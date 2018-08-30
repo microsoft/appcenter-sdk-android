@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.Notification;
@@ -63,6 +62,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest {
+
+    @SuppressWarnings("deprecation")
+    private static final String COLUMN_LOCAL_FILENAME = DownloadManager.COLUMN_LOCAL_FILENAME;
 
     @Before
     public void setUpDownload() throws Exception {
@@ -559,8 +561,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
     @Test
     @PrepareForTest(Uri.class)
-    @SuppressWarnings("deprecation")
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public void notifyThenRestartAppTwice() throws Exception {
 
         /* Simulate async task. */
@@ -586,7 +586,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Mock notification. */
         when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
         Notification.Builder notificationBuilder = mockNotificationBuilderChain();
         when(notificationBuilder.build()).thenReturn(mock(Notification.class));
 
@@ -598,7 +597,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
         PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
         verify(notificationBuilder).build();
-        verify(notificationBuilder, never()).getNotification();
         verify(mNotificationManager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
@@ -649,7 +647,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
     @Test
     @PrepareForTest(Uri.class)
-    @SuppressWarnings("deprecation")
     public void notifyThenRestartThenInstallerFails() throws Exception {
 
         /* Simulate async task. */
@@ -663,7 +660,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Mock old device URI. */
         Cursor cursor = mockSuccessCursor();
-        when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)).thenReturn(2);
+        when(cursor.getColumnIndexOrThrow(COLUMN_LOCAL_FILENAME)).thenReturn(2);
         Intent installIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
         when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(null).thenReturn(mock(ComponentName.class));
@@ -671,7 +668,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Mock notification. */
         when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
         Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.getNotification()).thenReturn(mock(Notification.class));
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
 
         /* Simulate task. */
         waitCheckDownloadTask();
@@ -703,7 +700,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void restartDownloadCheckIsLongEnoughToAppCanGoBackgroundAgain() throws Exception {
 
         /* Simulate async task. */
@@ -716,7 +712,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         Intent installIntent = mockInstallIntent();
         when(mPackageManager.getApplicationInfo(mContext.getPackageName(), 0)).thenReturn(mock(ApplicationInfo.class));
         Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.getNotification()).thenReturn(mock(Notification.class));
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
 
         /* Verify. */
         waitCheckDownloadTask();

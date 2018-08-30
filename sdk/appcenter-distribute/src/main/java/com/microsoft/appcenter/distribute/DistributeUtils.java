@@ -1,11 +1,9 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -69,15 +67,6 @@ class DistributeUtils {
      */
     static int getNotificationId() {
         return Distribute.class.getName().hashCode();
-    }
-
-    @SuppressWarnings("deprecation")
-    static Notification buildNotification(Notification.Builder builder) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            return builder.build();
-        } else {
-            return builder.getNotification();
-        }
     }
 
     /**

@@ -34,7 +34,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * The transmission target which this configurator belongs to.
      */
-    private AnalyticsTransmissionTarget mTransmissionTarget;
+    private final AnalyticsTransmissionTarget mTransmissionTarget;
 
     /**
      * Common event properties for this target. Inherited by children.

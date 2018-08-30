@@ -101,12 +101,12 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Pattern used to replace token in url encoded parameters.
      */
-    private static Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
+    private static final Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
 
     /**
      * Pattern used to replace token in json responses.
      */
-    private static Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
+    private static final Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
 
     /**
      * Dump stream to string.
@@ -169,10 +169,8 @@ public class DefaultHttpClient implements HttpClient {
              * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
              * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
              * to support future versions of TLS such as say 1.3 without having to patch this code.
-             * We have to drop support for API level 15 if we want to enforce TLS 1.2 on all devices.
              */
-            int apiLevel = Build.VERSION.SDK_INT;
-            if (apiLevel >= Build.VERSION_CODES.JELLY_BEAN && apiLevel < Build.VERSION_CODES.KITKAT_WATCH) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH) {
                 urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
             }
 

@@ -41,6 +41,7 @@
     <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
     <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>
     <string name="configure_target_properties" tools:ignore="MissingTranslation">Configure target properties</string>
+    <string name="delete">Delete</string>
     <string name="cs_properties_title" tools:ignore="MissingTranslation">Common Schema Properties</string>
     <string name="override_cs_properties" tools:ignore="MissingTranslation">Override common schema properties</string>
     <string name="common_schema_property_label" tools:ignore="MissingTranslation">Common Schema Property</string>

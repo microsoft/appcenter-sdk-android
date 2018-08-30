@@ -126,6 +126,7 @@ public interface Channel {
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
+        @SuppressWarnings("unused")
         void onPreparingLog(@NonNull Log log, @NonNull String groupName);
 
         /**
