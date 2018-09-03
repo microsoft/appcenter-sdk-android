@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 1.9.0 (Under active development)
+## Version 1.9.0 (TBA)
 
 ### AppCenter
 
