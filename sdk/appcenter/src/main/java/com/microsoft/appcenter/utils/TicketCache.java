@@ -13,7 +13,7 @@ public class TicketCache {
     /**
      * Cache backed by a simple map.
      */
-    private static Map<String, String> sTickets = new HashMap<>();
+    private static final Map<String, String> sTickets = new HashMap<>();
 
     /**
      * Get cached ticket.

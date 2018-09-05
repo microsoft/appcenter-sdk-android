@@ -113,6 +113,7 @@ public class EventActivity extends LogActivity {
         return mTransmissionTargets.get(mTransmissionTargetSpinner.getSelectedItemPosition());
     }
 
+    @SuppressWarnings("unused")
     public void toggleTransmissionEnabled(View view) {
         boolean checked = mTransmissionEnabledCheckBox.isChecked();
         final AnalyticsTransmissionTarget target = getSelectedTarget();

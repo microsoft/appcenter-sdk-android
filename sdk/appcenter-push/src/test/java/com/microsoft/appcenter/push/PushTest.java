@@ -42,11 +42,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
-import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -591,14 +591,17 @@ public class PushTest {
     public void registerWithoutFirebase() {
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
-
-        //noinspection deprecation
-        Push.setSenderId("1234");
+        setSenderId();
         start(Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
         verify(mContext).startService(any(Intent.class));
         verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
                 eq(PackageManager.COMPONENT_ENABLED_STATE_DISABLED), eq(PackageManager.DONT_KILL_APP));
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setSenderId() {
+        Push.setSenderId("1234");
     }
 
     @Test
@@ -630,9 +633,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsIllegalState() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
-
-        //noinspection deprecation
-        Push.setSenderId("1234");
+        setSenderId();
         doThrow(new IllegalStateException()).when(mContext).startService(any(Intent.class));
         start(Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
@@ -647,9 +648,7 @@ public class PushTest {
     @Test
     public void registerWithoutFirebaseStartServiceThrowsRuntimeException() {
         when(FirebaseInstanceId.getInstance()).thenThrow(new IllegalStateException());
-
-        //noinspection deprecation
-        Push.setSenderId("1234");
+        setSenderId();
         doThrow(new RuntimeException()).when(mContext).startService(any(Intent.class));
         start(Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
