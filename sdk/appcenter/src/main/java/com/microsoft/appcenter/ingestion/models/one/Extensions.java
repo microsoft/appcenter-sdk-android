@@ -82,6 +82,11 @@ public class Extensions implements Model {
     private LocExtension loc;
 
     /**
+     * Device extension.
+     */
+    private DeviceExtension device;
+
+    /**
      * Get protocol extension.
      *
      * @return protocol extension.
@@ -205,6 +210,24 @@ public class Extensions implements Model {
      */
     public void setLoc(LocExtension loc) {
         this.loc = loc;
+    }
+
+    /**
+     * Get device extension.
+     *
+     * @return device extension.
+     */
+    public DeviceExtension getDeviceId() {
+        return deviceId;
+    }
+
+    /**
+     * Set device extension.
+     *
+     * @param device device extension.
+     */
+    public void setDevice(DeviceExtension device) {
+        this.device = device;
     }
 
     @Override

@@ -4,56 +4,54 @@ import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.Test;
 
-import java.util.UUID;
-
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 
-public class SdkExtensionTest {
+public class DeviceExtensionTest {
 
     @Test
     public void compareDifferentType() {
-        TestUtils.compareSelfNullClass(new SdkExtension());
+        TestUtils.compareSelfNullClass(new DeviceExtension());
     }
 
     @Test
     public void equalsHashCode() {
 
         /* Empty objects. */
-        SdkExtension a = new SdkExtension();
-        SdkExtension b = new SdkExtension();
+        DeviceExtension a = new DeviceExtension();
+        DeviceExtension b = new DeviceExtension();
         checkEquals(a, b);
 
-        /* libVer. */
-        a.setLibVer("a1");
+        /* ID. */
+        a.setId("a1");
         checkNotEquals(a, b);
-        b.setLibVer("b1");
+        b.setId("b1");
         checkNotEquals(a, b);
-        b.setLibVer("a1");
+        b.setId("a1");
         checkEquals(a, b);
 
-        /* Epoch. */
-        a.setEpoch("a2");
+        /* Local ID. */
+        a.setLocalId("a1");
         checkNotEquals(a, b);
-        b.setEpoch("b2");
+        b.setLocalId("b1");
         checkNotEquals(a, b);
-        b.setEpoch("a2");
+        b.setLocalId("a1");
         checkEquals(a, b);
 
-        /* Seq. */
-        a.setSeq(0L);
+        /* Auth ID. */
+        a.setAuthId("a1");
         checkNotEquals(a, b);
-        b.setSeq(1L);
+        b.setAuthId("b1");
         checkNotEquals(a, b);
-        b.setSeq(0L);
+        b.setAuthId("a1");
         checkEquals(a, b);
 
-        /* InstallId. */
-        a.setInstallId(UUID.randomUUID());
+        /* Auth sec ID. */
+        a.setAuthSecId("a1");
         checkNotEquals(a, b);
-        b.setInstallId(UUID.randomUUID());
+        b.setAuthSecId("b1");
         checkNotEquals(a, b);
-        b.setInstallId(a.getInstallId());
+        b.setAuthSecId("a1");
         checkEquals(a, b);
     }
 }

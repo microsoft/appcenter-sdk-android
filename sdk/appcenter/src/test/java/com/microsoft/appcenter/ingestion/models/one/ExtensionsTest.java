@@ -91,5 +91,15 @@ public class ExtensionsTest {
         checkNotEquals(a, b);
         b.setLoc(a.getLoc());
         checkEquals(a, b);
+
+        /* Device. */
+        DeviceExtension device = new DeviceExtension();
+        device.setLocalId("123");
+        a.setDevice(device);
+        checkNotEquals(a, b);
+        b.setDevice(new DeviceExtension());
+        checkNotEquals(a, b);
+        b.setDevice(a.getDevice());
+        checkEquals(a, b);
     }
 }
