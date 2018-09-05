@@ -151,11 +151,15 @@ public class DeviceExtension implements Model {
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (localId != null ? !localId.equals(that.localId) : that.localId != null) return false;
         if (authId != null ? !authId.equals(that.authId) : that.authId != null) return false;
-        return authSecId != null ? authSecId.equals(that.authSecId) : that.authSecId == null);
+        return authSecId != null ? authSecId.equals(that.authSecId) : that.authSecId == null;
     }
 
     @Override
     public int hashCode() {
-        return locale != null ? locale.hashCode() : 0;
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (localId != null ? localId.hashCode() : 0);
+        result = 31 * result + (authId != null ? authId.hashCode() : 0);
+        result = 31 * result + (authSecId != null ? authSecId.hashCode() : 0);
+        return result;
     }
 }

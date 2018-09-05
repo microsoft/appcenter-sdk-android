@@ -217,8 +217,8 @@ public class Extensions implements Model {
      *
      * @return device extension.
      */
-    public DeviceExtension getDeviceId() {
-        return deviceId;
+    public DeviceExtension getDevice() {
+        return device;
     }
 
     /**
@@ -351,7 +351,8 @@ public class Extensions implements Model {
         if (app != null ? !app.equals(that.app) : that.app != null) return false;
         if (net != null ? !net.equals(that.net) : that.net != null) return false;
         if (sdk != null ? !sdk.equals(that.sdk) : that.sdk != null) return false;
-        return loc != null ? loc.equals(that.loc) : that.loc == null;
+        if (loc != null ? !loc.equals(that.loc) : that.loc != null) return false;
+        return device != null ? device.equals(that.device) : that.device == null;
     }
 
     @Override
@@ -363,6 +364,7 @@ public class Extensions implements Model {
         result = 31 * result + (net != null ? net.hashCode() : 0);
         result = 31 * result + (sdk != null ? sdk.hashCode() : 0);
         result = 31 * result + (loc != null ? loc.hashCode() : 0);
+        result = 31 * result + (device != null ? device.hashCode() : 0);
         return result;
     }
 }
