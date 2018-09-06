@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.analytics;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.provider.Settings.Secure;
 
@@ -54,7 +53,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Create a new property configurator.
      *
      * @param channel            The channel for this listener.
-     * @param transmissionTarget The tranmission target of the configurator.
+     * @param transmissionTarget The transmission target of the configurator.
      */
     PropertyConfigurator(Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
         mTransmissionTarget = transmissionTarget;

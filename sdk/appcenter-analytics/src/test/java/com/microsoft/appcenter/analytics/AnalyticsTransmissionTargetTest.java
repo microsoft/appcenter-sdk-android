@@ -9,6 +9,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -34,6 +36,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
@@ -53,8 +57,17 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
     @Test
     public void testGetTransmissionTarget() {
-        assertNull(Analytics.getTransmissionTarget(""));
         assertNotNull(Analytics.getTransmissionTarget("token"));
+    }
+
+    @Test
+    public void testGetTransmissionTargetWithInvalidToken() {
+        mockStatic(AppCenterLog.class);
+        assertNull(Analytics.getTransmissionTarget(""));
+
+        /* Verify log. */
+        verifyStatic();
+        AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
     }
 
     @Test

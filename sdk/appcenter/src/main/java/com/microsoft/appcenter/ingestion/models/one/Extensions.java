@@ -47,6 +47,11 @@ public class Extensions implements Model {
     private static final String LOC = "loc";
 
     /**
+     * Device property.
+     */
+    private static final String DEVICE = "device";
+
+    /**
      * Protocol extension.
      */
     private ProtocolExtension protocol;
@@ -281,6 +286,13 @@ public class Extensions implements Model {
             loc.read(object.getJSONObject(LOC));
             setLoc(loc);
         }
+
+        /* Device. */
+        if (object.has(DEVICE)) {
+            DeviceExtension device = new DeviceExtension();
+            device.read(object.getJSONObject(DEVICE));
+            setDevice(device);
+        }
     }
 
     @Override
@@ -332,6 +344,13 @@ public class Extensions implements Model {
         if (getLoc() != null) {
             writer.key(LOC).object();
             getLoc().write(writer);
+            writer.endObject();
+        }
+
+        /* Device. */
+        if (getDevice() != null) {
+            writer.key(DEVICE).object();
+            getDevice().write(writer);
             writer.endObject();
         }
     }
