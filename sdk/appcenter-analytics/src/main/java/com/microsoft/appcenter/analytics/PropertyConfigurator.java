@@ -1,12 +1,16 @@
 package com.microsoft.appcenter.analytics;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.support.annotation.NonNull;
+import android.provider.Settings.Secure;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,14 +26,19 @@ public class PropertyConfigurator extends AbstractChannelListener {
     private String mAppName;
 
     /**
-     * App name to override common schema part A 'app.ver'.
+     * App version to override common schema part A 'app.ver'.
      */
     private String mAppVersion;
 
     /**
-     * App name to override common schema part A 'app.locale'.
+     * App locale to override common schema part A 'app.locale'.
      */
     private String mAppLocale;
+
+    /**
+     * The device id to populate common schema 'device.localId'.
+     */
+    private String mDeviceId;
 
     /**
      * The transmission target which this configurator belongs to.
@@ -64,6 +73,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
+            DeviceExtension device = ((CommonSchemaLog) log).getExt().getDevice();
 
             /* Override app name if not null, else use the name of the nearest parent. */
             if (mAppName != null) {
@@ -99,6 +109,20 @@ public class PropertyConfigurator extends AbstractChannelListener {
                     String parentAppLocale = target.getPropertyConfigurator().getAppLocale();
                     if (parentAppLocale != null) {
                         app.setLocale(parentAppLocale);
+                        break;
+                    }
+                }
+            }
+
+            /* Fill out the device id if it has been collected, or use the device id of the nearest parent. */
+            if (mDeviceId != null) {
+                device.setLocalId(mDeviceId);
+            }
+            else {
+                for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
+                    String parentDeviceId = target.getPropertyConfigurator().getDeviceId();
+                    if (parentDeviceId != null) {
+                        device.setLocalId(parentDeviceId);
                         break;
                     }
                 }
@@ -173,6 +197,15 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
+     * Get device id. Used for checking parents for property inheritance.
+     *
+     * @return
+     */
+    private String getDeviceId() {
+        return mDeviceId;
+    }
+
+    /**
      * Add or overwrite the given key for the common event properties. Properties will be inherited
      * by children of this transmission target.
      *
@@ -192,6 +225,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
     @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
         mEventProperties.remove(key);
+    }
+
+    @SuppressLint("HardwareIds")
+    public void collectDeviceId() {
+        mDeviceId = Secure.getString(mTransmissionTarget.getContext().getContentResolver(), Secure.ANDROID_ID);
     }
 
     /*

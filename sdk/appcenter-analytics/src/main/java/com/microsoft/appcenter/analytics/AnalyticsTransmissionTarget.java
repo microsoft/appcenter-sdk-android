@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.analytics;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
@@ -59,16 +60,22 @@ public class AnalyticsTransmissionTarget {
     private final PropertyConfigurator mPropertyConfigurator;
 
     /**
+     * App context.
+     */
+    private final Context mContext;
+
+    /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
      * @param channel                 The channel for this transmission target.
      */
-    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Channel channel) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Context context, Channel channel) {
         mTransmissionTargetToken = transmissionTargetToken;
         mParentTarget = parentTarget;
         mChannel = channel;
+        mContext = context;
         mPropertyConfigurator = new PropertyConfigurator(channel, this);
     }
 
@@ -157,7 +164,7 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mChannel);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, getContext(), mChannel);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
         }
         return childTarget;
@@ -223,6 +230,15 @@ public class AnalyticsTransmissionTarget {
             }
         }, future, null);
         return future;
+    }
+
+    /**
+     * Getter for base context.
+     *
+     * @return the context.
+     */
+    Context getContext() {
+        return mContext;
     }
 
     /**

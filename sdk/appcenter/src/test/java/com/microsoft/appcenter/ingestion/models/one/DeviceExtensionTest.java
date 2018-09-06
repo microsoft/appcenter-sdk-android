@@ -22,36 +22,12 @@ public class DeviceExtensionTest {
         DeviceExtension b = new DeviceExtension();
         checkEquals(a, b);
 
-        /* ID. */
-        a.setId("a1");
-        checkNotEquals(a, b);
-        b.setId("b1");
-        checkNotEquals(a, b);
-        b.setId("a1");
-        checkEquals(a, b);
-
         /* Local ID. */
         a.setLocalId("a1");
         checkNotEquals(a, b);
         b.setLocalId("b1");
         checkNotEquals(a, b);
         b.setLocalId("a1");
-        checkEquals(a, b);
-
-        /* Auth ID. */
-        a.setAuthId("a1");
-        checkNotEquals(a, b);
-        b.setAuthId("b1");
-        checkNotEquals(a, b);
-        b.setAuthId("a1");
-        checkEquals(a, b);
-
-        /* Auth sec ID. */
-        a.setAuthSecId("a1");
-        checkNotEquals(a, b);
-        b.setAuthSecId("b1");
-        checkNotEquals(a, b);
-        b.setAuthSecId("a1");
         checkEquals(a, b);
     }
 }

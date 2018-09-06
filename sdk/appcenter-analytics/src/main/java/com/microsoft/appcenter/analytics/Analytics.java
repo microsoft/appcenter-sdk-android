@@ -316,7 +316,8 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null, mChannel);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null,
+                    mCurrentActivity.get().getBaseContext(), mChannel);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;

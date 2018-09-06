@@ -13,16 +13,6 @@ import org.json.JSONStringer;
 public class DeviceExtension implements Model {
 
     /**
-     * ID property.
-     */
-    private static final String ID = "id";
-
-    /**
-     * Device ID.
-     */
-    private String id;
-
-    /**
      * Local ID property.
      */
     private static final String LOCAL_ID = "localId";
@@ -31,44 +21,6 @@ public class DeviceExtension implements Model {
      * Local ID.
      */
     private String localId;
-
-    /**
-     * Auth ID property.
-     */
-    private static final String AUTH_ID = "authId";
-
-    /**
-     * Auth ID.
-     */
-    private String authId;
-
-    /**
-     * Auth sec ID property.
-     */
-    private static final String AUTH_SEC_ID = "authSecId";
-
-    /**
-     * Auth sec ID.
-     */
-    private String authSecId;
-
-    /**
-     * Get ID.
-     *
-     * @return device ID.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Set ID.
-     *
-     * @param id device ID.
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
 
     /**
      * Get local ID.
@@ -88,59 +40,16 @@ public class DeviceExtension implements Model {
         this.localId = localId;
     }
 
-    /**
-     * Get auth ID.
-     *
-     * @return auth ID.
-     */
-    public String getAuthId() {
-        return authId;
-    }
-
-    /**
-     * Set auth ID.
-     *
-     * @param authId auth ID.
-     */
-    public void setAuthId(String authId) {
-        this.authId = authId;
-    }
-
-    /**
-     * Get auth sec ID.
-     *
-     * @return auth sec ID.
-     */
-    public String getAuthSecId() {
-        return authSecId;
-    }
-
-    /**
-     * Set auth sec ID.
-     *
-     * @param authSecId auth sec ID.
-     */
-    public void setAuthSecId(String authSecId) {
-        this.authSecId = authSecId;
-    }
-
     @Override
     public void read(JSONObject object) {
-        setId(object.optString(ID, null));
         setLocalId(object.optString(LOCAL_ID, null));
-        setAuthId(object.optString(AUTH_ID, null));
-        setAuthSecId(object.optString(AUTH_SEC_ID, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
-        JSONUtils.write(writer, ID, getId());
         JSONUtils.write(writer, LOCAL_ID, getLocalId());
-        JSONUtils.write(writer, AUTH_ID, getAuthId());
-        JSONUtils.write(writer, AUTH_SEC_ID, getAuthSecId());
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -148,18 +57,11 @@ public class DeviceExtension implements Model {
 
         DeviceExtension that = (DeviceExtension) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (localId != null ? !localId.equals(that.localId) : that.localId != null) return false;
-        if (authId != null ? !authId.equals(that.authId) : that.authId != null) return false;
-        return authSecId != null ? authSecId.equals(that.authSecId) : that.authSecId == null;
+        return localId != null ? localId.equals(that.localId) : that.localId == null;
     }
 
     @Override
     public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (localId != null ? localId.hashCode() : 0);
-        result = 31 * result + (authId != null ? authId.hashCode() : 0);
-        result = 31 * result + (authSecId != null ? authSecId.hashCode() : 0);
-        return result;
+        return localId != null ? localId.hashCode() : 0;
     }
 }
