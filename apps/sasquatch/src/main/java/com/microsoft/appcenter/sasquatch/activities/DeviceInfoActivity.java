@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
@@ -50,7 +52,12 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
         }
 
         final List<DeviceInfoDisplayModel> list = getDeviceInfoDisplayModelList(log);
-
+        @SuppressLint("HardwareIds")
+        final String deviceId = Settings.Secure.getString(getApplication().getContentResolver(), Settings.Secure.ANDROID_ID);
+        list.add(new DeviceInfoDisplayModel() {{
+            title = "Device ID";
+            value = deviceId;
+        }});
         ArrayAdapter<DeviceInfoDisplayModel> adapter = new ArrayAdapter<DeviceInfoDisplayModel>(this, android.R.layout.simple_list_item_2, android.R.id.text1, list) {
 
             @NonNull
