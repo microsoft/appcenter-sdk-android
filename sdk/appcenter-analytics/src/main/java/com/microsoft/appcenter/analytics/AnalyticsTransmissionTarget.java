@@ -77,7 +77,7 @@ public class AnalyticsTransmissionTarget {
         mParentTarget = parentTarget;
         mChannel = channel;
         mContext = context;
-        mPropertyConfigurator = new PropertyConfigurator(channel, this);
+        mPropertyConfigurator = new PropertyConfigurator(this);
         mChannel.addListener(mPropertyConfigurator);
     }
 
