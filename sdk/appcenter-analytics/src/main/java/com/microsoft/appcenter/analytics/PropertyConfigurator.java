@@ -120,15 +120,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
             if (mDeviceId != null) {
                 device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
             }
-            else {
-                for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
-                    String parentDeviceId = target.getPropertyConfigurator().getDeviceId();
-                    if (parentDeviceId != null) {
-                        device.setLocalId(ANDROID_DEVICE_ID_PREFIX + parentDeviceId);
-                        break;
-                    }
-                }
-            }
         }
     }
 
@@ -196,15 +187,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     public void setAppLocale(String appLocale) {
         mAppLocale = appLocale;
-    }
-
-    /**
-     * Get device id. Used for checking parents for property inheritance.
-     *
-     * @return
-     */
-    private String getDeviceId() {
-        return mDeviceId;
     }
 
     /**

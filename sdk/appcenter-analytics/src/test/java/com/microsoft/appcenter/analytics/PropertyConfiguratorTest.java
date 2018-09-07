@@ -123,7 +123,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
         log.getExt().setApp(new AppExtension());
-        log.getExt().setDevice(new DeviceExtension());
 
         /* Set properties on parent to override unset properties on child */
         AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
@@ -134,7 +133,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Mock content resolver and set collect device ID. */
         mockStatic(Secure.class);
         when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
-        grandparent.getPropertyConfigurator().collectDeviceId();
 
         /* Set up hierarchy. */
         AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
@@ -150,7 +148,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
-        assertEquals("a:mockDeviceId", log.getExt().getDevice().getLocalId());
     }
 
     @Test
@@ -158,7 +155,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
         log.getExt().setApp(new AppExtension());
-        log.getExt().setDevice(new DeviceExtension());
 
         /* Set up hierarchy. */
         AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
@@ -169,7 +165,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         parent.getPropertyConfigurator().setAppVersion("appVersion");
         parent.getPropertyConfigurator().setAppName("appName");
         parent.getPropertyConfigurator().setAppLocale("appLocale");
-        parent.getPropertyConfigurator().collectDeviceId();
 
         /* Also set 1 on child. */
         child.getPropertyConfigurator().setAppName("childName");
@@ -184,7 +179,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
-        assertNull(log.getExt().getDevice().getLocalId());
     }
 
     @Test
@@ -192,7 +186,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
         log.getExt().setApp(new AppExtension());
-        log.getExt().setDevice(new DeviceExtension());
 
         /* Set up empty chain of parents. */
         AnalyticsTransmissionTarget grandparent = Analytics.getTransmissionTarget("grandparent");
@@ -209,7 +202,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
-        assertNull(log.getExt().getDevice().getLocalId());
     }
 
     @Test
