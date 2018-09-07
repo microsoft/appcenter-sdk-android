@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -60,6 +61,9 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
 
+    @Mock
+    private Channel mChannel;
+
     @Test
     public void singleton() {
         Assert.assertSame(Analytics.getInstance(), Analytics.getInstance());
@@ -81,24 +85,19 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertTrue(factories.isEmpty());
     }
 
-//    @Test
-//    public void notInit() {
-//
-//        /* Just check log is discarded without throwing any exception. */
-//        Analytics.trackEvent("test");
-//        Analytics.trackEvent("test", new HashMap<String, String>());
-//        Analytics.trackPage("test");
-//        Analytics.trackPage("test", new HashMap<String, String>());
-//        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("t1");
-//        target.trackEvent("test");
-//        target.trackEvent("test", new HashMap<String, String>());
-//        target.getTransmissionTarget("t2").trackEvent("test");
-//        target.getTransmissionTarget("t2").trackEvent("test", new HashMap<String, String>());
-//
-//        /* Verify we just get an error every time. */
-//        verifyStatic(times(8));
-//        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
-//    }
+    @Test
+    public void notInit() {
+
+        /* Just check log is discarded without throwing any exception. */
+        Analytics.trackEvent("test");
+        Analytics.trackEvent("test", new HashMap<String, String>());
+        Analytics.trackPage("test");
+        Analytics.trackPage("test", new HashMap<String, String>());
+
+        /* Verify we just get an error every time. */
+        verifyStatic(times(4));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+    }
 
     private void activityResumed(final String expectedName, android.app.Activity activity) {
 

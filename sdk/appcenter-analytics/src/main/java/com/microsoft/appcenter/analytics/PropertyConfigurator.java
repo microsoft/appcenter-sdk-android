@@ -20,6 +20,11 @@ import java.util.Map;
 public class PropertyConfigurator extends AbstractChannelListener {
 
     /**
+     * Common schema prefix for Android device IDs.
+     */
+    private final String ANDROID_DEVICE_ID_PREFIX = "a:";
+
+    /**
      * App name to override common schema part A 'app.name'.
      */
     private String mAppName;
@@ -55,11 +60,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param channel            The channel for this listener.
      * @param transmissionTarget The transmission target of the configurator.
      */
-    PropertyConfigurator(Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
+    PropertyConfigurator(@NonNull Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
         mTransmissionTarget = transmissionTarget;
-        if (channel != null) {
-            channel.addListener(this);
-        }
+        channel.addListener(this);
     }
 
     /**
@@ -115,13 +118,13 @@ public class PropertyConfigurator extends AbstractChannelListener {
 
             /* Fill out the device id if it has been collected, or use the device id of the nearest parent. */
             if (mDeviceId != null) {
-                device.setLocalId(mDeviceId);
+                device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
             }
             else {
                 for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
                     String parentDeviceId = target.getPropertyConfigurator().getDeviceId();
                     if (parentDeviceId != null) {
-                        device.setLocalId(parentDeviceId);
+                        device.setLocalId(ANDROID_DEVICE_ID_PREFIX + parentDeviceId);
                         break;
                     }
                 }

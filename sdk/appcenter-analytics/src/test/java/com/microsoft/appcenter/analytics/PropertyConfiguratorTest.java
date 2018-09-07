@@ -94,7 +94,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         pc.onPreparingLog(log, "groupName");
 
         /* Assert device ID is collected. */
-        assertEquals("mockDeviceId", log.getExt().getDevice().getLocalId());
+        assertEquals("a:mockDeviceId", log.getExt().getDevice().getLocalId());
     }
 
     @Test
@@ -150,7 +150,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
-        assertEquals("mockDeviceId", log.getExt().getDevice().getLocalId());
+        assertEquals("a:mockDeviceId", log.getExt().getDevice().getLocalId());
     }
 
     @Test
