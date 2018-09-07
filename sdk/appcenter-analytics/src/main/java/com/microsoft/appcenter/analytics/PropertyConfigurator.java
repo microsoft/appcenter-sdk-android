@@ -116,7 +116,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 }
             }
 
-            /* Fill out the device id if it has been collected, or use the device id of the nearest parent. */
+            /* Fill out the device id if it has been collected. */
             if (mDeviceId != null) {
                 device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
             }
