@@ -22,6 +22,11 @@ public class Extensions implements Model {
     private static final String USER = "user";
 
     /**
+     * Device property.
+     */
+    private static final String DEVICE = "device";
+
+    /**
      * Os property.
      */
     private static final String OS = "os";
@@ -47,11 +52,6 @@ public class Extensions implements Model {
     private static final String LOC = "loc";
 
     /**
-     * Device property.
-     */
-    private static final String DEVICE = "device";
-
-    /**
      * Protocol extension.
      */
     private ProtocolExtension protocol;
@@ -60,6 +60,11 @@ public class Extensions implements Model {
      * User extension.
      */
     private UserExtension user;
+
+    /**
+     * Device extension.
+     */
+    private DeviceExtension device;
 
     /**
      * Os extension.
@@ -85,11 +90,6 @@ public class Extensions implements Model {
      * Loc extension.
      */
     private LocExtension loc;
-
-    /**
-     * Device extension.
-     */
-    private DeviceExtension device;
 
     /**
      * Get protocol extension.
@@ -125,6 +125,24 @@ public class Extensions implements Model {
      */
     public void setUser(UserExtension user) {
         this.user = user;
+    }
+
+    /**
+     * Get device extension.
+     *
+     * @return device extension.
+     */
+    public DeviceExtension getDevice() {
+        return device;
+    }
+
+    /**
+     * Set device extension.
+     *
+     * @param device device extension.
+     */
+    public void setDevice(DeviceExtension device) {
+        this.device = device;
     }
 
     /**
@@ -217,24 +235,6 @@ public class Extensions implements Model {
         this.loc = loc;
     }
 
-    /**
-     * Get device extension.
-     *
-     * @return device extension.
-     */
-    public DeviceExtension getDevice() {
-        return device;
-    }
-
-    /**
-     * Set device extension.
-     *
-     * @param device device extension.
-     */
-    public void setDevice(DeviceExtension device) {
-        this.device = device;
-    }
-
     @Override
     public void read(JSONObject object) throws JSONException {
 
@@ -250,6 +250,13 @@ public class Extensions implements Model {
             UserExtension user = new UserExtension();
             user.read(object.getJSONObject(USER));
             setUser(user);
+        }
+
+        /* Device. */
+        if (object.has(DEVICE)) {
+            DeviceExtension device = new DeviceExtension();
+            device.read(object.getJSONObject(DEVICE));
+            setDevice(device);
         }
 
         /* Os. */
@@ -286,13 +293,6 @@ public class Extensions implements Model {
             loc.read(object.getJSONObject(LOC));
             setLoc(loc);
         }
-
-        /* Device. */
-        if (object.has(DEVICE)) {
-            DeviceExtension device = new DeviceExtension();
-            device.read(object.getJSONObject(DEVICE));
-            setDevice(device);
-        }
     }
 
     @Override
@@ -309,6 +309,13 @@ public class Extensions implements Model {
         if (getUser() != null) {
             writer.key(USER).object();
             getUser().write(writer);
+            writer.endObject();
+        }
+
+        /* Device. */
+        if (getDevice() != null) {
+            writer.key(DEVICE).object();
+            getDevice().write(writer);
             writer.endObject();
         }
 
@@ -346,16 +353,8 @@ public class Extensions implements Model {
             getLoc().write(writer);
             writer.endObject();
         }
-
-        /* Device. */
-        if (getDevice() != null) {
-            writer.key(DEVICE).object();
-            getDevice().write(writer);
-            writer.endObject();
-        }
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -366,24 +365,24 @@ public class Extensions implements Model {
         if (protocol != null ? !protocol.equals(that.protocol) : that.protocol != null)
             return false;
         if (user != null ? !user.equals(that.user) : that.user != null) return false;
+        if (device != null ? !device.equals(that.device) : that.device != null) return false;
         if (os != null ? !os.equals(that.os) : that.os != null) return false;
         if (app != null ? !app.equals(that.app) : that.app != null) return false;
         if (net != null ? !net.equals(that.net) : that.net != null) return false;
         if (sdk != null ? !sdk.equals(that.sdk) : that.sdk != null) return false;
-        if (loc != null ? !loc.equals(that.loc) : that.loc != null) return false;
-        return device != null ? device.equals(that.device) : that.device == null;
+        return loc != null ? loc.equals(that.loc) : that.loc == null;
     }
 
     @Override
     public int hashCode() {
         int result = protocol != null ? protocol.hashCode() : 0;
         result = 31 * result + (user != null ? user.hashCode() : 0);
+        result = 31 * result + (device != null ? device.hashCode() : 0);
         result = 31 * result + (os != null ? os.hashCode() : 0);
         result = 31 * result + (app != null ? app.hashCode() : 0);
         result = 31 * result + (net != null ? net.hashCode() : 0);
         result = 31 * result + (sdk != null ? sdk.hashCode() : 0);
         result = 31 * result + (loc != null ? loc.hashCode() : 0);
-        result = 31 * result + (device != null ? device.hashCode() : 0);
         return result;
     }
 }

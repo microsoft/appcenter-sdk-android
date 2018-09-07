@@ -317,7 +317,7 @@ public class Analytics extends AbstractAppCenterService {
             return null;
         } else if (mContext == null) {
 
-            // Context and channel have the same lifecycle so we only have to check one.
+            /* Context and channel have the same lifecycle so we only have to check one. */
             AppCenterLog.error(LOG_TAG, "App context is null, App Center has not been started.");
             return null;
         } else {
