@@ -1,20 +1,27 @@
 package com.microsoft.appcenter.analytics;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.provider.Settings.Secure;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,12 +31,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
+@PrepareForTest(Secure.class)
 public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
     @Mock
@@ -43,6 +54,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, null, false);
+
     }
 
     @Test
@@ -63,6 +75,26 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
+    }
+
+    @Test
+    public void collectDeviceId() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setDevice(new DeviceExtension());
+
+        /* Mock context things. */
+        mockStatic(Secure.class);
+        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+
+        /* Get property configurator and collect device ID. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.collectDeviceId();
+        log.addTransmissionTarget("test");
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert device ID is collected. */
+        assertEquals("a:mockDeviceId", log.getExt().getDevice().getLocalId());
     }
 
     @Test
@@ -97,6 +129,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         grandparent.getPropertyConfigurator().setAppVersion("appVersion");
         grandparent.getPropertyConfigurator().setAppName("appName");
         grandparent.getPropertyConfigurator().setAppLocale("appLocale");
+
+        /* Mock content resolver and set collect device ID. */
+        mockStatic(Secure.class);
+        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
 
         /* Set up hierarchy. */
         AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");

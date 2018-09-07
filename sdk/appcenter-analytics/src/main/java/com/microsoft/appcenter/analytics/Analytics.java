@@ -313,7 +313,12 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
-            AppCenterLog.error(LOG_TAG, "Transmission target may not be null or empty.");
+            AppCenterLog.error(LOG_TAG, "Transmission target token may not be null or empty.");
+            return null;
+        } else if (mContext == null) {
+
+            // Context and channel have the same lifecycle so we only have to check one.
+            AppCenterLog.error(LOG_TAG, "App context is null, App Center has not been started.");
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);

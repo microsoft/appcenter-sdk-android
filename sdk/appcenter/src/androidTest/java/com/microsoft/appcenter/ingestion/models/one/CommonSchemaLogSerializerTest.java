@@ -108,6 +108,12 @@ public class CommonSchemaLogSerializerTest {
         log.getExt().getLoc().setTz("-08:00");
         checkSerialization(serializer, log);
 
+        /* Device extension. */
+        log.getExt().setDevice(new DeviceExtension());
+        checkSerialization(serializer, log);
+        log.getExt().getDevice().setLocalId("5DE1C5B8433DF3EE");
+        checkSerialization(serializer, log);
+
         /* Data. */
         log.setData(new Data());
         checkSerialization(serializer, log);
