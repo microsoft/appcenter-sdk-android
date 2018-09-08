@@ -81,6 +81,11 @@ public class Analytics extends AbstractAppCenterService {
     private WeakReference<Activity> mCurrentActivity;
 
     /**
+     * Application context, if not null it means onStart was called.
+     */
+    private Context mContext;
+
+    /**
      * True if started from app, false if started only from a library or not yet started at all.
      */
     private boolean mStartedFromApp;
@@ -308,7 +313,12 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized AnalyticsTransmissionTarget getInstanceTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
-            AppCenterLog.error(LOG_TAG, "Transmission target may not be null or empty.");
+            AppCenterLog.error(LOG_TAG, "Transmission target token may not be null or empty.");
+            return null;
+        } else if (mContext == null) {
+
+            /* Context and channel have the same lifecycle so we only have to check one. */
+            AppCenterLog.error(LOG_TAG, "App context is null, App Center has not been started.");
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
@@ -316,7 +326,7 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null, mChannel);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null, mContext, mChannel);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
             return transmissionTarget;
@@ -595,6 +605,7 @@ public class Analytics extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+        mContext = context;
         mStartedFromApp = startedFromApp;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         setDefaultTransmissionTarget(transmissionTargetToken);

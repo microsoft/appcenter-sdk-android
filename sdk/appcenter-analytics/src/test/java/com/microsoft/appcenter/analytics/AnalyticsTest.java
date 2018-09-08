@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -44,6 +45,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
@@ -54,9 +56,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
+
+    @Mock
+    private Channel mChannel;
 
     @Test
     public void singleton() {
@@ -87,14 +93,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("t1");
-        target.trackEvent("test");
-        target.trackEvent("test", new HashMap<String, String>());
-        target.getTransmissionTarget("t2").trackEvent("test");
-        target.getTransmissionTarget("t2").trackEvent("test", new HashMap<String, String>());
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(8));
+        verifyStatic(times(4));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -502,6 +503,16 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel, times(2)).addListener(isA(SessionTracker.class));
         verify(channel, times(2)).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()));
         verify(channel, times(2)).enqueue(isA(PageLog.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
+    public void createTransmissionTargetBeforeStart() {
+        mockStatic(AppCenterLog.class);
+        assertNull(Analytics.getTransmissionTarget("t1"));
+
+        /* Verify log. */
+        verifyStatic();
+        AppCenterLog.error(anyString(), contains("App context is null, App Center has not been started."));
     }
 
     /**

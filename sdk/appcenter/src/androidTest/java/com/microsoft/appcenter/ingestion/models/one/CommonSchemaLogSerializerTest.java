@@ -66,6 +66,12 @@ public class CommonSchemaLogSerializerTest {
         log.getExt().getUser().setLocale("en-US");
         checkSerialization(serializer, log);
 
+        /* Device extension. */
+        log.getExt().setDevice(new DeviceExtension());
+        checkSerialization(serializer, log);
+        log.getExt().getDevice().setLocalId("5DE1C5B8433DF3EE");
+        checkSerialization(serializer, log);
+
         /* OS extension. */
         log.getExt().setOs(new OsExtension());
         checkSerialization(serializer, log);

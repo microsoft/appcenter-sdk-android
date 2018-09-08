@@ -22,6 +22,11 @@ public class Extensions implements Model {
     private static final String USER = "user";
 
     /**
+     * Device property.
+     */
+    private static final String DEVICE = "device";
+
+    /**
      * Os property.
      */
     private static final String OS = "os";
@@ -55,6 +60,11 @@ public class Extensions implements Model {
      * User extension.
      */
     private UserExtension user;
+
+    /**
+     * Device extension.
+     */
+    private DeviceExtension device;
 
     /**
      * Os extension.
@@ -115,6 +125,24 @@ public class Extensions implements Model {
      */
     public void setUser(UserExtension user) {
         this.user = user;
+    }
+
+    /**
+     * Get device extension.
+     *
+     * @return device extension.
+     */
+    public DeviceExtension getDevice() {
+        return device;
+    }
+
+    /**
+     * Set device extension.
+     *
+     * @param device device extension.
+     */
+    public void setDevice(DeviceExtension device) {
+        this.device = device;
     }
 
     /**
@@ -224,6 +252,13 @@ public class Extensions implements Model {
             setUser(user);
         }
 
+        /* Device. */
+        if (object.has(DEVICE)) {
+            DeviceExtension device = new DeviceExtension();
+            device.read(object.getJSONObject(DEVICE));
+            setDevice(device);
+        }
+
         /* Os. */
         if (object.has(OS)) {
             OsExtension os = new OsExtension();
@@ -277,6 +312,13 @@ public class Extensions implements Model {
             writer.endObject();
         }
 
+        /* Device. */
+        if (getDevice() != null) {
+            writer.key(DEVICE).object();
+            getDevice().write(writer);
+            writer.endObject();
+        }
+
         /* Os. */
         if (getOs() != null) {
             writer.key(OS).object();
@@ -313,7 +355,6 @@ public class Extensions implements Model {
         }
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -324,6 +365,7 @@ public class Extensions implements Model {
         if (protocol != null ? !protocol.equals(that.protocol) : that.protocol != null)
             return false;
         if (user != null ? !user.equals(that.user) : that.user != null) return false;
+        if (device != null ? !device.equals(that.device) : that.device != null) return false;
         if (os != null ? !os.equals(that.os) : that.os != null) return false;
         if (app != null ? !app.equals(that.app) : that.app != null) return false;
         if (net != null ? !net.equals(that.net) : that.net != null) return false;
@@ -335,6 +377,7 @@ public class Extensions implements Model {
     public int hashCode() {
         int result = protocol != null ? protocol.hashCode() : 0;
         result = 31 * result + (user != null ? user.hashCode() : 0);
+        result = 31 * result + (device != null ? device.hashCode() : 0);
         result = 31 * result + (os != null ? os.hashCode() : 0);
         result = 31 * result + (app != null ? app.hashCode() : 0);
         result = 31 * result + (net != null ? net.hashCode() : 0);

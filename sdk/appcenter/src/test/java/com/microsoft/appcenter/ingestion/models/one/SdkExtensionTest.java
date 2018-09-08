@@ -32,7 +32,7 @@ public class SdkExtensionTest {
         b.setLibVer("a1");
         checkEquals(a, b);
 
-        /* Ver. */
+        /* Epoch. */
         a.setEpoch("a2");
         checkNotEquals(a, b);
         b.setEpoch("b2");

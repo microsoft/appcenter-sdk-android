@@ -1,12 +1,14 @@
 package com.microsoft.appcenter.analytics;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
+import android.provider.Settings.Secure;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
-import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,19 +19,29 @@ import java.util.Map;
 public class PropertyConfigurator extends AbstractChannelListener {
 
     /**
+     * Common schema prefix for Android device IDs.
+     */
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
+
+    /**
      * App name to override common schema part A 'app.name'.
      */
     private String mAppName;
 
     /**
-     * App name to override common schema part A 'app.ver'.
+     * App version to override common schema part A 'app.ver'.
      */
     private String mAppVersion;
 
     /**
-     * App name to override common schema part A 'app.locale'.
+     * App locale to override common schema part A 'app.locale'.
      */
     private String mAppLocale;
+
+    /**
+     * The device id to populate common schema 'device.localId'.
+     */
+    private String mDeviceId;
 
     /**
      * The transmission target which this configurator belongs to.
@@ -44,14 +56,10 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Create a new property configurator.
      *
-     * @param channel            The channel for this listener.
-     * @param transmissionTarget The tranmission target of the configurator.
+     * @param transmissionTarget The transmission target of the configurator.
      */
-    PropertyConfigurator(Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
+    PropertyConfigurator(AnalyticsTransmissionTarget transmissionTarget) {
         mTransmissionTarget = transmissionTarget;
-        if (channel != null) {
-            channel.addListener(this);
-        }
     }
 
     /**
@@ -64,6 +72,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
+            DeviceExtension device = ((CommonSchemaLog) log).getExt().getDevice();
 
             /* Override app name if not null, else use the name of the nearest parent. */
             if (mAppName != null) {
@@ -102,6 +111,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
                         break;
                     }
                 }
+            }
+
+            /* Fill out the device id if it has been collected. */
+            if (mDeviceId != null) {
+                device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
             }
         }
     }
@@ -192,6 +206,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
     @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
         mEventProperties.remove(key);
+    }
+
+    @SuppressLint("HardwareIds")
+    public void collectDeviceId() {
+        mDeviceId = Secure.getString(mTransmissionTarget.mContext.getContentResolver(), Secure.ANDROID_ID);
     }
 
     /*

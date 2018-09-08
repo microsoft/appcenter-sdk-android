@@ -42,6 +42,16 @@ public class ExtensionsTest {
         b.setUser(a.getUser());
         checkEquals(a, b);
 
+        /* Device. */
+        DeviceExtension device = new DeviceExtension();
+        device.setLocalId("123");
+        a.setDevice(device);
+        checkNotEquals(a, b);
+        b.setDevice(new DeviceExtension());
+        checkNotEquals(a, b);
+        b.setDevice(a.getDevice());
+        checkEquals(a, b);
+
         /* OS. */
         OsExtension os = new OsExtension();
         os.setVer("7.0.0");

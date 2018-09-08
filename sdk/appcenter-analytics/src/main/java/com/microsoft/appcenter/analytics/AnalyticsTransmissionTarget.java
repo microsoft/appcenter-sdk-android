@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.analytics;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
@@ -59,17 +60,25 @@ public class AnalyticsTransmissionTarget {
     private final PropertyConfigurator mPropertyConfigurator;
 
     /**
+     * App context.
+     */
+    final Context mContext;
+
+    /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
+     * @param context                 The base context.
      * @param channel                 The channel for this transmission target.
      */
-    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Channel channel) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Context context, Channel channel) {
         mTransmissionTargetToken = transmissionTargetToken;
         mParentTarget = parentTarget;
         mChannel = channel;
-        mPropertyConfigurator = new PropertyConfigurator(channel, this);
+        mContext = context;
+        mPropertyConfigurator = new PropertyConfigurator(this);
+        mChannel.addListener(mPropertyConfigurator);
     }
 
     /**
@@ -157,7 +166,7 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mChannel);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mContext, mChannel);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
         }
         return childTarget;
