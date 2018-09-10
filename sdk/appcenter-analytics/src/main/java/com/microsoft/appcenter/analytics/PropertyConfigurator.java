@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import android.provider.Settings.Secure;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
-import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
@@ -22,7 +21,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common schema prefix for Android device IDs.
      */
-    private final String ANDROID_DEVICE_ID_PREFIX = "a:";
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
 
     /**
      * App name to override common schema part A 'app.name'.
@@ -57,12 +56,10 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Create a new property configurator.
      *
-     * @param channel            The channel for this listener.
      * @param transmissionTarget The transmission target of the configurator.
      */
-    PropertyConfigurator(@NonNull Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
+    PropertyConfigurator(AnalyticsTransmissionTarget transmissionTarget) {
         mTransmissionTarget = transmissionTarget;
-        channel.addListener(this);
     }
 
     /**
@@ -116,7 +113,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 }
             }
 
-            /* Fill out the device id if it has been collected, or use the device id of the nearest parent. */
+            /* Fill out the device id if it has been collected. */
             if (mDeviceId != null) {
                 device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
             }
@@ -213,7 +210,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
 
     @SuppressLint("HardwareIds")
     public void collectDeviceId() {
-        mDeviceId = Secure.getString(mTransmissionTarget.getContext().getContentResolver(), Secure.ANDROID_ID);
+        mDeviceId = Secure.getString(mTransmissionTarget.mContext.getContentResolver(), Secure.ANDROID_ID);
     }
 
     /*

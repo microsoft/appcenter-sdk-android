@@ -83,7 +83,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         log.setExt(new Extensions());
         log.getExt().setDevice(new DeviceExtension());
 
-        /* Mock context things. */
+        /* Mock context. */
         mockStatic(Secure.class);
         when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
 
@@ -130,7 +130,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         grandparent.getPropertyConfigurator().setAppName("appName");
         grandparent.getPropertyConfigurator().setAppLocale("appLocale");
 
-        /* Mock content resolver and set collect device ID. */
+        /* Mock Secure and set device ID. */
         mockStatic(Secure.class);
         when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
 

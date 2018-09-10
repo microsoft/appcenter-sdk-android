@@ -62,13 +62,14 @@ public class AnalyticsTransmissionTarget {
     /**
      * App context.
      */
-    private final Context mContext;
+    final Context mContext;
 
     /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
+     * @param context                 The base context.
      * @param channel                 The channel for this transmission target.
      */
     AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Context context, Channel channel) {
@@ -76,7 +77,8 @@ public class AnalyticsTransmissionTarget {
         mParentTarget = parentTarget;
         mChannel = channel;
         mContext = context;
-        mPropertyConfigurator = new PropertyConfigurator(channel, this);
+        mPropertyConfigurator = new PropertyConfigurator(this);
+        mChannel.addListener(mPropertyConfigurator);
     }
 
     /**
@@ -164,7 +166,7 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, getContext(), mChannel);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mContext, mChannel);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
         }
         return childTarget;
@@ -230,15 +232,6 @@ public class AnalyticsTransmissionTarget {
             }
         }, future, null);
         return future;
-    }
-
-    /**
-     * Getter for base context.
-     *
-     * @return the context.
-     */
-    Context getContext() {
-        return mContext;
     }
 
     /**
