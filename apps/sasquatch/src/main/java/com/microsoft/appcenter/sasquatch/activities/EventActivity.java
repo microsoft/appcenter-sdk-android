@@ -19,10 +19,18 @@ import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class EventActivity extends LogActivity {
+
+    /**
+     * Remember for what targets the device id was enabled.
+     * It shouldn't be lost on recreate activity.
+     */
+    private static Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
 
     private Spinner mTransmissionTargetSpinner;
 
@@ -150,6 +158,7 @@ public class EventActivity extends LogActivity {
             mDeviceIdEnabledCheckBox.setChecked(true);
             mDeviceIdEnabledCheckBox.setText(R.string.device_id_enabled);
             mDeviceIdEnabledCheckBox.setEnabled(false);
+            DEVICE_ID_ENABLED.add(target);
         }
     }
 
@@ -175,10 +184,11 @@ public class EventActivity extends LogActivity {
                     return;
                 }
             }
+            boolean deviceIdEnabled = DEVICE_ID_ENABLED.contains(target);
             mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
-            mDeviceIdEnabledCheckBox.setChecked(false);
-            mDeviceIdEnabledCheckBox.setText(R.string.device_id_disabled);
-            mDeviceIdEnabledCheckBox.setEnabled(true);
+            mDeviceIdEnabledCheckBox.setChecked(deviceIdEnabled);
+            mDeviceIdEnabledCheckBox.setText(deviceIdEnabled ? R.string.device_id_enabled : R.string.device_id_disabled);
+            mDeviceIdEnabledCheckBox.setEnabled(!deviceIdEnabled);
         }
     }
 }
