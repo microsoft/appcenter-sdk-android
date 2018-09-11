@@ -12,18 +12,31 @@ import android.widget.Spinner;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
+import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class EventActivity extends LogActivity {
+
+    /**
+     * Remember for what targets the device id was enabled.
+     * It shouldn't be lost on recreate activity.
+     */
+    private static Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
 
     private Spinner mTransmissionTargetSpinner;
 
     private CheckBox mTransmissionEnabledCheckBox;
+
+    private CheckBox mDeviceIdEnabledCheckBox;
 
     private Button mConfigureTargetPropertiesButton;
 
@@ -31,7 +44,6 @@ public class EventActivity extends LogActivity {
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
-    @SuppressWarnings("JavaReflectionMemberAccess")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,8 +76,9 @@ public class EventActivity extends LogActivity {
             }
         });
 
-        /* Init enabled check box. */
+        /* Init enabled check boxes. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
+        mDeviceIdEnabledCheckBox = findViewById(R.id.device_id_enabled);
 
         /*
          * The first element is a placeholder for default transmission.
@@ -113,7 +126,6 @@ public class EventActivity extends LogActivity {
         return mTransmissionTargets.get(mTransmissionTargetSpinner.getSelectedItemPosition());
     }
 
-    @SuppressWarnings("unused")
     public void toggleTransmissionEnabled(View view) {
         boolean checked = mTransmissionEnabledCheckBox.isChecked();
         final AnalyticsTransmissionTarget target = getSelectedTarget();
@@ -123,22 +135,60 @@ public class EventActivity extends LogActivity {
         }
     }
 
+    public void toggleDeviceIdEnabled(View view) {
+        final AnalyticsTransmissionTarget target = getSelectedTarget();
+        if (target != null) {
+            updateButtonStates(target);
+
+            // TODO remove reflection once new APIs available in jCenter.
+            // target.getPropertyConfigurator().collectDeviceId();
+            {
+                Method method;
+                try {
+                    method = PropertyConfigurator.class.getMethod("collectDeviceId");
+                } catch (Exception ignored) {
+                    return;
+                }
+                try {
+                    method.invoke(target.getPropertyConfigurator());
+                } catch (IllegalAccessException ignored) {
+                } catch (InvocationTargetException ignored) {
+                }
+            }
+            mDeviceIdEnabledCheckBox.setChecked(true);
+            mDeviceIdEnabledCheckBox.setText(R.string.device_id_enabled);
+            mDeviceIdEnabledCheckBox.setEnabled(false);
+            DEVICE_ID_ENABLED.add(target);
+        }
+    }
+
     private void updateButtonStates(AnalyticsTransmissionTarget target) {
         if (target == null) {
             mTransmissionEnabledCheckBox.setVisibility(View.GONE);
             mConfigureTargetPropertiesButton.setVisibility(View.GONE);
             mOverrideCommonSchemaButton.setVisibility(View.GONE);
+            mDeviceIdEnabledCheckBox.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
             mConfigureTargetPropertiesButton.setVisibility(View.VISIBLE);
             mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
-            if (enabled) {
-                mTransmissionEnabledCheckBox.setText(R.string.transmission_enabled);
-            } else {
-                mTransmissionEnabledCheckBox.setText(R.string.transmission_disabled);
+            mTransmissionEnabledCheckBox.setText(enabled ? R.string.transmission_enabled : R.string.transmission_disabled);
+
+            // TODO remove reflection once new APIs available in jCenter.
+            {
+                try {
+                    PropertyConfigurator.class.getMethod("collectDeviceId");
+                } catch (Exception ignored) {
+                    return;
+                }
             }
+            boolean deviceIdEnabled = DEVICE_ID_ENABLED.contains(target);
+            mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
+            mDeviceIdEnabledCheckBox.setChecked(deviceIdEnabled);
+            mDeviceIdEnabledCheckBox.setText(deviceIdEnabled ? R.string.device_id_enabled : R.string.device_id_disabled);
+            mDeviceIdEnabledCheckBox.setEnabled(!deviceIdEnabled);
         }
     }
 }

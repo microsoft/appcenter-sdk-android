@@ -123,5 +123,6 @@ public class PartAUtilsTest {
         assertNotNull(commonSchemaLog.getExt().getLoc());
         assertEquals(commonSchemaTimeZoneOffset, commonSchemaLog.getExt().getLoc().getTz());
         assertEquals(Collections.singleton(transmissionTarget), commonSchemaLog.getTransmissionTargetTokens());
+        assertNotNull(commonSchemaLog.getExt().getDevice());
     }
 }
