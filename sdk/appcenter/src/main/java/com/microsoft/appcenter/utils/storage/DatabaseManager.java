@@ -17,6 +17,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,11 +60,6 @@ public class DatabaseManager implements Closeable {
     private final ContentValues mSchema;
 
     /**
-     * Maximum number of records allowed in the table.
-     */
-    private final int mMaxNumberOfRecords;
-
-    /**
      * Listener instance.
      */
     private final Listener mListener;
@@ -87,37 +83,19 @@ public class DatabaseManager implements Closeable {
     /**
      * Initializes the table in the database.
      *
-     * @param context  The application context.
-     * @param database The database name.
-     * @param table    The table name.
-     * @param version  The version of current schema.
-     * @param schema   The schema.
-     * @param listener The error listener.
-     */
-    @SuppressWarnings("SameParameterValue")
-    DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, Listener listener) {
-        this(context, database, table, version, schema, 0, listener);
-    }
-
-    /**
-     * Initializes the table in the database.
-     *
      * @param context    The application context.
      * @param database   The database name.
      * @param table      The table name.
      * @param version    The version of current schema.
      * @param schema     The schema.
-     * @param maxRecords The maximum number of records allowed in the table. {@code 0} for no preset limit.
      * @param listener   The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, final int maxRecords, Listener listener) {
+                    ContentValues schema, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
         mSchema = schema;
-        mMaxNumberOfRecords = maxRecords;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
@@ -211,8 +189,8 @@ public class DatabaseManager implements Closeable {
                 /* Insert data. */
                 long id = getDatabase().insertOrThrow(mTable, null, values);
 
-                /* Purge oldest entry if it hits the limit. */
-                if (mMaxNumberOfRecords < getRowCount() && mMaxNumberOfRecords > 0) {
+                //TODO Change logic to remove old logs if over limit
+                if (false) {
                     Cursor cursor = getCursor(null, null, true);
                     cursor.moveToNext();
                     delete(cursor.getLong(0));
@@ -432,6 +410,27 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Get the size of the .db SQLite file in bytes.
+     *
+     * @return Size in bytes, or if database is null or if SQLite database does not exist, returns -1.
+     */
+    public long getSizeOnDisk() {
+        if (mIMDB == null) {
+            //TODO is this OK? It sort of feels like a workaround.  SQLite has no native APIs to get size
+            SQLiteDatabase database = getDatabase();
+            if (database != null) {
+                File databaseFile = new File(database.getPath());
+                return databaseFile.length();
+            }
+            AppCenterLog.error(AppCenter.LOG_TAG, "Database was null, cannot get size.");
+            return -1;
+        }
+
+        AppCenterLog.warn(AppCenter.LOG_TAG, "No local database found, cannot get size.");
+        return -1;
+    }
+
+    /**
      * Gets the count of records in the table.
      *
      * @return The number of records in the table.
@@ -513,12 +512,7 @@ public class DatabaseManager implements Closeable {
     void switchToInMemory(String operation, RuntimeException exception) {
 
         /* Create an in-memory database. */
-        mIMDB = new LinkedHashMap<Long, ContentValues>() {
-            @Override
-            protected boolean removeEldestEntry(Entry<Long, ContentValues> eldest) {
-                return mMaxNumberOfRecords < size() && mMaxNumberOfRecords > 0;
-            }
-        };
+        mIMDB = new LinkedHashMap<>();
 
         /* Trigger error listener. */
         if (mListener != null) {

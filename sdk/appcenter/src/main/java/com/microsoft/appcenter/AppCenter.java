@@ -29,6 +29,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -82,6 +83,11 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
+
+    /**
+     * Storage size used when setStorageSize is not called. Equal to 10Mib.
+     */
+    static final long DEFAULT_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
 
     /**
      * Shared instance.
@@ -165,6 +171,11 @@ public class AppCenter {
      * Background thread handler abstraction to shared with services.
      */
     private AppCenterHandler mAppCenterHandler;
+
+    /**
+     * True if setStorageSize has been called once in app lifetime. False otherwise.
+     */
+    private boolean mSetStorageSizeWasCalled = false;
 
     /**
      * Get unique instance.
@@ -369,6 +380,20 @@ public class AppCenter {
     }
 
     /**
+     * Set the SQLite database storage size. Returns true if the operation succeeded. If the new size
+     * is smaller than the previous size (database is shrinking) and the capacity is greater than
+     * the new size, then the operation will fail and a warning will be emitted. Can only be called
+     * once per app lifetime and only before AppCenter.start(...).
+     *
+     * @param application Application context.
+     * @param storageSizeInBytes New size for the SQLite db in bytes.
+     * @return Future with true result if succeeded, otherwise future with false result.
+     */
+    public static AppCenterFuture<Boolean> setStorageSize(Application application, long storageSizeInBytes) {
+        return getInstance().setInstanceStorageSize(application, storageSizeInBytes);
+    }
+
+    /**
      * Check whether the SDK is ready for use or not.
      *
      * @return <code>true</code> if the SDK is ready, <code>false</code> otherwise.
@@ -457,6 +482,32 @@ public class AppCenter {
                 queueCustomProperties(properties);
             }
         }, null);
+    }
+
+    /**
+     * {@link #setStorageSize(Application, long)} implementation at instance level.
+     *
+     * @param application application context.
+     * @param storageSizeInBytes size to set SQLite database to in bytes.
+     */
+    private synchronized AppCenterFuture<Boolean> setInstanceStorageSize(Application application, long storageSizeInBytes) {
+        if (mSetStorageSizeWasCalled) {
+            AppCenterLog.warn(AppCenter.LOG_TAG, "setStorageSize may only be called once per app launch.");
+
+            //TODO should be AppCenterFuture<Boolean> which is false
+            return null;
+        }
+        if (application == null) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Application context way not be null.");
+
+            //TODO should be AppCenterFuture<Boolean> which is false
+            return null;
+        }
+
+        //TODO write storage size logic
+        DatabaseManager dm = new DatabaseManager()
+        mSetStorageSizeWasCalled = true;
+        return null;
     }
 
     /**
@@ -635,6 +686,11 @@ public class AppCenter {
 
         /* Load some global constants. */
         Constants.loadFromContext(mApplication);
+
+        /* Set storage size if not already configured. */
+        if (!mSetStorageSizeWasCalled) {
+            setStorageSize(mApplication, DEFAULT_STORAGE_SIZE_IN_BYTES);
+        }
 
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(mApplication);
