@@ -85,11 +85,6 @@ public class AppCenter {
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
 
     /**
-     * Storage size used when setStorageSize is not called. Equal to 10Mib.
-     */
-    static final long DEFAULT_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
-
-    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -505,6 +500,7 @@ public class AppCenter {
         }
 
         //TODO write storage size logic
+        mStorageSizeInBytes = storageSizeInBytes;
         DatabaseManager dm = new DatabaseManager()
         mSetStorageSizeWasCalled = true;
         return null;
@@ -689,7 +685,7 @@ public class AppCenter {
 
         /* Set storage size if not already configured. */
         if (!mSetStorageSizeWasCalled) {
-            setStorageSize(mApplication, DEFAULT_STORAGE_SIZE_IN_BYTES);
+            setStorageSize(mApplication, DatabaseManager.DEFAULT_STORAGE_SIZE_IN_BYTES);
         }
 
         /* If parameters are valid, init context related resources. */
