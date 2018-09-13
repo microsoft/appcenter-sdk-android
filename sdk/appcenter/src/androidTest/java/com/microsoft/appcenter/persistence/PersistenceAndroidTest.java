@@ -44,7 +44,7 @@ public class PersistenceAndroidTest {
     public void missingLogSerializer() throws Persistence.PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {

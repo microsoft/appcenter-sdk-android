@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
@@ -23,6 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Scanner;
+import java.util.Set;
 
 /**
  * Database manager for SQLite with fail-over to in-memory.
@@ -83,15 +86,16 @@ public class DatabaseManager implements Closeable {
     /**
      * Initializes the table in the database.
      *
-     * @param context    The application context.
-     * @param database   The database name.
-     * @param table      The table name.
-     * @param version    The version of current schema.
-     * @param schema     The schema.
-     * @param listener   The error listener.
+     * @param context          The application context.
+     * @param database         The database name.
+     * @param table            The table name.
+     * @param version          The version of current schema.
+     * @param schema           The schema.
+     * @param maxDbSizeInBytes The max size the database is allowed to grow to.
+     * @param listener         The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, Listener listener) {
+                    ContentValues schema, final long maxDbSizeInBytes, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
@@ -101,6 +105,11 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
+                long oldSize = db.getMaximumSize();
+                long newSize = db.setMaximumSize(maxDbSizeInBytes);
+                if (oldSize == newSize) {
+                    AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to set database size, new size is smaller than current capacity.");
+                }
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -175,28 +184,39 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Stores the entry to the table.
+     * Stores the entry to the table. If the table is full, the oldest logs are discarded until the
+     * new one can fit. If the log is larger than the max table size, emit a warning and discard it.
      *
      * @param values The entry to be stored.
-     * @return A database identifier
+     * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     public long put(@NonNull ContentValues values) {
 
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
+                long id;
 
-                /* Insert data. */
-                long id = getDatabase().insertOrThrow(mTable, null, values);
+                /*
+                 * If the log is larger than the max size, all logs will be discarded and then
+                 * we will return -1 because there is not enough room.
+                 */
+                Cursor cursor = getCursor(null, null, true);
+                do {
+                    try {
 
-                //TODO Change logic to remove old logs if over limit
-                if (false) {
-                    Cursor cursor = getCursor(null, null, true);
-                    cursor.moveToNext();
-                    delete(cursor.getLong(0));
-                    cursor.close();
-                }
-                return id;
+                        /* Insert data. */
+                        id = getDatabase().insertOrThrow(mTable, null, values);
+                        cursor.close();
+                        return id;
+                    } catch (SQLiteFullException e) {
+
+                        /* Delete the oldest log. */
+                        delete(cursor.getLong(0));
+                    }
+                } while (cursor.moveToNext());
+                cursor.close();
+                return -1;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);
             }
@@ -206,33 +226,6 @@ public class DatabaseManager implements Closeable {
         values.put(PRIMARY_KEY, mIMDBAutoInc);
         mIMDB.put(mIMDBAutoInc, values);
         return mIMDBAutoInc++;
-    }
-
-    /**
-     * Updates the entry for the identifier.
-     *
-     * @param id     The existing database identifier.
-     * @param values The entry to be updated.
-     * @return true if the values updated successfully, false otherwise.
-     */
-    public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                return 0 < getDatabase().update(mTable, values, PRIMARY_KEY_SELECTION, new String[]{String.valueOf(id)});
-            } catch (RuntimeException e) {
-                switchToInMemory("update", e);
-            }
-        }
-
-        /* Updates the values in in-memory database if the identifier exists there. */
-        ContentValues existValues = mIMDB.get(id);
-        if (existValues == null) {
-            return false;
-        }
-        existValues.putAll(values);
-        return true;
     }
 
     /**
@@ -407,27 +400,6 @@ public class DatabaseManager implements Closeable {
             mIMDB.clear();
             mIMDB = null;
         }
-    }
-
-    /**
-     * Get the size of the .db SQLite file in bytes.
-     *
-     * @return Size in bytes, or if database is null or if SQLite database does not exist, returns -1.
-     */
-    public long getSizeOnDisk() {
-        if (mIMDB == null) {
-            //TODO is this OK? It sort of feels like a workaround.  SQLite has no native APIs to get size
-            SQLiteDatabase database = getDatabase();
-            if (database != null) {
-                File databaseFile = new File(database.getPath());
-                return databaseFile.length();
-            }
-            AppCenterLog.error(AppCenter.LOG_TAG, "Database was null, cannot get size.");
-            return -1;
-        }
-
-        AppCenterLog.warn(AppCenter.LOG_TAG, "No local database found, cannot get size.");
-        return -1;
     }
 
     /**

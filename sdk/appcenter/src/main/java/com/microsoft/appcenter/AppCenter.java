@@ -22,6 +22,7 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
+import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -29,7 +30,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -171,6 +171,11 @@ public class AppCenter {
      * True if setStorageSize has been called once in app lifetime. False otherwise.
      */
     private boolean mSetStorageSizeWasCalled = false;
+
+    /**
+     * Max storage size in bytes.
+     */
+    private long mMaxStorageSizeInBytes;
 
     /**
      * Get unique instance.
@@ -371,7 +376,7 @@ public class AppCenter {
      * @see AppCenterFuture
      */
     public static AppCenterFuture<UUID> getInstallId() {
-        return getInstance().getInstanceInstallId();
+        return getInstance().getInstanceInstallIdAsync();
     }
 
     /**
@@ -380,12 +385,11 @@ public class AppCenter {
      * the new size, then the operation will fail and a warning will be emitted. Can only be called
      * once per app lifetime and only before AppCenter.start(...).
      *
-     * @param application Application context.
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.
      */
-    public static AppCenterFuture<Boolean> setStorageSize(Application application, long storageSizeInBytes) {
-        return getInstance().setInstanceStorageSize(application, storageSizeInBytes);
+    public static AppCenterFuture<Boolean> setStorageSize(long storageSizeInBytes) {
+        return getInstance().setInstanceStorageSizeAsync(storageSizeInBytes);
     }
 
     /**
@@ -480,30 +484,30 @@ public class AppCenter {
     }
 
     /**
-     * {@link #setStorageSize(Application, long)} implementation at instance level.
+     * {@link #setStorageSize(long)} implementation at instance level.
      *
-     * @param application application context.
      * @param storageSizeInBytes size to set SQLite database to in bytes.
      */
-    private synchronized AppCenterFuture<Boolean> setInstanceStorageSize(Application application, long storageSizeInBytes) {
-        if (mSetStorageSizeWasCalled) {
-            AppCenterLog.warn(AppCenter.LOG_TAG, "setStorageSize may only be called once per app launch.");
+    private synchronized AppCenterFuture<Boolean> setInstanceStorageSizeAsync(final long storageSizeInBytes) {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
+        mHandler.post(new Runnable() {
 
-            //TODO should be AppCenterFuture<Boolean> which is false
-            return null;
-        }
-        if (application == null) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Application context way not be null.");
-
-            //TODO should be AppCenterFuture<Boolean> which is false
-            return null;
-        }
-
-        //TODO write storage size logic
-        mStorageSizeInBytes = storageSizeInBytes;
-        DatabaseManager dm = new DatabaseManager()
-        mSetStorageSizeWasCalled = true;
-        return null;
+            @Override
+            public void run() {
+                if (storageSizeInBytes <= 0) {
+                    AppCenterLog.error(AppCenter.LOG_TAG, "Storage size must be greater than 0.");
+                    future.complete(false);
+                }
+                if (mSetStorageSizeWasCalled) {
+                    AppCenterLog.warn(AppCenter.LOG_TAG, "setStorageSize may only be called once per app launch.");
+                    future.complete(false);
+                }
+                mMaxStorageSizeInBytes = storageSizeInBytes;
+                mSetStorageSizeWasCalled = true;
+                future.complete(true);
+            }
+        });
+        return future;
     }
 
     /**
@@ -685,7 +689,7 @@ public class AppCenter {
 
         /* Set storage size if not already configured. */
         if (!mSetStorageSizeWasCalled) {
-            setStorageSize(mApplication, DatabaseManager.DEFAULT_STORAGE_SIZE_IN_BYTES);
+            setStorageSize(Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES);
         }
 
         /* If parameters are valid, init context related resources. */
@@ -701,7 +705,7 @@ public class AppCenter {
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, mMaxStorageSizeInBytes);
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         if (mLogUrl != null) {
@@ -1016,7 +1020,7 @@ public class AppCenter {
     /**
      * Implements {@link #getInstallId()}.
      */
-    private synchronized AppCenterFuture<UUID> getInstanceInstallId() {
+    private synchronized AppCenterFuture<UUID> getInstanceInstallIdAsync() {
         final DefaultAppCenterFuture<UUID> future = new DefaultAppCenterFuture<>();
         if (checkPrecondition()) {
             mAppCenterHandler.post(new Runnable() {

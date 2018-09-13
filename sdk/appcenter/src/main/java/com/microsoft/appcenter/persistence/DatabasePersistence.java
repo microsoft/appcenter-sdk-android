@@ -130,25 +130,35 @@ public class DatabasePersistence extends Persistence {
      * Initializes variables.
      *
      * @param context application context.
+     * @param maxStorageSizeInBytes Max storage size.
+     */
+    public DatabasePersistence(Context context, long maxStorageSizeInBytes) {
+        this(context, VERSION, SCHEMA, maxStorageSizeInBytes);
+    }
+
+    /**
+     * Initializes variables with default storage size.
+     *
+     * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA, Persistence.DEFAULT_CAPACITY);
+        this(context, VERSION, SCHEMA, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES);
     }
 
     /**
      * Initializes variables.
      *
-     * @param context    application context.
-     * @param version    The version of current schema.
-     * @param schema     schema.
-     * @param maxRecords The maximum number of records allowed in the table.
+     * @param context               application context.
+     * @param version               The version of current schema.
+     * @param schema                schema.
+     * @param maxStorageSizeInBytes The maximum number of records allowed in the table.
      */
     @SuppressWarnings("SameParameterValue")
-    DatabasePersistence(Context context, int version, ContentValues schema, int maxRecords) {
+    DatabasePersistence(Context context, int version, ContentValues schema, long maxStorageSizeInBytes) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
-        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, maxRecords,
+        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, maxStorageSizeInBytes,
                 new DatabaseManager.Listener() {
 
                     @Override
@@ -202,16 +212,15 @@ public class DatabasePersistence extends Persistence {
             boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
             String targetToken;
             if (log instanceof CommonSchemaLog) {
+                if (isLargePayload) {
+                    throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + "b, cannot send to OneCollector.");
+                }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
                 targetToken = null;
             }
-            if (isLargePayload) {
-                contentValues = getContentValues(group, null, targetToken, log.getType());
-            } else {
-                contentValues = getContentValues(group, payload, targetToken, log.getType());
-            }
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType());
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {

@@ -16,9 +16,9 @@ import java.util.List;
 public abstract class Persistence implements Closeable {
 
     /**
-     * Storage capacity in number of logs.
+     * Default max storage size for SQLite database.
      */
-    static final int DEFAULT_CAPACITY = 300;
+    public static final long DEFAULT_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
 
     /**
      * Log serializer override.
@@ -101,6 +101,10 @@ public abstract class Persistence implements Closeable {
     public static class PersistenceException extends Exception {
         public PersistenceException(String detailMessage, Throwable throwable) {
             super(detailMessage, throwable);
+        }
+
+        public PersistenceException(String detailMessage) {
+            super(detailMessage);
         }
     }
 }

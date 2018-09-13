@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
+import com.microsoft.appcenter.persistence.Persistence;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.internal.stubbing.answers.Returns;
@@ -42,7 +44,7 @@ public class DatabaseManagerTest {
     private static DatabaseManager getDatabaseManagerMock() {
 
         /* Mocking(spying) instance. */
-        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
         when(databaseManagerMock.getDatabase()).thenThrow(new RuntimeException());
         return databaseManagerMock;
@@ -59,7 +61,8 @@ public class DatabaseManagerTest {
 
         /* Update. */
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.update(0, new ContentValues());
+        // TODO We removed this method so we need to fix the rest of the test
+        //databaseManagerMock.update(0, new ContentValues());
         verify(databaseManagerMock).switchToInMemory(eq("update"), any(RuntimeException.class));
 
         /* Get. */
@@ -80,7 +83,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing but closing working. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -98,7 +101,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing and closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -116,7 +119,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -207,18 +210,6 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(DatabaseManager.PRIMARY_KEY, null);
     }
 
-    @Test
-    public void updateFailure() {
-        /* Update returns 0 or less. */
-        DatabaseManager databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        SQLiteDatabase sQLiteDatabaseMock = mock(SQLiteDatabase.class);
-        when(databaseManagerMock.getDatabase()).thenReturn(sQLiteDatabaseMock);
-        when(sQLiteDatabaseMock.update(anyString(), any(ContentValues.class), anyString(), any(String[].class))).thenReturn(-1);
-
-        /* Verify. */
-        assertFalse(databaseManagerMock.update(0, new ContentValues()));
-    }
-
     @Test(expected = UnsupportedOperationException.class)
     public void scannerRemoveInMemoryDB() {
         DatabaseManager databaseManagerMock;
@@ -252,7 +243,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -272,7 +263,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
