@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,6 +33,7 @@ import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
+import com.microsoft.appcenter.sasquatch.util.StorageUtil;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -83,6 +86,46 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean isEnabled() {
                     return AppCenter.isEnabled().get();
+                }
+            });
+            initClickableSetting(R.string.storage_size_key, StorageUtil.getFormattedSize(StorageUtil.getStorageSize(getActivity()), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    long newSize = -1;
+                                    try {
+                                        newSize = Long.parseLong(input.getText().toString());
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                    if (newSize > 0) {
+                                        if (AppCenter.setStorageSize(newSize).get()) {
+                                            Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.storage_size_changed_format), StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(getActivity(), R.string.storage_size_error, Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.storage_size_invalid, Toast.LENGTH_SHORT).show();
+                                    }
+                                    preference.setSummary(StorageUtil.getFormattedSize(StorageUtil.getStorageSize(getActivity()), StorageUtil.SizeUnit.KB));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+            });
+            initClickableSetting(R.string.storage_file_size_key, StorageUtil.getFormattedSize(StorageUtil.getStorageFileSize(getActivity()), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    preference.setSummary(StorageUtil.getFormattedSize(StorageUtil.getStorageFileSize(getActivity()), StorageUtil.SizeUnit.KB));
+                    return true;
                 }
             });
 
@@ -561,6 +604,17 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
+        private void initDisplayOnlySetting(int key, String summary) {
+            Preference preference = getPreferenceManager().findPreference(getString(key));
+            if (preference == null) {
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                return;
+            }
+            if (summary != null) {
+                preference.setSummary(summary);
+            }
+        }
+
         private void initChangeableSetting(@SuppressWarnings("SameParameterValue") int key, String summary, Preference.OnPreferenceChangeListener changeListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
@@ -611,7 +665,6 @@ public class SettingsActivity extends AppCompatActivity {
             }
             return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
         }
-
 
         private interface HasEnabled {
 

@@ -531,6 +531,15 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Gets the maximum size of the database.
+     *
+     * @return The maximum size of database in bytes.
+     */
+    public long getMaxSize() {
+        return getDatabase().getMaximumSize();
+    }
+
+    /**
      * Database listener.
      */
     public interface Listener {

@@ -5,6 +5,15 @@
     <string name="appcenter_state_summary_enabled" tools:ignore="MissingTranslation">App Center is enabled</string>
     <string name="appcenter_state_summary_disabled" tools:ignore="MissingTranslation">App Center is disabled</string>
 
+    <string name="storage_size_key" tools:ignore="MissingTranslation">storage_size_key</string>
+    <string name="storage_size_title" tools:ignore="MissingTranslation">Storage Size</string>
+    <string name="storage_size_changed_format" tools:ignore="MissingTranslation">Storage size has been changed to %s successfully.</string>
+    <string name="storage_size_error" tools:ignore="MissingTranslation">Failed to set storage size.</string>
+    <string name="storage_size_invalid" tools:ignore="MissingTranslation">Storage size is not valid.</string>
+
+    <string name="storage_file_size_key" tools:ignore="MissingTranslation">storage_file_size_key</string>
+    <string name="storage_file_size_title" tools:ignore="MissingTranslation">Storage file Size</string>
+
     <string name="analytics_key" tools:ignore="MissingTranslation">appcenter_analytics</string>
     <string name="analytics_title" tools:ignore="MissingTranslation">Analytics</string>
 

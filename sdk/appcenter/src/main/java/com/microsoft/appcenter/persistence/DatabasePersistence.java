@@ -464,4 +464,9 @@ public class DatabasePersistence extends Persistence {
     public void close() {
         mDatabaseStorage.close();
     }
+
+    @SuppressWarnings("unused")
+    public long getMaxStorageSize() {
+        return mDatabaseStorage.getMaxSize();
+    }
 }
