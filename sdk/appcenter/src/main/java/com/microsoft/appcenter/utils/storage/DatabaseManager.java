@@ -92,7 +92,7 @@ public class DatabaseManager implements Closeable {
      * @param listener         The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, final long maxDbSizeInBytes, Listener listener) {
+                    ContentValues schema, long maxDbSizeInBytes, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;

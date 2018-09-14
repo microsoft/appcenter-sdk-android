@@ -132,7 +132,7 @@ public class DatabasePersistence extends Persistence {
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES);
+        this(context, VERSION, SCHEMA, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
     }
 
     /**

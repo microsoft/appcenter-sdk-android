@@ -175,12 +175,12 @@ public class AppCenter {
     /**
      * Max storage size in bytes.
      */
-    private long mMaxStorageSizeInBytes = Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES;
+    private long mMaxStorageSizeInBytes = Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
 
     /**
      * AppCenterFuture of set maximum storage size.
      */
-    private DefaultAppCenterFuture<Boolean> mSetStorageSizeFuture;
+    private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
     /**
      * Get unique instance.
@@ -494,26 +494,26 @@ public class AppCenter {
      * @param storageSizeInBytes size to set SQLite database to in bytes.
      * @return future of result of set maximum storage size.
      */
-    private synchronized AppCenterFuture<Boolean> setInstanceStorageSizeAsync(final long storageSizeInBytes) {
-        mSetStorageSizeFuture = new DefaultAppCenterFuture<>();
+    private synchronized AppCenterFuture<Boolean> setInstanceStorageSizeAsync(long storageSizeInBytes) {
+        mSetMaxStorageSizeFuture = new DefaultAppCenterFuture<>();
         if (mConfiguredFromApp) {
             AppCenterLog.warn(LOG_TAG, "setStorageSize may not be called after App Center has been configured.");
-            mSetStorageSizeFuture.complete(false);
-            return mSetStorageSizeFuture;
+            mSetMaxStorageSizeFuture.complete(false);
+            return mSetMaxStorageSizeFuture;
         }
         if (storageSizeInBytes <= 0) {
             AppCenterLog.error(LOG_TAG, "Storage size must be greater than 0.");
-            mSetStorageSizeFuture.complete(false);
-            return mSetStorageSizeFuture;
+            mSetMaxStorageSizeFuture.complete(false);
+            return mSetMaxStorageSizeFuture;
         }
         if (mSetStorageSizeWasCalled) {
             AppCenterLog.warn(LOG_TAG, "setStorageSize may only be called once per app launch.");
-            mSetStorageSizeFuture.complete(false);
-            return mSetStorageSizeFuture;
+            mSetMaxStorageSizeFuture.complete(false);
+            return mSetMaxStorageSizeFuture;
         }
         mMaxStorageSizeInBytes = storageSizeInBytes;
         mSetStorageSizeWasCalled = true;
-        return mSetStorageSizeFuture;
+        return mSetMaxStorageSizeFuture;
     }
 
     /**
@@ -572,8 +572,8 @@ public class AppCenter {
                     @Override
                     public void run() {
                         mChannel.setAppSecret(mAppSecret);
-                        if (mSetStorageSizeFuture != null) {
-                            mSetStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
+                        if (mSetMaxStorageSizeFuture != null) {
+                            mSetMaxStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
                         }
                     }
                 });
@@ -712,8 +712,8 @@ public class AppCenter {
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
 
         /* Complete set maximum storage size future. */
-        if (mSetStorageSizeFuture != null) {
-            mSetStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
+        if (mSetMaxStorageSizeFuture != null) {
+            mSetMaxStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);

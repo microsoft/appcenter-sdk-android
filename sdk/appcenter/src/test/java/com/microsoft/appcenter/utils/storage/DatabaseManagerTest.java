@@ -25,7 +25,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -44,7 +43,7 @@ public class DatabaseManagerTest {
     private static DatabaseManager getDatabaseManagerMock() {
 
         /* Mocking(spying) instance. */
-        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
         when(databaseManagerMock.getDatabase()).thenThrow(new RuntimeException());
         return databaseManagerMock;
@@ -83,7 +82,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing but closing working. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -101,7 +100,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing and closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -119,7 +118,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -243,7 +242,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -263,7 +262,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
