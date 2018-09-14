@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
-import com.microsoft.appcenter.persistence.Persistence;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,7 @@ public class DatabaseManagerTest {
     private static DatabaseManager getDatabaseManagerMock() {
 
         /* Mocking(spying) instance. */
-        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
         when(databaseManagerMock.getDatabase()).thenThrow(new RuntimeException());
         return databaseManagerMock;
@@ -57,12 +57,6 @@ public class DatabaseManagerTest {
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.put(new ContentValues());
         verify(databaseManagerMock).switchToInMemory(eq("put"), any(RuntimeException.class));
-
-        /* Update. */
-        databaseManagerMock = getDatabaseManagerMock();
-        // TODO We removed this method so we need to fix the rest of the test
-        //databaseManagerMock.update(0, new ContentValues());
-        verify(databaseManagerMock).switchToInMemory(eq("update"), any(RuntimeException.class));
 
         /* Get. */
         databaseManagerMock = getDatabaseManagerMock();
@@ -82,7 +76,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing but closing working. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -100,7 +94,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing and closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -118,7 +112,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -242,7 +236,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -262,7 +256,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */

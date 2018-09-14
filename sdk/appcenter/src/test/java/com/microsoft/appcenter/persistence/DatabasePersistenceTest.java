@@ -52,7 +52,7 @@ public class DatabasePersistenceTest {
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY));
+        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
 

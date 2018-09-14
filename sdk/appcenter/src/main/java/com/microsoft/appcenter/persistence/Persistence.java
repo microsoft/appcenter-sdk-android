@@ -16,11 +16,6 @@ import java.util.List;
 public abstract class Persistence implements Closeable {
 
     /**
-     * Default maximum storage size for SQLite database.
-     */
-    public static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
-
-    /**
      * Log serializer override.
      */
     private LogSerializer mLogSerializer;
@@ -111,7 +106,7 @@ public abstract class Persistence implements Closeable {
             super(detailMessage, throwable);
         }
 
-        public PersistenceException(String detailMessage) {
+        PersistenceException(String detailMessage) {
             super(detailMessage);
         }
     }

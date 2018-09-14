@@ -41,6 +41,11 @@ public class DatabasePersistence extends Persistence {
     private static final int VERSION = 2;
 
     /**
+     * Default maximum storage size for SQLite database.
+     */
+    public static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+
+    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -127,12 +132,12 @@ public class DatabasePersistence extends Persistence {
     private final File mLargePayloadDirectory;
 
     /**
-     * Initializes variables with default storage size.
+     * Initializes variables with default values.
      *
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+        this(context, VERSION, SCHEMA, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
     }
 
     /**
@@ -141,7 +146,7 @@ public class DatabasePersistence extends Persistence {
      * @param context               application context.
      * @param version               The version of current schema.
      * @param schema                schema.
-     * @param maxStorageSizeInBytes The maximum number of records allowed in the table.
+     * @param maxStorageSizeInBytes the maximum SQLite database storage size in bytes.
      */
     @SuppressWarnings("SameParameterValue")
     DatabasePersistence(Context context, int version, ContentValues schema, long maxStorageSizeInBytes) {
@@ -208,7 +213,7 @@ public class DatabasePersistence extends Persistence {
             String targetToken;
             if (log instanceof CommonSchemaLog) {
                 if (isLargePayload) {
-                    throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + "b, cannot send to OneCollector.");
+                    throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);

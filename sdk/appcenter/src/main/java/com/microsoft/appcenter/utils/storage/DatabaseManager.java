@@ -81,6 +81,11 @@ public class DatabaseManager implements Closeable {
     private long mMaxStorageSizeInBytes;
 
     /**
+     * Maximum number of entries of in memory database.
+     */
+    private static final long IN_MEMORY_MAX_SIZE = 300;
+
+    /**
      * Initializes the table in the database.
      *
      * @param context          The application context.
@@ -103,8 +108,8 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                long newSize = db.setMaximumSize(mMaxStorageSizeInBytes);
-                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database size is set to " + newSize + " bytes.");
+                long maxSize = db.setMaximumSize(mMaxStorageSizeInBytes);
+                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database size is set to " + maxSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -180,7 +185,8 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Stores the entry to the table. If the table is full, the oldest logs are discarded until the
-     * new one can fit. If the log is larger than the max table size, emit a warning and discard it.
+     * new one can fit. If the log is larger than the max table size, database will be cleared and
+     * the log is not inserted.
      *
      * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
@@ -190,27 +196,29 @@ public class DatabaseManager implements Closeable {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
-                long id;
 
                 /*
                  * If the log is larger than the max size, all logs will be discarded and then
                  * we will return -1 because there is not enough room.
                  */
                 Cursor cursor = getCursor(null, null, true);
-                do {
-                    try {
 
-                        /* Insert data. */
-                        id = getDatabase().insertOrThrow(mTable, null, values);
-                        cursor.close();
-                        return id;
-                    } catch (SQLiteFullException e) {
+                //noinspection TryFinallyCanBeTryWithResources
+                try {
+                    do {
+                        try {
 
-                        /* Delete the oldest log. */
-                        delete(cursor.getLong(0));
-                    }
-                } while (cursor.moveToNext());
-                cursor.close();
+                            /* Insert data. */
+                            return getDatabase().insertOrThrow(mTable, null, values);
+                        } catch (SQLiteFullException e) {
+
+                            /* Delete the oldest log. */
+                            delete(cursor.getLong(0));
+                        }
+                    } while (cursor.moveToNext());
+                } finally {
+                    cursor.close();
+                }
                 return -1;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);
@@ -479,7 +487,13 @@ public class DatabaseManager implements Closeable {
     void switchToInMemory(String operation, RuntimeException exception) {
 
         /* Create an in-memory database. */
-        mIMDB = new LinkedHashMap<>();
+        mIMDB = new LinkedHashMap<Long, ContentValues>() {
+
+            @Override
+            protected boolean removeEldestEntry(Entry<Long, ContentValues> eldest) {
+                return IN_MEMORY_MAX_SIZE < size();
+            }
+        };
 
         /* Trigger error listener. */
         if (mListener != null) {
@@ -505,11 +519,11 @@ public class DatabaseManager implements Closeable {
      * @return true if database size was set, otherwise false.
      */
     boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-        SQLiteDatabase db = mSQLiteOpenHelper.getWritableDatabase();
-        long currentSize = db.getMaximumSize();
-        long newSize = db.setMaximumSize(maxStorageSizeInBytes);
-        if (currentSize == newSize && maxStorageSizeInBytes < mMaxStorageSizeInBytes) {
-            AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to set database size, new size is smaller than current capacity.");
+        SQLiteDatabase db = getDatabase();
+        long currentMaxSize = db.getMaximumSize();
+        long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
+        if (currentMaxSize == newMaxSize && maxStorageSizeInBytes != mMaxStorageSizeInBytes) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Unable to set database maximum size. Current maximum size is " + currentMaxSize + " bytes.");
             return false;
         }
         mMaxStorageSizeInBytes = maxStorageSizeInBytes;

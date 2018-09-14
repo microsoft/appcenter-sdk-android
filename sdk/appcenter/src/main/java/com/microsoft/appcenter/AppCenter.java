@@ -22,7 +22,7 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
-import com.microsoft.appcenter.persistence.Persistence;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -168,14 +168,9 @@ public class AppCenter {
     private AppCenterHandler mAppCenterHandler;
 
     /**
-     * True if setStorageSize has been called once in app lifetime. False otherwise.
-     */
-    private boolean mSetStorageSizeWasCalled = false;
-
-    /**
      * Max storage size in bytes.
      */
-    private long mMaxStorageSizeInBytes = Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
+    private long mMaxStorageSizeInBytes = DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
 
     /**
      * AppCenterFuture of set maximum storage size.
@@ -495,25 +490,25 @@ public class AppCenter {
      * @return future of result of set maximum storage size.
      */
     private synchronized AppCenterFuture<Boolean> setInstanceStorageSizeAsync(long storageSizeInBytes) {
-        mSetMaxStorageSizeFuture = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<Boolean> setMaxStorageSizeFuture = new DefaultAppCenterFuture<>();
         if (mConfiguredFromApp) {
             AppCenterLog.warn(LOG_TAG, "setStorageSize may not be called after App Center has been configured.");
-            mSetMaxStorageSizeFuture.complete(false);
-            return mSetMaxStorageSizeFuture;
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
         }
         if (storageSizeInBytes <= 0) {
             AppCenterLog.error(LOG_TAG, "Storage size must be greater than 0.");
-            mSetMaxStorageSizeFuture.complete(false);
-            return mSetMaxStorageSizeFuture;
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
         }
-        if (mSetStorageSizeWasCalled) {
+        if (mSetMaxStorageSizeFuture != null) {
             AppCenterLog.warn(LOG_TAG, "setStorageSize may only be called once per app launch.");
-            mSetMaxStorageSizeFuture.complete(false);
-            return mSetMaxStorageSizeFuture;
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
         }
         mMaxStorageSizeInBytes = storageSizeInBytes;
-        mSetStorageSizeWasCalled = true;
-        return mSetMaxStorageSizeFuture;
+        mSetMaxStorageSizeFuture = setMaxStorageSizeFuture;
+        return setMaxStorageSizeFuture;
     }
 
     /**
@@ -543,7 +538,7 @@ public class AppCenter {
      * @param configureFromApp true if configuring from app, false if called from a library.
      * @return true if configuration was successful, false otherwise.
      */
-    private synchronized boolean configureInstance(Application application, String secretString, boolean configureFromApp) {
+    private synchronized boolean configureInstance(Application application, String secretString, final boolean configureFromApp) {
 
         /* Check parameters. */
         if (application == null) {
@@ -603,7 +598,7 @@ public class AppCenter {
 
             @Override
             public void run() {
-                finishConfiguration();
+                finishConfiguration(configureFromApp);
             }
         });
         AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
@@ -691,7 +686,7 @@ public class AppCenter {
     }
 
     @WorkerThread
-    private void finishConfiguration() {
+    private void finishConfiguration(boolean configureFromApp) {
 
         /* Load some global constants. */
         Constants.loadFromContext(mApplication);
@@ -712,7 +707,7 @@ public class AppCenter {
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
 
         /* Complete set maximum storage size future. */
-        if (mSetMaxStorageSizeFuture != null) {
+        if (mSetMaxStorageSizeFuture != null && configureFromApp) {
             mSetMaxStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
         }
         mChannel.setEnabled(enabled);

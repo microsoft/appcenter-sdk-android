@@ -21,7 +21,7 @@ public interface Channel {
     /**
      * Set maximum SQLite database size.
      *
-     * @param maxStorageSizeInBytes Maximum SQLite database size.
+     * @param maxStorageSizeInBytes maximum SQLite database size in bytes.
      * @return true if database size was set, otherwise false.
      */
     boolean setMaxStorageSize(long maxStorageSizeInBytes);

@@ -233,7 +233,7 @@ public class DatabasePersistenceAndroidTest {
     public void putLargeLogFailsToRead() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -342,7 +342,7 @@ public class DatabasePersistenceAndroidTest {
     public void deleteLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 1, DatabasePersistence.SCHEMA, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
