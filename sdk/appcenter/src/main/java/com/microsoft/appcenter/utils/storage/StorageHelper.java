@@ -603,6 +603,15 @@ public class StorageHelper {
         }
 
         /**
+         * Set maximum SQLite database size.
+         *
+         * @param maxStorageSizeInBytes Maximum SQLite database size.
+         */
+        public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+            return mDatabaseManager.setMaxStorageSize(maxStorageSizeInBytes);
+        }
+
+        /**
          * Store an entry in a table.
          *
          * @param values The entry to be stored.

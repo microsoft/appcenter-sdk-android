@@ -96,6 +96,14 @@ public abstract class Persistence implements Closeable {
     }
 
     /**
+     * Set maximum SQLite database size.
+     *
+     * @param maxStorageSizeInBytes Maximum SQLite database size.
+     * @return true if database size was set, otherwise false.
+     */
+    public abstract boolean setMaxStorageSize(long maxStorageSizeInBytes);
+
+    /**
      * Thrown when {@link Persistence} cannot write a log to the storage.
      */
     public static class PersistenceException extends Exception {

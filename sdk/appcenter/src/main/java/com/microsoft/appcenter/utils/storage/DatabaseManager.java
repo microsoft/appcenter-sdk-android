@@ -18,14 +18,11 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
-import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.Set;
 
 /**
  * Database manager for SQLite with fail-over to in-memory.
@@ -36,11 +33,6 @@ public class DatabaseManager implements Closeable {
      * Primary key name.
      */
     public static final String PRIMARY_KEY = "oid";
-
-    /**
-     * Selection (WHERE clause) pattern for primary key search.
-     */
-    private static final String PRIMARY_KEY_SELECTION = "oid = ?";
 
     /**
      * Application context instance.
@@ -84,6 +76,11 @@ public class DatabaseManager implements Closeable {
     private long mIMDBAutoInc;
 
     /**
+     * Maximum storage size of SQLite database.
+     */
+    private long mMaxStorageSizeInBytes;
+
+    /**
      * Initializes the table in the database.
      *
      * @param context          The application context.
@@ -100,16 +97,14 @@ public class DatabaseManager implements Closeable {
         mDatabase = database;
         mTable = table;
         mSchema = schema;
+        mMaxStorageSizeInBytes = maxDbSizeInBytes;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                long oldSize = db.getMaximumSize();
-                long newSize = db.setMaximumSize(maxDbSizeInBytes);
-                if (oldSize == newSize) {
-                    AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to set database size, new size is smaller than current capacity.");
-                }
+                long newSize = db.setMaximumSize(mMaxStorageSizeInBytes);
+                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database size is set to " + newSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -501,6 +496,24 @@ public class DatabaseManager implements Closeable {
     void setSQLiteOpenHelper(@NonNull SQLiteOpenHelper helper) {
         mSQLiteOpenHelper.close();
         mSQLiteOpenHelper = helper;
+    }
+
+    /**
+     * Set maximum SQLite database size.
+     *
+     * @param maxStorageSizeInBytes Maximum SQLite database size.
+     * @return true if database size was set, otherwise false.
+     */
+    boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        SQLiteDatabase db = mSQLiteOpenHelper.getWritableDatabase();
+        long currentSize = db.getMaximumSize();
+        long newSize = db.setMaximumSize(maxStorageSizeInBytes);
+        if (currentSize == newSize && maxStorageSizeInBytes < mMaxStorageSizeInBytes) {
+            AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to set database size, new size is smaller than current capacity.");
+            return false;
+        }
+        mMaxStorageSizeInBytes = maxStorageSizeInBytes;
+        return true;
     }
 
     /**

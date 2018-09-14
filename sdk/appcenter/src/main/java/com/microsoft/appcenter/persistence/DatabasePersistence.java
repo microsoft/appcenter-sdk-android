@@ -127,16 +127,6 @@ public class DatabasePersistence extends Persistence {
     private final File mLargePayloadDirectory;
 
     /**
-     * Initializes variables.
-     *
-     * @param context application context.
-     * @param maxStorageSizeInBytes Max storage size.
-     */
-    public DatabasePersistence(Context context, long maxStorageSizeInBytes) {
-        this(context, VERSION, SCHEMA, maxStorageSizeInBytes);
-    }
-
-    /**
      * Initializes variables with default storage size.
      *
      * @param context application context.
@@ -182,6 +172,11 @@ public class DatabasePersistence extends Persistence {
 
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
+    }
+
+    @Override
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        return mDatabaseStorage.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
     /**

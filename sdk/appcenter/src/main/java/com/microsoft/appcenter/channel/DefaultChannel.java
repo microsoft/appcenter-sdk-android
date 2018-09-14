@@ -6,7 +6,6 @@ import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -121,8 +120,8 @@ public class DefaultChannel implements Channel {
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
      */
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, long maxStorageSizeInBytes) {
-        this(context, appSecret, buildDefaultPersistence(context, logSerializer, maxStorageSizeInBytes), new AppCenterIngestion(context, logSerializer), appCenterHandler);
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
+        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler);
     }
 
     /**
@@ -152,10 +151,15 @@ public class DefaultChannel implements Channel {
     /**
      * Init Persistence for default constructor.
      */
-    private static Persistence buildDefaultPersistence(@NonNull Context context, @NonNull LogSerializer logSerializer, long maxStorageSizeInBytes) {
-        Persistence persistence = new DatabasePersistence(context, maxStorageSizeInBytes);
+    private static Persistence buildDefaultPersistence(@NonNull Context context, @NonNull LogSerializer logSerializer) {
+        Persistence persistence = new DatabasePersistence(context);
         persistence.setLogSerializer(logSerializer);
         return persistence;
+    }
+
+    @Override
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        return mPersistence.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
     /**

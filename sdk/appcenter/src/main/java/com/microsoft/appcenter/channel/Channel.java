@@ -19,6 +19,14 @@ public interface Channel {
     void setAppSecret(@NonNull String appSecret);
 
     /**
+     * Set maximum SQLite database size.
+     *
+     * @param maxStorageSizeInBytes Maximum SQLite database size.
+     * @return true if database size was set, otherwise false.
+     */
+    boolean setMaxStorageSize(long maxStorageSizeInBytes);
+
+    /**
      * Add a group for logs to be persisted and sent.
      *
      * @param groupName          the name of a group.
