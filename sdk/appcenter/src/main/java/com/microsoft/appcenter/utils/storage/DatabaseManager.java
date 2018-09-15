@@ -109,7 +109,7 @@ public class DatabaseManager implements Closeable {
             @Override
             public void onCreate(SQLiteDatabase db) {
                 long maxSize = db.setMaximumSize(mMaxStorageSizeInBytes);
-                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database size is set to " + maxSize + " bytes.");
+                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database maximum size is set to " + maxSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -191,35 +191,32 @@ public class DatabaseManager implements Closeable {
      * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values) {
 
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
+                while (true) {
+                    try {
 
-                /*
-                 * If the log is larger than the max size, all logs will be discarded and then
-                 * we will return -1 because there is not enough room.
-                 */
-                Cursor cursor = getCursor(null, null, true);
+                        /* Insert data. */
+                        return getDatabase().insertOrThrow(mTable, null, values);
+                    } catch (SQLiteFullException e) {
 
-                //noinspection TryFinallyCanBeTryWithResources
-                try {
-                    do {
+                        /* Delete the oldest log. */
+                        Cursor cursor = getCursor(null, null, true);
                         try {
-
-                            /* Insert data. */
-                            return getDatabase().insertOrThrow(mTable, null, values);
-                        } catch (SQLiteFullException e) {
-
-                            /* Delete the oldest log. */
-                            delete(cursor.getLong(0));
+                            if (cursor.moveToNext()) {
+                                delete(cursor.getLong(0));
+                            } else {
+                                return -1;
+                            }
+                        } finally {
+                            cursor.close();
                         }
-                    } while (cursor.moveToNext());
-                } finally {
-                    cursor.close();
+                    }
                 }
-                return -1;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);
             }

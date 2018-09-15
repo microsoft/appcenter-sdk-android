@@ -22,7 +22,6 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
-import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -170,7 +169,7 @@ public class AppCenter {
     /**
      * Max storage size in bytes.
      */
-    private long mMaxStorageSizeInBytes = DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
+    private long mMaxStorageSizeInBytes;
 
     /**
      * AppCenterFuture of set maximum storage size.

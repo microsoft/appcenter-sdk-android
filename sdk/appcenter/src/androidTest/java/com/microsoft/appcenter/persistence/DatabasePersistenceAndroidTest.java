@@ -9,11 +9,13 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.appcenter.AndroidTestUtils;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.json.MockLog;
 import com.microsoft.appcenter.ingestion.models.json.MockLogFactory;
 import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLogFactory;
@@ -24,7 +26,6 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 import com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage.DatabaseScanner;
 
 import org.json.JSONException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -59,6 +60,11 @@ import static org.mockito.Mockito.spy;
 public class DatabasePersistenceAndroidTest {
 
     /**
+     * Maximum storage size in bytes for unit test case.
+     */
+    private static final int MAX_STORAGE_SIZE_IN_BYTES = 16385;
+
+    /**
      * Context instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -66,6 +72,7 @@ public class DatabasePersistenceAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
+        AppCenter.setLogLevel(android.util.Log.VERBOSE);
         sContext = InstrumentationRegistry.getTargetContext();
         StorageHelper.initialize(sContext);
         Constants.loadFromContext(sContext);
@@ -83,13 +90,6 @@ public class DatabasePersistenceAndroidTest {
         for (; iterator.hasNext(); iterator.next())
             count++;
         return count;
-    }
-
-    @After
-    public void tearDown() {
-
-        /* Clean up database. */
-        sContext.deleteDatabase("test-persistence");
     }
 
     @Test
@@ -283,7 +283,7 @@ public class DatabasePersistenceAndroidTest {
     public void putTooManyLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext, 2, DatabasePersistence.SCHEMA, 2);
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 2, DatabasePersistence.SCHEMA, MAX_STORAGE_SIZE_IN_BYTES);
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -291,23 +291,27 @@ public class DatabasePersistenceAndroidTest {
         persistence.setLogSerializer(logSerializer);
         try {
 
-            /* Generate too many logs and persist. */
-            Log log1 = AndroidTestUtils.generateMockLog();
-            Log log2 = AndroidTestUtils.generateMockLog();
-            Log log3 = AndroidTestUtils.generateMockLog();
-            Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog("test-p1", log1);
-            persistence.putLog("test-p1", log2);
-            persistence.putLog("test-p1", log3);
-            persistence.putLog("test-p1", log4);
+            /* Generate some logs that will be evicted. */
+            for (int i = 0; i < 10; i++) {
+                persistence.putLog("test-p1", AndroidTestUtils.generateMockLog());
+            }
+
+            /*
+             * Generate the maximum number of logs that we can store in this configuration.
+             * This will evict all previously stored logs.
+             */
+            List<Log> expectedLogs = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                MockLog log = AndroidTestUtils.generateMockLog();
+                persistence.putLog("test-p1", log);
+                expectedLogs.add(log);
+            }
 
             /* Get logs from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", 4, outputLogs);
-            assertEquals(2, outputLogs.size());
-            assertEquals(log3, outputLogs.get(0));
-            assertEquals(log4, outputLogs.get(1));
-            assertEquals(2, persistence.countLogs("test-p1"));
+            persistence.getLogs("test-p1", 7, outputLogs);
+            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
+            assertEquals(expectedLogs, outputLogs);
         } finally {
 
             /* Close. */
