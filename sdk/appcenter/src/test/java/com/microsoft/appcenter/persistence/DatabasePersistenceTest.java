@@ -25,6 +25,8 @@ import java.util.List;
 
 import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -259,5 +261,21 @@ public class DatabasePersistenceTest {
 
         /* Verify that the only log we deleted in the entire test was the one from previous test (id=1). */
         verify(databaseStorage).delete(anyLong());
+    }
+
+    @Test
+    public void checkSetStorageSizeForwarding() {
+
+        /* The real Android test for checking size is in StorageHelperAndroidTest. */
+        mockStatic(StorageHelper.DatabaseStorage.class);
+        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
+                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
+        when(databaseStorage.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
+
+        /* Just checks calls are forwarded to the low level database layer. */
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        assertTrue(persistence.setMaxStorageSize(20480));
+        assertFalse(persistence.setMaxStorageSize(2));
     }
 }

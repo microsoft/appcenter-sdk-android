@@ -1,20 +1,27 @@
 package com.microsoft.appcenter.channel;
 
+import android.content.ContentValues;
 import android.content.Context;
 
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Test;
 import org.mockito.Matchers;
 
 import java.util.List;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
@@ -23,6 +30,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTest {
@@ -185,5 +193,18 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         verify(listener).onGroupAdded(TEST_GROUP, groupListener);
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
+    }
+
+    @Test
+    public void checkSetStorageSizeForwarding() {
+
+        /* The real Android test for checking size is in StorageHelperAndroidTest. */
+        Persistence persistence = mock(Persistence.class);
+        when(persistence.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(Ingestion.class), mAppCenterHandler);
+
+        /* Just checks calls are forwarded to the low level database layer. */
+        assertTrue(channel.setMaxStorageSize(20480));
+        assertFalse(channel.setMaxStorageSize(2));
     }
 }
