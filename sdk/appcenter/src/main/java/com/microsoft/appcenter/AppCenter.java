@@ -54,6 +54,11 @@ public class AppCenter {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG;
 
     /**
+     * Default maximum storage size for SQLite database.
+     */
+    private static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+
+    /**
      * Group for sending logs.
      */
     @VisibleForTesting
@@ -169,7 +174,7 @@ public class AppCenter {
     /**
      * Max storage size in bytes.
      */
-    private long mMaxStorageSizeInBytes;
+    private long mMaxStorageSizeInBytes = DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
 
     /**
      * AppCenterFuture of set maximum storage size.
@@ -387,6 +392,7 @@ public class AppCenter {
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove annotation when updating demo app for release.
     public static AppCenterFuture<Boolean> setStorageSize(long storageSizeInBytes) {
         return getInstance().setInstanceStorageSizeAsync(storageSizeInBytes);
     }
@@ -566,9 +572,7 @@ public class AppCenter {
                     @Override
                     public void run() {
                         mChannel.setAppSecret(mAppSecret);
-                        if (mSetMaxStorageSizeFuture != null) {
-                            mSetMaxStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
-                        }
+                        applyStorageMaxSize();
                     }
                 });
             }
@@ -706,8 +710,8 @@ public class AppCenter {
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
 
         /* Complete set maximum storage size future. */
-        if (mSetMaxStorageSizeFuture != null && configureFromApp) {
-            mSetMaxStorageSizeFuture.complete(mChannel.setMaxStorageSize(mMaxStorageSizeInBytes));
+        if (configureFromApp) {
+            applyStorageMaxSize();
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
@@ -727,6 +731,13 @@ public class AppCenter {
             mUncaughtExceptionHandler.register();
         }
         AppCenterLog.debug(LOG_TAG, "App Center initialized.");
+    }
+
+    private void applyStorageMaxSize() {
+        boolean resizeResult = mChannel.setMaxStorageSize(mMaxStorageSizeInBytes);
+        if (mSetMaxStorageSizeFuture != null) {
+            mSetMaxStorageSizeFuture.complete(resizeResult);
+        }
     }
 
     @SafeVarargs

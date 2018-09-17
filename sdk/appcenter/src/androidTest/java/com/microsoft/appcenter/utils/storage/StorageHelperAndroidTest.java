@@ -779,7 +779,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Testing Database Storage set maximum size");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-setMaximumSize", "test.setMaximumSize", 1, mSchema, MAX_SIZE_IN_BYTES, new DatabaseManager.Listener() {
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -795,15 +795,12 @@ public class StorageHelperAndroidTest {
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
 
-            /* Check initial size. */
+            /* Test to change to an exact size as its multiple of 4KB. */
+            assertTrue(databaseStorage.setMaxStorageSize(MAX_SIZE_IN_BYTES));
             assertEquals(MAX_SIZE_IN_BYTES, databaseStorage.getMaxSize());
 
-            /* Test to change to an exact size as its multiple of 4KB. */
-            assertTrue(databaseStorage.setMaxStorageSize(MAX_SIZE_IN_BYTES * 2));
-            assertEquals(MAX_SIZE_IN_BYTES * 2, databaseStorage.getMaxSize());
-
             /* Test inexact value, it will use next multiple of 4KB. */
-            long desiredSize = MAX_SIZE_IN_BYTES * 3 + 1;
+            long desiredSize = MAX_SIZE_IN_BYTES * 2 + 1;
             assertTrue(databaseStorage.setMaxStorageSize(desiredSize));
             assertEquals(desiredSize - 1 + ALLOWED_SIZE_MULTIPLE, databaseStorage.getMaxSize());
 

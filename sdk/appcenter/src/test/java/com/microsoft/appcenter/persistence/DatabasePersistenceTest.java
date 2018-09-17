@@ -54,7 +54,7 @@ public class DatabasePersistenceTest {
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES));
+        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
 
@@ -95,8 +95,7 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage mockDatabaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(mockDatabaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(mockDatabaseStorage);
 
         for (int i = 0; i < groupCount; i++) {
             StorageHelper.DatabaseStorage.DatabaseScanner mockDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
@@ -133,8 +132,7 @@ public class DatabasePersistenceTest {
         int logCount = 3;
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
 
         /* Make 3 logs, the second one will be corrupted. */
         Collection<ContentValues> fieldValues = new ArrayList<>(logCount);
@@ -269,8 +267,7 @@ public class DatabasePersistenceTest {
         /* The real Android test for checking size is in StorageHelperAndroidTest. */
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
         when(databaseStorage.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
 
         /* Just checks calls are forwarded to the low level database layer. */

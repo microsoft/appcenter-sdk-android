@@ -32,15 +32,21 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class DatabaseManager implements Closeable {
 
     /**
-     * Allowed multiple for maximum sizes.
-     */
-    @VisibleForTesting
-    public static final int ALLOWED_SIZE_MULTIPLE = 4096;
-
-    /**
      * Primary key name.
      */
     public static final String PRIMARY_KEY = "oid";
+
+    /**
+     * Allowed multiple for maximum sizes.
+     */
+    @VisibleForTesting
+    static final int ALLOWED_SIZE_MULTIPLE = 4096;
+
+    /**
+     * Maximum number of entries of in memory database.
+     */
+    @VisibleForTesting
+    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Application context instance.
@@ -83,42 +89,28 @@ public class DatabaseManager implements Closeable {
      */
     private long mIMDBAutoInc;
 
-    /**
-     * Maximum storage size of SQLite database.
-     */
-    private long mMaxStorageSizeInBytes;
-
-    /**
-     * Maximum number of entries of in memory database.
-     */
-    @VisibleForTesting
-    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Initializes the table in the database.
      *
-     * @param context          The application context.
-     * @param database         The database name.
-     * @param table            The table name.
-     * @param version          The version of current schema.
-     * @param schema           The schema.
-     * @param maxDbSizeInBytes The max size the database is allowed to grow to.
-     * @param listener         The error listener.
+     * @param context  The application context.
+     * @param database The database name.
+     * @param table    The table name.
+     * @param version  The version of current schema.
+     * @param schema   The schema.
+     * @param listener The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, long maxDbSizeInBytes, Listener listener) {
+                    ContentValues schema, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
         mSchema = schema;
-        mMaxStorageSizeInBytes = maxDbSizeInBytes;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                long maxSize = db.setMaximumSize(mMaxStorageSizeInBytes);
-                AppCenterLog.debug(LOG_TAG, "SQLite database maximum size is set to " + maxSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -539,7 +531,12 @@ public class DatabaseManager implements Closeable {
             AppCenterLog.error(LOG_TAG, "Could not change database size, current size is " + newMaxSize + " bytes.");
             return false;
         }
-        mMaxStorageSizeInBytes = maxStorageSizeInBytes;
+        if (maxStorageSizeInBytes != newMaxSize) {
+            AppCenterLog.warn(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
+                    maxStorageSizeInBytes + " actualMaxSize=" + newMaxSize);
+        } else {
+            AppCenterLog.info(LOG_TAG, "Database max size set to " + newMaxSize + " bytes.");
+        }
         return true;
     }
 
