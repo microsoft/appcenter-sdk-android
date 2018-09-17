@@ -528,7 +528,7 @@ public class DatabaseManager implements Closeable {
 
         /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
         if (newMaxSize != expectedMultipleMaxSize) {
-            AppCenterLog.error(LOG_TAG, "Could not change database size, current size is " + newMaxSize + " bytes.");
+            AppCenterLog.error(LOG_TAG, "Could not change database size to " + maxStorageSizeInBytes + " bytes, current max size is " + newMaxSize + " bytes.");
             return false;
         }
         if (maxStorageSizeInBytes != newMaxSize) {
