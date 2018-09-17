@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 /**
  * Database manager for SQLite with fail-over to in-memory.
  */
@@ -33,6 +35,18 @@ public class DatabaseManager implements Closeable {
      * Primary key name.
      */
     public static final String PRIMARY_KEY = "oid";
+
+    /**
+     * Allowed multiple for maximum sizes.
+     */
+    @VisibleForTesting
+    static final int ALLOWED_SIZE_MULTIPLE = 4096;
+
+    /**
+     * Maximum number of entries of in memory database.
+     */
+    @VisibleForTesting
+    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Application context instance.
@@ -75,41 +89,28 @@ public class DatabaseManager implements Closeable {
      */
     private long mIMDBAutoInc;
 
-    /**
-     * Maximum storage size of SQLite database.
-     */
-    private long mMaxStorageSizeInBytes;
-
-    /**
-     * Maximum number of entries of in memory database.
-     */
-    private static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Initializes the table in the database.
      *
-     * @param context          The application context.
-     * @param database         The database name.
-     * @param table            The table name.
-     * @param version          The version of current schema.
-     * @param schema           The schema.
-     * @param maxDbSizeInBytes The max size the database is allowed to grow to.
-     * @param listener         The error listener.
+     * @param context  The application context.
+     * @param database The database name.
+     * @param table    The table name.
+     * @param version  The version of current schema.
+     * @param schema   The schema.
+     * @param listener The error listener.
      */
     DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, long maxDbSizeInBytes, Listener listener) {
+                    ContentValues schema, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
         mSchema = schema;
-        mMaxStorageSizeInBytes = maxDbSizeInBytes;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                long maxSize = db.setMaximumSize(mMaxStorageSizeInBytes);
-                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database size is set to " + maxSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -191,35 +192,32 @@ public class DatabaseManager implements Closeable {
      * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values) {
 
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
+                while (true) {
+                    try {
 
-                /*
-                 * If the log is larger than the max size, all logs will be discarded and then
-                 * we will return -1 because there is not enough room.
-                 */
-                Cursor cursor = getCursor(null, null, true);
+                        /* Insert data. */
+                        return getDatabase().insertOrThrow(mTable, null, values);
+                    } catch (SQLiteFullException e) {
 
-                //noinspection TryFinallyCanBeTryWithResources
-                try {
-                    do {
+                        /* Delete the oldest log. */
+                        Cursor cursor = getCursor(null, null, true);
                         try {
-
-                            /* Insert data. */
-                            return getDatabase().insertOrThrow(mTable, null, values);
-                        } catch (SQLiteFullException e) {
-
-                            /* Delete the oldest log. */
-                            delete(cursor.getLong(0));
+                            if (cursor.moveToNext()) {
+                                delete(cursor.getLong(0));
+                            } else {
+                                return -1;
+                            }
+                        } finally {
+                            cursor.close();
                         }
-                    } while (cursor.moveToNext());
-                } finally {
-                    cursor.close();
+                    }
                 }
-                return -1;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);
             }
@@ -520,13 +518,25 @@ public class DatabaseManager implements Closeable {
      */
     boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         SQLiteDatabase db = getDatabase();
-        long currentMaxSize = db.getMaximumSize();
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
-        if (currentMaxSize == newMaxSize && maxStorageSizeInBytes != mMaxStorageSizeInBytes) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Unable to set database maximum size. Current maximum size is " + currentMaxSize + " bytes.");
+
+        /* SQLite always use the next multiple of 4KB as maximum size. */
+        long expectedMultipleMaxSize = maxStorageSizeInBytes / ALLOWED_SIZE_MULTIPLE * ALLOWED_SIZE_MULTIPLE;
+        if (expectedMultipleMaxSize != maxStorageSizeInBytes) {
+            expectedMultipleMaxSize += ALLOWED_SIZE_MULTIPLE;
+        }
+
+        /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
+        if (newMaxSize != expectedMultipleMaxSize) {
+            AppCenterLog.error(LOG_TAG, "Could not change database size to " + maxStorageSizeInBytes + " bytes, current max size is " + newMaxSize + " bytes.");
             return false;
         }
-        mMaxStorageSizeInBytes = maxStorageSizeInBytes;
+        if (maxStorageSizeInBytes != newMaxSize) {
+            AppCenterLog.warn(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
+                    maxStorageSizeInBytes + " actualMaxSize=" + newMaxSize);
+        } else {
+            AppCenterLog.info(LOG_TAG, "Database max size set to " + newMaxSize + " bytes.");
+        }
         return true;
     }
 

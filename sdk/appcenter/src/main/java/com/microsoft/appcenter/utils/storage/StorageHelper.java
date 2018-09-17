@@ -578,28 +578,7 @@ public class StorageHelper {
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
                                                          @NonNull DatabaseManager.Listener listener) {
-            return getDatabaseStorage(database, table, version, schema, 0, listener);
-        }
-
-        /**
-         * Get a new instance of {@code DatabaseManager}.
-         *
-         * @param database       The database name.
-         * @param table          The table name.
-         * @param version        The version.
-         * @param schema         The schema of the database. If the database has more than one table,
-         *                       it should contain schemas for all tables.
-         * @param maxSizeInBytes The maximum allowed database size.
-         * @param listener       The database listener.
-         * @return database storage.
-         */
-        public static DatabaseStorage getDatabaseStorage(@NonNull String database,
-                                                         @NonNull String table,
-                                                         @IntRange(from = 1) int version,
-                                                         @NonNull ContentValues schema,
-                                                         @IntRange(from = 0) long maxSizeInBytes,
-                                                         @NonNull DatabaseManager.Listener listener) {
-            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxSizeInBytes, listener));
+            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, listener));
         }
 
         /**

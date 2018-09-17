@@ -41,11 +41,6 @@ public class DatabasePersistence extends Persistence {
     private static final int VERSION = 2;
 
     /**
-     * Default maximum storage size for SQLite database.
-     */
-    public static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
-
-    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -137,42 +132,39 @@ public class DatabasePersistence extends Persistence {
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+        this(context, VERSION, SCHEMA);
     }
 
     /**
      * Initializes variables.
-     *
-     * @param context               application context.
+     *  @param context               application context.
      * @param version               The version of current schema.
      * @param schema                schema.
-     * @param maxStorageSizeInBytes the maximum SQLite database storage size in bytes.
      */
     @SuppressWarnings("SameParameterValue")
-    DatabasePersistence(Context context, int version, ContentValues schema, long maxStorageSizeInBytes) {
+    DatabasePersistence(Context context, int version, ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
-        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, maxStorageSizeInBytes,
-                new DatabaseManager.Listener() {
+        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
-                    @Override
-                    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-                        /*
-                         * This is called only on upgrade and thus only if oldVersion is < 2.
-                         * Therefore we don't have to check anything to add the missing columns.
-                         */
-                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
-                        db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
-                        return true;
-                    }
+                /*
+                 * This is called only on upgrade and thus only if oldVersion is < 2.
+                 * Therefore we don't have to check anything to add the missing columns.
+                 */
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
+                return true;
+            }
 
-                    @Override
-                    public void onError(String operation, RuntimeException e) {
-                        AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
-                    }
-                });
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
+            }
+        });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
 
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.

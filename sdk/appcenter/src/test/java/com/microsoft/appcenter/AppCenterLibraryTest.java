@@ -90,6 +90,9 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         verify(mChannel, never()).setAppSecret(anyString());
 
+        /* Libraries have to use the default max storage size. */
+        verify(mChannel).setMaxStorageSize(AppCenter.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+
         /* Verify state. */
         assertTrue(DummyService.isEnabled().get());
         assertFalse(AnotherDummyService.isEnabled().get());
@@ -124,7 +127,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         services.add(AnotherDummyService.getInstance().getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
 
-        /* Verify channel updated with app secret. */
+        /* Verify channel updated with app secret and storage size. */
         verify(mChannel).setAppSecret(DUMMY_APP_SECRET);
     }
 
