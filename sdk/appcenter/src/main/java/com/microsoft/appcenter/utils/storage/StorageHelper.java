@@ -730,6 +730,16 @@ public class StorageHelper {
         }
 
         /**
+         * Gets the maximum size of the database.
+         *
+         * @return The maximum size of database in bytes.
+         */
+        @SuppressWarnings("unused")
+        public long getMaxSize() {
+            return mDatabaseManager.getMaxSize();
+        }
+
+        /**
          * Gets an array of column names in the table.
          *
          * @return An array of column names.

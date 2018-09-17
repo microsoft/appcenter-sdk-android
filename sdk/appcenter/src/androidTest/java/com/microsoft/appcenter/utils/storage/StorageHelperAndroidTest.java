@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.ALLOWED_SIZE_MULTIPLE;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.InternalStorage;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
@@ -60,6 +61,11 @@ public class StorageHelperAndroidTest {
      * Random tool.
      */
     private static final Random RANDOM = new Random();
+
+    /**
+     * Initial maximum database size for some of the tests.
+     */
+    private static final long MAX_SIZE_IN_BYTES = 20480;
 
     /**
      * Context instance.
@@ -128,10 +134,10 @@ public class StorageHelperAndroidTest {
         /* Delete database. */
         sContext.deleteDatabase("test-databaseStorage");
         sContext.deleteDatabase("test-databaseStorageUpgrade");
-        sContext.deleteDatabase("test-putTooManyLogs");
         sContext.deleteDatabase("test-databaseStorageScannerRemove");
         sContext.deleteDatabase("test-databaseStorageScannerNext");
         sContext.deleteDatabase("test-databaseStorageInMemoryDB");
+        sContext.deleteDatabase("test-setMaximumSize");
     }
 
     private static SharedPreferencesTestData[] generateSharedPreferenceData() throws NoSuchMethodException {
@@ -762,6 +768,52 @@ public class StorageHelperAndroidTest {
         try {
             runDatabaseStorageTest(databaseStorage, true);
         } finally {
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseStorage.close();
+        }
+    }
+
+    @Test
+    public void setMaximumSize() {
+        Log.i(TAG, "Testing Database Storage set maximum size");
+
+        /* Get instance to access database. */
+        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-setMaximumSize", "test.setMaximumSize", 1, mSchema, MAX_SIZE_IN_BYTES, new DatabaseManager.Listener() {
+
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+
+            @Override
+            public void onError(String operation, RuntimeException e) {
+                /* Do not handle any errors. This is simulating errors so this is expected. */
+            }
+        });
+
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+
+            /* Check initial size. */
+            assertEquals(MAX_SIZE_IN_BYTES, databaseStorage.getMaxSize());
+
+            /* Test to change to an exact size as its multiple of 4KB. */
+            assertTrue(databaseStorage.setMaxStorageSize(MAX_SIZE_IN_BYTES * 2));
+            assertEquals(MAX_SIZE_IN_BYTES * 2, databaseStorage.getMaxSize());
+
+            /* Test inexact value, it will use next multiple of 4KB. */
+            long desiredSize = MAX_SIZE_IN_BYTES * 3 + 1;
+            assertTrue(databaseStorage.setMaxStorageSize(desiredSize));
+            assertEquals(desiredSize - 1 + ALLOWED_SIZE_MULTIPLE, databaseStorage.getMaxSize());
+
+            /* Try to set to a very small value. */
+            assertFalse(databaseStorage.setMaxStorageSize(2));
+
+            /* Test the side effect is that we shrunk to the minimum size that is possible. */
+            assertEquals(MAX_SIZE_IN_BYTES, databaseStorage.getMaxSize());
+        } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseStorage.close();

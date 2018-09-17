@@ -7,8 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
-import com.microsoft.appcenter.persistence.DatabasePersistence;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.internal.stubbing.answers.Returns;
@@ -19,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+import static com.microsoft.appcenter.persistence.DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -43,7 +42,7 @@ public class DatabaseManagerTest {
     private static DatabaseManager getDatabaseManagerMock() {
 
         /* Mocking(spying) instance. */
-        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
         when(databaseManagerMock.getDatabase()).thenThrow(new RuntimeException());
         return databaseManagerMock;
@@ -76,7 +75,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing but closing working. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -94,7 +93,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor next failing and closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -112,7 +111,7 @@ public class DatabaseManagerTest {
         }
         {
             /* Cursor closing failing. */
-            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
+            databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
             when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
             mockStatic(SQLiteUtils.class);
             Cursor cursor = mock(Cursor.class);
@@ -236,7 +235,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -256,7 +255,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DatabasePersistence.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -270,27 +269,30 @@ public class DatabaseManagerTest {
         Context contextMock = mock(Context.class);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, 2, null));
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, DEFAULT_MAX_STORAGE_SIZE_IN_BYTES, null));
         databaseManager.switchToInMemory("test", null);
 
-        ContentValues value1 = mock(ContentValues.class);
-        ContentValues value2 = mock(ContentValues.class);
-        ContentValues value3 = mock(ContentValues.class);
-
-        long value1Id = databaseManager.put(value1);
-        verify(value1).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        /* Put a first value, the test will eventually evict this one after inserting many more and hitting the limit. */
+        ContentValues valueToBeEvicted = mock(ContentValues.class);
+        long valueToBeEvictedId = databaseManager.put(valueToBeEvicted);
+        verify(valueToBeEvicted).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
         assertEquals(1, databaseManager.getRowCount());
 
-        long value2Id = databaseManager.put(value2);
-        verify(value2).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
-        assertEquals(2, databaseManager.getRowCount());
+        /* Put enough items to just reach the size limit. */
+        for (int i = 1; i < DatabaseManager.IN_MEMORY_MAX_SIZE; i++) {
+            ContentValues value = mock(ContentValues.class);
+            long valueId = databaseManager.put(value);
+            verify(value).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+            assertEquals(i + 1, databaseManager.getRowCount());
+        }
 
-        long value3Id = databaseManager.put(value3);
-        verify(value3).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
-        assertEquals(2, databaseManager.getRowCount());
+        /* Put 1 more log after limit reached so that it removes the oldest item. */
+        ContentValues value = mock(ContentValues.class);
+        long valueId = databaseManager.put(value);
+        verify(value).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        assertEquals(DatabaseManager.IN_MEMORY_MAX_SIZE, databaseManager.getRowCount());
 
-        assertNull(databaseManager.get(value1Id));
-        assertNotNull(databaseManager.get(value2Id));
-        assertNotNull(databaseManager.get(value3Id));
+        /* Verify the oldest item was evicted. */
+        assertNull(databaseManager.get(valueToBeEvictedId));
     }
 }

@@ -24,10 +24,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 /**
  * Database manager for SQLite with fail-over to in-memory.
  */
 public class DatabaseManager implements Closeable {
+
+    /**
+     * Allowed multiple for maximum sizes.
+     */
+    @VisibleForTesting
+    public static final int ALLOWED_SIZE_MULTIPLE = 4096;
 
     /**
      * Primary key name.
@@ -83,7 +91,8 @@ public class DatabaseManager implements Closeable {
     /**
      * Maximum number of entries of in memory database.
      */
-    private static final long IN_MEMORY_MAX_SIZE = 300;
+    @VisibleForTesting
+    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Initializes the table in the database.
@@ -109,7 +118,7 @@ public class DatabaseManager implements Closeable {
             @Override
             public void onCreate(SQLiteDatabase db) {
                 long maxSize = db.setMaximumSize(mMaxStorageSizeInBytes);
-                AppCenterLog.debug(AppCenterLog.LOG_TAG, "SQLite database maximum size is set to " + maxSize + " bytes.");
+                AppCenterLog.debug(LOG_TAG, "SQLite database maximum size is set to " + maxSize + " bytes.");
 
                 /* Generate a schema from specimen. */
                 StringBuilder sql = new StringBuilder("CREATE TABLE `");
@@ -517,14 +526,30 @@ public class DatabaseManager implements Closeable {
      */
     boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         SQLiteDatabase db = getDatabase();
-        long currentMaxSize = db.getMaximumSize();
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
-        if (currentMaxSize == newMaxSize && maxStorageSizeInBytes != mMaxStorageSizeInBytes) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Unable to set database maximum size. Current maximum size is " + currentMaxSize + " bytes.");
+
+        /* SQLite always use the next multiple of 4KB as maximum size. */
+        long expectedMultipleMaxSize = maxStorageSizeInBytes / ALLOWED_SIZE_MULTIPLE * ALLOWED_SIZE_MULTIPLE;
+        if (expectedMultipleMaxSize != maxStorageSizeInBytes) {
+            expectedMultipleMaxSize += ALLOWED_SIZE_MULTIPLE;
+        }
+
+        /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
+        if (newMaxSize != expectedMultipleMaxSize) {
+            AppCenterLog.error(LOG_TAG, "Could not change database size, current size is " + newMaxSize + " bytes.");
             return false;
         }
         mMaxStorageSizeInBytes = maxStorageSizeInBytes;
         return true;
+    }
+
+    /**
+     * Gets the maximum size of the database.
+     *
+     * @return The maximum size of database in bytes.
+     */
+    public long getMaxSize() {
+        return getDatabase().getMaximumSize();
     }
 
     /**

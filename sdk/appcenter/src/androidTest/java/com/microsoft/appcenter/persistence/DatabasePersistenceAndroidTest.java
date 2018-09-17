@@ -62,7 +62,7 @@ public class DatabasePersistenceAndroidTest {
     /**
      * Maximum storage size in bytes for unit test case.
      */
-    private static final int MAX_STORAGE_SIZE_IN_BYTES = 16385;
+    private static final int MAX_STORAGE_SIZE_IN_BYTES = 20480;
 
     /**
      * Context instance.
