@@ -1,9 +1,13 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.utils.AppCenterLog;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Map;
+
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
  * Populate Part C properties.
@@ -15,7 +19,6 @@ public class PartCUtils {
      *
      * @param properties custom properties.
      * @param dest       destination common schema log.
-     * @throws IllegalArgumentException if properties are not valid.
      */
     public static void addPartCFromLog(Map<String, String> properties, CommonSchemaLog dest) {
         if (properties == null) {
@@ -31,18 +34,21 @@ public class PartCUtils {
                 /* Validate key not null. */
                 String key = entry.getKey();
                 if (key == null) {
-                    throw new IllegalArgumentException("Property key cannot be null.");
+                    AppCenterLog.warn(LOG_TAG, "Property key cannot be null.");
+                    continue;
                 }
 
                 /* Validate value not null. */
                 String value = entry.getValue();
                 if (value == null) {
-                    throw new IllegalArgumentException("Property value cannot be null.");
+                    AppCenterLog.warn(LOG_TAG, "Property value cannot be null.");
+                    continue;
                 }
 
                 /* Validate key is not Part B. */
                 if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
-                    throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
+                    AppCenterLog.warn(LOG_TAG, "Property key '" + key + "' is reserved.");
+                    continue;
                 }
 
                 /* Split property name by dot. */
