@@ -18,7 +18,7 @@ import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,15 +42,26 @@ public class EventActivity extends LogActivity {
 
     private Button mOverrideCommonSchemaButton;
 
-    private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
+    private List<AnalyticsTransmissionTarget> mTransmissionTargets;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*
+         * The first element is a placeholder for default transmission.
+         * The second one is the parent transmission target, the third one is a child,
+         * the forth is a grandchild, etc...
+         */
+        mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+
         /* Transmission target views init. */
+        String[] targetNames = getResources().getStringArray(R.array.target_id_names);
+        if (targetNames.length != mTransmissionTargets.size()) {
+            targetNames = Arrays.copyOfRange(targetNames, 0, mTransmissionTargets.size());
+        }
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
-        ArrayAdapter<String> targetAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
+        ArrayAdapter<String> targetAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, targetNames);
         mTransmissionTargetSpinner.setAdapter(targetAdapter);
         mTransmissionTargetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -79,13 +90,6 @@ public class EventActivity extends LogActivity {
         /* Init enabled check boxes. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
         mDeviceIdEnabledCheckBox = findViewById(R.id.device_id_enabled);
-
-        /*
-         * The first element is a placeholder for default transmission.
-         * The second one is the parent transmission target, the third one is a child,
-         * the forth is a grandchild, etc...
-         */
-        mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
 
         /* Init common schema properties button. */
         mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);

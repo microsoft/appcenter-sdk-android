@@ -2,6 +2,7 @@ package com.microsoft.appcenter.sasquatch.util;
 
 import android.app.Activity;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.sasquatch.R;
@@ -19,8 +20,11 @@ public class EventActivityUtil {
          * The second one is the parent transmission target, the third one is a child,
          * the forth is a grandchild, etc...
          */
-        String[] targetTokens = activity.getResources().getStringArray(R.array.target_id_values);
         targets.add(null);
+        if (!AppCenter.isConfigured()) {
+            return targets;
+        }
+        String[] targetTokens = activity.getResources().getStringArray(R.array.target_id_values);
         targets.add(Analytics.getTransmissionTarget(targetTokens[1]));
         for (int i = 2; i < targetTokens.length; i++) {
             String targetToken = targetTokens[i];
