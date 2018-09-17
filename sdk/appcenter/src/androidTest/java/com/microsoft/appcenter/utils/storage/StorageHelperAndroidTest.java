@@ -279,12 +279,6 @@ public class StorageHelperAndroidTest {
         assertEquals(0, databaseStorage.getScanner("COL_STRING", null).getCount());
         assertEquals(2, databaseStorage.getScanner("COL_STRING_NULL", null).getCount());
 
-        /* Update. */
-        // TODO We removed this method so we need to fix the rest of the test
-        //assertTrue(databaseStorage.update(value1Id, value3));
-        ContentValues value3FromDatabase = databaseStorage.get(value1Id);
-        assertContentValuesEquals(value3, value3FromDatabase);
-
         /* Delete. */
         databaseStorage.delete(value1Id);
         assertNull(databaseStorage.get(value1Id));
@@ -680,49 +674,6 @@ public class StorageHelperAndroidTest {
         } finally {
 
             /* Close. */
-            databaseStorage.close();
-        }
-    }
-
-    @Test
-    public void putTooManyLogs() {
-        Log.i(TAG, "Testing Database Storage Capacity");
-
-        /* Get instance to access database. */
-        final int capacity = 2;
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-putTooManyLogs", "putTooManyLogs", 1, mSchema, capacity, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            ContentValues value1 = generateContentValues();
-            ContentValues value2 = generateContentValues();
-            ContentValues value3 = generateContentValues();
-
-            /* Put. */
-            Long value1Id = databaseStorage.put(value1);
-            Long value2Id = databaseStorage.put(value2);
-            Long value3Id = databaseStorage.put(value3);
-
-            assertNotNull(value1Id);
-            assertNotNull(value2Id);
-            assertNotNull(value3Id);
-
-            assertEquals(capacity, databaseStorage.size());
-        } finally {
-
-            /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseStorage.close();
         }
     }
