@@ -788,6 +788,7 @@ public class StorageHelperAndroidTest {
 
             @Override
             public void onError(String operation, RuntimeException e) {
+
                 /* Do not handle any errors. This is simulating errors so this is expected. */
             }
         });

@@ -28,6 +28,7 @@ import com.microsoft.appcenter.utils.storage.StorageHelper;
 import com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage.DatabaseScanner;
 
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -322,8 +323,6 @@ public class DatabasePersistenceAndroidTest {
                 assertEquals(0, persistence.countLogs("test-p1"));
             }
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -364,7 +363,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(expectedLogs, outputLogs);
         } finally {
 
-            /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
