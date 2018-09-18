@@ -88,6 +88,13 @@ public class DatabasePersistenceAndroidTest {
         sContext.deleteDatabase(DatabasePersistence.DATABASE);
     }
 
+    @After
+    public void tearDown() {
+
+        /* Clean up database. */
+        sContext.deleteDatabase("test-persistence");
+    }
+
     private static int getIteratorSize(Iterator iterator) {
         int count = 0;
         for (; iterator.hasNext(); iterator.next())
@@ -124,8 +131,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -182,8 +187,6 @@ public class DatabasePersistenceAndroidTest {
             assertFalse(file.exists());
             assertFalse(file.getParentFile().exists());
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -223,8 +226,6 @@ public class DatabasePersistenceAndroidTest {
             /* Make sure database entry has been removed. */
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
-
-            /* Close. */
             persistence.close();
 
             /* Restore path. */
@@ -276,8 +277,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(0, outputLogs.size());
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -408,7 +407,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
 
-            /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
@@ -430,8 +428,6 @@ public class DatabasePersistenceAndroidTest {
             Log log = AndroidTestUtils.generateMockLog();
             persistence.putLog("test-p1", log);
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -522,8 +518,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.countLogs("test-p3"));
 
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -585,8 +579,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, persistence.countLogs("test-p2"));
             assertEquals(0, persistence.countLogs("test-p3"));
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -634,7 +626,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(0, persistence.countLogs("test"));
         } finally {
 
-            /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
@@ -695,8 +686,6 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(numberOfLogs / 2, outputLogs.size());
             assertEquals(2, persistence.mDatabaseStorage.size());
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
@@ -734,8 +723,6 @@ public class DatabasePersistenceAndroidTest {
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
             databaseStorage.put(contentValues);
         } finally {
-
-            /* Close. */
             databaseStorage.close();
         }
 
@@ -764,8 +751,6 @@ public class DatabasePersistenceAndroidTest {
             /* Put new data with token. */
             persistence.putLog("test/one", commonSchemaLog);
         } finally {
-
-            /* Close. */
             persistence.close();
         }
 
@@ -788,8 +773,6 @@ public class DatabasePersistenceAndroidTest {
             assertNotEquals("test-guid", token);
             assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
         } finally {
-
-            /* Close. */
             persistence.close();
         }
     }
