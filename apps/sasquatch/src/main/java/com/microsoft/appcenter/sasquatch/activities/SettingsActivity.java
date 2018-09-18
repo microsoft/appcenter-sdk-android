@@ -129,10 +129,16 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void onEvent(int event, @Nullable String path) {
-                    Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
-                    if (preference != null) {
-                        preference.setSummary(Formatter.formatFileSize(getActivity(), dbFile.length()));
-                    }
+                    getActivity().runOnUiThread(new Runnable() {
+                        
+                        @Override
+                        public void run() {
+                            Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
+                            if (preference != null) {
+                                preference.setSummary(Formatter.formatFileSize(getActivity(), dbFile.length()));
+                            }
+                        }
+                    });
                 }
             };
             mDatabaseFileObserver.startWatching();
