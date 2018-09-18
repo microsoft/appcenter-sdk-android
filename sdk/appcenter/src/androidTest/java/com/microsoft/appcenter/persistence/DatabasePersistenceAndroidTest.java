@@ -17,6 +17,8 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.MockLog;
 import com.microsoft.appcenter.ingestion.models.json.MockLogFactory;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Data;
 import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLogFactory;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
@@ -280,6 +282,53 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
+    public void putLargeLogNotSupportedOnCommonSchema() throws JSONException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Initial count is 0. */
+            assertEquals(0, persistence.countLogs("test-p1"));
+
+            /* Generate a large log. */
+            CommonSchemaLog log = new MockCommonSchemaLog();
+            int size = 2 * 1024 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            log.setVer("3.0");
+            log.setName("test");
+            log.setTimestamp(new Date());
+            log.addTransmissionTarget("token");
+            Data data = new Data();
+            log.setData(data);
+            data.getProperties().put("key", largeValue.toString());
+
+            /* Persisting that log should fail. */
+            try {
+                persistence.putLog("test-p1", log);
+                fail("Inserting large common schema log is not supposed to work");
+            } catch (PersistenceException e) {
+
+                /* Count logs is still 0 */
+                e.printStackTrace();
+                assertEquals(0, persistence.countLogs("test-p1"));
+            }
+        } finally {
+
+            /* Close. */
+            persistence.close();
+        }
+    }
+
+    @Test
     public void putTooManyLogs() throws PersistenceException {
 
         /* Initialize database persistence. */
@@ -313,6 +362,52 @@ public class DatabasePersistenceAndroidTest {
             persistence.getLogs("test-p1", 7, outputLogs);
             assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
             assertEquals(expectedLogs, outputLogs);
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void putLogLargerThanMaxSizeClearsEverything() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext, 2, DatabasePersistence.SCHEMA);
+        assertTrue(persistence.setMaxStorageSize(MAX_STORAGE_SIZE_IN_BYTES));
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Generate some logs that will be evicted. */
+            int someLogCount = 3;
+            for (int i = 0; i < someLogCount; i++) {
+                persistence.putLog("test-p1", AndroidTestUtils.generateMockLog());
+            }
+            assertEquals(someLogCount, persistence.countLogs("test-p1"));
+
+            /*
+             * Generate a log that is so large that will empty all the database and
+             * eventually fails.
+             */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 30 * 1024;
+            StringBuilder largeValue = new StringBuilder(size);
+            for (int i = 0; i < size; i++) {
+                largeValue.append("x");
+            }
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", largeValue.toString());
+            log.setProperties(properties);
+            long id = persistence.putLog("test-p1", log);
+
+            /* Verify the behavior: not inserted and database now empty. */
+            assertEquals(-1, id);
+            assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
 
             /* Close. */
