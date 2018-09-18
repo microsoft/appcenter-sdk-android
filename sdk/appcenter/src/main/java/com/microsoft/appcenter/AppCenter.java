@@ -395,13 +395,15 @@ public class AppCenter {
      * is smaller than the previous size (database is shrinking) and the capacity is greater than
      * the new size, then the operation will fail and a warning will be emitted. Can only be called
      * once per app lifetime and only before AppCenter.start(...).
+     * <p>
+     * If the size is not a multiple of 4096 bytes, the next multiple of 4096 is used as the new maximum size.
      *
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove annotation when updating demo app for release.
-    public static AppCenterFuture<Boolean> setStorageSize(long storageSizeInBytes) {
-        return getInstance().setInstanceStorageSizeAsync(storageSizeInBytes);
+    public static AppCenterFuture<Boolean> setMaxStorageSize(long storageSizeInBytes) {
+        return getInstance().setInstanceMaxStorageSizeAsync(storageSizeInBytes);
     }
 
     /**
@@ -496,15 +498,15 @@ public class AppCenter {
     }
 
     /**
-     * {@link #setStorageSize(long)} implementation at instance level.
+     * {@link #setMaxStorageSize(long)} implementation at instance level.
      *
      * @param storageSizeInBytes size to set SQLite database to in bytes.
      * @return future of result of set maximum storage size.
      */
-    private synchronized AppCenterFuture<Boolean> setInstanceStorageSizeAsync(long storageSizeInBytes) {
+    private synchronized AppCenterFuture<Boolean> setInstanceMaxStorageSizeAsync(long storageSizeInBytes) {
         DefaultAppCenterFuture<Boolean> setMaxStorageSizeFuture = new DefaultAppCenterFuture<>();
         if (mConfiguredFromApp) {
-            AppCenterLog.error(LOG_TAG, "setStorageSize may not be called after App Center has been configured.");
+            AppCenterLog.error(LOG_TAG, "setMaxStorageSize may not be called after App Center has been configured.");
             setMaxStorageSizeFuture.complete(false);
             return setMaxStorageSizeFuture;
         }
@@ -514,7 +516,7 @@ public class AppCenter {
             return setMaxStorageSizeFuture;
         }
         if (mSetMaxStorageSizeFuture != null) {
-            AppCenterLog.error(LOG_TAG, "setStorageSize may only be called once per app launch.");
+            AppCenterLog.error(LOG_TAG, "setMaxStorageSize may only be called once per app launch.");
             setMaxStorageSizeFuture.complete(false);
             return setMaxStorageSizeFuture;
         }

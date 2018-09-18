@@ -20,13 +20,13 @@ public class AppCenterStorageTest extends AbstractAppCenterTest {
         when(mChannel.setMaxStorageSize(anyLong())).thenReturn(true);
 
         /* Configure before start. */
-        AppCenterFuture<Boolean> future = AppCenter.setStorageSize(AppCenter.MINIMUM_STORAGE_SIZE);
+        AppCenterFuture<Boolean> future = AppCenter.setMaxStorageSize(AppCenter.MINIMUM_STORAGE_SIZE);
 
         /* Verify the operation is still pending. */
         assertFalse(future.isDone());
 
         /* Since the call is registered, we cannot change our mind anymore. */
-        assertFalse(AppCenter.setStorageSize(AppCenter.MINIMUM_STORAGE_SIZE + 1).get());
+        assertFalse(AppCenter.setMaxStorageSize(AppCenter.MINIMUM_STORAGE_SIZE + 1).get());
 
         /* Start AppCenter. */
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
@@ -45,7 +45,7 @@ public class AppCenterStorageTest extends AbstractAppCenterTest {
         when(mChannel.setMaxStorageSize(anyLong())).thenReturn(false);
 
         /* Configure before start. */
-        AppCenterFuture<Boolean> future = AppCenter.setStorageSize(AppCenter.MINIMUM_STORAGE_SIZE - 1);
+        AppCenterFuture<Boolean> future = AppCenter.setMaxStorageSize(AppCenter.MINIMUM_STORAGE_SIZE - 1);
 
         /* Verify the operation is immediately failed. */
         assertFalse(future.get());
@@ -64,7 +64,7 @@ public class AppCenterStorageTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
 
         /* Configure after start immediately fails. */
-        assertFalse(AppCenter.setStorageSize(AppCenter.MINIMUM_STORAGE_SIZE).get());
+        assertFalse(AppCenter.setMaxStorageSize(AppCenter.MINIMUM_STORAGE_SIZE).get());
 
         /* Verify default storage size is used. */
         verify(mChannel).setMaxStorageSize(AppCenter.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
@@ -77,7 +77,7 @@ public class AppCenterStorageTest extends AbstractAppCenterTest {
         when(mChannel.setMaxStorageSize(anyLong())).thenReturn(true);
 
         /* Configure before start. */
-        AppCenterFuture<Boolean> future = AppCenter.setStorageSize(AppCenter.MINIMUM_STORAGE_SIZE);
+        AppCenterFuture<Boolean> future = AppCenter.setMaxStorageSize(AppCenter.MINIMUM_STORAGE_SIZE);
 
         /* Verify the operation is still pending. */
         assertFalse(future.isDone());
