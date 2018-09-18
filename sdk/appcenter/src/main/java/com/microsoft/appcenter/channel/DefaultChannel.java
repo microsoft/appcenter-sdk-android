@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -229,6 +230,26 @@ public class DefaultChannel implements Channel {
         /* Call listeners so that they can react on group removed. */
         for (Listener listener : mListeners) {
             listener.onGroupRemoved(groupName);
+        }
+    }
+
+    @Override
+    public synchronized void pauseGroup(String groupName) {
+        AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
+        GroupState groupState = mGroupStates.get(groupName);
+        if (groupState != null && !groupState.mPaused) {
+            groupState.mPaused = true;
+            cancelTimer(groupState);
+        }
+    }
+
+    @Override
+    public synchronized void resumeGroup(String groupName) {
+        AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
+        GroupState groupState = mGroupStates.get(groupName);
+        if (groupState != null && groupState.mPaused) {
+            groupState.mPaused = false;
+            checkPendingLogs(groupState.mName);
         }
     }
 
@@ -726,6 +747,11 @@ public class DefaultChannel implements Channel {
         boolean mScheduled;
 
         /**
+         * Indicates if the group is paused.
+         */
+        boolean mPaused;
+
+        /**
          * Runnable that triggers ingestion of this group data
          * and triggers itself in {@link #mBatchTimeInterval} ms.
          */
@@ -755,6 +781,7 @@ public class DefaultChannel implements Channel {
             mMaxParallelBatches = maxParallelBatches;
             mIngestion = ingestion;
             mListener = listener;
+            mPaused = false;
         }
     }
 }

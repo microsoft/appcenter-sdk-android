@@ -167,6 +167,24 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
+     * Pauses log transmission.
+     *
+     * @return future with null result to monitor when the operation completes.
+     */
+    public static AppCenterFuture<Void> pause() {
+        return getInstance().pauseInstanceAsync();
+    }
+
+    /**
+     * Resumes log transmission if paused.
+     *
+     * @return future with null result to monitor when the operation completes.
+     */
+    public static AppCenterFuture<Void> resume() {
+        return getInstance().resumeInstanceAsync();
+    }
+
+    /**
      * Sets an analytics listener.
      * <p>
      * Note: it needs to be protected for Xamarin to change it back to public in bindings.
@@ -596,6 +614,40 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized void setInstanceListener(AnalyticsListener listener) {
         mAnalyticsListener = listener;
+    }
+
+    /**
+     * Implements {@link #pause()}}.
+     */
+    private synchronized AppCenterFuture<Void> pauseInstanceAsync() {
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                mChannel.pauseGroup(ANALYTICS_GROUP);
+                future.complete(null);
+            }
+        };
+        post(runnable);
+        return future;
+    }
+
+    /**
+     * Implements {@link #resume()}}.
+     */
+    private synchronized AppCenterFuture<Void> resumeInstanceAsync() {
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                mChannel.resumeGroup(ANALYTICS_GROUP);
+                future.complete(null);
+            }
+        };
+        post(runnable);
+        return future;
     }
 
     @VisibleForTesting
