@@ -11,15 +11,14 @@ public class StorageUtil {
     private static final long FACTOR = 1024;
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance();
 
-    public static long getStorageSize(Context context) {
-        return (new DatabasePersistence(context)).getMaxStorageSize();
-    }
-
     public static long getStorageFileSize(Context context) {
         return context.getDatabasePath("com.microsoft.appcenter.persistence").length();
     }
 
     public static String getFormattedSize(long size, SizeUnit minSizeUnit) {
+        if (size < 0) {
+            return "Unknown";
+        }
         SizeUnit determinedUnit = SizeUnit.B;
         for (SizeUnit unit : SizeUnit.values()) {
             if (unit.getBase() >= minSizeUnit.getBase()) {

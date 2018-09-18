@@ -16,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
@@ -34,6 +35,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
+import com.microsoft.appcenter.sasquatch.util.StorageUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
@@ -51,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+
+    static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
     private static final String SENDER_ID = "177539951155";
 
@@ -140,6 +144,28 @@ public class MainActivity extends AppCompatActivity {
         /* Enable Firebase analytics if we enabled the setting previously. */
         if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
             Push.enableFirebaseAnalytics(this);
+        }
+
+        /* Set max storage size. */
+        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
+        if (maxStorageSize > 0) {
+            AppCenter.setStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
+                @Override
+                public void accept(Boolean aBoolean) {
+                    if (aBoolean) {
+                        long expectedMultipleMaxSize = maxStorageSize / 4096 * 4096;
+                        if (expectedMultipleMaxSize != maxStorageSize) {
+                            expectedMultipleMaxSize += 4096;
+                        }
+
+                        Toast.makeText(MainActivity.this, String.format(MainActivity.this.getString(R.string.max_storage_size_change_success), StorageUtil.getFormattedSize(expectedMultipleMaxSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
+                        sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
+                    } else {
+                        Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
+                        sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, 0).apply();
+                    }
+                }
+            });
         }
 
         /* Start App Center. */

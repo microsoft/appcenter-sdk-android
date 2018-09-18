@@ -45,6 +45,7 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTE
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MAX_STORAGE_SIZE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TARGET_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -88,12 +89,13 @@ public class SettingsActivity extends AppCompatActivity {
                     return AppCenter.isEnabled().get();
                 }
             });
-            initClickableSetting(R.string.storage_size_key, StorageUtil.getFormattedSize(StorageUtil.getStorageSize(getActivity()), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.storage_size_key, StorageUtil.getFormattedSize(MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, -1), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    input.setText(Long.toString(MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -105,15 +107,12 @@ public class SettingsActivity extends AppCompatActivity {
                                     } catch (NumberFormatException ignored) {
                                     }
                                     if (newSize > 0) {
-                                        if (AppCenter.setStorageSize(newSize).get()) {
-                                            Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.storage_size_changed_format), StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            Toast.makeText(getActivity(), R.string.storage_size_error, Toast.LENGTH_SHORT).show();
-                                        }
+                                        MainActivity.sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, newSize).apply();
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.storage_size_changed_format), StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
                                     } else {
-                                        Toast.makeText(getActivity(), R.string.storage_size_invalid, Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getActivity(), R.string.storage_size_error, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(StorageUtil.getFormattedSize(StorageUtil.getStorageSize(getActivity()), StorageUtil.SizeUnit.KB));
+                                    preference.setSummary(StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
