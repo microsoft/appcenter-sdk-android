@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -129,19 +130,26 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void onEvent(int event, @Nullable String path) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        
+                    Activity activity = getActivity();
+                    if (activity == null) {
+                        return;
+                    }
+                    activity.runOnUiThread(new Runnable() {
+
                         @Override
                         public void run() {
+                            Activity activity = getActivity();
+                            if (activity == null) {
+                                return;
+                            }
                             Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
                             if (preference != null) {
-                                preference.setSummary(Formatter.formatFileSize(getActivity(), dbFile.length()));
+                                preference.setSummary(Formatter.formatFileSize(activity, dbFile.length()));
                             }
                         }
                     });
                 }
             };
-            mDatabaseFileObserver.startWatching();
 
             /* Analytics. */
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {
@@ -542,12 +550,18 @@ public class SettingsActivity extends AppCompatActivity {
             /* Unregister preference change listener. */
             getPreferenceManager().getSharedPreferences()
                     .unregisterOnSharedPreferenceChangeListener(this);
+        }
 
-            /* Stop watching database file. */
-            if (mDatabaseFileObserver != null) {
-                mDatabaseFileObserver.startWatching();
-                mDatabaseFileObserver = null;
-            }
+        @Override
+        public void onStart() {
+            super.onStart();
+            mDatabaseFileObserver.startWatching();
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
+            mDatabaseFileObserver.stopWatching();
         }
 
         @Override
