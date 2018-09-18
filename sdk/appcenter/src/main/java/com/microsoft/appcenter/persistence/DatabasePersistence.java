@@ -137,9 +137,10 @@ public class DatabasePersistence extends Persistence {
 
     /**
      * Initializes variables.
-     *  @param context               application context.
-     * @param version               The version of current schema.
-     * @param schema                schema.
+     *
+     * @param context application context.
+     * @param version The version of current schema.
+     * @param schema  schema.
      */
     @SuppressWarnings("SameParameterValue")
     DatabasePersistence(Context context, int version, ContentValues schema) {
