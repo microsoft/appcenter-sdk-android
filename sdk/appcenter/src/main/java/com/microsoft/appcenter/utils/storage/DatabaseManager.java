@@ -89,7 +89,6 @@ public class DatabaseManager implements Closeable {
      */
     private long mIMDBAutoInc;
 
-
     /**
      * Initializes the table in the database.
      *
@@ -521,10 +520,7 @@ public class DatabaseManager implements Closeable {
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
         /* SQLite always use the next multiple of 4KB as maximum size. */
-        long expectedMultipleMaxSize = maxStorageSizeInBytes / ALLOWED_SIZE_MULTIPLE * ALLOWED_SIZE_MULTIPLE;
-        if (expectedMultipleMaxSize != maxStorageSizeInBytes) {
-            expectedMultipleMaxSize += ALLOWED_SIZE_MULTIPLE;
-        }
+        long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSizeInBytes / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
 
         /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
         if (newMaxSize != expectedMultipleMaxSize) {
