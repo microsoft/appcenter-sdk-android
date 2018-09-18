@@ -90,6 +90,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verify(service).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(service);
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
+        verify(mChannel).setMaxStorageSize(AppCenter.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));

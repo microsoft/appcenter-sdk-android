@@ -578,28 +578,16 @@ public class StorageHelper {
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
                                                          @NonNull DatabaseManager.Listener listener) {
-            return getDatabaseStorage(database, table, version, schema, 0, listener);
+            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, listener));
         }
 
         /**
-         * Get a new instance of {@code DatabaseManager}.
+         * Set maximum SQLite database size.
          *
-         * @param database   The database name.
-         * @param table      The table name.
-         * @param version    The version.
-         * @param schema     The schema of the database. If the database has more than one table,
-         *                   it should contain schemas for all tables.
-         * @param maxRecords The maximum number of records allowed in the table.
-         * @param listener   The database listener.
-         * @return database storage.
+         * @param maxStorageSizeInBytes Maximum SQLite database size.
          */
-        public static DatabaseStorage getDatabaseStorage(@NonNull String database,
-                                                         @NonNull String table,
-                                                         @IntRange(from = 1) int version,
-                                                         @NonNull ContentValues schema,
-                                                         @IntRange(from = 0) int maxRecords,
-                                                         @NonNull DatabaseManager.Listener listener) {
-            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, listener));
+        public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+            return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
         }
 
         /**
@@ -610,17 +598,6 @@ public class StorageHelper {
          */
         public long put(@NonNull ContentValues values) {
             return mDatabaseManager.put(values);
-        }
-
-        /**
-         * Update an entry in a table.
-         *
-         * @param id     The existing database identifier.
-         * @param values The value to update.
-         * @return {@code true} if the values were updated successfully, {@code false} otherwise.
-         */
-        public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
-            return mDatabaseManager.update(id, values);
         }
 
         /**
@@ -729,6 +706,16 @@ public class StorageHelper {
          */
         public long size() {
             return mDatabaseManager.getRowCount();
+        }
+
+        /**
+         * Gets the maximum size of the database.
+         *
+         * @return The maximum size of database in bytes.
+         */
+        @SuppressWarnings("unused")
+        public long getMaxSize() {
+            return mDatabaseManager.getMaxSize();
         }
 
         /**

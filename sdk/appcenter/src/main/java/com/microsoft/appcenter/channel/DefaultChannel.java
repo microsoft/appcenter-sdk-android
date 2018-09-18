@@ -157,6 +157,11 @@ public class DefaultChannel implements Channel {
         return persistence;
     }
 
+    @Override
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        return mPersistence.setMaxStorageSize(maxStorageSizeInBytes);
+    }
+
     /**
      * Call this after every async (such as database/ingestion) callback and stop processing if it returns false.
      * That means either the groupState was removed (or removed/added again),

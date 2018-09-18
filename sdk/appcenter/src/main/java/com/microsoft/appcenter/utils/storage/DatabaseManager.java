@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 /**
  * Database manager for SQLite with fail-over to in-memory.
  */
@@ -34,9 +37,16 @@ public class DatabaseManager implements Closeable {
     public static final String PRIMARY_KEY = "oid";
 
     /**
-     * Selection (WHERE clause) pattern for primary key search.
+     * Allowed multiple for maximum sizes.
      */
-    private static final String PRIMARY_KEY_SELECTION = "oid = ?";
+    @VisibleForTesting
+    static final int ALLOWED_SIZE_MULTIPLE = 4096;
+
+    /**
+     * Maximum number of entries of in memory database.
+     */
+    @VisibleForTesting
+    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Application context instance.
@@ -57,11 +67,6 @@ public class DatabaseManager implements Closeable {
      * Schema, e.g. a specimen with dummy values to have keys and their corresponding value's type.
      */
     private final ContentValues mSchema;
-
-    /**
-     * Maximum number of records allowed in the table.
-     */
-    private final int mMaxNumberOfRecords;
 
     /**
      * Listener instance.
@@ -94,30 +99,12 @@ public class DatabaseManager implements Closeable {
      * @param schema   The schema.
      * @param listener The error listener.
      */
-    @SuppressWarnings("SameParameterValue")
     DatabaseManager(Context context, String database, String table, int version,
                     ContentValues schema, Listener listener) {
-        this(context, database, table, version, schema, 0, listener);
-    }
-
-    /**
-     * Initializes the table in the database.
-     *
-     * @param context    The application context.
-     * @param database   The database name.
-     * @param table      The table name.
-     * @param version    The version of current schema.
-     * @param schema     The schema.
-     * @param maxRecords The maximum number of records allowed in the table. {@code 0} for no preset limit.
-     * @param listener   The error listener.
-     */
-    DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, final int maxRecords, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
         mSchema = schema;
-        mMaxNumberOfRecords = maxRecords;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
@@ -197,28 +184,39 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Stores the entry to the table.
+     * Stores the entry to the table. If the table is full, the oldest logs are discarded until the
+     * new one can fit. If the log is larger than the max table size, database will be cleared and
+     * the log is not inserted.
      *
      * @param values The entry to be stored.
-     * @return A database identifier
+     * @return If a log was inserted, the database identifier. Otherwise -1.
      */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values) {
 
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
+                while (true) {
+                    try {
 
-                /* Insert data. */
-                long id = getDatabase().insertOrThrow(mTable, null, values);
+                        /* Insert data. */
+                        return getDatabase().insertOrThrow(mTable, null, values);
+                    } catch (SQLiteFullException e) {
 
-                /* Purge oldest entry if it hits the limit. */
-                if (mMaxNumberOfRecords < getRowCount() && mMaxNumberOfRecords > 0) {
-                    Cursor cursor = getCursor(null, null, true);
-                    cursor.moveToNext();
-                    delete(cursor.getLong(0));
-                    cursor.close();
+                        /* Delete the oldest log. */
+                        Cursor cursor = getCursor(null, null, true);
+                        try {
+                            if (cursor.moveToNext()) {
+                                delete(cursor.getLong(0));
+                            } else {
+                                return -1;
+                            }
+                        } finally {
+                            cursor.close();
+                        }
+                    }
                 }
-                return id;
             } catch (RuntimeException e) {
                 switchToInMemory("put", e);
             }
@@ -228,33 +226,6 @@ public class DatabaseManager implements Closeable {
         values.put(PRIMARY_KEY, mIMDBAutoInc);
         mIMDB.put(mIMDBAutoInc, values);
         return mIMDBAutoInc++;
-    }
-
-    /**
-     * Updates the entry for the identifier.
-     *
-     * @param id     The existing database identifier.
-     * @param values The entry to be updated.
-     * @return true if the values updated successfully, false otherwise.
-     */
-    public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                return 0 < getDatabase().update(mTable, values, PRIMARY_KEY_SELECTION, new String[]{String.valueOf(id)});
-            } catch (RuntimeException e) {
-                switchToInMemory("update", e);
-            }
-        }
-
-        /* Updates the values in in-memory database if the identifier exists there. */
-        ContentValues existValues = mIMDB.get(id);
-        if (existValues == null) {
-            return false;
-        }
-        existValues.putAll(values);
-        return true;
     }
 
     /**
@@ -514,9 +485,10 @@ public class DatabaseManager implements Closeable {
 
         /* Create an in-memory database. */
         mIMDB = new LinkedHashMap<Long, ContentValues>() {
+
             @Override
             protected boolean removeEldestEntry(Entry<Long, ContentValues> eldest) {
-                return mMaxNumberOfRecords < size() && mMaxNumberOfRecords > 0;
+                return IN_MEMORY_MAX_SIZE < size();
             }
         };
 
@@ -535,6 +507,42 @@ public class DatabaseManager implements Closeable {
     void setSQLiteOpenHelper(@NonNull SQLiteOpenHelper helper) {
         mSQLiteOpenHelper.close();
         mSQLiteOpenHelper = helper;
+    }
+
+    /**
+     * Set maximum SQLite database size.
+     *
+     * @param maxStorageSizeInBytes Maximum SQLite database size.
+     * @return true if database size was set, otherwise false.
+     */
+    boolean setMaxSize(long maxStorageSizeInBytes) {
+        SQLiteDatabase db = getDatabase();
+        long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
+
+        /* SQLite always use the next multiple of 4KB as maximum size. */
+        long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSizeInBytes / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+
+        /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
+        if (newMaxSize != expectedMultipleMaxSize) {
+            AppCenterLog.error(LOG_TAG, "Could not change database size to " + maxStorageSizeInBytes + " bytes, current max size is " + newMaxSize + " bytes.");
+            return false;
+        }
+        if (maxStorageSizeInBytes != newMaxSize) {
+            AppCenterLog.warn(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
+                    maxStorageSizeInBytes + " actualMaxSize=" + newMaxSize);
+        } else {
+            AppCenterLog.info(LOG_TAG, "Database max size set to " + newMaxSize + " bytes.");
+        }
+        return true;
+    }
+
+    /**
+     * Gets the maximum size of the database.
+     *
+     * @return The maximum size of database in bytes.
+     */
+    public long getMaxSize() {
+        return getDatabase().getMaximumSize();
     }
 
     /**
