@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDiskIOException;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
@@ -23,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -293,5 +296,34 @@ public class DatabaseManagerTest {
 
         /* Verify the oldest item was evicted. */
         assertNull(databaseManager.get(valueToBeEvictedId));
+    }
+
+    @Test
+    public void failsToDeleteLogDuringPutWhenFull() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
+        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
+
+        /* Mock the select cursor we are using to find logs to evict to fail. */
+        mockStatic(SQLiteUtils.class);
+        Cursor cursor = mock(Cursor.class);
+        SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
+        when(cursor.moveToNext()).thenThrow(fatalException);
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+
+        /* Simulate that database is full and that deletes fail because of the cursor. */
+        when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* When we put a log, it will fail to purge and switch to in memory database. */
+        databaseManager.put(mock(ContentValues.class));
+        verify(databaseManager).switchToInMemory("put", fatalException);
     }
 }
