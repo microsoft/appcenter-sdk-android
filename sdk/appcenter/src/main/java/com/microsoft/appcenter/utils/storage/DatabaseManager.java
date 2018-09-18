@@ -515,7 +515,7 @@ public class DatabaseManager implements Closeable {
      * @param maxStorageSizeInBytes Maximum SQLite database size.
      * @return true if database size was set, otherwise false.
      */
-    boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+    boolean setMaxSize(long maxStorageSizeInBytes) {
         SQLiteDatabase db = getDatabase();
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
