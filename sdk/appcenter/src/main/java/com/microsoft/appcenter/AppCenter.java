@@ -510,8 +510,8 @@ public class AppCenter {
             setMaxStorageSizeFuture.complete(false);
             return setMaxStorageSizeFuture;
         }
-        if (storageSizeInBytes < MINIMUM_STORAGE_SIZE) {
-            AppCenterLog.error(LOG_TAG, "Storage size must be greater than " + MINIMUM_STORAGE_SIZE + " bytes.");
+        if (storageSizeInBytes <= MINIMUM_STORAGE_SIZE) {
+            AppCenterLog.error(LOG_TAG, "Storage size must be at least " + MINIMUM_STORAGE_SIZE + " bytes.");
             setMaxStorageSizeFuture.complete(false);
             return setMaxStorageSizeFuture;
         }
