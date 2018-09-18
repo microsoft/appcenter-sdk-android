@@ -1,8 +1,6 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +8,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -17,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.util.Patterns;
 import android.widget.BaseAdapter;
@@ -33,12 +33,13 @@ import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
-import com.microsoft.appcenter.sasquatch.util.StorageUtil;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
+import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Locale;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
@@ -73,6 +74,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
+        private FileObserver mDatabaseFileObserver;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -89,13 +92,13 @@ public class SettingsActivity extends AppCompatActivity {
                     return AppCenter.isEnabled().get();
                 }
             });
-            initClickableSetting(R.string.storage_size_key, StorageUtil.getFormattedSize(MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, -1), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.storage_size_key, Formatter.formatFileSize(getActivity(), MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                    input.setText(Long.toString(MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)));
+                    input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)));
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
@@ -108,11 +111,11 @@ public class SettingsActivity extends AppCompatActivity {
                                     }
                                     if (newSize > 0) {
                                         MainActivity.sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, newSize).apply();
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.storage_size_changed_format), StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.storage_size_changed_format), Formatter.formatFileSize(getActivity(), newSize)), Toast.LENGTH_SHORT).show();
                                     } else {
                                         Toast.makeText(getActivity(), R.string.storage_size_error, Toast.LENGTH_SHORT).show();
                                     }
-                                    preference.setSummary(StorageUtil.getFormattedSize(newSize, StorageUtil.SizeUnit.KB));
+                                    preference.setSummary(Formatter.formatFileSize(getActivity(), newSize));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -120,13 +123,19 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.storage_file_size_key, StorageUtil.getFormattedSize(StorageUtil.getStorageFileSize(getActivity()), StorageUtil.SizeUnit.KB), new Preference.OnPreferenceClickListener() {
+            final File dbFile = getActivity().getDatabasePath("com.microsoft.appcenter.persistence");
+            initDisplayOnlySetting(R.string.storage_file_size_key, Formatter.formatFileSize(getActivity(), dbFile.length()));
+            mDatabaseFileObserver = new FileObserver(dbFile.getAbsolutePath(), FileObserver.MODIFY | FileObserver.CLOSE_WRITE) {
+
                 @Override
-                public boolean onPreferenceClick(final Preference preference) {
-                    preference.setSummary(StorageUtil.getFormattedSize(StorageUtil.getStorageFileSize(getActivity()), StorageUtil.SizeUnit.KB));
-                    return true;
+                public void onEvent(int event, @Nullable String path) {
+                    Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
+                    if (preference != null) {
+                        preference.setSummary(Formatter.formatFileSize(getActivity(), dbFile.length()));
+                    }
                 }
-            });
+            };
+            mDatabaseFileObserver.startWatching();
 
             /* Analytics. */
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {
@@ -527,6 +536,12 @@ public class SettingsActivity extends AppCompatActivity {
             /* Unregister preference change listener. */
             getPreferenceManager().getSharedPreferences()
                     .unregisterOnSharedPreferenceChangeListener(this);
+
+            /* Stop watching database file. */
+            if (mDatabaseFileObserver != null) {
+                mDatabaseFileObserver.startWatching();
+                mDatabaseFileObserver = null;
+            }
         }
 
         @Override

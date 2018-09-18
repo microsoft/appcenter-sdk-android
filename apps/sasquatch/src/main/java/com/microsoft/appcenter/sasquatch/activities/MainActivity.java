@@ -11,6 +11,7 @@ import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,7 +36,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
-import com.microsoft.appcenter.sasquatch.util.StorageUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set max storage size. */
         final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
         if (maxStorageSize > 0) {
-            AppCenter.setStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
+            AppCenter.setMaxStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
                 @Override
                 public void accept(Boolean aBoolean) {
                     if (aBoolean) {
@@ -158,7 +158,9 @@ public class MainActivity extends AppCompatActivity {
                             expectedMultipleMaxSize += 4096;
                         }
 
-                        Toast.makeText(MainActivity.this, String.format(MainActivity.this.getString(R.string.max_storage_size_change_success), StorageUtil.getFormattedSize(expectedMultipleMaxSize, StorageUtil.SizeUnit.KB)), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, String.format(
+                                MainActivity.this.getString(R.string.max_storage_size_change_success),
+                                Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
                         sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
                     } else {
                         Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
