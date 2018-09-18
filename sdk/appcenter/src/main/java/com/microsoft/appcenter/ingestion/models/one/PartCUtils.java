@@ -41,7 +41,7 @@ public class PartCUtils {
                 /* Validate value not null. */
                 String value = entry.getValue();
                 if (value == null) {
-                    AppCenterLog.warn(LOG_TAG, "Property value cannot be null.");
+                    AppCenterLog.warn(LOG_TAG, "Value of property with key '" + key + "' cannot be null.");
                     continue;
                 }
 
