@@ -352,7 +352,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Check if Analytics group is paused. */
         verify(channel).pauseGroup(eq(analytics.getGroupName()));
 
-        /* Now try to use all methods. Should work. */
+        /* Send logs to verify the logs are enqueued after pause. */
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
@@ -363,7 +363,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Check if Analytics group is resumed. */
         verify(channel).resumeGroup(eq(analytics.getGroupName()));
 
-        /* Now try to use all methods. Should work. */
+        /* Send logs to verify the logs are enqueued after resume. */
         Analytics.trackEvent("test");
         Analytics.trackPage("test");
         verify(channel, times(4)).enqueue(any(Log.class), eq(analytics.getGroupName()));
