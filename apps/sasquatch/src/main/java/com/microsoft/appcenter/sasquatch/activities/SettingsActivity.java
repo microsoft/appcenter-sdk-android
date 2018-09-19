@@ -103,9 +103,10 @@ public class SettingsActivity extends AppCompatActivity {
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    long newSize = -1;
+                                    long newSize = 0;
                                     try {
                                         newSize = Long.parseLong(input.getText().toString());
                                     } catch (NumberFormatException ignored) {
@@ -124,30 +125,14 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            final File dbFile = getActivity().getDatabasePath("com.microsoft.appcenter.persistence");
-            initDisplayOnlySetting(R.string.storage_file_size_key, Formatter.formatFileSize(getActivity(), dbFile.length()));
+            final String DATABASE_NAME = "com.microsoft.appcenter.persistence";
+            final File dbFile = getActivity().getDatabasePath(DATABASE_NAME);
+            initClickableSetting(R.string.storage_file_size_key, Formatter.formatFileSize(getActivity(), dbFile.length()), null);
             mDatabaseFileObserver = new FileObserver(dbFile.getAbsolutePath(), FileObserver.MODIFY | FileObserver.CLOSE_WRITE) {
 
                 @Override
                 public void onEvent(int event, @Nullable String path) {
-                    Activity activity = getActivity();
-                    if (activity == null) {
-                        return;
-                    }
-                    activity.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            Activity activity = getActivity();
-                            if (activity == null) {
-                                return;
-                            }
-                            Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
-                            if (preference != null) {
-                                preference.setSummary(Formatter.formatFileSize(activity, dbFile.length()));
-                            }
-                        }
-                    });
+                    onDatabaseFileChanged(dbFile);
                 }
             };
 
@@ -191,6 +176,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             initChangeableSetting(R.string.appcenter_crashes_text_attachment_key, getCrashesTextAttachmentSummary(), new Preference.OnPreferenceChangeListener() {
+
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     MainActivity.setTextAttachment((String) newValue);
@@ -199,6 +185,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             initClickableSetting(R.string.appcenter_crashes_file_attachment_key, getCrashesFileAttachmentSummary(), new Preference.OnPreferenceClickListener() {
+
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     Intent intent;
@@ -350,6 +337,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.install_id_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
@@ -593,6 +581,27 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
 
+        private void onDatabaseFileChanged(final File dbFile) {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    Activity activity = getActivity();
+                    if (activity == null) {
+                        return;
+                    }
+                    Preference preference = getPreferenceManager().findPreference(getString(R.string.storage_file_size_key));
+                    if (preference != null) {
+                        preference.setSummary(Formatter.formatFileSize(activity, dbFile.length()));
+                    }
+                }
+            });
+        }
+
         private void initCheckBoxSetting(int key, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
@@ -633,17 +642,6 @@ public class SettingsActivity extends AppCompatActivity {
                 return;
             }
             preference.setOnPreferenceClickListener(clickListener);
-            if (summary != null) {
-                preference.setSummary(summary);
-            }
-        }
-
-        private void initDisplayOnlySetting(int key, String summary) {
-            Preference preference = getPreferenceManager().findPreference(getString(key));
-            if (preference == null) {
-                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
-                return;
-            }
             if (summary != null) {
                 preference.setSummary(summary);
             }

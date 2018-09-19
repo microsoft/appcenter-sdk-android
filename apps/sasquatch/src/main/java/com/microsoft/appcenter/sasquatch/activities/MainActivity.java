@@ -37,7 +37,9 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -147,28 +149,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Set max storage size. */
-        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
-        if (maxStorageSize > 0) {
-            AppCenter.setMaxStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
-                @Override
-                public void accept(Boolean aBoolean) {
-                    if (aBoolean) {
-                        long expectedMultipleMaxSize = maxStorageSize / 4096 * 4096;
-                        if (expectedMultipleMaxSize != maxStorageSize) {
-                            expectedMultipleMaxSize += 4096;
-                        }
-
-                        Toast.makeText(MainActivity.this, String.format(
-                                MainActivity.this.getString(R.string.max_storage_size_change_success),
-                                Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
-                        sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
-                    } else {
-                        Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
-                        sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, 0).apply();
-                    }
-                }
-            });
-        }
+        setMaxStorageSize();
 
         /* Start App Center. */
         String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
@@ -225,6 +206,44 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     private void setSenderId() {
         Push.setSenderId(SENDER_ID);
+    }
+
+    private void setMaxStorageSize() {
+        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
+        if (maxStorageSize <= 0) {
+            return;
+        }
+        // TODO remove reflection once new APIs available in jCenter.
+        // AppCenter.setMaxStorageSize(maxStorageSize)
+        AppCenterFuture<Boolean> future;
+        {
+            try {
+                Method method = AppCenter.class.getMethod("setMaxStorageSize", long.class);
+                future = (AppCenterFuture<Boolean>) method.invoke(null, maxStorageSize);
+            } catch (Exception ignored) {
+                return;
+            }
+        }
+        future.thenAccept(new AppCenterConsumer<Boolean>() {
+
+            @Override
+            public void accept(Boolean succeeded) {
+                if (succeeded) {
+
+                    /* SQLite always use the next multiple of 4KB as maximum size. */
+                    final int ALLOWED_SIZE_MULTIPLE = 4096;
+                    long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSize / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+
+                    Toast.makeText(MainActivity.this, String.format(
+                            MainActivity.this.getString(R.string.max_storage_size_change_success),
+                            Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
+                } else {
+                    Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, 0).apply();
+                }
+            }
+        });
     }
 
     @Override
