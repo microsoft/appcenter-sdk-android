@@ -333,6 +333,43 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void notSendingLogsOnPause() {
+
+        /* Before start it does not work to change state, it's disabled. */
+        Analytics analytics = Analytics.getInstance();
+
+        /* Start. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addListener(isA(SessionTracker.class));
+        verify(channel).addListener(isA(AnalyticsValidator.class));
+
+        /* Pause Analytics. */
+        Analytics.pause().get();
+
+        /* Check if Analytics group is paused. */
+        verify(channel).pauseGroup(eq(analytics.getGroupName()));
+
+        /* Now try to use all methods. Should work. */
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
+        verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Resume Analytics. */
+        Analytics.resume().get();
+
+        /* Check if Analytics group is resumed. */
+        verify(channel).resumeGroup(eq(analytics.getGroupName()));
+
+        /* Now try to use all methods. Should work. */
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
+        verify(channel, times(4)).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
     public void startSessionAfterUserApproval() {
 
         /*

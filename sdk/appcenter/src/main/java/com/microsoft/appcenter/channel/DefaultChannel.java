@@ -379,7 +379,8 @@ public class DefaultChannel implements Channel {
         }
     }
 
-    private void cancelTimer(GroupState groupState) {
+    @VisibleForTesting
+    void cancelTimer(GroupState groupState) {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
@@ -669,7 +670,8 @@ public class DefaultChannel implements Channel {
      *
      * @param groupName the group name.
      */
-    private synchronized void checkPendingLogs(@NonNull String groupName) {
+    @VisibleForTesting
+    synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState.mPaused) {
             AppCenterLog.debug(LOG_TAG, groupName + " is paused. Skip checking pending logs.");
@@ -683,6 +685,11 @@ public class DefaultChannel implements Channel {
             groupState.mScheduled = true;
             mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
+    }
+
+    @VisibleForTesting
+    GroupState getGroupState(String groupName) {
+        return mGroupStates.get(groupName);
     }
 
     @Override
@@ -703,7 +710,8 @@ public class DefaultChannel implements Channel {
     /**
      * State for a specific log group.
      */
-    private class GroupState {
+    @VisibleForTesting
+    class GroupState {
 
         /**
          * Group name
