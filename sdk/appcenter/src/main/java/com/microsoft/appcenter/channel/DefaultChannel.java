@@ -671,6 +671,10 @@ public class DefaultChannel implements Channel {
      */
     private synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
+        if (groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, groupName + " is paused. Skip checking pending logs.");
+            return;
+        }
         long pendingLogCount = groupState.mPendingLogCount;
         AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
