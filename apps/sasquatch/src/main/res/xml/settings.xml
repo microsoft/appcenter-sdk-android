@@ -3,6 +3,12 @@
     <CheckBoxPreference
         android:key="@string/appcenter_state_key"
         android:title="@string/appcenter_state_title" />
+    <Preference
+        android:key="@string/storage_size_key"
+        android:title="@string/storage_size_title" />
+    <Preference
+        android:key="@string/storage_file_size_key"
+        android:title="@string/storage_file_size_title" />
 
     <PreferenceCategory
         android:key="@string/analytics_key"

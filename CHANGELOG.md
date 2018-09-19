@@ -4,6 +4,7 @@
 
 ### AppCenter
 
+* **[Feature]** Added a `setMaxStorageSize` API which allows setting a maximum size limit on the local SQLite storage. Previously, up to 300 logs were stored of any size. The default value is 10MB.
 * **[Security]** To enforce TLS 1.2 on all HTTPS connections the SDK makes, we are dropping support for API level 15 (which supports only TLS 1.0), the minimum SDK version thus becomes 16. Previous versions of the SDK were already using TLS 1.2 on API level 16+.
 
 ### AppCenterAnalytics

@@ -56,8 +56,11 @@ public class PartCUtils {
                 int lastIndex = keys.length - 1;
                 JSONObject destProperties = data.getProperties();
                 for (int i = 0; i < lastIndex; i++) {
-                    JSONObject subObject = new JSONObject();
-                    destProperties.put(keys[i], subObject);
+                    JSONObject subObject = destProperties.optJSONObject(keys[i]);
+                    if (subObject == null) {
+                        subObject = new JSONObject();
+                        destProperties.put(keys[i], subObject);
+                    }
                     destProperties = subObject;
                 }
                 destProperties.put(keys[lastIndex], value);

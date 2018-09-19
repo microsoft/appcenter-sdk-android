@@ -60,13 +60,17 @@ public class PartCUtilsAndroidTest {
     public void deepNestingProperty() throws JSONException {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
-        properties.put("a.b.c", "v");
+        properties.put("a.b", "1");
+        properties.put("a.c.d", "2");
+        properties.put("a.c.e", "3");
         PartCUtils.addPartCFromLog(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         JSONObject a = log.getData().getProperties().optJSONObject("a");
         assertNotNull(a);
-        JSONObject b = a.getJSONObject("b");
-        assertNotNull(b);
-        assertEquals("v", b.optString("c", null));
+        assertEquals("1", a.optString("b", null));
+        JSONObject c = a.optJSONObject("c");
+        assertNotNull(c);
+        assertEquals("2", c.optString("d", null));
+        assertEquals("3", c.optString("e", null));
     }
 }
