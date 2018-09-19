@@ -42,6 +42,13 @@
         android:onClick="toggleTransmissionEnabled"
         android:visibility="gone" />
 
+    <CheckBox
+        android:id="@+id/device_id_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toggleDeviceIdEnabled"
+        android:visibility="gone" />
+
     <include layout="@layout/activity_log_bottom" />
 
 </LinearLayout>

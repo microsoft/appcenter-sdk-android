@@ -92,5 +92,8 @@ public class PartAUtils {
                 Math.abs(device.getTimeZoneOffset() / 60),
                 Math.abs(device.getTimeZoneOffset() % 60));
         dest.getExt().getLoc().setTz(timezoneOffset);
+
+        /* Add device extension. */
+        dest.getExt().setDevice(new DeviceExtension());
     }
 }

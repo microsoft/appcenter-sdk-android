@@ -42,38 +42,18 @@ public class PartCUtilsAndroidTest {
         assertEquals("", log.getData().getProperties().getString(""));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void nullKey() {
+    @Test()
+    public void filterInvalidProperties() throws JSONException {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
+        properties.put("a", "b");
         properties.put(null, "c");
-        PartCUtils.addPartCFromLog(properties, log);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void nullValue() {
-        MockCommonSchemaLog log = new MockCommonSchemaLog();
-        Map<String, String> properties = new HashMap<>();
         properties.put("d", null);
-        PartCUtils.addPartCFromLog(properties, log);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void baseDataForbidden() {
-        MockCommonSchemaLog log = new MockCommonSchemaLog();
-        Map<String, String> properties = new HashMap<>();
-        properties.put("a", "b");
         properties.put("baseData", "{}");
-        PartCUtils.addPartCFromLog(properties, log);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void baseDataTypeForbidden() {
-        MockCommonSchemaLog log = new MockCommonSchemaLog();
-        Map<String, String> properties = new HashMap<>();
-        properties.put("a", "b");
         properties.put("baseDataType", "custom");
         PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertEquals("b", log.getData().getProperties().getString("a"));
     }
 
     @Test

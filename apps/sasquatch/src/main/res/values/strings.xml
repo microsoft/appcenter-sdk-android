@@ -40,6 +40,8 @@
     <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>
     <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
     <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>
+    <string name="device_id_enabled" tools:ignore="MissingTranslation">Device ID is enabled.</string>
+    <string name="device_id_disabled" tools:ignore="MissingTranslation">Device ID is disabled.</string>
     <string name="configure_target_properties" tools:ignore="MissingTranslation">Configure target properties</string>
     <string name="delete">Delete</string>
     <string name="cs_properties_title" tools:ignore="MissingTranslation">Common Schema Properties</string>
