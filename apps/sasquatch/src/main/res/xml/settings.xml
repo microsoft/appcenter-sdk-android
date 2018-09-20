@@ -24,9 +24,6 @@
         <CheckBoxPreference
             android:key="@string/appcenter_auto_page_tracking_key"
             android:title="@string/appcenter_auto_page_tracking_title" />
-        <CheckBoxPreference
-            android:key="@string/appcenter_auto_page_tracking_key"
-            android:title="@string/appcenter_auto_page_tracking_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
