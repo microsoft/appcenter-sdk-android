@@ -21,6 +21,11 @@
     <string name="appcenter_analytics_state_summary_enabled" tools:ignore="MissingTranslation">Analytics is enabled</string>
     <string name="appcenter_analytics_state_summary_disabled" tools:ignore="MissingTranslation">Analytics is disabled</string>
 
+    <string name="appcenter_analytics_pause_key" tools:ignore="MissingTranslation">appcenter_analytics_pause_resume_key</string>
+    <string name="appcenter_analytics_pause_title" tools:ignore="MissingTranslation">Analytics paused state</string>
+    <string name="appcenter_analytics_pause_summary_paused" tools:ignore="MissingTranslation">Analytics is paused</string>
+    <string name="appcenter_analytics_pause_summary_resumed" tools:ignore="MissingTranslation">Analytics is resumed</string>
+
     <string name="appcenter_auto_page_tracking_key" tools:ignore="MissingTranslation">appcenter_auto_page_tracking_key</string>
     <string name="appcenter_auto_page_tracking_title" tools:ignore="MissingTranslation">Analytics automatic page tracking</string>
     <string name="appcenter_auto_page_tracking_enabled" tools:ignore="MissingTranslation">Automatic page tracking is enabled</string>
