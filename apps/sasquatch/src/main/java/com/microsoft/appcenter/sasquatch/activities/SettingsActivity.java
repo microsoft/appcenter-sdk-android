@@ -89,9 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     AppCenter.setEnabled(enabled);
-                    if (enabled) {
-                        sAnalyticsPaused = false;
-                    }
+                    sAnalyticsPaused = false;
                 }
 
                 @Override
@@ -148,9 +146,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setEnabled(enabled);
-                    if (enabled) {
-                        sAnalyticsPaused = false;
-                    }
+                    sAnalyticsPaused = false;
                 }
 
                 @Override
