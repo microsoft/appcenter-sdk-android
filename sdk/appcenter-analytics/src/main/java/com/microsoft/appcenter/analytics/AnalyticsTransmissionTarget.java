@@ -50,11 +50,6 @@ public class AnalyticsTransmissionTarget {
     private final Map<String, AnalyticsTransmissionTarget> mChildrenTargets = new HashMap<>();
 
     /**
-     * Channel used for Property Configurator.
-     */
-    private final Channel mChannel;
-
-    /**
      * Property configurator used to override Common Schema Part A properties.
      */
     private final PropertyConfigurator mPropertyConfigurator;
@@ -62,23 +57,30 @@ public class AnalyticsTransmissionTarget {
     /**
      * App context.
      */
-    final Context mContext;
+    Context mContext;
+
+    /**
+     * Channel used for Property Configurator.
+     */
+    private Channel mChannel;
 
     /**
      * Create a new instance.
      *
      * @param transmissionTargetToken The token for this transmission target.
      * @param parentTarget            Parent transmission target.
-     * @param context                 The base context.
-     * @param channel                 The channel for this transmission target.
      */
-    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget, Context context, Channel channel) {
+    AnalyticsTransmissionTarget(@NonNull String transmissionTargetToken, final AnalyticsTransmissionTarget parentTarget) {
         mTransmissionTargetToken = transmissionTargetToken;
         mParentTarget = parentTarget;
-        mChannel = channel;
-        mContext = context;
         mPropertyConfigurator = new PropertyConfigurator(this);
-        mChannel.addListener(mPropertyConfigurator);
+    }
+
+    @WorkerThread
+    void initInBackground(Context context, Channel channel) {
+        mContext = context;
+        mChannel = channel;
+        channel.addListener(mPropertyConfigurator);
     }
 
     /**
@@ -166,8 +168,16 @@ public class AnalyticsTransmissionTarget {
         /* Reuse instance if a child with the same token has already been created. */
         AnalyticsTransmissionTarget childTarget = mChildrenTargets.get(transmissionTargetToken);
         if (childTarget == null) {
-            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this, mContext, mChannel);
+            childTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, this);
             mChildrenTargets.put(transmissionTargetToken, childTarget);
+            final AnalyticsTransmissionTarget finalChildTarget = childTarget;
+            Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+                @Override
+                public void run() {
+                    finalChildTarget.initInBackground(mContext, mChannel);
+                }
+            });
         }
         return childTarget;
     }

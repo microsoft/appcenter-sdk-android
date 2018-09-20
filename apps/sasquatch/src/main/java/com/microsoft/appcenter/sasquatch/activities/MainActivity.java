@@ -213,12 +213,15 @@ public class MainActivity extends AppCompatActivity {
         if (maxStorageSize <= 0) {
             return;
         }
+
         // TODO remove reflection once new APIs available in jCenter.
         // AppCenter.setMaxStorageSize(maxStorageSize)
         AppCenterFuture<Boolean> future;
         {
             try {
                 Method method = AppCenter.class.getMethod("setMaxStorageSize", long.class);
+
+                //noinspection unchecked
                 future = (AppCenterFuture<Boolean>) method.invoke(null, maxStorageSize);
             } catch (Exception ignored) {
                 return;
@@ -232,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
                     /* SQLite always use the next multiple of 4KB as maximum size. */
                     final int ALLOWED_SIZE_MULTIPLE = 4096;
-                    long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSize / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
 
                     Toast.makeText(MainActivity.this, String.format(
                             MainActivity.this.getString(R.string.max_storage_size_change_success),

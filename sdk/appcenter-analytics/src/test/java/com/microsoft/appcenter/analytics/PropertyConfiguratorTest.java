@@ -7,15 +7,12 @@ import android.provider.Settings.Secure;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -98,6 +95,32 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void collectDeviceIdSavedWhenDisabled() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setDevice(new DeviceExtension());
+
+        /* Mock context. */
+        mockStatic(Secure.class);
+        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+
+        /* Disable Analytics. */
+        Analytics.setEnabled(false).get();
+
+        /* Get property configurator and collect device ID. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.collectDeviceId();
+        log.addTransmissionTarget("test");
+
+        /* Enable and simulate log preparing. */
+        Analytics.setEnabled(true).get();
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert device ID is collected. */
+        assertEquals("a:mockDeviceId", log.getExt().getDevice().getLocalId());
+    }
+
+    @Test
     public void commonSchemaPropertiesNotSetWhenDisabled() {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
@@ -116,6 +139,13 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
+
+        /* The properties are not applied but are saved, if we enable now we can see the values. */
+        target.setEnabledAsync(true).get();
+        target.getPropertyConfigurator().onPreparingLog(log, "groupName");
+        assertEquals("appVersion", log.getExt().getApp().getVer());
+        assertEquals("appName", log.getExt().getApp().getName());
+        assertEquals("appLocale", log.getExt().getApp().getLocale());
     }
 
     @Test
