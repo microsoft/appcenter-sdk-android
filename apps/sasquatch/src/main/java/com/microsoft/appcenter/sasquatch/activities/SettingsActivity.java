@@ -56,6 +56,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static final int FILE_ATTACHMENT_DIALOG_ID = 1;
 
+    private static final int DEFAULT_MAX_STORAGE_SIZE = 10 * 1024 * 1024;
+
     private static boolean sRumStarted;
 
     private static boolean sEventFilterStarted;
@@ -93,14 +95,15 @@ public class SettingsActivity extends AppCompatActivity {
                     return AppCenter.isEnabled().get();
                 }
             });
-            initClickableSetting(R.string.storage_size_key, Formatter.formatFileSize(getActivity(), MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)), new Preference.OnPreferenceClickListener() {
+            initClickableSetting(R.string.storage_size_key, Formatter.formatFileSize(getActivity(), MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, DEFAULT_MAX_STORAGE_SIZE)), new Preference.OnPreferenceClickListener() {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
                     final EditText input = new EditText(getActivity());
                     input.setInputType(InputType.TYPE_CLASS_NUMBER);
-                    input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0)));
-
+                    input.setHint(R.string.size_in_bytes);
+                    input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, DEFAULT_MAX_STORAGE_SIZE)));
+                    input.setSelection(input.getText().length());
                     new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
 
