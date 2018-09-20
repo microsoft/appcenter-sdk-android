@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -233,6 +234,26 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
+    public synchronized void pauseGroup(String groupName) {
+        GroupState groupState = mGroupStates.get(groupName);
+        if (groupState != null && !groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
+            groupState.mPaused = true;
+            cancelTimer(groupState);
+        }
+    }
+
+    @Override
+    public synchronized void resumeGroup(String groupName) {
+        GroupState groupState = mGroupStates.get(groupName);
+        if (groupState != null && groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
+            groupState.mPaused = false;
+            checkPendingLogs(groupState.mName);
+        }
+    }
+
+    @Override
     public synchronized boolean isEnabled() {
         return mEnabled;
     }
@@ -358,7 +379,8 @@ public class DefaultChannel implements Channel {
         }
     }
 
-    private void cancelTimer(GroupState groupState) {
+    @VisibleForTesting
+    void cancelTimer(GroupState groupState) {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
@@ -648,8 +670,13 @@ public class DefaultChannel implements Channel {
      *
      * @param groupName the group name.
      */
-    private synchronized void checkPendingLogs(@NonNull String groupName) {
+    @VisibleForTesting
+    synchronized void checkPendingLogs(@NonNull String groupName) {
         GroupState groupState = mGroupStates.get(groupName);
+        if (groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, groupName + " is paused. Skip checking pending logs.");
+            return;
+        }
         long pendingLogCount = groupState.mPendingLogCount;
         AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
@@ -658,6 +685,11 @@ public class DefaultChannel implements Channel {
             groupState.mScheduled = true;
             mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
+    }
+
+    @VisibleForTesting
+    GroupState getGroupState(String groupName) {
+        return mGroupStates.get(groupName);
     }
 
     @Override
@@ -678,7 +710,8 @@ public class DefaultChannel implements Channel {
     /**
      * State for a specific log group.
      */
-    private class GroupState {
+    @VisibleForTesting
+    class GroupState {
 
         /**
          * Group name
@@ -724,6 +757,11 @@ public class DefaultChannel implements Channel {
          * Is timer scheduled.
          */
         boolean mScheduled;
+
+        /**
+         * Indicates if the group is paused.
+         */
+        boolean mPaused;
 
         /**
          * Runnable that triggers ingestion of this group data

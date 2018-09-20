@@ -46,6 +46,20 @@ public interface Channel {
     void removeGroup(String groupName);
 
     /**
+     * Pauses the given group.
+     *
+     * @param groupName the name of a group.
+     */
+    void pauseGroup(String groupName);
+
+    /**
+     * Resumes transmission for the given group.
+     *
+     * @param groupName the name of a group.
+     */
+    void resumeGroup(String groupName);
+
+    /**
      * Add Log to queue to be persisted and sent.
      *
      * @param log       the Log to be enqueued.

@@ -9,6 +9,7 @@
 
 ### AppCenterAnalytics
 
+* **[Feature]** Added `pause`/`resume` APIs which pause/resume sending Analytics logs to App Center.
 * **[Feature]** Preparation work for a future change in transmission protocol and endpoint for Analytics data. There is no impact on your current workflow when using App Center.
 
 ## Version 1.8.0
