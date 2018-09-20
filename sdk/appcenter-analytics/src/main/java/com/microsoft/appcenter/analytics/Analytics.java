@@ -657,6 +657,11 @@ public class Analytics extends AbstractAppCenterService {
         postAsyncGetter(runnable, future, valueIfDisabledOrNotStarted);
     }
 
+    /**
+     * Post a command that will run on background even if SDK disabled (needs to be configured though).
+     *
+     * @param runnable command.
+     */
     void postCommandEvenIfDisabled(Runnable runnable) {
         post(runnable, runnable, runnable);
     }
