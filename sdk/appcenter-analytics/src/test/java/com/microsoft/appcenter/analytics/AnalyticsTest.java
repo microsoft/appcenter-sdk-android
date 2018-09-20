@@ -370,6 +370,44 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void pauseResumeWhileDisabled() {
+
+        /* Before start it does not work to change state, it's disabled. */
+        Analytics analytics = Analytics.getInstance();
+
+        /* Start. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addListener(isA(SessionTracker.class));
+        verify(channel).addListener(isA(AnalyticsValidator.class));
+
+        /* Disable and pause Analytics. */
+        Analytics.setEnabled(false);
+        Analytics.pause().get();
+
+        /* Check if Analytics group is paused even while disabled. */
+        verify(channel, never()).pauseGroup(eq(analytics.getGroupName()));
+
+        /* Send logs to verify the logs are enqueued after pause. */
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+
+        /* Resume Analytics. */
+        Analytics.resume().get();
+
+        /* Check if Analytics group is resumed even while paused. */
+        verify(channel, never()).resumeGroup(eq(analytics.getGroupName()));
+
+        /* Send logs to verify the logs are enqueued after resume. */
+        Analytics.trackEvent("test");
+        Analytics.trackPage("test");
+        verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
+    }
+
+    @Test
     public void startSessionAfterUserApproval() {
 
         /*
