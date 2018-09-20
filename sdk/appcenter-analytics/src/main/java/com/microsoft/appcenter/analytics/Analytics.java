@@ -28,6 +28,7 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -569,7 +570,7 @@ public class Analytics extends AbstractAppCenterService {
     private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
 
         /* Make a copy to prevent concurrent modification. */
-        final Map<String, String> propertiesCopy = properties != null ? new HashMap<>(properties) : null;
+        final Map<String, String> propertiesCopy = properties != null ? new LinkedHashMap<>(properties) : null;
         post(new Runnable() {
 
             @Override

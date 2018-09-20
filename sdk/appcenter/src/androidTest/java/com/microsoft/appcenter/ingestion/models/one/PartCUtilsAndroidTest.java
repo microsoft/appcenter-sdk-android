@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -57,7 +58,7 @@ public class PartCUtilsAndroidTest {
     }
 
     @Test
-    public void deepNestingProperty() throws JSONException {
+    public void deepNestingProperty() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         Map<String, String> properties = new HashMap<>();
         properties.put("a.b", "1");
@@ -72,5 +73,18 @@ public class PartCUtilsAndroidTest {
         assertNotNull(c);
         assertEquals("2", c.optString("d", null));
         assertEquals("3", c.optString("e", null));
+    }
+
+    @Test
+    public void overrideProperty() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Map<String, String> properties = new LinkedHashMap<>();
+        properties.put("a.b", "1");
+        properties.put("a.b.c.d", "2");
+        properties.put("a.b.c", "3");
+        PartCUtils.addPartCFromLog(properties, log);
+        JSONObject b = log.getData().getProperties().optJSONObject("a").optJSONObject("b");
+        assertNotNull(b);
+        assertEquals("3", b.optString("c", null));
     }
 }
