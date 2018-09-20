@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.analytics;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -7,6 +8,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -59,7 +61,8 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Shared instance.
      */
-    private static Analytics sInstance = null;
+    @SuppressLint("StaticFieldLeak")
+    private static Analytics sInstance;
 
     /**
      * Log factories managed by this service.
@@ -334,10 +337,8 @@ public class Analytics extends AbstractAppCenterService {
         if (transmissionTargetToken == null || transmissionTargetToken.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "Transmission target token may not be null or empty.");
             return null;
-        } else if (mContext == null) {
-
-            /* Context and channel have the same lifecycle so we only have to check one. */
-            AppCenterLog.error(LOG_TAG, "App context is null, App Center has not been started.");
+        } else if (!AppCenter.isConfigured()) {
+            AppCenterLog.error(LOG_TAG, "Cannot create transmission target, AppCenter is not configured or started.");
             return null;
         } else {
             AnalyticsTransmissionTarget transmissionTarget = mTransmissionTargets.get(transmissionTargetToken);
@@ -345,9 +346,17 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null, mContext, mChannel);
+            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
             AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
+            final AnalyticsTransmissionTarget finalTransmissionTarget = transmissionTarget;
+            postCommandEvenIfDisabled(new Runnable() {
+
+                @Override
+                public void run() {
+                    finalTransmissionTarget.initInBackground(mContext, mChannel);
+                }
+            });
             return transmissionTarget;
         }
     }
@@ -674,7 +683,9 @@ public class Analytics extends AbstractAppCenterService {
      */
     @WorkerThread
     private void setDefaultTransmissionTarget(String transmissionTargetToken) {
-        mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
+        if (transmissionTargetToken != null) {
+            mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
+        }
     }
 
     /**
@@ -692,6 +703,15 @@ public class Analytics extends AbstractAppCenterService {
          * it turns out the non get operations use the same flow as get.
          */
         postAsyncGetter(runnable, future, valueIfDisabledOrNotStarted);
+    }
+
+    /**
+     * Post a command that will run on background even if SDK disabled (needs to be configured though).
+     *
+     * @param runnable command.
+     */
+    void postCommandEvenIfDisabled(Runnable runnable) {
+        post(runnable, runnable, runnable);
     }
 
     /**

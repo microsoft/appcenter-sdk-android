@@ -45,6 +45,7 @@ abstract class AbstractAnalyticsTest {
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
+        when(AppCenter.isConfigured()).thenReturn(true);
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
         Answer<Void> runNow = new Answer<Void>() {
