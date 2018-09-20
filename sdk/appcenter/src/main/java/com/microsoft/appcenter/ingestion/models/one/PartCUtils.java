@@ -60,6 +60,8 @@ public class PartCUtils {
                     if (subObject == null) {
                         subObject = new JSONObject();
                         destProperties.put(keys[i], subObject);
+                    } else {
+                        AppCenterLog.warn(LOG_TAG, "Property key '" + keys[i] + "' already has a value, the old value will be overridden.");
                     }
                     destProperties = subObject;
                 }
