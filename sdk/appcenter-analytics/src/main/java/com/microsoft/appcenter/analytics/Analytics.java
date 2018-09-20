@@ -320,8 +320,6 @@ public class Analytics extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Transmission target token may not be null or empty.");
             return null;
         } else if (!AppCenter.isConfigured()) {
-
-            /* Context and channel have the same lifecycle so we only have to check one. */
             AppCenterLog.error(LOG_TAG, "Cannot create transmission target, AppCenter is not configured or started.");
             return null;
         } else {
