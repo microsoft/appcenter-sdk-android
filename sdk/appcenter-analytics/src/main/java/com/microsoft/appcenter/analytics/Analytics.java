@@ -621,15 +621,14 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized AppCenterFuture<Void> pauseInstanceAsync() {
         final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
-        Runnable runnable = new Runnable() {
+        post(new Runnable() {
 
             @Override
             public void run() {
                 mChannel.pauseGroup(ANALYTICS_GROUP);
                 future.complete(null);
             }
-        };
-        post(runnable);
+        });
         return future;
     }
 
@@ -638,15 +637,14 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized AppCenterFuture<Void> resumeInstanceAsync() {
         final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
-        Runnable runnable = new Runnable() {
+        post(new Runnable() {
 
             @Override
             public void run() {
                 mChannel.resumeGroup(ANALYTICS_GROUP);
                 future.complete(null);
             }
-        };
-        post(runnable);
+        });
         return future;
     }
 

@@ -235,9 +235,9 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void pauseGroup(String groupName) {
-        AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null && !groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
             groupState.mPaused = true;
             cancelTimer(groupState);
         }
@@ -245,9 +245,9 @@ public class DefaultChannel implements Channel {
 
     @Override
     public synchronized void resumeGroup(String groupName) {
-        AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null && groupState.mPaused) {
+            AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
             groupState.mPaused = false;
             checkPendingLogs(groupState.mName);
         }
@@ -793,7 +793,6 @@ public class DefaultChannel implements Channel {
             mMaxParallelBatches = maxParallelBatches;
             mIngestion = ingestion;
             mListener = listener;
-            mPaused = false;
         }
     }
 }
