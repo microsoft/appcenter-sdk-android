@@ -1,6 +1,6 @@
 MY_ROOT_PATH := $(call my-dir)/src/main/cpp
 
-include $(MY_ROOT_PATH)/google-breakpad/Android.mk
+include $(MY_ROOT_PATH)/google-breakpad/android/google_breakpad/Android.mk
 
 LOCAL_PATH := $(MY_ROOT_PATH)
 
