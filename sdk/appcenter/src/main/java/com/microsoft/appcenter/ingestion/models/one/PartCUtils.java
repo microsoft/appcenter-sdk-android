@@ -58,12 +58,16 @@ public class PartCUtils {
                 for (int i = 0; i < lastIndex; i++) {
                     JSONObject subObject = destProperties.optJSONObject(keys[i]);
                     if (subObject == null) {
+                        if (destProperties.has(keys[i])) {
+                            AppCenterLog.warn(LOG_TAG, "Property key '" + keys[i] + "' already has a value, the old value will be overridden.");
+                        }
                         subObject = new JSONObject();
                         destProperties.put(keys[i], subObject);
-                    } else {
-                        AppCenterLog.warn(LOG_TAG, "Property key '" + keys[i] + "' already has a value, the old value will be overridden.");
                     }
                     destProperties = subObject;
+                }
+                if (destProperties.has(keys[lastIndex])) {
+                    AppCenterLog.warn(LOG_TAG, "Property key '" + keys[lastIndex] + "' already has a value, the old value will be overridden.");
                 }
                 destProperties.put(keys[lastIndex], value);
             }
