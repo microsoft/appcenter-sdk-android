@@ -507,12 +507,17 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void createTransmissionTargetBeforeStart() {
+
+        /* Given app center not configured. */
         mockStatic(AppCenterLog.class);
+        when(AppCenter.isConfigured()).thenReturn(false);
+
+        /* When creating a target, it returns null. */
         assertNull(Analytics.getTransmissionTarget("t1"));
 
-        /* Verify log. */
+        /* And prints an error. */
         verifyStatic();
-        AppCenterLog.error(anyString(), contains("App context is null, App Center has not been started."));
+        AppCenterLog.error(anyString(), contains("AppCenter is not configured"));
     }
 
     /**

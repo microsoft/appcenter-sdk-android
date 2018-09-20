@@ -9,7 +9,6 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -218,7 +217,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * This does not have any effect on child transmission targets.
      */
     public void collectDeviceId() {
-        AppCenterLog.debug(AppCenterLog.LOG_TAG, "Context shall be null at that time " + mTransmissionTarget.mContext);  //TODO remove this log
         mDeviceIdEnabled = true;
     }
 
