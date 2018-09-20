@@ -13,6 +13,7 @@ import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -62,6 +63,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sNeedRestartOnStartTypeUpdate;
 
+    private static boolean sAnalyticsPaused;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +89,9 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     AppCenter.setEnabled(enabled);
+                    if (enabled) {
+                        sAnalyticsPaused = false;
+                    }
                 }
 
                 @Override
@@ -142,6 +148,9 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     Analytics.setEnabled(enabled);
+                    if (enabled) {
+                        sAnalyticsPaused = false;
+                    }
                 }
 
                 @Override
@@ -149,6 +158,41 @@ public class SettingsActivity extends AppCompatActivity {
                     return Analytics.isEnabled().get();
                 }
             });
+
+            /* TODO remove reflection once SDK pre-released. */
+            try {
+                final Method pauseMethod = Analytics.class.getMethod("pause");
+                final Method resumeMethod = Analytics.class.getMethod("resume");
+                initCheckBoxSetting(R.string.appcenter_analytics_pause_key, R.string.appcenter_analytics_pause_summary_paused, R.string.appcenter_analytics_pause_summary_resumed, new HasEnabled() {
+
+                    @Override
+                    public boolean isEnabled() {
+                        return sAnalyticsPaused;
+                    }
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        Method method;
+                        if (enabled) {
+                            method = pauseMethod;
+                        } else {
+                            method = resumeMethod;
+                        }
+                        try {
+
+                            @SuppressWarnings("unchecked")
+                            AppCenterFuture<Void> future = (AppCenterFuture<Void>) method.invoke(null);
+                            future.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        sAnalyticsPaused = enabled;
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                PreferenceGroup preference = (PreferenceGroup) findPreference(getString(R.string.analytics_key));
+                preference.removePreference(findPreference(getString(R.string.appcenter_analytics_pause_key)));
+            }
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override

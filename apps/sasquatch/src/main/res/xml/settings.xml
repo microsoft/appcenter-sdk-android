@@ -18,6 +18,13 @@
             android:key="@string/appcenter_analytics_state_key"
             android:title="@string/appcenter_analytics_state_title" />
         <CheckBoxPreference
+            android:dependency="@string/appcenter_analytics_state_key"
+            android:key="@string/appcenter_analytics_pause_key"
+            android:title="@string/appcenter_analytics_pause_title" />
+        <CheckBoxPreference
+            android:key="@string/appcenter_auto_page_tracking_key"
+            android:title="@string/appcenter_auto_page_tracking_title" />
+        <CheckBoxPreference
             android:key="@string/appcenter_auto_page_tracking_key"
             android:title="@string/appcenter_auto_page_tracking_title" />
     </PreferenceCategory>
@@ -96,10 +103,10 @@
         android:key="@string/miscellaneous_key"
         android:title="@string/miscellaneous_title">
         <ListPreference
-            android:key="@string/appcenter_start_type_key"
-            android:title="@string/appcenter_start_type_title"
             android:entries="@array/appcenter_start_type_values"
-            android:entryValues="@array/appcenter_start_type_values" />
+            android:entryValues="@array/appcenter_start_type_values"
+            android:key="@string/appcenter_start_type_key"
+            android:title="@string/appcenter_start_type_title" />
         <Preference
             android:key="@string/target_id_key"
             android:title="@string/target_id_title" />
