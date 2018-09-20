@@ -22,6 +22,7 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
+import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
@@ -107,6 +108,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // TODO revert block before PR
+        AppCenter.startFromLibrary(this, Analytics.class);
+        AnalyticsTransmissionTarget test = Analytics.getTransmissionTarget("0eac643c981e48e8afeb29d9df5593e1-cb0ac72d-a4c4-41a3-b032-9f5ae7b64460-7166");
+        test = test.getTransmissionTarget("4ee5ab442b354e6abebd166820bd8fef-88dbb064-f5f9-4dec-a428-d34062307511-8016");
+        test.getPropertyConfigurator().collectDeviceId();
+        AppCenter.setEnabled(false);
+        AppCenter.setEnabled(true);
+        test.trackEvent("test");
+
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
@@ -153,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Start App Center. */
         String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
-        startAppCenter(getApplication(), startType);
+        //startAppCenter(getApplication(), startType);
 
         /* Attach NDK Crash Handler after SDK is initialized. */
         Crashes.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
@@ -232,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
 
                     /* SQLite always use the next multiple of 4KB as maximum size. */
                     final int ALLOWED_SIZE_MULTIPLE = 4096;
-                    long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSize / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
 
                     Toast.makeText(MainActivity.this, String.format(
                             MainActivity.this.getString(R.string.max_storage_size_change_success),

@@ -1,14 +1,15 @@
 package com.microsoft.appcenter.analytics;
 
 import android.annotation.SuppressLint;
-import android.support.annotation.NonNull;
 import android.provider.Settings.Secure;
+import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +40,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
     private String mAppLocale;
 
     /**
-     * The device id to populate common schema 'device.localId'.
+     * Flag to enable populating common schema 'device.localId'.
      */
-    private String mDeviceId;
+    private boolean mDeviceIdEnabled;
 
     /**
      * The transmission target which this configurator belongs to.
@@ -114,8 +115,12 @@ public class PropertyConfigurator extends AbstractChannelListener {
             }
 
             /* Fill out the device id if it has been collected. */
-            if (mDeviceId != null) {
-                device.setLocalId(ANDROID_DEVICE_ID_PREFIX + mDeviceId);
+            if (mDeviceIdEnabled) {
+
+                /* Get device identifier, Secure class already has an in memory cache. */
+                @SuppressLint("HardwareIds")
+                String androidId = Secure.getString(mTransmissionTarget.mContext.getContentResolver(), Secure.ANDROID_ID);
+                device.setLocalId(ANDROID_DEVICE_ID_PREFIX + androidId);
             }
         }
     }
@@ -208,9 +213,13 @@ public class PropertyConfigurator extends AbstractChannelListener {
         mEventProperties.remove(key);
     }
 
-    @SuppressLint("HardwareIds")
+    /**
+     * Enable collection of the Android device identifier for this target.
+     * This does not have any effect on child transmission targets.
+     */
     public void collectDeviceId() {
-        mDeviceId = Secure.getString(mTransmissionTarget.mContext.getContentResolver(), Secure.ANDROID_ID);
+        AppCenterLog.debug(AppCenterLog.LOG_TAG, "Context shall be null at that time " + mTransmissionTarget.mContext);  //TODO remove this log
+        mDeviceIdEnabled = true;
     }
 
     /*

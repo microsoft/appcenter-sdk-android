@@ -48,6 +48,9 @@ public class EventActivity extends LogActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /* Test start from library. */
+        AppCenter.startFromLibrary(this, Analytics.class);
+
         /* Transmission target views init. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
         ArrayAdapter<String> targetAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.target_id_names));
@@ -100,9 +103,6 @@ public class EventActivity extends LogActivity {
                 startActivity(intent);
             }
         });
-
-        /* Test start from library. */
-        AppCenter.startFromLibrary(this, Analytics.class);
     }
 
     @Override
