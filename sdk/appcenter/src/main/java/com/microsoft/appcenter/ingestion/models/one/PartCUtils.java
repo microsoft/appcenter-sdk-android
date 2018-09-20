@@ -66,7 +66,7 @@ public class PartCUtils {
                     }
                     destProperties = subObject;
                 }
-                if (!destProperties.isNull(keys[lastIndex])) {
+                if (destProperties.has(keys[lastIndex])) {
                     AppCenterLog.warn(LOG_TAG, "Property key '" + keys[lastIndex] + "' already has a value, the old value will be overridden.");
                 }
                 destProperties.put(keys[lastIndex], value);
