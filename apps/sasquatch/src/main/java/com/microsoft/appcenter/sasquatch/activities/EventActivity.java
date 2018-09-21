@@ -42,6 +42,10 @@ public class EventActivity extends LogActivity {
 
     private Button mOverrideCommonSchemaButton;
 
+    private Button mPauseTransmissionButton;
+
+    private Button mResumeTransmissionButton;
+
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
     @Override
@@ -90,6 +94,8 @@ public class EventActivity extends LogActivity {
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
 
+        /*
+
         /* Init common schema properties button. */
         mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);
 
@@ -101,6 +107,26 @@ public class EventActivity extends LogActivity {
                 final Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
                 intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
                 startActivity(intent);
+            }
+        });
+
+        /* Init pause/resume buttons. */
+        mPauseTransmissionButton = findViewById(R.id.pause_transmission_button);
+        mPauseTransmissionButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                AnalyticsTransmissionTarget target = getSelectedTarget();
+                //target.pause();
+            }
+        });
+        mResumeTransmissionButton = findViewById(R.id.resume_transmission_button);
+        mResumeTransmissionButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                AnalyticsTransmissionTarget target = getSelectedTarget();
+                //target.resume();
             }
         });
     }
@@ -168,10 +194,14 @@ public class EventActivity extends LogActivity {
             mConfigureTargetPropertiesButton.setVisibility(View.GONE);
             mOverrideCommonSchemaButton.setVisibility(View.GONE);
             mDeviceIdEnabledCheckBox.setVisibility(View.GONE);
+            mPauseTransmissionButton.setVisibility(View.GONE);
+            mResumeTransmissionButton.setVisibility(View.GONE);
         } else {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
             mConfigureTargetPropertiesButton.setVisibility(View.VISIBLE);
             mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
+            mPauseTransmissionButton.setVisibility(View.VISIBLE);
+            mResumeTransmissionButton.setVisibility(View.VISIBLE);
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             mTransmissionEnabledCheckBox.setText(enabled ? R.string.transmission_enabled : R.string.transmission_disabled);
