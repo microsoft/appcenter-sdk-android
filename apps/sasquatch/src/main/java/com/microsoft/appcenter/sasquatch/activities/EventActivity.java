@@ -15,6 +15,7 @@ import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -111,13 +112,22 @@ public class EventActivity extends LogActivity {
         });
 
         /* Init pause/resume buttons. */
+        /* TODO remove reflection once SDKs are released. */
         mPauseTransmissionButton = findViewById(R.id.pause_transmission_button);
         mPauseTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 AnalyticsTransmissionTarget target = getSelectedTarget();
-                //target.pause();
+                try {
+                    final Method pauseMethod = target.getClass().getMethod("pause");
+
+                    @SuppressWarnings("unchecked")
+                    AppCenterFuture<Void> future = (AppCenterFuture<Void>) pauseMethod.invoke(null);
+                    future.get();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         mResumeTransmissionButton = findViewById(R.id.resume_transmission_button);
@@ -126,7 +136,13 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 AnalyticsTransmissionTarget target = getSelectedTarget();
-                //target.resume();
+                try {
+                    final Method resumeMethod = target.getClass().getMethod("resume");
+                    AppCenterFuture<Void> future = (AppCenterFuture<Void>) resumeMethod.invoke(null);
+                    future.get();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
