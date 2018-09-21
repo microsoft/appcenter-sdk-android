@@ -23,7 +23,6 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 
 import java.io.IOException;
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -240,6 +239,11 @@ public class DefaultChannel implements Channel {
             AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
             groupState.mPaused = true;
             cancelTimer(groupState);
+
+            /* Call listeners so that they can react on group resuming. */
+            for (Listener listener : mListeners) {
+                listener.onPaused(groupName);
+            }
         }
     }
 
@@ -250,6 +254,11 @@ public class DefaultChannel implements Channel {
             AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
             groupState.mPaused = false;
             checkPendingLogs(groupState.mName);
+
+            /* Call listeners so that they can react on group resuming. */
+            for (Listener listener : mListeners) {
+                listener.onResumed(groupName);
+            }
         }
     }
 

@@ -236,8 +236,40 @@ public class OneCollectorChannelListenerTest {
         /* Verify group added. */
         verify(channel).clear(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
 
-        /* Clear the one collector group. */
+        /* Clear the one collector group: nothing more happens. */
         listener.onClear(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verifyNoMoreInteractions(channel);
+    }
+
+    @Test
+    public void pauseCorrespondingGroup() {
+        Channel channel = mock(Channel.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+
+        /* Clear a group. */
+        listener.onPaused(TEST_GROUP);
+
+        /* Verify group added. */
+        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+
+        /* Pause the one collector group: nothing more happens. */
+        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verifyNoMoreInteractions(channel);
+    }
+
+    @Test
+    public void resumeCorrespondingGroup() {
+        Channel channel = mock(Channel.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
+
+        /* Clear a group. */
+        listener.onResumed(TEST_GROUP);
+
+        /* Verify group added. */
+        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+
+        /* Pause the one collector group: nothing more happens. */
+        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
         verifyNoMoreInteractions(channel);
     }
 }
