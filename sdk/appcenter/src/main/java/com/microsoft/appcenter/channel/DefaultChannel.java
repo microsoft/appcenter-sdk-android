@@ -205,8 +205,12 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
-        /* If no app secret, don't resume sending App Center logs from storage. */
-        if (mAppSecret != null && mIngestion == ingestion) {
+        /*
+         * If no app secret, don't resume sending App Center logs from storage.
+         * If the ingestion is alternate implementation we assume One Collector
+         * and thus we have the keys in database.
+         */
+        if (mAppSecret != null || mIngestion != ingestion) {
 
             /* Schedule sending any pending log. */
             checkPendingLogs(groupState.mName);
