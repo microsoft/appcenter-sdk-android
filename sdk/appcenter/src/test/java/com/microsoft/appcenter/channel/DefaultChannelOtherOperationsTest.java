@@ -1,16 +1,12 @@
 package com.microsoft.appcenter.channel;
 
-import android.content.ContentValues;
 import android.content.Context;
 
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
-import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -30,7 +26,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTest {
@@ -182,7 +177,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void addRemoveGroupListener() {
+    public void groupListeners() {
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
         Channel.Listener listener = spy(new AbstractChannelListener());
@@ -191,6 +186,10 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
         verify(listener).onGroupAdded(TEST_GROUP, groupListener);
+        channel.pauseGroup(TEST_GROUP);
+        verify(listener).onPaused(TEST_GROUP);
+        channel.resumeGroup(TEST_GROUP);
+        verify(listener).onResumed(TEST_GROUP);
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
     }

@@ -181,6 +181,20 @@ public interface Channel {
          * @param groupName The group name.
          */
         void onClear(@NonNull String groupName);
+
+        /**
+         * Called when a group is paused.
+         *
+         * @param groupName The group name.
+         */
+        void onPaused(@NonNull String groupName);
+
+        /**
+         * Called when a group is resumed.
+         *
+         * @param groupName The group name.
+         */
+        void onResumed(@NonNull String groupName);
     }
 
     /**

@@ -164,8 +164,23 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         if (isOneCollectorGroup(groupName)) {
             return;
         }
-        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.clear(oneCollectorGroupName);
+        mChannel.clear(getOneCollectorGroupName(groupName));
+    }
+
+    @Override
+    public void onPaused(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        mChannel.pauseGroup(getOneCollectorGroupName(groupName));
+    }
+
+    @Override
+    public void onResumed(@NonNull String groupName) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        mChannel.resumeGroup(getOneCollectorGroupName(groupName));
     }
 
     /**

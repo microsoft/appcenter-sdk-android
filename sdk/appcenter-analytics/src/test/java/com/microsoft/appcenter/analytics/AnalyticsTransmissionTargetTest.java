@@ -61,7 +61,17 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void testGetTransmissionTargetWithInvalidToken() {
+    public void testGetTransmissionTargetWithNullToken() {
+        mockStatic(AppCenterLog.class);
+        assertNull(Analytics.getTransmissionTarget(null));
+
+        /* Verify log. */
+        verifyStatic();
+        AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
+    }
+
+    @Test
+    public void testGetTransmissionTargetWithEmptyToken() {
         mockStatic(AppCenterLog.class);
         assertNull(Analytics.getTransmissionTarget(""));
 
