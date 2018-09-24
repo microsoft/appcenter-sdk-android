@@ -21,6 +21,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
@@ -112,7 +113,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>());
         }
 
         /* Verify there are 4 pending groups. */
@@ -192,7 +193,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs and verify we get only non corrupted logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(logCount - 1, outLogs.size());
         assertEquals("first", outLogs.get(0).getType());
         assertEquals("last", outLogs.get(1).getType());
@@ -202,7 +203,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is empty logs as they are pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /*
@@ -253,7 +254,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(1, outLogs.size());
         assertEquals("true last", outLogs.get(0).getType());
 
