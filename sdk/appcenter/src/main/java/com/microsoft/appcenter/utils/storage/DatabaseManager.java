@@ -528,7 +528,7 @@ public class DatabaseManager implements Closeable {
             return false;
         }
         if (maxStorageSizeInBytes != newMaxSize) {
-            AppCenterLog.warn(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
+            AppCenterLog.info(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
                     maxStorageSizeInBytes + " actualMaxSize=" + newMaxSize);
         } else {
             AppCenterLog.info(LOG_TAG, "Database max size set to " + newMaxSize + " bytes.");
