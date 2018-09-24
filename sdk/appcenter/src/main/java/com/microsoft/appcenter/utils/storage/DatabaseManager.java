@@ -18,6 +18,8 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -205,7 +207,7 @@ public class DatabaseManager implements Closeable {
                     } catch (SQLiteFullException e) {
 
                         /* Delete the oldest log. */
-                        Cursor cursor = getCursor(null, null, true);
+                        Cursor cursor = getCursor(null, null, null, null, true);
                         try {
                             if (cursor.moveToNext()) {
                                 delete(cursor.getLong(0));
@@ -320,7 +322,7 @@ public class DatabaseManager implements Closeable {
         /* Try SQLite. */
         if (mIMDB == null) {
             try {
-                Cursor cursor = getCursor(key, value, false);
+                Cursor cursor = getCursor(key, value, null, null, false);
                 ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
                 cursor.close();
                 return values;
@@ -348,16 +350,19 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Gets a scanner to iterate all values those match key == value.
+     * Gets a scanner to iterate all values those match
+     * key1 == value1 and key2 not matching any values from the list in value2Filter.
      *
-     * @param key    The optional key for query.
-     * @param value  The optional value for query.
-     * @param idOnly true to return only identifier, false to return all fields.
-     *               This flag is ignored if using in memory database.
+     * @param key1         The optional key1 for query.
+     * @param value1       The optional value1 for query.
+     * @param key2         The optional key2 to filter the query.
+     * @param value2Filter The optional value filter for key2.
+     * @param idOnly       true to return only identifier, false to return all fields.
+     *                     This flag is ignored if using in memory database.
      * @return A scanner to iterate all values.
      */
-    Scanner getScanner(String key, Object value, boolean idOnly) {
-        return new Scanner(key, value, idOnly);
+    Scanner getScanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
+        return new Scanner(key1, value1, key2, value2Filter, idOnly);
     }
 
     /**
@@ -425,26 +430,54 @@ public class DatabaseManager implements Closeable {
     /**
      * Gets a cursor for all rows in the table, all rows where key matches value if specified.
      *
-     * @param key    The optional key for query.
-     * @param value  The optional value for query.
-     * @param idOnly Return only row identifier if true, return all fields otherwise.
+     * @param key1         The first key to match values against.
+     * @param value1       The value to match against first key.
+     * @param key2         The second key to match values against.
+     * @param value2Filter The list of values to exclude matching the second key.
+     * @param idOnly       Return only row identifier if true, return all fields otherwise.
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    Cursor getCursor(String key, Object value, boolean idOnly) throws RuntimeException {
+    Cursor getCursor(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) throws RuntimeException {
 
         /* Build a query to get values. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.setTables(mTable);
+        List<String> selectionArgsList = new ArrayList<>();
+
+        /* Add filter for key1 = value1, with null value matching. */
+        if (key1 != null) {
+            if (value1 == null) {
+                builder.appendWhere(key1 + " IS NULL");
+            } else {
+                builder.appendWhere(key1 + " = ?");
+                selectionArgsList.add(value1.toString());
+            }
+        }
+
+        /* Append value filter to exclude values matching key2, if key2 and value2Filter were both specified. */
+        if (key2 != null && value2Filter != null && !value2Filter.isEmpty()) {
+            if (key1 != null) {
+                builder.appendWhere(" AND ");
+            }
+            builder.appendWhere(key2);
+            builder.appendWhere(" NOT IN (");
+            StringBuilder inBuilder = new StringBuilder();
+            for (String value2 : value2Filter) {
+                inBuilder.append("?,");
+                selectionArgsList.add(value2);
+            }
+            inBuilder.deleteCharAt(inBuilder.length() - 1);
+            builder.appendWhere(inBuilder.toString());
+            builder.appendWhere(")");
+        }
+
+        /* Convert list to array. */
         String[] selectionArgs;
-        if (key == null) {
-            selectionArgs = null;
-        } else if (value == null) {
-            builder.appendWhere(key + " IS NULL");
+        if (selectionArgsList.isEmpty()) {
             selectionArgs = null;
         } else {
-            builder.appendWhere(key + " = ?");
-            selectionArgs = new String[]{String.valueOf(value.toString())};
+            selectionArgs = selectionArgsList.toArray(new String[selectionArgsList.size()]);
         }
 
         /* Query database. */
@@ -520,7 +553,7 @@ public class DatabaseManager implements Closeable {
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
         /* SQLite always use the next multiple of 4KB as maximum size. */
-        long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSizeInBytes / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+        long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSizeInBytes / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
 
         /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
         if (newMaxSize != expectedMultipleMaxSize) {
@@ -579,14 +612,24 @@ public class DatabaseManager implements Closeable {
     class Scanner implements Iterable<ContentValues>, Closeable {
 
         /**
-         * Filter key.
+         * First filter key.
          */
-        private final String key;
+        private final String key1;
 
         /**
-         * Filter value.
+         * Filter value for key1.
          */
-        private final Object value;
+        private final Object value1;
+
+        /**
+         * Second filter key.
+         */
+        private final String key2;
+
+        /**
+         * Filter values to exclude matching key2.
+         */
+        private final Collection<String> value2Filter;
 
         /**
          * Return only IDs flags (SQLite implementation only).
@@ -601,9 +644,11 @@ public class DatabaseManager implements Closeable {
         /**
          * Initializes a cursor with optional filter.
          */
-        private Scanner(String key, Object value, boolean idOnly) {
-            this.key = key;
-            this.value = value;
+        private Scanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
+            this.key1 = key1;
+            this.value1 = value1;
+            this.key2 = key2;
+            this.value2Filter = value2Filter;
             this.idOnly = idOnly;
         }
 
@@ -628,9 +673,10 @@ public class DatabaseManager implements Closeable {
             /* Try SQLite. */
             if (mIMDB == null) {
                 try {
+
                     /* Close cursor first if it was being used. */
                     close();
-                    cursor = getCursor(key, value, idOnly);
+                    cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
 
                     /* Wrap cursor as iterator. */
                     return new Iterator<ContentValues>() {
@@ -708,10 +754,17 @@ public class DatabaseManager implements Closeable {
                         next = null;
                         while (iterator.hasNext()) {
                             ContentValues nextCandidate = iterator.next();
-                            Object candidateValue = nextCandidate.get(key);
-                            if (key == null || (value != null && value.equals(candidateValue)) || (value == null && candidateValue == null)) {
-                                next = nextCandidate;
-                                break;
+                            Object value1 = nextCandidate.get(key1);
+                            Object rawValue2 = nextCandidate.get(key2);
+                            String value2 = null;
+                            if (rawValue2 instanceof String) {
+                                value2 = rawValue2.toString();
+                            }
+                            if (key1 == null || (Scanner.this.value1 != null && Scanner.this.value1.equals(value1)) || (Scanner.this.value1 == null && value1 == null)) {
+                                if (key2 == null || (value2Filter != null && !value2Filter.contains(value2))) {
+                                    next = nextCandidate;
+                                    break;
+                                }
                             }
                         }
                         advanced = true;
@@ -739,7 +792,7 @@ public class DatabaseManager implements Closeable {
             if (mIMDB == null) {
                 try {
                     if (cursor == null) {
-                        cursor = getCursor(key, value, idOnly);
+                        cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
                     }
                     return cursor.getCount();
                 } catch (RuntimeException e) {

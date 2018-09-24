@@ -29,10 +29,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -161,7 +163,7 @@ public class DatabasePersistenceTest {
         /* Mock log sequence retrieved from scanner. */
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
         when(databaseStorage.getScanner(anyString(), anyString())).thenReturn(databaseScanner);
-        when(databaseStorage.getScanner(anyString(), anyString(), eq(false))).thenReturn(databaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), isNull(String.class), anyCollectionOf(String.class), eq(false))).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
 
         /* Mock second scanner with identifiers only. */
@@ -172,7 +174,7 @@ public class DatabasePersistenceTest {
             idValues.add(contentValues);
         }
         StorageHelper.DatabaseStorage.DatabaseScanner idDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyString(), eq(true))).thenReturn(idDatabaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), isNull(String.class), anyCollectionOf(String.class), eq(true))).thenReturn(idDatabaseScanner);
         when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
 
         /* Mock serializer and eventually the database. */

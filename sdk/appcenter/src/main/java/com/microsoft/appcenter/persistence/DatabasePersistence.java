@@ -40,11 +40,6 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final int VERSION_TYPE_API_KEY = 2;
-    /**
-     * iKey part of the target token in clear text.
-     */
-    @VisibleForTesting
-    static final String COLUMN_IKEY = "ikey";
 
     /**
      * Name of group column in the table.
@@ -69,6 +64,13 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String COLUMN_DATA_TYPE = "type";
+
+    /**
+     * iKey part of the target token in clear text.
+     */
+    @VisibleForTesting
+    static final String COLUMN_IKEY = "ikey";
+
     /**
      * Table schema for Persistence.
      */
@@ -327,7 +329,7 @@ public class DatabasePersistence extends Persistence {
     public int countLogs(@NonNull String group) {
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, null, null, true);
         int count = scanner.getCount();
         scanner.close();
         return count;
@@ -360,7 +362,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
+                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, null, null, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
