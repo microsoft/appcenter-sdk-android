@@ -58,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
+    private final int DATABASE_SIZE_MULTIPLE = 4096;
+
     private static final String SENDER_ID = "177539951155";
 
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
@@ -231,11 +233,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void accept(Boolean succeeded) {
-                final int ALLOWED_SIZE_MULTIPLE = 4096;
                 if (succeeded) {
 
                     /* SQLite always use the next multiple of 4KB as maximum size. */
-                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) DATABASE_SIZE_MULTIPLE) * DATABASE_SIZE_MULTIPLE;
                     Toast.makeText(MainActivity.this, String.format(
                             MainActivity.this.getString(R.string.max_storage_size_change_success),
                             Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
@@ -246,8 +247,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
                     String DATABASE_NAME = "com.microsoft.appcenter.persistence";
                     long fileSize = getDatabasePath(DATABASE_NAME).length();
-                    long maxSize = (long) Math.ceil((double) fileSize / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
-                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, maxSize).apply();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, fileSize).apply();
                 }
             }
         });
