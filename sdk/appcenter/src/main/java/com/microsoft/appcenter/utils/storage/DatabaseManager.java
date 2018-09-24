@@ -520,7 +520,7 @@ public class DatabaseManager implements Closeable {
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
         /* SQLite always use the next multiple of 4KB as maximum size. */
-        long expectedMultipleMaxSize = (long)Math.ceil((double)maxStorageSizeInBytes / (double)ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+        long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSizeInBytes / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
 
         /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
         if (newMaxSize != expectedMultipleMaxSize) {
@@ -528,8 +528,7 @@ public class DatabaseManager implements Closeable {
             return false;
         }
         if (maxStorageSizeInBytes != newMaxSize) {
-            AppCenterLog.info(LOG_TAG, "Could change database size but is slightly larger than expected (next multiple of 4KB), requestedMaxSize=" +
-                    maxStorageSizeInBytes + " actualMaxSize=" + newMaxSize);
+            AppCenterLog.info(LOG_TAG, "Will attempt to change database size to " + newMaxSize + " bytes (next multiple of 4KiB).");
         } else {
             AppCenterLog.info(LOG_TAG, "Database max size set to " + newMaxSize + " bytes.");
         }
