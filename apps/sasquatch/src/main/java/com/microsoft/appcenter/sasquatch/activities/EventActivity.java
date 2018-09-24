@@ -119,14 +119,17 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 AnalyticsTransmissionTarget target = getSelectedTarget();
+                Method pauseMethod;
                 try {
-                    final Method pauseMethod = target.getClass().getMethod("pause");
-
-                    @SuppressWarnings("unchecked")
+                    pauseMethod = target.getClass().getMethod("pause");
+                } catch (Exception ignored) {
+                    return;
+                }
+                try {
                     AppCenterFuture<Void> future = (AppCenterFuture<Void>) pauseMethod.invoke(null);
                     future.get();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (IllegalAccessException ignored) {
+                } catch (InvocationTargetException ignored) {
                 }
             }
         });
@@ -136,12 +139,17 @@ public class EventActivity extends LogActivity {
             @Override
             public void onClick(View v) {
                 AnalyticsTransmissionTarget target = getSelectedTarget();
+                Method resumeMethod;
                 try {
-                    final Method resumeMethod = target.getClass().getMethod("resume");
+                    resumeMethod = target.getClass().getMethod("resume");
+                } catch (Exception ignored) {
+                    return;
+                }
+                try {
                     AppCenterFuture<Void> future = (AppCenterFuture<Void>) resumeMethod.invoke(null);
                     future.get();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (IllegalAccessException ignored) {
+                } catch (InvocationTargetException ignored) {
                 }
             }
         });
