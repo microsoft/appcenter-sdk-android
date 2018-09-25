@@ -761,7 +761,7 @@ public class DatabaseManager implements Closeable {
                                 value2 = rawValue2.toString();
                             }
                             if (key1 == null || (Scanner.this.value1 != null && Scanner.this.value1.equals(value1)) || (Scanner.this.value1 == null && value1 == null)) {
-                                if (key2 == null || (value2Filter != null && !value2Filter.contains(value2))) {
+                                if (key2 == null || value2Filter == null || !value2Filter.contains(value2)) {
                                     next = nextCandidate;
                                     break;
                                 }

@@ -285,6 +285,10 @@ public class StorageHelperAndroidTest {
         assertEquals(0, databaseStorage.getScanner("COL_STRING", null).getCount());
         assertEquals(2, databaseStorage.getScanner("COL_STRING_NULL", null).getCount());
 
+        /* Test null value filter does not exclude anything, so returns the 2 logs. */
+        scanner = databaseStorage.getScanner(null, null, "COL_STRING", null, false);
+        assertEquals(2, scanner.getCount());
+
         /* Delete. */
         databaseStorage.delete(value1Id);
         assertNull(databaseStorage.get(value1Id));
