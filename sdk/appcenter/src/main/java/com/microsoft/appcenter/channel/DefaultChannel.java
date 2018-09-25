@@ -41,7 +41,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
-     * Persistence batch size for {@link Persistence#getLogs(String, Iterable, int, List)} when clearing.
+     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
