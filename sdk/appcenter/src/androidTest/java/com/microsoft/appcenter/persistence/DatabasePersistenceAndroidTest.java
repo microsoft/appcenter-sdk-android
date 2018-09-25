@@ -36,6 +36,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -592,14 +593,12 @@ public class DatabasePersistenceAndroidTest {
             int numberOfLogs = 10;
             int sizeForGetLogs = 4;
 
-            /* Generate a log and persist. */
+            /* Generate and persist some logs. */
             Log[] logs = new Log[numberOfLogs];
-            for (int i = 0; i < logs.length; i++)
+            for (int i = 0; i < logs.length; i++) {
                 logs[i] = AndroidTestUtils.generateMockLog();
-
-            /* Put. */
-            for (Log log : logs)
-                persistence.putLog("test", log);
+                persistence.putLog("test", logs[i]);
+            }
 
             /* Get. */
             getAllLogs(persistence, numberOfLogs, sizeForGetLogs);
@@ -638,6 +637,93 @@ public class DatabasePersistenceAndroidTest {
         /* Get should be 0 now. */
         persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs);
         assertEquals(0, outputLogs.size());
+    }
+
+    @Test
+    public void getLogsFilteringOutDisabledKeys() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MockCommonSchemaLog.TYPE, new MockCommonSchemaLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Test constants. */
+            int numberOfLogsPerKey = 10;
+
+            /* Generate and persist some logs with a first iKey. */
+            String disabledKey1 = "o:1";
+            for (int i = 0; i < numberOfLogsPerKey; i++) {
+                CommonSchemaLog log = new MockCommonSchemaLog();
+                log.setVer("3.0");
+                log.setName("test");
+                log.setTimestamp(new Date());
+                log.setIKey(disabledKey1);
+                log.addTransmissionTarget("1:token");
+                persistence.putLog("test", log);
+            }
+
+            /* Generate more logs with another iKey to exclude. */
+            String disabledKey2 = "o:2";
+            for (int i = 0; i < numberOfLogsPerKey; i++) {
+                CommonSchemaLog log = new MockCommonSchemaLog();
+                log.setVer("3.0");
+                log.setName("test");
+                log.setTimestamp(new Date());
+                log.setIKey(disabledKey2);
+                log.addTransmissionTarget("2:token");
+                persistence.putLog("test", log);
+            }
+
+            /* Generate logs from a third key. */
+            String enabledKey = "o:3";
+            for (int i = 0; i < numberOfLogsPerKey; i++) {
+                CommonSchemaLog log = new MockCommonSchemaLog();
+                log.setVer("3.0");
+                log.setName("test");
+                log.setTimestamp(new Date());
+                log.setIKey(enabledKey);
+                log.addTransmissionTarget("3:token");
+                persistence.putLog("test", log);
+            }
+
+            /* Get logs without disabled keys. */
+            List<Log> outLogs = new ArrayList<>();
+            int limit = numberOfLogsPerKey * 3;
+            String batchId = persistence.getLogs("test", Arrays.asList(disabledKey1, disabledKey2), limit, outLogs);
+            assertNotNull(batchId);
+
+            /* Verify we get a subset of logs without the disabled keys. */
+            assertEquals(numberOfLogsPerKey, outLogs.size());
+            assertEquals(limit, persistence.countLogs("test"));
+            for (Log log : outLogs) {
+                assertTrue(log instanceof CommonSchemaLog);
+                assertEquals(enabledKey, ((CommonSchemaLog) log).getIKey());
+            }
+
+            /* Calling a second time should return nothing since the batch is in progress. */
+            outLogs.clear();
+            batchId = persistence.getLogs("test", Arrays.asList(disabledKey1, disabledKey2), limit, outLogs);
+            assertNull(batchId);
+            assertEquals(0, outLogs.size());
+
+            /* If we try to get a second batch without filtering, we should get all disabled logs. */
+            outLogs.clear();
+            batchId = persistence.getLogs("test", Collections.<String>emptyList(), limit, outLogs);
+            assertNotNull(batchId);
+            assertEquals(numberOfLogsPerKey * 2, outLogs.size());
+            for (Log log : outLogs) {
+                assertTrue(log instanceof CommonSchemaLog);
+                assertNotEquals(enabledKey, ((CommonSchemaLog) log).getIKey());
+            }
+        } finally {
+
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
     }
 
     @Test

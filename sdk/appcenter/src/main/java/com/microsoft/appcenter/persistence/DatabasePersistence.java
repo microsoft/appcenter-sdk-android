@@ -22,6 +22,7 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -337,13 +338,13 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Iterable<String> disabledIKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> disabledIKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_IKEY, disabledIKeys, false);
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
@@ -362,7 +363,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, null, null, true);
+                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_IKEY, disabledIKeys, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
