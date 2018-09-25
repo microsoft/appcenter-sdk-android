@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_IKEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,7 +35,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -103,7 +103,7 @@ public class DatabasePersistenceTest {
         for (int i = 0; i < groupCount; i++) {
             StorageHelper.DatabaseStorage.DatabaseScanner mockDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
             when(mockDatabaseScanner.iterator()).thenReturn(list.get(i).iterator());
-            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i))).thenReturn(mockDatabaseScanner);
+            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i), COLUMN_IKEY, Collections.<String>emptyList(), false)).thenReturn(mockDatabaseScanner);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
@@ -162,8 +162,7 @@ public class DatabasePersistenceTest {
 
         /* Mock log sequence retrieved from scanner. */
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyString())).thenReturn(databaseScanner);
-        when(databaseStorage.getScanner(anyString(), anyString(), isNull(String.class), anyCollectionOf(String.class), eq(false))).thenReturn(databaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), anyString(), anyCollectionOf(String.class), eq(false))).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
 
         /* Mock second scanner with identifiers only. */
@@ -174,7 +173,7 @@ public class DatabasePersistenceTest {
             idValues.add(contentValues);
         }
         StorageHelper.DatabaseStorage.DatabaseScanner idDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyString(), isNull(String.class), anyCollectionOf(String.class), eq(true))).thenReturn(idDatabaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), anyString(), anyCollectionOf(String.class), eq(true))).thenReturn(idDatabaseScanner);
         when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
 
         /* Mock serializer and eventually the database. */
