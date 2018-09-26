@@ -46,6 +46,8 @@
     <string name="delete">Delete</string>
     <string name="cs_properties_title" tools:ignore="MissingTranslation">Common Schema Properties</string>
     <string name="override_cs_properties" tools:ignore="MissingTranslation">Override common schema properties</string>
+    <string name="pause_target" tools:ignore="MissingTranslation">Pause</string>
+    <string name="resume_target" tools:ignore="MissingTranslation">Resume</string>
     <string name="common_schema_property_label" tools:ignore="MissingTranslation">Common Schema Property</string>
     <string-array name="common_schema_properties" tools:ignore="MissingTranslation">
         <item>App Name</item>

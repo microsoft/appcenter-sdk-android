@@ -35,6 +35,29 @@
         android:text="@string/override_cs_properties"
         android:visibility="gone" />
 
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/pause_transmission_button"
+            android:layout_width="0dp"
+            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
+            android:text="@string/pause_target"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/resume_transmission_button"
+            android:layout_width="0dp"
+            android:layout_weight="0.5"
+            android:layout_height="wrap_content"
+            android:text="@string/resume_target"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
     <CheckBox
         android:id="@+id/transmission_enabled"
         android:layout_width="match_parent"
