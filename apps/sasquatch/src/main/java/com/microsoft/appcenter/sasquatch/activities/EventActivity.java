@@ -15,7 +15,6 @@ import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -126,8 +125,7 @@ public class EventActivity extends LogActivity {
                     return;
                 }
                 try {
-                    AppCenterFuture<Void> future = (AppCenterFuture<Void>) pauseMethod.invoke(null);
-                    future.get();
+                    pauseMethod.invoke(target);
                 } catch (IllegalAccessException ignored) {
                 } catch (InvocationTargetException ignored) {
                 }
@@ -146,8 +144,7 @@ public class EventActivity extends LogActivity {
                     return;
                 }
                 try {
-                    AppCenterFuture<Void> future = (AppCenterFuture<Void>) resumeMethod.invoke(null);
-                    future.get();
+                    resumeMethod.invoke(target);
                 } catch (IllegalAccessException ignored) {
                 } catch (InvocationTargetException ignored) {
                 }
@@ -195,6 +192,7 @@ public class EventActivity extends LogActivity {
             {
                 Method method;
                 try {
+                    //noinspection JavaReflectionMemberAccess
                     method = PropertyConfigurator.class.getMethod("collectDeviceId");
                 } catch (Exception ignored) {
                     return;
@@ -233,6 +231,7 @@ public class EventActivity extends LogActivity {
             // TODO remove reflection once new APIs available in jCenter.
             {
                 try {
+                    //noinspection JavaReflectionMemberAccess
                     PropertyConfigurator.class.getMethod("collectDeviceId");
                 } catch (Exception ignored) {
                     return;
