@@ -9,6 +9,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -89,7 +90,7 @@ class DistributeUtils {
 
     @NonNull
     static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
-        return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+        return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + DeviceInfoHelper.getVersionCode(packageInfo));
     }
 
     /**
