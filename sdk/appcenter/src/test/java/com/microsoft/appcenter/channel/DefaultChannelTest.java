@@ -738,7 +738,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Pause group. */
-        channel.pauseGroup(TEST_GROUP);
+        channel.pauseGroup(TEST_GROUP, null);
         assertTrue(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Enqueue a log. */
@@ -759,7 +759,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(50, channel.getCounter(TEST_GROUP));
 
         /* Resume group. */
-        channel.resumeGroup(TEST_GROUP);
+        channel.resumeGroup(TEST_GROUP, null);
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Verify channel starts sending logs. */
@@ -780,9 +780,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Pause group twice. */
-        channel.pauseGroup(TEST_GROUP);
+        channel.pauseGroup(TEST_GROUP, null);
         assertTrue(channel.getGroupState(TEST_GROUP).mPaused);
-        channel.pauseGroup(TEST_GROUP);
+        channel.pauseGroup(TEST_GROUP, null);
         assertTrue(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Verify the group is paused only once. */
@@ -797,7 +797,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Resume group. */
-        channel.resumeGroup(TEST_GROUP);
+        channel.resumeGroup(TEST_GROUP, null);
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
         /* Verify resumeGroup doesn't resume the group while un-paused.  */
@@ -809,7 +809,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
 
         /* Pause group twice. */
-        channel.pauseGroup(TEST_GROUP);
+        channel.pauseGroup(TEST_GROUP, null);
 
         /* Verify the group is NOT paused. */
         verify(channel, never()).cancelTimer(any(DefaultChannel.GroupState.class));
@@ -820,7 +820,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
 
         /* Resume group. */
-        channel.resumeGroup(TEST_GROUP);
+        channel.resumeGroup(TEST_GROUP, null);
 
         /* Verify the group is NOT resumed.  */
         verify(channel, never()).checkPendingLogs(eq(TEST_GROUP));

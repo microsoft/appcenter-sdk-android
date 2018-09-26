@@ -247,13 +247,13 @@ public class OneCollectorChannelListenerTest {
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Clear a group. */
-        listener.onPaused(TEST_GROUP);
+        listener.onPaused(TEST_GROUP, null);
 
         /* Verify group added. */
-        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
 
         /* Pause the one collector group: nothing more happens. */
-        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
     }
 
@@ -263,13 +263,13 @@ public class OneCollectorChannelListenerTest {
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Clear a group. */
-        listener.onResumed(TEST_GROUP);
+        listener.onResumed(TEST_GROUP, null);
 
         /* Verify group added. */
-        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
 
         /* Pause the one collector group: nothing more happens. */
-        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
     }
 }

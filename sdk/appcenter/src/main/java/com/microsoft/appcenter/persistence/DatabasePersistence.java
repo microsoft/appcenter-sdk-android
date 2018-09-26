@@ -223,8 +223,8 @@ public class DatabasePersistence extends Persistence {
                 if (isLargePayload) {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
-                iKey = ((CommonSchemaLog) log).getIKey();
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
+                iKey = targetToken.split("-")[0];
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
                 iKey = null;

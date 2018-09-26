@@ -350,7 +350,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.pause().get();
 
         /* Check if Analytics group is paused. */
-        verify(channel).pauseGroup(eq(analytics.getGroupName()));
+        verify(channel).pauseGroup(eq(analytics.getGroupName()), null);
 
         /* Send logs to verify the logs are enqueued after pause. */
         Analytics.trackEvent("test");
@@ -361,7 +361,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.resume().get();
 
         /* Check if Analytics group is resumed. */
-        verify(channel).resumeGroup(eq(analytics.getGroupName()));
+        verify(channel).resumeGroup(eq(analytics.getGroupName()), null);
 
         /* Send logs to verify the logs are enqueued after resume. */
         Analytics.trackEvent("test");
@@ -388,7 +388,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.pause().get();
 
         /* Check if Analytics group is paused even while disabled. */
-        verify(channel, never()).pauseGroup(eq(analytics.getGroupName()));
+        verify(channel, never()).pauseGroup(eq(analytics.getGroupName()), null);
 
         /* Send logs to verify the logs are enqueued after pause. */
         Analytics.trackEvent("test");
@@ -399,7 +399,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.resume().get();
 
         /* Check if Analytics group is resumed even while paused. */
-        verify(channel, never()).resumeGroup(eq(analytics.getGroupName()));
+        verify(channel, never()).resumeGroup(eq(analytics.getGroupName()), null);
 
         /* Send logs to verify the logs are enqueued after resume. */
         Analytics.trackEvent("test");

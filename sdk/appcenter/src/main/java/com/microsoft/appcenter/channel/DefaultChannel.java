@@ -238,31 +238,45 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void pauseGroup(String groupName) {
+    public synchronized void pauseGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
-        if (groupState != null && !groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
-            groupState.mPaused = true;
-            cancelTimer(groupState);
+        if (groupState != null) {
+            if (targetToken != null) {
+                String targetKey = targetToken.split("-")[0];
+                if (groupState.mDisabledTargetKeys.add(targetKey)) {
+                    AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ", " + targetKey + ")");
+                }
+            } else if (!groupState.mPaused) {
+                AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
+                groupState.mPaused = true;
+                cancelTimer(groupState);
+            }
 
             /* Call listeners so that they can react on group resuming. */
             for (Listener listener : mListeners) {
-                listener.onPaused(groupName);
+                listener.onPaused(groupName, targetToken);
             }
         }
     }
 
     @Override
-    public synchronized void resumeGroup(String groupName) {
+    public synchronized void resumeGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
-        if (groupState != null && groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
-            groupState.mPaused = false;
-            checkPendingLogs(groupState.mName);
+        if (groupState != null) {
+            if (targetToken != null) {
+                String targetKey = targetToken.split("-")[0];
+                if (groupState.mDisabledTargetKeys.remove(targetKey)) {
+                    AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ", " + targetKey + ")");
+                }
+            } else if (groupState.mPaused) {
+                AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
+                groupState.mPaused = false;
+                checkPendingLogs(groupState.mName);
+            }
 
             /* Call listeners so that they can react on group resuming. */
             for (Listener listener : mListeners) {
-                listener.onResumed(groupName);
+                listener.onResumed(groupName, targetToken);
             }
         }
     }
@@ -434,7 +448,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, Collections.<String>emptyList(), maxFetch, batch);
+        final String batchId = mPersistence.getLogs(groupName, groupState.mDisabledTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;
@@ -776,6 +790,11 @@ public class DefaultChannel implements Channel {
          * Indicates if the group is paused.
          */
         boolean mPaused;
+
+        /**
+         * List of disabled target keys.
+         */
+        final Collection<String> mDisabledTargetKeys = new HashSet<>();
 
         /**
          * Runnable that triggers ingestion of this group data

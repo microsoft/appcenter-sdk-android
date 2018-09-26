@@ -245,6 +245,34 @@ public class AnalyticsTransmissionTarget {
     }
 
     /**
+     * Pauses log transmission for this target.
+     * This does not pause child targets.
+     */
+    public void pause() {
+        Analytics.getInstance().post(new Runnable() {
+
+            @Override
+            public void run() {
+                mChannel.pauseGroup(Analytics.ANALYTICS_GROUP, mTransmissionTargetToken);
+            }
+        });
+    }
+
+    /**
+     * Resumes log transmission for this target.
+     * This does not resume child targets.
+     */
+    public void resume() {
+        Analytics.getInstance().post(new Runnable() {
+
+            @Override
+            public void run() {
+                mChannel.resumeGroup(Analytics.ANALYTICS_GROUP, mTransmissionTargetToken);
+            }
+        });
+    }
+
+    /**
      * Getter for transmission target token.
      *
      * @return the transmission target token.
