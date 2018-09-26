@@ -655,38 +655,38 @@ public class DatabasePersistenceAndroidTest {
             int numberOfLogsPerKey = 10;
 
             /* Generate and persist some logs with a first iKey. */
-            String disabledKey1 = "o:1";
+            String disabledKey1 = "1";
             for (int i = 0; i < numberOfLogsPerKey; i++) {
                 CommonSchemaLog log = new MockCommonSchemaLog();
                 log.setVer("3.0");
                 log.setName("test");
                 log.setTimestamp(new Date());
                 log.setIKey(disabledKey1);
-                log.addTransmissionTarget("1:token");
+                log.addTransmissionTarget("1-token");
                 persistence.putLog("test", log);
             }
 
             /* Generate more logs with another iKey to exclude. */
-            String disabledKey2 = "o:2";
+            String disabledKey2 = "2";
             for (int i = 0; i < numberOfLogsPerKey; i++) {
                 CommonSchemaLog log = new MockCommonSchemaLog();
                 log.setVer("3.0");
                 log.setName("test");
                 log.setTimestamp(new Date());
                 log.setIKey(disabledKey2);
-                log.addTransmissionTarget("2:token");
+                log.addTransmissionTarget("2-token");
                 persistence.putLog("test", log);
             }
 
             /* Generate logs from a third key. */
-            String enabledKey = "o:3";
+            String enabledKey = "3";
             for (int i = 0; i < numberOfLogsPerKey; i++) {
                 CommonSchemaLog log = new MockCommonSchemaLog();
                 log.setVer("3.0");
                 log.setName("test");
                 log.setTimestamp(new Date());
                 log.setIKey(enabledKey);
-                log.addTransmissionTarget("3:token");
+                log.addTransmissionTarget("3-token");
                 persistence.putLog("test", log);
             }
 
@@ -813,7 +813,7 @@ public class DatabasePersistenceAndroidTest {
         /* Prepare a common schema log. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
         commonSchemaLog.setName("test");
-        commonSchemaLog.setIKey("o:test");
+        commonSchemaLog.setIKey("test");
         commonSchemaLog.setTimestamp(new Date());
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
@@ -904,7 +904,7 @@ public class DatabasePersistenceAndroidTest {
         /* Prepare a common schema log. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
         commonSchemaLog.setName("test");
-        commonSchemaLog.setIKey("o:test");
+        commonSchemaLog.setIKey("test");
         commonSchemaLog.setTimestamp(new Date());
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
