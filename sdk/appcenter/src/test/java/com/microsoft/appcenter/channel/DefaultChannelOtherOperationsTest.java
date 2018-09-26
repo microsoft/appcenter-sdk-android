@@ -42,7 +42,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void listener() {
+    public void logCallbacks() {
 
         @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
@@ -178,7 +178,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void listeners() {
+    public void groupCallbacks() {
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
         Channel.Listener listener = spy(new AbstractChannelListener());
