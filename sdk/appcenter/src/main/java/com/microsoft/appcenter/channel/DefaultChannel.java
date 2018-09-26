@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -242,7 +243,7 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
-                String targetKey = targetToken.split("-")[0];
+                String targetKey = PartAUtils.getIKey(targetToken);
                 if (groupState.mDisabledTargetKeys.add(targetKey)) {
                     AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ", " + targetKey + ")");
                 }
@@ -264,7 +265,7 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
-                String targetKey = targetToken.split("-")[0];
+                String targetKey = PartAUtils.getIKey(targetToken);
                 if (groupState.mDisabledTargetKeys.remove(targetKey)) {
                     AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ", " + targetKey + ")");
                 }

@@ -11,6 +11,7 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -224,7 +225,7 @@ public class DatabasePersistence extends Persistence {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
-                iKey = targetToken.split("-")[0];
+                iKey = PartAUtils.getIKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
                 iKey = null;

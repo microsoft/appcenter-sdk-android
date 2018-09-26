@@ -9,6 +9,7 @@ import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -318,7 +319,7 @@ public class AnalyticsTransmissionTarget {
 
     @NonNull
     private String getEnabledPreferenceKey() {
-        return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + mTransmissionTargetToken.split("-")[0];
+        return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + PartAUtils.getIKey(mTransmissionTargetToken);
     }
 
     @WorkerThread
