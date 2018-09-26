@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -46,7 +46,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
-@SuppressWarnings("unused")
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
@@ -67,13 +66,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void analyticsSuccess() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(2));
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(2));
 
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
@@ -203,13 +201,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void maxRequests() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         /* We make second request return less logs than expected to make sure counter is reset properly. */
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
@@ -255,13 +252,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void maxRequestsInitial() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         when(mockPersistence.countLogs(any(String.class))).thenReturn(100);
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
@@ -309,13 +305,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void analyticsRecoverable() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(20));
@@ -388,12 +383,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void analyticsFatal() throws Exception {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(50))
                 /* Second 50 logs will be used for clearing pending states. */
                 .then(getGetLogsAnswer(50))
@@ -470,13 +464,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void errorLogSuccess() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion mockIngestion = mock(Ingestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer());
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer());
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
@@ -510,13 +503,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void errorLogRecoverable() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion mockIngestion = mock(Ingestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
@@ -575,14 +567,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void suspendWithFailureCallback() {
         Ingestion mockIngestion = mock(Ingestion.class);
         Persistence mockPersistence = mock(Persistence.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.countLogs(anyString())).thenReturn(30);
-        when(mockPersistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(10));
+        when(mockPersistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(10));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
@@ -611,13 +602,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void suspendWithoutFailureCallback() {
         Ingestion mockIngestion = mock(Ingestion.class);
         Persistence mockPersistence = mock(Persistence.class);
 
         when(mockPersistence.countLogs(anyString())).thenReturn(3);
-        when(mockPersistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
@@ -665,14 +655,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void setEnabled() throws IOException {
 
         /* Send a log. */
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
-        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
+        when(persistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         Channel.Listener listener = spy(new AbstractChannelListener());
         channel.addListener(listener);
@@ -700,12 +689,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void disableBeforeCheckingPendingLogs() {
         Ingestion ingestion = mock(Ingestion.class);
         Persistence persistence = mock(Persistence.class);
         final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
-        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(1));
+        when(persistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(1));
         when(ingestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) {
@@ -729,7 +717,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyInt(), any(ArrayList.class))).then(getGetLogsAnswer(50));
+        when(mockPersistence.getLogs(any(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
@@ -826,14 +814,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void initialLogs() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
-        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
+        when(persistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -846,14 +833,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void initialLogsMoreThan1Batch() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(103);
-        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(3));
+        when(persistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -866,14 +852,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void initialLogsThenDisable() throws IOException {
         AtomicReference<Runnable> runnable = catchPostRunnable();
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
-        when(persistence.getLogs(anyString(), anyInt(), anyList())).thenAnswer(getGetLogsAnswer(3));
+        when(persistence.getLogs(anyString(), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         assertEquals(3, channel.getCounter(TEST_GROUP));
@@ -909,7 +894,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void somehowDatabaseEmptiedAfterTimer() throws IOException {
 
         /* Cover the if (batchId != null) test though it could happen only if the database content disappear after the timer... */
@@ -930,13 +914,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendFatal() {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(1))
                 /* Logs from here will be used TEST_GROUP to clear pending states. */
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE))
@@ -961,14 +944,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendFatalNoListener() {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         /* Simulate a lot of logs already in database. */
-        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(1))
                 .then(getGetLogsAnswer(1))
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
@@ -993,13 +975,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void invokeCallbacksAfterSuspendRecoverable() {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), any(ArrayList.class)))
+        when(mockPersistence.getLogs(eq(TEST_GROUP), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(1));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
 

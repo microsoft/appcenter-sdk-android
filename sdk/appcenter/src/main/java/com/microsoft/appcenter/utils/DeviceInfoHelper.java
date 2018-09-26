@@ -50,7 +50,7 @@ public class DeviceInfoHelper {
             PackageManager packageManager = context.getPackageManager();
             packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
             device.setAppVersion(packageInfo.versionName);
-            device.setAppBuild(String.valueOf(packageInfo.versionCode));
+            device.setAppBuild(String.valueOf(getVersionCode(packageInfo)));
         } catch (Exception e) {
             AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
@@ -115,6 +115,18 @@ public class DeviceInfoHelper {
 
         /* Return device properties. */
         return device;
+    }
+
+    @SuppressWarnings("deprecation")
+    public static int getVersionCode(PackageInfo packageInfo) {
+
+        /*
+         * Only devices running on Android 9+ have the new version code major which modifies the long version code.
+         * But we want to report the legacy version code for distribute and for consistency in telemetry
+         * with devices using the same app across all os versions.
+         * In most apps, versionCodeMajor is 0 so getLongVersionCode would actually return the existing versionCode anyway.
+         */
+        return packageInfo.versionCode;
     }
 
     /**

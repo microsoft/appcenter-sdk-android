@@ -48,6 +48,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -1191,10 +1192,11 @@ public class Distribute extends AbstractAppCenterService {
      */
     private boolean isMoreRecent(ReleaseDetails releaseDetails) {
         boolean moreRecent;
-        if (releaseDetails.getVersion() == mPackageInfo.versionCode) {
+        int versionCode = DeviceInfoHelper.getVersionCode(mPackageInfo);
+        if (releaseDetails.getVersion() == versionCode) {
             moreRecent = !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mPackageInfo));
         } else {
-            moreRecent = releaseDetails.getVersion() > mPackageInfo.versionCode;
+            moreRecent = releaseDetails.getVersion() > versionCode;
         }
         AppCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
         return moreRecent;
