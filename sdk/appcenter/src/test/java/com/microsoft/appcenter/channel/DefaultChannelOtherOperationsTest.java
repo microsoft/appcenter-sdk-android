@@ -178,7 +178,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void groupListeners() {
+    public void listeners() {
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
         Channel.Listener listener = spy(new AbstractChannelListener());
@@ -189,8 +189,12 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         verify(listener).onGroupAdded(TEST_GROUP, groupListener);
         channel.pauseGroup(TEST_GROUP, null);
         verify(listener).onPaused(TEST_GROUP, null);
+        channel.pauseGroup(TEST_GROUP, "token");
+        verify(listener).onPaused(TEST_GROUP, "token");
         channel.resumeGroup(TEST_GROUP, null);
         verify(listener).onResumed(TEST_GROUP, null);
+        channel.resumeGroup(TEST_GROUP, "token");
+        verify(listener).onResumed(TEST_GROUP, "token");
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
     }
