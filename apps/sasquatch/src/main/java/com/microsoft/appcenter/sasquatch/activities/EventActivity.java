@@ -48,6 +48,15 @@ public class EventActivity extends LogActivity {
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
+    // TODO remove reflection once new APIs available in jCenter.
+    private Method mCollectDeviceIdMethod;
+
+    // TODO remove reflection once new APIs available in jCenter.
+    private Method mPauseMethod;
+
+    // TODO remove reflection once new APIs available in jCenter.
+    private Method mResumeMethod;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +95,12 @@ public class EventActivity extends LogActivity {
         /* Init enabled check boxes. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
         mDeviceIdEnabledCheckBox = findViewById(R.id.device_id_enabled);
+        try {
+            //noinspection JavaReflectionMemberAccess
+            mCollectDeviceIdMethod = PropertyConfigurator.class.getMethod("collectDeviceId");
+        } catch (NoSuchMethodException e) {
+            mDeviceIdEnabledCheckBox.setVisibility(View.GONE);
+        }
 
         /*
          * The first element is a placeholder for default transmission.
@@ -93,8 +108,6 @@ public class EventActivity extends LogActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
-
-        /*
 
         /* Init common schema properties button. */
         mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);
@@ -104,47 +117,46 @@ public class EventActivity extends LogActivity {
 
             @Override
             public void onClick(View v) {
-                final Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
+                Intent intent = new Intent(EventActivity.this, CommonSchemaPropertiesActivity.class);
                 intent.putExtra(ActivityConstants.EXTRA_TARGET_SELECTED, mTransmissionTargetSpinner.getSelectedItemPosition());
                 startActivity(intent);
             }
         });
 
-        /* Init pause/resume buttons. */
-        /* TODO remove reflection once SDKs are released. */
+        /* Init pause/resume buttons. TODO remove reflection once SDKs are released. */
         mPauseTransmissionButton = findViewById(R.id.pause_transmission_button);
+        try {
+            //noinspection JavaReflectionMemberAccess
+            mPauseMethod = AnalyticsTransmissionTarget.class.getMethod("pause");
+        } catch (NoSuchMethodException e) {
+            mPauseTransmissionButton.setVisibility(View.GONE);
+        }
         mPauseTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
+            @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
-                AnalyticsTransmissionTarget target = getSelectedTarget();
-                Method pauseMethod;
                 try {
-                    pauseMethod = target.getClass().getMethod("pause");
-                } catch (Exception ignored) {
-                    return;
-                }
-                try {
-                    pauseMethod.invoke(target);
+                    mPauseMethod.invoke(getSelectedTarget());
                 } catch (IllegalAccessException ignored) {
                 } catch (InvocationTargetException ignored) {
                 }
             }
         });
         mResumeTransmissionButton = findViewById(R.id.resume_transmission_button);
+        try {
+            //noinspection JavaReflectionMemberAccess
+            mResumeMethod = AnalyticsTransmissionTarget.class.getMethod("resume");
+        } catch (NoSuchMethodException e) {
+            mResumeTransmissionButton.setVisibility(View.GONE);
+        }
         mResumeTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
+            @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
-                AnalyticsTransmissionTarget target = getSelectedTarget();
-                Method resumeMethod;
                 try {
-                    resumeMethod = target.getClass().getMethod("resume");
-                } catch (Exception ignored) {
-                    return;
-                }
-                try {
-                    resumeMethod.invoke(target);
+                    mResumeMethod.invoke(getSelectedTarget());
                 } catch (IllegalAccessException ignored) {
                 } catch (InvocationTargetException ignored) {
                 }
@@ -189,19 +201,10 @@ public class EventActivity extends LogActivity {
 
             // TODO remove reflection once new APIs available in jCenter.
             // target.getPropertyConfigurator().collectDeviceId();
-            {
-                Method method;
-                try {
-                    //noinspection JavaReflectionMemberAccess
-                    method = PropertyConfigurator.class.getMethod("collectDeviceId");
-                } catch (Exception ignored) {
-                    return;
-                }
-                try {
-                    method.invoke(target.getPropertyConfigurator());
-                } catch (IllegalAccessException ignored) {
-                } catch (InvocationTargetException ignored) {
-                }
+            try {
+                mCollectDeviceIdMethod.invoke(target.getPropertyConfigurator());
+            } catch (IllegalAccessException ignored) {
+            } catch (InvocationTargetException ignored) {
             }
             mDeviceIdEnabledCheckBox.setChecked(true);
             mDeviceIdEnabledCheckBox.setText(R.string.device_id_enabled);
@@ -222,23 +225,19 @@ public class EventActivity extends LogActivity {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
             mConfigureTargetPropertiesButton.setVisibility(View.VISIBLE);
             mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
-            mPauseTransmissionButton.setVisibility(View.VISIBLE);
-            mResumeTransmissionButton.setVisibility(View.VISIBLE);
+            if (mPauseMethod != null) {
+                mPauseTransmissionButton.setVisibility(View.VISIBLE);
+            }
+            if (mResumeMethod != null) {
+                mResumeTransmissionButton.setVisibility(View.VISIBLE);
+            }
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             mTransmissionEnabledCheckBox.setText(enabled ? R.string.transmission_enabled : R.string.transmission_disabled);
-
-            // TODO remove reflection once new APIs available in jCenter.
-            {
-                try {
-                    //noinspection JavaReflectionMemberAccess
-                    PropertyConfigurator.class.getMethod("collectDeviceId");
-                } catch (Exception ignored) {
-                    return;
-                }
-            }
             boolean deviceIdEnabled = DEVICE_ID_ENABLED.contains(target);
-            mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
+            if (mCollectDeviceIdMethod != null) {
+                mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
+            }
             mDeviceIdEnabledCheckBox.setChecked(deviceIdEnabled);
             mDeviceIdEnabledCheckBox.setText(deviceIdEnabled ? R.string.device_id_enabled : R.string.device_id_disabled);
             mDeviceIdEnabledCheckBox.setEnabled(!deviceIdEnabled);
