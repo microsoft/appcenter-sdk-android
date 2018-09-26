@@ -17,7 +17,7 @@ duration=$(( SECONDS - start ))
 echo "Android Emulator started after $duration seconds."
 
 # Run tests now
-./gradlew coverageReport
+./gradlew coveralls
 EXIT_CODE=$?
 
 # And kill emulator
