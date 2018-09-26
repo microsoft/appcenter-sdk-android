@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
@@ -11,6 +12,7 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -23,6 +25,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -130,5 +133,96 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Verify the group is NOT resumed.  */
         verify(channel, never()).checkPendingLogs(eq(TEST_GROUP));
+    }
+
+    @Test
+    public void pauseResumeTargetToken() throws Persistence.PersistenceException {
+
+        /* Mock database and ingestion. */
+        Persistence persistence = mock(Persistence.class);
+        OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+
+        /* Create a channel with a log group that send logs 1 by 1. */
+        AppCenterIngestion appCenterIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
+
+        /* Pause token. */
+        String targetToken = "iKey-apiKey";
+        channel.pauseGroup(TEST_GROUP, targetToken);
+
+        /* Mock the database to return logs now. */
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
+
+        /* Enqueue a log. */
+        Log log = mock(Log.class);
+        when(log.getTransmissionTargetTokens()).thenReturn(Collections.singleton(targetToken));
+        channel.enqueue(log, TEST_GROUP);
+
+        /* Verify persisted but not incrementing and checking logs. */
+        verify(persistence).putLog(TEST_GROUP, log);
+        assertEquals(0, channel.getCounter(TEST_GROUP));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Enqueueing a log from another transmission target works. */
+        Log otherLog = mock(Log.class);
+        when(otherLog.getTransmissionTargetTokens()).thenReturn(Collections.singleton("iKey2-apiKey2"));
+        channel.enqueue(otherLog, TEST_GROUP);
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        reset(ingestion);
+
+        /* Resume token. */
+        channel.resumeGroup(TEST_GROUP, targetToken);
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Sending more logs works now. */
+        reset(ingestion);
+        channel.enqueue(log, TEST_GROUP);
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* AppCenter ingestion never used. */
+        verify(appCenterIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void pauseGroupPauseTargetResumeGroupResumeTarget() throws Persistence.PersistenceException {
+
+        /* Mock database and ingestion. */
+        Persistence persistence = mock(Persistence.class);
+        OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+
+        /* Create a channel with a log group that send logs 1 by 1. */
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
+
+        /* Pause group first. */
+        channel.pauseGroup(TEST_GROUP, null);
+
+        /* Pause token. */
+        String targetToken = "iKey-apiKey";
+        channel.pauseGroup(TEST_GROUP, targetToken);
+
+        /* Mock the database to return logs now. */
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
+
+        /* Enqueue a log. */
+        Log log = mock(Log.class);
+        when(log.getTransmissionTargetTokens()).thenReturn(Collections.singleton(targetToken));
+        channel.enqueue(log, TEST_GROUP);
+
+        /* Verify persisted but not incrementing and checking logs. */
+        verify(persistence).putLog(TEST_GROUP, log);
+        assertEquals(0, channel.getCounter(TEST_GROUP));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Resume group should not send the log. */
+        channel.resumeGroup(TEST_GROUP, null);
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Resume token, send the log now. */
+        channel.resumeGroup(TEST_GROUP, targetToken);
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 }
