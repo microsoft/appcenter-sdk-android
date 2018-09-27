@@ -196,16 +196,16 @@ public class DatabasePersistence extends Persistence {
      * @param group       The group of the storage for the log.
      * @param logJ        The JSON string for a log.
      * @param targetToken target token if the log is common schema.
-     * @param iKey        iKey part of the target token in clear text.
+     * @param targetKey   project identifier part of the target token in clear text.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String iKey) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
         values.put(COLUMN_DATA_TYPE, type);
-        values.put(COLUMN_TARGET_KEY, iKey);
+        values.put(COLUMN_TARGET_KEY, targetKey);
         return values;
     }
 

@@ -272,7 +272,7 @@ public class DefaultChannel implements Channel {
                      * Log count can be 0 in memory because of the partial pause, but we might have
                      * logs in storage for this key, a simple fix is to reevaluate log count and check
                      * for logs again. This might create a batch with fewer logs than expected as
-                     * the log count does not exclude logs with disabled keys, this would be an optimization
+                     * the log count does not exclude logs with paused keys, this would be an optimization
                      * that does not seem necessary for now.
                      */
                     AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ", " + targetKey + ")");
@@ -811,7 +811,7 @@ public class DefaultChannel implements Channel {
         boolean mPaused;
 
         /**
-         * List of disabled target keys.
+         * List of paused target keys.
          */
         final Collection<String> mPausedTargetKeys = new HashSet<>();
 
