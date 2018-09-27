@@ -218,20 +218,20 @@ public class DatabasePersistence extends Persistence {
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
             boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
-            String iKey;
+            String targetKey;
             String targetToken;
             if (log instanceof CommonSchemaLog) {
                 if (isLargePayload) {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
-                iKey = PartAUtils.getTargetKey(targetToken);
+                targetKey = PartAUtils.getTargetKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
-                iKey = null;
+                targetKey = null;
                 targetToken = null;
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), iKey);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {
