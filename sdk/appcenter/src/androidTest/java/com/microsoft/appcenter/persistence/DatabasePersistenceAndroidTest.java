@@ -804,7 +804,7 @@ public class DatabasePersistenceAndroidTest {
         /* Prepare a common schema log. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
         commonSchemaLog.setName("test");
-        commonSchemaLog.setIKey("test");
+        commonSchemaLog.setIKey("o:test");
         commonSchemaLog.setTimestamp(new Date());
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
@@ -844,9 +844,9 @@ public class DatabasePersistenceAndroidTest {
             assertNotEquals("test-guid", token);
             assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
 
-            /* Verify iKey stored as well. */
-            String iKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
-            assertEquals(commonSchemaLog.getIKey(), iKey);
+            /* Verify target key stored as well. */
+            String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
+            assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
         } finally {
             persistence.close();
         }
@@ -895,7 +895,7 @@ public class DatabasePersistenceAndroidTest {
         /* Prepare a common schema log. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
         commonSchemaLog.setName("test");
-        commonSchemaLog.setIKey("test");
+        commonSchemaLog.setIKey("o:test");
         commonSchemaLog.setTimestamp(new Date());
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
@@ -935,9 +935,9 @@ public class DatabasePersistenceAndroidTest {
             assertNotEquals("test-guid", token);
             assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
 
-            /* Verify iKey stored as well. */
-            String iKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
-            assertEquals(commonSchemaLog.getIKey(), iKey);
+            /* Verify target key stored as well. */
+            String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
+            assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
         } finally {
             persistence.close();
         }
