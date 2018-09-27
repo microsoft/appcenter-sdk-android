@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -394,5 +396,46 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* And that we check expiry. */
         verify(authenticationProvider).checkTokenExpiry();
+    }
+
+    @Test
+    public void pauseResume() {
+
+        /* Create a parent and child targets to test calls are not inherited. */
+        AnalyticsTransmissionTarget parent = Analytics.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Call resume while not paused is only checked by channel so call is forwarded. */
+        child.resume();
+        verify(mChannel).resumeGroup(ANALYTICS_GROUP, "child");
+        reset(mChannel);
+
+        /* Test pause. */
+        parent.pause();
+        verify(mChannel).pauseGroup(ANALYTICS_GROUP, "parent");
+        verify(mChannel, never()).pauseGroup(ANALYTICS_GROUP, "child");
+
+        /* We can call it twice, double calls are checked by channel. */
+        parent.pause();
+        verify(mChannel, times(2)).pauseGroup(ANALYTICS_GROUP, "parent");
+
+        /* Test resume. */
+        parent.resume();
+        verify(mChannel).resumeGroup(ANALYTICS_GROUP, "parent");
+        verify(mChannel, never()).resumeGroup(ANALYTICS_GROUP, "child");
+
+        /* We can call it twice, double calls are checked by channel. */
+        parent.resume();
+        verify(mChannel, times(2)).resumeGroup(ANALYTICS_GROUP, "parent");
+
+        /* Disable analytics. */
+        Analytics.setEnabled(false).get();
+        reset(mChannel);
+
+        /* We cannot call channel while disabled. */
+        parent.pause();
+        parent.resume();
+        verify(mChannel, never()).pauseGroup(anyString(), anyString());
+        verify(mChannel, never()).resumeGroup(anyString(), anyString());
     }
 }
