@@ -211,13 +211,24 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
         html.enabled = true
     }
 
+    def coverageReports = subprojects.coverageReport.findAll { !it.project.name.contains("rum") }
+
     //noinspection GroovyAssignabilityCheck
-    sourceDirectories = files(subprojects.coverageReport.sourceDirectories)
+    sourceDirectories = files(coverageReports.sourceDirectories)
     //noinspection GroovyAssignabilityCheck
-    classDirectories = files(subprojects.coverageReport.classDirectories)
+    classDirectories = files(coverageReports.classDirectories)
     //noinspection GroovyAssignabilityCheck
-    executionData = files(subprojects.coverageReport.executionData)
+    executionData = files(coverageReports.executionData)
 }
+
+apply plugin: 'com.github.kt3k.coveralls'
+
+coveralls {
+    jacocoReportPath "$buildDir/reports/jacoco/coverageReport/coverageReport.xml"
+    sourceDirs = files(subprojects.coverageReport.sourceDirectories).files.absolutePath
+}
+
+tasks.coveralls.dependsOn coverageReport
 
 task javadoc(type: Javadoc, dependsOn: subprojects.javadoc) {
     // Do nothing for :sdk but run the task for its children.
