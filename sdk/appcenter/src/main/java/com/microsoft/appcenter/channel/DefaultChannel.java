@@ -243,8 +243,8 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
-                String targetKey = PartAUtils.getIKey(targetToken);
-                if (groupState.mDisabledTargetKeys.add(targetKey)) {
+                String targetKey = PartAUtils.getTargetKey(targetToken);
+                if (groupState.mPausedTargetKeys.add(targetKey)) {
                     AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ", " + targetKey + ")");
                 }
             } else if (!groupState.mPaused) {
@@ -265,8 +265,8 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
-                String targetKey = PartAUtils.getIKey(targetToken);
-                if (groupState.mDisabledTargetKeys.remove(targetKey)) {
+                String targetKey = PartAUtils.getTargetKey(targetToken);
+                if (groupState.mPausedTargetKeys.remove(targetKey)) {
 
                     /*
                      * Log count can be 0 in memory because of the partial pause, but we might have
@@ -459,7 +459,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, groupState.mDisabledTargetKeys, maxFetch, batch);
+        final String batchId = mPersistence.getLogs(groupName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;
@@ -692,8 +692,8 @@ public class DefaultChannel implements Channel {
 
                 /* Nothing more to do if the log is from a paused transmission target. */
                 Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
-                String iKey = targetKeys.hasNext() ? PartAUtils.getIKey(targetKeys.next()) : null;
-                if (groupState.mDisabledTargetKeys.contains(iKey)) {
+                String iKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
+                if (groupState.mPausedTargetKeys.contains(iKey)) {
                     AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + iKey + " is paused.");
                     return;
                 }
@@ -813,7 +813,7 @@ public class DefaultChannel implements Channel {
         /**
          * List of disabled target keys.
          */
-        final Collection<String> mDisabledTargetKeys = new HashSet<>();
+        final Collection<String> mPausedTargetKeys = new HashSet<>();
 
         /**
          * Runnable that triggers ingestion of this group data

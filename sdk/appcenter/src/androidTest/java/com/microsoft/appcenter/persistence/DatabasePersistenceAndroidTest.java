@@ -767,7 +767,7 @@ public class DatabasePersistenceAndroidTest {
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
-        oldSchema.remove(DatabasePersistence.COLUMN_IKEY);
+        oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -845,7 +845,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
 
             /* Verify iKey stored as well. */
-            String iKey = values.getAsString(DatabasePersistence.COLUMN_IKEY);
+            String iKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
             assertEquals(commonSchemaLog.getIKey(), iKey);
         } finally {
             persistence.close();
@@ -857,7 +857,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
-        oldSchema.remove(DatabasePersistence.COLUMN_IKEY);
+        oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -936,7 +936,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
 
             /* Verify iKey stored as well. */
-            String iKey = values.getAsString(DatabasePersistence.COLUMN_IKEY);
+            String iKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
             assertEquals(commonSchemaLog.getIKey(), iKey);
         } finally {
             persistence.close();

@@ -319,7 +319,7 @@ public class AnalyticsTransmissionTarget {
 
     @NonNull
     private String getEnabledPreferenceKey() {
-        return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + PartAUtils.getIKey(mTransmissionTargetToken);
+        return Analytics.getInstance().getEnabledPreferenceKeyPrefix() + PartAUtils.getTargetKey(mTransmissionTargetToken);
     }
 
     @WorkerThread

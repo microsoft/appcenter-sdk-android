@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_IKEY;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_TARGET_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -103,7 +103,7 @@ public class DatabasePersistenceTest {
         for (int i = 0; i < groupCount; i++) {
             StorageHelper.DatabaseStorage.DatabaseScanner mockDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
             when(mockDatabaseScanner.iterator()).thenReturn(list.get(i).iterator());
-            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i), COLUMN_IKEY, Collections.<String>emptyList(), false)).thenReturn(mockDatabaseScanner);
+            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i), COLUMN_TARGET_KEY, Collections.<String>emptyList(), false)).thenReturn(mockDatabaseScanner);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);

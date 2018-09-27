@@ -68,10 +68,10 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_DATA_TYPE = "type";
 
     /**
-     * iKey part of the target token in clear text.
+     * Project identifier part of the target token in clear text (the target token key).
      */
     @VisibleForTesting
-    static final String COLUMN_IKEY = "ikey";
+    static final String COLUMN_TARGET_KEY = "target_key";
 
     /**
      * Table schema for Persistence.
@@ -170,7 +170,7 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_IKEY + "` TEXT");
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 return true;
             }
 
@@ -205,7 +205,7 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
         values.put(COLUMN_DATA_TYPE, type);
-        values.put(COLUMN_IKEY, iKey);
+        values.put(COLUMN_TARGET_KEY, iKey);
         return values;
     }
 
@@ -225,7 +225,7 @@ public class DatabasePersistence extends Persistence {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
-                iKey = PartAUtils.getIKey(targetToken);
+                iKey = PartAUtils.getTargetKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
                 iKey = null;
@@ -339,13 +339,13 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> disabledIKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> disabledTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_IKEY, disabledIKeys, false);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, disabledTargetKeys, false);
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
@@ -364,7 +364,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_IKEY, disabledIKeys, true);
+                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, disabledTargetKeys, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
