@@ -16,6 +16,12 @@ done
 duration=$(( SECONDS - start ))
 echo "Android Emulator started after $duration seconds."
 
+# Convert VSTS variables to coveralls for pull request reports to work.
+if [[ $BUILD_SOURCEBRANCH =~ ^refs/pull/[0-9]+/merge$ ]]
+then
+    export CI_PULL_REQUEST=`sed -E 's#refs/pull/([0-9]+)/merge#\1#' <<< $BUILD_SOURCEBRANCH`
+fi
+
 # Run tests with coverage
 if [ -z $1 ]
 then
