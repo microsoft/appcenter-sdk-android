@@ -656,39 +656,15 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate and persist some logs with a first iKey. */
             String disabledKey1 = "1";
-            for (int i = 0; i < numberOfLogsPerKey; i++) {
-                CommonSchemaLog log = new MockCommonSchemaLog();
-                log.setVer("3.0");
-                log.setName("test");
-                log.setTimestamp(new Date());
-                log.setIKey(disabledKey1);
-                log.addTransmissionTarget("1-token");
-                persistence.putLog("test", log);
-            }
+            generateCsLogsWithIKey(persistence, disabledKey1, numberOfLogsPerKey);
 
             /* Generate more logs with another iKey to exclude. */
             String disabledKey2 = "2";
-            for (int i = 0; i < numberOfLogsPerKey; i++) {
-                CommonSchemaLog log = new MockCommonSchemaLog();
-                log.setVer("3.0");
-                log.setName("test");
-                log.setTimestamp(new Date());
-                log.setIKey(disabledKey2);
-                log.addTransmissionTarget("2-token");
-                persistence.putLog("test", log);
-            }
+            generateCsLogsWithIKey(persistence, disabledKey2, numberOfLogsPerKey);
 
             /* Generate logs from a third key. */
             String enabledKey = "3";
-            for (int i = 0; i < numberOfLogsPerKey; i++) {
-                CommonSchemaLog log = new MockCommonSchemaLog();
-                log.setVer("3.0");
-                log.setName("test");
-                log.setTimestamp(new Date());
-                log.setIKey(enabledKey);
-                log.addTransmissionTarget("3-token");
-                persistence.putLog("test", log);
-            }
+            generateCsLogsWithIKey(persistence, enabledKey, numberOfLogsPerKey);
 
             /* Get logs without disabled keys. */
             List<Log> outLogs = new ArrayList<>();
@@ -723,6 +699,21 @@ public class DatabasePersistenceAndroidTest {
 
             //noinspection ThrowFromFinallyBlock
             persistence.close();
+        }
+    }
+
+    /**
+     * Utility for getLogsFilteringOutDisabledKeys test.
+     */
+    private void generateCsLogsWithIKey(DatabasePersistence persistence, String iKey, int numberOfLogsPerKey) throws PersistenceException {
+        for (int i = 0; i < numberOfLogsPerKey; i++) {
+            CommonSchemaLog log = new MockCommonSchemaLog();
+            log.setVer("3.0");
+            log.setName("test");
+            log.setTimestamp(new Date());
+            log.setIKey(iKey);
+            log.addTransmissionTarget(iKey + "-token");
+            persistence.putLog("test", log);
         }
     }
 
