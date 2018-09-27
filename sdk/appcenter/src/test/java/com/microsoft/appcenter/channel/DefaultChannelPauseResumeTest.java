@@ -28,6 +28,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
@@ -114,28 +115,6 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void pauseGroupWhileDisabled() {
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
-
-        /* Pause group twice. */
-        channel.pauseGroup(TEST_GROUP, null);
-
-        /* Verify the group is NOT paused. */
-        verify(channel, never()).cancelTimer(any(DefaultChannel.GroupState.class));
-    }
-
-    @Test
-    public void resumeGroupWhileDisabled() {
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
-
-        /* Resume group. */
-        channel.resumeGroup(TEST_GROUP, null);
-
-        /* Verify the group is NOT resumed.  */
-        verify(channel, never()).checkPendingLogs(eq(TEST_GROUP));
-    }
-
-    @Test
     public void pauseResumeTargetToken() throws Persistence.PersistenceException {
 
         /* Mock database and ingestion. */
@@ -146,6 +125,9 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         AppCenterIngestion appCenterIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
+
+        /* Reset to verify further interactions besides initial check after adding group. */
+        reset(persistence);
 
         /* Pause token. */
         String targetToken = "iKey-apiKey";
@@ -163,7 +145,12 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(TEST_GROUP, log);
         assertEquals(0, channel.getCounter(TEST_GROUP));
+        verify(persistence, never()).countLogs(TEST_GROUP);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Pausing a second time has no effect. */
+        channel.pauseGroup(TEST_GROUP, targetToken);
+        verify(persistence, never()).countLogs(TEST_GROUP);
 
         /* Enqueueing a log from another transmission target works. */
         Log otherLog = mock(Log.class);
@@ -180,6 +167,13 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         reset(ingestion);
         channel.enqueue(log, TEST_GROUP);
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+
+        /* Calling resume a second time has 0 effect. */
+        reset(persistence);
+        reset(ingestion);
+        channel.resumeGroup(TEST_GROUP, targetToken);
+        verifyZeroInteractions(persistence);
+        verifyZeroInteractions(ingestion);
 
         /* AppCenter ingestion never used. */
         verify(appCenterIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
