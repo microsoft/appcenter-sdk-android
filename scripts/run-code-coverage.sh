@@ -16,8 +16,17 @@ done
 duration=$(( SECONDS - start ))
 echo "Android Emulator started after $duration seconds."
 
-# Run tests now
-./gradlew coveralls
+# Run tests with coverage
+if [ -z $1 ]
+then
+
+    # Using env variable COVERALLS_REPO_TOKEN if set, this will not fail process unset.
+    ./gradlew coveralls
+else
+
+    # Expose variable just for this run based on script parameter.
+    COVERALLS_REPO_TOKEN=$1 ./gradlew coveralls
+fi
 EXIT_CODE=$?
 
 # And kill emulator
