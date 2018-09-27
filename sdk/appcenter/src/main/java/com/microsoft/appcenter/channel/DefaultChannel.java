@@ -692,9 +692,9 @@ public class DefaultChannel implements Channel {
 
                 /* Nothing more to do if the log is from a paused transmission target. */
                 Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
-                String iKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
-                if (groupState.mPausedTargetKeys.contains(iKey)) {
-                    AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + iKey + " is paused.");
+                String targetKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
+                if (groupState.mPausedTargetKeys.contains(targetKey)) {
+                    AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + targetKey + " is paused.");
                     return;
                 }
 
