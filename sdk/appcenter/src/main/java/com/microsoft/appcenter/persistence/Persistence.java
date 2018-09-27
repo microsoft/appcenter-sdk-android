@@ -57,14 +57,14 @@ public abstract class Persistence implements Closeable {
     /**
      * Gets an array of logs for the given {@code group}.
      *
-     * @param group              The group of the storage for logs.
-     * @param disabledTargetKeys List of target token keys to exclude from the log query.
-     * @param limit              The max number of logs to be returned.
-     * @param outLogs            A list to receive {@link Log} objects.
+     * @param group            The group of the storage for logs.
+     * @param pausedTargetKeys List of target token keys to exclude from the log query.
+     * @param limit            The max number of logs to be returned.
+     * @param outLogs          A list to receive {@link Log} objects.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
     @Nullable
-    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> disabledTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
+    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
      * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List)}}.

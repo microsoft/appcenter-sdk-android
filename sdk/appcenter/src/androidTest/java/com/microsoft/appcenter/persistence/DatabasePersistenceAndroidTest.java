@@ -640,7 +640,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void getLogsFilteringOutDisabledKeys() throws PersistenceException {
+    public void getLogsFilteringOutPausedTargetKeys() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -655,21 +655,21 @@ public class DatabasePersistenceAndroidTest {
             int numberOfLogsPerKey = 10;
 
             /* Generate and persist some logs with a first iKey. */
-            String disabledKey1 = "1";
-            generateCsLogsWithIKey(persistence, disabledKey1, numberOfLogsPerKey);
+            String pausedKey1 = "1";
+            generateCsLogsWithIKey(persistence, pausedKey1, numberOfLogsPerKey);
 
             /* Generate more logs with another iKey to exclude. */
-            String disabledKey2 = "2";
-            generateCsLogsWithIKey(persistence, disabledKey2, numberOfLogsPerKey);
+            String pausedKey2 = "2";
+            generateCsLogsWithIKey(persistence, pausedKey2, numberOfLogsPerKey);
 
             /* Generate logs from a third key. */
-            String enabledKey = "3";
-            generateCsLogsWithIKey(persistence, enabledKey, numberOfLogsPerKey);
+            String resumedKey = "3";
+            generateCsLogsWithIKey(persistence, resumedKey, numberOfLogsPerKey);
 
             /* Get logs without disabled keys. */
             List<Log> outLogs = new ArrayList<>();
             int limit = numberOfLogsPerKey * 3;
-            String batchId = persistence.getLogs("test", Arrays.asList(disabledKey1, disabledKey2), limit, outLogs);
+            String batchId = persistence.getLogs("test", Arrays.asList(pausedKey1, pausedKey2), limit, outLogs);
             assertNotNull(batchId);
 
             /* Verify we get a subset of logs without the disabled keys. */
@@ -677,12 +677,12 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(limit, persistence.countLogs("test"));
             for (Log log : outLogs) {
                 assertTrue(log instanceof CommonSchemaLog);
-                assertEquals(enabledKey, ((CommonSchemaLog) log).getIKey());
+                assertEquals(resumedKey, ((CommonSchemaLog) log).getIKey());
             }
 
             /* Calling a second time should return nothing since the batch is in progress. */
             outLogs.clear();
-            batchId = persistence.getLogs("test", Arrays.asList(disabledKey1, disabledKey2), limit, outLogs);
+            batchId = persistence.getLogs("test", Arrays.asList(pausedKey1, pausedKey2), limit, outLogs);
             assertNull(batchId);
             assertEquals(0, outLogs.size());
 
@@ -693,7 +693,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(numberOfLogsPerKey * 2, outLogs.size());
             for (Log log : outLogs) {
                 assertTrue(log instanceof CommonSchemaLog);
-                assertNotEquals(enabledKey, ((CommonSchemaLog) log).getIKey());
+                assertNotEquals(resumedKey, ((CommonSchemaLog) log).getIKey());
             }
         } finally {
 
@@ -703,7 +703,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     /**
-     * Utility for getLogsFilteringOutDisabledKeys test.
+     * Utility for getLogsFilteringOutPausedTargetKeys test.
      */
     private void generateCsLogsWithIKey(DatabasePersistence persistence, String iKey, int numberOfLogsPerKey) throws PersistenceException {
         for (int i = 0; i < numberOfLogsPerKey; i++) {
