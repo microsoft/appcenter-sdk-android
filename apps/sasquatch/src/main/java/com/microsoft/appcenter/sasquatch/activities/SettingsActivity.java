@@ -68,6 +68,7 @@ public class SettingsActivity extends AppCompatActivity {
     private static boolean sAnalyticsPaused;
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.SKIP_START.toString());
@@ -76,6 +77,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
+    @SuppressWarnings("deprecation")
     public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
@@ -178,10 +180,7 @@ public class SettingsActivity extends AppCompatActivity {
                             method = resumeMethod;
                         }
                         try {
-
-                            @SuppressWarnings("unchecked")
-                            AppCenterFuture<Void> future = (AppCenterFuture<Void>) method.invoke(null);
-                            future.get();
+                            method.invoke(null);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }

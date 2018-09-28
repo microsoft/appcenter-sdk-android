@@ -171,21 +171,24 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Pauses log transmission.
-     *
-     * @return future with null result to monitor when the operation completes.
+     * Pauses log transmission. This API cannot be used if the service is disabled.
+     * Transmission is resumed:
+     * <ul>
+     * <li>when calling {@link #resume()}.</li>
+     * <li>when restarting the application process and calling AppCenter.start again.</li>
+     * <li>when disabling and re-enabling the SDK or the Analytics module.</li>
+     * </ul>
      */
-    public static AppCenterFuture<Void> pause() {
-        return getInstance().pauseInstanceAsync();
+    public static void pause() {
+        getInstance().pauseInstanceAsync();
     }
 
     /**
      * Resumes log transmission if paused.
-     *
-     * @return future with null result to monitor when the operation completes.
+     * This API cannot be used if the service is disabled.
      */
-    public static AppCenterFuture<Void> resume() {
-        return getInstance().resumeInstanceAsync();
+    public static void resume() {
+        getInstance().resumeInstanceAsync();
     }
 
     /**
@@ -629,33 +632,27 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Implements {@link #pause()}}.
      */
-    private synchronized AppCenterFuture<Void> pauseInstanceAsync() {
-        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
-        postAsyncGetter(new Runnable() {
+    private synchronized void pauseInstanceAsync() {
+        post(new Runnable() {
 
             @Override
             public void run() {
                 mChannel.pauseGroup(ANALYTICS_GROUP, null);
-                future.complete(null);
             }
-        }, future, null);
-        return future;
+        });
     }
 
     /**
      * Implements {@link #resume()}}.
      */
-    private synchronized AppCenterFuture<Void> resumeInstanceAsync() {
-        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
-        postAsyncGetter(new Runnable() {
+    private synchronized void resumeInstanceAsync() {
+        post(new Runnable() {
 
             @Override
             public void run() {
                 mChannel.resumeGroup(ANALYTICS_GROUP, null);
-                future.complete(null);
             }
-        }, future, null);
-        return future;
+        });
     }
 
     @VisibleForTesting
