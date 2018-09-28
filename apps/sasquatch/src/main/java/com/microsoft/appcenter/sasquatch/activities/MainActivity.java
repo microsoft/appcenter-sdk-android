@@ -210,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
         Push.setSenderId(SENDER_ID);
     }
 
+    @SuppressWarnings("unchecked")
     private void setMaxStorageSize() {
         final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
         if (maxStorageSize <= 0) {
@@ -222,8 +223,6 @@ public class MainActivity extends AppCompatActivity {
         {
             try {
                 Method method = AppCenter.class.getMethod("setMaxStorageSize", long.class);
-
-                //noinspection unchecked
                 future = (AppCenterFuture<Boolean>) method.invoke(null, maxStorageSize);
             } catch (Exception ignored) {
                 return;
