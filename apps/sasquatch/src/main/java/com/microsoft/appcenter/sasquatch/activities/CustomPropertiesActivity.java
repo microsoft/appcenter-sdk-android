@@ -143,12 +143,16 @@ public class CustomPropertiesActivity extends AppCompatActivity {
 
         private void showDate() {
             CustomPropertiesActivity activity = (CustomPropertiesActivity) getActivity();
+
+            //noinspection ConstantConditions
             activity.mCurrentProperty = this;
             new DatePickerFragment().show(activity.getSupportFragmentManager(), "datePicker");
         }
 
         private void showTime() {
             CustomPropertiesActivity activity = (CustomPropertiesActivity) getActivity();
+
+            //noinspection ConstantConditions
             activity.mCurrentProperty = this;
             new TimePickerFragment().show(activity.getSupportFragmentManager(), "timePicker");
         }
@@ -222,6 +226,8 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             CustomPropertiesActivity activity = (CustomPropertiesActivity) getActivity();
+
+            @SuppressWarnings("ConstantConditions")
             CustomPropertyFragment property = activity.mCurrentProperty;
             Calendar calendar = Calendar.getInstance();
             if (property != null) {
@@ -240,6 +246,8 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             CustomPropertiesActivity activity = (CustomPropertiesActivity) getActivity();
+
+            @SuppressWarnings("ConstantConditions")
             CustomPropertyFragment property = activity.mCurrentProperty;
             Calendar calendar = Calendar.getInstance();
             if (property != null) {

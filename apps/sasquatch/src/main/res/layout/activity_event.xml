@@ -46,7 +46,8 @@
             android:layout_weight="0.5"
             android:layout_height="wrap_content"
             android:text="@string/pause_target"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
 
         <Button
             android:id="@+id/resume_transmission_button"
@@ -54,7 +55,8 @@
             android:layout_weight="0.5"
             android:layout_height="wrap_content"
             android:text="@string/resume_target"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
 
     </LinearLayout>
 

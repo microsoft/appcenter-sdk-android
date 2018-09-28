@@ -30,7 +30,7 @@ public class EventActivity extends LogActivity {
      * Remember for what targets the device id was enabled.
      * It shouldn't be lost on recreate activity.
      */
-    private static Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
+    private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
 
     private Spinner mTransmissionTargetSpinner;
 

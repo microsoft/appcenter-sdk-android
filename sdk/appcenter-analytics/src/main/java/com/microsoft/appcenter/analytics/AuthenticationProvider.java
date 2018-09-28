@@ -216,7 +216,7 @@ public class AuthenticationProvider {
          * @param ticketKey The ticket key that is used to get an updated token.
          * @param callback  callback to provide the result.
          */
-        void acquireToken(String ticketKey, AuthenticationCallback callback);
+        void acquireToken(@SuppressWarnings("unused") String ticketKey, AuthenticationCallback callback);
     }
 
     /**
