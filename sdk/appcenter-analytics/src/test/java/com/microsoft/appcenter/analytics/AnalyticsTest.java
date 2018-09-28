@@ -26,7 +26,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -60,9 +59,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
-
-    @Mock
-    private Channel mChannel;
 
     @Test
     public void singleton() {
@@ -347,7 +343,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).addListener(isA(AnalyticsValidator.class));
 
         /* Pause Analytics. */
-        Analytics.pause().get();
+        Analytics.pause();
 
         /* Check if Analytics group is paused. */
         verify(channel).pauseGroup(eq(analytics.getGroupName()));
@@ -358,7 +354,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel, times(2)).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Resume Analytics. */
-        Analytics.resume().get();
+        Analytics.resume();
 
         /* Check if Analytics group is resumed. */
         verify(channel).resumeGroup(eq(analytics.getGroupName()));
@@ -385,7 +381,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
         /* Disable and pause Analytics. */
         Analytics.setEnabled(false);
-        Analytics.pause().get();
+        Analytics.pause();
 
         /* Check if Analytics group is paused even while disabled. */
         verify(channel, never()).pauseGroup(eq(analytics.getGroupName()));
@@ -396,7 +392,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel, never()).enqueue(any(Log.class), eq(analytics.getGroupName()));
 
         /* Resume Analytics. */
-        Analytics.resume().get();
+        Analytics.resume();
 
         /* Check if Analytics group is resumed even while paused. */
         verify(channel, never()).resumeGroup(eq(analytics.getGroupName()));
