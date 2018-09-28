@@ -11,6 +11,7 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -22,6 +23,7 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,9 +38,10 @@ import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorag
 public class DatabasePersistence extends Persistence {
 
     /**
-     * Version of the schema.
+     * Version of the schema that introduced api key and type field.
      */
-    private static final int VERSION = 2;
+    @VisibleForTesting
+    static final int VERSION_TYPE_API_KEY = 2;
 
     /**
      * Name of group column in the table.
@@ -65,6 +68,18 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_DATA_TYPE = "type";
 
     /**
+     * Project identifier part of the target token in clear text (the target token key).
+     */
+    @VisibleForTesting
+    static final String COLUMN_TARGET_KEY = "target_key";
+
+    /**
+     * Table schema for Persistence.
+     */
+    @VisibleForTesting
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "");
+
+    /**
      * Database name.
      */
     @VisibleForTesting
@@ -75,12 +90,10 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String TABLE = "logs";
-
     /**
-     * Table schema for Persistence.
+     * Current version of the schema.
      */
-    @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "");
+    private static final int VERSION = 3;
 
     /**
      * Size limit (in bytes) for a database row log payload.
@@ -152,12 +165,12 @@ public class DatabasePersistence extends Persistence {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-                /*
-                 * This is called only on upgrade and thus only if oldVersion is < 2.
-                 * Therefore we don't have to check anything to add the missing columns.
-                 */
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
+                /* Update columns only if needed, this callback is called only on upgrade. */
+                if (oldVersion < VERSION_TYPE_API_KEY) {
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
+                }
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 return true;
             }
 
@@ -183,14 +196,16 @@ public class DatabasePersistence extends Persistence {
      * @param group       The group of the storage for the log.
      * @param logJ        The JSON string for a log.
      * @param targetToken target token if the log is common schema.
+     * @param targetKey   project identifier part of the target token in clear text.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
         values.put(COLUMN_DATA_TYPE, type);
+        values.put(COLUMN_TARGET_KEY, targetKey);
         return values;
     }
 
@@ -203,17 +218,20 @@ public class DatabasePersistence extends Persistence {
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
             boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
+            String targetKey;
             String targetToken;
             if (log instanceof CommonSchemaLog) {
                 if (isLargePayload) {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
                 }
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
+                targetKey = PartAUtils.getTargetKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
             } else {
+                targetKey = null;
                 targetToken = null;
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType());
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
             long databaseId = mDatabaseStorage.put(contentValues);
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {
@@ -313,7 +331,7 @@ public class DatabasePersistence extends Persistence {
     public int countLogs(@NonNull String group) {
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, null, null, true);
         int count = scanner.getCount();
         scanner.close();
         return count;
@@ -321,13 +339,13 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group);
+        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, false);
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
@@ -346,7 +364,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, true);
+                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {

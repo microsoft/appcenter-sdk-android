@@ -17,6 +17,16 @@ public class PartAUtils {
     private static final Pattern NAME_REGEX = Pattern.compile("^[a-zA-Z0-9]((\\.(?!(\\.|$)))|[_a-zA-Z0-9]){3,99}$");
 
     /**
+     * Get the project identifier from the full target token (aka ingestion key or apiKey).
+     *
+     * @param targetToken transmission target token.
+     * @return the ikey or the original string if format is invalid.
+     */
+    public static String getTargetKey(String targetToken) {
+        return targetToken.split("-")[0];
+    }
+
+    /**
      * Validate and set name for common schema log.
      *
      * @param log  log.
@@ -48,7 +58,7 @@ public class PartAUtils {
         dest.setVer("3.0");
         dest.setTimestamp(src.getTimestamp());
         /* TODO: We should cache the ikey for transmission target */
-        dest.setIKey("o:" + transmissionTarget.split("-")[0]);
+        dest.setIKey("o:" + getTargetKey(transmissionTarget));
 
         /* Copy target token also in the set. */
         dest.addTransmissionTarget(transmissionTarget);

@@ -17,6 +17,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.notNull;
@@ -41,7 +42,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void listener() {
+    public void logCallbacks() {
 
         @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
@@ -90,7 +91,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        when(mockPersistence.getLogs(any(String.class), anyInt(), Matchers.<List<Log>>any()))
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any()))
                 .then(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -177,7 +178,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     }
 
     @Test
-    public void groupListeners() {
+    public void groupCallbacks() {
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
         Channel.Listener listener = spy(new AbstractChannelListener());
@@ -186,10 +187,14 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
         verify(listener).onGroupAdded(TEST_GROUP, groupListener);
-        channel.pauseGroup(TEST_GROUP);
-        verify(listener).onPaused(TEST_GROUP);
-        channel.resumeGroup(TEST_GROUP);
-        verify(listener).onResumed(TEST_GROUP);
+        channel.pauseGroup(TEST_GROUP, null);
+        verify(listener).onPaused(TEST_GROUP, null);
+        channel.pauseGroup(TEST_GROUP, "token");
+        verify(listener).onPaused(TEST_GROUP, "token");
+        channel.resumeGroup(TEST_GROUP, null);
+        verify(listener).onResumed(TEST_GROUP, null);
+        channel.resumeGroup(TEST_GROUP, "token");
+        verify(listener).onResumed(TEST_GROUP, "token");
         channel.removeGroup(TEST_GROUP);
         verify(listener).onGroupRemoved(TEST_GROUP);
     }

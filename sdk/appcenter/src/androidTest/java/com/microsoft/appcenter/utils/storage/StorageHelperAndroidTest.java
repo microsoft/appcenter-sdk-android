@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -284,6 +285,15 @@ public class StorageHelperAndroidTest {
         /* Null value matching. */
         assertEquals(0, databaseStorage.getScanner("COL_STRING", null).getCount());
         assertEquals(2, databaseStorage.getScanner("COL_STRING_NULL", null).getCount());
+
+        /* Test null value filter does not exclude anything, so returns the 2 logs. */
+        scanner = databaseStorage.getScanner(null, null, "COL_STRING", null, false);
+        assertEquals(2, scanner.getCount());
+
+        /* Test filtering only with the second key parameter to get only the second log. */
+        scanner = databaseStorage.getScanner(null, null, "COL_STRING", Collections.singletonList(value1.getAsString("COL_STRING")), false);
+        assertEquals(1, scanner.getCount());
+        assertContentValuesEquals(value2, scanner.iterator().next());
 
         /* Delete. */
         databaseStorage.delete(value1Id);

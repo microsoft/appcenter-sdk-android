@@ -51,7 +51,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Constant marking event of the analytics group.
      */
-    private static final String ANALYTICS_GROUP = "group_analytics";
+    static final String ANALYTICS_GROUP = "group_analytics";
 
     /**
      * Activity suffix to exclude from generated page names.
@@ -637,7 +637,7 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                mChannel.pauseGroup(ANALYTICS_GROUP);
+                mChannel.pauseGroup(ANALYTICS_GROUP, null);
             }
         });
     }
@@ -650,7 +650,7 @@ public class Analytics extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                mChannel.resumeGroup(ANALYTICS_GROUP);
+                mChannel.resumeGroup(ANALYTICS_GROUP, null);
             }
         });
     }
@@ -700,6 +700,13 @@ public class Analytics extends AbstractAppCenterService {
          * it turns out the non get operations use the same flow as get.
          */
         postAsyncGetter(runnable, future, valueIfDisabledOrNotStarted);
+    }
+
+    @Override
+    protected synchronized void post(Runnable runnable) {
+
+        /* Override so that AnalyticsTransmissionTarget has access to it. */
+        super.post(runnable);
     }
 
     /**

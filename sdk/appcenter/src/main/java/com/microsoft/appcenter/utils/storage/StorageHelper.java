@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -667,21 +668,23 @@ public class StorageHelper {
          * @return A scanner to iterate all values.
          */
         public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value) {
-            return getScanner(key, value, false);
+            return getScanner(key, value, null, null, false);
         }
 
         /**
          * Gets a scanner to iterate all values those match key == value, but records contain
          * only identifiers.
          *
-         * @param key    The optional key for query.
-         * @param value  The optional value for query.
-         * @param idOnly True to return only identifiers, false to return all fields.
-         *               This flag is ignored if using in memory database.
+         * @param key          The optional key1 for query.
+         * @param value        The optional value1 for query.
+         * @param key2         The optional key2 for query.
+         * @param value2Filter The optional values to exclude from query that matches key2.
+         * @param idOnly       True to return only identifiers, false to return all fields.
+         *                     This flag is ignored if using in memory database.
          * @return A scanner to iterate all values (records contain only identifiers).
          */
-        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, boolean idOnly) {
-            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, idOnly));
+        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, String key2, Collection<String> value2Filter, boolean idOnly) {
+            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, key2, value2Filter, idOnly));
         }
 
         /**
@@ -725,7 +728,7 @@ public class StorageHelper {
          */
         @VisibleForTesting
         String[] getColumnNames() {
-            return mDatabaseManager.getCursor(null, null, false).getColumnNames();
+            return mDatabaseManager.getCursor(null, null, null, null, false).getColumnNames();
         }
 
         /**

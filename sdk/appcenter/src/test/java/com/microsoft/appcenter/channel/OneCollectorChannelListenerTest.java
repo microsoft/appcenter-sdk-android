@@ -246,14 +246,22 @@ public class OneCollectorChannelListenerTest {
         Channel channel = mock(Channel.class);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
-        /* Clear a group. */
-        listener.onPaused(TEST_GROUP);
+        /* Pause a group. */
+        listener.onPaused(TEST_GROUP, null);
 
-        /* Verify group added. */
-        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        /* Verify group paused. */
+        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
 
         /* Pause the one collector group: nothing more happens. */
-        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
+        verifyNoMoreInteractions(channel);
+
+        /* Pause a single token. */
+        listener.onPaused(TEST_GROUP, "token");
+
+        /* Verify. */
+        verify(channel).pauseGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, "token");
+        listener.onPaused(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
     }
 
@@ -262,14 +270,22 @@ public class OneCollectorChannelListenerTest {
         Channel channel = mock(Channel.class);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
-        /* Clear a group. */
-        listener.onResumed(TEST_GROUP);
+        /* Resume a group. */
+        listener.onResumed(TEST_GROUP, null);
 
-        /* Verify group added. */
-        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        /* Verify group resumed. */
+        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
 
-        /* Pause the one collector group: nothing more happens. */
-        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        /* Resume the one collector group: nothing more happens. */
+        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
+        verifyNoMoreInteractions(channel);
+
+        /* Resume a single token. */
+        listener.onResumed(TEST_GROUP, "token");
+
+        /* Verify. */
+        verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, "token");
+        listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
     }
 }

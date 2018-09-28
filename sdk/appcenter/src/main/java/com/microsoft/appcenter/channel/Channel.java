@@ -48,16 +48,18 @@ public interface Channel {
     /**
      * Pauses the given group.
      *
-     * @param groupName the name of a group.
+     * @param groupName   the name of a group.
+     * @param targetToken the target token to pause, or null to pause the entire group.
      */
-    void pauseGroup(String groupName);
+    void pauseGroup(String groupName, String targetToken);
 
     /**
      * Resumes transmission for the given group.
      *
-     * @param groupName the name of a group.
+     * @param groupName   the name of a group.
+     * @param targetToken the target token to resume, or null to resume the entire group.
      */
-    void resumeGroup(String groupName);
+    void resumeGroup(String groupName, String targetToken);
 
     /**
      * Add Log to queue to be persisted and sent.
@@ -185,16 +187,18 @@ public interface Channel {
         /**
          * Called when a group is paused.
          *
-         * @param groupName The group name.
+         * @param groupName   The group name.
+         * @param targetToken The target token is paused, or null when the entire group is paused.
          */
-        void onPaused(@NonNull String groupName);
+        void onPaused(@NonNull String groupName, String targetToken);
 
         /**
          * Called when a group is resumed.
          *
-         * @param groupName The group name.
+         * @param groupName   The group name.
+         * @param targetToken The target token is resumed, or null when the entire group is resumed.
          */
-        void onResumed(@NonNull String groupName);
+        void onResumed(@NonNull String groupName, String targetToken);
     }
 
     /**

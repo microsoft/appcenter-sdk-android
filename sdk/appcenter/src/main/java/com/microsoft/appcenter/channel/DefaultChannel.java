@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -25,6 +26,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +42,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
-     * Persistence batch size for {@link Persistence#getLogs(String, int, List)} when clearing.
+     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
@@ -237,31 +239,55 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void pauseGroup(String groupName) {
+    public synchronized void pauseGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
-        if (groupState != null && !groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
-            groupState.mPaused = true;
-            cancelTimer(groupState);
+        if (groupState != null) {
+            if (targetToken != null) {
+                String targetKey = PartAUtils.getTargetKey(targetToken);
+                if (groupState.mPausedTargetKeys.add(targetKey)) {
+                    AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ", " + targetKey + ")");
+                }
+            } else if (!groupState.mPaused) {
+                AppCenterLog.debug(LOG_TAG, "pauseGroup(" + groupName + ")");
+                groupState.mPaused = true;
+                cancelTimer(groupState);
+            }
 
             /* Call listeners so that they can react on group resuming. */
             for (Listener listener : mListeners) {
-                listener.onPaused(groupName);
+                listener.onPaused(groupName, targetToken);
             }
         }
     }
 
     @Override
-    public synchronized void resumeGroup(String groupName) {
+    public synchronized void resumeGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
-        if (groupState != null && groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
-            groupState.mPaused = false;
-            checkPendingLogs(groupState.mName);
+        if (groupState != null) {
+            if (targetToken != null) {
+                String targetKey = PartAUtils.getTargetKey(targetToken);
+                if (groupState.mPausedTargetKeys.remove(targetKey)) {
+
+                    /*
+                     * Log count can be 0 in memory because of the partial pause, but we might have
+                     * logs in storage for this key, a simple fix is to reevaluate log count and check
+                     * for logs again. This might create a batch with fewer logs than expected as
+                     * the log count does not exclude logs with paused keys, this would be an optimization
+                     * that does not seem necessary for now.
+                     */
+                    AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ", " + targetKey + ")");
+                    groupState.mPendingLogCount = mPersistence.countLogs(groupName);
+                    checkPendingLogs(groupState.mName);
+                }
+            } else if (groupState.mPaused) {
+                AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
+                groupState.mPaused = false;
+                checkPendingLogs(groupState.mName);
+            }
 
             /* Call listeners so that they can react on group resuming. */
             for (Listener listener : mListeners) {
-                listener.onResumed(groupName);
+                listener.onResumed(groupName, targetToken);
             }
         }
     }
@@ -378,7 +404,7 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        mPersistence.getLogs(groupState.mName, CLEAR_BATCH_SIZE, logs);
+        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs);
         if (logs.size() > 0 && groupState.mListener != null) {
             for (Log log : logs) {
                 groupState.mListener.onBeforeSending(log);
@@ -433,7 +459,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, maxFetch, batch);
+        final String batchId = mPersistence.getLogs(groupName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;
@@ -659,18 +685,26 @@ public class DefaultChannel implements Channel {
                 AppCenterLog.debug(LOG_TAG, "Log of type '" + log.getType() + "' was not filtered out by listener(s) but no app secret was provided. Not persisting/sending the log.");
                 return;
             }
-
-            /* Persist log if not filtered out. */
             try {
 
-                /* Increment counters and schedule ingestion if we are enabled. */
+                /* Persist log. */
                 mPersistence.putLog(groupName, log);
+
+                /* Nothing more to do if the log is from a paused transmission target. */
+                Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
+                String targetKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
+                if (groupState.mPausedTargetKeys.contains(targetKey)) {
+                    AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + targetKey + " is paused.");
+                    return;
+                }
+
+                /* Increment counters and schedule ingestion if we are enabled. */
                 groupState.mPendingLogCount++;
                 AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
                 if (mEnabled) {
                     checkPendingLogs(groupState.mName);
                 } else {
-                    AppCenterLog.warn(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
+                    AppCenterLog.debug(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
                 }
             } catch (Persistence.PersistenceException e) {
                 AppCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
@@ -775,6 +809,11 @@ public class DefaultChannel implements Channel {
          * Indicates if the group is paused.
          */
         boolean mPaused;
+
+        /**
+         * List of paused target keys.
+         */
+        final Collection<String> mPausedTargetKeys = new HashSet<>();
 
         /**
          * Runnable that triggers ingestion of this group data
