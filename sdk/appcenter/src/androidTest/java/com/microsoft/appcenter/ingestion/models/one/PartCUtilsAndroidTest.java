@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNull;
 
 public class PartCUtilsAndroidTest {
 
-    private StringTypedProperty typedProperty(String key, String value) {
+    private static StringTypedProperty typedProperty(String key, String value) {
         StringTypedProperty stringTypedProperty = new StringTypedProperty();
         stringTypedProperty.setName(key);
         stringTypedProperty.setValue(value);
