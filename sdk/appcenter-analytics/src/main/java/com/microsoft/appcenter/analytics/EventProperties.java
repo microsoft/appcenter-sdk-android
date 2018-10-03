@@ -79,10 +79,14 @@ public class EventProperties {
      */
     public EventProperties set(String key, double value) {
         if (isValidKey(key)) {
-            DoubleTypedProperty property = new DoubleTypedProperty();
-            property.setName(key);
-            property.setValue(value);
-            mProperties.put(key, property);
+            if (Double.isInfinite(value) || Double.isNaN(value)) {
+                AppCenterLog.error(LOG_TAG, "Double property value cannot be NaN or infinite.");
+            } else {
+                DoubleTypedProperty property = new DoubleTypedProperty();
+                property.setName(key);
+                property.setValue(value);
+                mProperties.put(key, property);
+            }
         }
         return this;
     }
