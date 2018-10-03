@@ -219,4 +219,27 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.resumeGroup(TEST_GROUP, targetToken);
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
+
+    @Test
+    public void pauseResumeGroupWhenDisabled() {
+
+        /* Create a channel with a log group. */
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
+        Channel.Listener listener = mock(Channel.Listener.class);
+        channel.addListener(listener);
+
+        /* Pause group. */
+        channel.pauseGroup(TEST_GROUP, null);
+
+        /* Verify channel doesn't do anything on pause. */
+        verify(channel, never()).cancelTimer(any(DefaultChannel.GroupState.class));
+        verify(listener, never()).onPaused(eq(TEST_GROUP), anyString());
+
+        /* Resume group. */
+        channel.resumeGroup(TEST_GROUP, null);
+
+        /* Verify channel doesn't do anything on pause. */
+        verify(channel, never()).checkPendingLogs(eq(TEST_GROUP));
+        verify(listener, never()).onResumed(eq(TEST_GROUP), anyString());
+    }
 }
