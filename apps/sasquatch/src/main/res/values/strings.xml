@@ -29,6 +29,13 @@
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>
+    <string-array name="typed_property_types" tools:ignore="MissingTranslation">
+        <item>Boolean</item>
+        <item>Double</item>
+        <item>Long</item>
+        <item>Date/Time</item>
+        <item>String</item>
+    </string-array>
     <string-array name="custom_property_types" tools:ignore="MissingTranslation">
         <item>Clear</item>
         <item>Boolean</item>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="2dp"
+    android:background="@drawable/border"
+    android:orientation="vertical"
+    android:padding="5dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/key" />
+
+    <EditText
+        android:id="@+id/key"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/key"
+        android:inputType="text" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/type" />
+
+    <Spinner
+        android:id="@+id/type"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:entries="@array/typed_property_types" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/value" />
+
+    <FrameLayout
+        android:id="@+id/value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <CheckBox
+            android:id="@+id/bool"
+            android:layout_width="match_parent"
+            android:layout_height="42dp" />
+
+        <LinearLayout
+            android:id="@+id/datetime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <EditText
+                android:id="@+id/date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:focusable="false"
+                android:inputType="date"
+                tools:ignore="LabelFor" />
+
+            <EditText
+                android:id="@+id/time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:focusable="false"
+                android:inputType="time"
+                tools:ignore="LabelFor" />
+
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/number_double"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/value"
+            android:inputType="number|numberSigned|numberDecimal" />
+
+        <EditText
+            android:id="@+id/number_long"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/value"
+            android:inputType="number|numberSigned" />
+
+        <EditText
+            android:id="@+id/string"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/value"
+            android:inputType="text" />
+
+    </FrameLayout>
+
+</LinearLayout>

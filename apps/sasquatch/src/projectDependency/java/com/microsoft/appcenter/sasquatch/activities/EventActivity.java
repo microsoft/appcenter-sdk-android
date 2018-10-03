@@ -2,29 +2,35 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
-import com.microsoft.appcenter.analytics.PropertyConfigurator;
+import com.microsoft.appcenter.analytics.EventProperties;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class EventActivity extends LogActivity {
+// TODO move to main folder once new APIs available in jCenter
+public class EventActivity extends AppCompatActivity {
 
     /**
      * Remember for what targets the device id was enabled.
@@ -48,18 +54,12 @@ public class EventActivity extends LogActivity {
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
-    // TODO remove reflection once new APIs available in jCenter.
-    private Method mCollectDeviceIdMethod;
-
-    // TODO remove reflection once new APIs available in jCenter.
-    private Method mPauseMethod;
-
-    // TODO remove reflection once new APIs available in jCenter.
-    private Method mResumeMethod;
+    private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_event);
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
@@ -95,12 +95,6 @@ public class EventActivity extends LogActivity {
         /* Init enabled check boxes. */
         mTransmissionEnabledCheckBox = findViewById(R.id.transmission_enabled);
         mDeviceIdEnabledCheckBox = findViewById(R.id.device_id_enabled);
-        try {
-            //noinspection JavaReflectionMemberAccess
-            mCollectDeviceIdMethod = PropertyConfigurator.class.getMethod("collectDeviceId");
-        } catch (NoSuchMethodException e) {
-            mDeviceIdEnabledCheckBox.setVisibility(View.GONE);
-        }
 
         /*
          * The first element is a placeholder for default transmission.
@@ -123,59 +117,89 @@ public class EventActivity extends LogActivity {
             }
         });
 
-        /* Init pause/resume buttons. TODO remove reflection once SDKs are released. */
+        /* Init pause/resume buttons. */
         mPauseTransmissionButton = findViewById(R.id.pause_transmission_button);
-        try {
-            //noinspection JavaReflectionMemberAccess
-            mPauseMethod = AnalyticsTransmissionTarget.class.getMethod("pause");
-        } catch (NoSuchMethodException e) {
-            mPauseTransmissionButton.setVisibility(View.GONE);
-        }
         mPauseTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
-                try {
-                    mPauseMethod.invoke(getSelectedTarget());
-                } catch (IllegalAccessException ignored) {
-                } catch (InvocationTargetException ignored) {
-                }
+                getSelectedTarget().pause();
             }
         });
         mResumeTransmissionButton = findViewById(R.id.resume_transmission_button);
-        try {
-            //noinspection JavaReflectionMemberAccess
-            mResumeMethod = AnalyticsTransmissionTarget.class.getMethod("resume");
-        } catch (NoSuchMethodException e) {
-            mResumeTransmissionButton.setVisibility(View.GONE);
-        }
         mResumeTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
-                try {
-                    mResumeMethod.invoke(getSelectedTarget());
-                } catch (IllegalAccessException ignored) {
-                } catch (InvocationTargetException ignored) {
-                }
+                getSelectedTarget().resume();
             }
         });
     }
 
+
     @Override
-    int getLayoutId() {
-        return R.layout.activity_event;
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.add, menu);
+        return true;
     }
 
     @Override
-    void trackLog(String name, Map<String, String> properties) {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                addProperty();
+                break;
+        }
+        return true;
+    }
+
+    private void addProperty() {
+        TypedPropertyFragment fragment = new TypedPropertyFragment();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.list, fragment).commit();
+        mProperties.add(fragment);
+    }
+
+    private boolean onlyStringProperties() {
+        for (TypedPropertyFragment fragment : mProperties) {
+            if (fragment.getType() != TypedPropertyFragment.TYPE_STRING) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @SuppressWarnings("unused")
+    public void send(@SuppressWarnings("UnusedParameters") View view) {
+        String name = ((TextView) findViewById(R.id.name)).getText().toString();
+        Map<String, String> properties = null;
+        EventProperties typedProperties = null;
+        if (mProperties.size() > 0) {
+            if (onlyStringProperties()) {
+                properties = new HashMap<>();
+                for (TypedPropertyFragment fragment : mProperties) {
+                    fragment.set(properties);
+                }
+            } else {
+                typedProperties = new EventProperties();
+                for (TypedPropertyFragment fragment : mProperties) {
+                    fragment.set(typedProperties);
+                }
+            }
+        }
 
         /* First item is always empty as it's default value which means either appcenter, one collector or both. */
         AnalyticsTransmissionTarget target = getSelectedTarget();
         if (target == null) {
-            Analytics.trackEvent(name, properties);
+            if (typedProperties != null) {
+                Analytics.trackEvent(name, typedProperties);
+            } else if (properties != null) {
+                Analytics.trackEvent(name, properties);
+            } else {
+                Analytics.trackEvent(name);
+            }
         } else {
             target.trackEvent(name, properties);
         }
@@ -198,14 +222,7 @@ public class EventActivity extends LogActivity {
         final AnalyticsTransmissionTarget target = getSelectedTarget();
         if (target != null) {
             updateButtonStates(target);
-
-            // TODO remove reflection once new APIs available in jCenter.
-            // target.getPropertyConfigurator().collectDeviceId();
-            try {
-                mCollectDeviceIdMethod.invoke(target.getPropertyConfigurator());
-            } catch (IllegalAccessException ignored) {
-            } catch (InvocationTargetException ignored) {
-            }
+            target.getPropertyConfigurator().collectDeviceId();
             mDeviceIdEnabledCheckBox.setChecked(true);
             mDeviceIdEnabledCheckBox.setText(R.string.device_id_enabled);
             mDeviceIdEnabledCheckBox.setEnabled(false);
@@ -225,19 +242,13 @@ public class EventActivity extends LogActivity {
             mTransmissionEnabledCheckBox.setVisibility(View.VISIBLE);
             mConfigureTargetPropertiesButton.setVisibility(View.VISIBLE);
             mOverrideCommonSchemaButton.setVisibility(View.VISIBLE);
-            if (mPauseMethod != null) {
-                mPauseTransmissionButton.setVisibility(View.VISIBLE);
-            }
-            if (mResumeMethod != null) {
-                mResumeTransmissionButton.setVisibility(View.VISIBLE);
-            }
+            mPauseTransmissionButton.setVisibility(View.VISIBLE);
+            mResumeTransmissionButton.setVisibility(View.VISIBLE);
             boolean enabled = target.isEnabledAsync().get();
             mTransmissionEnabledCheckBox.setChecked(enabled);
             mTransmissionEnabledCheckBox.setText(enabled ? R.string.transmission_enabled : R.string.transmission_disabled);
             boolean deviceIdEnabled = DEVICE_ID_ENABLED.contains(target);
-            if (mCollectDeviceIdMethod != null) {
-                mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
-            }
+            mDeviceIdEnabledCheckBox.setVisibility(View.VISIBLE);
             mDeviceIdEnabledCheckBox.setChecked(deviceIdEnabled);
             mDeviceIdEnabledCheckBox.setText(deviceIdEnabled ? R.string.device_id_enabled : R.string.device_id_disabled);
             mDeviceIdEnabledCheckBox.setEnabled(!deviceIdEnabled);
