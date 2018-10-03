@@ -313,11 +313,10 @@ public class Analytics extends AbstractAppCenterService {
         getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
     }
 
-    // TODO use it from AnalyticsTransmissionTarget to resolve both warnings.
-
     /**
      * Internal method redirection for trackEvent.
      */
+    // TODO use it from AnalyticsTransmissionTarget to resolve both warnings.
     static void trackEvent(String name, EventProperties properties, AnalyticsTransmissionTarget transmissionTarget) {
         getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
     }
