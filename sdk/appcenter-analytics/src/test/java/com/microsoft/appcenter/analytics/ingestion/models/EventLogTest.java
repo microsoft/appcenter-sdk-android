@@ -1,10 +1,16 @@
 package com.microsoft.appcenter.analytics.ingestion.models;
 
+import com.microsoft.appcenter.analytics.EventProperties;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,6 +45,14 @@ public class EventLogTest {
         b.setProperties(p1);
         checkEquals(a, b);
 
+        /* Name. */
+        a.setName("a");
+        checkNotEquals(a, b);
+        b.setName("b");
+        checkNotEquals(a, b);
+        b.setName("a");
+        checkEquals(a, b);
+
         /* Id */
         UUID sid1 = UUID.randomUUID();
         UUID sid2 = UUID.randomUUID();
@@ -49,12 +63,13 @@ public class EventLogTest {
         b.setId(sid1);
         checkEquals(a, b);
 
-        /* Name. */
-        a.setName("a");
+        /* Event properties. */
+        a.setTypedProperties(new ArrayList<TypedProperty>());
         checkNotEquals(a, b);
-        b.setName("b");
+        a.setTypedProperties(null);
+        b.setTypedProperties(new ArrayList<TypedProperty>());
         checkNotEquals(a, b);
-        b.setName("a");
+        a.setTypedProperties(new ArrayList<TypedProperty>());
         checkEquals(a, b);
     }
 }
