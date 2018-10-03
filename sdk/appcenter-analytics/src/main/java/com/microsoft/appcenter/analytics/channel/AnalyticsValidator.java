@@ -39,16 +39,55 @@ public class AnalyticsValidator extends AbstractChannelListener {
     @VisibleForTesting
     static final int MAX_PROPERTY_COUNT = 20;
 
-    @Override
-    public boolean shouldFilter(@NonNull Log log) {
-
-        //noinspection SimplifiableIfStatement
-        if (log instanceof PageLog) {
-            return !validateLog((LogWithNameAndProperties) log);
-        } else if (log instanceof EventLog) {
-            return !validateLog((EventLog)log);
+    /**
+     * Validates typed properties.
+     *
+     * @param properties Typed properties collection to validate.
+     */
+    private static void validateProperties(List<TypedProperty> properties) {
+        if (properties == null) {
+            return;
         }
-        return false;
+        int count = 0;
+        boolean maxCountReached = false;
+        String message;
+        for (Iterator<TypedProperty> iterator = properties.iterator(); iterator.hasNext(); ) {
+            TypedProperty property = iterator.next();
+            String key = property.getName();
+            if (count >= MAX_PROPERTY_COUNT) {
+                if (!maxCountReached) {
+                    message = String.format("Typed properties cannot contain more than %s items. Skipping other properties.", MAX_PROPERTY_COUNT);
+                    AppCenterLog.warn(LOG_TAG, message);
+                    maxCountReached = true;
+                }
+                iterator.remove();
+                continue;
+            }
+            if (key == null || key.isEmpty()) {
+                AppCenterLog.warn(LOG_TAG, "A typed property key cannot be null or empty. Property will be skipped.");
+                continue;
+            }
+            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                message = String.format("Typed property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
+                AppCenterLog.warn(LOG_TAG, message);
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+            }
+            if (property instanceof StringTypedProperty) {
+                StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
+                String value = stringTypedProperty.getValue();
+                if (value == null) {
+                    message = String.format("Typed property '%s' : property value cannot be null. Property '%s' will be skipped.", key, key);
+                    AppCenterLog.warn(LOG_TAG, message);
+                    continue;
+                }
+                if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
+                    message = String.format("A String property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
+                    AppCenterLog.warn(LOG_TAG, message);
+                    stringTypedProperty.setValue(value.substring(0, MAX_PROPERTY_ITEM_LENGTH));
+                }
+            }
+            count++;
+        }
     }
 
     /**
@@ -152,52 +191,15 @@ public class AnalyticsValidator extends AbstractChannelListener {
         return result;
     }
 
-    /**
-     * Validates typed properties.
-     *
-     * @param properties Typed properties collection to validate.
-     * @return Modified `properties` collection with maximum size of 20.
-     */
-    private static List<TypedProperty> validateProperties(List<TypedProperty> properties) {
-        if (properties == null) {
-            return null;
+    @Override
+    public boolean shouldFilter(@NonNull Log log) {
+
+        //noinspection SimplifiableIfStatement
+        if (log instanceof PageLog) {
+            return !validateLog((LogWithNameAndProperties) log);
+        } else if (log instanceof EventLog) {
+            return !validateLog((EventLog) log);
         }
-        int count = 0;
-        boolean maxCountReached = false;
-        String message;
-        for (Iterator<TypedProperty> iterator = properties.iterator(); iterator.hasNext(); ) {
-            TypedProperty property = iterator.next();
-            String key = property.getName();
-            if (count >= MAX_PROPERTY_COUNT) {
-                if (!maxCountReached) {
-                    message = String.format("Typed properties cannot contain more than %s items. Skipping other properties.", MAX_PROPERTY_COUNT);
-                    AppCenterLog.warn(LOG_TAG, message);
-                    maxCountReached = true;
-                }
-                iterator.remove();
-                continue;
-            }
-            if (key.isEmpty()) {
-                message = String.format("A typed property key cannot be empty. Property will be skipped.");
-                AppCenterLog.warn(LOG_TAG, message);
-                continue;
-            }
-            if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                message = String.format("Typed property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
-                AppCenterLog.warn(LOG_TAG, message);
-                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
-            }
-            if (property instanceof StringTypedProperty) {
-                StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
-                String value = stringTypedProperty.getValue();
-                if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
-                    message = String.format("A String property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
-                    AppCenterLog.warn(LOG_TAG, message);
-                    stringTypedProperty.setValue(value.substring(0, MAX_PROPERTY_ITEM_LENGTH));
-                }
-            }
-            count++;
-        }
-        return properties;
+        return false;
     }
 }
