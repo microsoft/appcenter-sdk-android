@@ -10,6 +10,10 @@ public final class CommonProperties {
 
     public static final String NAME = "name";
 
+    public static final String VALUE = "value";
+
+    public static final String TYPED_PROPERTIES = "typedProperties";
+
     public static final String FRAMES = "frames";
 
     @VisibleForTesting

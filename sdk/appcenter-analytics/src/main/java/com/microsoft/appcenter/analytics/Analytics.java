@@ -23,14 +23,17 @@ import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaE
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -268,7 +271,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(String name) {
-        trackEvent(name, null, null);
+        trackEvent(name, (EventProperties) null, null);
     }
 
     /**
@@ -288,20 +291,70 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Track a custom event with name and optional properties and optional transmissionTarget.
+     * Track a custom event with name and optional properties.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 20.
      * The properties keys can not be null or empty, maximum allowed key length = 125.
-     * The properties values can not be null, maximum allowed value length = 125.
+     * The property values cannot be null.
+     * The property string maximum allowed length = 125.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      *
-     * @param name               An event name.
-     * @param properties         Optional properties.
-     * @param transmissionTarget Optional transmissionTarget.
+     * @param name       An event name.
+     * @param properties Optional properties.
      */
-    @SuppressWarnings("WeakerAccess")
+    public static void trackEvent(String name, EventProperties properties) {
+        trackEvent(name, properties, null);
+    }
+
+    /**
+     * Internal method redirection for trackEvent.
+     */
     static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
-        getInstance().trackEventAsync(name, properties, transmissionTarget);
+        getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
+    }
+
+    // TODO use it from AnalyticsTransmissionTarget to resolve both warnings.
+
+    /**
+     * Internal method redirection for trackEvent.
+     */
+    static void trackEvent(String name, EventProperties properties, AnalyticsTransmissionTarget transmissionTarget) {
+        getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
+    }
+
+    /**
+     * Internal conversion for properties.
+     *
+     * @param properties input properties.
+     * @return copy as a list.
+     */
+    private static List<TypedProperty> convertProperties(EventProperties properties) {
+        if (properties == null) {
+            return null;
+        }
+
+        /* Make a copy to avoid concurrent modifications after trackEvent. */
+        return new ArrayList<>(properties.getProperties().values());
+    }
+
+    /**
+     * Internal conversion for properties.
+     *
+     * @param properties input properties.
+     * @return copy as a typed list.
+     */
+    private static List<TypedProperty> convertProperties(Map<String, String> properties) {
+        if (properties == null) {
+            return null;
+        }
+        List<TypedProperty> typedProperties = new ArrayList<>(properties.size());
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            StringTypedProperty typedProperty = new StringTypedProperty();
+            typedProperty.setName(property.getKey());
+            typedProperty.setValue(property.getValue());
+            typedProperties.add(typedProperty);
+        }
+        return typedProperties;
     }
 
     /**
@@ -576,13 +629,11 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Send an event.
      *
-     * @param name       event name.
-     * @param properties optional properties.
+     * @param name               event name.
+     * @param properties         optional properties.
+     * @param transmissionTarget optional target.
      */
-    private synchronized void trackEventAsync(final String name, final Map<String, String> properties, final AnalyticsTransmissionTarget transmissionTarget) {
-
-        /* Make a copy to prevent concurrent modification. */
-        final Map<String, String> propertiesCopy = properties != null ? new LinkedHashMap<>(properties) : null;
+    private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget) {
         post(new Runnable() {
 
             @Override
@@ -602,7 +653,7 @@ public class Analytics extends AbstractAppCenterService {
                 }
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
-                eventLog.setProperties(propertiesCopy);
+                eventLog.setTypedProperties(properties);
                 mChannel.enqueue(eventLog, ANALYTICS_GROUP);
             }
         });
