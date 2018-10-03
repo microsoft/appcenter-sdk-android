@@ -38,9 +38,17 @@ public class PartCUtils {
 
                     /* Validate key not null. */
                     String key = property.getName();
+                    if (key == null) {
+                        AppCenterLog.warn(LOG_TAG, "Property key cannot be null.");
+                        continue;
+                    }
 
                     /* Validate value not null. */
                     String value = ((StringTypedProperty) property).getValue();
+                    if (value == null) {
+                        AppCenterLog.warn(LOG_TAG, "Value of property with key '" + key + "' cannot be null.");
+                        continue;
+                    }
 
                     /* Validate key is not Part B. */
                     if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {

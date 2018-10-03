@@ -42,6 +42,7 @@ public class EventProperties {
     public EventProperties set(String key, boolean value) {
         if (isValidKey(key)) {
             BooleanTypedProperty property = new BooleanTypedProperty();
+            property.setName(key);
             property.setValue(value);
             mProperties.put(key, property);
         }
@@ -60,6 +61,7 @@ public class EventProperties {
     public EventProperties set(String key, Date value) {
         if (isValidKey(key) && isValidValue(value)) {
             DateTimeTypedProperty property = new DateTimeTypedProperty();
+            property.setName(key);
             property.setValue(value);
             mProperties.put(key, property);
         }
@@ -78,6 +80,7 @@ public class EventProperties {
     public EventProperties set(String key, double value) {
         if (isValidKey(key)) {
             DoubleTypedProperty property = new DoubleTypedProperty();
+            property.setName(key);
             property.setValue(value);
             mProperties.put(key, property);
         }
@@ -96,6 +99,7 @@ public class EventProperties {
     public EventProperties set(String key, long value) {
         if (isValidKey(key)) {
             LongTypedProperty property = new LongTypedProperty();
+            property.setName(key);
             property.setValue(value);
             mProperties.put(key, property);
         }
@@ -114,6 +118,7 @@ public class EventProperties {
     public EventProperties set(String key, String value) {
         if (isValidKey(key) && isValidValue(value)) {
             StringTypedProperty property = new StringTypedProperty();
+            property.setName(key);
             property.setValue(value);
             mProperties.put(key, property);
         }
