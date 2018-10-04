@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.analytics.channel;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
@@ -135,8 +136,27 @@ public class AnalyticsValidatorForEventLogTest {
         assertFalse(mAnalyticsValidator.shouldFilter(mEventLog));
         assertEquals(validEventName, mEventLog.getName());
         assertEquals(1, mEventLog.getTypedProperties().size());
-        StringTypedProperty stringProperty = (StringTypedProperty)mEventLog.getTypedProperties().iterator().next();
+        StringTypedProperty stringProperty = (StringTypedProperty) mEventLog.getTypedProperties().iterator().next();
         assertEquals(MAX_PROPERTY_ITEM_LENGTH, stringProperty.getName().length());
         assertEquals(MAX_PROPERTY_ITEM_LENGTH, stringProperty.getValue().length());
+    }
+
+    /**
+     * This test case only makes up missing branch in validateProperties when TypedProperty isn't StringTypedProperty.
+     */
+    @Test
+    public void shouldNotFilterNonStringTypedProperty() {
+        String validEventName = "eventName";
+        mEventLog.setName(validEventName);
+        BooleanTypedProperty property = new BooleanTypedProperty();
+        property.setName("name");
+        property.setValue(true);
+        mEventLog.setTypedProperties(Collections.<TypedProperty>singletonList(property));
+        assertFalse(mAnalyticsValidator.shouldFilter(mEventLog));
+        assertEquals(validEventName, mEventLog.getName());
+        assertEquals(1, mEventLog.getTypedProperties().size());
+        BooleanTypedProperty booleanProperty = (BooleanTypedProperty) mEventLog.getTypedProperties().iterator().next();
+        assertEquals("name", booleanProperty.getName());
+        assertTrue(booleanProperty.getValue());
     }
 }

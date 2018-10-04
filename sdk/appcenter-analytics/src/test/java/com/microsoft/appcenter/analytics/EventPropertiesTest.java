@@ -155,19 +155,27 @@ public class EventPropertiesTest {
         assertEquals(0, properties.getProperties().size());
 
         /* NaN value. */
-        double positiveInfinityValue = Double.NaN;
+        double nanValue = Double.NaN;
         properties = new EventProperties();
-        properties.set(key, positiveInfinityValue);
+        properties.set(key, nanValue);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(1));
         AppCenterLog.error(eq(Analytics.LOG_TAG), anyString());
 
-        /* NaN value. */
-        double negativeInfinityValue = Double.NaN;
+        /* Positive infinity value. */
+        double positiveInfinityValue = Double.POSITIVE_INFINITY;
+        properties = new EventProperties();
+        properties.set(key, positiveInfinityValue);
+        assertEquals(0, properties.getProperties().size());
+        verifyStatic(times(2));
+        AppCenterLog.error(eq(Analytics.LOG_TAG), anyString());
+
+        /* Negative infinity value. */
+        double negativeInfinityValue = Double.NEGATIVE_INFINITY;
         properties = new EventProperties();
         properties.set(key, negativeInfinityValue);
         assertEquals(0, properties.getProperties().size());
-        verifyStatic(times(2));
+        verifyStatic(times(3));
         AppCenterLog.error(eq(Analytics.LOG_TAG), anyString());
 
         /* Normal value. */
@@ -177,7 +185,7 @@ public class EventPropertiesTest {
         DoubleTypedProperty expected = new DoubleTypedProperty();
         expected.setName(key);
         expected.setValue(normalValue);
-        verifyStatic(times(2));
+        verifyStatic(times(3));
         AppCenterLog.error(eq(Analytics.LOG_TAG), anyString());
     }
 
