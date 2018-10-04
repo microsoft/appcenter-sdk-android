@@ -11,6 +11,12 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
@@ -84,6 +90,35 @@ public class AnalyticsSerializerTest {
                 put("x", "1");
                 put("y", "2");
             }});
+            logs.add(eventLog);
+        }
+        {
+            List<TypedProperty> properties = new ArrayList<>();
+            BooleanTypedProperty bp = new BooleanTypedProperty();
+            bp.setName("n1");
+            bp.setValue(true);
+            properties.add(bp);
+            DateTimeTypedProperty dtp = new DateTimeTypedProperty();
+            dtp.setName("n2");
+            dtp.setValue(new Date());
+            properties.add(dtp);
+            DoubleTypedProperty dp = new DoubleTypedProperty();
+            dp.setName("n3");
+            dp.setValue(10);
+            properties.add(dp);
+            LongTypedProperty lp = new LongTypedProperty();
+            lp.setName("n4");
+            lp.setValue(10000000000L);
+            properties.add(lp);
+            StringTypedProperty sp = new StringTypedProperty();
+            sp.setName("n5");
+            sp.setValue("value");
+            properties.add(sp);
+            EventLog eventLog = new EventLog();
+            eventLog.setTimestamp(new Date());
+            eventLog.setId(UUIDUtils.randomUUID());
+            eventLog.setName("event");
+            eventLog.setTypedProperties(properties);
             logs.add(eventLog);
         }
         UUID sid = UUIDUtils.randomUUID();
