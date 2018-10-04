@@ -1,5 +1,9 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
@@ -9,11 +13,13 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class PartCUtilsAndroidTest {
 
@@ -96,5 +102,58 @@ public class PartCUtilsAndroidTest {
         JSONObject b = log.getData().getProperties().optJSONObject("a").optJSONObject("b");
         assertNotNull(b);
         assertEquals("3", b.optString("c", null));
+    }
+
+    @Test
+    public void booleanTypedProperty() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        BooleanTypedProperty property = new BooleanTypedProperty();
+        property.setName("a");
+        property.setValue(true);
+        properties.add(property);
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertTrue(log.getData().getProperties().getBoolean("a"));
+    }
+
+    @Test
+    public void dateTimeTypedProperty() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        DateTimeTypedProperty property = new DateTimeTypedProperty();
+        property.setName("a");
+        property.setValue(new Date(100));
+        properties.add(property);
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        // TODO: Fix this assert.
+        //assertEquals(new Date(100), JSONDateUtils.toDate(log.getData().getProperties().getString("a")));
+    }
+
+    @Test
+    public void doubleTypedProperty() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        DoubleTypedProperty property = new DoubleTypedProperty();
+        property.setName("a");
+        property.setValue(1.1);
+        properties.add(property);
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertEquals(1.1, log.getData().getProperties().getDouble("a"), 0);
+    }
+
+    @Test
+    public void longTypedProperty() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty property = new LongTypedProperty();
+        property.setName("a");
+        property.setValue(10000000000L);
+        properties.add(property);
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertEquals(10000000000L, log.getData().getProperties().getLong("a"));
     }
 }

@@ -28,8 +28,10 @@ public class TypedPropertyUtils {
 
             case StringTypedProperty.TYPE:
                 return new StringTypedProperty();
+
+            default:
+                throw new JSONException("Unsupported type: " + type);
         }
-        throw new JSONException("Unsupported type: " + type);
     }
 
     public static List<TypedProperty> read(JSONObject object) throws JSONException {

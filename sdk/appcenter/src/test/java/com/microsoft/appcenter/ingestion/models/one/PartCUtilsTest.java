@@ -40,4 +40,25 @@ public class PartCUtilsTest {
         PartCUtils.addPartCFromLog(properties, commonSchemaLog);
         assertEquals(0, commonSchemaLog.getData().getProperties().length());
     }
+
+    @Test
+    public void coverUnsupportedTypedProperty() throws Exception {
+
+        /* Fake JSON exception to cover unsupported typed property. */
+        JSONObject value = mock(JSONObject.class);
+        whenNew(JSONObject.class).withNoArguments().thenReturn(value);
+        when(value.put(anyString(), any())).thenThrow(new JSONException("mock"));
+        CommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        TypedProperty unsupportedTypedProperty = new TypedProperty() {
+            @Override
+            public String getType() {
+                return "unsupported";
+            }
+        };
+        unsupportedTypedProperty.setName("a");
+        properties.add(unsupportedTypedProperty);
+        PartCUtils.addPartCFromLog(properties, commonSchemaLog);
+        assertEquals(0, commonSchemaLog.getData().getProperties().length());
+    }
 }
