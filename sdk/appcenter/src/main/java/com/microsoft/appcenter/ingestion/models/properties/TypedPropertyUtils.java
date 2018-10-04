@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.properties;
 
+import android.support.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,26 +14,20 @@ import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPED_PR
 
 public class TypedPropertyUtils {
 
-    public static TypedProperty create(String type) throws JSONException {
-        switch (type) {
-            case BooleanTypedProperty.TYPE:
-                return new BooleanTypedProperty();
-
-            case DateTimeTypedProperty.TYPE:
-                return new DateTimeTypedProperty();
-
-            case DoubleTypedProperty.TYPE:
-                return new DoubleTypedProperty();
-
-            case LongTypedProperty.TYPE:
-                return new LongTypedProperty();
-
-            case StringTypedProperty.TYPE:
-                return new StringTypedProperty();
-
-            default:
-                throw new JSONException("Unsupported type: " + type);
+    @SuppressWarnings("IfCanBeSwitch")
+    public static TypedProperty create(@NonNull String type) throws JSONException {
+        if (BooleanTypedProperty.TYPE.equals(type)) {
+            return new BooleanTypedProperty();
+        } else if (DateTimeTypedProperty.TYPE.equals(type)) {
+            return new DateTimeTypedProperty();
+        } else if (DoubleTypedProperty.TYPE.equals(type)) {
+            return new DoubleTypedProperty();
+        } else if (LongTypedProperty.TYPE.equals(type)) {
+            return new LongTypedProperty();
+        } else if (StringTypedProperty.TYPE.equals(type)) {
+            return new StringTypedProperty();
         }
+        throw new JSONException("Unsupported type: " + type);
     }
 
     public static List<TypedProperty> read(JSONObject object) throws JSONException {

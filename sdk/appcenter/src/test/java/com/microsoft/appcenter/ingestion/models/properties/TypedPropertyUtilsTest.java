@@ -18,6 +18,7 @@ public class TypedPropertyUtilsTest {
 
     @Test(expected = JSONException.class)
     public void createInvalidTypedProperty() throws JSONException {
-        TypedPropertyUtils.create("Something");
+        //noinspection AccessStaticViaInstance to cover default constructor
+        new TypedPropertyUtils().create("Something");
     }
 }
