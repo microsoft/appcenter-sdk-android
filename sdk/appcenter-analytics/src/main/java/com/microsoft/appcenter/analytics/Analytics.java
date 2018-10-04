@@ -266,6 +266,13 @@ public class Analytics extends AbstractAppCenterService {
 
     /**
      * Track a custom event with name.
+     * <p>
+     * The name cannot be null or empty.
+     * <p>
+     * Additional validation rules apply depending on the configured secret.
+     * <p>
+     * For AppCenter, the name cannot be longer than 256 and is truncated otherwise.
+     * For OneCollector, the name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.
      *
      * @param name An event name.
      */
@@ -275,12 +282,29 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Track a custom event with name and optional properties.
-     * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 20.
-     * The properties keys can not be null or empty, maximum allowed key length = 125.
-     * The properties values can not be null, maximum allowed value length = 125.
-     * Any length of name/keys/values that are longer than each limit will be truncated.
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The name cannot be null or empty.
+     * <p>
+     * The property names or values cannot be null.
+     * <p>
+     * Additional validation rules apply depending on the configured secret.
+     * <p>
+     * For AppCenter:
+     * <ul>
+     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>the property names cannot be empty.</li>
+     * <li>the property names and values are limited to 125 characters each (truncated).</li>
+     * <li>the number of properties per event is limited to 20 (truncated).</li>
+     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
+     * </ul>
+     * <p>
+     * For OneCollector:
+     * <ul>
+     * <li>The event name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.</li>
+     * <li>The baseData and baseDataType properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded in JSON cannot be larger than 1.9MB.</li>
+     * </ul>
      *
      * @param name       An event name.
      * @param properties Optional properties.
@@ -291,13 +315,31 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Track a custom event with name and optional properties.
-     * The name parameter can not be null or empty. Maximum allowed length = 256.
-     * The properties parameter maximum item count = 20.
-     * The properties keys can not be null or empty, maximum allowed key length = 125.
-     * The property values cannot be null.
-     * The property string maximum allowed length = 125.
-     * Any length of name/keys/values that are longer than each limit will be truncated.
+     * Track a custom event with name and optional typed properties.
+     * <p>
+     * The name cannot be null or empty.
+     * <p>
+     * The property names or values cannot be null.
+     * <p>
+     * Double values must fe finite (NaN or Infinite values are discarded).
+     * <p>
+     * Additional validation rules apply depending on the configured secret.
+     * <p>
+     * For AppCenter:
+     * <ul>
+     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>the property names cannot be empty.</li>
+     * <li>the property names and values are limited to 125 characters each (truncated).</li>
+     * <li>the number of properties per event is limited to 20 (truncated).</li>
+     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
+     * </ul>
+     * <p>
+     * For OneCollector:
+     * <ul>
+     * <li>The event name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.</li>
+     * <li>The baseData and baseDataType properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded in JSON cannot be larger than 1.9MB.</li>
+     * </ul>
      *
      * @param name       An event name.
      * @param properties Optional properties.
