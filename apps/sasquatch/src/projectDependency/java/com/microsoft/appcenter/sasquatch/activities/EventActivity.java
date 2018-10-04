@@ -136,6 +136,9 @@ public class EventActivity extends AppCompatActivity {
                 getSelectedTarget().resume();
             }
         });
+
+        /* Add a property layout by default. */
+        addProperty();
     }
 
 
