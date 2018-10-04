@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
@@ -59,7 +60,7 @@ public class PartCUtils {
                 } else if (property instanceof DoubleTypedProperty) {
                     value = ((DoubleTypedProperty) property).getValue();
                 } else if (property instanceof DateTimeTypedProperty) {
-                    value = ((DateTimeTypedProperty) property).getValue();
+                    value = JSONDateUtils.toString(((DateTimeTypedProperty) property).getValue());
                 } else if (property instanceof BooleanTypedProperty) {
                     value = ((BooleanTypedProperty) property).getValue();
                 } else {

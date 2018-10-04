@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
@@ -127,8 +128,7 @@ public class PartCUtilsAndroidTest {
         properties.add(property);
         PartCUtils.addPartCFromLog(properties, log);
         assertEquals(1, log.getData().getProperties().length());
-        // TODO: Fix this assert.
-        //assertEquals(new Date(100), JSONDateUtils.toDate(log.getData().getProperties().getString("a")));
+        assertEquals(new Date(100), JSONDateUtils.toDate(log.getData().getProperties().getString("a")));
     }
 
     @Test
