@@ -296,7 +296,6 @@ public class Analytics extends AbstractAppCenterService {
      * <li>the property names cannot be empty.</li>
      * <li>the property names and values are limited to 125 characters each (truncated).</li>
      * <li>the number of properties per event is limited to 20 (truncated).</li>
-     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
      * </ul>
      * <p>
      * For OneCollector:
@@ -331,7 +330,6 @@ public class Analytics extends AbstractAppCenterService {
      * <li>the property names cannot be empty.</li>
      * <li>the property names and values are limited to 125 characters each (truncated).</li>
      * <li>the number of properties per event is limited to 20 (truncated).</li>
-     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
      * </ul>
      * <p>
      * For OneCollector:
