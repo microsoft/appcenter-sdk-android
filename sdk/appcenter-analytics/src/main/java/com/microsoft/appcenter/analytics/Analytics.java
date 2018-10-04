@@ -272,7 +272,7 @@ public class Analytics extends AbstractAppCenterService {
      * Additional validation rules apply depending on the configured secret.
      * <p>
      * For AppCenter, the name cannot be longer than 256 and is truncated otherwise.
-     * For OneCollector, the name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.
+     * For OneCollector, the name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
      *
      * @param name An event name.
      */
@@ -300,9 +300,9 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For OneCollector:
      * <ul>
-     * <li>The event name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.</li>
-     * <li>The baseData and baseDataType properties are reserved and thus discarded.</li>
-     * <li>The full event size when encoded in JSON cannot be larger than 1.9MB.</li>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
      * @param name       An event name.
@@ -334,9 +334,9 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For OneCollector:
      * <ul>
-     * <li>The event name needs to match the [a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99} regular expression.</li>
-     * <li>The baseData and baseDataType properties are reserved and thus discarded.</li>
-     * <li>The full event size when encoded in JSON cannot be larger than 1.9MB.</li>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
      * @param name       An event name.
