@@ -15,16 +15,14 @@ import com.microsoft.appcenter.sasquatch.R;
 
 public class CustomPropertyFragment extends EditDateTimeFragment {
 
-    public static final int TYPE_CLEAR = 0;
-    public static final int TYPE_BOOLEAN = 1;
-    public static final int TYPE_NUMBER = 2;
-    public static final int TYPE_DATETIME = 3;
-    public static final int TYPE_STRING = 4;
-
     private EditText mEditKey;
+
     private Spinner mEditType;
+
     private EditText mEditString;
+
     private EditText mEditNumber;
+
     private CheckBox mEditBool;
 
     @Override
@@ -32,12 +30,14 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.custom_property, container, false);
 
+        /* Find views. */
         mEditKey = view.findViewById(R.id.key);
         mEditType = view.findViewById(R.id.type);
         mEditString = view.findViewById(R.id.string);
         mEditNumber = view.findViewById(R.id.number);
         mEditBool = view.findViewById(R.id.bool);
 
+        /* Set change type callback. */
         mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
@@ -49,33 +49,32 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
-
         return view;
     }
 
     private void updateValueType() {
-        int type = getType();
-        mEditString.setVisibility(type == TYPE_STRING ? View.VISIBLE : View.GONE);
-        mEditNumber.setVisibility(type == TYPE_NUMBER ? View.VISIBLE : View.GONE);
-        mEditBool.setVisibility(type == TYPE_BOOLEAN ? View.VISIBLE : View.GONE);
-        mDateTime.setVisibility(type == TYPE_DATETIME ? View.VISIBLE : View.GONE);
+        CustomPropertyType type = getType();
+        mEditString.setVisibility(type == CustomPropertyType.STRING ? View.VISIBLE : View.GONE);
+        mEditNumber.setVisibility(type == CustomPropertyType.NUMBER ? View.VISIBLE : View.GONE);
+        mEditBool.setVisibility(type == CustomPropertyType.BOOLEAN ? View.VISIBLE : View.GONE);
+        mDateTime.setVisibility(type == CustomPropertyType.DATETIME ? View.VISIBLE : View.GONE);
     }
 
-    public int getType() {
-        return mEditType.getSelectedItemPosition();
+    public CustomPropertyType getType() {
+        return CustomPropertyType.values()[mEditType.getSelectedItemPosition()];
     }
 
     public void set(CustomProperties customProperties) {
-        int type = getType();
+        CustomPropertyType type = getType();
         String key = mEditKey.getText().toString();
         switch (type) {
-            case TYPE_CLEAR:
+            case CLEAR:
                 customProperties.clear(key);
                 break;
-            case TYPE_BOOLEAN:
+            case BOOLEAN:
                 customProperties.set(key, mEditBool.isChecked());
                 break;
-            case TYPE_NUMBER:
+            case NUMBER:
                 String stringValue = mEditNumber.getText().toString();
                 Number value;
                 try {
@@ -85,12 +84,20 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
                 }
                 customProperties.set(key, value);
                 break;
-            case TYPE_DATETIME:
+            case DATETIME:
                 customProperties.set(key, mDate);
                 break;
-            case TYPE_STRING:
+            case STRING:
                 customProperties.set(key, mEditString.getText().toString());
                 break;
         }
+    }
+
+    public enum CustomPropertyType {
+        CLEAR,
+        BOOLEAN,
+        NUMBER,
+        DATETIME,
+        STRING
     }
 }

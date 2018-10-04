@@ -18,17 +18,16 @@ import java.util.Map;
 // TODO move to main folder once new APIs available in jCenter
 public class TypedPropertyFragment extends EditDateTimeFragment {
 
-    public static final int TYPE_BOOLEAN = 0;
-    public static final int TYPE_NUMBER_DOUBLE = 1;
-    public static final int TYPE_NUMBER_LONG = 2;
-    public static final int TYPE_DATETIME = 3;
-    public static final int TYPE_STRING = 4;
-
     private EditText mEditKey;
+
     private Spinner mEditType;
+
     private EditText mEditString;
+
     private EditText mEditNumberDouble;
+
     private EditText mEditNumberLong;
+
     private CheckBox mEditBool;
 
     @Override
@@ -36,6 +35,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.typed_property, container, false);
 
+        /* Find views. */
         mEditKey = view.findViewById(R.id.key);
         mEditType = view.findViewById(R.id.type);
         mEditString = view.findViewById(R.id.string);
@@ -43,6 +43,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
         mEditNumberLong = view.findViewById(R.id.number_long);
         mEditBool = view.findViewById(R.id.bool);
 
+        /* Set change type callback. */
         mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
@@ -54,58 +55,65 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
-
         return view;
     }
 
     private void updateValueType() {
-        int type = getType();
-        mEditString.setVisibility(type == TYPE_STRING ? View.VISIBLE : View.GONE);
-        mEditBool.setVisibility(type == TYPE_BOOLEAN ? View.VISIBLE : View.GONE);
-        mEditNumberDouble.setVisibility(type == TYPE_NUMBER_DOUBLE ? View.VISIBLE : View.GONE);
-        mEditNumberLong.setVisibility(type == TYPE_NUMBER_LONG ? View.VISIBLE : View.GONE);
-        mDateTime.setVisibility(type == TYPE_DATETIME ? View.VISIBLE : View.GONE);
+        EventPropertyType type = getType();
+        mEditString.setVisibility(type == EventPropertyType.STRING ? View.VISIBLE : View.GONE);
+        mEditBool.setVisibility(type == EventPropertyType.BOOLEAN ? View.VISIBLE : View.GONE);
+        mEditNumberDouble.setVisibility(type == EventPropertyType.NUMBER_DOUBLE ? View.VISIBLE : View.GONE);
+        mEditNumberLong.setVisibility(type == EventPropertyType.NUMBER_LONG ? View.VISIBLE : View.GONE);
+        mDateTime.setVisibility(type == EventPropertyType.DATETIME ? View.VISIBLE : View.GONE);
     }
 
-    public int getType() {
-        return mEditType.getSelectedItemPosition();
+    public EventPropertyType getType() {
+        return EventPropertyType.values()[mEditType.getSelectedItemPosition()];
     }
 
     public void set(Map<String, String> eventProperties) {
-        int type = getType();
+        EventPropertyType type = getType();
         String key = mEditKey.getText().toString();
         switch (type) {
-            case TYPE_STRING:
+            case STRING:
                 eventProperties.put(key, mEditString.getText().toString());
                 break;
         }
     }
 
     public void set(EventProperties eventProperties) {
-        int type = getType();
+        EventPropertyType type = getType();
         String key = mEditKey.getText().toString();
         switch (type) {
-            case TYPE_BOOLEAN:
+            case BOOLEAN:
                 eventProperties.set(key, mEditBool.isChecked());
                 break;
-            case TYPE_NUMBER_DOUBLE: {
+            case NUMBER_DOUBLE: {
                 String stringValue = mEditNumberDouble.getText().toString();
                 Double value = Double.parseDouble(stringValue);
                 eventProperties.set(key, value);
                 break;
             }
-            case TYPE_NUMBER_LONG: {
+            case NUMBER_LONG: {
                 String stringValue = mEditNumberLong.getText().toString();
                 Long value = Long.parseLong(stringValue);
                 eventProperties.set(key, value);
                 break;
             }
-            case TYPE_DATETIME:
+            case DATETIME:
                 eventProperties.set(key, mDate);
                 break;
-            case TYPE_STRING:
+            case STRING:
                 eventProperties.set(key, mEditString.getText().toString());
                 break;
         }
+    }
+
+    public enum EventPropertyType {
+        BOOLEAN,
+        NUMBER_DOUBLE,
+        NUMBER_LONG,
+        DATETIME,
+        STRING
     }
 }

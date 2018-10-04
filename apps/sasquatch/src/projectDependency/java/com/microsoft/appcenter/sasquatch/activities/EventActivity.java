@@ -164,7 +164,7 @@ public class EventActivity extends AppCompatActivity {
 
     private boolean onlyStringProperties() {
         for (TypedPropertyFragment fragment : mProperties) {
-            if (fragment.getType() != TypedPropertyFragment.TYPE_STRING) {
+            if (fragment.getType() != TypedPropertyFragment.EventPropertyType.STRING) {
                 return false;
             }
         }

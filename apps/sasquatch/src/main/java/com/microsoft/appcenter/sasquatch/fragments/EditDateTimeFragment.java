@@ -21,17 +21,22 @@ public abstract class EditDateTimeFragment extends Fragment
         implements DatePickerDialog.OnDateSetListener, TimePickerDialog.OnTimeSetListener {
 
     private EditText mEditDate;
+
     private EditText mEditTime;
+
     protected View mDateTime;
 
     protected Date mDate;
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+
+        /* Find views. */
         mEditDate = view.findViewById(R.id.date);
         mEditTime = view.findViewById(R.id.time);
         mDateTime = view.findViewById(R.id.datetime);
 
+        /* Set listeners. */
         mEditDate.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -47,6 +52,7 @@ public abstract class EditDateTimeFragment extends Fragment
             }
         });
 
+        /* Set the current date. */
         setDate(new Date());
     }
 
