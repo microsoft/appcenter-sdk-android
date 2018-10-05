@@ -12,6 +12,11 @@ import org.json.JSONStringer;
 public class Extensions implements Model {
 
     /**
+     * Metadata extension.
+     */
+    private static final String METADATA = "metadata";
+
+    /**
      * Protocol property.
      */
     private static final String PROTOCOL = "protocol";
@@ -52,6 +57,11 @@ public class Extensions implements Model {
     private static final String LOC = "loc";
 
     /**
+     * Metadata extension.
+     */
+    private MetadataExtension metadata;
+
+    /**
      * Protocol extension.
      */
     private ProtocolExtension protocol;
@@ -90,6 +100,24 @@ public class Extensions implements Model {
      * Loc extension.
      */
     private LocExtension loc;
+
+    /**
+     * Get metadata extension.
+     *
+     * @return metadata extension.
+     */
+    public MetadataExtension getMetadata() {
+        return metadata;
+    }
+
+    /**
+     * Set metadata extension.
+     *
+     * @param metadata metadata extension.
+     */
+    public void setMetadata(MetadataExtension metadata) {
+        this.metadata = metadata;
+    }
 
     /**
      * Get protocol extension.
@@ -222,6 +250,7 @@ public class Extensions implements Model {
      *
      * @return loc extension.
      */
+    @SuppressWarnings("WeakerAccess")
     public LocExtension getLoc() {
         return loc;
     }
@@ -231,12 +260,20 @@ public class Extensions implements Model {
      *
      * @param loc loc extension.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setLoc(LocExtension loc) {
         this.loc = loc;
     }
 
     @Override
     public void read(JSONObject object) throws JSONException {
+
+        /* Metadata. */
+        if (object.has(METADATA)) {
+            MetadataExtension metadata = new MetadataExtension();
+            metadata.read(object.getJSONObject(METADATA));
+            setMetadata(metadata);
+        }
 
         /* Protocol. */
         if (object.has(PROTOCOL)) {
@@ -298,6 +335,13 @@ public class Extensions implements Model {
     @Override
     public void write(JSONStringer writer) throws JSONException {
 
+        /* Metadata. */
+        if (getMetadata() != null) {
+            writer.key(METADATA).object();
+            getMetadata().write(writer);
+            writer.endObject();
+        }
+
         /* Protocol. */
         if (getProtocol() != null) {
             writer.key(PROTOCOL).object();
@@ -355,7 +399,6 @@ public class Extensions implements Model {
         }
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -363,6 +406,8 @@ public class Extensions implements Model {
 
         Extensions that = (Extensions) o;
 
+        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null)
+            return false;
         if (protocol != null ? !protocol.equals(that.protocol) : that.protocol != null)
             return false;
         if (user != null ? !user.equals(that.user) : that.user != null) return false;
@@ -376,7 +421,8 @@ public class Extensions implements Model {
 
     @Override
     public int hashCode() {
-        int result = protocol != null ? protocol.hashCode() : 0;
+        int result = metadata != null ? metadata.hashCode() : 0;
+        result = 31 * result + (protocol != null ? protocol.hashCode() : 0);
         result = 31 * result + (user != null ? user.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
         result = 31 * result + (os != null ? os.hashCode() : 0);

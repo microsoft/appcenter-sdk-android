@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
@@ -21,6 +23,18 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
  */
 public class PartCUtils {
 
+    @VisibleForTesting
+    static final String METADATA_FIELDS = "f";
+
+    @VisibleForTesting
+    static final int DATA_TYPE_INT64 = 4;
+
+    @VisibleForTesting
+    static final int DATA_TYPE_DOUBLE = 6;
+
+    @VisibleForTesting
+    static final int DATA_TYPE_DATETIME = 9;
+
     /**
      * Adds part C properties to a log.
      *
@@ -36,6 +50,9 @@ public class PartCUtils {
             /* Part C creates properties in a deep structure using dot as an object separator. */
             Data data = new Data();
             dest.setData(data);
+
+            /* We also build Part A metadata extension at the same time to reflect the data. */
+            MetadataExtension metadata = new MetadataExtension();
             for (TypedProperty property : properties) {
 
                 /* Validate key not null. */
@@ -52,19 +69,25 @@ public class PartCUtils {
                 }
 
                 /* Get value from property. */
-                Object value;
+                Object value = null;
+                Integer metadataType = null;
                 if (property instanceof StringTypedProperty) {
-                    value = ((StringTypedProperty) property).getValue();
+                    StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
+                    value = stringTypedProperty.getValue();
                 } else if (property instanceof LongTypedProperty) {
-                    value = ((LongTypedProperty) property).getValue();
+                    LongTypedProperty longTypedProperty = (LongTypedProperty) property;
+                    value = longTypedProperty.getValue();
+                    metadataType = DATA_TYPE_INT64;
                 } else if (property instanceof DoubleTypedProperty) {
-                    value = ((DoubleTypedProperty) property).getValue();
+                    DoubleTypedProperty doubleTypedProperty = (DoubleTypedProperty) property;
+                    value = doubleTypedProperty.getValue();
+                    metadataType = DATA_TYPE_DOUBLE;
                 } else if (property instanceof DateTimeTypedProperty) {
                     value = JSONDateUtils.toString(((DateTimeTypedProperty) property).getValue());
+                    metadataType = DATA_TYPE_DATETIME;
                 } else if (property instanceof BooleanTypedProperty) {
-                    value = ((BooleanTypedProperty) property).getValue();
-                } else {
-                    value = null;
+                    BooleanTypedProperty booleanTypedProperty = (BooleanTypedProperty) property;
+                    value = booleanTypedProperty.getValue();
                 }
 
                 /* Validate value not null. */
@@ -76,22 +99,73 @@ public class PartCUtils {
                 /* Split property name by dot. */
                 String[] keys = key.split("\\.", -1);
                 int lastIndex = keys.length - 1;
+
+                /* Handle all intermediate keys. */
                 JSONObject destProperties = data.getProperties();
+                JSONObject destMetadata = metadata.getMetadata();
                 for (int i = 0; i < lastIndex; i++) {
-                    JSONObject subObject = destProperties.optJSONObject(keys[i]);
-                    if (subObject == null) {
-                        if (destProperties.has(keys[i])) {
-                            AppCenterLog.warn(LOG_TAG, "Property key '" + keys[i] + "' already has a value, the old value will be overridden.");
+
+                    /* Add data sub object. */
+                    String subKey = keys[i];
+                    JSONObject subDataObject = destProperties.optJSONObject(subKey);
+                    if (subDataObject == null) {
+                        if (destProperties.has(subKey)) {
+                            AppCenterLog.warn(LOG_TAG, "Property key '" + subKey + "' already has a value, the old value will be overridden.");
                         }
-                        subObject = new JSONObject();
-                        destProperties.put(keys[i], subObject);
+
+                        /* Add sub data intermediate object. */
+                        subDataObject = new JSONObject();
+                        destProperties.put(subKey, subDataObject);
                     }
-                    destProperties = subObject;
+                    destProperties = subDataObject;
+
+                    /* Add sub metadata intermediate object if using a non default type. */
+                    if (metadataType != null) {
+                        JSONObject subMetadataObject = destMetadata.optJSONObject(METADATA_FIELDS);
+                        if (subMetadataObject != null) {
+                            JSONObject fObject = subMetadataObject.optJSONObject(subKey);
+                            if (fObject != null) {
+                                subMetadataObject = fObject;
+                            }
+                        }
+                        if (subMetadataObject == null) {
+                            subMetadataObject = new JSONObject();
+                            destMetadata.put(METADATA_FIELDS, subMetadataObject);
+                        }
+
+                        /* Put intermediate fields object for that intermediate key. */
+                        JSONObject fields = new JSONObject();
+                        subMetadataObject.put(subKey, fields);
+                        destMetadata = fields;
+                    }
                 }
-                if (destProperties.has(keys[lastIndex])) {
-                    AppCenterLog.warn(LOG_TAG, "Property key '" + keys[lastIndex] + "' already has a value, the old value will be overridden.");
+
+                /* Handle the last key, the leaf. */
+                String lastKey = keys[lastIndex];
+                if (destProperties.has(lastKey)) {
+                    AppCenterLog.warn(LOG_TAG, "Property key '" + lastKey + "' already has a value, the old value will be overridden.");
                 }
-                destProperties.put(keys[lastIndex], value);
+                destProperties.put(lastKey, value);
+
+                /* Add metadata if not a default type. */
+                JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
+                if (metadataType != null) {
+                    if (fields == null) {
+                        fields = new JSONObject();
+                        destMetadata.put(METADATA_FIELDS, fields);
+                    }
+                    fields.put(lastKey, metadataType);
+                } else if (fields != null) {
+                    fields.remove(lastKey);
+                    if (fields.length() == 0) {
+                        metadata.getMetadata().remove(METADATA_FIELDS);
+                    }
+                }
+            }
+
+            /* Add metadata extension only if not empty. */
+            if (metadata.getMetadata().length() > 0) {
+                dest.getExt().setMetadata(metadata);
             }
         } catch (JSONException ignore) {
 
