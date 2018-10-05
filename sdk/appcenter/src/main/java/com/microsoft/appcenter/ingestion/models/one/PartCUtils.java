@@ -121,22 +121,17 @@ public class PartCUtils {
 
                     /* Add sub metadata intermediate object if using a non default type. */
                     if (metadataType != null) {
-                        JSONObject subMetadataObject = destMetadata.optJSONObject(METADATA_FIELDS);
-                        if (subMetadataObject != null) {
-                            JSONObject fObject = subMetadataObject.optJSONObject(subKey);
-                            if (fObject != null) {
-                                subMetadataObject = fObject;
-                            }
+                        JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
+                        if (fields == null) {
+                            fields = new JSONObject();
+                            destMetadata.put(METADATA_FIELDS, fields);
                         }
+                        JSONObject subMetadataObject = fields.optJSONObject(subKey);
                         if (subMetadataObject == null) {
                             subMetadataObject = new JSONObject();
-                            destMetadata.put(METADATA_FIELDS, subMetadataObject);
+                            fields.put(subKey, subMetadataObject);
                         }
-
-                        /* Put intermediate fields object for that intermediate key. */
-                        JSONObject fields = new JSONObject();
-                        subMetadataObject.put(subKey, fields);
-                        destMetadata = fields;
+                        destMetadata = subMetadataObject;
                     }
                 }
 
@@ -148,18 +143,13 @@ public class PartCUtils {
                 destProperties.put(lastKey, value);
 
                 /* Add metadata if not a default type. */
-                JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                 if (metadataType != null) {
+                    JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                     if (fields == null) {
                         fields = new JSONObject();
                         destMetadata.put(METADATA_FIELDS, fields);
                     }
                     fields.put(lastKey, metadataType);
-                } else if (fields != null) {
-                    fields.remove(lastKey);
-                    if (fields.length() == 0) {
-                        metadata.getMetadata().remove(METADATA_FIELDS);
-                    }
                 }
             }
 
