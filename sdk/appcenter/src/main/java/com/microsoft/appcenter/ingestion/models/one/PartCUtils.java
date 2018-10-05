@@ -176,6 +176,9 @@ public class PartCUtils {
 
             /* Add metadata extension only if not empty. */
             if (metadata.getMetadata().length() > 0) {
+                if (dest.getExt() == null) {
+                    dest.setExt(new Extensions());
+                }
                 dest.getExt().setMetadata(metadata);
             }
         } catch (JSONException ignore) {
