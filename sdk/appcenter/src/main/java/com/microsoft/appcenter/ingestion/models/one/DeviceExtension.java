@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 /**
- * The “device” extension tracks common device elements that are not available in the core envelope.
+ * The "device" extension tracks common device elements that are not available in the core envelope.
  */
 public class DeviceExtension implements Model {
 
