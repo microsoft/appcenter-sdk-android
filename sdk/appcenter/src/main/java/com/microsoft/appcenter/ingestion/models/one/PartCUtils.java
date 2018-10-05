@@ -120,8 +120,8 @@ public class PartCUtils {
                     destProperties = subDataObject;
 
                     /* Add sub metadata intermediate object if using a non default type. */
+                    JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                     if (metadataType != null) {
-                        JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                         if (fields == null) {
                             fields = new JSONObject();
                             destMetadata.put(METADATA_FIELDS, fields);
@@ -132,6 +132,8 @@ public class PartCUtils {
                             fields.put(subKey, subMetadataObject);
                         }
                         destMetadata = subMetadataObject;
+                    } else if (fields != null) {
+                        destMetadata.remove(METADATA_FIELDS);
                     }
                 }
 
@@ -143,13 +145,15 @@ public class PartCUtils {
                 destProperties.put(lastKey, value);
 
                 /* Add metadata if not a default type. */
+                JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                 if (metadataType != null) {
-                    JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
                     if (fields == null) {
                         fields = new JSONObject();
                         destMetadata.put(METADATA_FIELDS, fields);
                     }
                     fields.put(lastKey, metadataType);
+                } else if (fields != null) {
+                    destMetadata.remove(METADATA_FIELDS);
                 }
             }
 
