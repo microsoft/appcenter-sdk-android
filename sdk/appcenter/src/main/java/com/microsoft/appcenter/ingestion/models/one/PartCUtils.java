@@ -133,6 +133,19 @@ public class PartCUtils {
                         }
                         destMetadata = subMetadataObject;
                     }
+
+                    /*
+                     * If overriding from metadata type in a sub object to default type in a parent object,
+                     * Select sub object without creating it to be able to override metadata after the loop.
+                     * Example: put "a.b.c": 2 then put "a.b": "3" will trigger that code
+                     * and we need to cleanup metadata.
+                     */
+                    else if (fields != null) {
+                        JSONObject subMetadataObject = fields.optJSONObject(subKey);
+                        if (subMetadataObject != null) {
+                            destMetadata = subMetadataObject;
+                        }
+                    }
                 }
 
                 /* Handle the last key, the leaf. */
@@ -150,7 +163,10 @@ public class PartCUtils {
                         destMetadata.put(METADATA_FIELDS, fields);
                     }
                     fields.put(lastKey, metadataType);
-                } else if (fields != null) {
+                }
+
+                /* If we override a key that needs metadata with a key that doesn't, cleanup. */
+                else if (fields != null) {
                     fields.remove(lastKey);
                     if (fields.length() == 0) {
                         destMetadata.remove(METADATA_FIELDS);
