@@ -14,6 +14,9 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
@@ -168,14 +171,11 @@ public class PartCUtils {
                 /* If we override a key that needs metadata with a key that doesn't, cleanup. */
                 else if (fields != null) {
                     fields.remove(lastKey);
-                    if (fields.length() == 0) {
-                        destMetadata.remove(METADATA_FIELDS);
-                    }
                 }
             }
 
             /* Add metadata extension only if not empty. */
-            if (metadata.getMetadata().length() > 0) {
+            if (!cleanUpEmptyObjectsInMetadata(metadata.getMetadata())) {
                 if (dest.getExt() == null) {
                     dest.setExt(new Extensions());
                 }
@@ -185,5 +185,32 @@ public class PartCUtils {
 
             /* Can only happen with NaN or Infinite but our values are String. */
         }
+    }
+
+    /**
+     * Remove all empty children from JSON object.
+     * <p>
+     * For example, if a property is {"a.b.c": 3}, the metadata contains {"f": {"a": {"f": {"b": {"f": {"c":4}}}}}}.
+     * When {"a.b": "a"} property overrides the metadata JSON object (since string type doesn't require metadata),
+     * it would remove "b" but {"f": {"a": {"f": {}}}} remains in the metadata.
+     * <p>
+     * This method cleans up empty child objects in the given JSON object that were created while
+     * building metadata but remained after its properties were overridden.
+     *
+     * @param object Parent JSON object.
+     * @return true if the object has no children and safe to be removed from its parent.
+     */
+    private static boolean cleanUpEmptyObjectsInMetadata(JSONObject object) {
+        for (Iterator<String> iterator = object.keys(); iterator.hasNext(); ) {
+            String childKey = iterator.next();
+            JSONObject child = object.optJSONObject(childKey);
+            if (child != null) {
+                if (cleanUpEmptyObjectsInMetadata(child)) {
+                    iterator.remove();
+                }
+            }
+        }
+
+        return object.length() == 0;
     }
 }
