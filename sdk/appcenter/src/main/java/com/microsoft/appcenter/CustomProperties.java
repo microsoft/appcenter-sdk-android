@@ -169,7 +169,7 @@ public class CustomProperties {
         }
         double doubleValue = value.doubleValue();
         if (Double.isInfinite(doubleValue) || Double.isNaN(doubleValue)) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value is not a valid number.");
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value cannot be NaN or infinite.");
             return false;
         }
         return true;
