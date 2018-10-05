@@ -132,8 +132,6 @@ public class PartCUtils {
                             fields.put(subKey, subMetadataObject);
                         }
                         destMetadata = subMetadataObject;
-                    } else if (fields != null) {
-                        destMetadata.remove(METADATA_FIELDS);
                     }
                 }
 
@@ -153,7 +151,10 @@ public class PartCUtils {
                     }
                     fields.put(lastKey, metadataType);
                 } else if (fields != null) {
-                    destMetadata.remove(METADATA_FIELDS);
+                    fields.remove(lastKey);
+                    if (fields.length() == 0) {
+                        destMetadata.remove(METADATA_FIELDS);
+                    }
                 }
             }
 
