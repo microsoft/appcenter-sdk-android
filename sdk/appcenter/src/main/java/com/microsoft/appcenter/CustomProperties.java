@@ -90,12 +90,8 @@ public class CustomProperties {
      * @return this instance.
      */
     public CustomProperties set(String key, Number value) {
-        if (isValidKey(key)) {
-            if (value != null) {
-                addProperty(key, value);
-            } else {
-                AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
-            }
+        if (isValidKey(key) && isValidNumberValue(key, value)) {
+            addProperty(key, value);
         }
         return this;
     }
@@ -161,6 +157,19 @@ public class CustomProperties {
         }
         if (value.length() > MAX_PROPERTY_VALUE_LENGTH) {
             AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidNumberValue(String key, Number value) {
+        if (value == null) {
+            AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            return false;
+        }
+        double doubleValue = value.doubleValue();
+        if (Double.isInfinite(doubleValue) || Double.isNaN(doubleValue)) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value is not a valid number.");
             return false;
         }
         return true;
