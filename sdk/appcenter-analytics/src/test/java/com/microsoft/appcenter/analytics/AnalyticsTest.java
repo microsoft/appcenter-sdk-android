@@ -60,7 +60,6 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -197,7 +196,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void trackEventFromApp() {
+    public void trackEventFromAppWithoutProperties() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
@@ -209,8 +208,16 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).enqueue(argumentCaptor.capture(), anyString());
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
-        assertEquals(null, argumentCaptor.getValue().getTypedProperties());
-        reset(channel);
+        assertNull(argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithEmptyMapProperty() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty Map properties. */
         Analytics.trackEvent("eventName", new HashMap<String, String>());
@@ -218,7 +225,15 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
         assertEquals(Collections.emptyList(), argumentCaptor.getValue().getTypedProperties());
-        reset(channel);
+    }
+
+    @Test
+    public void trackEventFromAppWithMapProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with non-empty Map properties. */
         Analytics.trackEvent("eventName", new HashMap<String, String>() {{
@@ -231,7 +246,15 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
         assertEquals(Collections.<TypedProperty>singletonList(stringProperty), argumentCaptor.getValue().getTypedProperties());
-        reset(channel);
+    }
+
+    @Test
+    public void trackEventFromAppWithEmptyEventProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty EventProperties. */
         Analytics.trackEvent("eventName", new EventProperties());
@@ -239,7 +262,15 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
         assertEquals(Collections.emptyList(), argumentCaptor.getValue().getTypedProperties());
-        reset(channel);
+    }
+
+    @Test
+    public void trackEventFromAppWithEventProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Prepare typed properties. */
         Date date = new Date();
@@ -275,7 +306,6 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertEquals(longTypedProperty, argumentCaptor.getValue().getTypedProperties().get(2));
         assertEquals(doubleTypedProperty, argumentCaptor.getValue().getTypedProperties().get(3));
         assertEquals(booleanTypedProperty, argumentCaptor.getValue().getTypedProperties().get(4));
-        reset(channel);
     }
 
     @Test
