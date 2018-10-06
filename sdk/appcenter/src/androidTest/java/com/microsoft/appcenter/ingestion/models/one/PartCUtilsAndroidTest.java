@@ -17,6 +17,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_DATETIME;
+import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_DOUBLE;
+import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_INT64;
+import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.METADATA_FIELDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -41,6 +45,7 @@ public class PartCUtilsAndroidTest {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         PartCUtils.addPartCFromLog(null, log);
         assertNull(log.getData());
+        assertNull(log.getExt());
     }
 
     @Test
@@ -48,6 +53,7 @@ public class PartCUtilsAndroidTest {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         PartCUtils.addPartCFromLog(Collections.<TypedProperty>emptyList(), log);
         assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt());
     }
 
     @Test
@@ -58,6 +64,7 @@ public class PartCUtilsAndroidTest {
         PartCUtils.addPartCFromLog(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals("", log.getData().getProperties().getString(""));
+        assertNull(log.getExt());
     }
 
     @Test()
@@ -72,6 +79,7 @@ public class PartCUtilsAndroidTest {
         PartCUtils.addPartCFromLog(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals("b", log.getData().getProperties().getString("a"));
+        assertNull(log.getExt());
     }
 
     @Test
@@ -90,6 +98,7 @@ public class PartCUtilsAndroidTest {
         assertNotNull(c);
         assertEquals("2", c.optString("d", null));
         assertEquals("3", c.optString("e", null));
+        assertNull(log.getExt());
     }
 
     @Test
@@ -103,6 +112,7 @@ public class PartCUtilsAndroidTest {
         JSONObject b = log.getData().getProperties().optJSONObject("a").optJSONObject("b");
         assertNotNull(b);
         assertEquals("3", b.optString("c", null));
+        assertNull(log.getExt());
     }
 
     @Test
@@ -127,8 +137,19 @@ public class PartCUtilsAndroidTest {
         property.setValue(new Date(100));
         properties.add(property);
         PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
         assertEquals(1, log.getData().getProperties().length());
         assertEquals(new Date(100), JSONDateUtils.toDate(log.getData().getProperties().getString("a")));
+
+        /* Check metadata. */
+        JSONObject expectedMetadata = new JSONObject();
+        JSONObject a = new JSONObject();
+        a.put("a", DATA_TYPE_DATETIME);
+        expectedMetadata.put(METADATA_FIELDS, a);
+        assertNotNull(log.getExt());
+        assertNotNull(log.getExt().getMetadata());
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
 
     @Test
@@ -140,8 +161,19 @@ public class PartCUtilsAndroidTest {
         property.setValue(1.1);
         properties.add(property);
         PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
         assertEquals(1, log.getData().getProperties().length());
         assertEquals(1.1, log.getData().getProperties().getDouble("a"), 0);
+
+        /* Check metadata. */
+        JSONObject expectedMetadata = new JSONObject();
+        JSONObject a = new JSONObject();
+        a.put("a", DATA_TYPE_DOUBLE);
+        expectedMetadata.put(METADATA_FIELDS, a);
+        assertNotNull(log.getExt());
+        assertNotNull(log.getExt().getMetadata());
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
 
     @Test
@@ -155,5 +187,14 @@ public class PartCUtilsAndroidTest {
         PartCUtils.addPartCFromLog(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals(10000000000L, log.getData().getProperties().getLong("a"));
+
+        /* Check metadata. */
+        JSONObject expectedMetadata = new JSONObject();
+        JSONObject a = new JSONObject();
+        a.put("a", DATA_TYPE_INT64);
+        expectedMetadata.put(METADATA_FIELDS, a);
+        assertNotNull(log.getExt());
+        assertNotNull(log.getExt().getMetadata());
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
 }
