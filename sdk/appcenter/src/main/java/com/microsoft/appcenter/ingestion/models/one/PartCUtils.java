@@ -56,51 +56,20 @@ public class PartCUtils {
             MetadataExtension metadata = new MetadataExtension();
             for (TypedProperty property : properties) {
 
-                /* Validate key not null. */
-                String key = property.getName();
-                if (key == null) {
-                    AppCenterLog.warn(LOG_TAG, "Property key cannot be null.");
-                    continue;
-                }
-
-                /* Validate key is not Part B. */
-                if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
-                    AppCenterLog.warn(LOG_TAG, "Property key '" + key + "' is reserved.");
-                    continue;
-                }
-
-                /* Get value from property. */
+                /* Validate property and get type. */
                 Object value;
-                Integer metadataType = null;
-                if (property instanceof StringTypedProperty) {
-                    StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
-                    value = stringTypedProperty.getValue();
-                } else if (property instanceof LongTypedProperty) {
-                    LongTypedProperty longTypedProperty = (LongTypedProperty) property;
-                    value = longTypedProperty.getValue();
-                    metadataType = DATA_TYPE_INT64;
-                } else if (property instanceof DoubleTypedProperty) {
-                    DoubleTypedProperty doubleTypedProperty = (DoubleTypedProperty) property;
-                    value = doubleTypedProperty.getValue();
-                    metadataType = DATA_TYPE_DOUBLE;
-                } else if (property instanceof DateTimeTypedProperty) {
-                    value = JSONDateUtils.toString(((DateTimeTypedProperty) property).getValue());
-                    metadataType = DATA_TYPE_DATETIME;
-                } else if (property instanceof BooleanTypedProperty) {
-                    BooleanTypedProperty booleanTypedProperty = (BooleanTypedProperty) property;
-                    value = booleanTypedProperty.getValue();
-                } else {
-                    AppCenterLog.warn(LOG_TAG, "Unsupported property type: " + property.getType());
+                try {
+                    value = validateProperty(property);
+                } catch (IllegalArgumentException e) {
+                    AppCenterLog.warn(LOG_TAG, e.getMessage());
                     continue;
                 }
 
-                /* Validate value not null. */
-                if (value == null) {
-                    AppCenterLog.warn(LOG_TAG, "Value of property with key '" + key + "' cannot be null.");
-                    continue;
-                }
+                /* Get metadata type. */
+                Integer metadataType = getMetadataType(property);
 
                 /* Split property name by dot. */
+                String key = property.getName();
                 String[] keys = key.split("\\.", -1);
                 int lastIndex = keys.length - 1;
 
@@ -123,59 +92,22 @@ public class PartCUtils {
                     }
                     destProperties = subDataObject;
 
-                    /* Add sub metadata intermediate object if using a non default type. */
-                    JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
-                    if (metadataType != null) {
-                        if (fields == null) {
-                            fields = new JSONObject();
-                            destMetadata.put(METADATA_FIELDS, fields);
-                        }
-                        JSONObject subMetadataObject = fields.optJSONObject(subKey);
-                        if (subMetadataObject == null) {
-                            subMetadataObject = new JSONObject();
-                            fields.put(subKey, subMetadataObject);
-                        }
-                        destMetadata = subMetadataObject;
-                    }
-
-                    /*
-                     * If overriding from metadata type in a sub object to default type in a parent object,
-                     * Select sub object without creating it to be able to override metadata after the loop.
-                     * Example: put "a.b.c": 2 then put "a.b": "3" will trigger that code
-                     * and we need to cleanup metadata.
-                     */
-                    else if (fields != null) {
-                        JSONObject subMetadataObject = fields.optJSONObject(subKey);
-                        if (subMetadataObject != null) {
-                            destMetadata = subMetadataObject;
-                        }
-                    }
+                    /* Handle metadata. */
+                    destMetadata = addIntermediateMetadata(metadataType, destMetadata, subKey);
                 }
 
-                /* Handle the last key, the leaf. */
+                /* Handle the last key for data, the leaf. */
                 String lastKey = keys[lastIndex];
                 if (destProperties.has(lastKey)) {
                     AppCenterLog.warn(LOG_TAG, "Property key '" + lastKey + "' already has a value, the old value will be overridden.");
                 }
                 destProperties.put(lastKey, value);
 
-                /* Add metadata if not a default type. */
-                JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
-                if (metadataType != null) {
-                    if (fields == null) {
-                        fields = new JSONObject();
-                        destMetadata.put(METADATA_FIELDS, fields);
-                    }
-                    fields.put(lastKey, metadataType);
-                }
-
-                /* If we override a key that needs metadata with a key that doesn't, cleanup. */
-                else if (fields != null) {
-                    fields.remove(lastKey);
-                }
+                /* Handle the last key for meta-data, the leaf. */
+                addLeafMetadata(metadataType, destMetadata, lastKey);
             }
 
-            /* Add metadata extension only if not empty. */
+            /* Add metadata extension only if not empty after cleanup. */
             if (!cleanUpEmptyObjectsInMetadata(metadata.getMetadata())) {
                 if (dest.getExt() == null) {
                     dest.setExt(new Extensions());
@@ -184,8 +116,140 @@ public class PartCUtils {
             }
         } catch (JSONException ignore) {
 
-            /* Can only happen with NaN or Infinite but our values are String. */
+            /* Can only happen with NaN or Infinite but this is already checked before. */
         }
+    }
+
+    /**
+     * Validate typed property.
+     *
+     * @param property typed property.
+     * @return property value.
+     * @throws IllegalArgumentException if the property is invalid.
+     * @throws JSONException            if JSON date formatting fails (never happens).
+     */
+    private static Object validateProperty(TypedProperty property) throws IllegalArgumentException, JSONException {
+
+        /* Validate key not null. */
+        String key = property.getName();
+        if (key == null) {
+            throw new IllegalArgumentException("Property key cannot be null.");
+        }
+
+        /* Validate key is not Part B. */
+        if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
+            throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
+        }
+
+        /* Get value from property. */
+        Object value;
+        if (property instanceof StringTypedProperty) {
+            StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
+            value = stringTypedProperty.getValue();
+        } else if (property instanceof LongTypedProperty) {
+            LongTypedProperty longTypedProperty = (LongTypedProperty) property;
+            value = longTypedProperty.getValue();
+        } else if (property instanceof DoubleTypedProperty) {
+            DoubleTypedProperty doubleTypedProperty = (DoubleTypedProperty) property;
+            value = doubleTypedProperty.getValue();
+        } else if (property instanceof DateTimeTypedProperty) {
+            value = JSONDateUtils.toString(((DateTimeTypedProperty) property).getValue());
+        } else if (property instanceof BooleanTypedProperty) {
+            BooleanTypedProperty booleanTypedProperty = (BooleanTypedProperty) property;
+            value = booleanTypedProperty.getValue();
+        } else {
+            throw new IllegalArgumentException("Unsupported property type: " + property.getType());
+        }
+
+        /* Validate value not null. */
+        if (value == null) {
+            throw new IllegalArgumentException("Value of property with key '" + key + "' cannot be null.");
+        }
+        return value;
+    }
+
+    /**
+     * Get metadata type for the specified value.
+     *
+     * @param property property to check type.
+     * @return metadata type or null if the type is a default one.
+     */
+    private static Integer getMetadataType(TypedProperty property) {
+        if (property instanceof LongTypedProperty) {
+            return DATA_TYPE_INT64;
+        }
+        if (property instanceof DoubleTypedProperty) {
+            return DATA_TYPE_DOUBLE;
+        }
+        if (property instanceof DateTimeTypedProperty) {
+            return DATA_TYPE_DATETIME;
+        }
+        return null;
+    }
+
+    /**
+     * Add the last level of metadata.
+     *
+     * @param metadataType metadata type.
+     * @param destMetadata the parent metadata object.
+     * @param lastKey      the last key from the dot split.
+     * @throws JSONException if JSON put fails.
+     */
+    private static void addLeafMetadata(Integer metadataType, JSONObject destMetadata, String lastKey) throws JSONException {
+        JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
+        if (metadataType != null) {
+            if (fields == null) {
+                fields = new JSONObject();
+                destMetadata.put(METADATA_FIELDS, fields);
+            }
+            fields.put(lastKey, metadataType);
+        }
+
+        /* If we override a key that needs metadata with a key that doesn't, cleanup. */
+        else if (fields != null) {
+            fields.remove(lastKey);
+        }
+    }
+
+    /**
+     * Add a level of metadata nesting or return the existing intermediate object.
+     *
+     * @param metadataType metadata type.
+     * @param destMetadata the parent metadata object.
+     * @param subKey       the intermediate key from the dot split.
+     * @return metadata object on next level.
+     * @throws JSONException if JSON put fails.
+     */
+    private static JSONObject addIntermediateMetadata(Integer metadataType, JSONObject destMetadata, String subKey) throws JSONException {
+
+        /* Add sub metadata intermediate object if using a non default type. */
+        JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
+        if (metadataType != null) {
+            if (fields == null) {
+                fields = new JSONObject();
+                destMetadata.put(METADATA_FIELDS, fields);
+            }
+            JSONObject subMetadataObject = fields.optJSONObject(subKey);
+            if (subMetadataObject == null) {
+                subMetadataObject = new JSONObject();
+                fields.put(subKey, subMetadataObject);
+            }
+            destMetadata = subMetadataObject;
+        }
+
+        /*
+         * If overriding from metadata type in a sub object to default type in a parent object,
+         * Select sub object without creating it to be able to override metadata after the loop.
+         * Example: put "a.b.c": 2 then put "a.b": "3" will trigger that code
+         * and we need to cleanup metadata.
+         */
+        else if (fields != null) {
+            JSONObject subMetadataObject = fields.optJSONObject(subKey);
+            if (subMetadataObject != null) {
+                destMetadata = subMetadataObject;
+            }
+        }
+        return destMetadata;
     }
 
     /**
@@ -211,7 +275,6 @@ public class PartCUtils {
                 }
             }
         }
-
         return object.length() == 0;
     }
 }
