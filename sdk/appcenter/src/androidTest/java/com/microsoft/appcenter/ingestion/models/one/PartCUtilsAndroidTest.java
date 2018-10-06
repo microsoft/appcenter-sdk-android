@@ -24,6 +24,7 @@ import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.METADATA_F
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class PartCUtilsAndroidTest {
@@ -199,6 +200,30 @@ public class PartCUtilsAndroidTest {
     }
 
     @Test
+    public void longTypedPropertyReuseExtensions() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        Extensions ext = new Extensions();
+        log.setExt(ext);
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty property = new LongTypedProperty();
+        property.setName("a");
+        property.setValue(10000000000L);
+        properties.add(property);
+        PartCUtils.addPartCFromLog(properties, log);
+        assertEquals(1, log.getData().getProperties().length());
+        assertEquals(10000000000L, log.getData().getProperties().getLong("a"));
+
+        /* Check metadata. */
+        JSONObject expectedMetadata = new JSONObject();
+        JSONObject a = new JSONObject();
+        a.put("a", DATA_TYPE_INT64);
+        expectedMetadata.put(METADATA_FIELDS, a);
+        assertSame(ext, log.getExt());
+        assertNotNull(log.getExt().getMetadata());
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
+    }
+
+    @Test
     public void unknownTypedProperty() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         TypedProperty typedProperty = new TypedProperty() {
@@ -216,5 +241,45 @@ public class PartCUtilsAndroidTest {
 
         /* And we don't send metadata when using only standard types. */
         assertNull(log.getExt());
+    }
+
+    @Test
+    public void nestingWithTypes() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("p.a");
+        a.setValue(1);
+        properties.add(a);
+        DoubleTypedProperty b = new DoubleTypedProperty();
+        b.setName("p.b");
+        b.setValue(2.0);
+        properties.add(b);
+        BooleanTypedProperty c = new BooleanTypedProperty();
+        c.setName("p.c");
+        c.setValue(true);
+        properties.add(c);
+        PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
+        JSONObject p = new JSONObject();
+        p.put("a", 1);
+        p.put("b", 2.0);
+        p.put("c", true);
+        JSONObject expectedData = new JSONObject();
+        expectedData.put("p", p);
+        assertEquals(expectedData.toString(), log.getData().getProperties().toString());
+
+        /* Check metadata, boolean is a default type. */
+        JSONObject f2 = new JSONObject();
+        f2.put("a", DATA_TYPE_INT64);
+        f2.put("b", DATA_TYPE_DOUBLE);
+        JSONObject mp = new JSONObject();
+        mp.put(METADATA_FIELDS, f2);
+        JSONObject f1 = new JSONObject();
+        f1.put("p", mp);
+        JSONObject expectedMetadata = new JSONObject();
+        expectedMetadata.put(METADATA_FIELDS, f1);
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
 }
