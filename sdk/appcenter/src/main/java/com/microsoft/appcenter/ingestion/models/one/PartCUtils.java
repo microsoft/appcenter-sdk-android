@@ -14,9 +14,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
@@ -72,7 +70,7 @@ public class PartCUtils {
                 }
 
                 /* Get value from property. */
-                Object value = null;
+                Object value;
                 Integer metadataType = null;
                 if (property instanceof StringTypedProperty) {
                     StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
@@ -91,6 +89,9 @@ public class PartCUtils {
                 } else if (property instanceof BooleanTypedProperty) {
                     BooleanTypedProperty booleanTypedProperty = (BooleanTypedProperty) property;
                     value = booleanTypedProperty.getValue();
+                } else {
+                    AppCenterLog.warn(LOG_TAG, "Unsupported property type: " + property.getType());
+                    continue;
                 }
 
                 /* Validate value not null. */

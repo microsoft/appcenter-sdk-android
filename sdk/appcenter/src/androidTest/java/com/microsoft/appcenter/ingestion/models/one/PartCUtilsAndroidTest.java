@@ -197,4 +197,24 @@ public class PartCUtilsAndroidTest {
         assertNotNull(log.getExt().getMetadata());
         assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
+
+    @Test
+    public void unknownTypedProperty() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        TypedProperty typedProperty = new TypedProperty() {
+
+            @Override
+            public String getType() {
+                return "unknown";
+            }
+        };
+        typedProperty.setName("a");
+        PartCUtils.addPartCFromLog(Collections.singletonList(typedProperty), log);
+
+        /* Data is empty because the invalid property filtered out. */
+        assertEquals(0, log.getData().getProperties().length());
+
+        /* And we don't send metadata when using only standard types. */
+        assertNull(log.getExt());
+    }
 }
