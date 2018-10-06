@@ -282,4 +282,68 @@ public class PartCUtilsAndroidTest {
         expectedMetadata.put(METADATA_FIELDS, f1);
         assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
+
+    @Test
+    public void overrideMetadataToNull() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("a.b.c");
+        a.setValue(1);
+        properties.add(a);
+        StringTypedProperty b = new StringTypedProperty();
+        b.setName("a.b");
+        b.setValue("2");
+        properties.add(b);
+        PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
+        JSONObject aData = new JSONObject();
+        aData.put("b", "2");
+        JSONObject expectedData = new JSONObject();
+        expectedData.put("a", aData);
+        assertEquals(expectedData.toString(), log.getData().getProperties().toString());
+
+        /* Check metadata is null */
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void overrideMetadataCleanup() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("a.b.c");
+        a.setValue(1);
+        properties.add(a);
+        StringTypedProperty b = new StringTypedProperty();
+        b.setName("a.b");
+        b.setValue("2");
+        properties.add(b);
+        DoubleTypedProperty c = new DoubleTypedProperty();
+        c.setName("a.c");
+        c.setValue(3.14);
+        properties.add(c);
+        PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
+        JSONObject aData = new JSONObject();
+        aData.put("b", "2");
+        aData.put("c", 3.14);
+        JSONObject expectedData = new JSONObject();
+        expectedData.put("a", aData);
+        assertEquals(expectedData.toString(), log.getData().getProperties().toString());
+
+        /* Check metadata contains only a.c. */
+        JSONObject aFields = new JSONObject();
+        aFields.put("c", DATA_TYPE_DOUBLE);
+        JSONObject aMetadata = new JSONObject();
+        aMetadata.put(METADATA_FIELDS, aFields);
+        JSONObject rootFields = new JSONObject();
+        rootFields.put("a", aMetadata);
+        JSONObject expectedMetadata = new JSONObject();
+        expectedMetadata.put(METADATA_FIELDS, rootFields);
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
+    }
 }
