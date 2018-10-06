@@ -394,4 +394,41 @@ public class PartCUtilsAndroidTest {
         expectedMetadata.put(METADATA_FIELDS, rootFields);
         assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
+
+    @Test
+    public void noMetadataCleanupOnNestingString() throws JSONException {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("a.b");
+        a.setValue(1);
+        properties.add(a);
+        StringTypedProperty b = new StringTypedProperty();
+        b.setName("b.c");
+        b.setValue("2");
+        properties.add(b);
+        PartCUtils.addPartCFromLog(properties, log);
+
+        /* Check data. */
+        JSONObject aData = new JSONObject();
+        aData.put("b", 1);
+        JSONObject bData = new JSONObject();
+        bData.put("c", "2");
+        JSONObject expectedData = new JSONObject();
+        expectedData.put("a", aData);
+        expectedData.put("b", bData);
+        assertEquals(expectedData.toString(), log.getData().getProperties().toString());
+
+        /* Check metadata. a.b only. */
+        JSONObject aFields = new JSONObject();
+        aFields.put("b", DATA_TYPE_INT64);
+        JSONObject aMetadata = new JSONObject();
+        aMetadata.put(METADATA_FIELDS, aFields);
+        JSONObject rootFields = new JSONObject();
+        rootFields.put("a", aMetadata);
+        JSONObject expectedMetadata = new JSONObject();
+        expectedMetadata.put(METADATA_FIELDS, rootFields);
+        assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
+    }
 }
