@@ -55,6 +55,7 @@ public class EventLogFactoryTest {
 
         /* Mock utilities. */
         mockStatic(PartAUtils.class);
+        mockStatic(PartCUtils.class);
 
         /* Create event log. */
         EventLog log = new EventLog();

@@ -64,7 +64,9 @@ public class PartAUtils {
         dest.addTransmissionTarget(transmissionTarget);
 
         /* Add extension. */
-        dest.setExt(new Extensions());
+        if (dest.getExt() == null) {
+            dest.setExt(new Extensions());
+        }
 
         /* Add protocol extension. */
         dest.getExt().setProtocol(new ProtocolExtension());
