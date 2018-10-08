@@ -120,6 +120,11 @@ subprojects {
             configurations.api.dependencies.withType(ProjectDependency).dependencyProject.buildDir.each { dir -> classpath += files("${dir}/intermediates/classes/release") }
             //noinspection GroovyAssignabilityCheck
             classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+            android.libraryVariants.all { variant ->
+                if (variant.name == 'release') {
+                    owner.classpath += variant.javaCompile.classpath
+                }
+            }
             javadoc.dependsOn project.assembleRelease
         }
     }
