@@ -65,46 +65,11 @@ public class PartCUtils {
                     continue;
                 }
 
-                /* Get metadata type. */
-                Integer metadataType = getMetadataType(property);
-
                 /* Split property name by dot. */
-                String key = property.getName();
-                String[] keys = key.split("\\.", -1);
-                int lastIndex = keys.length - 1;
+                String[] keys = property.getName().split("\\.", -1);
 
                 /* Handle all intermediate keys. */
-                JSONObject destProperties = data.getProperties();
-                JSONObject destMetadata = metadata.getMetadata();
-                for (int i = 0; i < lastIndex; i++) {
-
-                    /* Add data sub object. */
-                    String subKey = keys[i];
-                    JSONObject subDataObject = destProperties.optJSONObject(subKey);
-                    if (subDataObject == null) {
-                        if (destProperties.has(subKey)) {
-                            AppCenterLog.warn(LOG_TAG, "Property key '" + subKey + "' already has a value, the old value will be overridden.");
-                        }
-
-                        /* Add sub data intermediate object. */
-                        subDataObject = new JSONObject();
-                        destProperties.put(subKey, subDataObject);
-                    }
-                    destProperties = subDataObject;
-
-                    /* Handle metadata. */
-                    destMetadata = addIntermediateMetadata(metadataType, destMetadata, subKey);
-                }
-
-                /* Handle the last key for data, the leaf. */
-                String lastKey = keys[lastIndex];
-                if (destProperties.has(lastKey)) {
-                    AppCenterLog.warn(LOG_TAG, "Property key '" + lastKey + "' already has a value, the old value will be overridden.");
-                }
-                destProperties.put(lastKey, value);
-
-                /* Handle the last key for meta-data, the leaf. */
-                addLeafMetadata(metadataType, destMetadata, lastKey);
+                addDataWithMetadata(data.getProperties(), metadata.getMetadata(), keys, value, getMetadataType(property), 0);
             }
 
             /* Add metadata extension only if not empty after cleanup. */
@@ -188,6 +153,46 @@ public class PartCUtils {
     }
 
     /**
+     * Add a key and a value to data properties with metadata.
+     *
+     * @param destProperties the parent data properties object.
+     * @param destMetadata   the parent metadata object.
+     * @param keys           the dot-splitted keys
+     * @param value          the value for the given keys.
+     * @param metadataType   metadata type.
+     * @param index          the index for the parent key in <code>keys</code>.
+     * @throws JSONException if it fails to add the key and value to data property and metadata.
+     */
+    private static void addDataWithMetadata(JSONObject destProperties, JSONObject destMetadata, String[] keys, Object value, Integer metadataType, int index) throws JSONException {
+        if (index == keys.length - 1) {
+            if (destProperties.has(keys[index])) {
+                AppCenterLog.warn(LOG_TAG, "Property key '" + keys[index] + "' already has a value, the old value will be overridden.");
+            }
+
+            /* Add a child object for the key and value. */
+            destProperties.put(keys[index], value);
+
+            /* Add a leaf metadata for the key. */
+            addLeafMetadata(metadataType, destMetadata, keys[index]);
+            return;
+        }
+
+        /* Get a child property of the key. */
+        JSONObject childProperties = destProperties.optJSONObject(keys[index]);
+        if (childProperties == null) {
+            childProperties = new JSONObject();
+            destProperties.put(keys[index], childProperties);
+        }
+        destProperties = childProperties;
+
+        /* Add an intermediateMetadata for the key. */
+        destMetadata = addIntermediateMetadata(destMetadata, keys[index]);
+
+        /* Add metadata for its children. */
+        addDataWithMetadata(destProperties, destMetadata, keys, value, metadataType, index + 1);
+    }
+
+    /**
      * Add the last level of metadata.
      *
      * @param metadataType metadata type.
@@ -214,42 +219,23 @@ public class PartCUtils {
     /**
      * Add a level of metadata nesting or return the existing intermediate object.
      *
-     * @param metadataType metadata type.
      * @param destMetadata the parent metadata object.
      * @param subKey       the intermediate key from the dot split.
      * @return metadata object on next level.
      * @throws JSONException if JSON put fails.
      */
-    private static JSONObject addIntermediateMetadata(Integer metadataType, JSONObject destMetadata, String subKey) throws JSONException {
-
-        /* Add sub metadata intermediate object if using a non default type. */
+    private static JSONObject addIntermediateMetadata(JSONObject destMetadata, String subKey) throws JSONException {
         JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
-        if (metadataType != null) {
-            if (fields == null) {
-                fields = new JSONObject();
-                destMetadata.put(METADATA_FIELDS, fields);
-            }
-            JSONObject subMetadataObject = fields.optJSONObject(subKey);
-            if (subMetadataObject == null) {
-                subMetadataObject = new JSONObject();
-                fields.put(subKey, subMetadataObject);
-            }
-            destMetadata = subMetadataObject;
+        if (fields == null) {
+            fields = new JSONObject();
+            destMetadata.put(METADATA_FIELDS, fields);
         }
-
-        /*
-         * If overriding from metadata type in a sub object to default type in a parent object,
-         * Select sub object without creating it to be able to override metadata after the loop.
-         * Example: put "a.b.c": 2 then put "a.b": "3" will trigger that code
-         * and we need to cleanup metadata.
-         */
-        else if (fields != null) {
-            JSONObject subMetadataObject = fields.optJSONObject(subKey);
-            if (subMetadataObject != null) {
-                destMetadata = subMetadataObject;
-            }
+        JSONObject subMetadataObject = fields.optJSONObject(subKey);
+        if (subMetadataObject == null) {
+            subMetadataObject = new JSONObject();
+            fields.put(subKey, subMetadataObject);
         }
-        return destMetadata;
+        return subMetadataObject;
     }
 
     /**
