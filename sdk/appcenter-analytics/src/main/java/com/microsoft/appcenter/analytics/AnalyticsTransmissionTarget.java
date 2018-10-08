@@ -10,6 +10,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -123,8 +124,9 @@ public class AnalyticsTransmissionTarget {
      */
     @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public void trackEvent(String name) {
-        trackEvent(name, null);
+        trackEvent(name, (EventProperties) null);
     }
+
 
     /**
      * Track a custom event with name and optional properties.
@@ -134,23 +136,41 @@ public class AnalyticsTransmissionTarget {
      */
     @SuppressWarnings("WeakerAccess")
     public void trackEvent(String name, Map<String, String> properties) {
+        EventProperties eventProperties = null;
+        if (properties != null) {
+            eventProperties = new EventProperties();
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+                eventProperties.set(entry.getKey(), entry.getValue());
+            }
+        }
+        trackEvent(name, eventProperties);
+    }
+
+    /**
+     * Track a custom event with name and optional properties.
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void trackEvent(String name, EventProperties properties) {
 
         /* Merge common properties. More specific target wins conflicts. */
-        Map<String, String> mergedProperties = new HashMap<>();
+        EventProperties mergedProperties = new EventProperties();
         for (AnalyticsTransmissionTarget target = this; target != null; target = target.mParentTarget) {
             target.getPropertyConfigurator().mergeEventProperties(mergedProperties);
         }
 
         /* Override with parameter. */
         if (properties != null) {
-            mergedProperties.putAll(properties);
+            mergedProperties.getProperties().putAll(properties.getProperties());
         }
 
         /*
          * If we passed null as parameter and no common properties set,
          * keep null for consistency with Analytics class regarding null vs empty.
          */
-        else if (mergedProperties.isEmpty()) {
+        else if (mergedProperties.getProperties().isEmpty()) {
             mergedProperties = null;
         }
 
