@@ -93,7 +93,7 @@ public class PartCUtils {
                     destProperties = subDataObject;
 
                     /* Handle metadata. */
-                    destMetadata = addIntermediateMetadata(metadataType, destMetadata, subKey);
+                    destMetadata = addIntermediateMetadata(destMetadata, subKey);
                 }
 
                 /* Handle the last key for data, the leaf. */
@@ -214,42 +214,23 @@ public class PartCUtils {
     /**
      * Add a level of metadata nesting or return the existing intermediate object.
      *
-     * @param metadataType metadata type.
      * @param destMetadata the parent metadata object.
      * @param subKey       the intermediate key from the dot split.
      * @return metadata object on next level.
      * @throws JSONException if JSON put fails.
      */
-    private static JSONObject addIntermediateMetadata(Integer metadataType, JSONObject destMetadata, String subKey) throws JSONException {
-
-        /* Add sub metadata intermediate object if using a non default type. */
+    private static JSONObject addIntermediateMetadata(JSONObject destMetadata, String subKey) throws JSONException {
         JSONObject fields = destMetadata.optJSONObject(METADATA_FIELDS);
-        if (metadataType != null) {
-            if (fields == null) {
-                fields = new JSONObject();
-                destMetadata.put(METADATA_FIELDS, fields);
-            }
-            JSONObject subMetadataObject = fields.optJSONObject(subKey);
-            if (subMetadataObject == null) {
-                subMetadataObject = new JSONObject();
-                fields.put(subKey, subMetadataObject);
-            }
-            destMetadata = subMetadataObject;
+        if (fields == null) {
+            fields = new JSONObject();
+            destMetadata.put(METADATA_FIELDS, fields);
         }
-
-        /*
-         * If overriding from metadata type in a sub object to default type in a parent object,
-         * Select sub object without creating it to be able to override metadata after the loop.
-         * Example: put "a.b.c": 2 then put "a.b": "3" will trigger that code
-         * and we need to cleanup metadata.
-         */
-        else if (fields != null) {
-            JSONObject subMetadataObject = fields.optJSONObject(subKey);
-            if (subMetadataObject != null) {
-                destMetadata = subMetadataObject;
-            }
+        JSONObject subMetadataObject = fields.optJSONObject(subKey);
+        if (subMetadataObject == null) {
+            subMetadataObject = new JSONObject();
+            fields.put(subKey, subMetadataObject);
         }
-        return destMetadata;
+        return subMetadataObject;
     }
 
     /**
