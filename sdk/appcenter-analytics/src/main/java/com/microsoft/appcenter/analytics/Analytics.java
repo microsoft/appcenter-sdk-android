@@ -320,7 +320,7 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * The property names or values cannot be null.
      * <p>
-     * Double values must fe finite (NaN or Infinite values are discarded).
+     * Double values must be finite (NaN or Infinite values are discarded).
      * <p>
      * Additional validation rules apply depending on the configured secret.
      * <p>
