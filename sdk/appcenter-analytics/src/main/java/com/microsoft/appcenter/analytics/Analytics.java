@@ -201,7 +201,6 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param listener The custom analytics listener.
      */
-    @SuppressWarnings("WeakerAccess")
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);
@@ -241,7 +240,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name A page name.
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    @SuppressWarnings("WeakerAccess")
     protected static void trackPage(String name) {
         trackPage(name, null);
     }
@@ -276,9 +275,8 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name An event name.
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public static void trackEvent(String name) {
-        trackEvent(name, (EventProperties) null, null);
+        trackEvent(name, null, null);
     }
 
     /**
@@ -308,9 +306,8 @@ public class Analytics extends AbstractAppCenterService {
      * @param name       An event name.
      * @param properties Optional properties.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void trackEvent(String name, Map<String, String> properties) {
-        trackEvent(name, properties, null);
+        getInstance().trackEventAsync(name, convertProperties(properties), null);
     }
 
     /**
@@ -349,14 +346,6 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Internal method redirection for trackEvent.
      */
-    static void trackEvent(String name, Map<String, String> properties, AnalyticsTransmissionTarget transmissionTarget) {
-        getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
-    }
-
-    /**
-     * Internal method redirection for trackEvent.
-     */
-    // TODO use it from AnalyticsTransmissionTarget to resolve both warnings.
     static void trackEvent(String name, EventProperties properties, AnalyticsTransmissionTarget transmissionTarget) {
         getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
     }
