@@ -781,6 +781,7 @@ public class Analytics extends AbstractAppCenterService {
         postAsyncGetter(runnable, future, valueIfDisabledOrNotStarted);
     }
 
+    @SuppressWarnings("EmptyMethod")
     @Override
     protected synchronized void post(Runnable runnable) {
 

@@ -11,7 +11,6 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
