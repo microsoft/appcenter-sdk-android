@@ -25,6 +25,8 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
 
     private CheckBox mEditBool;
 
+    private View mValueLabel;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -36,6 +38,7 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
         mEditString = view.findViewById(R.id.string);
         mEditNumber = view.findViewById(R.id.number);
         mEditBool = view.findViewById(R.id.bool);
+        mValueLabel = view.findViewById(R.id.value_label);
 
         /* Set change type callback. */
         mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -58,6 +61,7 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
         mEditNumber.setVisibility(type == CustomPropertyType.NUMBER ? View.VISIBLE : View.GONE);
         mEditBool.setVisibility(type == CustomPropertyType.BOOLEAN ? View.VISIBLE : View.GONE);
         mDateTime.setVisibility(type == CustomPropertyType.DATETIME ? View.VISIBLE : View.GONE);
+        mValueLabel.setVisibility(type != CustomPropertyType.CLEAR ? View.VISIBLE : View.GONE);
     }
 
     public CustomPropertyType getType() {
@@ -77,10 +81,14 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
             case NUMBER:
                 String stringValue = mEditNumber.getText().toString();
                 Number value;
-                try {
-                    value = Integer.parseInt(stringValue);
-                } catch (NumberFormatException ignored) {
-                    value = Double.parseDouble(stringValue);
+                if (!stringValue.isEmpty()) {
+                    try {
+                        value = Integer.parseInt(stringValue);
+                    } catch (NumberFormatException ignored) {
+                        value = Double.parseDouble(stringValue);
+                    }
+                } else {
+                    value = Double.NaN;
                 }
                 customProperties.set(key, value);
                 break;
@@ -94,10 +102,10 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
     }
 
     public enum CustomPropertyType {
-        CLEAR,
+        STRING,
         BOOLEAN,
         NUMBER,
         DATETIME,
-        STRING
+        CLEAR
     }
 }

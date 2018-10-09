@@ -167,10 +167,10 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
     }
 
     public enum EventPropertyType {
+        STRING,
         BOOLEAN,
         NUMBER_DOUBLE,
         NUMBER_LONG,
-        DATETIME,
-        STRING
+        DATETIME
     }
 }

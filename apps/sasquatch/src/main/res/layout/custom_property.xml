@@ -32,6 +32,7 @@
         android:entries="@array/custom_property_types" />
 
     <TextView
+        android:id="@+id/value_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/value" />
