@@ -444,7 +444,6 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         }).when(mChannel).enqueue(any(Log.class), anyString());
 
         /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
-        when(AppCenter.isConfigured()).thenReturn(true);
         Analytics analytics = Analytics.getInstance();
         AppCenterHandler handler = mock(AppCenterHandler.class);
         ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
@@ -497,6 +496,53 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* And that we checked expiry. */
         verify(authenticationProvider2).checkTokenExpiry();
+    }
+
+    @Test
+    public void registerCallbackWhenDisabledWorks() {
+
+        /* Simulate disabling and background thread. */
+        Analytics analytics = Analytics.getInstance();
+        AppCenterHandler handler = mock(AppCenterHandler.class);
+        ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Runnable> disabledRunnable = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(handler).post(backgroundRunnable.capture(), disabledRunnable.capture());
+        analytics.onStarting(handler);
+        analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
+
+        /* Disable. */
+        Analytics.setEnabled(false);
+        backgroundRunnable.getValue().run();
+
+        /* Add authentication provider while disabled. */
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+
+        /* Unlock command. */
+        disabledRunnable.getValue().run();
+
+        /* Verify update while disabled. */
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+
+        /* Enable. */
+        Analytics.setEnabled(true);
+        disabledRunnable.getValue().run();
+
+        /* Call prepare log. */
+        ProtocolExtension protocol = new ProtocolExtension();
+        Extensions ext = new Extensions();
+        ext.setProtocol(protocol);
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(ext);
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Verify log. */
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
+
+        /* And that we check expiry. */
+        verify(authenticationProvider).checkTokenExpiry();
     }
 
     @Test
