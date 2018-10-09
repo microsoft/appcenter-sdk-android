@@ -26,7 +26,12 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <include layout="@layout/property" />
+        <fragment
+            android:id="@+id/typed_property"
+            android:name="com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <LinearLayout
             style="?android:attr/buttonBarStyle"
@@ -36,15 +41,15 @@
             android:orientation="horizontal">
 
             <Button
-                style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/cancel_button"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/cancel" />
 
             <Button
-                style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/add_button"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/add" />

@@ -11,8 +11,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import com.microsoft.appcenter.analytics.EventProperties;
+import com.microsoft.appcenter.analytics.PropertyConfigurator;
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.util.Date;
 import java.util.Map;
 
 // TODO move to main folder once new APIs available in jCenter
@@ -55,6 +57,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+        resetValue();
         return view;
     }
 
@@ -65,6 +68,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
         mEditNumberDouble.setVisibility(type == EventPropertyType.NUMBER_DOUBLE ? View.VISIBLE : View.GONE);
         mEditNumberLong.setVisibility(type == EventPropertyType.NUMBER_LONG ? View.VISIBLE : View.GONE);
         mDateTime.setVisibility(type == EventPropertyType.DATETIME ? View.VISIBLE : View.GONE);
+        resetValue();
     }
 
     public EventPropertyType getType() {
@@ -90,14 +94,20 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
                 break;
             case NUMBER_DOUBLE: {
                 String stringValue = mEditNumberDouble.getText().toString();
-                Double value = Double.parseDouble(stringValue);
-                eventProperties.set(key, value);
+                if (stringValue.isEmpty()) {
+                    Double value = Double.parseDouble(stringValue);
+                    eventProperties.set(key, value);
+                } else {
+                    eventProperties.set(key, Double.NaN);
+                }
                 break;
             }
             case NUMBER_LONG: {
                 String stringValue = mEditNumberLong.getText().toString();
-                Long value = Long.parseLong(stringValue);
-                eventProperties.set(key, value);
+                if (!stringValue.isEmpty()) {
+                    Long value = Long.parseLong(stringValue);
+                    eventProperties.set(key, value);
+                }
                 break;
             }
             case DATETIME:
@@ -107,6 +117,53 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
                 eventProperties.set(key, mEditString.getText().toString());
                 break;
         }
+    }
+
+    public void set(PropertyConfigurator configurator) {
+        EventPropertyType type = getType();
+        String key = mEditKey.getText().toString();
+        switch (type) {
+            case BOOLEAN:
+                configurator.setEventProperty(key, mEditBool.isChecked());
+                break;
+            case NUMBER_DOUBLE: {
+                String stringValue = mEditNumberDouble.getText().toString();
+                if (!stringValue.isEmpty()) {
+                    Double value = Double.parseDouble(stringValue);
+                    configurator.setEventProperty(key, value);
+                } else {
+                    configurator.setEventProperty(key, Double.NaN);
+                }
+                break;
+            }
+            case NUMBER_LONG: {
+                String stringValue = mEditNumberLong.getText().toString();
+                if (!stringValue.isEmpty()) {
+                    Long value = Long.parseLong(stringValue);
+                    configurator.setEventProperty(key, value);
+                }
+                break;
+            }
+            case DATETIME:
+                configurator.setEventProperty(key, mDate);
+                break;
+            case STRING:
+                configurator.setEventProperty(key, mEditString.getText().toString());
+                break;
+        }
+    }
+
+    public void reset() {
+        resetValue();
+        mEditType.setSelection(0);
+    }
+
+    private void resetValue() {
+        mEditString.setText("");
+        mEditBool.setChecked(false);
+        mEditNumberDouble.setText("0");
+        mEditNumberLong.setText("0");
+        setDate(new Date());
     }
 
     public enum EventPropertyType {

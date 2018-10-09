@@ -26,7 +26,10 @@ public abstract class EditDateTimeFragment extends Fragment
 
     protected View mDateTime;
 
-    protected Date mDate;
+    /**
+     * Date value, with default being current time.
+     */
+    protected Date mDate = new Date();
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -52,8 +55,8 @@ public abstract class EditDateTimeFragment extends Fragment
             }
         });
 
-        /* Set the current date. */
-        setDate(new Date());
+        /* Refresh UI with set date value. */
+        setDate(mDate);
     }
 
     private void showDate() {
@@ -82,10 +85,14 @@ public abstract class EditDateTimeFragment extends Fragment
         fragment.show(getActivity().getSupportFragmentManager(), "timePicker");
     }
 
-    private void setDate(Date date) {
+    protected void setDate(Date date) {
         mDate = date;
-        mEditDate.setText(DateFormat.getDateInstance().format(mDate));
-        mEditTime.setText(DateFormat.getTimeInstance().format(mDate));
+
+        /* If UI ready update now, otherwise do it in onCreateView. */
+        if (mEditDate != null) {
+            mEditDate.setText(DateFormat.getDateInstance().format(mDate));
+            mEditTime.setText(DateFormat.getTimeInstance().format(mDate));
+        }
     }
 
     public void onDateSet(DatePicker view, int year, int month, int day) {
