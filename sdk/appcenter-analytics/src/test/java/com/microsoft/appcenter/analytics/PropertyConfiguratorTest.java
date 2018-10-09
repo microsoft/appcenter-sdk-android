@@ -381,6 +381,50 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals(Collections.emptyList(), log.getTypedProperties());
     }
 
+
+    @Test
+    public void trackEventWithCommonTypedProperties() {
+
+        /* Create transmission target. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Set common properties for various types. Some of which are invalid. */
+        target.getPropertyConfigurator().setEventProperty("myString", "hello");
+        target.getPropertyConfigurator().setEventProperty("myNullString", (String) null);
+        target.getPropertyConfigurator().setEventProperty("myTrue", true);
+        target.getPropertyConfigurator().setEventProperty("myFalse", false);
+        target.getPropertyConfigurator().setEventProperty("myLong", 123);
+        target.getPropertyConfigurator().setEventProperty("myDate", new Date(456));
+        target.getPropertyConfigurator().setEventProperty("myNullDate", (Date) null);
+        target.getPropertyConfigurator().setEventProperty("myDouble", -3.14);
+        target.getPropertyConfigurator().setEventProperty("myNan", Double.NaN);
+        target.getPropertyConfigurator().setEventProperty("myInfinite", Double.POSITIVE_INFINITY);
+        target.getPropertyConfigurator().setEventProperty("myRemoved", "to be removed");
+        target.getPropertyConfigurator().removeEventProperty("myRemoved");
+
+        /* Track event with just a name. */
+        target.trackEvent("eventName");
+
+        /* Check what event was sent. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+
+        /* Check typed properties. */
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("myString", "hello"));
+        typedProperties.add(typedProperty("myTrue", true));
+        typedProperties.add(typedProperty("myFalse", false));
+        typedProperties.add(typedProperty("myLong", 123));
+        typedProperties.add(typedProperty("myDate", new Date(456)));
+        typedProperties.add(typedProperty("myDouble", -3.14));
+        assertEquals(typedProperties, log.getTypedProperties());
+    }
+
     @Test
     public void eventPropertiesCascading() {
 
@@ -459,8 +503,8 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         parent.getPropertyConfigurator().setEventProperty("a", 11);
         parent.getPropertyConfigurator().setEventProperty("b", "22");
 
-        /* And a new one. */
-        parent.getPropertyConfigurator().setEventProperty("d", new Date(44));
+        /* And new ones. */
+        parent.getPropertyConfigurator().setEventProperty("d", 44);
 
         /* Just to show we still get value from grandParent if we remove an override. */
         parent.getPropertyConfigurator().setEventProperty("c", "33");
