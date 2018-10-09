@@ -198,7 +198,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param key   The property key. The key must not be null.
      * @param value The boolean value.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
     public synchronized void setEventProperty(String key, boolean value) {
         mEventProperties.set(key, value);
     }
@@ -210,7 +209,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param key   The property key. The key must not be null.
      * @param value The date value. The value cannot be null.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
     public synchronized void setEventProperty(String key, Date value) {
         mEventProperties.set(key, value);
     }
@@ -222,7 +220,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param key   The property key. The key must not be null.
      * @param value The double value. The value must not be NaN or infinite.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
     public synchronized void setEventProperty(String key, double value) {
         mEventProperties.set(key, value);
     }
@@ -234,7 +231,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @param key   The property key. The key must not be null.
      * @param value The long value.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
     public synchronized void setEventProperty(String key, long value) {
         mEventProperties.set(key, value);
     }
