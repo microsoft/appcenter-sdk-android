@@ -96,11 +96,14 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Just check log is discarded without throwing any exception. */
         Analytics.trackEvent("test");
         Analytics.trackEvent("test", new HashMap<String, String>());
+        Analytics.trackEvent("test", (Map<String, String>) null);
+        Analytics.trackEvent("test", (EventProperties) null);
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
+        Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(4));
+        verifyStatic(times(7));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -205,6 +208,22 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
         /* Send event without properties. */
         Analytics.trackEvent("eventName");
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertNull(argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithNullMapProperty() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event with empty Map properties. */
+        Analytics.trackEvent("eventName", (Map<String, String>)null);
         verify(channel).enqueue(argumentCaptor.capture(), anyString());
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());

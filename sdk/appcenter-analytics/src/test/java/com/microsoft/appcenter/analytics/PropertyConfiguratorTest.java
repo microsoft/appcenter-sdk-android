@@ -24,6 +24,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -283,6 +284,29 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void setCommonEventPropertiesWithNullMapProperties() {
+
+        /* Create transmission target and add property. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+        target.getPropertyConfigurator().setEventProperty("key", "value");
+
+        /* Track event without property. */
+        target.trackEvent("eventName", (Map<String, String>) null);
+
+        /* Check event. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("key", "value"));
+        assertEquals(typedProperties, log.getTypedProperties());
+    }
+
+    @Test
     public void setAndRemoveCommonEventPropertiesWithMerge() {
 
         /* Create transmission target and add 2 properties (1 overwritten). */
@@ -296,7 +320,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().removeEventProperty("notFound");
 
         /* Prepare properties. */
-        Map<String, String> properties = new HashMap<>();
+        Map<String, String> properties = new LinkedHashMap<>();
         properties.put("key2", "value2");
         properties.put("key3", "value3");
 
@@ -312,6 +336,8 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("eventName", log.getName());
         assertNull(log.getProperties());
         List<TypedProperty> typedProperties = new ArrayList<>();
+
+        /* The order should be property configurator -> properties which is in the order of override properties. */
         typedProperties.add(typedProperty("key1", "value1"));
         typedProperties.add(typedProperty("key2", "value2"));
         typedProperties.add(typedProperty("key3", "value3"));
@@ -370,7 +396,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         child.getPropertyConfigurator().setEventProperty("f", "666");
 
         /* Track event in child. Override properties in trackEvent. */
-        Map<String, String> properties = new HashMap<>();
+        Map<String, String> properties = new LinkedHashMap<>();
         properties.put("f", "6666");
         properties.put("g", "7777");
         child.trackEvent("eventName", properties);
@@ -387,12 +413,14 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Verify properties. */
         assertNull(log.getProperties());
         List<TypedProperty> typedProperties = new ArrayList<>();
-        typedProperties.add(typedProperty("a", "11"));
-        typedProperties.add(typedProperty("b", "22"));
-        typedProperties.add(typedProperty("c", "3"));
+
+        /* The order should be child -> parent -> grandparent which is in the order of override properties. */
         typedProperties.add(typedProperty("d", "444"));
         typedProperties.add(typedProperty("e", "555"));
         typedProperties.add(typedProperty("f", "6666"));
+        typedProperties.add(typedProperty("a", "11"));
+        typedProperties.add(typedProperty("b", "22"));
+        typedProperties.add(typedProperty("c", "3"));
         typedProperties.add(typedProperty("g", "7777"));
         assertEquals(typedProperties, log.getTypedProperties());
     }

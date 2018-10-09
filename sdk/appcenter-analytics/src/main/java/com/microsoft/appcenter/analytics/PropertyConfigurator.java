@@ -9,8 +9,8 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,7 +51,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common event properties for this target. Inherited by children.
      */
-    private final Map<String, String> mEventProperties = new HashMap<>();
+    private final EventProperties mEventProperties = new EventProperties();
 
     /**
      * Create a new property configurator.
@@ -199,7 +199,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @SuppressWarnings("WeakerAccess")
     public synchronized void setEventProperty(String key, String value) {
-        mEventProperties.put(key, value);
+        mEventProperties.set(key, value);
     }
 
     /**
@@ -209,7 +209,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
-        mEventProperties.remove(key);
+        mEventProperties.getProperties().remove(key);
     }
 
     /**
@@ -224,11 +224,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Extracted method to synchronize on each level at once while reading properties.
      * Nesting synchronize between parent/child could lead to deadlocks.
      */
-    synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
-        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
+    synchronized void mergeEventProperties(EventProperties mergedProperties) {
+        for (Map.Entry<String, TypedProperty> property : mEventProperties.getProperties().entrySet()) {
             String key = property.getKey();
-            if (!mergedProperties.containsKey(key)) {
-                mergedProperties.put(key, property.getValue());
+            if (!mergedProperties.getProperties().containsKey(key)) {
+                mergedProperties.getProperties().put(key, property.getValue());
             }
         }
     }

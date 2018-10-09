@@ -118,39 +118,74 @@ public class AnalyticsTransmissionTarget {
 
     /**
      * Track a custom event with name.
+     * <p>
+     * The name cannot be null and needs to match the
+     * <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
      *
      * @param name An event name.
      */
-    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
     public void trackEvent(String name) {
-        trackEvent(name, null);
+        trackEvent(name, (EventProperties) null);
     }
 
     /**
-     * Track a custom event with name and optional properties.
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
      *
      * @param name       An event name.
      * @param properties Optional properties.
      */
-    @SuppressWarnings("WeakerAccess")
     public void trackEvent(String name, Map<String, String> properties) {
+        EventProperties eventProperties = null;
+        if (properties != null) {
+            eventProperties = new EventProperties();
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+                eventProperties.set(entry.getKey(), entry.getValue());
+            }
+        }
+        trackEvent(name, eventProperties);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>Double values must be finite (NaN or Infinite values are discarded).</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     */
+    public void trackEvent(String name, EventProperties properties) {
 
         /* Merge common properties. More specific target wins conflicts. */
-        Map<String, String> mergedProperties = new HashMap<>();
+        EventProperties mergedProperties = new EventProperties();
         for (AnalyticsTransmissionTarget target = this; target != null; target = target.mParentTarget) {
             target.getPropertyConfigurator().mergeEventProperties(mergedProperties);
         }
 
         /* Override with parameter. */
         if (properties != null) {
-            mergedProperties.putAll(properties);
+            mergedProperties.getProperties().putAll(properties.getProperties());
         }
 
         /*
          * If we passed null as parameter and no common properties set,
          * keep null for consistency with Analytics class regarding null vs empty.
          */
-        else if (mergedProperties.isEmpty()) {
+        else if (mergedProperties.getProperties().isEmpty()) {
             mergedProperties = null;
         }
 

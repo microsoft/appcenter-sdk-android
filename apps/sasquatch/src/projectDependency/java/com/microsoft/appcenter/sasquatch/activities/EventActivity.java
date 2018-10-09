@@ -136,9 +136,6 @@ public class EventActivity extends AppCompatActivity {
                 getSelectedTarget().resume();
             }
         });
-
-        /* Add a property layout by default. */
-        addProperty();
     }
 
 
@@ -193,7 +190,7 @@ public class EventActivity extends AppCompatActivity {
             }
         }
 
-        /* First item is always empty as it's default value which means either appcenter, one collector or both. */
+        /* First item is always empty as it's default value which means either AppCenter, one collector or both. */
         AnalyticsTransmissionTarget target = getSelectedTarget();
         if (target == null) {
             if (typedProperties != null) {
@@ -204,7 +201,13 @@ public class EventActivity extends AppCompatActivity {
                 Analytics.trackEvent(name);
             }
         } else {
-            target.trackEvent(name, properties);
+            if (typedProperties != null) {
+                target.trackEvent(name, typedProperties);
+            } else if (properties != null) {
+                target.trackEvent(name, properties);
+            } else {
+                target.trackEvent(name);
+            }
         }
     }
 
