@@ -393,10 +393,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setEventProperty("myNullString", (String) null);
         target.getPropertyConfigurator().setEventProperty("myTrue", true);
         target.getPropertyConfigurator().setEventProperty("myFalse", false);
-        target.getPropertyConfigurator().setEventProperty("myLong", 123);
+        target.getPropertyConfigurator().setEventProperty("myLong", Long.MAX_VALUE);
         target.getPropertyConfigurator().setEventProperty("myDate", new Date(456));
         target.getPropertyConfigurator().setEventProperty("myNullDate", (Date) null);
-        target.getPropertyConfigurator().setEventProperty("myDouble", -3.14);
+        target.getPropertyConfigurator().setEventProperty("myDouble", -3.14E3);
         target.getPropertyConfigurator().setEventProperty("myNan", Double.NaN);
         target.getPropertyConfigurator().setEventProperty("myInfinite", Double.POSITIVE_INFINITY);
         target.getPropertyConfigurator().setEventProperty("myRemoved", "to be removed");
@@ -419,9 +419,9 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         typedProperties.add(typedProperty("myString", "hello"));
         typedProperties.add(typedProperty("myTrue", true));
         typedProperties.add(typedProperty("myFalse", false));
-        typedProperties.add(typedProperty("myLong", 123));
+        typedProperties.add(typedProperty("myLong", Long.MAX_VALUE));
         typedProperties.add(typedProperty("myDate", new Date(456)));
-        typedProperties.add(typedProperty("myDouble", -3.14));
+        typedProperties.add(typedProperty("myDouble", -3.14E3));
         assertEquals(typedProperties, log.getTypedProperties());
     }
 
