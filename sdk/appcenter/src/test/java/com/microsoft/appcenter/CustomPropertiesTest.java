@@ -178,11 +178,26 @@ public class CustomPropertiesTest {
         verifyStatic(times(1));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
 
+
+        /* Invalid values. */
+        properties.set(key, Double.NaN);
+        assertEquals(0, properties.getProperties().size());
+        verifyStatic(times(2));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+        properties.set(key, Double.POSITIVE_INFINITY);
+        assertEquals(0, properties.getProperties().size());
+        verifyStatic(times(3));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+        properties.set(key, Double.NEGATIVE_INFINITY);
+        assertEquals(0, properties.getProperties().size());
+        verifyStatic(times(4));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+
         /* Normal value. */
         Number normalValue = 0;
         properties.set(key, normalValue);
         assertEquals(1, properties.getProperties().size());
-        verifyStatic(times(1));
+        verifyStatic(times(4));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 

@@ -48,6 +48,7 @@ public class PartAUtils {
      *
      * @param src  source log.
      * @param dest destination common schema log.
+     * @param transmissionTarget transmission target to use.
      */
     public static void addPartAFromLog(Log src, CommonSchemaLog dest, String transmissionTarget) {
 

@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 /**
- * The “user” extension tracks common user elements that are not available in the core envelope.
+ * The "user" extension tracks common user elements that are not available in the core envelope.
  */
 public class UserExtension implements Model {
 

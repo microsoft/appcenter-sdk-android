@@ -13,6 +13,7 @@ output.json
 bin/
 gen/
 out/
+jacoco.exec
 
 # Gradle files
 .gradle/
