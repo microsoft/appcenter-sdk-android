@@ -447,8 +447,8 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         when(AppCenter.isConfigured()).thenReturn(true);
         Analytics analytics = Analytics.getInstance();
         AppCenterHandler handler = mock(AppCenterHandler.class);
-        ArgumentCaptor<Runnable> normalRunnable = ArgumentCaptor.forClass(Runnable.class);
-        doNothing().when(handler).post(normalRunnable.capture(), any(Runnable.class));
+        ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(handler).post(backgroundRunnable.capture(), any(Runnable.class));
         analytics.onStarting(handler);
         analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
 
@@ -460,10 +460,10 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Check provider updated in background thread only when AppCenter is configured/started. */
         assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
         verify(authenticationProvider1, never()).acquireTokenAsync();
-        assertNotNull(normalRunnable.getValue());
+        assertNotNull(backgroundRunnable.getValue());
 
         /* Run background thread. */
-        normalRunnable.getValue().run();
+        backgroundRunnable.getValue().run();
 
         /* Check update. */
         assertEquals(authenticationProvider1, AnalyticsTransmissionTarget.sAuthenticationProvider);
@@ -471,16 +471,15 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* Track an event. */
         Analytics.trackEvent("test1");
-        Runnable trackEvent1Command = normalRunnable.getValue();
+        Runnable trackEvent1Command = backgroundRunnable.getValue();
 
         /* Update authentication provider before the commands run and track a second event. */
         AuthenticationProvider.TokenProvider tokenProvider2 = mock(AuthenticationProvider.TokenProvider.class);
         AuthenticationProvider authenticationProvider2 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key2", tokenProvider2));
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
-        Runnable addAuthProvider2Command = normalRunnable.getValue();
+        Runnable addAuthProvider2Command = backgroundRunnable.getValue();
         Analytics.trackEvent("test2");
-        Runnable trackEvent2Command = normalRunnable.getValue();
-
+        Runnable trackEvent2Command = backgroundRunnable.getValue();
 
         /* Simulate background thread doing everything in a sequence. */
         trackEvent1Command.run();
