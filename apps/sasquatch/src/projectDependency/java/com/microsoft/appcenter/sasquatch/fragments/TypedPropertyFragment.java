@@ -94,7 +94,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
                 break;
             case NUMBER_DOUBLE: {
                 String stringValue = mEditNumberDouble.getText().toString();
-                if (stringValue.isEmpty()) {
+                if (!stringValue.isEmpty()) {
                     Double value = Double.parseDouble(stringValue);
                     eventProperties.set(key, value);
                 } else {
