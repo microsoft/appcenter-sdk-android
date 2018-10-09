@@ -11,6 +11,7 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -194,10 +195,57 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Add or overwrite the given key for the common event properties. Properties will be inherited
      * by children of this transmission target.
      *
-     * @param key   The property key.
-     * @param value The property value.
+     * @param key   The property key. The key must not be null.
+     * @param value The boolean value.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
+    public synchronized void setEventProperty(String key, boolean value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The date value. The value cannot be null.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
+    public synchronized void setEventProperty(String key, Date value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The double value. The value must not be NaN or infinite.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
+    public synchronized void setEventProperty(String key, double value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The long value.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once UI code added without reflection
+    public synchronized void setEventProperty(String key, long value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The string value. The value cannot be null.
+     */
     public synchronized void setEventProperty(String key, String value) {
         mEventProperties.set(key, value);
     }
@@ -207,7 +255,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param key The property key to be removed.
      */
-    @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
         mEventProperties.getProperties().remove(key);
     }
