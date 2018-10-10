@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -86,10 +87,16 @@ public class AnalyticsTransmissionTarget {
 
     /**
      * Add an authentication provider to associate logs with user identifiers.
+     * Events tracked previous to calling this method are not impacted by this call.
+     * If the callback from the authentication provider takes a long time to process,
+     * events might be tracked anonymously.
+     * <p>
+     * If you want to wait for authentication callback to complete before processing logs,
+     * you can pause and resume Analytics or a specific transmission target.
      *
      * @param authenticationProvider The authentication provider.
      */
-    public static synchronized void addAuthenticationProvider(AuthenticationProvider authenticationProvider) {
+    public static synchronized void addAuthenticationProvider(final AuthenticationProvider authenticationProvider) {
 
         /* Validate input. */
         if (authenticationProvider == null) {
@@ -110,6 +117,27 @@ public class AnalyticsTransmissionTarget {
         }
 
         /* Update current provider. */
+        if (AppCenter.isConfigured()) {
+            Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+                @Override
+                public void run() {
+                    updateProvider(authenticationProvider);
+                }
+            });
+        } else {
+            updateProvider(authenticationProvider);
+        }
+    }
+
+    /**
+     * Update authentication provider.
+     *
+     * @param authenticationProvider the new authentication provider.
+     */
+    private static void updateProvider(AuthenticationProvider authenticationProvider) {
+
+        /* Update reference. */
         sAuthenticationProvider = authenticationProvider;
 
         /* Request token now. */
@@ -333,7 +361,7 @@ public class AnalyticsTransmissionTarget {
     /**
      * Add ticket to common schema logs.
      */
-    private synchronized static void addTicketToLog(@NonNull Log log) {
+    private static void addTicketToLog(@NonNull Log log) {
 
         /* Decorate only common schema logs when an authentication provider was registered. */
         if (sAuthenticationProvider != null && log instanceof CommonSchemaLog) {
