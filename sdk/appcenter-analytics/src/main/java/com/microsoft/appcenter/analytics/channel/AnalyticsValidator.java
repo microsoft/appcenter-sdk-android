@@ -8,13 +8,17 @@ import com.microsoft.appcenter.analytics.ingestion.models.LogWithNameAndProperti
 import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
@@ -152,7 +156,8 @@ public class AnalyticsValidator extends AbstractChannelListener {
         int count = 0;
         boolean maxCountReached = false;
         String message;
-        for (Iterator<TypedProperty> iterator = properties.iterator(); iterator.hasNext(); ) {
+        for (ListIterator<TypedProperty> iterator = properties.listIterator(); iterator.hasNext(); ) {
+            boolean copyNeededOnModification = true;
             TypedProperty property = iterator.next();
             String key = property.getName();
             if (count >= MAX_PROPERTY_COUNT) {
@@ -172,7 +177,10 @@ public class AnalyticsValidator extends AbstractChannelListener {
             if (key.length() > MAX_PROPERTY_ITEM_LENGTH) {
                 message = String.format("Typed property '%s' : property key length cannot be longer than %s characters. Property key will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
                 AppCenterLog.warn(LOG_TAG, message);
-                property.setName(key.substring(0, MAX_PROPERTY_ITEM_LENGTH));
+                key = key.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+                property = copyProperty(property, key);
+                iterator.set(property);
+                copyNeededOnModification = false;
             }
             if (property instanceof StringTypedProperty) {
                 StringTypedProperty stringTypedProperty = (StringTypedProperty) property;
@@ -186,11 +194,49 @@ public class AnalyticsValidator extends AbstractChannelListener {
                 if (value.length() > MAX_PROPERTY_ITEM_LENGTH) {
                     message = String.format("A String property '%s' : property value cannot be longer than %s characters. Property value will be truncated.", key, MAX_PROPERTY_ITEM_LENGTH);
                     AppCenterLog.warn(LOG_TAG, message);
-                    stringTypedProperty.setValue(value.substring(0, MAX_PROPERTY_ITEM_LENGTH));
+                    value = value.substring(0, MAX_PROPERTY_ITEM_LENGTH);
+                    if (copyNeededOnModification) {
+                        stringTypedProperty = new StringTypedProperty();
+                        stringTypedProperty.setName(key);
+                        stringTypedProperty.setValue(value);
+                        iterator.set(stringTypedProperty);
+                    } else {
+                        stringTypedProperty.setValue(value);
+                    }
                 }
             }
             count++;
         }
+    }
+
+    private static TypedProperty copyProperty(TypedProperty property, String newKey) {
+        String type = property.getType();
+        TypedProperty copy;
+        if (BooleanTypedProperty.TYPE.equals(type)) {
+            BooleanTypedProperty typedCopy = new BooleanTypedProperty();
+            typedCopy.setValue(((BooleanTypedProperty) property).getValue());
+            copy = typedCopy;
+        } else if (DateTimeTypedProperty.TYPE.equals(type)) {
+            DateTimeTypedProperty typedCopy = new DateTimeTypedProperty();
+            typedCopy.setValue(((DateTimeTypedProperty) property).getValue());
+            copy = typedCopy;
+        } else if (DoubleTypedProperty.TYPE.equals(type)) {
+            DoubleTypedProperty typedCopy = new DoubleTypedProperty();
+            typedCopy.setValue(((DoubleTypedProperty) property).getValue());
+            copy = typedCopy;
+        } else if (LongTypedProperty.TYPE.equals(type)) {
+            LongTypedProperty typedCopy = new LongTypedProperty();
+            typedCopy.setValue(((LongTypedProperty) property).getValue());
+            copy = typedCopy;
+        } else {
+
+            /* SDK invariant: unknown property type is not possible with public APIs. */
+            StringTypedProperty typedCopy = new StringTypedProperty();
+            typedCopy.setValue(((StringTypedProperty) property).getValue());
+            copy = typedCopy;
+        }
+        copy.setName(newKey);
+        return copy;
     }
 
     @Override
