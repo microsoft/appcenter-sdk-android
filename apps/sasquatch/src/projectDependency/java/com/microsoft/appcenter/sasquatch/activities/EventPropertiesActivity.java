@@ -35,6 +35,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.EXTRA_TARGET_SELECTED;
 
+// TODO move to main folder once new APIs available in jCenter
 public class EventPropertiesActivity extends AppCompatActivity {
 
     private Spinner mTransmissionTargetSpinner;
