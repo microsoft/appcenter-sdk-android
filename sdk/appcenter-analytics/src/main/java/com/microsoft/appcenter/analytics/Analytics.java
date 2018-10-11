@@ -270,8 +270,8 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * Additional validation rules apply depending on the configured secret.
      * <p>
-     * For AppCenter, the name cannot be longer than 256 and is truncated otherwise.
-     * For OneCollector, the name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
+     * For App Center, the name cannot be longer than 256 and is truncated otherwise.
+     * For One Collector, the name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
      *
      * @param name An event name.
      */
@@ -288,15 +288,15 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * Additional validation rules apply depending on the configured secret.
      * <p>
-     * For AppCenter:
+     * For App Center:
      * <ul>
-     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
-     * <li>the property names cannot be empty.</li>
-     * <li>the property names and values are limited to 125 characters each (truncated).</li>
-     * <li>the number of properties per event is limited to 20 (truncated).</li>
+     * <li>The event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>The property names cannot be empty.</li>
+     * <li>The property names and values are limited to 125 characters each (truncated).</li>
+     * <li>The number of properties per event is limited to 20 (truncated).</li>
      * </ul>
      * <p>
-     * For OneCollector:
+     * For One Collector:
      * <ul>
      * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
      * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
@@ -321,15 +321,15 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * Additional validation rules apply depending on the configured secret.
      * <p>
-     * For AppCenter:
+     * For App Center:
      * <ul>
-     * <li>the event name cannot be longer than 256 and is truncated otherwise.</li>
-     * <li>the property names cannot be empty.</li>
-     * <li>the property names and values are limited to 125 characters each (truncated).</li>
-     * <li>the number of properties per event is limited to 20 (truncated).</li>
+     * <li>The event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>The property names cannot be empty.</li>
+     * <li>The property names and values are limited to 125 characters each (truncated).</li>
+     * <li>The number of properties per event is limited to 20 (truncated).</li>
      * </ul>
      * <p>
-     * For OneCollector:
+     * For One Collector:
      * <ul>
      * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
      * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
