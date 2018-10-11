@@ -9,8 +9,8 @@ import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
@@ -23,8 +23,11 @@ public class EventProperties {
 
     /**
      * Properties key/value pairs.
+     * Using a concurrent map to avoid concurrent modification exception when doing the traversal copy.
+     * We also need to traverse a snapshot of properties when doing property inheritance between targets.
+     * There is no need to block in a more global way than the snapshot traversal.
      */
-    private final Map<String, TypedProperty> mProperties = new LinkedHashMap<>();
+    private final Map<String, TypedProperty> mProperties = new ConcurrentHashMap<>();
 
     Map<String, TypedProperty> getProperties() {
         return mProperties;

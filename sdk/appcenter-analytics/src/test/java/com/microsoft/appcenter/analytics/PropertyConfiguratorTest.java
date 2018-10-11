@@ -28,6 +28,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         typedProperty.setName(name);
         typedProperty.setValue(value);
         return typedProperty;
+    }
+
+    private static void assertUnorderedListEquals(List<TypedProperty> expected, List<TypedProperty> actual) {
+        assertEquals(new HashSet<>(expected), new HashSet<>(actual));
     }
 
     @Mock
@@ -422,7 +427,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         typedProperties.add(typedProperty("myLong", Long.MAX_VALUE));
         typedProperties.add(typedProperty("myDate", new Date(456)));
         typedProperties.add(typedProperty("myDouble", -3.14E3));
-        assertEquals(typedProperties, log.getTypedProperties());
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
     }
 
     @Test
@@ -474,16 +479,14 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Verify properties. */
         assertNull(log.getProperties());
         List<TypedProperty> typedProperties = new ArrayList<>();
-
-        /* The order should be child -> parent -> grandparent which is in the order of override properties. */
-        typedProperties.add(typedProperty("d", "444"));
-        typedProperties.add(typedProperty("e", "555"));
-        typedProperties.add(typedProperty("f", "6666"));
         typedProperties.add(typedProperty("a", "11"));
         typedProperties.add(typedProperty("b", "22"));
         typedProperties.add(typedProperty("c", "3"));
+        typedProperties.add(typedProperty("d", "444"));
+        typedProperties.add(typedProperty("e", "555"));
+        typedProperties.add(typedProperty("f", "6666"));
         typedProperties.add(typedProperty("g", "7777"));
-        assertEquals(typedProperties, log.getTypedProperties());
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
     }
 
     @Test
@@ -535,15 +538,13 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Verify properties. */
         assertNull(log.getProperties());
         List<TypedProperty> typedProperties = new ArrayList<>();
-
-        /* The order should be child -> parent -> grandparent which is in the order of override properties. */
-        typedProperties.add(typedProperty("d", true));
-        typedProperties.add(typedProperty("e", 55.5));
-        typedProperties.add(typedProperty("f", new Date(6666)));
         typedProperties.add(typedProperty("a", 11));
         typedProperties.add(typedProperty("b", "22"));
         typedProperties.add(typedProperty("c", "3"));
+        typedProperties.add(typedProperty("d", true));
+        typedProperties.add(typedProperty("e", 55.5));
+        typedProperties.add(typedProperty("f", new Date(6666)));
         typedProperties.add(typedProperty("g", "7777"));
-        assertEquals(typedProperties, log.getTypedProperties());
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
     }
 }
