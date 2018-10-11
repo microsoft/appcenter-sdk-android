@@ -12,16 +12,25 @@ import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -30,7 +39,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -39,6 +47,49 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @PrepareForTest(Secure.class)
 public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
+
+    @SuppressWarnings("SameParameterValue")
+    private static BooleanTypedProperty typedProperty(String name, boolean value) {
+        BooleanTypedProperty typedProperty = new BooleanTypedProperty();
+        typedProperty.setName(name);
+        typedProperty.setValue(value);
+        return typedProperty;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static DateTimeTypedProperty typedProperty(String name, Date value) {
+        DateTimeTypedProperty typedProperty = new DateTimeTypedProperty();
+        typedProperty.setName(name);
+        typedProperty.setValue(value);
+        return typedProperty;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static DoubleTypedProperty typedProperty(String name, double value) {
+        DoubleTypedProperty typedProperty = new DoubleTypedProperty();
+        typedProperty.setName(name);
+        typedProperty.setValue(value);
+        return typedProperty;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static LongTypedProperty typedProperty(String name, long value) {
+        LongTypedProperty typedProperty = new LongTypedProperty();
+        typedProperty.setName(name);
+        typedProperty.setValue(value);
+        return typedProperty;
+    }
+
+    private static StringTypedProperty typedProperty(String name, String value) {
+        StringTypedProperty typedProperty = new StringTypedProperty();
+        typedProperty.setName(name);
+        typedProperty.setValue(value);
+        return typedProperty;
+    }
+
+    private static void assertUnorderedListEquals(List<TypedProperty> expected, List<TypedProperty> actual) {
+        assertEquals(new HashSet<>(expected), new HashSet<>(actual));
+    }
 
     @Mock
     private Channel mChannel;
@@ -258,60 +309,41 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Track event without property. */
         target.trackEvent("eventName");
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = new HashMap<>();
-                    expectedProperties.put("key", "value");
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
+        /* Check event. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("key", "value"));
+        assertEquals(typedProperties, log.getTypedProperties());
     }
 
     @Test
-    public void setAndRemoveCommonEventPropertiesWithMerge() {
+    public void setCommonEventPropertiesWithNullMapProperties() {
 
-        /* Create transmission target and add 2 properties (1 overwritten). */
+        /* Create transmission target and add property. */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
-        target.getPropertyConfigurator().setEventProperty("key1", "value1");
-        target.getPropertyConfigurator().setEventProperty("key2", "ignore");
-        target.getPropertyConfigurator().setEventProperty("remove", "ignore");
+        target.getPropertyConfigurator().setEventProperty("key", "value");
 
-        /* Remove some properties. */
-        target.getPropertyConfigurator().removeEventProperty("remove");
-        target.getPropertyConfigurator().removeEventProperty("notFound");
+        /* Track event without property. */
+        target.trackEvent("eventName", (Map<String, String>) null);
 
-        /* Prepare properties. */
-        Map<String, String> properties = new HashMap<>();
-        properties.put("key2", "value2");
-        properties.put("key3", "value3");
-
-        /* Track event with extra properties. */
-        target.trackEvent("eventName", properties);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = new HashMap<>();
-                    expectedProperties.put("key1", "value1");
-                    expectedProperties.put("key2", "value2");
-                    expectedProperties.put("key3", "value3");
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
+        /* Check event. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("key", "value"));
+        assertEquals(typedProperties, log.getTypedProperties());
     }
 
     @Test
@@ -322,20 +354,80 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Track event with empty properties. */
         target.trackEvent("eventName", Collections.<String, String>emptyMap());
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    Map<String, String> expectedProperties = Collections.emptyMap();
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("eventName") && expectedProperties.equals(eventLog.getProperties());
-                    boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("test");
-                    return nameAndPropertiesMatch && tokenMatch;
-                }
-                return false;
-            }
-        }), anyString());
+        /* Check what event was sent. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+        assertEquals(Collections.emptyList(), log.getTypedProperties());
+    }
+
+    @Test
+    public void trackEventWithEmptyTypedProperties() {
+
+        /* Create transmission target. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Track event with empty properties. */
+        target.trackEvent("eventName", new EventProperties());
+
+        /* Check what event was sent. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+        assertEquals(Collections.emptyList(), log.getTypedProperties());
+    }
+
+
+    @Test
+    public void trackEventWithCommonTypedProperties() {
+
+        /* Create transmission target. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Set common properties for various types. Some of which are invalid. */
+        target.getPropertyConfigurator().setEventProperty("myString", "hello");
+        target.getPropertyConfigurator().setEventProperty("myNullString", (String) null);
+        target.getPropertyConfigurator().setEventProperty("myTrue", true);
+        target.getPropertyConfigurator().setEventProperty("myFalse", false);
+        target.getPropertyConfigurator().setEventProperty("myLong", Long.MAX_VALUE);
+        target.getPropertyConfigurator().setEventProperty("myDate", new Date(456));
+        target.getPropertyConfigurator().setEventProperty("myNullDate", (Date) null);
+        target.getPropertyConfigurator().setEventProperty("myDouble", -3.14E3);
+        target.getPropertyConfigurator().setEventProperty("myNan", Double.NaN);
+        target.getPropertyConfigurator().setEventProperty("myInfinite", Double.POSITIVE_INFINITY);
+        target.getPropertyConfigurator().setEventProperty("myRemoved", "to be removed");
+        target.getPropertyConfigurator().removeEventProperty("myRemoved");
+
+        /* Track event with just a name. */
+        target.trackEvent("eventName");
+
+        /* Check what event was sent. */
+        ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        EventLog log = eventLogArg.getValue();
+        assertNotNull(log);
+        assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
+        assertEquals("eventName", log.getName());
+        assertNull(log.getProperties());
+
+        /* Check typed properties. */
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("myString", "hello"));
+        typedProperties.add(typedProperty("myTrue", true));
+        typedProperties.add(typedProperty("myFalse", false));
+        typedProperties.add(typedProperty("myLong", Long.MAX_VALUE));
+        typedProperties.add(typedProperty("myDate", new Date(456)));
+        typedProperties.add(typedProperty("myDouble", -3.14E3));
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
     }
 
     @Test
@@ -370,7 +462,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         child.getPropertyConfigurator().setEventProperty("f", "666");
 
         /* Track event in child. Override properties in trackEvent. */
-        Map<String, String> properties = new HashMap<>();
+        Map<String, String> properties = new LinkedHashMap<>();
         properties.put("f", "6666");
         properties.put("g", "7777");
         child.trackEvent("eventName", properties);
@@ -385,14 +477,74 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertTrue(log.getTransmissionTargetTokens().contains("child"));
 
         /* Verify properties. */
-        Map<String, String> expectedProperties = new HashMap<>();
-        expectedProperties.put("a", "11");
-        expectedProperties.put("b", "22");
-        expectedProperties.put("c", "3");
-        expectedProperties.put("d", "444");
-        expectedProperties.put("e", "555");
-        expectedProperties.put("f", "6666");
-        expectedProperties.put("g", "7777");
-        assertEquals(expectedProperties, log.getProperties());
+        assertNull(log.getProperties());
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("a", "11"));
+        typedProperties.add(typedProperty("b", "22"));
+        typedProperties.add(typedProperty("c", "3"));
+        typedProperties.add(typedProperty("d", "444"));
+        typedProperties.add(typedProperty("e", "555"));
+        typedProperties.add(typedProperty("f", "6666"));
+        typedProperties.add(typedProperty("g", "7777"));
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
+    }
+
+    @Test
+    public void eventPropertiesCascadingWithTypes() {
+
+        /* Create transmission target hierarchy. */
+        AnalyticsTransmissionTarget grandParent = Analytics.getTransmissionTarget("grandParent");
+        AnalyticsTransmissionTarget parent = grandParent.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Set common properties across hierarchy with some overrides. */
+        grandParent.getPropertyConfigurator().setEventProperty("a", "1");
+        grandParent.getPropertyConfigurator().setEventProperty("b", 2.0);
+        grandParent.getPropertyConfigurator().setEventProperty("c", "3");
+
+        /* Override some. */
+        parent.getPropertyConfigurator().setEventProperty("a", 11);
+        parent.getPropertyConfigurator().setEventProperty("b", "22");
+
+        /* And new ones. */
+        parent.getPropertyConfigurator().setEventProperty("d", 44);
+
+        /* Just to show we still get value from grandParent if we remove an override. */
+        parent.getPropertyConfigurator().setEventProperty("c", "33");
+        parent.getPropertyConfigurator().removeEventProperty("c");
+
+        /* Overrides in child. */
+        child.getPropertyConfigurator().setEventProperty("d", true);
+
+        /* New in child. */
+        child.getPropertyConfigurator().setEventProperty("e", 55.5);
+        child.getPropertyConfigurator().setEventProperty("f", "666");
+
+        /* Track event in child. Override properties in trackEvent. */
+        EventProperties properties = new EventProperties();
+        properties.set("f", new Date(6666));
+        properties.set("g", "7777");
+        child.trackEvent("eventName", properties);
+
+        /* Verify log that was sent. */
+        ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        EventLog log = logArgumentCaptor.getValue();
+        assertNotNull(log);
+        assertEquals("eventName", log.getName());
+        assertEquals(1, log.getTransmissionTargetTokens().size());
+        assertTrue(log.getTransmissionTargetTokens().contains("child"));
+
+        /* Verify properties. */
+        assertNull(log.getProperties());
+        List<TypedProperty> typedProperties = new ArrayList<>();
+        typedProperties.add(typedProperty("a", 11));
+        typedProperties.add(typedProperty("b", "22"));
+        typedProperties.add(typedProperty("c", "3"));
+        typedProperties.add(typedProperty("d", true));
+        typedProperties.add(typedProperty("e", 55.5));
+        typedProperties.add(typedProperty("f", new Date(6666)));
+        typedProperties.add(typedProperty("g", "7777"));
+        assertUnorderedListEquals(typedProperties, log.getTypedProperties());
     }
 }

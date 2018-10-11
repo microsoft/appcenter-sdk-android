@@ -11,6 +11,8 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Before;
@@ -124,7 +126,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 public boolean matches(Object item) {
                     if (item instanceof EventLog) {
                         EventLog eventLog = (EventLog) item;
-                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                         boolean tokenMatch;
                         if (defaultToken != null) {
                             tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
@@ -149,7 +151,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
                     return nameAndPropertiesMatch && tokenMatch;
                 }
@@ -168,9 +170,14 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
+                    boolean nameMatches = eventLog.getName().equals("name");
+                    List<TypedProperty> typedProperties = new ArrayList<>();
+                    StringTypedProperty stringTypedProperty = new StringTypedProperty();
+                    stringTypedProperty.setName("valid");
+                    stringTypedProperty.setValue("valid");
+                    typedProperties.add(stringTypedProperty);
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    return nameMatches && tokenMatch && typedProperties.equals(eventLog.getTypedProperties());
                 }
                 return false;
             }
@@ -186,7 +193,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
                     return nameAndPropertiesMatch && tokenMatch;
                 }

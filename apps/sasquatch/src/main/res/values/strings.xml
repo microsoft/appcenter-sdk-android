@@ -29,12 +29,19 @@
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>
+    <string-array name="typed_property_types" tools:ignore="MissingTranslation">
+        <item>String</item>
+        <item>Boolean</item>
+        <item>Double</item>
+        <item>Long</item>
+        <item>Date/Time</item>
+    </string-array>
     <string-array name="custom_property_types" tools:ignore="MissingTranslation">
-        <item>Clear</item>
+        <item>String</item>
         <item>Boolean</item>
         <item>Number</item>
         <item>Date/Time</item>
-        <item>String</item>
+        <item>Clear</item>
     </string-array>
     <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
     <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>

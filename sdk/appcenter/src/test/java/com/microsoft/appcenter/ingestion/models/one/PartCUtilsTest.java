@@ -1,5 +1,8 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -7,8 +10,8 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -29,8 +32,11 @@ public class PartCUtilsTest {
         whenNew(JSONObject.class).withNoArguments().thenReturn(value);
         when(value.put(anyString(), any())).thenThrow(new JSONException("mock"));
         CommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
-        Map<String, String> properties = new HashMap<>();
-        properties.put("a", "b");
+        List<TypedProperty> properties = new ArrayList<>();
+        StringTypedProperty stringTypedProperty = new StringTypedProperty();
+        stringTypedProperty.setName("a");
+        stringTypedProperty.setValue("b");
+        properties.add(stringTypedProperty);
         PartCUtils.addPartCFromLog(properties, commonSchemaLog);
         assertEquals(0, commonSchemaLog.getData().getProperties().length());
     }

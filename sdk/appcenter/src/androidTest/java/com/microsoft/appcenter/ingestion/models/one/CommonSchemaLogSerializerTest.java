@@ -50,7 +50,15 @@ public class CommonSchemaLogSerializerTest {
         log.setExt(new Extensions());
         checkSerialization(serializer, log);
 
-        /* Add extension and fields 1 by 1. Start with protocol. */
+        /* Add extension and fields 1 by 1. */
+
+        /* Metadata extension. */
+        log.getExt().setMetadata(new MetadataExtension());
+        checkSerialization(serializer, log);
+        log.getExt().getMetadata().getMetadata().put("f", new JSONObject());
+        checkSerialization(serializer, log);
+
+        /* Protocol extension. */
         log.getExt().setProtocol(new ProtocolExtension());
         checkSerialization(serializer, log);
         log.getExt().getProtocol().setTicketKeys(Arrays.asList("First", "Second"));

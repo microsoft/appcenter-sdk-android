@@ -18,6 +18,12 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
@@ -29,12 +35,15 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -87,11 +96,14 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Just check log is discarded without throwing any exception. */
         Analytics.trackEvent("test");
         Analytics.trackEvent("test", new HashMap<String, String>());
+        Analytics.trackEvent("test", (Map<String, String>) null);
+        Analytics.trackEvent("test", (EventProperties) null);
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
+        Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(4));
+        verifyStatic(times(7));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -187,13 +199,132 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void trackEventFromApp() {
+    public void trackEventFromAppWithoutProperties() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event without properties. */
         Analytics.trackEvent("eventName");
-        verify(channel).enqueue(isA(EventLog.class), anyString());
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertNull(argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithNullMapProperty() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event with empty Map properties. */
+        Analytics.trackEvent("eventName", (Map<String, String>)null);
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertNull(argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithEmptyMapProperty() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event with empty Map properties. */
+        Analytics.trackEvent("eventName", new HashMap<String, String>());
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertEquals(Collections.emptyList(), argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithMapProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event with non-empty Map properties. */
+        Analytics.trackEvent("eventName", new HashMap<String, String>() {{
+            put("name", "value");
+        }});
+        StringTypedProperty stringProperty = new StringTypedProperty();
+        stringProperty.setName("name");
+        stringProperty.setValue("value");
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertEquals(Collections.<TypedProperty>singletonList(stringProperty), argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithEmptyEventProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Send event with empty EventProperties. */
+        Analytics.trackEvent("eventName", new EventProperties());
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertEquals(Collections.emptyList(), argumentCaptor.getValue().getTypedProperties());
+    }
+
+    @Test
+    public void trackEventFromAppWithEventProperties() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Prepare typed properties. */
+        Date date = new Date();
+        StringTypedProperty stringTypedProperty = new StringTypedProperty();
+        stringTypedProperty.setName("n0");
+        stringTypedProperty.setValue("value");
+        DateTimeTypedProperty dateTimeTypedProperty = new DateTimeTypedProperty();
+        dateTimeTypedProperty.setName("n1");
+        dateTimeTypedProperty.setValue(date);
+        LongTypedProperty longTypedProperty = new LongTypedProperty();
+        longTypedProperty.setName("n2");
+        longTypedProperty.setValue(0);
+        DoubleTypedProperty doubleTypedProperty = new DoubleTypedProperty();
+        doubleTypedProperty.setName("n3");
+        doubleTypedProperty.setValue(0);
+        BooleanTypedProperty booleanTypedProperty = new BooleanTypedProperty();
+        booleanTypedProperty.setName("n4");
+        booleanTypedProperty.setValue(true);
+
+        /* Send event with non-empty EventProperties. */
+        EventProperties eventProperties = new EventProperties();
+        eventProperties.set("n0", "value");
+        eventProperties.set("n1", date);
+        eventProperties.set("n2", 0l);
+        eventProperties.set("n3", 0d);
+        eventProperties.set("n4", true);
+        Analytics.trackEvent("eventName", eventProperties);
+        verify(channel).enqueue(argumentCaptor.capture(), anyString());
+        assertNotNull(argumentCaptor.getValue());
+        assertEquals("eventName", argumentCaptor.getValue().getName());
+        assertEquals(stringTypedProperty, argumentCaptor.getValue().getTypedProperties().get(0));
+        assertEquals(dateTimeTypedProperty, argumentCaptor.getValue().getTypedProperties().get(1));
+        assertEquals(longTypedProperty, argumentCaptor.getValue().getTypedProperties().get(2));
+        assertEquals(doubleTypedProperty, argumentCaptor.getValue().getTypedProperties().get(3));
+        assertEquals(booleanTypedProperty, argumentCaptor.getValue().getTypedProperties().get(4));
     }
 
     @Test

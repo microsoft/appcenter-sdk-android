@@ -9,8 +9,9 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -51,7 +52,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common event properties for this target. Inherited by children.
      */
-    private final Map<String, String> mEventProperties = new HashMap<>();
+    private final EventProperties mEventProperties = new EventProperties();
 
     /**
      * Create a new property configurator.
@@ -194,12 +195,55 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Add or overwrite the given key for the common event properties. Properties will be inherited
      * by children of this transmission target.
      *
-     * @param key   The property key.
-     * @param value The property value.
+     * @param key   The property key. The key must not be null.
+     * @param value The boolean value.
      */
-    @SuppressWarnings("WeakerAccess")
+    public synchronized void setEventProperty(String key, boolean value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The date value. The value cannot be null.
+     */
+    public synchronized void setEventProperty(String key, Date value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The double value. The value must not be NaN or infinite.
+     */
+    public synchronized void setEventProperty(String key, double value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The long value.
+     */
+    public synchronized void setEventProperty(String key, long value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The string value. The value cannot be null.
+     */
     public synchronized void setEventProperty(String key, String value) {
-        mEventProperties.put(key, value);
+        mEventProperties.set(key, value);
     }
 
     /**
@@ -207,9 +251,8 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param key The property key to be removed.
      */
-    @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
-        mEventProperties.remove(key);
+        mEventProperties.getProperties().remove(key);
     }
 
     /**
@@ -224,11 +267,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Extracted method to synchronize on each level at once while reading properties.
      * Nesting synchronize between parent/child could lead to deadlocks.
      */
-    synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
-        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
+    synchronized void mergeEventProperties(EventProperties mergedProperties) {
+        for (Map.Entry<String, TypedProperty> property : mEventProperties.getProperties().entrySet()) {
             String key = property.getKey();
-            if (!mergedProperties.containsKey(key)) {
-                mergedProperties.put(key, property.getValue());
+            if (!mergedProperties.getProperties().containsKey(key)) {
+                mergedProperties.getProperties().put(key, property.getValue());
             }
         }
     }
