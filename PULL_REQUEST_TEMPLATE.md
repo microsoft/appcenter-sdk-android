@@ -7,7 +7,7 @@ Cheers!
 
 The App Center team -->
 
-Things to consider before you submit the PR:
+Please have a look at our [guidelines for contributions](https://github.com/Microsoft/AppCenter-SDK-Android/blob/develop/CONTRIBUTING.md) and consider the following before you submit the PR:
 
 * [ ] Has `CHANGELOG.md` been updated?
 * [ ] Are tests passing locally?
