@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
-import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -158,38 +157,23 @@ public class SettingsActivity extends AppCompatActivity {
                     return Analytics.isEnabled().get();
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_analytics_pause_key, R.string.appcenter_analytics_pause_summary_paused, R.string.appcenter_analytics_pause_summary_resumed, new HasEnabled() {
 
-            /* TODO remove reflection once SDK pre-released. */
-            try {
-                final Method pauseMethod = Analytics.class.getMethod("pause");
-                final Method resumeMethod = Analytics.class.getMethod("resume");
-                initCheckBoxSetting(R.string.appcenter_analytics_pause_key, R.string.appcenter_analytics_pause_summary_paused, R.string.appcenter_analytics_pause_summary_resumed, new HasEnabled() {
+                @Override
+                public boolean isEnabled() {
+                    return sAnalyticsPaused;
+                }
 
-                    @Override
-                    public boolean isEnabled() {
-                        return sAnalyticsPaused;
+                @Override
+                public void setEnabled(boolean enabled) {
+                    if (enabled) {
+                        Analytics.pause();
+                    } else {
+                        Analytics.resume();
                     }
-
-                    @Override
-                    public void setEnabled(boolean enabled) {
-                        Method method;
-                        if (enabled) {
-                            method = pauseMethod;
-                        } else {
-                            method = resumeMethod;
-                        }
-                        try {
-                            method.invoke(null);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        sAnalyticsPaused = enabled;
-                    }
-                });
-            } catch (NoSuchMethodException e) {
-                PreferenceGroup preference = (PreferenceGroup) findPreference(getString(R.string.analytics_key));
-                preference.removePreference(findPreference(getString(R.string.appcenter_analytics_pause_key)));
-            }
+                    sAnalyticsPaused = enabled;
+                }
+            });
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override

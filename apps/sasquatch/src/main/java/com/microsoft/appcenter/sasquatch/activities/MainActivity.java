@@ -37,9 +37,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -216,19 +214,7 @@ public class MainActivity extends AppCompatActivity {
         if (maxStorageSize <= 0) {
             return;
         }
-
-        // TODO remove reflection once new APIs available in jCenter.
-        // AppCenter.setMaxStorageSize(maxStorageSize)
-        AppCenterFuture<Boolean> future;
-        {
-            try {
-                Method method = AppCenter.class.getMethod("setMaxStorageSize", long.class);
-                future = (AppCenterFuture<Boolean>) method.invoke(null, maxStorageSize);
-            } catch (Exception ignored) {
-                return;
-            }
-        }
-        future.thenAccept(new AppCenterConsumer<Boolean>() {
+        AppCenter.setMaxStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
 
             @Override
             public void accept(Boolean succeeded) {

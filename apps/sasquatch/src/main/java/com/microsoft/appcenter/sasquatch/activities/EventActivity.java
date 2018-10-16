@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// TODO move to main folder once new APIs available in jCenter
 public class EventActivity extends AppCompatActivity {
 
     /**
