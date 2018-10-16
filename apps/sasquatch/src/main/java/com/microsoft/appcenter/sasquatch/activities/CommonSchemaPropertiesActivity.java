@@ -89,6 +89,7 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
         mPropertyConfigurator = transmissionTargets.get(selectedTargetIndex).getPropertyConfigurator();
     }
 
+    @SuppressWarnings("unused")
     public void saveProperty(View view) {
         PropertyName propertyName = PropertyName.values()[mCommonSchemaPropertiesSpinner.getSelectedItemPosition()];
         String value = mCommonSchemaPropertyValue.getText().toString();

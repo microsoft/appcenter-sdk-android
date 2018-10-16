@@ -12,8 +12,8 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static junit.framework.Assert.assertSame;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;

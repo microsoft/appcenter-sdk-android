@@ -2,6 +2,8 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.test.TestUtils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
@@ -15,11 +17,21 @@ public class ExtensionsTest {
     }
 
     @Test
-    public void equalsHashCode() {
+    public void equalsHashCode() throws JSONException {
 
         /* Empty objects. */
         Extensions a = new Extensions();
         Extensions b = new Extensions();
+        checkEquals(a, b);
+
+        /* Metadata. */
+        MetadataExtension metadata = new MetadataExtension();
+        metadata.getMetadata().put("f", new JSONObject());
+        a.setMetadata(metadata);
+        checkNotEquals(a, b);
+        b.setMetadata(new MetadataExtension());
+        checkNotEquals(a, b);
+        b.getMetadata().getMetadata().put("f", new JSONObject());
         checkEquals(a, b);
 
         /* Protocol. */
@@ -40,6 +52,16 @@ public class ExtensionsTest {
         b.setUser(new UserExtension());
         checkNotEquals(a, b);
         b.setUser(a.getUser());
+        checkEquals(a, b);
+
+        /* Device. */
+        DeviceExtension device = new DeviceExtension();
+        device.setLocalId("123");
+        a.setDevice(device);
+        checkNotEquals(a, b);
+        b.setDevice(new DeviceExtension());
+        checkNotEquals(a, b);
+        b.setDevice(a.getDevice());
         checkEquals(a, b);
 
         /* OS. */

@@ -21,11 +21,16 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_TARGET_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
@@ -52,7 +57,7 @@ public class DatabasePersistenceTest {
         mockStatic(AppCenterLog.class);
         LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
         when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA, Persistence.DEFAULT_CAPACITY));
+        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA));
         doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
         try {
 
@@ -93,13 +98,12 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage mockDatabaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(mockDatabaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(mockDatabaseStorage);
 
         for (int i = 0; i < groupCount; i++) {
             StorageHelper.DatabaseStorage.DatabaseScanner mockDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
             when(mockDatabaseScanner.iterator()).thenReturn(list.get(i).iterator());
-            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i))).thenReturn(mockDatabaseScanner);
+            when(mockDatabaseStorage.getScanner(COLUMN_GROUP, String.valueOf(i), COLUMN_TARGET_KEY, Collections.<String>emptyList(), false)).thenReturn(mockDatabaseScanner);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
@@ -111,7 +115,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>());
         }
 
         /* Verify there are 4 pending groups. */
@@ -131,8 +135,7 @@ public class DatabasePersistenceTest {
         int logCount = 3;
         mockStatic(StorageHelper.DatabaseStorage.class);
         StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class),
-                anyInt(), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
 
         /* Make 3 logs, the second one will be corrupted. */
         Collection<ContentValues> fieldValues = new ArrayList<>(logCount);
@@ -159,8 +162,7 @@ public class DatabasePersistenceTest {
 
         /* Mock log sequence retrieved from scanner. */
         StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyString())).thenReturn(databaseScanner);
-        when(databaseStorage.getScanner(anyString(), anyString(), eq(false))).thenReturn(databaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), anyString(), anyCollectionOf(String.class), eq(false))).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
 
         /* Mock second scanner with identifiers only. */
@@ -171,7 +173,7 @@ public class DatabasePersistenceTest {
             idValues.add(contentValues);
         }
         StorageHelper.DatabaseStorage.DatabaseScanner idDatabaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyString(), eq(true))).thenReturn(idDatabaseScanner);
+        when(databaseStorage.getScanner(anyString(), anyString(), anyString(), anyCollectionOf(String.class), eq(true))).thenReturn(idDatabaseScanner);
         when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
 
         /* Mock serializer and eventually the database. */
@@ -192,7 +194,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs and verify we get only non corrupted logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(logCount - 1, outLogs.size());
         assertEquals("first", outLogs.get(0).getType());
         assertEquals("last", outLogs.get(1).getType());
@@ -202,7 +204,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is empty logs as they are pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /*
@@ -253,11 +255,26 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(1, outLogs.size());
         assertEquals("true last", outLogs.get(0).getType());
 
         /* Verify that the only log we deleted in the entire test was the one from previous test (id=1). */
         verify(databaseStorage).delete(anyLong());
+    }
+
+    @Test
+    public void checkSetStorageSizeForwarding() {
+
+        /* The real Android test for checking size is in StorageHelperAndroidTest. */
+        mockStatic(StorageHelper.DatabaseStorage.class);
+        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
+        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
+        when(databaseStorage.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
+
+        /* Just checks calls are forwarded to the low level database layer. */
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        assertTrue(persistence.setMaxStorageSize(20480));
+        assertFalse(persistence.setMaxStorageSize(2));
     }
 }

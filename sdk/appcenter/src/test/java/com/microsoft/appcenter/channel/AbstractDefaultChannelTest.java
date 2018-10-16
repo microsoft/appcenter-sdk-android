@@ -56,9 +56,9 @@ public class AbstractDefaultChannelTest {
             @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[2] instanceof ArrayList) {
-                    ArrayList logs = (ArrayList) args[2];
-                    int length = size >= 0 ? size : (int) args[1];
+                if (args[3] instanceof ArrayList) {
+                    ArrayList logs = (ArrayList) args[3];
+                    int length = size >= 0 ? size : (int) args[2];
                     for (int i = 0; i < length; i++) {
                         logs.add(mock(Log.class));
                     }

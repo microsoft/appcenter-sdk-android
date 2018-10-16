@@ -12,13 +12,14 @@ Please make sure the following is done when submitting a pull request:
 ### Workflow and validation
 
 1. Fork the repository and create your branch from `develop`.
-1. Run `git submodule update --init` before opening the solution if you don't want errors in the test application.
+1. Run `git submodule update --init --recursive` before opening the solution if you don't want errors in the test application.
 1. To run the test app that uses project references to the SDK sources:
    1. Select build variant `projectDependencyFirebaseDebug` before hitting gradle sync.
    1. Disable `Instant run` in Android Studio settings before running.
 1. To run unit tests within Android Studio, disable `Configure on demand` in Android Studio `Compiler` settings.
 1. Make sure all tests have passed and your code is covered: run `gradlew coverageReport` command to generate report.
 1. Make sure that there are no lint errors: run `gradlew assemble lint` command.
+1. If your change includes a fix or feature related to the changelog of the next release, you have to update the **CHANGELOG.md**.
 1. After creating a pull request, sign the CLA, if you haven't already.
 
 ### Code formatting

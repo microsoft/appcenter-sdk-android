@@ -38,4 +38,12 @@ public class AbstractChannelListener implements Channel.Listener {
     @Override
     public void onClear(@NonNull String groupName) {
     }
+
+    @Override
+    public void onPaused(@NonNull String groupName, String targetToken) {
+    }
+
+    @Override
+    public void onResumed(@NonNull String groupName, String targetToken) {
+    }
 }

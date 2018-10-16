@@ -1,8 +1,5 @@
 package com.microsoft.appcenter.http;
 
-import android.os.Build;
-import android.support.annotation.RequiresApi;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -15,7 +12,6 @@ import static javax.net.ssl.HttpsURLConnection.getDefaultSSLSocketFactory;
 /**
  * This class forces TLS 1.2 protocol via adapter pattern.
  */
-@RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
 class TLS1_2SocketFactory extends SSLSocketFactory {
 
     /**

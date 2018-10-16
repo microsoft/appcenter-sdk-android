@@ -26,25 +26,29 @@
         android:orientation="vertical"
         android:visibility="gone">
 
+        <!-- TODO replace this file by project version after SDK available in jCenter. -->
         <include layout="@layout/property" />
 
         <LinearLayout
+            style="?android:attr/buttonBarStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="end"
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/add_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/add" />
-
-            <Button
                 android:id="@+id/cancel_button"
+                style="?android:attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/cancel" />
+
+            <Button
+                android:id="@+id/add_button"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add" />
 
         </LinearLayout>
 

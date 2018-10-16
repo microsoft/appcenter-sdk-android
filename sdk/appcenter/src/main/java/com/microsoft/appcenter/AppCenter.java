@@ -54,6 +54,19 @@ public class AppCenter {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG;
 
     /**
+     * Default maximum storage size for SQLite database.
+     */
+    @VisibleForTesting
+    static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+
+    /**
+     * Minimum size allowed for set maximum size (SQL limitation). setMaxStorageSize could accept values
+     * as low as 16385 but in practice the lowest size set is the next highest multiple of 4096.
+     */
+    @VisibleForTesting
+    static final long MINIMUM_STORAGE_SIZE = 20480;
+
+    /**
      * Group for sending logs.
      */
     @VisibleForTesting
@@ -165,6 +178,16 @@ public class AppCenter {
      * Background thread handler abstraction to shared with services.
      */
     private AppCenterHandler mAppCenterHandler;
+
+    /**
+     * Max storage size in bytes.
+     */
+    private long mMaxStorageSizeInBytes = DEFAULT_MAX_STORAGE_SIZE_IN_BYTES;
+
+    /**
+     * AppCenterFuture of set maximum storage size.
+     */
+    private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
     /**
      * Get unique instance.
@@ -365,7 +388,23 @@ public class AppCenter {
      * @see AppCenterFuture
      */
     public static AppCenterFuture<UUID> getInstallId() {
-        return getInstance().getInstanceInstallId();
+        return getInstance().getInstanceInstallIdAsync();
+    }
+
+    /**
+     * Set the SQLite database storage size. Returns true if the operation succeeded. If the new size
+     * is smaller than the previous size (database is shrinking) and the capacity is greater than
+     * the new size, then the operation will fail and a warning will be emitted. Can only be called
+     * once per app lifetime and only before AppCenter.start(...).
+     * <p>
+     * If the size is not a multiple of 4096 bytes, the next multiple of 4096 is used as the new maximum size.
+     *
+     * @param storageSizeInBytes New size for the SQLite db in bytes.
+     * @return Future with true result if succeeded, otherwise future with false result.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove annotation when updating demo app for release.
+    public static AppCenterFuture<Boolean> setMaxStorageSize(long storageSizeInBytes) {
+        return getInstance().setInstanceMaxStorageSizeAsync(storageSizeInBytes);
     }
 
     /**
@@ -460,6 +499,34 @@ public class AppCenter {
     }
 
     /**
+     * {@link #setMaxStorageSize(long)} implementation at instance level.
+     *
+     * @param storageSizeInBytes size to set SQLite database to in bytes.
+     * @return future of result of set maximum storage size.
+     */
+    private synchronized AppCenterFuture<Boolean> setInstanceMaxStorageSizeAsync(long storageSizeInBytes) {
+        DefaultAppCenterFuture<Boolean> setMaxStorageSizeFuture = new DefaultAppCenterFuture<>();
+        if (mConfiguredFromApp) {
+            AppCenterLog.error(LOG_TAG, "setMaxStorageSize may not be called after App Center has been configured.");
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
+        }
+        if (storageSizeInBytes < MINIMUM_STORAGE_SIZE) {
+            AppCenterLog.error(LOG_TAG, "Maximum storage size must be at least " + MINIMUM_STORAGE_SIZE + " bytes.");
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
+        }
+        if (mSetMaxStorageSizeFuture != null) {
+            AppCenterLog.error(LOG_TAG, "setMaxStorageSize may only be called once per app launch.");
+            setMaxStorageSizeFuture.complete(false);
+            return setMaxStorageSizeFuture;
+        }
+        mMaxStorageSizeInBytes = storageSizeInBytes;
+        mSetMaxStorageSizeFuture = setMaxStorageSizeFuture;
+        return setMaxStorageSizeFuture;
+    }
+
+    /**
      * {@link #isConfigured()} implementation at instance level.
      */
     private synchronized boolean isInstanceConfigured() {
@@ -486,7 +553,7 @@ public class AppCenter {
      * @param configureFromApp true if configuring from app, false if called from a library.
      * @return true if configuration was successful, false otherwise.
      */
-    private synchronized boolean configureInstance(Application application, String secretString, boolean configureFromApp) {
+    private synchronized boolean configureInstance(Application application, String secretString, final boolean configureFromApp) {
 
         /* Check parameters. */
         if (application == null) {
@@ -515,6 +582,7 @@ public class AppCenter {
                     @Override
                     public void run() {
                         mChannel.setAppSecret(mAppSecret);
+                        applyStorageMaxSize();
                     }
                 });
             }
@@ -543,7 +611,7 @@ public class AppCenter {
 
             @Override
             public void run() {
-                finishConfiguration();
+                finishConfiguration(configureFromApp);
             }
         });
         AppCenterLog.info(LOG_TAG, "App Center SDK configured successfully.");
@@ -631,7 +699,7 @@ public class AppCenter {
     }
 
     @WorkerThread
-    private void finishConfiguration() {
+    private void finishConfiguration(boolean configureFromApp) {
 
         /* Load some global constants. */
         Constants.loadFromContext(mApplication);
@@ -650,6 +718,15 @@ public class AppCenter {
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+
+        /* Complete set maximum storage size future if starting from app. */
+        if (configureFromApp) {
+            applyStorageMaxSize();
+        } else {
+
+            /* If from library, we apply storage size only later, we have to try using the default value in the mean time. */
+            mChannel.setMaxStorageSize(DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+        }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         if (mLogUrl != null) {
@@ -668,6 +745,13 @@ public class AppCenter {
             mUncaughtExceptionHandler.register();
         }
         AppCenterLog.debug(LOG_TAG, "App Center initialized.");
+    }
+
+    private void applyStorageMaxSize() {
+        boolean resizeResult = mChannel.setMaxStorageSize(mMaxStorageSizeInBytes);
+        if (mSetMaxStorageSizeFuture != null) {
+            mSetMaxStorageSizeFuture.complete(resizeResult);
+        }
     }
 
     @SafeVarargs
@@ -964,7 +1048,7 @@ public class AppCenter {
     /**
      * Implements {@link #getInstallId()}.
      */
-    private synchronized AppCenterFuture<UUID> getInstanceInstallId() {
+    private synchronized AppCenterFuture<UUID> getInstanceInstallIdAsync() {
         final DefaultAppCenterFuture<UUID> future = new DefaultAppCenterFuture<>();
         if (checkPrecondition()) {
             mAppCenterHandler.post(new Runnable() {

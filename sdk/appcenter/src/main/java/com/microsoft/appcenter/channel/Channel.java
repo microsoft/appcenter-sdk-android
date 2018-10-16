@@ -19,6 +19,14 @@ public interface Channel {
     void setAppSecret(@NonNull String appSecret);
 
     /**
+     * Set maximum SQLite database size.
+     *
+     * @param maxStorageSizeInBytes maximum SQLite database size in bytes.
+     * @return true if database size was set, otherwise false.
+     */
+    boolean setMaxStorageSize(long maxStorageSizeInBytes);
+
+    /**
      * Add a group for logs to be persisted and sent.
      *
      * @param groupName          the name of a group.
@@ -36,6 +44,22 @@ public interface Channel {
      * @param groupName the name of a group.
      */
     void removeGroup(String groupName);
+
+    /**
+     * Pauses the given group.
+     *
+     * @param groupName   the name of a group.
+     * @param targetToken the target token to pause, or null to pause the entire group.
+     */
+    void pauseGroup(String groupName, String targetToken);
+
+    /**
+     * Resumes transmission for the given group.
+     *
+     * @param groupName   the name of a group.
+     * @param targetToken the target token to resume, or null to resume the entire group.
+     */
+    void resumeGroup(String groupName, String targetToken);
 
     /**
      * Add Log to queue to be persisted and sent.
@@ -126,6 +150,7 @@ public interface Channel {
          * @param log       log being enqueued.
          * @param groupName group of the log.
          */
+        @SuppressWarnings("unused")
         void onPreparingLog(@NonNull Log log, @NonNull String groupName);
 
         /**
@@ -158,6 +183,22 @@ public interface Channel {
          * @param groupName The group name.
          */
         void onClear(@NonNull String groupName);
+
+        /**
+         * Called when a group is paused.
+         *
+         * @param groupName   The group name.
+         * @param targetToken The target token is paused, or null when the entire group is paused.
+         */
+        void onPaused(@NonNull String groupName, String targetToken);
+
+        /**
+         * Called when a group is resumed.
+         *
+         * @param groupName   The group name.
+         * @param targetToken The target token is resumed, or null when the entire group is resumed.
+         */
+        void onResumed(@NonNull String groupName, String targetToken);
     }
 
     /**

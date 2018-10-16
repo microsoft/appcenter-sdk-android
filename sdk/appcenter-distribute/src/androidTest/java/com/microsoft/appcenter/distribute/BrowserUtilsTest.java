@@ -17,7 +17,7 @@ import java.util.Collections;
 
 import static com.microsoft.appcenter.distribute.BrowserUtils.GOOGLE_CHROME_URL_SCHEME;
 import static java.util.Arrays.asList;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;

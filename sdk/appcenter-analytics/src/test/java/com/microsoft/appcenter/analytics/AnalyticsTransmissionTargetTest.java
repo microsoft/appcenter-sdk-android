@@ -2,6 +2,8 @@ package com.microsoft.appcenter.analytics;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
@@ -9,15 +11,24 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,13 +38,19 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
@@ -53,8 +70,27 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
     @Test
     public void testGetTransmissionTarget() {
-        assertNull(Analytics.getTransmissionTarget(""));
         assertNotNull(Analytics.getTransmissionTarget("token"));
+    }
+
+    @Test
+    public void testGetTransmissionTargetWithNullToken() {
+        mockStatic(AppCenterLog.class);
+        assertNull(Analytics.getTransmissionTarget(null));
+
+        /* Verify log. */
+        verifyStatic();
+        AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
+    }
+
+    @Test
+    public void testGetTransmissionTargetWithEmptyToken() {
+        mockStatic(AppCenterLog.class);
+        assertNull(Analytics.getTransmissionTarget(""));
+
+        /* Verify log. */
+        verifyStatic();
+        AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
     }
 
     @Test
@@ -90,7 +126,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 public boolean matches(Object item) {
                     if (item instanceof EventLog) {
                         EventLog eventLog = (EventLog) item;
-                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                        boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                         boolean tokenMatch;
                         if (defaultToken != null) {
                             tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
@@ -115,7 +151,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
                     return nameAndPropertiesMatch && tokenMatch;
                 }
@@ -134,9 +170,14 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties().size() == 1 && "valid".equals(eventLog.getProperties().get("valid"));
+                    boolean nameMatches = eventLog.getName().equals("name");
+                    List<TypedProperty> typedProperties = new ArrayList<>();
+                    StringTypedProperty stringTypedProperty = new StringTypedProperty();
+                    stringTypedProperty.setName("valid");
+                    stringTypedProperty.setValue("valid");
+                    typedProperties.add(stringTypedProperty);
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    return nameMatches && tokenMatch && typedProperties.equals(eventLog.getTypedProperties());
                 }
                 return false;
             }
@@ -152,7 +193,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             public boolean matches(Object item) {
                 if (item instanceof EventLog) {
                     EventLog eventLog = (EventLog) item;
-                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getProperties() == null;
+                    boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
                     return nameAndPropertiesMatch && tokenMatch;
                 }
@@ -342,18 +383,32 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void addTicketToLog() {
+    public void addTicketToLogBeforeStart() {
+
+        /* Simulate not started. */
+        Analytics.unsetInstance();
+        when(AppCenter.isConfigured()).thenReturn(false);
 
         /* No actions are prepared without authentication provider. */
         CommonSchemaLog log = new CommonSchemaEventLog();
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
 
-        /* Add authentication provider. */
+        /* Add authentication provider before start. */
         AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
         AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider));
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
         assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
         verify(authenticationProvider).acquireTokenAsync();
+
+        /* Start analytics. */
+        when(AppCenter.isConfigured()).thenReturn(true);
+        Analytics analytics = Analytics.getInstance();
+        AppCenterHandler handler = mock(AppCenterHandler.class);
+        ArgumentCaptor<Runnable> normalRunnable = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Runnable> disabledRunnable = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(handler).post(normalRunnable.capture(), disabledRunnable.capture());
+        analytics.onStarting(handler);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, false);
 
         /* No actions are prepared with no CommonSchemaLog. */
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
@@ -371,5 +426,170 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
 
         /* And that we check expiry. */
         verify(authenticationProvider).checkTokenExpiry();
+    }
+
+    @Test
+    public void updateAuthProviderAndLog() {
+
+        /* When we enqueue app center log from track event. */
+        final List<CommonSchemaLog> sentLogs = new ArrayList<>();
+        doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                ProtocolExtension protocol = new ProtocolExtension();
+                Extensions ext = new Extensions();
+                ext.setProtocol(protocol);
+                CommonSchemaLog log = new CommonSchemaEventLog();
+                log.setExt(ext);
+                sentLogs.add(log);
+
+                /* Call the listener after conversion of common schema for authentication decoration. */
+                AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+                return null;
+            }
+        }).when(mChannel).enqueue(any(Log.class), anyString());
+
+        /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
+        Analytics analytics = Analytics.getInstance();
+        AppCenterHandler handler = mock(AppCenterHandler.class);
+        ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(handler).post(backgroundRunnable.capture(), any(Runnable.class));
+        analytics.onStarting(handler);
+        analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
+
+        /* Add first authentication provider. */
+        AuthenticationProvider.TokenProvider tokenProvider1 = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider1 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider1));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider1);
+
+        /* Check provider updated in background thread only when AppCenter is configured/started. */
+        assertNull(AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider1, never()).acquireTokenAsync();
+        assertNotNull(backgroundRunnable.getValue());
+
+        /* Run background thread. */
+        backgroundRunnable.getValue().run();
+
+        /* Check update. */
+        assertEquals(authenticationProvider1, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider1).acquireTokenAsync();
+
+        /* Track an event. */
+        Analytics.trackEvent("test1");
+        Runnable trackEvent1Command = backgroundRunnable.getValue();
+
+        /* Update authentication provider before the commands run and track a second event. */
+        AuthenticationProvider.TokenProvider tokenProvider2 = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider2 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key2", tokenProvider2));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
+        Runnable addAuthProvider2Command = backgroundRunnable.getValue();
+        Analytics.trackEvent("test2");
+        Runnable trackEvent2Command = backgroundRunnable.getValue();
+
+        /* Simulate background thread doing everything in a sequence. */
+        trackEvent1Command.run();
+        addAuthProvider2Command.run();
+        trackEvent2Command.run();
+
+        /* Verify first log has first ticket. */
+        assertEquals(Collections.singletonList(authenticationProvider1.getTicketKeyHash()), sentLogs.get(0).getExt().getProtocol().getTicketKeys());
+
+        /* And that we checked expiry. */
+        verify(authenticationProvider1).checkTokenExpiry();
+
+        /* Verify second log has the second ticket. */
+        assertEquals(Collections.singletonList(authenticationProvider2.getTicketKeyHash()), sentLogs.get(1).getExt().getProtocol().getTicketKeys());
+
+        /* And that we checked expiry. */
+        verify(authenticationProvider2).checkTokenExpiry();
+    }
+
+    @Test
+    public void registerCallbackWhenDisabledWorks() {
+
+        /* Simulate disabling and background thread. */
+        Analytics analytics = Analytics.getInstance();
+        AppCenterHandler handler = mock(AppCenterHandler.class);
+        ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Runnable> disabledRunnable = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(handler).post(backgroundRunnable.capture(), disabledRunnable.capture());
+        analytics.onStarting(handler);
+        analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
+
+        /* Disable. */
+        Analytics.setEnabled(false);
+        backgroundRunnable.getValue().run();
+
+        /* Add authentication provider while disabled. */
+        AuthenticationProvider.TokenProvider tokenProvider = mock(AuthenticationProvider.TokenProvider.class);
+        AuthenticationProvider authenticationProvider = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key1", tokenProvider));
+        AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider);
+
+        /* Unlock command. */
+        disabledRunnable.getValue().run();
+
+        /* Verify update while disabled. */
+        assertEquals(authenticationProvider, AnalyticsTransmissionTarget.sAuthenticationProvider);
+        verify(authenticationProvider).acquireTokenAsync();
+
+        /* Enable. */
+        Analytics.setEnabled(true);
+        disabledRunnable.getValue().run();
+
+        /* Call prepare log. */
+        ProtocolExtension protocol = new ProtocolExtension();
+        Extensions ext = new Extensions();
+        ext.setProtocol(protocol);
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(ext);
+        AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
+
+        /* Verify log. */
+        assertEquals(Collections.singletonList(authenticationProvider.getTicketKeyHash()), protocol.getTicketKeys());
+
+        /* And that we check expiry. */
+        verify(authenticationProvider).checkTokenExpiry();
+    }
+
+    @Test
+    public void pauseResume() {
+
+        /* Create a parent and child targets to test calls are not inherited. */
+        AnalyticsTransmissionTarget parent = Analytics.getTransmissionTarget("parent");
+        AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
+
+        /* Call resume while not paused is only checked by channel so call is forwarded. */
+        child.resume();
+        verify(mChannel).resumeGroup(ANALYTICS_GROUP, "child");
+        reset(mChannel);
+
+        /* Test pause. */
+        parent.pause();
+        verify(mChannel).pauseGroup(ANALYTICS_GROUP, "parent");
+        verify(mChannel, never()).pauseGroup(ANALYTICS_GROUP, "child");
+
+        /* We can call it twice, double calls are checked by channel. */
+        parent.pause();
+        verify(mChannel, times(2)).pauseGroup(ANALYTICS_GROUP, "parent");
+
+        /* Test resume. */
+        parent.resume();
+        verify(mChannel).resumeGroup(ANALYTICS_GROUP, "parent");
+        verify(mChannel, never()).resumeGroup(ANALYTICS_GROUP, "child");
+
+        /* We can call it twice, double calls are checked by channel. */
+        parent.resume();
+        verify(mChannel, times(2)).resumeGroup(ANALYTICS_GROUP, "parent");
+
+        /* Disable analytics. */
+        Analytics.setEnabled(false).get();
+        reset(mChannel);
+
+        /* We cannot call channel while disabled. */
+        parent.pause();
+        parent.resume();
+        verify(mChannel, never()).pauseGroup(anyString(), anyString());
+        verify(mChannel, never()).resumeGroup(anyString(), anyString());
     }
 }

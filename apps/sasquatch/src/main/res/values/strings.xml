@@ -29,20 +29,32 @@
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>
+    <string-array name="typed_property_types" tools:ignore="MissingTranslation">
+        <item>String</item>
+        <item>Boolean</item>
+        <item>Double</item>
+        <item>Long</item>
+        <item>Date/Time</item>
+    </string-array>
     <string-array name="custom_property_types" tools:ignore="MissingTranslation">
-        <item>Clear</item>
+        <item>String</item>
         <item>Boolean</item>
         <item>Number</item>
         <item>Date/Time</item>
-        <item>String</item>
+        <item>Clear</item>
     </string-array>
     <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
     <string name="push_toast" tools:ignore="MissingTranslation">Push clicked with data=%1s</string>
     <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
     <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>
+    <string name="device_id_enabled" tools:ignore="MissingTranslation">Device ID is enabled.</string>
+    <string name="device_id_disabled" tools:ignore="MissingTranslation">Device ID is disabled.</string>
     <string name="configure_target_properties" tools:ignore="MissingTranslation">Configure target properties</string>
+    <string name="delete" tools:ignore="MissingTranslation">Delete</string>
     <string name="cs_properties_title" tools:ignore="MissingTranslation">Common Schema Properties</string>
     <string name="override_cs_properties" tools:ignore="MissingTranslation">Override common schema properties</string>
+    <string name="pause_target" tools:ignore="MissingTranslation">Pause</string>
+    <string name="resume_target" tools:ignore="MissingTranslation">Resume</string>
     <string name="common_schema_property_label" tools:ignore="MissingTranslation">Common Schema Property</string>
     <string-array name="common_schema_properties" tools:ignore="MissingTranslation">
         <item>App Name</item>
@@ -55,10 +67,13 @@
     <string name="signed_in" tools:ignore="MissingTranslation">Signed in.</string>
     <string name="sign_in_failed" tools:ignore="MissingTranslation">Sign in failed, please check logs.</string>
     <string name="sign_out_failed" tools:ignore="MissingTranslation">Sign out failed, please check logs.</string>
-    <string name="signed_in_cookie">Clicking sign in will get token without prompt with cookie. Sign out to see prompt again.</string>
-    <string name="msa_title">MSA authentication</string>
-    <string name="msa_compact_title">MSA compact ticket</string>
-    <string name="msa_compact_description">For first party applications</string>
-    <string name="msa_delegate_title">MSA delegate ticket</string>
-    <string name="msa_delegate_description">For third party applications</string>
+    <string name="signed_in_cookie" tools:ignore="MissingTranslation">Clicking sign in will get token without prompt with cookie. Sign out to see prompt again.</string>
+    <string name="msa_title" tools:ignore="MissingTranslation">MSA authentication</string>
+    <string name="msa_compact_title" tools:ignore="MissingTranslation">MSA compact ticket</string>
+    <string name="msa_compact_description" tools:ignore="MissingTranslation">For first party applications</string>
+    <string name="msa_delegate_title" tools:ignore="MissingTranslation">MSA delegate ticket</string>
+    <string name="msa_delegate_description" tools:ignore="MissingTranslation">For third party applications</string>
+    <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
+    <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>
+    <string name="size_in_bytes" tools:ignore="MissingTranslation">Size in bytes</string>
 </resources>

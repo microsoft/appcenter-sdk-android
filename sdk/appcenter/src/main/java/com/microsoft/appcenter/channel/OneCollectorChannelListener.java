@@ -79,6 +79,8 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      *
      * @param context context.
      * @param channel channel.
+     * @param logSerializer log serializer.
+     * @param installId installId.
      */
     public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
@@ -164,8 +166,23 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         if (isOneCollectorGroup(groupName)) {
             return;
         }
-        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.clear(oneCollectorGroupName);
+        mChannel.clear(getOneCollectorGroupName(groupName));
+    }
+
+    @Override
+    public void onPaused(@NonNull String groupName, String targetToken) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        mChannel.pauseGroup(getOneCollectorGroupName(groupName), targetToken);
+    }
+
+    @Override
+    public void onResumed(@NonNull String groupName, String targetToken) {
+        if (isOneCollectorGroup(groupName)) {
+            return;
+        }
+        mChannel.resumeGroup(getOneCollectorGroupName(groupName), targetToken);
     }
 
     /**

@@ -81,5 +81,5 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
      * @param transmissionTargetToken transmission target token.
      */
     @WorkerThread
-    void onConfigurationUpdated(String appSecret, String transmissionTargetToken);
+    void onConfigurationUpdated(@SuppressWarnings("unused") String appSecret, String transmissionTargetToken);
 }

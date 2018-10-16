@@ -123,25 +123,18 @@ class PushNotifier {
         setSound(context, pushIntent, builder);
 
         /* Set texts. */
-        builder.setContentTitle(notificationTitle).
-                setContentText(notificationMessage).
-                setWhen(System.currentTimeMillis());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            builder.setStyle(new Notification.BigTextStyle().bigText(notificationMessage));
-        }
+        builder.setContentTitle(notificationTitle)
+                .setContentText(notificationMessage)
+                .setWhen(System.currentTimeMillis())
+                .setStyle(new Notification.BigTextStyle().bigText(notificationMessage));
 
         /* Click action. Reuse notification id for simplicity. */
         PendingIntent contentIntent = PendingIntent.getActivity(context, notificationId,
                 actionIntent, 0);
         builder.setContentIntent(contentIntent);
 
-        /* Build method depends on versions. */
-        Notification notification;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            notification = builder.build();
-        } else {
-            notification = getOldNotification(builder);
-        }
+        /* Set flags. */
+        Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
         //noinspection ConstantConditions
@@ -152,12 +145,6 @@ class PushNotifier {
     @SuppressWarnings("deprecation")
     private static Notification.Builder getOldNotificationBuilder(Context context) {
         return new Notification.Builder(context);
-    }
-
-    @NonNull
-    @SuppressWarnings("deprecation")
-    private static Notification getOldNotification(Notification.Builder builder) {
-        return builder.getNotification();
     }
 
     /**

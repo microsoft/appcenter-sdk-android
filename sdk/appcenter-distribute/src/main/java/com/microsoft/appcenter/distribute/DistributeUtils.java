@@ -1,16 +1,15 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -71,15 +70,6 @@ class DistributeUtils {
         return Distribute.class.getName().hashCode();
     }
 
-    @SuppressWarnings("deprecation")
-    static Notification buildNotification(Notification.Builder builder) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            return builder.build();
-        } else {
-            return builder.getNotification();
-        }
-    }
-
     /**
      * Get download identifier from storage.
      *
@@ -100,7 +90,7 @@ class DistributeUtils {
 
     @NonNull
     static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
-        return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + packageInfo.versionCode);
+        return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + DeviceInfoHelper.getVersionCode(packageInfo));
     }
 
     /**

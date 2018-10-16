@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDiskIOException;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
@@ -57,11 +59,6 @@ public class DatabaseManagerTest {
         databaseManagerMock.put(new ContentValues());
         verify(databaseManagerMock).switchToInMemory(eq("put"), any(RuntimeException.class));
 
-        /* Update. */
-        databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.update(0, new ContentValues());
-        verify(databaseManagerMock).switchToInMemory(eq("update"), any(RuntimeException.class));
-
         /* Get. */
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.get(0);
@@ -70,12 +67,12 @@ public class DatabaseManagerTest {
         /* Scanner. */
         {
             databaseManagerMock = getDatabaseManagerMock();
-            databaseManagerMock.getScanner(null, null, false).iterator();
+            databaseManagerMock.getScanner(null, null, null, null, false).iterator();
             verify(databaseManagerMock).switchToInMemory(eq("scan.iterator"), any(RuntimeException.class));
         }
         {
             databaseManagerMock = getDatabaseManagerMock();
-            databaseManagerMock.getScanner(null, null, false).getCount();
+            databaseManagerMock.getScanner(null, null, null, null, false).getCount();
             verify(databaseManagerMock).switchToInMemory(eq("scan.count"), any(RuntimeException.class));
         }
         {
@@ -87,7 +84,7 @@ public class DatabaseManagerTest {
             SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             when(cursor.moveToNext()).thenThrow(new RuntimeException());
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
             assertFalse(scanner.iterator().hasNext());
             verify(databaseManagerMock).switchToInMemory(eq("scan.hasNext"), any(RuntimeException.class));
 
@@ -106,7 +103,7 @@ public class DatabaseManagerTest {
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             when(cursor.moveToNext()).thenThrow(new RuntimeException());
             doThrow(new RuntimeException()).when(cursor).close();
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
             assertFalse(scanner.iterator().hasNext());
             verify(databaseManagerMock).switchToInMemory(eq("scan.hasNext"), any(RuntimeException.class));
 
@@ -123,7 +120,7 @@ public class DatabaseManagerTest {
             SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
             when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
             doThrow(new RuntimeException()).when(cursor).close();
-            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, false);
+            DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
             assertFalse(scanner.iterator().hasNext());
             scanner.close();
             verify(databaseManagerMock).switchToInMemory(eq("scan.close"), any(RuntimeException.class));
@@ -207,18 +204,6 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(DatabaseManager.PRIMARY_KEY, null);
     }
 
-    @Test
-    public void updateFailure() {
-        /* Update returns 0 or less. */
-        DatabaseManager databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        SQLiteDatabase sQLiteDatabaseMock = mock(SQLiteDatabase.class);
-        when(databaseManagerMock.getDatabase()).thenReturn(sQLiteDatabaseMock);
-        when(sQLiteDatabaseMock.update(anyString(), any(ContentValues.class), anyString(), any(String[].class))).thenReturn(-1);
-
-        /* Verify. */
-        assertFalse(databaseManagerMock.update(0, new ContentValues()));
-    }
-
     @Test(expected = UnsupportedOperationException.class)
     public void scannerRemoveInMemoryDB() {
         DatabaseManager databaseManagerMock;
@@ -228,7 +213,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(0);
 
         /* Remove. */
-        databaseManagerMock.getScanner(null, null, false).iterator().remove();
+        databaseManagerMock.getScanner(null, null, null, null, false).iterator().remove();
     }
 
     @Test(expected = NoSuchElementException.class)
@@ -240,7 +225,7 @@ public class DatabaseManagerTest {
         databaseManagerMock.get(0);
 
         /* Next. */
-        databaseManagerMock.getScanner(null, null, false).iterator().next();
+        databaseManagerMock.getScanner(null, null, null, null, false).iterator().next();
     }
 
     @Test
@@ -286,27 +271,59 @@ public class DatabaseManagerTest {
         Context contextMock = mock(Context.class);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, 2, null));
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
         databaseManager.switchToInMemory("test", null);
 
-        ContentValues value1 = mock(ContentValues.class);
-        ContentValues value2 = mock(ContentValues.class);
-        ContentValues value3 = mock(ContentValues.class);
-
-        long value1Id = databaseManager.put(value1);
-        verify(value1).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        /* Put a first value, the test will eventually evict this one after inserting many more and hitting the limit. */
+        ContentValues valueToBeEvicted = mock(ContentValues.class);
+        long valueToBeEvictedId = databaseManager.put(valueToBeEvicted);
+        verify(valueToBeEvicted).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
         assertEquals(1, databaseManager.getRowCount());
 
-        long value2Id = databaseManager.put(value2);
-        verify(value2).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
-        assertEquals(2, databaseManager.getRowCount());
+        /* Put enough items to just reach the size limit. */
+        for (int i = 1; i < DatabaseManager.IN_MEMORY_MAX_SIZE; i++) {
+            ContentValues value = mock(ContentValues.class);
+            long valueId = databaseManager.put(value);
+            verify(value).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+            assertEquals(i + 1, databaseManager.getRowCount());
+        }
 
-        long value3Id = databaseManager.put(value3);
-        verify(value3).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
-        assertEquals(2, databaseManager.getRowCount());
+        /* Put 1 more log after limit reached so that it removes the oldest item. */
+        ContentValues value = mock(ContentValues.class);
+        long valueId = databaseManager.put(value);
+        verify(value).put(eq(DatabaseManager.PRIMARY_KEY), anyLong());
+        assertEquals(DatabaseManager.IN_MEMORY_MAX_SIZE, databaseManager.getRowCount());
 
-        assertNull(databaseManager.get(value1Id));
-        assertNotNull(databaseManager.get(value2Id));
-        assertNotNull(databaseManager.get(value3Id));
+        /* Verify the oldest item was evicted. */
+        assertNull(databaseManager.get(valueToBeEvictedId));
+    }
+
+    @Test
+    public void failsToDeleteLogDuringPutWhenFull() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
+        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
+
+        /* Mock the select cursor we are using to find logs to evict to fail. */
+        mockStatic(SQLiteUtils.class);
+        Cursor cursor = mock(Cursor.class);
+        SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
+        when(cursor.moveToNext()).thenThrow(fatalException);
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+
+        /* Simulate that database is full and that deletes fail because of the cursor. */
+        when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* When we put a log, it will fail to purge and switch to in memory database. */
+        databaseManager.put(mock(ContentValues.class));
+        verify(databaseManager).switchToInMemory("put", fatalException);
     }
 }

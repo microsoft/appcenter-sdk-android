@@ -1,14 +1,17 @@
 package com.microsoft.appcenter.analytics;
 
+import android.annotation.SuppressLint;
+import android.provider.Settings.Secure;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
-import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -17,41 +20,47 @@ import java.util.Map;
 public class PropertyConfigurator extends AbstractChannelListener {
 
     /**
+     * Common schema prefix for Android device IDs.
+     */
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
+
+    /**
      * App name to override common schema part A 'app.name'.
      */
     private String mAppName;
 
     /**
-     * App name to override common schema part A 'app.ver'.
+     * App version to override common schema part A 'app.ver'.
      */
     private String mAppVersion;
 
     /**
-     * App name to override common schema part A 'app.locale'.
+     * App locale to override common schema part A 'app.locale'.
      */
     private String mAppLocale;
 
     /**
+     * Flag to enable populating common schema 'device.localId'.
+     */
+    private boolean mDeviceIdEnabled;
+
+    /**
      * The transmission target which this configurator belongs to.
      */
-    private AnalyticsTransmissionTarget mTransmissionTarget;
+    private final AnalyticsTransmissionTarget mTransmissionTarget;
 
     /**
      * Common event properties for this target. Inherited by children.
      */
-    private final Map<String, String> mEventProperties = new HashMap<>();
+    private final EventProperties mEventProperties = new EventProperties();
 
     /**
      * Create a new property configurator.
      *
-     * @param channel            The channel for this listener.
-     * @param transmissionTarget The tranmission target of the configurator.
+     * @param transmissionTarget The transmission target of the configurator.
      */
-    PropertyConfigurator(Channel channel, AnalyticsTransmissionTarget transmissionTarget) {
+    PropertyConfigurator(AnalyticsTransmissionTarget transmissionTarget) {
         mTransmissionTarget = transmissionTarget;
-        if (channel != null) {
-            channel.addListener(this);
-        }
     }
 
     /**
@@ -64,6 +73,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
+            DeviceExtension device = ((CommonSchemaLog) log).getExt().getDevice();
 
             /* Override app name if not null, else use the name of the nearest parent. */
             if (mAppName != null) {
@@ -102,6 +112,15 @@ public class PropertyConfigurator extends AbstractChannelListener {
                         break;
                     }
                 }
+            }
+
+            /* Fill out the device id if it has been collected. */
+            if (mDeviceIdEnabled) {
+
+                /* Get device identifier, Secure class already has an in memory cache. */
+                @SuppressLint("HardwareIds")
+                String androidId = Secure.getString(mTransmissionTarget.mContext.getContentResolver(), Secure.ANDROID_ID);
+                device.setLocalId(ANDROID_DEVICE_ID_PREFIX + androidId);
             }
         }
     }
@@ -176,12 +195,55 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * Add or overwrite the given key for the common event properties. Properties will be inherited
      * by children of this transmission target.
      *
-     * @param key   The property key.
-     * @param value The property value.
+     * @param key   The property key. The key must not be null.
+     * @param value The boolean value.
      */
-    @SuppressWarnings("WeakerAccess")
+    public synchronized void setEventProperty(String key, boolean value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The date value. The value cannot be null.
+     */
+    public synchronized void setEventProperty(String key, Date value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The double value. The value must not be NaN or infinite.
+     */
+    public synchronized void setEventProperty(String key, double value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The long value.
+     */
+    public synchronized void setEventProperty(String key, long value) {
+        mEventProperties.set(key, value);
+    }
+
+    /**
+     * Add or overwrite the given key for the common event properties. Properties will be inherited
+     * by children of this transmission target.
+     *
+     * @param key   The property key. The key must not be null.
+     * @param value The string value. The value cannot be null.
+     */
     public synchronized void setEventProperty(String key, String value) {
-        mEventProperties.put(key, value);
+        mEventProperties.set(key, value);
     }
 
     /**
@@ -189,20 +251,27 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param key The property key to be removed.
      */
-    @SuppressWarnings("WeakerAccess")
     public synchronized void removeEventProperty(String key) {
-        mEventProperties.remove(key);
+        mEventProperties.getProperties().remove(key);
+    }
+
+    /**
+     * Enable collection of the Android device identifier for this target.
+     * This does not have any effect on child transmission targets.
+     */
+    public void collectDeviceId() {
+        mDeviceIdEnabled = true;
     }
 
     /*
      * Extracted method to synchronize on each level at once while reading properties.
      * Nesting synchronize between parent/child could lead to deadlocks.
      */
-    synchronized void mergeEventProperties(Map<String, String> mergedProperties) {
-        for (Map.Entry<String, String> property : mEventProperties.entrySet()) {
+    synchronized void mergeEventProperties(EventProperties mergedProperties) {
+        for (Map.Entry<String, TypedProperty> property : mEventProperties.getProperties().entrySet()) {
             String key = property.getKey();
-            if (!mergedProperties.containsKey(key)) {
-                mergedProperties.put(key, property.getValue());
+            if (!mergedProperties.getProperties().containsKey(key)) {
+                mergedProperties.getProperties().put(key, property.getValue());
             }
         }
     }

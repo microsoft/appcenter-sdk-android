@@ -16,8 +16,38 @@ done
 duration=$(( SECONDS - start ))
 echo "Android Emulator started after $duration seconds."
 
-# Run tests now
-./gradlew coverageReport
+# Convert VSTS variables to coveralls for reporting status on github.
+if [[ "$LOGNAME" -eq "vsts" ]];
+then
+    export CI_NAME="vsts"
+
+    # For pull request we need to expose the number to the gradle plugin.
+    if [[ $BUILD_SOURCEBRANCH =~ ^refs/pull/[0-9]+/merge$ ]]
+    then
+        export CI_PULL_REQUEST=`sed -E 's#refs/pull/([0-9]+)/merge#\1#' <<< $BUILD_SOURCEBRANCH`
+    fi
+
+    # For branches (after merging), we need to attach to branch name in git
+    # VSTS checkouts in detached mode
+    # and the branch env variable does not work with the gradle plugin...
+    if [[ $BUILD_SOURCEBRANCH =~ ^refs/heads/.*$ ]]
+    then
+        BRANCH=`sed -E 's#refs/heads/(.*)#\1#' <<< $BUILD_SOURCEBRANCH`
+        git checkout -b $BRANCH
+    fi
+fi
+
+# Run tests with coverage
+if [ -z $1 ]
+then
+
+    # Using env variable COVERALLS_REPO_TOKEN if set, this will not fail process unset.
+    ./gradlew --parallel coveralls
+else
+
+    # Expose variable just for this run based on script parameter.
+    COVERALLS_REPO_TOKEN=$1 ./gradlew --parallel coveralls
+fi
 EXIT_CODE=$?
 
 # And kill emulator

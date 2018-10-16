@@ -13,9 +13,9 @@ import java.util.List;
 import static com.microsoft.appcenter.AppCenter.CORE_GROUP;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.AppCenter.PAIR_DELIMITER;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -90,6 +90,9 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP));
         verify(mChannel, never()).setAppSecret(anyString());
 
+        /* Libraries have to use the default max storage size. */
+        verify(mChannel).setMaxStorageSize(AppCenter.DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
+
         /* Verify state. */
         assertTrue(DummyService.isEnabled().get());
         assertFalse(AnotherDummyService.isEnabled().get());
@@ -124,7 +127,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         services.add(AnotherDummyService.getInstance().getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
 
-        /* Verify channel updated with app secret. */
+        /* Verify channel updated with app secret and storage size. */
         verify(mChannel).setAppSecret(DUMMY_APP_SECRET);
     }
 

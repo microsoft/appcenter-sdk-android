@@ -5,14 +5,18 @@ import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaE
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.ingestion.models.one.PartCUtils;
+import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
+import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -51,13 +55,24 @@ public class EventLogFactoryTest {
 
         /* Mock utilities. */
         mockStatic(PartAUtils.class);
+        mockStatic(PartCUtils.class);
 
         /* Create event log. */
         EventLog log = new EventLog();
         log.setName("test");
-        Map<String, String> properties = new HashMap<>();
-        properties.put("a", "b");
-        log.setProperties(properties);
+
+        /* Old properties are ignored. */
+        Map<String, String> oldProperties = new HashMap<>();
+        oldProperties.put("ignored", "ignored");
+        log.setProperties(oldProperties);
+
+        /* Set typed properties. */
+        List<TypedProperty> properties = new ArrayList<>();
+        StringTypedProperty stringTypedProperty = new StringTypedProperty();
+        stringTypedProperty.setName("a");
+        stringTypedProperty.setValue("b");
+        properties.add(stringTypedProperty);
+        log.setTypedProperties(properties);
 
         /* With 2 targets. */
         log.addTransmissionTarget("t1");
@@ -78,8 +93,8 @@ public class EventLogFactoryTest {
         verifyStatic();
         PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t2"));
 
-        /* Check Part C was added. */
+        /* Check Part C was added with typed properties (and thus not old ones). */
         verifyStatic(times(2));
-        PartCUtils.addPartCFromLog(eq(log.getProperties()), notNull(CommonSchemaLog.class));
+        PartCUtils.addPartCFromLog(eq(properties), notNull(CommonSchemaLog.class));
     }
 }

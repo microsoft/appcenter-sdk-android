@@ -11,11 +11,13 @@ import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
@@ -35,7 +37,9 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
     static final String LOG_URL_KEY = "logUrl";
 
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
+
+    static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
+
+    private final int DATABASE_SIZE_MULTIPLE = 4096;
 
     private static final String SENDER_ID = "177539951155";
 
@@ -142,6 +150,9 @@ public class MainActivity extends AppCompatActivity {
             Push.enableFirebaseAnalytics(this);
         }
 
+        /* Set max storage size. */
+        setMaxStorageSize();
+
         /* Start App Center. */
         String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
@@ -197,6 +208,48 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     private void setSenderId() {
         Push.setSenderId(SENDER_ID);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setMaxStorageSize() {
+        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
+        if (maxStorageSize <= 0) {
+            return;
+        }
+
+        // TODO remove reflection once new APIs available in jCenter.
+        // AppCenter.setMaxStorageSize(maxStorageSize)
+        AppCenterFuture<Boolean> future;
+        {
+            try {
+                Method method = AppCenter.class.getMethod("setMaxStorageSize", long.class);
+                future = (AppCenterFuture<Boolean>) method.invoke(null, maxStorageSize);
+            } catch (Exception ignored) {
+                return;
+            }
+        }
+        future.thenAccept(new AppCenterConsumer<Boolean>() {
+
+            @Override
+            public void accept(Boolean succeeded) {
+                if (succeeded) {
+
+                    /* SQLite always use the next multiple of 4KB as maximum size. */
+                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) DATABASE_SIZE_MULTIPLE) * DATABASE_SIZE_MULTIPLE;
+                    Toast.makeText(MainActivity.this, String.format(
+                            MainActivity.this.getString(R.string.max_storage_size_change_success),
+                            Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
+                } else {
+
+                    /* SQLite shrinks to fileSize rounded to next page size in that case. */
+                    Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
+                    String DATABASE_NAME = "com.microsoft.appcenter.persistence";
+                    long fileSize = getDatabasePath(DATABASE_NAME).length();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, fileSize).apply();
+                }
+            }
+        });
     }
 
     @Override

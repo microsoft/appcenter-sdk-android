@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -578,28 +579,17 @@ public class StorageHelper {
                                                          @IntRange(from = 1) int version,
                                                          @NonNull ContentValues schema,
                                                          @NonNull DatabaseManager.Listener listener) {
-            return getDatabaseStorage(database, table, version, schema, 0, listener);
+            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, listener));
         }
 
         /**
-         * Get a new instance of {@code DatabaseManager}.
+         * Set maximum SQLite database size.
          *
-         * @param database   The database name.
-         * @param table      The table name.
-         * @param version    The version.
-         * @param schema     The schema of the database. If the database has more than one table,
-         *                   it should contain schemas for all tables.
-         * @param maxRecords The maximum number of records allowed in the table.
-         * @param listener   The database listener.
-         * @return database storage.
+         * @param maxStorageSizeInBytes Maximum SQLite database size.
+         * @return true if database size was set, otherwise false.
          */
-        public static DatabaseStorage getDatabaseStorage(@NonNull String database,
-                                                         @NonNull String table,
-                                                         @IntRange(from = 1) int version,
-                                                         @NonNull ContentValues schema,
-                                                         @IntRange(from = 0) int maxRecords,
-                                                         @NonNull DatabaseManager.Listener listener) {
-            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, maxRecords, listener));
+        public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+            return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
         }
 
         /**
@@ -610,17 +600,6 @@ public class StorageHelper {
          */
         public long put(@NonNull ContentValues values) {
             return mDatabaseManager.put(values);
-        }
-
-        /**
-         * Update an entry in a table.
-         *
-         * @param id     The existing database identifier.
-         * @param values The value to update.
-         * @return {@code true} if the values were updated successfully, {@code false} otherwise.
-         */
-        public boolean update(@IntRange(from = 0) long id, @NonNull ContentValues values) {
-            return mDatabaseManager.update(id, values);
         }
 
         /**
@@ -690,21 +669,23 @@ public class StorageHelper {
          * @return A scanner to iterate all values.
          */
         public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value) {
-            return getScanner(key, value, false);
+            return getScanner(key, value, null, null, false);
         }
 
         /**
          * Gets a scanner to iterate all values those match key == value, but records contain
          * only identifiers.
          *
-         * @param key    The optional key for query.
-         * @param value  The optional value for query.
-         * @param idOnly True to return only identifiers, false to return all fields.
-         *               This flag is ignored if using in memory database.
+         * @param key          The optional key1 for query.
+         * @param value        The optional value1 for query.
+         * @param key2         The optional key2 for query.
+         * @param value2Filter The optional values to exclude from query that matches key2.
+         * @param idOnly       True to return only identifiers, false to return all fields.
+         *                     This flag is ignored if using in memory database.
          * @return A scanner to iterate all values (records contain only identifiers).
          */
-        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, boolean idOnly) {
-            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, idOnly));
+        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, String key2, Collection<String> value2Filter, boolean idOnly) {
+            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, key2, value2Filter, idOnly));
         }
 
         /**
@@ -732,13 +713,23 @@ public class StorageHelper {
         }
 
         /**
+         * Gets the maximum size of the database.
+         *
+         * @return The maximum size of database in bytes.
+         */
+        @SuppressWarnings("unused")
+        public long getMaxSize() {
+            return mDatabaseManager.getMaxSize();
+        }
+
+        /**
          * Gets an array of column names in the table.
          *
          * @return An array of column names.
          */
         @VisibleForTesting
         String[] getColumnNames() {
-            return mDatabaseManager.getCursor(null, null, false).getColumnNames();
+            return mDatabaseManager.getCursor(null, null, null, null, false).getColumnNames();
         }
 
         /**

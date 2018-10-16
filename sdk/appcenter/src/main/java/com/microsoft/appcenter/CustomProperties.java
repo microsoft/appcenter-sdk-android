@@ -9,11 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+
 /**
  * Custom properties builder.
  * Collect multiple properties for send its at once in the same log.
  */
-@SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class CustomProperties {
 
     @VisibleForTesting
@@ -22,8 +23,7 @@ public class CustomProperties {
     @VisibleForTesting
     static final int MAX_PROPERTY_KEY_LENGTH = 128;
 
-    @VisibleForTesting
-    static final int MAX_PROPERTY_VALUE_LENGTH = 128;
+    private static final int MAX_PROPERTY_VALUE_LENGTH = 128;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9]*$");
 
@@ -36,12 +36,12 @@ public class CustomProperties {
     private final Map<String, Object> mProperties = new HashMap<>();
 
     /**
-     * Get the properties value.
+     * Get the property values as a copy.
      *
-     * @return the properties value
+     * @return the property values.
      */
-    Map<String, Object> getProperties() {
-        return mProperties;
+    synchronized Map<String, Object> getProperties() {
+        return new HashMap<>(mProperties);
     }
 
     /**
@@ -53,7 +53,7 @@ public class CustomProperties {
      * @param value value to be set with the specified key.
      * @return this instance.
      */
-    public CustomProperties set(String key, String value) {
+    public synchronized CustomProperties set(String key, String value) {
         if (isValidKey(key) && isValidStringValue(key, value)) {
             addProperty(key, value);
         }
@@ -69,12 +69,12 @@ public class CustomProperties {
      * @param value value to be set with the specified key.
      * @return this instance.
      */
-    public CustomProperties set(String key, Date value) {
+    public synchronized CustomProperties set(String key, Date value) {
         if (isValidKey(key)) {
             if (value != null) {
                 addProperty(key, value);
             } else {
-                AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+                AppCenterLog.error(LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             }
         }
         return this;
@@ -89,13 +89,9 @@ public class CustomProperties {
      * @param value value to be set with the specified key.
      * @return this instance.
      */
-    public CustomProperties set(String key, Number value) {
-        if (isValidKey(key)) {
-            if (value != null) {
-                addProperty(key, value);
-            } else {
-                AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
-            }
+    public synchronized CustomProperties set(String key, Number value) {
+        if (isValidKey(key) && isValidNumberValue(key, value)) {
+            addProperty(key, value);
         }
         return this;
     }
@@ -109,7 +105,7 @@ public class CustomProperties {
      * @param value value to be set with the specified key.
      * @return this instance.
      */
-    public CustomProperties set(String key, boolean value) {
+    public synchronized CustomProperties set(String key, boolean value) {
         if (isValidKey(key)) {
             addProperty(key, value);
         }
@@ -122,7 +118,7 @@ public class CustomProperties {
      * @param key key whose mapping is to be cleared.
      * @return this instance.
      */
-    public CustomProperties clear(String key) {
+    public synchronized CustomProperties clear(String key) {
         if (isValidKey(key)) {
 
             /* Null value means that key marked to clear. */
@@ -135,32 +131,45 @@ public class CustomProperties {
         if (mProperties.containsKey(key) || mProperties.size() < MAX_PROPERTIES_COUNT) {
             mProperties.put(key, value);
         } else {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
+            AppCenterLog.error(LOG_TAG, "Custom properties cannot contain more than " + MAX_PROPERTIES_COUNT + " items");
         }
     }
 
     private boolean isValidKey(String key) {
         if (key == null || !KEY_PATTERN.matcher(key).matches()) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" must match \"" + KEY_PATTERN + "\"");
+            AppCenterLog.error(LOG_TAG, "Custom property \"" + key + "\" must match \"" + KEY_PATTERN + "\"");
             return false;
         }
         if (key.length() > MAX_PROPERTY_KEY_LENGTH) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
+            AppCenterLog.error(LOG_TAG, "Custom property \"" + key + "\" length cannot be longer than " + MAX_PROPERTY_KEY_LENGTH + " characters.");
             return false;
         }
         if (mProperties.containsKey(key)) {
-            AppCenterLog.warn(AppCenter.LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
+            AppCenterLog.warn(LOG_TAG, "Custom property \"" + key + "\" is already set or cleared and will be overridden.");
         }
         return true;
     }
 
     private boolean isValidStringValue(String key, String value) {
         if (value == null) {
-            AppCenterLog.error(AppCenter.LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            AppCenterLog.error(LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
             return false;
         }
         if (value.length() > MAX_PROPERTY_VALUE_LENGTH) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Custom property \""+ key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
+            AppCenterLog.error(LOG_TAG, "Custom property \"" + key + "\" value length cannot be longer than " + MAX_PROPERTY_VALUE_LENGTH + " characters.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidNumberValue(String key, Number value) {
+        if (value == null) {
+            AppCenterLog.error(LOG_TAG, VALUE_NULL_ERROR_MESSAGE);
+            return false;
+        }
+        double doubleValue = value.doubleValue();
+        if (Double.isInfinite(doubleValue) || Double.isNaN(doubleValue)) {
+            AppCenterLog.error(LOG_TAG, "Custom property \"" + key + "\" value cannot be NaN or infinite.");
             return false;
         }
         return true;

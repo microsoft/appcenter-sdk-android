@@ -11,6 +11,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
@@ -21,7 +22,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
-import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
@@ -126,7 +126,7 @@ public class NetworkStateHelper implements Closeable {
             } else {
                 updateNetworkType();
                 mConnectivityReceiver = new ConnectivityReceiver();
-                mContext.registerReceiver(mConnectivityReceiver, new IntentFilter(CONNECTIVITY_ACTION));
+                mContext.registerReceiver(mConnectivityReceiver, getOldIntentFilter());
             }
         } catch (RuntimeException e) {
 
@@ -136,6 +136,12 @@ public class NetworkStateHelper implements Closeable {
              */
             AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
         }
+    }
+
+    @NonNull
+    @SuppressWarnings("deprecation")
+    private IntentFilter getOldIntentFilter() {
+        return new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     }
 
     /**
@@ -189,6 +195,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Update network type by polling on API level < 21.
      */
+    @SuppressWarnings("deprecation")
     private void updateNetworkType() {
 
         /* Get active network info */

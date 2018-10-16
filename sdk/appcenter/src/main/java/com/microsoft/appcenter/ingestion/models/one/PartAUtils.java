@@ -17,6 +17,16 @@ public class PartAUtils {
     private static final Pattern NAME_REGEX = Pattern.compile("^[a-zA-Z0-9]((\\.(?!(\\.|$)))|[_a-zA-Z0-9]){3,99}$");
 
     /**
+     * Get the project identifier from the full target token (aka ingestion key or apiKey).
+     *
+     * @param targetToken transmission target token.
+     * @return the ikey or the original string if format is invalid.
+     */
+    public static String getTargetKey(String targetToken) {
+        return targetToken.split("-")[0];
+    }
+
+    /**
      * Validate and set name for common schema log.
      *
      * @param log  log.
@@ -38,6 +48,7 @@ public class PartAUtils {
      *
      * @param src  source log.
      * @param dest destination common schema log.
+     * @param transmissionTarget transmission target to use.
      */
     public static void addPartAFromLog(Log src, CommonSchemaLog dest, String transmissionTarget) {
 
@@ -48,13 +59,15 @@ public class PartAUtils {
         dest.setVer("3.0");
         dest.setTimestamp(src.getTimestamp());
         /* TODO: We should cache the ikey for transmission target */
-        dest.setIKey("o:" + transmissionTarget.split("-")[0]);
+        dest.setIKey("o:" + getTargetKey(transmissionTarget));
 
         /* Copy target token also in the set. */
         dest.addTransmissionTarget(transmissionTarget);
 
         /* Add extension. */
-        dest.setExt(new Extensions());
+        if (dest.getExt() == null) {
+            dest.setExt(new Extensions());
+        }
 
         /* Add protocol extension. */
         dest.getExt().setProtocol(new ProtocolExtension());
@@ -92,5 +105,8 @@ public class PartAUtils {
                 Math.abs(device.getTimeZoneOffset() / 60),
                 Math.abs(device.getTimeZoneOffset() % 60));
         dest.getExt().getLoc().setTz(timezoneOffset);
+
+        /* Add device extension. */
+        dest.getExt().setDevice(new DeviceExtension());
     }
 }

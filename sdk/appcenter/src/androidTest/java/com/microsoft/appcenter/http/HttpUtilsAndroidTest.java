@@ -17,8 +17,8 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import static com.microsoft.appcenter.http.HttpUtils.isRecoverableError;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class HttpUtilsAndroidTest {
