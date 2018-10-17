@@ -26,8 +26,12 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- TODO replace this file by project version after SDK available in jCenter. -->
-        <include layout="@layout/property" />
+        <fragment
+            android:id="@+id/typed_property"
+            android:name="com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <LinearLayout
             style="?android:attr/buttonBarStyle"
