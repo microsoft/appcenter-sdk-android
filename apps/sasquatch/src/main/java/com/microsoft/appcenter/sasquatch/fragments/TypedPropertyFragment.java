@@ -17,7 +17,6 @@ import com.microsoft.appcenter.sasquatch.R;
 import java.util.Date;
 import java.util.Map;
 
-// TODO move to main folder once new APIs available in jCenter
 public class TypedPropertyFragment extends EditDateTimeFragment {
 
     private EditText mEditKey;
