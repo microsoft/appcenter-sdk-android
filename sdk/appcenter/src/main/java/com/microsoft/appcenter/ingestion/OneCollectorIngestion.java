@@ -34,7 +34,6 @@ import java.util.UUID;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
@@ -166,8 +165,9 @@ public class OneCollectorIngestion implements Ingestion {
         /* Content type. */
         headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
 
-        /* Client version */
-        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, VERSION_NAME));
+        /* Client version (no import to avoid Javadoc issue). */
+        String sdkVersion = com.microsoft.appcenter.BuildConfig.VERSION_NAME;
+        headers.put(CLIENT_VERSION_KEY, String.format(CLIENT_VERSION_FORMAT, sdkVersion));
 
         /* Upload time */
         headers.put(UPLOAD_TIME_KEY, String.valueOf(System.currentTimeMillis()));
