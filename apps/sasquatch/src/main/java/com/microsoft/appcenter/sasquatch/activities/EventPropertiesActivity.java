@@ -81,7 +81,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         /* Initialize list view. */
         mListView = findViewById(R.id.list);
-        mPropertyListAdapter = new PropertyListAdapter(new ArrayList<Pair<String, String>>());
+        mPropertyListAdapter = new PropertyListAdapter(new ArrayList<Pair<String, Object>>());
 
         /*
          * Initialize analytics transmission targets.
@@ -143,10 +143,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
             mPropertyListAdapter.mList.clear();
             for (Map.Entry<String, TypedProperty> entry : properties.entrySet()) {
                 Object value = entry.getValue().getClass().getMethod("getValue").invoke(entry.getValue());
-                if (value instanceof String || value instanceof Date) {
-                    value = JSONObject.quote(value.toString());
-                }
-                mPropertyListAdapter.mList.add(new Pair<>(JSONObject.quote(entry.getKey()), value.toString()));
+                mPropertyListAdapter.mList.add(new Pair<>(entry.getKey(), value));
             }
             mListView.setAdapter(mPropertyListAdapter);
             mPropertyListAdapter.notifyDataSetChanged();
@@ -163,9 +160,9 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
         private final static String KEY_VALUE_PAIR_FORMAT = "%s:%s";
 
-        private final List<Pair<String, String>> mList;
+        private final List<Pair<String, Object>> mList;
 
-        private PropertyListAdapter(List<Pair<String, String>> list) {
+        private PropertyListAdapter(List<Pair<String, Object>> list) {
             mList = list;
         }
 
@@ -190,7 +187,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
             /* Set key and value strings to the view. */
             View rowView;
-            final Pair<String, String> item = (Pair<String, String>) getItem(position);
+            final Pair<String, Object> item = (Pair<String, Object>) getItem(position);
             ViewHolder holder;
             if (convertView != null && convertView.getTag() != null) {
                 holder = (ViewHolder) convertView.getTag();
@@ -202,8 +199,12 @@ public class EventPropertiesActivity extends AppCompatActivity {
                 holder = new ViewHolder(textView, imageButton);
                 rowView.setTag(holder);
             }
-            holder.mTextView.setText(String.format(KEY_VALUE_PAIR_FORMAT, item.first, item.second));
-            holder.mImageButton.setOnClickListener(new View.OnClickListener() {
+            Object value = item.second;
+            if (value instanceof String || value instanceof Date) {
+                value = JSONObject.quote(value.toString());
+            }
+            holder.mTextView.setText(String.format(KEY_VALUE_PAIR_FORMAT, JSONObject.quote(item.first), value.toString()));
+            holder.mRemoveButton.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View v) {
@@ -222,11 +223,11 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
             private final TextView mTextView;
 
-            private final ImageButton mImageButton;
+            private final ImageButton mRemoveButton;
 
-            private ViewHolder(TextView textView, ImageButton imageButton) {
+            private ViewHolder(TextView textView, ImageButton removeButton) {
                 mTextView = textView;
-                mImageButton = imageButton;
+                mRemoveButton = removeButton;
             }
         }
     }
