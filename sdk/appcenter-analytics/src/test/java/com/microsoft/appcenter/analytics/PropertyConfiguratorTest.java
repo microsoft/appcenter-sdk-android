@@ -29,7 +29,6 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -615,7 +614,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
         Analytics analytics = Analytics.getInstance();
         AppCenterHandler handler = mock(AppCenterHandler.class);
-        final Collection<Runnable> backgroundCommands = new LinkedList<>();
+        final LinkedList<Runnable> backgroundCommands = new LinkedList<>();
         doAnswer(new Answer() {
 
             @Override
@@ -629,6 +628,9 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Create a target. */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Init target background code now. */
+        backgroundCommands.removeFirst().run();
 
         /* Simulate a track event call with no property. */
         CommonSchemaLog logBeforeSetProperty = new CommonSchemaEventLog();
