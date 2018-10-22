@@ -438,7 +438,7 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Unconditionally create a new transmission target at root level.
+     * Unconditionally create a new transmission target at root level, even if one exists with the given token.
      *
      * @param transmissionTargetToken the token.
      * @return the created target.
