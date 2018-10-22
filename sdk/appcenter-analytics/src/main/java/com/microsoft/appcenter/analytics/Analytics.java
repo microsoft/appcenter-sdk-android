@@ -80,7 +80,8 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * The default transmission target.
      */
-    private AnalyticsTransmissionTarget mDefaultTransmissionTarget;
+    @VisibleForTesting
+    AnalyticsTransmissionTarget mDefaultTransmissionTarget;
 
     /**
      * Current activity to replay onResume when enabled in foreground.
@@ -430,19 +431,29 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
-            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+            transmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
-            final AnalyticsTransmissionTarget finalTransmissionTarget = transmissionTarget;
-            postCommandEvenIfDisabled(new Runnable() {
-
-                @Override
-                public void run() {
-                    finalTransmissionTarget.initInBackground(mContext, mChannel);
-                }
-            });
             return transmissionTarget;
         }
+    }
+
+    /**
+     * Unconditionally create a new transmission target at root level, even if one exists with the given token.
+     *
+     * @param transmissionTargetToken the token.
+     * @return the created target.
+     */
+    private AnalyticsTransmissionTarget createAnalyticsTransmissionTarget(String transmissionTargetToken) {
+        final AnalyticsTransmissionTarget transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
+        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+        postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                transmissionTarget.initInBackground(mContext, mChannel);
+            }
+        });
+        return transmissionTarget;
     }
 
     @Override
@@ -671,6 +682,7 @@ public class Analytics extends AbstractAppCenterService {
                 if (aTransmissionTarget != null) {
                     if (aTransmissionTarget.isEnabled()) {
                         eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                        eventLog.setTag(aTransmissionTarget);
                     } else {
                         AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");
                         return;
@@ -760,7 +772,7 @@ public class Analytics extends AbstractAppCenterService {
     @WorkerThread
     private void setDefaultTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken != null) {
-            mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
+            mDefaultTransmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
         }
     }
 

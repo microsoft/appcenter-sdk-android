@@ -72,6 +72,11 @@ public abstract class AbstractLog implements Log {
      */
     private Device device;
 
+    /**
+     * Transient object tag.
+     */
+    private Object tag;
+
     @Override
     public Date getTimestamp() {
         return this.timestamp;
@@ -136,6 +141,16 @@ public abstract class AbstractLog implements Log {
         this.device = device;
     }
 
+    @Override
+    public Object getTag() {
+        return tag;
+    }
+
+    @Override
+    public void setTag(Object tag) {
+        this.tag = tag;
+    }
+
     /**
      * Adds a transmission target that this log should be sent to.
      *
@@ -188,7 +203,6 @@ public abstract class AbstractLog implements Log {
         }
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -202,7 +216,8 @@ public abstract class AbstractLog implements Log {
         if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
         if (distributionGroupId != null ? !distributionGroupId.equals(that.distributionGroupId) : that.distributionGroupId != null)
             return false;
-        return device != null ? device.equals(that.device) : that.device == null;
+        if (device != null ? !device.equals(that.device) : that.device != null) return false;
+        return tag != null ? tag.equals(that.tag) : that.tag == null;
     }
 
     @Override
@@ -212,6 +227,7 @@ public abstract class AbstractLog implements Log {
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
         result = 31 * result + (distributionGroupId != null ? distributionGroupId.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
+        result = 31 * result + (tag != null ? tag.hashCode() : 0);
         return result;
     }
 }

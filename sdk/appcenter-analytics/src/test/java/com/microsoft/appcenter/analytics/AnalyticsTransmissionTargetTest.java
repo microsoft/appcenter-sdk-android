@@ -111,7 +111,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         mChannel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, startFromApp);
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        final AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 
         /* Getting a reference to the same target a second time actually returns the same. */
@@ -128,12 +128,15 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                         EventLog eventLog = (EventLog) item;
                         boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                         boolean tokenMatch;
+                        boolean tagMatch;
                         if (defaultToken != null) {
                             tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
+                            tagMatch = Analytics.getInstance().mDefaultTransmissionTarget.equals(eventLog.getTag());
                         } else {
                             tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
+                            tagMatch = eventLog.getTag() == null;
                         }
-                        return nameAndPropertiesMatch && tokenMatch;
+                        return nameAndPropertiesMatch && tokenMatch && tagMatch;
                     }
                     return false;
                 }
@@ -153,7 +156,8 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     EventLog eventLog = (EventLog) item;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    boolean tagMatch = target.equals(eventLog.getTag());
+                    return nameAndPropertiesMatch && tokenMatch && tagMatch;
                 }
                 return false;
             }
@@ -177,7 +181,8 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     stringTypedProperty.setValue("valid");
                     typedProperties.add(stringTypedProperty);
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameMatches && tokenMatch && typedProperties.equals(eventLog.getTypedProperties());
+                    boolean tagMatch = Analytics.getTransmissionTarget("token2").equals(eventLog.getTag());
+                    return nameMatches && tokenMatch && tagMatch && typedProperties.equals(eventLog.getTypedProperties());
                 }
                 return false;
             }
@@ -185,7 +190,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         reset(mChannel);
 
         /* Create a child transmission target and track event. */
-        AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
+        final AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
         childTarget.trackEvent("name");
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -195,7 +200,8 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     EventLog eventLog = (EventLog) item;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    boolean tagMatch = childTarget.equals(eventLog.getTag());
+                    return nameAndPropertiesMatch && tokenMatch && tagMatch;
                 }
                 return false;
             }
