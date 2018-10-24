@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.ALLOWED_SIZE_MULTIPLE;
-import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.InternalStorage;
 import static com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
 import static org.junit.Assert.assertArrayEquals;
@@ -234,94 +233,94 @@ public class StorageHelperAndroidTest {
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static void runDatabaseStorageTest(DatabaseStorage databaseStorage, boolean imdbTest) {
+    private static void runDatabaseManagerTest(DatabaseManager databaseManager, boolean imdbTest) {
         ContentValues value1 = generateContentValues();
         ContentValues value2 = generateContentValues();
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseStorage.put(value1);
+        Long value1Id = databaseManager.put(value1);
         assertNotNull(value1Id);
 
         /* Get for in-memory database test. */
         if (imdbTest) {
 
             /* Try with invalid key. */
-            ContentValues valueFromDatabase = databaseStorage.get("COL_STRINGX", value1.getAsString("COL_STRING"));
+            ContentValues valueFromDatabase = databaseManager.get("COL_STRINGX", value1.getAsString("COL_STRING"));
             assertNull(valueFromDatabase);
 
             /* Try with valid key. */
-            valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING"));
+            valueFromDatabase = databaseManager.get("COL_STRING", value1.getAsString("COL_STRING"));
             assertContentValuesEquals(value1, valueFromDatabase);
-            valueFromDatabase = databaseStorage.get("COL_STRING", value1.getAsString("COL_STRING") + "X");
+            valueFromDatabase = databaseManager.get("COL_STRING", value1.getAsString("COL_STRING") + "X");
             assertNull(valueFromDatabase);
         }
 
         /* Put another. */
-        Long value2Id = databaseStorage.put(value2);
+        Long value2Id = databaseManager.put(value2);
         assertNotNull(value2Id);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
 
         /* Get. */
-        ContentValues value1FromDatabase = databaseStorage.get(value1Id);
+        ContentValues value1FromDatabase = databaseManager.get(value1Id);
         assertContentValuesEquals(value1, value1FromDatabase);
-        ContentValues value2FromDatabase = databaseStorage.get(DatabaseManager.PRIMARY_KEY, value2Id);
+        ContentValues value2FromDatabase = databaseManager.get(DatabaseManager.PRIMARY_KEY, value2Id);
         assertContentValuesEquals(value2, value2FromDatabase);
         //noinspection ResourceType
-        ContentValues nullValueFromDatabase = databaseStorage.get(-1);
+        ContentValues nullValueFromDatabase = databaseManager.get(-1);
         assertNull(nullValueFromDatabase);
 
         /* Count with scanner. */
-        DatabaseStorage.DatabaseScanner scanner = databaseStorage.getScanner();
+        DatabaseManager.Scanner scanner = databaseManager.getScanner(null, null, null, null, false);
         assertEquals(2, scanner.getCount());
         assertEquals(2, scanner.getCount());
-        DatabaseStorage.DatabaseScanner scanner1 = databaseStorage.getScanner("COL_STRING", value1.getAsString("COL_STRING"));
+        DatabaseManager.Scanner scanner1 = databaseManager.getScanner("COL_STRING", value1.getAsString("COL_STRING"), null, null, false);
         assertEquals(1, scanner1.getCount());
         Iterator<ContentValues> iterator = scanner1.iterator();
         assertContentValuesEquals(value1, iterator.next());
         assertFalse(iterator.hasNext());
 
         /* Null value matching. */
-        assertEquals(0, databaseStorage.getScanner("COL_STRING", null).getCount());
-        assertEquals(2, databaseStorage.getScanner("COL_STRING_NULL", null).getCount());
+        assertEquals(0, databaseManager.getScanner("COL_STRING", null, null, null, false).getCount());
+        assertEquals(2, databaseManager.getScanner("COL_STRING_NULL", null, null, null, false).getCount());
 
         /* Test null value filter does not exclude anything, so returns the 2 logs. */
-        scanner = databaseStorage.getScanner(null, null, "COL_STRING", null, false);
+        scanner = databaseManager.getScanner(null, null, "COL_STRING", null, false);
         assertEquals(2, scanner.getCount());
 
         /* Test filtering only with the second key parameter to get only the second log. */
-        scanner = databaseStorage.getScanner(null, null, "COL_STRING", Collections.singletonList(value1.getAsString("COL_STRING")), false);
+        scanner = databaseManager.getScanner(null, null, "COL_STRING", Collections.singletonList(value1.getAsString("COL_STRING")), false);
         assertEquals(1, scanner.getCount());
         assertContentValuesEquals(value2, scanner.iterator().next());
 
         /* Delete. */
-        databaseStorage.delete(value1Id);
-        assertNull(databaseStorage.get(value1Id));
-        assertEquals(1, databaseStorage.size());
-        assertEquals(1, databaseStorage.getScanner().getCount());
+        databaseManager.delete(value1Id);
+        assertNull(databaseManager.get(value1Id));
+        assertEquals(1, databaseManager.getRowCount());
+        assertEquals(1, databaseManager.getScanner(null, null, null, null, false).getCount());
 
         /* Put logs to delete multiple IDs. */
         ContentValues value4 = generateContentValues();
         ContentValues value5 = generateContentValues();
-        Long value4Id = databaseStorage.put(value4);
-        Long value5Id = databaseStorage.put(value5);
+        Long value4Id = databaseManager.put(value4);
+        Long value5Id = databaseManager.put(value5);
         assertNotNull(value4Id);
         assertNotNull(value5Id);
 
         /* Delete multiple logs. */
-        databaseStorage.delete(Arrays.asList(value4Id, value5Id));
-        assertNull(databaseStorage.get(value4Id));
-        assertNull(databaseStorage.get(value5Id));
-        assertEquals(1, databaseStorage.size());
+        databaseManager.delete(Arrays.asList(value4Id, value5Id));
+        assertNull(databaseManager.get(value4Id));
+        assertNull(databaseManager.get(value5Id));
+        assertEquals(1, databaseManager.getRowCount());
 
         /* Put logs to delete with condition. */
         ContentValues value6 = generateContentValues();
         ContentValues value7 = generateContentValues();
         value6.put("COL_STRING", value2.getAsString("COL_STRING"));
         value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        Long value6Id = databaseStorage.put(value6);
-        Long value7Id = databaseStorage.put(value7);
+        Long value6Id = databaseManager.put(value6);
+        Long value7Id = databaseManager.put(value7);
         assertNotNull(value6Id);
         assertNotNull(value7Id);
 
@@ -329,19 +328,19 @@ public class StorageHelperAndroidTest {
         if (imdbTest) {
 
             /* Try with invalid key. */
-            databaseStorage.delete("COL_STRINGX", value2.getAsString("COL_STRING"));
-            assertEquals(3, databaseStorage.size());
+            databaseManager.delete("COL_STRINGX", value2.getAsString("COL_STRING"));
+            assertEquals(3, databaseManager.getRowCount());
         }
 
         /* Delete logs with condition. */
-        databaseStorage.delete("COL_STRING", value2.getAsString("COL_STRING"));
-        assertEquals(1, databaseStorage.size());
-        ContentValues value7FromDatabase = databaseStorage.get(value7Id);
+        databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
+        assertEquals(1, databaseManager.getRowCount());
+        ContentValues value7FromDatabase = databaseManager.get(value7Id);
         assertContentValuesEquals(value7, value7FromDatabase);
 
         /* Clear. */
-        databaseStorage.clear();
-        assertEquals(0, databaseStorage.size());
+        databaseManager.clear();
+        assertEquals(0, databaseManager.getRowCount());
     }
 
     @Test
@@ -519,10 +518,10 @@ public class StorageHelperAndroidTest {
 
     @Test
     public void databaseStorage() {
-        Log.i(TAG, "Testing Database Storage");
+        Log.i(TAG, "Testing Database Manager");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorage", "databaseStorage", 1, mSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorage", "databaseStorage", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -537,12 +536,12 @@ public class StorageHelperAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            runDatabaseStorageTest(databaseStorage, false);
+            runDatabaseManagerTest(databaseManager, false);
         } finally {
 
             /* Close. */
             //noinspection ThrowFromFinallyBlock
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -559,7 +558,7 @@ public class StorageHelperAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -574,22 +573,22 @@ public class StorageHelperAndroidTest {
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
-            assertEquals(2, databaseStorage.getColumnNames().length);
-            long id = databaseStorage.put(oldVersionValue);
+            assertEquals(2, databaseManager.getColumnNames().length);
+            long id = databaseManager.put(oldVersionValue);
 
             /* Put data. */
-            ContentValues actual = databaseStorage.get(id);
+            ContentValues actual = databaseManager.get(id);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
-            assertEquals(1, databaseStorage.size());
+            assertEquals(1, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
-            databaseStorage.close();
+            databaseManager.close();
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, mSchema, new DatabaseManager.Listener() {
+        databaseManager = new DatabaseManager(sContext, "test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -604,12 +603,12 @@ public class StorageHelperAndroidTest {
 
         /* Verify data deleted since no handled upgrade. */
         try {
-            assertEquals(11, databaseStorage.getColumnNames().length);
-            assertEquals(0, databaseStorage.size());
+            assertEquals(11, databaseManager.getColumnNames().length);
+            assertEquals(0, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -626,7 +625,7 @@ public class StorageHelperAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageUpgrade", "databaseStorageUpgrade", 1, schema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -642,22 +641,22 @@ public class StorageHelperAndroidTest {
         /* Put data. */
         long id;
         try {
-            id = databaseStorage.put(oldVersionValue);
-            ContentValues actual = databaseStorage.get(id);
+            id = databaseManager.put(oldVersionValue);
+            ContentValues actual = databaseManager.get(id);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
-            assertEquals(1, databaseStorage.size());
+            assertEquals(1, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
-            databaseStorage.close();
+            databaseManager.close();
         }
 
         /* Upgrade schema. */
         schema.put("COL_INT", 1);
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, schema, new DatabaseManager.Listener() {
+        databaseManager = new DatabaseManager(sContext, "test-databaseStorageUpgrade", "databaseStorageUpgrade", 2, schema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -673,24 +672,24 @@ public class StorageHelperAndroidTest {
         try {
 
             /* Verify data still there. */
-            ContentValues actual = databaseStorage.get(id);
+            ContentValues actual = databaseManager.get(id);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
-            assertEquals(1, databaseStorage.size());
+            assertEquals(1, databaseManager.getRowCount());
 
             /* Put new data. */
             ContentValues data = new ContentValues();
             data.put("COL_STRING", "Hello World");
             data.put("COL_INT", 2);
-            id = databaseStorage.put(data);
-            actual = databaseStorage.get(id);
+            id = databaseManager.put(data);
+            actual = databaseManager.get(id);
             actual.remove("oid");
             assertEquals(data, actual);
-            assertEquals(2, databaseStorage.size());
+            assertEquals(2, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -699,7 +698,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Testing Database Storage Exceptions");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerRemove", "databaseStorageScannerRemove", 1, mSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageScannerRemove", "databaseStorageScannerRemove", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -714,12 +713,12 @@ public class StorageHelperAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            databaseStorage.getScanner().iterator().remove();
+            databaseManager.getScanner(null, null, null, null, false).iterator().remove();
         } finally {
 
             /* Close. */
             //noinspection ThrowFromFinallyBlock
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -728,7 +727,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Testing Database Storage Exceptions");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageScannerNext", "databaseStorageScannerNext", 1, mSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageScannerNext", "databaseStorageScannerNext", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -743,12 +742,12 @@ public class StorageHelperAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            databaseStorage.getScanner().iterator().next();
+            databaseManager.getScanner(null, null, null, null, false).iterator().next();
         } finally {
 
             /* Close. */
             //noinspection ThrowFromFinallyBlock
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -761,7 +760,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Testing Database Storage switch over to in-memory database");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -770,17 +769,19 @@ public class StorageHelperAndroidTest {
 
             @Override
             public void onError(String operation, RuntimeException e) {
+
                 /* Do not handle any errors. This is simulating errors so this is expected. */
             }
         });
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            runDatabaseStorageTest(databaseStorage, true);
+            runDatabaseManagerTest(databaseManager, true);
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 
@@ -789,7 +790,7 @@ public class StorageHelperAndroidTest {
         Log.i(TAG, "Testing Database Storage set maximum size");
 
         /* Get instance to access database. */
-        DatabaseStorage databaseStorage = DatabaseStorage.getDatabaseStorage("test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -807,24 +808,24 @@ public class StorageHelperAndroidTest {
         try {
 
             /* Test to change to an exact size as its multiple of 4KB. */
-            assertTrue(databaseStorage.setMaxStorageSize(MAX_SIZE_IN_BYTES));
-            assertEquals(MAX_SIZE_IN_BYTES, databaseStorage.getMaxSize());
+            assertTrue(databaseManager.setMaxSize(MAX_SIZE_IN_BYTES));
+            assertEquals(MAX_SIZE_IN_BYTES, databaseManager.getMaxSize());
 
             /* Test inexact value, it will use next multiple of 4KB. */
             long desiredSize = MAX_SIZE_IN_BYTES * 2 + 1;
-            assertTrue(databaseStorage.setMaxStorageSize(desiredSize));
-            assertEquals(desiredSize - 1 + ALLOWED_SIZE_MULTIPLE, databaseStorage.getMaxSize());
+            assertTrue(databaseManager.setMaxSize(desiredSize));
+            assertEquals(desiredSize - 1 + ALLOWED_SIZE_MULTIPLE, databaseManager.getMaxSize());
 
             /* Try to set to a very small value. */
-            assertFalse(databaseStorage.setMaxStorageSize(2));
+            assertFalse(databaseManager.setMaxSize(2));
 
             /* Test the side effect is that we shrunk to the minimum size that is possible. */
-            assertEquals(MAX_SIZE_IN_BYTES, databaseStorage.getMaxSize());
+            assertEquals(MAX_SIZE_IN_BYTES, databaseManager.getMaxSize());
         } finally {
 
             /* Close. */
             //noinspection ThrowFromFinallyBlock
-            databaseStorage.close();
+            databaseManager.close();
         }
     }
 

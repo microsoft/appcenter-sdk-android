@@ -1,13 +1,10 @@
 package com.microsoft.appcenter.utils.storage;
 
 import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.AppCenter;
@@ -15,7 +12,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,9 +23,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -540,223 +533,6 @@ public class StorageHelper {
         @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
         public static void mkdir(@NonNull String path) {
             new File(path).mkdirs();
-        }
-    }
-
-    /**
-     * DatabaseStorage Helper class
-     */
-    public static class DatabaseStorage implements Closeable {
-
-        /**
-         * DatabaseManager instance.
-         */
-        private final DatabaseManager mDatabaseManager;
-
-        /**
-         * Private constructor.
-         *
-         * @param databaseManager An instance of {@code DatabaseManager}.
-         */
-        private DatabaseStorage(@NonNull DatabaseManager databaseManager) {
-            mDatabaseManager = databaseManager;
-        }
-
-        /**
-         * Get a new instance of {@code DatabaseManager}.
-         *
-         * @param database The database name.
-         * @param table    The table name.
-         * @param version  The version.
-         * @param schema   The schema of the database. If the database has more than one table,
-         *                 it should contain schemas for all the tables.
-         * @param listener The database listener.
-         * @return database storage.
-         */
-        @SuppressWarnings("WeakerAccess")
-        public static DatabaseStorage getDatabaseStorage(@NonNull String database,
-                                                         @NonNull String table,
-                                                         @IntRange(from = 1) int version,
-                                                         @NonNull ContentValues schema,
-                                                         @NonNull DatabaseManager.Listener listener) {
-            return new DatabaseStorage(new DatabaseManager(sContext, database, table, version, schema, listener));
-        }
-
-        /**
-         * Set maximum SQLite database size.
-         *
-         * @param maxStorageSizeInBytes Maximum SQLite database size.
-         * @return true if database size was set, otherwise false.
-         */
-        public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-            return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
-        }
-
-        /**
-         * Store an entry in a table.
-         *
-         * @param values The entry to be stored.
-         * @return The identifier of the created database entry.
-         */
-        public long put(@NonNull ContentValues values) {
-            return mDatabaseManager.put(values);
-        }
-
-        /**
-         * Delete an entry in a table.
-         *
-         * @param id The identifier for the entry to be deleted.
-         */
-        public void delete(@IntRange(from = 0) long id) {
-            mDatabaseManager.delete(id);
-        }
-
-        /**
-         * Deletes the entries by the identifier from the database.
-         *
-         * @param idList The list of database identifiers.
-         */
-        public void delete(@NonNull List<Long> idList) {
-            mDatabaseManager.delete(idList);
-        }
-
-        /**
-         * Deletes the entries that matches key == value.
-         *
-         * @param key   The optional key for query.
-         * @param value The optional value for query.
-         */
-        public void delete(@Nullable String key, @Nullable Object value) {
-            mDatabaseManager.delete(key, value);
-        }
-
-        /**
-         * Gets the entry by the identifier.
-         *
-         * @param id The database identifier.
-         * @return An entry for the identifier or null if not found.
-         */
-        public ContentValues get(@IntRange(from = 0) long id) {
-            return mDatabaseManager.get(id);
-        }
-
-        /**
-         * Gets the entry that matches key == value.
-         *
-         * @param key   The optional key for query.
-         * @param value The optional value for query.
-         * @return A matching entry.
-         */
-        public ContentValues get(@Nullable String key, @Nullable Object value) {
-            return mDatabaseManager.get(key, value);
-        }
-
-        /**
-         * Gets a scanner to iterate all values.
-         *
-         * @return A scanner to iterate all values.
-         */
-        @SuppressWarnings("WeakerAccess")
-        public DatabaseScanner getScanner() {
-            return getScanner(null, null);
-        }
-
-        /**
-         * Gets a scanner to iterate all values those match key == value.
-         *
-         * @param key   The optional key for query.
-         * @param value The optional value for query.
-         * @return A scanner to iterate all values.
-         */
-        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value) {
-            return getScanner(key, value, null, null, false);
-        }
-
-        /**
-         * Gets a scanner to iterate all values those match key == value, but records contain
-         * only identifiers.
-         *
-         * @param key          The optional key1 for query.
-         * @param value        The optional value1 for query.
-         * @param key2         The optional key2 for query.
-         * @param value2Filter The optional values to exclude from query that matches key2.
-         * @param idOnly       True to return only identifiers, false to return all fields.
-         *                     This flag is ignored if using in memory database.
-         * @return A scanner to iterate all values (records contain only identifiers).
-         */
-        public DatabaseScanner getScanner(@Nullable String key, @Nullable Object value, String key2, Collection<String> value2Filter, boolean idOnly) {
-            return new DatabaseScanner(mDatabaseManager.getScanner(key, value, key2, value2Filter, idOnly));
-        }
-
-        /**
-         * Clears the table in the database.
-         */
-        public void clear() {
-            mDatabaseManager.clear();
-        }
-
-        /**
-         * Closes database and cleans up in-memory database.
-         */
-        @Override
-        public void close() {
-            mDatabaseManager.close();
-        }
-
-        /**
-         * Gets the count of records in the table.
-         *
-         * @return The number of records in the table.
-         */
-        public long size() {
-            return mDatabaseManager.getRowCount();
-        }
-
-        /**
-         * Gets the maximum size of the database.
-         *
-         * @return The maximum size of database in bytes.
-         */
-        @SuppressWarnings("unused")
-        public long getMaxSize() {
-            return mDatabaseManager.getMaxSize();
-        }
-
-        /**
-         * Gets an array of column names in the table.
-         *
-         * @return An array of column names.
-         */
-        @VisibleForTesting
-        String[] getColumnNames() {
-            return mDatabaseManager.getCursor(null, null, null, null, false).getColumnNames();
-        }
-
-        /**
-         * Database scanner to iterate over values.
-         */
-        public static class DatabaseScanner implements Iterable<ContentValues>, Closeable {
-
-            private final DatabaseManager.Scanner mScanner;
-
-            private DatabaseScanner(DatabaseManager.Scanner scanner) {
-                mScanner = scanner;
-            }
-
-            @Override
-            public void close() {
-                mScanner.close();
-            }
-
-            @NonNull
-            @Override
-            public Iterator<ContentValues> iterator() {
-                return mScanner.iterator();
-            }
-
-            public int getCount() {
-                return mScanner.getCount();
-            }
         }
     }
 }

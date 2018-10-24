@@ -40,7 +40,7 @@ import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
 import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -61,7 +61,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         StorageHelper.class,
         StorageHelper.PreferencesStorage.class,
         IdHelper.class,
-        StorageHelper.DatabaseStorage.class,
         DeviceInfoHelper.class,
         Thread.class,
         ShutdownHelper.class,
@@ -122,7 +121,6 @@ public class AbstractAppCenterTest {
         mockStatic(StorageHelper.class);
         mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(IdHelper.class);
-        mockStatic(StorageHelper.DatabaseStorage.class);
         mockStatic(Thread.class);
         mockStatic(ShutdownHelper.class);
         mockStatic(DeviceInfoHelper.class);
@@ -164,10 +162,10 @@ public class AbstractAppCenterTest {
         StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
 
         /* Mock empty database. */
-        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
-        StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
+        when(databaseManager.getScanner(anyString(), anyObject(), anyString(), anyCollectionOf(String.class), anyBoolean())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
 
         /* Mock network state helper. */

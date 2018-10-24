@@ -101,8 +101,8 @@ public class DatabaseManager implements Closeable {
      * @param schema   The schema.
      * @param listener The error listener.
      */
-    DatabaseManager(Context context, String database, String table, int version,
-                    ContentValues schema, Listener listener) {
+    public DatabaseManager(Context context, String database, String table, int version,
+                           ContentValues schema, Listener listener) {
         mContext = context;
         mDatabase = database;
         mTable = table;
@@ -361,7 +361,7 @@ public class DatabaseManager implements Closeable {
      *                     This flag is ignored if using in memory database.
      * @return A scanner to iterate all values.
      */
-    Scanner getScanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
+    public Scanner getScanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
         return new Scanner(key1, value1, key2, value2Filter, idOnly);
     }
 
@@ -412,7 +412,7 @@ public class DatabaseManager implements Closeable {
      *
      * @return The number of records in the table.
      */
-    final long getRowCount() {
+    public final long getRowCount() {
 
         /* Try SQLite. */
         if (mIMDB == null) {
@@ -543,12 +543,22 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Gets an array of column names in the table.
+     *
+     * @return An array of column names.
+     */
+    @VisibleForTesting
+    String[] getColumnNames() {
+        return getCursor(null, null, null, null, false).getColumnNames();
+    }
+
+    /**
      * Set maximum SQLite database size.
      *
      * @param maxStorageSizeInBytes Maximum SQLite database size.
      * @return true if database size was set, otherwise false.
      */
-    boolean setMaxSize(long maxStorageSizeInBytes) {
+    public boolean setMaxSize(long maxStorageSizeInBytes) {
         SQLiteDatabase db = getDatabase();
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
@@ -608,7 +618,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Scanner specification.
      */
-    class Scanner implements Iterable<ContentValues>, Closeable {
+    public class Scanner implements Iterable<ContentValues>, Closeable {
 
         /**
          * First filter key.
