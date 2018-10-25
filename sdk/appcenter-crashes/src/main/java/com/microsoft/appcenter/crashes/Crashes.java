@@ -30,6 +30,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -677,7 +678,7 @@ public class Crashes extends AbstractAppCenterService {
     private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
-        final boolean alwaysSend = StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false);
+        final boolean alwaysSend = SharedPreferencesManager.getBoolean(PREF_KEY_ALWAYS_SEND, false);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -798,7 +799,7 @@ public class Crashes extends AbstractAppCenterService {
 
                     /* Always send: we remember. */
                     if (userConfirmation == ALWAYS_SEND) {
-                        StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
+                        SharedPreferencesManager.putBoolean(PREF_KEY_ALWAYS_SEND, true);
                     }
 
                     /* Send every pending report. */

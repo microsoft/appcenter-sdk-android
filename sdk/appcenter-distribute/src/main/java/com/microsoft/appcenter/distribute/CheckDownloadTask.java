@@ -11,7 +11,7 @@ import android.os.Build;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.NoSuchElementException;
 
@@ -200,8 +200,8 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         String releaseHash = mReleaseDetails.getReleaseHash();
         int releaseId = mReleaseDetails.getId();
         AppCenterLog.debug(LOG_TAG, "Store downloaded group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-        StorageHelper.PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }

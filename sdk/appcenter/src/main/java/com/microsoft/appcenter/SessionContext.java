@@ -4,7 +4,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class SessionContext {
 
         /* Try loading past sessions from storage. */
         mAppLaunchTimestamp = System.currentTimeMillis();
-        Set<String> storedSessions = StorageHelper.PreferencesStorage.getStringSet(STORAGE_KEY);
+        Set<String> storedSessions = SharedPreferencesManager.getStringSet(STORAGE_KEY);
         if (storedSessions != null) {
             for (String session : storedSessions) {
                 String[] split = session.split(STORAGE_KEY_VALUE_SEPARATOR, -1);
@@ -130,7 +130,7 @@ public class SessionContext {
         for (SessionInfo session : mSessions.values()) {
             sessionStorage.add(session.toString());
         }
-        StorageHelper.PreferencesStorage.putStringSet(STORAGE_KEY, sessionStorage);
+        SharedPreferencesManager.putStringSet(STORAGE_KEY, sessionStorage);
     }
 
     /**
@@ -152,7 +152,7 @@ public class SessionContext {
      */
     public synchronized void clearSessions() {
         mSessions.clear();
-        StorageHelper.PreferencesStorage.remove(STORAGE_KEY);
+        SharedPreferencesManager.remove(STORAGE_KEY);
     }
 
     /**

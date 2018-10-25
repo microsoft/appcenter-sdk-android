@@ -16,6 +16,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -36,7 +37,6 @@ import java.util.Collection;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -77,8 +77,8 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     public void setUpDialog() throws Exception {
 
         /* Mock we already have redirection parameters. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
@@ -152,7 +152,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -175,7 +175,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -193,7 +193,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         /* Disable. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -203,7 +203,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify cancel did nothing more. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -221,7 +221,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         /* Disable. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
         ArgumentCaptor<DialogInterface.OnCancelListener> cancelListener = ArgumentCaptor.forClass(DialogInterface.OnCancelListener.class);
@@ -231,7 +231,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify cancel did nothing more. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -367,7 +367,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify failure is treated as a cancel dialog. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -382,7 +382,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         /* Disable. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Click settings. */
         Intent intent = mock(Intent.class);
@@ -398,7 +398,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Verify cleaning behavior happened only once, e.g. completeWorkflow skipped. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));

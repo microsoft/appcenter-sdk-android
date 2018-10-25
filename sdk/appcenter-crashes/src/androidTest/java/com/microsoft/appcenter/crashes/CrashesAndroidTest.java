@@ -17,6 +17,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -78,13 +79,14 @@ public class CrashesAndroidTest {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
         sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
         StorageHelper.initialize(sApplication);
+        SharedPreferencesManager.initialize(sApplication);
         Constants.loadFromContext(sApplication);
     }
 
     @Before
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             if (logFile.isDirectory()) {
                 for (File dumpDir : logFile.listFiles()) {

@@ -21,7 +21,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -72,7 +72,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         PushIntentUtils.class,
         AppCenterLog.class,
         AppCenter.class,
-        StorageHelper.PreferencesStorage.class,
+        SharedPreferencesManager.class,
         FirebaseInstanceId.class,
         FirebaseAnalytics.class,
         HandlerUtils.class
@@ -124,8 +124,8 @@ public class PushTest {
         }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(true);
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Object>() {
@@ -134,11 +134,11 @@ public class PushTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(enabled);
+                when(SharedPreferencesManager.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(eq(PUSH_ENABLED_KEY), anyBoolean());
 
         /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);

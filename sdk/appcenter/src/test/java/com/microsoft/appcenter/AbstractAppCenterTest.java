@@ -20,6 +20,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.junit.After;
@@ -59,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppCenterLog.class,
         StartServiceLog.class,
         StorageHelper.class,
-        StorageHelper.PreferencesStorage.class,
+        SharedPreferencesManager.class,
         IdHelper.class,
         DeviceInfoHelper.class,
         Thread.class,
@@ -119,7 +120,7 @@ public class AbstractAppCenterTest {
         mockStatic(Constants.class);
         mockStatic(AppCenterLog.class);
         mockStatic(StorageHelper.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(SharedPreferencesManager.class);
         mockStatic(IdHelper.class);
         mockStatic(Thread.class);
         mockStatic(ShutdownHelper.class);
@@ -144,7 +145,7 @@ public class AbstractAppCenterTest {
         addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
-        when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(anyString(), eq(true))).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Void>() {
@@ -155,11 +156,11 @@ public class AbstractAppCenterTest {
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 String key = (String) invocation.getArguments()[0];
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                when(SharedPreferencesManager.getBoolean(key, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(anyString(), anyBoolean());
 
         /* Mock empty database. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);

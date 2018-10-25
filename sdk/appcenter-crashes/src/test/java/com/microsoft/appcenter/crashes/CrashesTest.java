@@ -32,6 +32,7 @@ import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -93,7 +94,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -129,7 +130,7 @@ public class CrashesTest {
         Crashes.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(StorageHelper.InternalStorage.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
 
@@ -140,7 +141,7 @@ public class CrashesTest {
         when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
 
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Object>() {
@@ -150,11 +151,11 @@ public class CrashesTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
+                when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
 
         /* Mock handlers. */
         mockStatic(HandlerUtils.class);
@@ -193,13 +194,13 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(dir.listFiles()).thenReturn(new File[]{file1, file2});
         crashes.setUncaughtExceptionHandler(mockHandler);
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* Test. */
         verifyStatic(times(3));
-        StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true);
+        SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true);
         assertFalse(Crashes.isEnabled().get());
         assertEquals(crashes.getInitializeTimestamp(), -1);
         assertNull(crashes.getUncaughtExceptionHandler());
@@ -404,7 +405,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
         when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
-        when(StorageHelper.PreferencesStorage.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(true);
@@ -464,7 +465,7 @@ public class CrashesTest {
     public void noQueueingWhenDisabled() {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         Channel channel = mock(Channel.class);
         Crashes crashes = Crashes.getInstance();
         crashes.onStarting(mAppCenterHandler);
@@ -846,7 +847,7 @@ public class CrashesTest {
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
 
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
+        SharedPreferencesManager.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
     }
 
     @Test
@@ -1231,8 +1232,8 @@ public class CrashesTest {
         /* Confirm with always send. */
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
-        when(StorageHelper.PreferencesStorage.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
+        SharedPreferencesManager.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
+        when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         /* 1 log sent. Other one is filtered. */
         verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));

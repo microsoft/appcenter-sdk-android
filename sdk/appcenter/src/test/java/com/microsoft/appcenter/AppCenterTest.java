@@ -10,7 +10,7 @@ import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -98,7 +98,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
     @Test
     public void useDummyServiceWhenDisablePersisted() {
-        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(KEY_ENABLED, true)).thenReturn(false);
         AppCenter appCenter = AppCenter.getInstance();
         DummyService service = DummyService.getInstance();
         AnotherDummyService anotherService = AnotherDummyService.getInstance();
@@ -528,8 +528,8 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
     @Test
     public void disablePersisted() {
-        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
-        when(StorageHelper.PreferencesStorage.getBoolean(AnotherDummyService.getInstance().getEnabledPreferenceKey(), true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(AnotherDummyService.getInstance().getEnabledPreferenceKey(), true)).thenReturn(false);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
         AppCenter appCenter = AppCenter.getInstance();
 
@@ -555,7 +555,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
     @Test
     public void disabledBeforeStart() {
-        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(KEY_ENABLED, true)).thenReturn(true);
 
         /* Verify services are disabled if called before start (no access to storage). */
         assertFalse(AppCenter.isEnabled().get());
@@ -569,7 +569,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
     @Test
     public void disablePersistedAndDisable() {
-        when(StorageHelper.PreferencesStorage.getBoolean(KEY_ENABLED, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(KEY_ENABLED, true)).thenReturn(false);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, AnotherDummyService.class);
         AppCenter appCenter = AppCenter.getInstance();
 

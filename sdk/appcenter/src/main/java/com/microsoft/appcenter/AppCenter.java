@@ -29,6 +29,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import java.util.ArrayList;
@@ -706,6 +707,7 @@ public class AppCenter {
 
         /* If parameters are valid, init context related resources. */
         StorageHelper.initialize(mApplication);
+        SharedPreferencesManager.initialize(mApplication);
 
         /* Initialize session storage. */
         SessionContext.getInstance();
@@ -965,7 +967,7 @@ public class AppCenter {
      * However after that it can be used from U.I. thread without breaking strict mode.
      */
     boolean isInstanceEnabled() {
-        return StorageHelper.PreferencesStorage.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
+        return SharedPreferencesManager.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
     }
 
     /**
@@ -993,7 +995,7 @@ public class AppCenter {
 
         /* Update state now if true, services are checking this. */
         if (enabled) {
-            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
+            SharedPreferencesManager.putBoolean(PrefStorageConstants.KEY_ENABLED, true);
         }
 
         /* Send started services. */
@@ -1012,7 +1014,7 @@ public class AppCenter {
 
         /* Update state now if false, services are checking if enabled while disabling. */
         if (!enabled) {
-            StorageHelper.PreferencesStorage.putBoolean(PrefStorageConstants.KEY_ENABLED, false);
+            SharedPreferencesManager.putBoolean(PrefStorageConstants.KEY_ENABLED, false);
         }
 
         /* Log current state. */

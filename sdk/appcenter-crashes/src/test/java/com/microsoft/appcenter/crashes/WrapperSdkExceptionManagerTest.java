@@ -12,6 +12,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
@@ -52,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({AppCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
+@PrepareForTest({AppCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, SharedPreferencesManager.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
 public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -67,8 +68,8 @@ public class WrapperSdkExceptionManagerTest {
     public void setUp() {
         Crashes.unsetInstance();
         mockStatic(AppCenter.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
         mockStatic(StorageHelper.InternalStorage.class);
+        mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
@@ -81,7 +82,7 @@ public class WrapperSdkExceptionManagerTest {
         AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
         when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Mock handlers. */
         mockStatic(HandlerUtils.class);
@@ -346,7 +347,7 @@ public class WrapperSdkExceptionManagerTest {
 
     @Test
     public void saveWrapperExceptionWhenSDKDisabled() throws JSONException {
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         Crashes.getInstance().setLogSerializer(logSerializer);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'d'});

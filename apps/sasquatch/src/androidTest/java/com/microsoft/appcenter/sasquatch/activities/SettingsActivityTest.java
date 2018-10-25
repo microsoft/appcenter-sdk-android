@@ -11,7 +11,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,8 +41,8 @@ public class SettingsActivityTest {
         mContext = getInstrumentation().getTargetContext();
 
         /* Clear preferences. */
-        StorageHelper.initialize(mContext);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.initialize(mContext);
+        SharedPreferencesManager.clear();
 
         /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityTestRule.launchActivity(new Intent());

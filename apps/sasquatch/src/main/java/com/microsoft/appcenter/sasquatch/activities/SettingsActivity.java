@@ -35,7 +35,7 @@ import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -367,7 +367,7 @@ public class SettingsActivity extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int which) {
                                     if (input.getText().toString().matches(UUID_FORMAT_REGEX)) {
                                         UUID uuid = UUID.fromString(input.getText().toString());
-                                        StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, uuid.toString());
+                                        SharedPreferencesManager.putString(PrefStorageConstants.KEY_INSTALL_ID, uuid.toString());
                                         Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.install_id_changed_format), uuid.toString()), Toast.LENGTH_SHORT).show();
                                     } else {
                                         Toast.makeText(getActivity(), R.string.install_id_invalid, Toast.LENGTH_SHORT).show();
@@ -492,7 +492,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    StorageHelper.PreferencesStorage.remove(Crashes.PREF_KEY_ALWAYS_SEND);
+                    SharedPreferencesManager.remove(Crashes.PREF_KEY_ALWAYS_SEND);
                     Toast.makeText(getActivity(), R.string.clear_crash_user_confirmation_toast, Toast.LENGTH_SHORT).show();
                     return true;
                 }

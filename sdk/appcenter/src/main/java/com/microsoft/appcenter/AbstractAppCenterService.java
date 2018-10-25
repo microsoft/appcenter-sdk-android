@@ -11,7 +11,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Map;
 
@@ -120,7 +120,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
     @Override
     public synchronized boolean isInstanceEnabled() {
-        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+        return SharedPreferencesManager.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @Override
@@ -149,7 +149,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         }
 
         /* Save new state. */
-        StorageHelper.PreferencesStorage.putBoolean(getEnabledPreferenceKey(), enabled);
+        SharedPreferencesManager.putBoolean(getEnabledPreferenceKey(), enabled);
         AppCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
 
         /* Don't call it before the service starts. */

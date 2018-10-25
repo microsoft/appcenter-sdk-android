@@ -9,7 +9,7 @@ import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -249,7 +249,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify POSTPONE has been processed. */
         verify(distribute).completeWorkflow();
-        StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
     @Test
@@ -308,7 +308,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify POSTPONE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
         verifyStatic(never());
-        StorageHelper.PreferencesStorage.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
     @Test
@@ -425,7 +425,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(ReleaseDetails.parse(anyString())).thenReturn(details);
 
         /* Mock update token. */
-        when(StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         return details;
     }
 
@@ -440,8 +440,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
                 currentDownloadState[0] = (Integer) invocation.getArguments()[1];
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -449,9 +449,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
                 currentDownloadState[0] = DOWNLOAD_STATE_COMPLETED;
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        when(StorageHelper.PreferencesStorage.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt()))
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt()))
                 .thenAnswer(new Answer<Integer>() {
 
                     @Override

@@ -14,7 +14,7 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,14 +49,14 @@ public class AppCenterAndroidTest {
     @Test
     public void getInstallId() {
         assertNull(AppCenter.getInstallId().get());
-        StorageHelper.initialize(mApplication);
-        StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
+        SharedPreferencesManager.initialize(mApplication);
+        SharedPreferencesManager.remove(PrefStorageConstants.KEY_INSTALL_ID);
         AppCenter.start(mApplication, UUIDUtils.randomUUID().toString(), DummyService.class);
         UUID installId = AppCenter.getInstallId().get();
         assertNotNull(installId);
         assertEquals(installId, AppCenter.getInstallId().get());
         assertEquals(installId, DummyService.getInstallId().get());
-        StorageHelper.PreferencesStorage.remove(PrefStorageConstants.KEY_INSTALL_ID);
+        SharedPreferencesManager.remove(PrefStorageConstants.KEY_INSTALL_ID);
         final UUID installId2 = AppCenter.getInstallId().get();
         assertNotNull(installId2);
         assertNotEquals(installId2, installId);

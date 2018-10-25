@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.Ingestion;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StorageHelper.PreferencesStorage.class, AppCenter.class})
+@PrepareForTest({SharedPreferencesManager.class, AppCenter.class})
 public class AbstractAppCenterServiceTest {
 
     private static final String SERVICE_ENABLED_KEY = KEY_ENABLED + "_Test";
@@ -69,8 +69,8 @@ public class AbstractAppCenterServiceTest {
         mockStatic(AppCenter.class);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        when(StorageHelper.PreferencesStorage.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(true);
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
@@ -80,11 +80,11 @@ public class AbstractAppCenterServiceTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(enabled);
+                when(SharedPreferencesManager.getBoolean(SERVICE_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(SERVICE_ENABLED_KEY), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(eq(SERVICE_ENABLED_KEY), anyBoolean());
     }
 
     @Test
@@ -142,25 +142,25 @@ public class AbstractAppCenterServiceTest {
         /* Change state to true will have no effect. */
         mService.setInstanceEnabledAsync(true);
         verifyStatic(never());
-        StorageHelper.PreferencesStorage.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
+        SharedPreferencesManager.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
 
         /* Disable. */
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(mService.getEnabledPreferenceKey(), false);
+        SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
 
         /* Disable again will have no effect. */
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(mService.getEnabledPreferenceKey(), false);
+        SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
 
         /* Enable back. */
         mService.setInstanceEnabledAsync(true);
         assertTrue(mService.isInstanceEnabledAsync().get());
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(mService.getEnabledPreferenceKey(), true);
+        SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), true);
 
         /* Enable again has no effect. */
         mService.setInstanceEnabledAsync(true);
@@ -168,9 +168,9 @@ public class AbstractAppCenterServiceTest {
 
         /* Verify only 2 actual changes in storage: false to true, then true to false. */
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(mService.getEnabledPreferenceKey(), false);
+        SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
         verifyStatic();
-        StorageHelper.PreferencesStorage.putBoolean(mService.getEnabledPreferenceKey(), true);
+        SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), true);
     }
 
     @Test
@@ -197,7 +197,7 @@ public class AbstractAppCenterServiceTest {
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
         verifyStatic(never());
-        StorageHelper.PreferencesStorage.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
+        SharedPreferencesManager.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
     }
 
     @Test
