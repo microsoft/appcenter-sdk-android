@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.appcenter.utils.storage.StorageHelper.InternalStorage;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,12 +62,12 @@ public class StorageHelperAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        FileManager.initialize(sContext);
         SharedPreferencesManager.initialize(sContext);
         sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath() + "/test/";
 
         /* Create a test directory. */
-        InternalStorage.mkdir(sAndroidFilesPath);
+        FileManager.mkdir(sAndroidFilesPath);
     }
 
     @AfterClass
@@ -92,14 +91,14 @@ public class StorageHelperAndroidTest {
             }
         };
 
-        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath, filter);
+        String[] filenames = FileManager.getFilenames(sAndroidFilesPath, filter);
 
         /* Delete the files to clean up. */
         for (String filename : filenames) {
-            InternalStorage.delete(sAndroidFilesPath + filename);
+            FileManager.delete(sAndroidFilesPath + filename);
         }
 
-        InternalStorage.delete(sAndroidFilesPath);
+        FileManager.delete(sAndroidFilesPath);
     }
 
     private static SharedPreferencesTestData[] generateSharedPreferenceData() throws NoSuchMethodException {
@@ -226,16 +225,16 @@ public class StorageHelperAndroidTest {
 
         /* Write contents to test files after 2 sec delay. */
         Log.i(TAG, "Writing " + filename1);
-        InternalStorage.write(sAndroidFilesPath + filename1, contents1);
+        FileManager.write(sAndroidFilesPath + filename1, contents1);
         TimeUnit.SECONDS.sleep(2);
         Log.i(TAG, "Writing " + filename2);
-        InternalStorage.write(sAndroidFilesPath + filename2, contents2);
+        FileManager.write(sAndroidFilesPath + filename2, contents2);
         /* Also write empty content to a test file. */
-        InternalStorage.write(sAndroidFilesPath + filename3, "");
-        InternalStorage.write(sAndroidFilesPath + filename4, "  ");
+        FileManager.write(sAndroidFilesPath + filename3, "");
+        FileManager.write(sAndroidFilesPath + filename4, "  ");
 
         /* Get file names in the root path. */
-        String[] filenames = InternalStorage.getFilenames(sAndroidFilesPath, filter);
+        String[] filenames = FileManager.getFilenames(sAndroidFilesPath, filter);
 
         /* Verify the files are created. */
         assertNotNull(filenames);
@@ -247,14 +246,14 @@ public class StorageHelperAndroidTest {
         assertFalse(list.contains(filename4));
 
         /* Get the most recent file. */
-        File lastModifiedFile = InternalStorage.lastModifiedFile(sAndroidFilesPath, filter);
+        File lastModifiedFile = FileManager.lastModifiedFile(sAndroidFilesPath, filter);
 
         /* Verify the most recent file. */
         assertNotNull(lastModifiedFile);
         assertEquals(filename2, lastModifiedFile.getName());
 
         /* Read the most recent file. */
-        String actual = InternalStorage.read(lastModifiedFile);
+        String actual = FileManager.read(lastModifiedFile);
 
         /* Verify the contents of the most recent file. */
         assertNotNull(actual);
@@ -263,16 +262,16 @@ public class StorageHelperAndroidTest {
         /* Delete the files to clean up. */
         for (String filename : filenames) {
             Log.i(TAG, "Deleting " + filename);
-            assertTrue(InternalStorage.delete(sAndroidFilesPath + filename));
+            assertTrue(FileManager.delete(sAndroidFilesPath + filename));
         }
 
         /* Verify all the files are properly deleted. */
-        assertEquals(0, InternalStorage.getFilenames(sAndroidFilesPath, filter).length);
+        assertEquals(0, FileManager.getFilenames(sAndroidFilesPath, filter).length);
 
         /* Verify invalid accesses. */
-        assertNull(InternalStorage.read("not-exist-filename"));
-        assertArrayEquals(new String[0], InternalStorage.getFilenames("not-exist-path", null));
-        assertNull(InternalStorage.lastModifiedFile("not-exist-path", null));
+        assertNull(FileManager.read("not-exist-filename"));
+        assertArrayEquals(new String[0], FileManager.getFilenames("not-exist-path", null));
+        assertNull(FileManager.lastModifiedFile("not-exist-path", null));
     }
 
     @Test
@@ -285,16 +284,16 @@ public class StorageHelperAndroidTest {
         DataModel model = new DataModel(10, "Model", true);
 
         /* Write the object to a file. */
-        InternalStorage.writeObject(file, model);
+        FileManager.writeObject(file, model);
 
         /* Read the file. */
-        DataModel actual = InternalStorage.readObject(file);
+        DataModel actual = FileManager.readObject(file);
 
         /* Read with class cast exception. */
         Exception readCastException = null;
         try {
             @SuppressWarnings("UnusedAssignment")
-            String wrongType = InternalStorage.readObject(file);
+            String wrongType = FileManager.readObject(file);
         } catch (Exception e) {
             readCastException = e;
         }
@@ -308,7 +307,7 @@ public class StorageHelperAndroidTest {
 
         /* Delete the files to clean up. */
         Log.i(TAG, "Deleting " + file.getName());
-        InternalStorage.delete(file);
+        FileManager.delete(file);
     }
 
     @Test
@@ -319,10 +318,10 @@ public class StorageHelperAndroidTest {
 
         /* Create a mock object. */
         String hello = "Hello world";
-        StorageHelper.InternalStorage.write(file, hello);
+        FileManager.write(file, hello);
 
         /* Read the file as bytes. */
-        byte[] helloBytes = StorageHelper.InternalStorage.readBytes(file);
+        byte[] helloBytes = FileManager.readBytes(file);
 
         /* Check. */
         assertNotNull(helloBytes);
@@ -330,10 +329,10 @@ public class StorageHelperAndroidTest {
 
         /* Delete the files to clean up. */
         Log.i(TAG, "Deleting " + file.getName());
-        InternalStorage.delete(file);
+        FileManager.delete(file);
 
         /* Check file not found. */
-        assertNull(StorageHelper.InternalStorage.readBytes(file));
+        assertNull(FileManager.readBytes(file));
     }
 
     /**

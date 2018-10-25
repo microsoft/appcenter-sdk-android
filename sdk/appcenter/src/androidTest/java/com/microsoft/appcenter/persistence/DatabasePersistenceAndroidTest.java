@@ -24,8 +24,8 @@ import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLogFactory;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -78,7 +78,7 @@ public class DatabasePersistenceAndroidTest {
     public static void setUpClass() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        FileManager.initialize(sContext);
         SharedPreferencesManager.initialize(sContext);
         Constants.loadFromContext(sContext);
     }
@@ -170,7 +170,7 @@ public class DatabasePersistenceAndroidTest {
             /* Verify large file. */
             File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
             assertNotNull(file);
-            String fileLog = StorageHelper.InternalStorage.read(file);
+            String fileLog = FileManager.read(file);
             assertNotNull(fileLog);
             assertTrue(fileLog.length() >= size);
 
@@ -259,7 +259,7 @@ public class DatabasePersistenceAndroidTest {
             /* Verify large file. */
             File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
             assertNotNull(file);
-            String fileLog = StorageHelper.InternalStorage.read(file);
+            String fileLog = FileManager.read(file);
             assertNotNull(fileLog);
             assertTrue(fileLog.length() >= size);
 

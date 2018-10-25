@@ -15,8 +15,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -53,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, SharedPreferencesManager.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, SharedPreferencesManager.class, FileManager.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -71,7 +71,7 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(AppCenter.class);
         mockStatic(AppCenterLog.class);
         mockStatic(SystemClock.class);
-        mockStatic(StorageHelper.InternalStorage.class);
+        mockStatic(FileManager.class);
         mockStatic(SharedPreferencesManager.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
@@ -210,8 +210,8 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.register();
 
         IOException ioException = new IOException("Fake IO exception");
-        PowerMockito.doThrow(ioException).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.write(any(File.class), anyString());
+        PowerMockito.doThrow(ioException).when(FileManager.class);
+        FileManager.write(any(File.class), anyString());
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();

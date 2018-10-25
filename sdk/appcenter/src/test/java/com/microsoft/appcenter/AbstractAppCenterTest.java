@@ -20,8 +20,9 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -59,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         Constants.class,
         AppCenterLog.class,
         StartServiceLog.class,
-        StorageHelper.class,
+        FileManager.class,
         SharedPreferencesManager.class,
         IdHelper.class,
         DeviceInfoHelper.class,
@@ -119,7 +120,7 @@ public class AbstractAppCenterTest {
 
         mockStatic(Constants.class);
         mockStatic(AppCenterLog.class);
-        mockStatic(StorageHelper.class);
+        mockStatic(FileManager.class);
         mockStatic(SharedPreferencesManager.class);
         mockStatic(IdHelper.class);
         mockStatic(Thread.class);

@@ -16,7 +16,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.json.JSONException;
 
@@ -239,7 +239,7 @@ public class DatabasePersistence extends Persistence {
                 directory.mkdir();
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 try {
-                    StorageHelper.InternalStorage.write(payloadFile, payload);
+                    FileManager.write(payloadFile, payload);
                 } catch (IOException e) {
 
                     /* Remove database entry if we cannot save payload as a file. */
@@ -386,7 +386,7 @@ public class DatabasePersistence extends Persistence {
                     if (databasePayload == null) {
                         File file = getLargePayloadFile(largePayloadGroupDirectory, dbIdentifier);
                         AppCenterLog.debug(LOG_TAG, "Read payload file " + file);
-                        logPayload = StorageHelper.InternalStorage.read(file);
+                        logPayload = FileManager.read(file);
                         if (logPayload == null) {
                             throw new JSONException("Log payload is null and not stored as a file.");
                         }

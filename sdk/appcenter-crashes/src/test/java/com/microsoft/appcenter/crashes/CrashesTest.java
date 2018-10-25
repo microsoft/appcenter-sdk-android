@@ -32,8 +32,8 @@ import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 import org.junit.Assert;
@@ -94,7 +94,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
     @SuppressWarnings("ThrowableInstanceNeverThrown")
@@ -129,7 +129,7 @@ public class CrashesTest {
         Thread.setDefaultUncaughtExceptionHandler(null);
         Crashes.unsetInstance();
         mockStatic(SystemClock.class);
-        mockStatic(StorageHelper.InternalStorage.class);
+        mockStatic(FileManager.class);
         mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
@@ -311,8 +311,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new RuntimeException());
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(false);
@@ -360,8 +360,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException()).thenReturn(new byte[]{});
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new RuntimeException()).thenReturn(new byte[]{});
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(report)).thenReturn(false);
@@ -403,8 +403,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new RuntimeException());
         when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -443,7 +443,7 @@ public class CrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(FileManager.read(any(File.class))).thenReturn("");
 
         Crashes crashes = Crashes.getInstance();
 
@@ -502,7 +502,7 @@ public class CrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(FileManager.read(any(File.class))).thenReturn("");
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
 
@@ -710,8 +710,8 @@ public class CrashesTest {
         when(throwableFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION)).thenReturn(errorReport);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(EXCEPTION);
 
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
@@ -764,7 +764,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
+        when(FileManager.readObject(any(File.class))).thenReturn(null);
 
         CrashesListener mockListener = mock(CrashesListener.class);
         Crashes crashes = Crashes.getInstance();
@@ -792,8 +792,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(null);
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
@@ -830,7 +830,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(null);
+        when(FileManager.readObject(any(File.class))).thenReturn(null);
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
@@ -860,7 +860,7 @@ public class CrashesTest {
         when(throwableFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile).thenReturn(null);
         when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION)).thenReturn(errorReport);
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(EXCEPTION);
+        when(FileManager.readObject(any(File.class))).thenReturn(EXCEPTION);
 
         Crashes crashes = Crashes.getInstance();
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
@@ -889,7 +889,7 @@ public class CrashesTest {
 
         Exception classNotFoundException = mock(ClassNotFoundException.class);
         Exception ioException = mock(IOException.class);
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenThrow(classNotFoundException).thenThrow(ioException);
+        when(FileManager.readObject(any(File.class))).thenThrow(classNotFoundException).thenThrow(ioException);
 
         Crashes crashes = Crashes.getInstance();
 
@@ -995,8 +995,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(throwable);
 
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
@@ -1063,7 +1063,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(FileManager.read(any(File.class))).thenReturn("");
 
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
@@ -1151,8 +1151,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(new ErrorReport());
 
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(mock(Throwable.class));
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(mock(Throwable.class));
 
         Crashes crashes = Crashes.getInstance();
         crashes.setInstanceListener(listener);
@@ -1180,8 +1180,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
@@ -1288,8 +1288,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report1).thenReturn(report2);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new RuntimeException());
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new RuntimeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
 
@@ -1354,8 +1354,8 @@ public class CrashesTest {
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingDir);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(report);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(new NativeException());
+        when(FileManager.read(any(File.class))).thenReturn("");
+        when(FileManager.readObject(any(File.class))).thenReturn(new NativeException());
         LogSerializer logSerializer = mock(LogSerializer.class);
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
         when(logSerializer.serializeLog(log.capture())).thenReturn("{}");

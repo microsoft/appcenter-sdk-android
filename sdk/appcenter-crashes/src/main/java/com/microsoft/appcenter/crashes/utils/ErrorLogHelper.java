@@ -19,7 +19,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -190,7 +190,7 @@ public class ErrorLogHelper {
     public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
+            FileManager.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
         return sErrorLogDirectory;
     }
@@ -201,7 +201,7 @@ public class ErrorLogHelper {
             File errorStorageDirectory = getErrorStorageDirectory();
             File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
             sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sNewMinidumpDirectory.getPath());
+            FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
         return sNewMinidumpDirectory;
     }
@@ -212,7 +212,7 @@ public class ErrorLogHelper {
             File errorStorageDirectory = getErrorStorageDirectory();
             File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
             sPendingMinidumpDirectory = new File(minidumpDirectory, PENDING_MINIDUMP_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sPendingMinidumpDirectory.getPath());
+            FileManager.mkdir(sPendingMinidumpDirectory.getPath());
         }
         return sPendingMinidumpDirectory;
     }
@@ -236,7 +236,7 @@ public class ErrorLogHelper {
 
     @Nullable
     public static File getLastErrorLogFile() {
-        return StorageHelper.InternalStorage.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
+        return FileManager.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
@@ -253,7 +253,7 @@ public class ErrorLogHelper {
         File file = getStoredThrowableFile(id);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
-            StorageHelper.InternalStorage.delete(file);
+            FileManager.delete(file);
         }
     }
 
@@ -266,7 +266,7 @@ public class ErrorLogHelper {
         File file = getStoredErrorLogFile(id);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting error log file " + file.getName());
-            StorageHelper.InternalStorage.delete(file);
+            FileManager.delete(file);
         }
     }
 

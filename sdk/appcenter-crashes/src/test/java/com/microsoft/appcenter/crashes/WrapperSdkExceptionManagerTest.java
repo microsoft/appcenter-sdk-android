@@ -12,8 +12,8 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -53,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({AppCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, SharedPreferencesManager.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
+@PrepareForTest({AppCenter.class, WrapperSdkExceptionManager.class, AppCenterLog.class, SharedPreferencesManager.class, FileManager.class, Crashes.class, ErrorLogHelper.class, HandlerUtils.class})
 public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -68,7 +68,7 @@ public class WrapperSdkExceptionManagerTest {
     public void setUp() {
         Crashes.unsetInstance();
         mockStatic(AppCenter.class);
-        mockStatic(StorageHelper.InternalStorage.class);
+        mockStatic(FileManager.class);
         mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         mockStatic(ErrorLogHelper.class);
@@ -111,11 +111,11 @@ public class WrapperSdkExceptionManagerTest {
         File file = mock(File.class);
         whenNew(File.class).withAnyArguments().thenReturn(file);
         when(file.exists()).thenReturn(true);
-        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.readObject(any(File.class));
+        doThrow(new IOException()).when(FileManager.class);
+        FileManager.readObject(any(File.class));
         assertNull(WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID()));
-        doThrow(new ClassNotFoundException()).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.readObject(any(File.class));
+        doThrow(new ClassNotFoundException()).when(FileManager.class);
+        FileManager.readObject(any(File.class));
         assertNull(WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID()));
         assertNull(WrapperSdkExceptionManager.loadWrapperExceptionData(null));
     }
@@ -126,7 +126,7 @@ public class WrapperSdkExceptionManagerTest {
         /* Delete null does nothing. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(null);
         verifyStatic(never());
-        StorageHelper.InternalStorage.delete(any(File.class));
+        FileManager.delete(any(File.class));
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
@@ -137,7 +137,7 @@ public class WrapperSdkExceptionManagerTest {
         /* Delete with file not found does nothing. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         verifyStatic(never());
-        StorageHelper.InternalStorage.delete(any(File.class));
+        FileManager.delete(any(File.class));
         verifyStatic(never());
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
@@ -151,7 +151,7 @@ public class WrapperSdkExceptionManagerTest {
         when(file.exists()).thenReturn(true);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(UUID.randomUUID());
         verifyStatic();
-        StorageHelper.InternalStorage.delete(any(File.class));
+        FileManager.delete(any(File.class));
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString());
     }
@@ -164,13 +164,13 @@ public class WrapperSdkExceptionManagerTest {
         byte[] data = new byte[]{'d'};
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        FileManager.writeObject(any(File.class), eq(data));
 
         /* We can't do it twice in the same process. */
         data = new byte[]{'e'};
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verifyStatic(never());
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        FileManager.writeObject(any(File.class), eq(data));
     }
 
     @Test
@@ -182,17 +182,17 @@ public class WrapperSdkExceptionManagerTest {
         Throwable throwable = new Throwable();
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+        FileManager.writeObject(any(File.class), eq(throwable));
 
         /* We can't do it twice in the same process. */
         data = new byte[]{'e'};
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
         verifyStatic(never());
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+        FileManager.writeObject(any(File.class), eq(throwable));
     }
 
     @Test
@@ -203,14 +203,14 @@ public class WrapperSdkExceptionManagerTest {
         Throwable throwable = new Throwable();
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic(never());
-        StorageHelper.InternalStorage.writeObject(any(File.class), isNull(byte[].class));
+        FileManager.writeObject(any(File.class), isNull(byte[].class));
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+        FileManager.writeObject(any(File.class), eq(throwable));
 
         /* We can't do it twice in the same process. */
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic();
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(throwable));
+        FileManager.writeObject(any(File.class), eq(throwable));
     }
 
     @Test
@@ -284,8 +284,8 @@ public class WrapperSdkExceptionManagerTest {
 
     @Test
     public void saveWrapperSdkCrashFailsWithIOException() throws IOException, JSONException {
-        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.write(any(File.class), anyString());
+        doThrow(new IOException()).when(FileManager.class);
+        FileManager.write(any(File.class), anyString());
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);
@@ -316,8 +316,8 @@ public class WrapperSdkExceptionManagerTest {
     @Test
     public void saveWrapperSdkCrashFailsWithIOExceptionAfterLog() throws IOException, JSONException {
         byte[] data = {'d'};
-        doThrow(new IOException()).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.writeObject(any(File.class), eq(data));
+        doThrow(new IOException()).when(FileManager.class);
+        FileManager.writeObject(any(File.class), eq(data));
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
         Crashes.getInstance().setLogSerializer(logSerializer);

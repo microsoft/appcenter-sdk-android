@@ -29,8 +29,9 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -706,7 +707,7 @@ public class AppCenter {
         Constants.loadFromContext(mApplication);
 
         /* If parameters are valid, init context related resources. */
-        StorageHelper.initialize(mApplication);
+        FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
 
         /* Initialize session storage. */
