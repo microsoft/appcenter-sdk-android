@@ -40,7 +40,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({FileManager.class, AppCenterLog.class, TextUtils.class})
-public class StorageHelperTest {
+public class FileManagerTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();

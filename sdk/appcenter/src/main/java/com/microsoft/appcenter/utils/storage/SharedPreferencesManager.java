@@ -8,7 +8,7 @@ import android.support.annotation.NonNull;
 import java.util.Set;
 
 /**
- * SharedPreferencesManager Helper class
+ * Shared preferences manager
  */
 public class SharedPreferencesManager {
 
@@ -29,7 +29,7 @@ public class SharedPreferencesManager {
     private static SharedPreferences sSharedPreferences;
 
     /**
-     * Initializes StorageHelper class.
+     * Initializes SharedPreferencesManager class.
      *
      * @param context The context of the application.
      */

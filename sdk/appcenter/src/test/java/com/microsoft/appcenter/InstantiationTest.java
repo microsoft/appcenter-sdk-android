@@ -7,7 +7,6 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.Test;
 
@@ -18,8 +17,12 @@ import org.junit.Test;
 public class InstantiationTest {
 
     @Test
-    public void storageHelper() {
+    public void fileManager() {
         new FileManager();
+    }
+
+    @Test
+    public void sharedPreferencesManager() {
         new SharedPreferencesManager();
     }
 

@@ -267,7 +267,7 @@ public class DatabasePersistenceTest {
     @Test
     public void checkSetStorageSizeForwarding() throws Exception {
 
-        /* The real Android test for checking size is in StorageHelperAndroidTest. */
+        /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
         DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);

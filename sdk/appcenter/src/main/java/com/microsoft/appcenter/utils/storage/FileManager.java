@@ -24,7 +24,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
- * FileManager Helper class
+ * File manager for internal/external storage access
  */
 public class FileManager {
 
@@ -35,7 +35,7 @@ public class FileManager {
     private static Context sContext;
 
     /**
-     * Initializes StorageHelper class.
+     * Initializes FileManager class.
      *
      * @param context The context of the application.
      */

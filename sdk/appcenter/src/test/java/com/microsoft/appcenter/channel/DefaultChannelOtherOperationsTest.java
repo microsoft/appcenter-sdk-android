@@ -202,7 +202,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     @Test
     public void checkSetStorageSizeForwarding() {
 
-        /* The real Android test for checking size is in StorageHelperAndroidTest. */
+        /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
         Persistence persistence = mock(Persistence.class);
         when(persistence.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(Ingestion.class), mAppCenterHandler);

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -24,11 +23,6 @@ import static org.junit.Assert.assertNull;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class SharedPreferencesManagerAndroidTest {
-
-    /**
-     * Log tag.
-     */
-    private static final String TAG = "StorageHelperTest";
 
     /**
      * Context instance.
@@ -119,9 +113,7 @@ public class SharedPreferencesManagerAndroidTest {
 
     @Test
     public void sharedPreferences() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        Log.i(TAG, "Testing Shared Preference");
         for (SharedPreferencesTestData data : generateSharedPreferenceData()) {
-            Log.i(TAG, "Get/Put test for type " + data.value.getClass().getSimpleName());
 
             /* Put value to shared preferences. */
             String key = data.value.getClass().getCanonicalName();
