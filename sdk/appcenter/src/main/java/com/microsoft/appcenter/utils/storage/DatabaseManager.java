@@ -19,9 +19,10 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -29,7 +30,7 @@ import java.util.NoSuchElementException;
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
- * Database manager for SQLite with fail-over to in-memory.
+ * Database manager for SQLite.
  */
 public class DatabaseManager implements Closeable {
 
@@ -43,12 +44,6 @@ public class DatabaseManager implements Closeable {
      */
     @VisibleForTesting
     static final int ALLOWED_SIZE_MULTIPLE = 4096;
-
-    /**
-     * Maximum number of entries of in memory database.
-     */
-    @VisibleForTesting
-    static final long IN_MEMORY_MAX_SIZE = 300;
 
     /**
      * Application context instance.
@@ -79,17 +74,6 @@ public class DatabaseManager implements Closeable {
      * SQLite helper instance.
      */
     private SQLiteOpenHelper mSQLiteOpenHelper;
-
-    /**
-     * In-memory database if SQLite cannot be used.
-     */
-    @SuppressWarnings("SpellCheckingInspection")
-    private Map<Long, ContentValues> mIMDB;
-
-    /**
-     * In-memory auto increment.
-     */
-    private long mIMDBAutoInc;
 
     /**
      * Initializes the table in the database.
@@ -195,39 +179,31 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values) {
+        try {
+            while (true) {
+                try {
 
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                while (true) {
+                    /* Insert data. */
+                    return getDatabase().insertOrThrow(mTable, null, values);
+                } catch (SQLiteFullException e) {
+
+                    /* Delete the oldest log. */
+                    Cursor cursor = getCursor(null, null, null, null, true);
                     try {
-
-                        /* Insert data. */
-                        return getDatabase().insertOrThrow(mTable, null, values);
-                    } catch (SQLiteFullException e) {
-
-                        /* Delete the oldest log. */
-                        Cursor cursor = getCursor(null, null, null, null, true);
-                        try {
-                            if (cursor.moveToNext()) {
-                                delete(cursor.getLong(0));
-                            } else {
-                                return -1;
-                            }
-                        } finally {
-                            cursor.close();
+                        if (cursor.moveToNext()) {
+                            delete(cursor.getLong(0));
+                        } else {
+                            return -1;
                         }
+                    } finally {
+                        cursor.close();
                     }
                 }
-            } catch (RuntimeException e) {
-                switchToInMemory("put", e);
             }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
         }
-
-        /* Store the values to in-memory database. */
-        values.put(PRIMARY_KEY, mIMDBAutoInc);
-        mIMDB.put(mIMDBAutoInc, values);
-        return mIMDBAutoInc++;
+        return -1;
     }
 
     /**
@@ -248,21 +224,10 @@ public class DatabaseManager implements Closeable {
         if (idList.size() <= 0) {
             return;
         }
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
-            } catch (RuntimeException e) {
-                switchToInMemory("delete", e);
-            }
-        }
-
-        /* Deletes the values from in-memory database. */
-        else {
-            for (Long id : idList) {
-                mIMDB.remove(id);
-            }
+        try {
+            getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to delete IDs (%s) from database.", Arrays.toString(idList.toArray())), e);
         }
     }
 
@@ -273,30 +238,10 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      */
     public void delete(@Nullable String key, @Nullable Object value) {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
-            } catch (RuntimeException e) {
-                switchToInMemory("delete", e);
-            }
-        }
-
-        /* Deletes the values from in-memory database. */
-        else if (PRIMARY_KEY.equals(key)) {
-            if (value == null || !(value instanceof Number)) {
-                throw new IllegalArgumentException("Primary key should be a number type and cannot be null");
-            }
-            mIMDB.remove(((Number) value).longValue());
-        } else {
-            for (Iterator<Map.Entry<Long, ContentValues>> iterator = mIMDB.entrySet().iterator(); iterator.hasNext(); ) {
-                Map.Entry<Long, ContentValues> entry = iterator.next();
-                Object object = entry.getValue().get(key);
-                if (object != null && object.equals(value)) {
-                    iterator.remove();
-                }
-            }
+        try {
+            getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
         }
     }
 
@@ -318,34 +263,14 @@ public class DatabaseManager implements Closeable {
      * @return A matching entry.
      */
     public ContentValues get(@Nullable String key, @Nullable Object value) {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                Cursor cursor = getCursor(key, value, null, null, false);
-                ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
-                cursor.close();
-                return values;
-            } catch (RuntimeException e) {
-                switchToInMemory("get", e);
-            }
+        try {
+            Cursor cursor = getCursor(key, value, null, null, false);
+            ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
+            cursor.close();
+            return values;
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to get values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
         }
-
-        /* Get the values from in-memory database. */
-        else if (PRIMARY_KEY.equals(key)) {
-            if (value == null || !(value instanceof Number)) {
-                throw new IllegalArgumentException("Primary key should be a number type and cannot be null");
-            }
-            return mIMDB.get(((Number) value).longValue());
-        } else {
-            for (ContentValues values : mIMDB.values()) {
-                Object object = values.get(key);
-                if (object != null && object.equals(value)) {
-                    return values;
-                }
-            }
-        }
-
         return null;
     }
 
@@ -358,7 +283,6 @@ public class DatabaseManager implements Closeable {
      * @param key2         The optional key2 to filter the query.
      * @param value2Filter The optional value filter for key2.
      * @param idOnly       true to return only identifier, false to return all fields.
-     *                     This flag is ignored if using in memory database.
      * @return A scanner to iterate all values.
      */
     public Scanner getScanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
@@ -369,62 +293,37 @@ public class DatabaseManager implements Closeable {
      * Clears the table in the database.
      */
     public void clear() {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                getDatabase().delete(mTable, null, null);
-            } catch (RuntimeException e) {
-                switchToInMemory("clear", e);
-            }
-        }
-
-        /* Clear in-memory database. */
-        else {
-            mIMDB.clear();
+        try {
+            getDatabase().delete(mTable, null, null);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to clear the table.", e);
         }
     }
 
     /**
-     * Closes database and clean up in-memory database.
+     * Closes database.
      */
     @Override
     public void close() {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                getDatabase().close();
-            } catch (RuntimeException e) {
-                switchToInMemory("close", e);
-            }
-        }
-
-        /* Close in-memory database. */
-        else {
-            mIMDB.clear();
-            mIMDB = null;
+        try {
+            getDatabase().close();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to close the database.", e);
         }
     }
 
     /**
      * Gets the count of records in the table.
      *
-     * @return The number of records in the table.
+     * @return The number of records in the table, or <code>-1</code> if operation failed.
      */
     public final long getRowCount() {
-
-        /* Try SQLite. */
-        if (mIMDB == null) {
-            try {
-                return DatabaseUtils.queryNumEntries(getDatabase(), mTable);
-            } catch (RuntimeException e) {
-                switchToInMemory("count", e);
-            }
+        try {
+            return DatabaseUtils.queryNumEntries(getDatabase(), mTable);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get row count of database.", e);
         }
-
-        /* Get row count of in-memory database. */
-        return mIMDB.size();
+        return -1;
     }
 
     /**
@@ -508,30 +407,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Switches to in-memory management, triggers error listener.
-     *
-     * @param operation The operation that triggered the error.
-     * @param exception The exception that triggered the switch.
-     */
-    @VisibleForTesting
-    void switchToInMemory(String operation, RuntimeException exception) {
-
-        /* Create an in-memory database. */
-        mIMDB = new LinkedHashMap<Long, ContentValues>() {
-
-            @Override
-            protected boolean removeEldestEntry(Entry<Long, ContentValues> eldest) {
-                return IN_MEMORY_MAX_SIZE < size();
-            }
-        };
-
-        /* Trigger error listener. */
-        if (mListener != null) {
-            mListener.onError(operation, exception);
-        }
-    }
-
-    /**
      * Sets {@link SQLiteOpenHelper} instance.
      *
      * @param helper A {@link SQLiteOpenHelper} instance to be used for accessing database.
@@ -605,14 +480,6 @@ public class DatabaseManager implements Closeable {
          */
         @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
-
-        /**
-         * Notifies an exception, before switching to in memory storage.
-         *
-         * @param operation A name of operation that caused the error.
-         * @param e         A runtime exception for the error.
-         */
-        void onError(String operation, RuntimeException e);
     }
 
     /**
@@ -670,7 +537,7 @@ public class DatabaseManager implements Closeable {
                     cursor.close();
                     cursor = null;
                 } catch (RuntimeException e) {
-                    switchToInMemory("scan.close", e);
+                    AppCenterLog.error(AppCenter.LOG_TAG, "Failed to close the scanner.", e);
                 }
             }
         }
@@ -678,141 +545,76 @@ public class DatabaseManager implements Closeable {
         @NonNull
         @Override
         public Iterator<ContentValues> iterator() {
+            try {
 
-            /* Try SQLite. */
-            if (mIMDB == null) {
-                try {
+                /* Close cursor first if it was being used. */
+                close();
+                cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
 
-                    /* Close cursor first if it was being used. */
-                    close();
-                    cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
+                /* Wrap cursor as iterator. */
+                return new Iterator<ContentValues>() {
 
-                    /* Wrap cursor as iterator. */
-                    return new Iterator<ContentValues>() {
+                    /**
+                     * If null, cursor needs to be moved to next.
+                     */
+                    Boolean hasNext;
 
-                        /**
-                         * If null, cursor needs to be moved to next.
-                         */
-                        Boolean hasNext;
+                    @Override
+                    public boolean hasNext() {
+                        if (hasNext == null) {
+                            try {
+                                hasNext = cursor.moveToNext();
+                            } catch (RuntimeException e) {
 
-                        @Override
-                        public boolean hasNext() {
-                            if (hasNext == null) {
+                                /* Consider no next on errors. */
+                                hasNext = false;
+
+                                /* Close cursor. */
                                 try {
-                                    hasNext = cursor.moveToNext();
-                                } catch (RuntimeException e) {
-
-                                    /* Consider no next on errors. */
-                                    hasNext = false;
-
-                                    /* Close cursor. */
-                                    try {
-                                        cursor.close();
-                                    } catch (RuntimeException e1) {
-                                        AppCenterLog.warn(AppCenter.LOG_TAG, "Closing cursor failed", e1);
-                                    }
-                                    cursor = null;
-
-                                    /* Switch to in-memory database. */
-                                    switchToInMemory("scan.hasNext", e);
+                                    cursor.close();
+                                } catch (RuntimeException e1) {
+                                    AppCenterLog.warn(AppCenter.LOG_TAG, "Closing cursor failed", e1);
                                 }
+                                cursor = null;
                             }
-                            return hasNext;
                         }
+                        return hasNext;
+                    }
 
-                        @Override
-                        public ContentValues next() {
+                    @Override
+                    public ContentValues next() {
 
-                            /* Check next. */
-                            if (!hasNext()) {
-                                throw new NoSuchElementException();
-                            }
-                            hasNext = null;
-
-                            /* Build object. */
-                            return buildValues(cursor, mSchema);
+                        /* Check next. */
+                        if (!hasNext()) {
+                            throw new NoSuchElementException();
                         }
+                        hasNext = null;
 
-                        @Override
-                        public void remove() {
-                            throw new UnsupportedOperationException();
-                        }
-                    };
-                } catch (RuntimeException e) {
-                    switchToInMemory("scan.iterator", e);
-                }
+                        /* Build object. */
+                        return buildValues(cursor, mSchema);
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            } catch (RuntimeException e) {
+                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get iterator of the scanner.", e);
             }
-
-            /* Scanner for in-memory database. */
-            return new Iterator<ContentValues>() {
-
-                /** In memory map iterator that we wrap because of the filter logic. */
-                final Iterator<ContentValues> iterator = mIMDB.values().iterator();
-
-                /** True if we moved the iterator but not retrieved the value. */
-                boolean advanced;
-
-                /** Next value. */
-                ContentValues next;
-
-                @Override
-                public boolean hasNext() {
-
-                    /* Iterator needs to be moved to the next. */
-                    if (!advanced) {
-                        next = null;
-                        while (iterator.hasNext()) {
-                            ContentValues nextCandidate = iterator.next();
-                            Object value1 = nextCandidate.get(key1);
-                            Object rawValue2 = nextCandidate.get(key2);
-                            String value2 = null;
-                            if (rawValue2 instanceof String) {
-                                value2 = rawValue2.toString();
-                            }
-                            if (key1 == null || (Scanner.this.value1 != null && Scanner.this.value1.equals(value1)) || (Scanner.this.value1 == null && value1 == null)) {
-                                if (key2 == null || value2Filter == null || !value2Filter.contains(value2)) {
-                                    next = nextCandidate;
-                                    break;
-                                }
-                            }
-                        }
-                        advanced = true;
-                    }
-                    return next != null;
-                }
-
-                @Override
-                public ContentValues next() {
-                    if (!hasNext()) {
-                        throw new NoSuchElementException();
-                    }
-                    advanced = false;
-                    return next;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
+            return Collections.<ContentValues>emptyList().iterator();
         }
 
         public int getCount() {
-            if (mIMDB == null) {
-                try {
-                    if (cursor == null) {
-                        cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
-                    }
-                    return cursor.getCount();
-                } catch (RuntimeException e) {
-                    switchToInMemory("scan.count", e);
+            try {
+                if (cursor == null) {
+                    cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
                 }
+                return cursor.getCount();
+            } catch (RuntimeException e) {
+                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get count of the scanner.", e);
             }
-            int count = 0;
-            for (Iterator<ContentValues> iterator = iterator(); iterator.hasNext(); iterator.next()) {
-                count++;
-            }
-            return count;
+            return -1;
         }
     }
 }

@@ -172,11 +172,6 @@ public class DatabasePersistence extends Persistence {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 return true;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
-            }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
 
@@ -232,6 +227,9 @@ public class DatabasePersistence extends Persistence {
             }
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
             long databaseId = mDatabaseManager.put(contentValues);
+            if (databaseId == -1) {
+                AppCenterLog.warn(LOG_TAG, "Failed to store a log to the Persistence database for log type " + log.getType() + ".");
+            }
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {
                 AppCenterLog.debug(LOG_TAG, "Payload is larger than what SQLite supports, storing payload in a separate file.");

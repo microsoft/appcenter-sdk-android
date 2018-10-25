@@ -136,7 +136,6 @@ public class StorageHelperAndroidTest {
         sContext.deleteDatabase("test-databaseStorageUpgrade");
         sContext.deleteDatabase("test-databaseStorageScannerRemove");
         sContext.deleteDatabase("test-databaseStorageScannerNext");
-        sContext.deleteDatabase("test-databaseStorageInMemoryDB");
         sContext.deleteDatabase("test-setMaximumSize");
     }
 
@@ -233,7 +232,7 @@ public class StorageHelperAndroidTest {
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static void runDatabaseManagerTest(DatabaseManager databaseManager, boolean imdbTest) {
+    private static void runDatabaseManagerTest(DatabaseManager databaseManager) {
         ContentValues value1 = generateContentValues();
         ContentValues value2 = generateContentValues();
         ContentValues value3 = generateContentValues();
@@ -241,20 +240,6 @@ public class StorageHelperAndroidTest {
         /* Put. */
         Long value1Id = databaseManager.put(value1);
         assertNotNull(value1Id);
-
-        /* Get for in-memory database test. */
-        if (imdbTest) {
-
-            /* Try with invalid key. */
-            ContentValues valueFromDatabase = databaseManager.get("COL_STRINGX", value1.getAsString("COL_STRING"));
-            assertNull(valueFromDatabase);
-
-            /* Try with valid key. */
-            valueFromDatabase = databaseManager.get("COL_STRING", value1.getAsString("COL_STRING"));
-            assertContentValuesEquals(value1, valueFromDatabase);
-            valueFromDatabase = databaseManager.get("COL_STRING", value1.getAsString("COL_STRING") + "X");
-            assertNull(valueFromDatabase);
-        }
 
         /* Put another. */
         Long value2Id = databaseManager.put(value2);
@@ -323,14 +308,6 @@ public class StorageHelperAndroidTest {
         Long value7Id = databaseManager.put(value7);
         assertNotNull(value6Id);
         assertNotNull(value7Id);
-
-        /* Delete for in-memory database test. */
-        if (imdbTest) {
-
-            /* Try with invalid key. */
-            databaseManager.delete("COL_STRINGX", value2.getAsString("COL_STRING"));
-            assertEquals(3, databaseManager.getRowCount());
-        }
 
         /* Delete logs with condition. */
         databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
@@ -527,16 +504,11 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-            runDatabaseManagerTest(databaseManager, false);
+            runDatabaseManagerTest(databaseManager);
         } finally {
 
             /* Close. */
@@ -564,11 +536,6 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
         try {
 
@@ -593,11 +560,6 @@ public class StorageHelperAndroidTest {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
             }
         });
 
@@ -631,11 +593,6 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
 
         /* Put data. */
@@ -662,11 +619,6 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 db.execSQL("ALTER TABLE databaseStorageUpgrade ADD COLUMN COL_INT INTEGER");
                 return true;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
             }
         });
         try {
@@ -704,11 +656,6 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -733,50 +680,11 @@ public class StorageHelperAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             databaseManager.getScanner(null, null, null, null, false).iterator().next();
-        } finally {
-
-            /* Close. */
-            //noinspection ThrowFromFinallyBlock
-            databaseManager.close();
-        }
-    }
-
-    /* This is a hack to test database failure by passing a weird table name which is actually valid.
-       SQLite database allows to create a table that contains period (.) but it doesn't actually create the table and doesn't raise any exceptions.
-       This test method will then be able to test in-memory database by accessing a table which is not created.
-       Only tested on emulator so it might not work in the future or on any other devices. */
-    @Test
-    public void databaseStorageInMemoryDB() {
-        Log.i(TAG, "Testing Database Storage switch over to in-memory database");
-
-        /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseStorageInMemoryDB", "test.databaseStorageInMemoryDB", 1, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-
-                /* Do not handle any errors. This is simulating errors so this is expected. */
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            runDatabaseManagerTest(databaseManager, true);
         } finally {
 
             /* Close. */
@@ -795,12 +703,6 @@ public class StorageHelperAndroidTest {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-
-                /* Do not handle any errors. This is simulating errors so this is expected. */
             }
         });
 

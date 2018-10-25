@@ -773,11 +773,6 @@ public class DatabasePersistenceAndroidTest {
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
-            }
         });
 
         /* Init log serializer. */
@@ -862,11 +857,6 @@ public class DatabasePersistenceAndroidTest {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
             }
         });
 

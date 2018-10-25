@@ -38,6 +38,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -72,7 +73,8 @@ public class DatabasePersistenceTest {
             mockPersistence.close();
         }
 
-        verifyStatic();
+        // There are two error logs on putLog and close
+        verifyStatic(times(2));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
