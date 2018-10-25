@@ -3,6 +3,7 @@ package com.microsoft.appcenter.persistence;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +18,7 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import org.json.JSONException;
 
@@ -89,6 +91,7 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String TABLE = "logs";
+
     /**
      * Current version of the schema.
      */
@@ -111,11 +114,6 @@ public class DatabasePersistence extends Persistence {
     private static final String PAYLOAD_FILE_EXTENSION = ".json";
 
     /**
-     * Application context.
-     */
-    private final Context mContext;
-
-    /**
      * Database manager instance to access Persistence database.
      */
     @VisibleForTesting
@@ -132,6 +130,11 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     final Set<Long> mPendingDbIdentifiers;
+
+    /**
+     * Application context.
+     */
+    private final Context mContext;
 
     /**
      * Base directory to store large payloads outside of SQLite.
@@ -179,11 +182,6 @@ public class DatabasePersistence extends Persistence {
         mLargePayloadDirectory.mkdirs();
     }
 
-    @Override
-    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-        return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
-    }
-
     /**
      * Instantiates {@link ContentValues} with the give values.
      *
@@ -201,6 +199,11 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
         return values;
+    }
+
+    @Override
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
     }
 
     @Override
@@ -328,7 +331,9 @@ public class DatabasePersistence extends Persistence {
     public int countLogs(@NonNull String group) {
 
         /* Query database and get scanner. */
-        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(COLUMN_GROUP, group, null, null, true);
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(COLUMN_GROUP + " = ?");
+        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(builder, new String[]{group}, true);
         int count = scanner.getCount();
         scanner.close();
         return count;
@@ -342,13 +347,27 @@ public class DatabasePersistence extends Persistence {
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
         /* Query database and get scanner. */
-        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, false);
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(COLUMN_GROUP + " = ?");
+        String[] selectionArgs = new String[pausedTargetKeys.size() + 1];
+        selectionArgs[0] = group;
+        if (!pausedTargetKeys.isEmpty()) {
+            StringBuilder filter = new StringBuilder();
+            for (int i = 0; i < pausedTargetKeys.size(); i++) {
+                filter.append("?,");
+            }
+            filter.deleteCharAt(filter.length() - 1);
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
+            System.arraycopy(pausedTargetKeys.toArray(), 0, selectionArgs, 1, pausedTargetKeys.size());
+        }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
         Map<Long, Log> candidates = new TreeMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
+        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(builder, selectionArgs, false);
         for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
             ContentValues values = iterator.next();
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
@@ -361,7 +380,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseManager.Scanner idScanner = mDatabaseManager.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, true);
+                DatabaseManager.Scanner idScanner = mDatabaseManager.getScanner(builder, selectionArgs, true);
                 for (ContentValues idValues : idScanner) {
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {

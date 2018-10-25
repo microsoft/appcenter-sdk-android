@@ -128,7 +128,7 @@ public class DatabaseManagerTest {
         mockStatic(AppCenterLog.class);
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getScanner(null, null, null, null, false).iterator();
+        databaseManagerMock.getScanner().iterator();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -138,7 +138,7 @@ public class DatabaseManagerTest {
         mockStatic(AppCenterLog.class);
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getScanner(null, null, null, null, false).getCount();
+        databaseManagerMock.getScanner().getCount();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -156,7 +156,7 @@ public class DatabaseManagerTest {
         SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
         when(cursor.moveToNext()).thenThrow(new RuntimeException());
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
+        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
         assertFalse(scanner.iterator().hasNext());
         verifyStatic(never());
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -180,7 +180,7 @@ public class DatabaseManagerTest {
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
         when(cursor.moveToNext()).thenThrow(new RuntimeException());
         doThrow(new RuntimeException()).when(cursor).close();
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
+        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
         assertFalse(scanner.iterator().hasNext());
         verifyStatic(never());
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -201,7 +201,7 @@ public class DatabaseManagerTest {
         SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
         doThrow(new RuntimeException()).when(cursor).close();
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner(null, null, null, null, false);
+        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
         assertFalse(scanner.iterator().hasNext());
         scanner.close();
         verifyStatic();

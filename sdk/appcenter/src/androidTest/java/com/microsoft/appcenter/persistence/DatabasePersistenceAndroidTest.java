@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -25,6 +26,7 @@ import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
@@ -83,18 +85,18 @@ public class DatabasePersistenceAndroidTest {
         Constants.loadFromContext(sContext);
     }
 
-    @Before
-    public void setUp() {
-
-        /* Clean up database. */
-        sContext.deleteDatabase(DatabasePersistence.DATABASE);
-    }
-
     private static int getIteratorSize(Iterator iterator) {
         int count = 0;
         for (; iterator.hasNext(); iterator.next())
             count++;
         return count;
+    }
+
+    @Before
+    public void setUp() {
+
+        /* Clean up database. */
+        sContext.deleteDatabase(DatabasePersistence.DATABASE);
     }
 
     @Test
@@ -470,10 +472,14 @@ public class DatabasePersistenceAndroidTest {
             /* Delete. */
             persistence.deleteLogs("", id);
 
+            /* Create a query builder for column group. */
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseManager.Scanner scanner1 = persistence.mDatabaseManager.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p1", null, null, false);
-            DatabaseManager.Scanner scanner2 = persistence.mDatabaseManager.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p2", null, null, false);
-            DatabaseManager.Scanner scanner3 = persistence.mDatabaseManager.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p3", null, null, false);
+            DatabaseManager.Scanner scanner1 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p1"}, false);
+            DatabaseManager.Scanner scanner2 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p2"}, false);
+            DatabaseManager.Scanner scanner3 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p3"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
@@ -494,7 +500,7 @@ public class DatabasePersistenceAndroidTest {
             persistence.deleteLogs("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseManager.Scanner scanner4 = persistence.mDatabaseManager.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p1", null, null, false);
+            DatabaseManager.Scanner scanner4 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p1"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {

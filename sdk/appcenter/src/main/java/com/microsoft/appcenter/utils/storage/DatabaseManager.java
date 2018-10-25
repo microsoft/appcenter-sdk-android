@@ -18,9 +18,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -188,7 +186,7 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    Cursor cursor = getCursor(null, null, null, null, true);
+                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, true);
                     try {
                         if (cursor.moveToNext()) {
                             delete(cursor.getLong(0));
@@ -264,7 +262,17 @@ public class DatabaseManager implements Closeable {
      */
     public ContentValues get(@Nullable String key, @Nullable Object value) {
         try {
-            Cursor cursor = getCursor(key, value, null, null, false);
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            String[] selectionArgs = null;
+            if (key != null) {
+                if (value == null) {
+                    builder.appendWhere(key + " IS NULL");
+                } else {
+                    builder.appendWhere(key + " = ?");
+                    selectionArgs = new String[]{value.toString()};
+                }
+            }
+            Cursor cursor = getCursor(builder, selectionArgs, false);
             ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
             cursor.close();
             return values;
@@ -275,18 +283,25 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Gets a scanner to iterate all values those match
-     * key1 == value1 and key2 not matching any values from the list in value2Filter.
+     * Gets a scanner for all data stored in the table.
      *
-     * @param key1         The optional key1 for query.
-     * @param value1       The optional value1 for query.
-     * @param key2         The optional key2 to filter the query.
-     * @param value2Filter The optional value filter for key2.
-     * @param idOnly       true to return only identifier, false to return all fields.
      * @return A scanner to iterate all values.
      */
-    public Scanner getScanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
-        return new Scanner(key1, value1, key2, value2Filter, idOnly);
+    @VisibleForTesting
+    Scanner getScanner() {
+        return getScanner(null, null, false);
+    }
+
+    /**
+     * Gets a scanner for the given SQL query.
+     *
+     * @param queryBuilder  The query builder that contains SQL query .
+     * @param selectionArgs The array of values for selection.
+     * @param idOnly        Return only row identifier if true, return all fields otherwise.
+     * @return A scanner to iterate all values.
+     */
+    public Scanner getScanner(SQLiteQueryBuilder queryBuilder, String[] selectionArgs, boolean idOnly) {
+        return new Scanner(queryBuilder, selectionArgs, idOnly);
     }
 
     /**
@@ -329,59 +344,19 @@ public class DatabaseManager implements Closeable {
     /**
      * Gets a cursor for all rows in the table, all rows where key matches value if specified.
      *
-     * @param key1         The first key to match values against.
-     * @param value1       The value to match against first key.
-     * @param key2         The second key to match values against.
-     * @param value2Filter The list of values to exclude matching the second key.
-     * @param idOnly       Return only row identifier if true, return all fields otherwise.
+     * @param queryBuilder  The query builder that contains SQL query.
+     * @param selectionArgs The array of values for selection.
+     * @param idOnly        Return only row identifier if true, return all fields otherwise.
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    Cursor getCursor(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) throws RuntimeException {
-
-        /* Build a query to get values. */
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.setTables(mTable);
-        List<String> selectionArgsList = new ArrayList<>();
-
-        /* Add filter for key1 = value1, with null value matching. */
-        if (key1 != null) {
-            if (value1 == null) {
-                builder.appendWhere(key1 + " IS NULL");
-            } else {
-                builder.appendWhere(key1 + " = ?");
-                selectionArgsList.add(value1.toString());
-            }
+    Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, boolean idOnly) throws RuntimeException {
+        if (queryBuilder == null) {
+            queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
-
-        /* Append value filter to exclude values matching key2, if key2 and value2Filter were both specified. */
-        if (key2 != null && value2Filter != null && !value2Filter.isEmpty()) {
-            if (key1 != null) {
-                builder.appendWhere(" AND ");
-            }
-            builder.appendWhere(key2);
-            builder.appendWhere(" NOT IN (");
-            StringBuilder inBuilder = new StringBuilder();
-            for (String value2 : value2Filter) {
-                inBuilder.append("?,");
-                selectionArgsList.add(value2);
-            }
-            inBuilder.deleteCharAt(inBuilder.length() - 1);
-            builder.appendWhere(inBuilder.toString());
-            builder.appendWhere(")");
-        }
-
-        /* Convert list to array. */
-        String[] selectionArgs;
-        if (selectionArgsList.isEmpty()) {
-            selectionArgs = null;
-        } else {
-            selectionArgs = selectionArgsList.toArray(new String[selectionArgsList.size()]);
-        }
-
-        /* Query database. */
+        queryBuilder.setTables(mTable);
         String[] projectionIn = idOnly ? new String[]{PRIMARY_KEY} : null;
-        return builder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, PRIMARY_KEY);
+        return queryBuilder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, PRIMARY_KEY);
     }
 
     /**
@@ -424,7 +399,11 @@ public class DatabaseManager implements Closeable {
      */
     @VisibleForTesting
     String[] getColumnNames() {
-        return getCursor(null, null, null, null, false).getColumnNames();
+
+        // TODO: Below line doesn't look efficient to get column names. Could use "PRAGMA table_info(table-name)" to avoid getting all data back from database just to get column names.
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.setTables(mTable);
+        return builder.query(getDatabase(), null, null, null, null, null, PRIMARY_KEY).getColumnNames();
     }
 
     /**
@@ -490,27 +469,17 @@ public class DatabaseManager implements Closeable {
         /**
          * First filter key.
          */
-        private final String key1;
+        private final SQLiteQueryBuilder mQueryBuilder;
 
         /**
-         * Filter value for key1.
+         * Filter value for mQueryBuilder.
          */
-        private final Object value1;
-
-        /**
-         * Second filter key.
-         */
-        private final String key2;
-
-        /**
-         * Filter values to exclude matching key2.
-         */
-        private final Collection<String> value2Filter;
+        private final String[] mSelectionArgs;
 
         /**
          * Return only IDs flags (SQLite implementation only).
          */
-        private final boolean idOnly;
+        private final boolean mIdOnly;
 
         /**
          * SQLite cursor.
@@ -520,12 +489,10 @@ public class DatabaseManager implements Closeable {
         /**
          * Initializes a cursor with optional filter.
          */
-        private Scanner(String key1, Object value1, String key2, Collection<String> value2Filter, boolean idOnly) {
-            this.key1 = key1;
-            this.value1 = value1;
-            this.key2 = key2;
-            this.value2Filter = value2Filter;
-            this.idOnly = idOnly;
+        private Scanner(SQLiteQueryBuilder queryBuilder, String[] selectionArgs, boolean idOnly) {
+            this.mQueryBuilder = queryBuilder;
+            this.mSelectionArgs = selectionArgs;
+            this.mIdOnly = idOnly;
         }
 
         @Override
@@ -549,7 +516,7 @@ public class DatabaseManager implements Closeable {
 
                 /* Close cursor first if it was being used. */
                 close();
-                cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
+                cursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
 
                 /* Wrap cursor as iterator. */
                 return new Iterator<ContentValues>() {
@@ -608,7 +575,7 @@ public class DatabaseManager implements Closeable {
         public int getCount() {
             try {
                 if (cursor == null) {
-                    cursor = getCursor(key1, value1, key2, value2Filter, idOnly);
+                    cursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
                 }
                 return cursor.getCount();
             } catch (RuntimeException e) {
