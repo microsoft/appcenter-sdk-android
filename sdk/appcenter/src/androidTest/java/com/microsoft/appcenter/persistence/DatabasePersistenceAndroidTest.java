@@ -3,6 +3,7 @@ package com.microsoft.appcenter.persistence;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
@@ -85,10 +86,11 @@ public class DatabasePersistenceAndroidTest {
         Constants.loadFromContext(sContext);
     }
 
-    private static int getIteratorSize(Iterator iterator) {
+    private static int getCursorSize(Cursor cursor) {
         int count = 0;
-        for (; iterator.hasNext(); iterator.next())
+        while (cursor.moveToNext()) {
             count++;
+        }
         return count;
     }
 
@@ -477,40 +479,40 @@ public class DatabasePersistenceAndroidTest {
             builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseManager.Scanner scanner1 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p1"}, false);
-            DatabaseManager.Scanner scanner2 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p2"}, false);
-            DatabaseManager.Scanner scanner3 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p3"}, false);
+            Cursor cursor1 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, false);
+            Cursor cursor2 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p2"}, false);
+            Cursor cursor3 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p3"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
 
                 /* Verify. */
-                assertEquals(2, getIteratorSize(scanner1.iterator()));
-                assertEquals(1, getIteratorSize(scanner2.iterator()));
-                assertEquals(1, getIteratorSize(scanner3.iterator()));
+                assertEquals(2, getCursorSize(cursor1));
+                assertEquals(1, getCursorSize(cursor2));
+                assertEquals(1, getCursorSize(cursor3));
             } finally {
 
                 /* Close. */
-                scanner1.close();
-                scanner2.close();
-                scanner3.close();
+                cursor1.close();
+                cursor2.close();
+                cursor3.close();
             }
 
             /* Delete. */
             persistence.deleteLogs("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseManager.Scanner scanner4 = persistence.mDatabaseManager.getScanner(builder, new String[]{"test-p1"}, false);
+            Cursor cursor4 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
 
                 /* Verify. */
-                assertEquals(0, getIteratorSize(scanner4.iterator()));
+                assertEquals(0, getCursorSize(cursor4));
             } finally {
 
                 /* Close. */
-                scanner4.close();
+                cursor4.close();
             }
 
             /* Count logs after delete. */

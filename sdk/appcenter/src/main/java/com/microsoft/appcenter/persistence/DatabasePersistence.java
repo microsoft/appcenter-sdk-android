@@ -2,6 +2,7 @@ package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
@@ -333,9 +334,9 @@ public class DatabasePersistence extends Persistence {
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
-        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(builder, new String[]{group}, true);
-        int count = scanner.getCount();
-        scanner.close();
+        Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
+        int count = cursor.getCount();
+        cursor.close();
         return count;
     }
 
@@ -367,9 +368,9 @@ public class DatabasePersistence extends Persistence {
         Map<Long, Log> candidates = new TreeMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
-        DatabaseManager.Scanner scanner = mDatabaseManager.getScanner(builder, selectionArgs, false);
-        for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
-            ContentValues values = iterator.next();
+        Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
+        while (cursor.moveToNext() && count < limit) {
+            ContentValues values =  mDatabaseManager.buildValues(cursor);
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
 
             /*
@@ -380,8 +381,9 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseManager.Scanner idScanner = mDatabaseManager.getScanner(builder, selectionArgs, true);
-                for (ContentValues idValues : idScanner) {
+                Cursor idCursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+                while (idCursor.moveToNext()) {
+                    ContentValues idValues = mDatabaseManager.buildValues(idCursor);
                     Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                     if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
 
@@ -391,7 +393,7 @@ public class DatabasePersistence extends Persistence {
                         break;
                     }
                 }
-                idScanner.close();
+                idCursor.close();
                 continue;
             }
 
@@ -435,7 +437,7 @@ public class DatabasePersistence extends Persistence {
                 }
             }
         }
-        scanner.close();
+        cursor.close();
 
         /* Delete any logs that cannot be de-serialized. */
         if (failedDbIdentifiers.size() > 0) {

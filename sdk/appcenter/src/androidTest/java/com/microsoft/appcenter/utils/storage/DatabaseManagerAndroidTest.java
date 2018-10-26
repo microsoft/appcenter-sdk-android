@@ -3,6 +3,7 @@ package com.microsoft.appcenter.utils.storage;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
@@ -103,42 +104,43 @@ public class DatabaseManagerAndroidTest {
         assertNull(nullValueFromDatabase);
 
         /* Count with scanner. */
-        DatabaseManager.Scanner scanner = databaseManager.getScanner();
-        assertEquals(2, scanner.getCount());
-        assertEquals(2, scanner.getCount());
+        Cursor cursor = databaseManager.getCursor(null, null, false);
+        assertEquals(2, cursor.getCount());
+        assertEquals(2, cursor.getCount());
         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING = ?");
-        DatabaseManager.Scanner scanner1 = databaseManager.getScanner(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
-        assertEquals(1, scanner1.getCount());
-        Iterator<ContentValues> iterator = scanner1.iterator();
-        assertContentValuesEquals(value1, iterator.next());
-        assertFalse(iterator.hasNext());
+        Cursor cursor1 = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        assertEquals(1, cursor1.getCount());
+        assertTrue(cursor1.moveToNext());
+        assertContentValuesEquals(value1, databaseManager.buildValues(cursor1));
+        assertFalse(cursor1.moveToNext());
 
         /* Null value matching. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING IS NULL");
-        assertEquals(0, databaseManager.getScanner(queryBuilder, null, false).getCount());
+        assertEquals(0, databaseManager.getCursor(queryBuilder, null, false).getCount());
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING_NULL IS NULL");
-        assertEquals(2, databaseManager.getScanner(queryBuilder, null, false).getCount());
+        assertEquals(2, databaseManager.getCursor(queryBuilder, null, false).getCount());
 
         /* Test null value filter does not exclude anything, so returns the 2 logs. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
-        scanner = databaseManager.getScanner(queryBuilder, null, false);
-        assertEquals(2, scanner.getCount());
+        cursor = databaseManager.getCursor(queryBuilder, null, false);
+        assertEquals(2, cursor.getCount());
 
         /* Test filtering only with the second key parameter to get only the second log. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING NOT IN (?)");
-        scanner = databaseManager.getScanner(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
-        assertEquals(1, scanner.getCount());
-        assertContentValuesEquals(value2, scanner.iterator().next());
+        cursor = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        assertEquals(1, cursor.getCount());
+        assertTrue(cursor.moveToNext());
+        assertContentValuesEquals(value2, databaseManager.buildValues(cursor));
 
         /* Delete. */
         databaseManager.delete(value1Id);
         assertNull(databaseManager.get(value1Id));
         assertEquals(1, databaseManager.getRowCount());
-        assertEquals(1, databaseManager.getScanner().getCount());
+        assertEquals(1, databaseManager.getCursor(null, null, false).getCount());
 
         /* Put logs to delete multiple IDs. */
         ContentValues value4 = generateContentValues();
@@ -351,52 +353,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            databaseManager.close();
-        }
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void databaseManagerScannerRemove() {
-
-        /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerScannerRemove", "databaseManagerScannerRemove", 1, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            databaseManager.getScanner().iterator().remove();
-        } finally {
-
-            /* Close. */
-            //noinspection ThrowFromFinallyBlock
-            databaseManager.close();
-        }
-    }
-
-    @Test(expected = NoSuchElementException.class)
-    public void databaseManagerScannerNext() {
-
-        /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerScannerNext", "databaseManagerScannerNext", 1, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            databaseManager.getScanner().iterator().next();
-        } finally {
-
-            /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
     }

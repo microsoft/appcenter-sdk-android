@@ -19,11 +19,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
@@ -134,7 +131,7 @@ public class DatabaseManager implements Closeable {
      * @param cursor The cursor to be converted to an entry.
      * @return An entry converted from the cursor.
      */
-    private static ContentValues buildValues(Cursor cursor, ContentValues schema) {
+    public ContentValues buildValues(Cursor cursor) {
         ContentValues values = new ContentValues();
         for (int i = 0; i < cursor.getColumnCount(); i++) {
             if (cursor.isNull(i)) {
@@ -144,7 +141,7 @@ public class DatabaseManager implements Closeable {
             if (key.equals(PRIMARY_KEY)) {
                 values.put(key, cursor.getLong(i));
             } else {
-                Object specimen = schema.get(key);
+                Object specimen = mSchema.get(key);
                 if (specimen instanceof byte[]) {
                     values.put(key, cursor.getBlob(i));
                 } else if (specimen instanceof Double) {
@@ -273,35 +270,13 @@ public class DatabaseManager implements Closeable {
                 }
             }
             Cursor cursor = getCursor(builder, selectionArgs, false);
-            ContentValues values = cursor.moveToFirst() ? buildValues(cursor, mSchema) : null;
+            ContentValues values = cursor.moveToFirst() ? buildValues(cursor) : null;
             cursor.close();
             return values;
         } catch (RuntimeException e) {
             AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to get values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
         }
         return null;
-    }
-
-    /**
-     * Gets a scanner for all data stored in the table.
-     *
-     * @return A scanner to iterate all values.
-     */
-    @VisibleForTesting
-    Scanner getScanner() {
-        return getScanner(null, null, false);
-    }
-
-    /**
-     * Gets a scanner for the given SQL query.
-     *
-     * @param queryBuilder  The query builder that contains SQL query .
-     * @param selectionArgs The array of values for selection.
-     * @param idOnly        Return only row identifier if true, return all fields otherwise.
-     * @return A scanner to iterate all values.
-     */
-    public Scanner getScanner(SQLiteQueryBuilder queryBuilder, String[] selectionArgs, boolean idOnly) {
-        return new Scanner(queryBuilder, selectionArgs, idOnly);
     }
 
     /**
@@ -350,7 +325,7 @@ public class DatabaseManager implements Closeable {
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, boolean idOnly) throws RuntimeException {
+    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, boolean idOnly) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
@@ -459,129 +434,5 @@ public class DatabaseManager implements Closeable {
          */
         @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
-    }
-
-    /**
-     * Scanner specification.
-     */
-    public class Scanner implements Iterable<ContentValues>, Closeable {
-
-        /**
-         * First filter key.
-         */
-        private final SQLiteQueryBuilder mQueryBuilder;
-
-        /**
-         * Filter value for mQueryBuilder.
-         */
-        private final String[] mSelectionArgs;
-
-        /**
-         * Return only IDs flags (SQLite implementation only).
-         */
-        private final boolean mIdOnly;
-
-        /**
-         * SQLite cursor.
-         */
-        private Cursor mCursor;
-
-        /**
-         * Initializes a cursor with optional filter.
-         */
-        private Scanner(SQLiteQueryBuilder queryBuilder, String[] selectionArgs, boolean idOnly) {
-            this.mQueryBuilder = queryBuilder;
-            this.mSelectionArgs = selectionArgs;
-            this.mIdOnly = idOnly;
-        }
-
-        @Override
-        public void close() {
-
-            /* Close cursor. */
-            if (mCursor != null) {
-                try {
-                    mCursor.close();
-                    mCursor = null;
-                } catch (RuntimeException e) {
-                    AppCenterLog.error(AppCenter.LOG_TAG, "Failed to close the scanner.", e);
-                }
-            }
-        }
-
-        @NonNull
-        @Override
-        public Iterator<ContentValues> iterator() {
-            try {
-
-                /* Close cursor first if it was being used. */
-                close();
-                mCursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
-
-                /* Wrap cursor as iterator. */
-                return new Iterator<ContentValues>() {
-
-                    /**
-                     * If null, cursor needs to be moved to next.
-                     */
-                    Boolean hasNext;
-
-                    @Override
-                    public boolean hasNext() {
-                        if (hasNext == null) {
-                            try {
-                                hasNext = mCursor.moveToNext();
-                            } catch (RuntimeException e) {
-
-                                /* Consider no next on errors. */
-                                hasNext = false;
-
-                                /* Close cursor. */
-                                try {
-                                    mCursor.close();
-                                } catch (RuntimeException e1) {
-                                    AppCenterLog.warn(AppCenter.LOG_TAG, "Closing cursor failed", e1);
-                                }
-                                mCursor = null;
-                            }
-                        }
-                        return hasNext;
-                    }
-
-                    @Override
-                    public ContentValues next() {
-
-                        /* Check next. */
-                        if (!hasNext()) {
-                            throw new NoSuchElementException();
-                        }
-                        hasNext = null;
-
-                        /* Build object. */
-                        return buildValues(mCursor, mSchema);
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            } catch (RuntimeException e) {
-                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get iterator of the scanner.", e);
-            }
-            return Collections.<ContentValues>emptyList().iterator();
-        }
-
-        public int getCount() {
-            try {
-                if (mCursor == null) {
-                    mCursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
-                }
-                return mCursor.getCount();
-            } catch (RuntimeException e) {
-                AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get count of the scanner.", e);
-            }
-            return -1;
-        }
     }
 }
