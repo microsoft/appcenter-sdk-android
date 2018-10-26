@@ -126,12 +126,41 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Get next entry from the cursor.
+     *
+     * @param cursor The cursor to be converted to an entry.
+     * @return An entry converted from the cursor.
+     */
+    @Nullable
+    public ContentValues nextValues(Cursor cursor) {
+        try {
+             if (cursor.moveToNext()) {
+                 return buildValues(cursor, mSchema);
+             }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get next cursor value: ", e);
+        }
+        return null;
+    }
+
+    /**
      * Converts a cursor to an entry.
      *
      * @param cursor The cursor to be converted to an entry.
      * @return An entry converted from the cursor.
      */
     public ContentValues buildValues(Cursor cursor) {
+        return buildValues(cursor, mSchema);
+    }
+
+     /**
+     * Converts a cursor to an entry.
+     *
+     * @param cursor The cursor to be converted to an entry.
+     * @param schema The schema with value types.
+     * @return An entry converted from the cursor.
+     */
+    private static ContentValues buildValues(Cursor cursor, ContentValues schema) {
         ContentValues values = new ContentValues();
         for (int i = 0; i < cursor.getColumnCount(); i++) {
             if (cursor.isNull(i)) {
@@ -141,7 +170,7 @@ public class DatabaseManager implements Closeable {
             if (key.equals(PRIMARY_KEY)) {
                 values.put(key, cursor.getLong(i));
             } else {
-                Object specimen = mSchema.get(key);
+                Object specimen = schema.get(key);
                 if (specimen instanceof byte[]) {
                     values.put(key, cursor.getBlob(i));
                 } else if (specimen instanceof Double) {

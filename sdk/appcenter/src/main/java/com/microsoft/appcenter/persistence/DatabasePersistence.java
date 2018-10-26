@@ -334,9 +334,14 @@ public class DatabasePersistence extends Persistence {
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
-        Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
-        int count = cursor.getCount();
-        cursor.close();
+        int count = 0;
+        try {
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
+            count = cursor.getCount();
+            cursor.close();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get logs count: ", e);
+        }
         return count;
     }
 
@@ -347,7 +352,7 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
-        /* Query database and get scanner. */
+        /* Query database. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
         String[] selectionArgs = new String[pausedTargetKeys.size() + 1];
@@ -368,9 +373,16 @@ public class DatabasePersistence extends Persistence {
         Map<Long, Log> candidates = new TreeMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
-        Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
-        while (cursor.moveToNext() && count < limit) {
-            ContentValues values =  mDatabaseManager.buildValues(cursor);
+        Cursor cursor = null;
+        ContentValues values;
+        try {
+            cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
+        }
+        while (cursor != null &&
+                (values = mDatabaseManager.nextValues(cursor)) != null &&
+                count < limit) {
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
 
             /*
@@ -381,19 +393,16 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                Cursor idCursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
-                while (idCursor.moveToNext()) {
-                    ContentValues idValues = mDatabaseManager.buildValues(idCursor);
-                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
-                    if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
+                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgs);
+                for (Long corruptedId : corruptedIds) {
+                    if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
                         /* Found the record to delete that we could not read when selecting all fields. */
-                        deleteLog(largePayloadGroupDirectory, invalidId);
-                        AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + invalidId);
+                        deleteLog(largePayloadGroupDirectory, corruptedId);
+                        AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + corruptedId);
                         break;
                     }
                 }
-                idCursor.close();
                 continue;
             }
 
@@ -437,7 +446,12 @@ public class DatabasePersistence extends Persistence {
                 }
             }
         }
-        cursor.close();
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
+        }
 
         /* Delete any logs that cannot be de-serialized. */
         if (failedDbIdentifiers.size() > 0) {
@@ -492,5 +506,21 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void close() {
         mDatabaseManager.close();
+    }
+
+    private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
+        List<Long> result = new ArrayList<>();
+        try {
+            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            while (cursor.moveToNext()) {
+                ContentValues idValues = mDatabaseManager.buildValues(cursor);
+                Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
+                result.add(invalidId);
+            }
+            cursor.close();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
+        }
+        return result;
     }
 }
