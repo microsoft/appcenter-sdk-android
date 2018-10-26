@@ -484,7 +484,7 @@ public class DatabaseManager implements Closeable {
         /**
          * SQLite cursor.
          */
-        private Cursor cursor;
+        private Cursor mCursor;
 
         /**
          * Initializes a cursor with optional filter.
@@ -499,10 +499,10 @@ public class DatabaseManager implements Closeable {
         public void close() {
 
             /* Close cursor. */
-            if (cursor != null) {
+            if (mCursor != null) {
                 try {
-                    cursor.close();
-                    cursor = null;
+                    mCursor.close();
+                    mCursor = null;
                 } catch (RuntimeException e) {
                     AppCenterLog.error(AppCenter.LOG_TAG, "Failed to close the scanner.", e);
                 }
@@ -516,7 +516,7 @@ public class DatabaseManager implements Closeable {
 
                 /* Close cursor first if it was being used. */
                 close();
-                cursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
+                mCursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
 
                 /* Wrap cursor as iterator. */
                 return new Iterator<ContentValues>() {
@@ -530,7 +530,7 @@ public class DatabaseManager implements Closeable {
                     public boolean hasNext() {
                         if (hasNext == null) {
                             try {
-                                hasNext = cursor.moveToNext();
+                                hasNext = mCursor.moveToNext();
                             } catch (RuntimeException e) {
 
                                 /* Consider no next on errors. */
@@ -538,11 +538,11 @@ public class DatabaseManager implements Closeable {
 
                                 /* Close cursor. */
                                 try {
-                                    cursor.close();
+                                    mCursor.close();
                                 } catch (RuntimeException e1) {
                                     AppCenterLog.warn(AppCenter.LOG_TAG, "Closing cursor failed", e1);
                                 }
-                                cursor = null;
+                                mCursor = null;
                             }
                         }
                         return hasNext;
@@ -558,7 +558,7 @@ public class DatabaseManager implements Closeable {
                         hasNext = null;
 
                         /* Build object. */
-                        return buildValues(cursor, mSchema);
+                        return buildValues(mCursor, mSchema);
                     }
 
                     @Override
@@ -574,10 +574,10 @@ public class DatabaseManager implements Closeable {
 
         public int getCount() {
             try {
-                if (cursor == null) {
-                    cursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
+                if (mCursor == null) {
+                    mCursor = getCursor(mQueryBuilder, mSelectionArgs, mIdOnly);
                 }
-                return cursor.getCount();
+                return mCursor.getCount();
             } catch (RuntimeException e) {
                 AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get count of the scanner.", e);
             }

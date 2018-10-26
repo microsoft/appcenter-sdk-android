@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -16,7 +15,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -80,101 +78,102 @@ public class DatabaseManagerAndroidTest {
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-//    private static void runDatabaseManagerTest(DatabaseManager databaseManager) {
-//        ContentValues value1 = generateContentValues();
-//        ContentValues value2 = generateContentValues();
-//        ContentValues value3 = generateContentValues();
-//
-//        /* Put. */
-//        Long value1Id = databaseManager.put(value1);
-//        assertNotNull(value1Id);
-//
-//        /* Put another. */
-//        Long value2Id = databaseManager.put(value2);
-//        assertNotNull(value2Id);
-//
-//        /* Generate an ID that is neither value1Id nor value2Id. */
-//
-//        /* Get. */
-//        ContentValues value1FromDatabase = databaseManager.get(value1Id);
-//        assertContentValuesEquals(value1, value1FromDatabase);
-//        ContentValues value2FromDatabase = databaseManager.get(DatabaseManager.PRIMARY_KEY, value2Id);
-//        assertContentValuesEquals(value2, value2FromDatabase);
-//        //noinspection ResourceType
-//        ContentValues nullValueFromDatabase = databaseManager.get(-1);
-//        assertNull(nullValueFromDatabase);
-//
-//        /* Query builder. */
-//        SQLiteQueryBuilder colStringIsNullQuery = SQLiteUtils.newSQLiteQueryBuilder();
-//        colStringIsNullQuery.appendWhere("COL_STRING IS NULL");
-//        SQLiteQueryBuilder colStringQuery = SQLiteUtils.newSQLiteQueryBuilder();
-//        colStringQuery.appendWhere("COL_STRING = ?");
-//        SQLiteQueryBuilder colStringNullIsNullQuery = SQLiteUtils.newSQLiteQueryBuilder();
-//        colStringNullIsNullQuery.appendWhere("COL_STRING_NULL IS NULL");
-//
-//        /* Count with scanner. */
-//        DatabaseManager.Scanner scanner = databaseManager.getScanner();
-//        assertEquals(2, scanner.getCount());
-//        assertEquals(2, scanner.getCount());
-//        DatabaseManager.Scanner scanner1 = databaseManager.getScanner(colStringQuery, new String[]{value1.getAsString("COL_STRING")}, false);
-//        assertEquals(1, scanner1.getCount());
-//        Iterator<ContentValues> iterator = scanner1.iterator();
-//        assertContentValuesEquals(value1, iterator.next());
-//        assertFalse(iterator.hasNext());
-//
-//        /* Null value matching. */
-//        assertEquals(0, databaseManager.getScanner(colStringIsNullQuery, null, false).getCount());
-//        assertEquals(2, databaseManager.getScanner("COL_STRING_NULL", null, null, null, false).getCount());
-//
-//        /* Test null value filter does not exclude anything, so returns the 2 logs. */
-//        scanner = databaseManager.getScanner(null, null, "COL_STRING", null, false);
-//        assertEquals(2, scanner.getCount());
-//
-//        /* Test filtering only with the second key parameter to get only the second log. */
-//        scanner = databaseManager.getScanner(null, null, "COL_STRING", Collections.singletonList(value1.getAsString("COL_STRING")), false);
-//        assertEquals(1, scanner.getCount());
-//        assertContentValuesEquals(value2, scanner.iterator().next());
-//
-//        /* Delete. */
-//        databaseManager.delete(value1Id);
-//        assertNull(databaseManager.get(value1Id));
-//        assertEquals(1, databaseManager.getRowCount());
-//        assertEquals(1, databaseManager.getScanner().getCount());
-//
-//        /* Put logs to delete multiple IDs. */
-//        ContentValues value4 = generateContentValues();
-//        ContentValues value5 = generateContentValues();
-//        Long value4Id = databaseManager.put(value4);
-//        Long value5Id = databaseManager.put(value5);
-//        assertNotNull(value4Id);
-//        assertNotNull(value5Id);
-//
-//        /* Delete multiple logs. */
-//        databaseManager.delete(Arrays.asList(value4Id, value5Id));
-//        assertNull(databaseManager.get(value4Id));
-//        assertNull(databaseManager.get(value5Id));
-//        assertEquals(1, databaseManager.getRowCount());
-//
-//        /* Put logs to delete with condition. */
-//        ContentValues value6 = generateContentValues();
-//        ContentValues value7 = generateContentValues();
-//        value6.put("COL_STRING", value2.getAsString("COL_STRING"));
-//        value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-//        Long value6Id = databaseManager.put(value6);
-//        Long value7Id = databaseManager.put(value7);
-//        assertNotNull(value6Id);
-//        assertNotNull(value7Id);
-//
-//        /* Delete logs with condition. */
-//        databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
-//        assertEquals(1, databaseManager.getRowCount());
-//        ContentValues value7FromDatabase = databaseManager.get(value7Id);
-//        assertContentValuesEquals(value7, value7FromDatabase);
-//
-//        /* Clear. */
-//        databaseManager.clear();
-//        assertEquals(0, databaseManager.getRowCount());
-//    }
+    private static void runDatabaseManagerTest(DatabaseManager databaseManager) {
+        ContentValues value1 = generateContentValues();
+        ContentValues value2 = generateContentValues();
+        ContentValues value3 = generateContentValues();
+
+        /* Put. */
+        Long value1Id = databaseManager.put(value1);
+        assertNotNull(value1Id);
+
+        /* Put another. */
+        Long value2Id = databaseManager.put(value2);
+        assertNotNull(value2Id);
+
+        /* Generate an ID that is neither value1Id nor value2Id. */
+
+        /* Get. */
+        ContentValues value1FromDatabase = databaseManager.get(value1Id);
+        assertContentValuesEquals(value1, value1FromDatabase);
+        ContentValues value2FromDatabase = databaseManager.get(DatabaseManager.PRIMARY_KEY, value2Id);
+        assertContentValuesEquals(value2, value2FromDatabase);
+        //noinspection ResourceType
+        ContentValues nullValueFromDatabase = databaseManager.get(-1);
+        assertNull(nullValueFromDatabase);
+
+        /* Count with scanner. */
+        DatabaseManager.Scanner scanner = databaseManager.getScanner();
+        assertEquals(2, scanner.getCount());
+        assertEquals(2, scanner.getCount());
+        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere("COL_STRING = ?");
+        DatabaseManager.Scanner scanner1 = databaseManager.getScanner(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        assertEquals(1, scanner1.getCount());
+        Iterator<ContentValues> iterator = scanner1.iterator();
+        assertContentValuesEquals(value1, iterator.next());
+        assertFalse(iterator.hasNext());
+
+        /* Null value matching. */
+        queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere("COL_STRING IS NULL");
+        assertEquals(0, databaseManager.getScanner(queryBuilder, null, false).getCount());
+        queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere("COL_STRING_NULL IS NULL");
+        assertEquals(2, databaseManager.getScanner(queryBuilder, null, false).getCount());
+
+        /* Test null value filter does not exclude anything, so returns the 2 logs. */
+        queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        scanner = databaseManager.getScanner(queryBuilder, null, false);
+        assertEquals(2, scanner.getCount());
+
+        /* Test filtering only with the second key parameter to get only the second log. */
+        queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere("COL_STRING NOT IN (?)");
+        scanner = databaseManager.getScanner(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        assertEquals(1, scanner.getCount());
+        assertContentValuesEquals(value2, scanner.iterator().next());
+
+        /* Delete. */
+        databaseManager.delete(value1Id);
+        assertNull(databaseManager.get(value1Id));
+        assertEquals(1, databaseManager.getRowCount());
+        assertEquals(1, databaseManager.getScanner().getCount());
+
+        /* Put logs to delete multiple IDs. */
+        ContentValues value4 = generateContentValues();
+        ContentValues value5 = generateContentValues();
+        Long value4Id = databaseManager.put(value4);
+        Long value5Id = databaseManager.put(value5);
+        assertNotNull(value4Id);
+        assertNotNull(value5Id);
+
+        /* Delete multiple logs. */
+        databaseManager.delete(Arrays.asList(value4Id, value5Id));
+        assertNull(databaseManager.get(value4Id));
+        assertNull(databaseManager.get(value5Id));
+        assertEquals(1, databaseManager.getRowCount());
+
+        /* Put logs to delete with condition. */
+        ContentValues value6 = generateContentValues();
+        ContentValues value7 = generateContentValues();
+        value6.put("COL_STRING", value2.getAsString("COL_STRING"));
+        value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
+        Long value6Id = databaseManager.put(value6);
+        Long value7Id = databaseManager.put(value7);
+        assertNotNull(value6Id);
+        assertNotNull(value7Id);
+
+        /* Delete logs with condition. */
+        databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
+        assertEquals(1, databaseManager.getRowCount());
+        ContentValues value7FromDatabase = databaseManager.get(value7Id);
+        assertContentValuesEquals(value7, value7FromDatabase);
+
+        /* Clear. */
+        databaseManager.clear();
+        assertEquals(0, databaseManager.getRowCount());
+    }
 
     private static ContentValues generateContentValues() {
         byte[] randomBytes = new byte[10];
@@ -221,7 +220,7 @@ public class DatabaseManagerAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
-//            runDatabaseManagerTest(databaseManager);
+            runDatabaseManagerTest(databaseManager);
         } finally {
 
             /* Close. */

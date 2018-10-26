@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -167,7 +168,7 @@ public class AbstractAppCenterTest {
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
         DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(anyString(), anyObject(), anyString(), anyCollectionOf(String.class), anyBoolean())).thenReturn(databaseScanner);
+        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean())).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
 
         /* Mock network state helper. */

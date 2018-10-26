@@ -2,6 +2,7 @@ package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -9,6 +10,7 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import org.json.JSONException;
 import org.junit.Rule;
@@ -105,7 +107,7 @@ public class DatabasePersistenceTest {
         for (int i = 0; i < groupCount; i++) {
             DatabaseManager.Scanner mockDatabaseScanner = mock(DatabaseManager.Scanner.class);
             when(mockDatabaseScanner.iterator()).thenReturn(list.get(i).iterator());
-            when(mockDatabaseManager.getScanner(COLUMN_GROUP, String.valueOf(i), COLUMN_TARGET_KEY, Collections.<String>emptyList(), false)).thenReturn(mockDatabaseScanner);
+            when(mockDatabaseManager.getScanner(any(SQLiteQueryBuilder.class), eq(new String[]{String.valueOf(i)}), eq(false))).thenReturn(mockDatabaseScanner);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
@@ -163,7 +165,7 @@ public class DatabasePersistenceTest {
 
         /* Mock log sequence retrieved from scanner. */
         DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(anyString(), anyString(), anyString(), anyCollectionOf(String.class), eq(false))).thenReturn(databaseScanner);
+        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(databaseScanner);
         when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
 
         /* Mock second scanner with identifiers only. */
@@ -174,7 +176,7 @@ public class DatabasePersistenceTest {
             idValues.add(contentValues);
         }
         DatabaseManager.Scanner idDatabaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(anyString(), anyObject(), anyString(), anyCollectionOf(String.class), eq(true))).thenReturn(idDatabaseScanner);
+        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(idDatabaseScanner);
         when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
 
         /* Mock serializer and eventually the database. */
@@ -271,7 +273,7 @@ public class DatabasePersistenceTest {
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
         DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(anyString(), anyObject(), anyString(), anyCollectionOf(String.class), anyBoolean())).thenReturn(databaseScanner);
+        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean())).thenReturn(databaseScanner);
         when(databaseManager.setMaxSize(anyLong())).thenReturn(true).thenReturn(false);
 
         /* Just checks calls are forwarded to the low level database layer. */
