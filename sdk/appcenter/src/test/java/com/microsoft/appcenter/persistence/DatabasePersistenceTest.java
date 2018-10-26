@@ -2,6 +2,8 @@ package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
@@ -10,7 +12,6 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import org.json.JSONException;
 import org.junit.Rule;
@@ -21,20 +22,15 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_GROUP;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_TARGET_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -103,11 +99,13 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
+        when(mockDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
 
         for (int i = 0; i < groupCount; i++) {
-            DatabaseManager.Scanner mockDatabaseScanner = mock(DatabaseManager.Scanner.class);
-            when(mockDatabaseScanner.iterator()).thenReturn(list.get(i).iterator());
-            when(mockDatabaseManager.getScanner(any(SQLiteQueryBuilder.class), eq(new String[]{String.valueOf(i)}), eq(false))).thenReturn(mockDatabaseScanner);
+            MockCursor mockCursor = new MockCursor(list.get(i));
+            mockCursor.mockBuildValues(mockDatabaseManager);
+            when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), eq(new String[]{String.valueOf(i)}), eq(false)))
+                    .thenReturn(mockCursor);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
@@ -139,9 +137,10 @@ public class DatabasePersistenceTest {
         int logCount = 3;
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
 
         /* Make 3 logs, the second one will be corrupted. */
-        Collection<ContentValues> fieldValues = new ArrayList<>(logCount);
+        List<ContentValues> fieldValues = new ArrayList<>(logCount);
         {
             /* Valid record. */
             ContentValues contentValues = mock(ContentValues.class);
@@ -164,20 +163,20 @@ public class DatabasePersistenceTest {
         }
 
         /* Mock log sequence retrieved from scanner. */
-        DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(databaseScanner);
-        when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
+        MockCursor mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
 
         /* Mock second scanner with identifiers only. */
-        Collection<ContentValues> idValues = new ArrayList<>(logCount);
+        List<ContentValues> idValues = new ArrayList<>(logCount);
         for (long i = 0; i < logCount; i++) {
             ContentValues contentValues = mock(ContentValues.class);
             when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(i);
             idValues.add(contentValues);
         }
-        DatabaseManager.Scanner idDatabaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(idDatabaseScanner);
-        when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
+        MockCursor mockIdCursor = new MockCursor(idValues);
+        mockIdCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(mockIdCursor);
 
         /* Mock serializer and eventually the database. */
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -245,7 +244,9 @@ public class DatabasePersistenceTest {
             when(contentValues.getAsString(DatabasePersistence.COLUMN_LOG)).thenReturn("true last");
             fieldValues.add(contentValues);
         }
-        when(databaseScanner.iterator()).thenReturn(fieldValues.iterator());
+        mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
         idValues = new ArrayList<>(4);
 
         /* Here the id scanner will also skip the new corrupted log which id would be 3. */
@@ -254,7 +255,9 @@ public class DatabasePersistenceTest {
             when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(i);
             idValues.add(contentValues);
         }
-        when(idDatabaseScanner.iterator()).thenReturn(idValues.iterator());
+        mockIdCursor = new MockCursor(idValues);
+        mockIdCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(mockIdCursor);
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
@@ -272,13 +275,40 @@ public class DatabasePersistenceTest {
         /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
-        DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean())).thenReturn(databaseScanner);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean()))
+                .thenReturn(mock(Cursor.class));
         when(databaseManager.setMaxSize(anyLong())).thenReturn(true).thenReturn(false);
 
         /* Just checks calls are forwarded to the low level database layer. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         assertTrue(persistence.setMaxStorageSize(20480));
         assertFalse(persistence.setMaxStorageSize(2));
+    }
+
+    private static class MockCursor extends CursorWrapper {
+
+        private final List<ContentValues> mList;
+
+        private int mIndex = -1;
+
+        private MockCursor(List<ContentValues> list) {
+            super(null);
+            mList = list;
+        }
+
+        @Override
+        public boolean moveToNext() {
+            return ++mIndex < mList.size();
+        }
+
+        private void mockBuildValues(DatabaseManager databaseManager) {
+            when(databaseManager.buildValues(eq(this))).then(new Answer<ContentValues>() {
+
+                @Override
+                public ContentValues answer(InvocationOnMock invocation) {
+                    return mList.get(mIndex);
+                }
+            });
+        }
     }
 }

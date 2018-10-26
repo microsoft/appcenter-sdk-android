@@ -1,9 +1,9 @@
 package com.microsoft.appcenter;
 
 import android.app.Application;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,7 +23,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,15 +35,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
 import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -81,9 +77,6 @@ public class AbstractAppCenterTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
-
-    @Mock
-    private Iterator<ContentValues> mDataBaseScannerIterator;
 
     @Mock
     DefaultChannel mChannel;
@@ -167,9 +160,8 @@ public class AbstractAppCenterTest {
         /* Mock empty database. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
-        DatabaseManager.Scanner databaseScanner = mock(DatabaseManager.Scanner.class);
-        when(databaseManager.getScanner(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean())).thenReturn(databaseScanner);
-        when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean()))
+                .thenReturn(mock(Cursor.class));
 
         /* Mock network state helper. */
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);

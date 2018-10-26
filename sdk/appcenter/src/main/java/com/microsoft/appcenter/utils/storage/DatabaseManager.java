@@ -135,7 +135,7 @@ public class DatabaseManager implements Closeable {
     public ContentValues nextValues(Cursor cursor) {
         try {
              if (cursor.moveToNext()) {
-                 return buildValues(cursor, mSchema);
+                 return buildValues(cursor);
              }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get next cursor value: ", e);

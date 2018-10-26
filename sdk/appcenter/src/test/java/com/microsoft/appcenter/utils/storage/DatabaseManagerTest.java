@@ -22,12 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -119,91 +117,6 @@ public class DatabaseManagerTest {
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.getRowCount();
-        verifyStatic();
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void scannerIteratorFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getScanner().iterator();
-        verifyStatic();
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void scannerCountFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getScanner().getCount();
-        verifyStatic();
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void scannerNextFailedButClosingWorks() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-
-        /* Cursor next failing but closing working. */
-        databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
-        mockStatic(SQLiteUtils.class);
-        Cursor cursor = mock(Cursor.class);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
-        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
-        when(cursor.moveToNext()).thenThrow(new RuntimeException());
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
-        assertFalse(scanner.iterator().hasNext());
-        verifyStatic(never());
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-
-        /* Verify closing failed. */
-        verifyStatic(never());
-        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void scannerNextFailedAndClosingFails() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-
-        /* Cursor next failing and closing failing. */
-        databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
-        mockStatic(SQLiteUtils.class);
-        Cursor cursor = mock(Cursor.class);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
-        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
-        when(cursor.moveToNext()).thenThrow(new RuntimeException());
-        doThrow(new RuntimeException()).when(cursor).close();
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
-        assertFalse(scanner.iterator().hasNext());
-        verifyStatic(never());
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-
-        /* Verify closing failed. */
-        verifyStatic();
-        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void cursorCloseFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = spy(new DatabaseManager(null, "database", "table", 1, null, null));
-        when(databaseManagerMock.getDatabase()).thenReturn(mock(SQLiteDatabase.class));
-        mockStatic(SQLiteUtils.class);
-        Cursor cursor = mock(Cursor.class);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
-        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
-        doThrow(new RuntimeException()).when(cursor).close();
-        DatabaseManager.Scanner scanner = databaseManagerMock.getScanner();
-        assertFalse(scanner.iterator().hasNext());
-        scanner.close();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
