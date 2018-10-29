@@ -510,16 +510,22 @@ public class DatabasePersistence extends Persistence {
 
     private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
+        Cursor cursor = null;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
             while (cursor.moveToNext()) {
                 ContentValues idValues = mDatabaseManager.buildValues(cursor);
                 Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
                 result.add(invalidId);
             }
-            cursor.close();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
+        }
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
         }
         return result;
     }

@@ -286,18 +286,11 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return A matching entry.
      */
-    public ContentValues get(@Nullable String key, @Nullable Object value) {
+    public ContentValues get(String key, Object value) {
         try {
             SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-            String[] selectionArgs = null;
-            if (key != null) {
-                if (value == null) {
-                    builder.appendWhere(key + " IS NULL");
-                } else {
-                    builder.appendWhere(key + " = ?");
-                    selectionArgs = new String[]{value.toString()};
-                }
-            }
+            builder.appendWhere(key + " = ?");
+            String[] selectionArgs = new String[]{value.toString()};
             Cursor cursor = getCursor(builder, selectionArgs, false);
             ContentValues values = cursor.moveToFirst() ? buildValues(cursor) : null;
             cursor.close();

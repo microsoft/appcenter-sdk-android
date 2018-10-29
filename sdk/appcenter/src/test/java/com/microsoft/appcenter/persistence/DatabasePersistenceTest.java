@@ -71,8 +71,36 @@ public class DatabasePersistenceTest {
             mockPersistence.close();
         }
 
-        // There are two error logs on putLog and close
+        /* There are two error logs on putLog and close. */
         verifyStatic(times(2));
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void countLogsWithGetCountException() throws Exception {
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
+        Cursor mockCursor = mock(Cursor.class);
+        when(mockCursor.getCount()).thenThrow(new RuntimeException());
+        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(mockCursor);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
+
+        /* Try to get logs count. */
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            assertEquals(0, persistence.countLogs("test-p1"));
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+
+        /* There is a error log. */
+        verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -131,6 +159,87 @@ public class DatabasePersistenceTest {
     }
 
     @Test
+    public void getLogsWithGetCursorException() throws Exception {
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenThrow(new RuntimeException());
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
+
+        /* Try to get logs. */
+        ArrayList<Log> outLogs = new ArrayList<>();
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        assertEquals(0, outLogs.size());
+
+        /* There is a error log. */
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void getLogsWithMoveNextException() throws Exception {
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
+        Cursor mockCursor = mock(Cursor.class);
+        when(mockCursor.moveToNext()).thenThrow(new RuntimeException());
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
+
+        /* Try to get logs. */
+        ArrayList<Log> outLogs = new ArrayList<>();
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        assertEquals(0, outLogs.size());
+
+        /* There is a error log. */
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void getLogsWithGetCorruptedIdsException() throws Exception {
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
+
+        /* Make corrupted log. */
+        List<ContentValues> fieldValues = new ArrayList<>();
+        {
+            /* Empty record, "corrupted", cause identifier is null (and no other field either). */
+            ContentValues contentValues = mock(ContentValues.class);
+            when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(null);
+            fieldValues.add(contentValues);
+        }
+
+        /* Mock log sequence retrieved from cursor. */
+        MockCursor mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
+
+        /* Mock second cursor with identifiers only. */
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenThrow(new RuntimeException());
+
+        /* Get logs and verify we get only non corrupted logs. */
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        ArrayList<Log> outLogs = new ArrayList<>();
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        assertEquals(0, outLogs.size());
+
+        /* There is a error log. */
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
     public void getLogsWithCorruption() throws Exception {
 
         /* Mock instances. */
@@ -162,12 +271,12 @@ public class DatabasePersistenceTest {
             fieldValues.add(contentValues);
         }
 
-        /* Mock log sequence retrieved from scanner. */
+        /* Mock log sequence retrieved from cursor. */
         MockCursor mockCursor = new MockCursor(fieldValues);
         mockCursor.mockBuildValues(databaseManager);
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
 
-        /* Mock second scanner with identifiers only. */
+        /* Mock second cursor with identifiers only. */
         List<ContentValues> idValues = new ArrayList<>(logCount);
         for (long i = 0; i < logCount; i++) {
             ContentValues contentValues = mock(ContentValues.class);
@@ -244,18 +353,34 @@ public class DatabasePersistenceTest {
             when(contentValues.getAsString(DatabasePersistence.COLUMN_LOG)).thenReturn("true last");
             fieldValues.add(contentValues);
         }
-        mockCursor = new MockCursor(fieldValues);
+        mockCursor = new MockCursor(fieldValues) {
+
+            @Override
+            public void close() {
+
+                /* It should be ignored. */
+                throw new RuntimeException();
+            }
+        };
         mockCursor.mockBuildValues(databaseManager);
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
         idValues = new ArrayList<>(4);
 
-        /* Here the id scanner will also skip the new corrupted log which id would be 3. */
+        /* Here the id cursor will also skip the new corrupted log which id would be 3. */
         for (long i = 0; i < logCount; i += 2) {
             ContentValues contentValues = mock(ContentValues.class);
             when(contentValues.getAsLong(DatabaseManager.PRIMARY_KEY)).thenReturn(i);
             idValues.add(contentValues);
         }
-        mockIdCursor = new MockCursor(idValues);
+        mockIdCursor = new MockCursor(idValues) {
+
+            @Override
+            public void close() {
+
+                /* It should be ignored. */
+                throw new RuntimeException();
+            }
+        };
         mockIdCursor.mockBuildValues(databaseManager);
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(mockIdCursor);
 
@@ -299,6 +424,10 @@ public class DatabasePersistenceTest {
         @Override
         public boolean moveToNext() {
             return ++mIndex < mList.size();
+        }
+
+        @Override
+        public void close() {
         }
 
         private void mockBuildValues(DatabaseManager databaseManager) {
