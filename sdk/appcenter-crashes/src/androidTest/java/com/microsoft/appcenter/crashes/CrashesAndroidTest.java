@@ -17,7 +17,8 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -77,14 +78,15 @@ public class CrashesAndroidTest {
     public static void setUpClass() {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
         sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
-        StorageHelper.initialize(sApplication);
+        FileManager.initialize(sApplication);
+        SharedPreferencesManager.initialize(sApplication);
         Constants.loadFromContext(sApplication);
     }
 
     @Before
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             if (logFile.isDirectory()) {
                 for (File dumpDir : logFile.listFiles()) {
@@ -173,7 +175,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Start crashes now. */
         startFresh(null);
@@ -201,7 +203,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Make moving fail. */
         assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
@@ -366,7 +368,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Set up crash listener. */
         CrashesListener crashesListener = mock(CrashesListener.class);

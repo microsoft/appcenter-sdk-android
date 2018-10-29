@@ -26,7 +26,8 @@ import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -223,7 +224,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty Map properties. */
-        Analytics.trackEvent("eventName", (Map<String, String>)null);
+        Analytics.trackEvent("eventName", (Map<String, String>) null);
         verify(channel).enqueue(argumentCaptor.capture(), anyString());
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
@@ -402,7 +403,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel, times(2)).removeGroup(analytics.getGroupName());
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();
-        StorageHelper.PreferencesStorage.remove("sessions");
+        SharedPreferencesManager.remove("sessions");
 
         /* Now try to use all methods. Should not work. */
         Analytics.trackEvent("test");
@@ -448,7 +449,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void disablePersisted() {
-        when(StorageHelper.PreferencesStorage.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(ANALYTICS_ENABLED_KEY, true)).thenReturn(false);
         Analytics analytics = Analytics.getInstance();
 
         /* Start. */

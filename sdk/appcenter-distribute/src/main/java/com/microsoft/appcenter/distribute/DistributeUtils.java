@@ -13,7 +13,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 
@@ -76,7 +76,7 @@ class DistributeUtils {
      * @return download identifier or negative value if not found.
      */
     static long getStoredDownloadId() {
-        return StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+        return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
 
     /**
@@ -85,7 +85,7 @@ class DistributeUtils {
      * @return download state (completed by default).
      */
     static int getStoredDownloadState() {
-        return StorageHelper.PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
+        return SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
     }
 
     @NonNull
@@ -117,7 +117,7 @@ class DistributeUtils {
         AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
 
         /* Store request id. */
-        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
         /* Open the native tester app */
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -166,7 +166,7 @@ class DistributeUtils {
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */
-        StorageHelper.PreferencesStorage.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
         /* Open browser, remember that whatever the outcome to avoid opening it twice. */
         BrowserUtils.openBrowser(url, activity);
@@ -178,13 +178,13 @@ class DistributeUtils {
      * @return release details from cache or null.
      */
     static ReleaseDetails loadCachedReleaseDetails() {
-        String cachedReleaseDetails = StorageHelper.PreferencesStorage.getString(PREFERENCE_KEY_RELEASE_DETAILS);
+        String cachedReleaseDetails = SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS);
         if (cachedReleaseDetails != null) {
             try {
                 return ReleaseDetails.parse(cachedReleaseDetails);
             } catch (JSONException e) {
                 AppCenterLog.error(LOG_TAG, "Invalid release details in cache.", e);
-                StorageHelper.PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
             }
         }
         return null;

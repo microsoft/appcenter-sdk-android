@@ -9,7 +9,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,7 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SessionTracker.class, SessionContext.class, StorageHelper.PreferencesStorage.class, SystemClock.class})
+@PrepareForTest({SessionTracker.class, SessionContext.class, SharedPreferencesManager.class, SystemClock.class})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
@@ -80,7 +80,7 @@ public class SessionTrackerTest {
     public void setUp() {
         mockStatic(System.class);
         mockStatic(SystemClock.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(SharedPreferencesManager.class);
         PowerMockito.doAnswer(new Answer<Void>() {
 
             @Override
@@ -90,12 +90,12 @@ public class SessionTrackerTest {
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 String key = (String) invocation.getArguments()[0];
                 Set<String> value = (Set<String>) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getStringSet(key)).thenReturn(value);
+                when(SharedPreferencesManager.getStringSet(key)).thenReturn(value);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putStringSet(anyString(), anySetOf(String.class));
-        when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(null);
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putStringSet(anyString(), anySetOf(String.class));
+        when(SharedPreferencesManager.getStringSet(anyString())).thenReturn(null);
         SessionContext.unsetInstance();
         spendTime(1000);
         mChannel = mock(Channel.class);
@@ -415,24 +415,24 @@ public class SessionTrackerTest {
     public void maxOutStoredSessions() {
         SessionContext.getInstance();
         spendTime(1000);
-        Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(1, sessions.size());
         String firstSession = sessions.iterator().next();
         mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
-        sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        sessions = SharedPreferencesManager.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(2, sessions.size());
         spendTime(30000);
         for (int i = 3; i <= 10; i++) {
             mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
-            Set<String> intermediateSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> intermediateSessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(intermediateSessions);
             assertEquals(i, intermediateSessions.size());
             spendTime(30000);
         }
         mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
-        Set<String> finalSessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        Set<String> finalSessions = SharedPreferencesManager.getStringSet("sessions");
         assertNotNull(finalSessions);
         assertEquals(10, finalSessions.size());
         assertFalse(finalSessions.contains(firstSession));
@@ -473,7 +473,7 @@ public class SessionTrackerTest {
             log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(currentSid, log.getSid());
-            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(sessions);
             assertEquals(1, sessions.size());
         }
@@ -483,7 +483,7 @@ public class SessionTrackerTest {
             Log log = newEvent();
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNotEquals(currentSid, log.getSid());
-            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(sessions);
             assertEquals(2, sessions.size());
         }
@@ -495,7 +495,7 @@ public class SessionTrackerTest {
             log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
-            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(sessions);
             assertEquals(2, sessions.size());
         }
@@ -507,7 +507,7 @@ public class SessionTrackerTest {
             log.setTimestamp(new Date(firstSessionTime + 1));
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
-            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(sessions);
             assertEquals(2, sessions.size());
         }
@@ -518,7 +518,7 @@ public class SessionTrackerTest {
             log.setTimestamp(new Date(1));
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             assertNull(log.getSid());
-            Set<String> sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+            Set<String> sessions = SharedPreferencesManager.getStringSet("sessions");
             assertNotNull(sessions);
             assertEquals(2, sessions.size());
         }
@@ -526,7 +526,7 @@ public class SessionTrackerTest {
         /* Clear sessions. */
         mSessionTracker.clearSessions();
         verifyStatic();
-        StorageHelper.PreferencesStorage.remove("sessions");
+        SharedPreferencesManager.remove("sessions");
     }
 
     @Test
@@ -542,14 +542,14 @@ public class SessionTrackerTest {
         sessions.add("800/");
         sessions.add("900//899");
         sessions.add("999//");
-        when(StorageHelper.PreferencesStorage.getStringSet(anyString())).thenReturn(sessions);
+        when(SharedPreferencesManager.getStringSet(anyString())).thenReturn(sessions);
         mSessionTracker = new SessionTracker(mChannel, TEST_GROUP);
 
         /* Generate a current session. */
         mSessionTracker.onPreparingLog(newEvent(), TEST_GROUP);
 
         /* Check sessions in store. */
-        sessions = StorageHelper.PreferencesStorage.getStringSet("sessions");
+        sessions = SharedPreferencesManager.getStringSet("sessions");
         assertNotNull(sessions);
         assertEquals(6, sessions.size());
         assertTrue(sessions.contains("100/10abd355-40a5-4b51-8071-cb5a4c338531/99"));

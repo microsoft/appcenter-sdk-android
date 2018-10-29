@@ -14,7 +14,7 @@ import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -293,7 +293,7 @@ public class AnalyticsTransmissionTarget {
                         while (descendantIterator.hasNext()) {
                             AnalyticsTransmissionTarget descendantTarget = descendantIterator.next();
                             descendantIterator.remove();
-                            StorageHelper.PreferencesStorage.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
+                            SharedPreferencesManager.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
                             for (AnalyticsTransmissionTarget childTarget : descendantTarget.mChildrenTargets.values()) {
                                 descendantIterator.add(childTarget);
                             }
@@ -387,7 +387,7 @@ public class AnalyticsTransmissionTarget {
 
     @WorkerThread
     private boolean isEnabledInStorage() {
-        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+        return SharedPreferencesManager.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @WorkerThread

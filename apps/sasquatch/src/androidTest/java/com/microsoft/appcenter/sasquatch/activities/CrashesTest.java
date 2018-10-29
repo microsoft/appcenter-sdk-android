@@ -20,7 +20,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -87,8 +87,8 @@ public class CrashesTest {
         mContext = getInstrumentation().getTargetContext();
 
         /* Clear preferences. */
-        StorageHelper.initialize(mContext);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.initialize(mContext);
+        SharedPreferencesManager.clear();
 
         /* Clear crashes. */
         Constants.loadFromContext(mContext);

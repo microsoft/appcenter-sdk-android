@@ -2,7 +2,9 @@ package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,7 +18,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import org.json.JSONException;
 
@@ -33,8 +36,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage;
 
+@SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
 
     /**
@@ -90,6 +93,7 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String TABLE = "logs";
+
     /**
      * Current version of the schema.
      */
@@ -112,15 +116,10 @@ public class DatabasePersistence extends Persistence {
     private static final String PAYLOAD_FILE_EXTENSION = ".json";
 
     /**
-     * Application context.
-     */
-    private final Context mContext;
-
-    /**
-     * Database storage instance to access Persistence database.
+     * Database manager instance to access Persistence database.
      */
     @VisibleForTesting
-    final DatabaseStorage mDatabaseStorage;
+    final DatabaseManager mDatabaseManager;
 
     /**
      * Pending log groups. Key is a UUID and value is a list of database identifiers.
@@ -133,6 +132,11 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     final Set<Long> mPendingDbIdentifiers;
+
+    /**
+     * Application context.
+     */
+    private final Context mContext;
 
     /**
      * Base directory to store large payloads outside of SQLite.
@@ -160,7 +164,7 @@ public class DatabasePersistence extends Persistence {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
-        mDatabaseStorage = DatabaseStorage.getDatabaseStorage(DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
+        mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -173,21 +177,11 @@ public class DatabasePersistence extends Persistence {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 return true;
             }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                AppCenterLog.error(LOG_TAG, "Cannot complete an operation (" + operation + ")", e);
-            }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
 
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
-    }
-
-    @Override
-    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-        return mDatabaseStorage.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
     /**
@@ -207,6 +201,11 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
         return values;
+    }
+
+    @Override
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+        return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
     }
 
     @Override
@@ -232,7 +231,10 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
-            long databaseId = mDatabaseStorage.put(contentValues);
+            long databaseId = mDatabaseManager.put(contentValues);
+            if (databaseId == -1) {
+                throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
+            }
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {
                 AppCenterLog.debug(LOG_TAG, "Payload is larger than what SQLite supports, storing payload in a separate file.");
@@ -242,11 +244,11 @@ public class DatabasePersistence extends Persistence {
                 directory.mkdir();
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 try {
-                    StorageHelper.InternalStorage.write(payloadFile, payload);
+                    FileManager.write(payloadFile, payload);
                 } catch (IOException e) {
 
                     /* Remove database entry if we cannot save payload as a file. */
-                    mDatabaseStorage.delete(databaseId);
+                    mDatabaseManager.delete(databaseId);
                     throw e;
                 }
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
@@ -274,7 +276,7 @@ public class DatabasePersistence extends Persistence {
     private void deleteLog(File groupLargePayloadDirectory, long id) {
         //noinspection ResultOfMethodCallIgnored SQLite delete does not have return type either.
         getLargePayloadFile(groupLargePayloadDirectory, id).delete();
-        mDatabaseStorage.delete(id);
+        mDatabaseManager.delete(id);
     }
 
     @Override
@@ -316,7 +318,7 @@ public class DatabasePersistence extends Persistence {
         directory.delete();
 
         /* Delete from database. */
-        mDatabaseStorage.delete(COLUMN_GROUP, group);
+        mDatabaseManager.delete(COLUMN_GROUP, group);
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
@@ -331,9 +333,19 @@ public class DatabasePersistence extends Persistence {
     public int countLogs(@NonNull String group) {
 
         /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, null, null, true);
-        int count = scanner.getCount();
-        scanner.close();
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(COLUMN_GROUP + " = ?");
+        int count = 0;
+        try {
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
+            try {
+                count = cursor.getCount();
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get logs count: ", e);
+        }
         return count;
     }
 
@@ -344,16 +356,37 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
 
-        /* Query database and get scanner. */
-        DatabaseStorage.DatabaseScanner scanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, false);
+        /* Query database. */
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(COLUMN_GROUP + " = ?");
+        String[] selectionArgs = new String[pausedTargetKeys.size() + 1];
+        selectionArgs[0] = group;
+        if (!pausedTargetKeys.isEmpty()) {
+            StringBuilder filter = new StringBuilder();
+            for (int i = 0; i < pausedTargetKeys.size(); i++) {
+                filter.append("?,");
+            }
+            filter.deleteCharAt(filter.length() - 1);
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
+            System.arraycopy(pausedTargetKeys.toArray(new String[0]), 0, selectionArgs, 1, pausedTargetKeys.size());
+        }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
         Map<Long, Log> candidates = new TreeMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
-        for (Iterator<ContentValues> iterator = scanner.iterator(); iterator.hasNext() && count < limit; ) {
-            ContentValues values = iterator.next();
+        Cursor cursor = null;
+        ContentValues values;
+        try {
+            cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
+        }
+        while (cursor != null &&
+                (values = mDatabaseManager.nextValues(cursor)) != null &&
+                count < limit) {
             Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
 
             /*
@@ -364,18 +397,16 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                DatabaseStorage.DatabaseScanner idScanner = mDatabaseStorage.getScanner(COLUMN_GROUP, group, COLUMN_TARGET_KEY, pausedTargetKeys, true);
-                for (ContentValues idValues : idScanner) {
-                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
-                    if (!mPendingDbIdentifiers.contains(invalidId) && !candidates.containsKey(invalidId)) {
+                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgs);
+                for (Long corruptedId : corruptedIds) {
+                    if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
                         /* Found the record to delete that we could not read when selecting all fields. */
-                        deleteLog(largePayloadGroupDirectory, invalidId);
-                        AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + invalidId);
+                        deleteLog(largePayloadGroupDirectory, corruptedId);
+                        AppCenterLog.error(LOG_TAG, "Empty database corrupted empty record deleted, id=" + corruptedId);
                         break;
                     }
                 }
-                idScanner.close();
                 continue;
             }
 
@@ -389,7 +420,7 @@ public class DatabasePersistence extends Persistence {
                     if (databasePayload == null) {
                         File file = getLargePayloadFile(largePayloadGroupDirectory, dbIdentifier);
                         AppCenterLog.debug(LOG_TAG, "Read payload file " + file);
-                        logPayload = StorageHelper.InternalStorage.read(file);
+                        logPayload = FileManager.read(file);
                         if (logPayload == null) {
                             throw new JSONException("Log payload is null and not stored as a file.");
                         }
@@ -419,7 +450,12 @@ public class DatabasePersistence extends Persistence {
                 }
             }
         }
-        scanner.close();
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
+        }
 
         /* Delete any logs that cannot be de-serialized. */
         if (failedDbIdentifiers.size() > 0) {
@@ -473,6 +509,25 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public void close() {
-        mDatabaseStorage.close();
+        mDatabaseManager.close();
+    }
+
+    private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
+        List<Long> result = new ArrayList<>();
+        try {
+            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            try {
+                while (cursor.moveToNext()) {
+                    ContentValues idValues = mDatabaseManager.buildValues(cursor);
+                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
+                    result.add(invalidId);
+                }
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
+        }
+        return result;
     }
 }

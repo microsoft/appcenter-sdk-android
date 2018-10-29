@@ -3,7 +3,9 @@ package com.microsoft.appcenter.persistence;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -24,8 +26,9 @@ import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLogFactory;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
-import com.microsoft.appcenter.utils.storage.StorageHelper.DatabaseStorage.DatabaseScanner;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SQLiteUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -40,7 +43,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -78,7 +80,8 @@ public class DatabasePersistenceAndroidTest {
     public static void setUpClass() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        FileManager.initialize(sContext);
+        SharedPreferencesManager.initialize(sContext);
         Constants.loadFromContext(sContext);
     }
 
@@ -87,13 +90,6 @@ public class DatabasePersistenceAndroidTest {
 
         /* Clean up database. */
         sContext.deleteDatabase(DatabasePersistence.DATABASE);
-    }
-
-    private static int getIteratorSize(Iterator iterator) {
-        int count = 0;
-        for (; iterator.hasNext(); iterator.next())
-            count++;
-        return count;
     }
 
     @Test
@@ -169,7 +165,7 @@ public class DatabasePersistenceAndroidTest {
             /* Verify large file. */
             File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
             assertNotNull(file);
-            String fileLog = StorageHelper.InternalStorage.read(file);
+            String fileLog = FileManager.read(file);
             assertNotNull(fileLog);
             assertTrue(fileLog.length() >= size);
 
@@ -258,7 +254,7 @@ public class DatabasePersistenceAndroidTest {
             /* Verify large file. */
             File file = persistence.getLargePayloadFile(persistence.getLargePayloadGroupDirectory("test-p1"), id);
             assertNotNull(file);
-            String fileLog = StorageHelper.InternalStorage.read(file);
+            String fileLog = FileManager.read(file);
             assertNotNull(fileLog);
             assertTrue(fileLog.length() >= size);
 
@@ -394,10 +390,13 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog("test-p1", log);
+            try {
+                persistence.putLog("test-p1", log);
+                fail("Expected persistence exception");
+            } catch (PersistenceException ignore) {
+            }
 
             /* Verify the behavior: not inserted and database now empty. */
-            assertEquals(-1, id);
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
 
@@ -469,41 +468,45 @@ public class DatabasePersistenceAndroidTest {
             /* Delete. */
             persistence.deleteLogs("", id);
 
+            /* Create a query builder for column group. */
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseScanner scanner1 = persistence.mDatabaseStorage.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p1");
-            DatabaseScanner scanner2 = persistence.mDatabaseStorage.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p2");
-            DatabaseScanner scanner3 = persistence.mDatabaseStorage.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p3");
+            Cursor cursor1 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, false);
+            Cursor cursor2 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p2"}, false);
+            Cursor cursor3 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p3"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
 
                 /* Verify. */
-                assertEquals(2, getIteratorSize(scanner1.iterator()));
-                assertEquals(1, getIteratorSize(scanner2.iterator()));
-                assertEquals(1, getIteratorSize(scanner3.iterator()));
+                assertEquals(2, cursor1.getCount());
+                assertEquals(1, cursor2.getCount());
+                assertEquals(1, cursor3.getCount());
             } finally {
 
                 /* Close. */
-                scanner1.close();
-                scanner2.close();
-                scanner3.close();
+                cursor1.close();
+                cursor2.close();
+                cursor3.close();
             }
 
             /* Delete. */
             persistence.deleteLogs("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            DatabaseScanner scanner4 = persistence.mDatabaseStorage.getScanner(DatabasePersistence.COLUMN_GROUP, "test-p1");
+            Cursor cursor4 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, false);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
 
                 /* Verify. */
-                assertEquals(0, getIteratorSize(scanner4.iterator()));
+                assertEquals(0, cursor4.getCount());
             } finally {
 
                 /* Close. */
-                scanner4.close();
+                cursor4.close();
             }
 
             /* Count logs after delete. */
@@ -556,10 +559,12 @@ public class DatabasePersistenceAndroidTest {
             /* Verify. */
             Map<String, List<Long>> pendingGroups = persistence.mPendingDbIdentifiersGroups;
             assertNull(pendingGroups.get("test-p1" + id1));
-            assertEquals(1, pendingGroups.get("test-p2" + id2).size());
+            List<Long> p2Logs = pendingGroups.get("test-p2" + id2);
+            assertNotNull(p2Logs);
+            assertEquals(1, p2Logs.size());
             assertEquals(1, pendingGroups.size());
             assertEquals(0, outputLogs.size());
-            assertEquals(1, persistence.mDatabaseStorage.size());
+            assertEquals(1, persistence.mDatabaseManager.getRowCount());
 
             /* Verify one log still persists in the database. */
             persistence.clearPendingLogState();
@@ -611,7 +616,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(10, persistence.countLogs("test"));
 
             /* Clear. Nothing to get after. */
-            persistence.mDatabaseStorage.clear();
+            persistence.mDatabaseManager.clear();
             List<Log> outputLogs = new ArrayList<>();
             assertNull(persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());
@@ -754,7 +759,7 @@ public class DatabasePersistenceAndroidTest {
             List<Log> outputLogs = new ArrayList<>();
             persistence.getLogs("test", Collections.<String>emptyList(), 10, outputLogs);
             assertEquals(numberOfLogs / 2, outputLogs.size());
-            assertEquals(2, persistence.mDatabaseStorage.size());
+            assertEquals(2, persistence.mDatabaseManager.getRowCount());
         } finally {
             persistence.close();
         }
@@ -768,16 +773,11 @@ public class DatabasePersistenceAndroidTest {
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
             }
         });
 
@@ -792,9 +792,9 @@ public class DatabasePersistenceAndroidTest {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
-            databaseStorage.put(contentValues);
+            databaseManager.put(contentValues);
         } finally {
-            databaseStorage.close();
+            databaseManager.close();
         }
 
         /* Upgrade. */
@@ -838,7 +838,12 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog, outputLogs.get(0));
 
             /* Verify target token is encrypted. */
-            ContentValues values = persistence.mDatabaseStorage.get(DatabasePersistence.COLUMN_GROUP, "test/one");
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+            String[] selectionArgs = new String[]{"test/one"};
+            Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
+            ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
+            assertNotNull(values);
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
@@ -858,16 +863,11 @@ public class DatabasePersistenceAndroidTest {
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        StorageHelper.DatabaseStorage databaseStorage = StorageHelper.DatabaseStorage.getDatabaseStorage(DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 return false;
-            }
-
-            @Override
-            public void onError(String operation, RuntimeException e) {
-                throw e;
             }
         });
 
@@ -883,9 +883,9 @@ public class DatabasePersistenceAndroidTest {
             contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
             contentValues.put(DatabasePersistence.COLUMN_DATA_TYPE, MOCK_LOG_TYPE);
-            databaseStorage.put(contentValues);
+            databaseManager.put(contentValues);
         } finally {
-            databaseStorage.close();
+            databaseManager.close();
         }
 
         /* Upgrade. */
@@ -929,7 +929,12 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog, outputLogs.get(0));
 
             /* Verify target token is encrypted. */
-            ContentValues values = persistence.mDatabaseStorage.get(DatabasePersistence.COLUMN_GROUP, "test/one");
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+            String[] selectionArgs = new String[]{"test/one"};
+            Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
+            ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
+            assertNotNull(values);
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);

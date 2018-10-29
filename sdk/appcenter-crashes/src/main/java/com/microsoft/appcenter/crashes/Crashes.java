@@ -30,7 +30,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 
@@ -619,7 +620,7 @@ public class Crashes extends AbstractAppCenterService {
             File logFile = ErrorLogHelper.getLastErrorLogFile();
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
-                String logFileContents = StorageHelper.InternalStorage.read(logFile);
+                String logFileContents = FileManager.read(logFile);
                 if (logFileContents == null) {
                     AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
                 } else {
@@ -638,7 +639,7 @@ public class Crashes extends AbstractAppCenterService {
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
             AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
-            String logfileContents = StorageHelper.InternalStorage.read(logFile);
+            String logfileContents = FileManager.read(logFile);
             if (logfileContents != null) {
                 try {
                     ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents, null);
@@ -677,7 +678,7 @@ public class Crashes extends AbstractAppCenterService {
     private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
-        final boolean alwaysSend = StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false);
+        final boolean alwaysSend = SharedPreferencesManager.getBoolean(PREF_KEY_ALWAYS_SEND, false);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -747,15 +748,15 @@ public class Crashes extends AbstractAppCenterService {
                 try {
                     Throwable throwable = null;
                     if (file.length() > 0) {
-                        throwable = StorageHelper.InternalStorage.readObject(file);
+                        throwable = FileManager.readObject(file);
                     }
                     ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
                     mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
-                } catch (ClassNotFoundException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
-                } catch (IOException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
+                } catch (ClassNotFoundException e) {
+                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
+                } catch (IOException e) {
+                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), e);
                 }
             }
         }
@@ -798,7 +799,7 @@ public class Crashes extends AbstractAppCenterService {
 
                     /* Always send: we remember. */
                     if (userConfirmation == ALWAYS_SEND) {
-                        StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
+                        SharedPreferencesManager.putBoolean(PREF_KEY_ALWAYS_SEND, true);
                     }
 
                     /* Send every pending report. */
@@ -814,7 +815,7 @@ public class Crashes extends AbstractAppCenterService {
                             Exception exception = errorLogReport.log.getException();
                             dumpFile = new File(exception.getStackTrace());
                             exception.setStackTrace(null);
-                            byte[] logfileContents = StorageHelper.InternalStorage.readBytes(dumpFile);
+                            byte[] logfileContents = FileManager.readBytes(dumpFile);
                             dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                         }
 
@@ -932,11 +933,11 @@ public class Crashes extends AbstractAppCenterService {
         AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
-        StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+        FileManager.write(errorLogFile, errorLogString);
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
-            StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
+            FileManager.writeObject(throwableFile, throwable);
             AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
         } else {
 

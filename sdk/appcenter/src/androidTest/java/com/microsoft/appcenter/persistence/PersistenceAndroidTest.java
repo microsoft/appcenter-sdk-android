@@ -7,7 +7,7 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.appcenter.ingestion.models.json.MockLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -28,7 +28,7 @@ public class PersistenceAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        SharedPreferencesManager.initialize(sContext);
 
         /* Clean up database. */
         sContext.deleteDatabase("test-persistence");

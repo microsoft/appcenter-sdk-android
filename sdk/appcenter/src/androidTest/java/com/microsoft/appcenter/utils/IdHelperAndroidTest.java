@@ -3,7 +3,7 @@ package com.microsoft.appcenter.utils;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class IdHelperAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        StorageHelper.initialize(InstrumentationRegistry.getTargetContext());
+        SharedPreferencesManager.initialize(InstrumentationRegistry.getTargetContext());
     }
 
 
@@ -30,13 +30,13 @@ public class IdHelperAndroidTest {
     public void getInstallId() {
         Log.i(TAG, "Testing installId-shortcut");
         UUID expected = UUIDUtils.randomUUID();
-        StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
+        SharedPreferencesManager.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
 
         UUID actual = IdHelper.getInstallId();
         assertEquals(expected, actual);
 
         String wrongUUID = "1234567";
-        StorageHelper.PreferencesStorage.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
+        SharedPreferencesManager.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
 
         actual = IdHelper.getInstallId();
         assertNotEquals(wrongUUID, actual);
