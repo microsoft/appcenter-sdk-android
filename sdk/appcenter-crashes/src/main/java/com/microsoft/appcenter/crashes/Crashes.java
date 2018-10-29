@@ -753,10 +753,10 @@ public class Crashes extends AbstractAppCenterService {
                     ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
                     mErrorReportCache.put(id, new ErrorLogReport(log, report));
                     return report;
-                } catch (ClassNotFoundException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
-                } catch (IOException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
+                } catch (ClassNotFoundException e) {
+                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
+                } catch (IOException e) {
+                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), e);
                 }
             }
         }

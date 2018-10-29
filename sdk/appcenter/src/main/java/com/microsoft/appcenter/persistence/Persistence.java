@@ -108,6 +108,7 @@ public abstract class Persistence implements Closeable {
             super(detailMessage, throwable);
         }
 
+        @SuppressWarnings("SameParameterValue")
         PersistenceException(String detailMessage) {
             super(detailMessage);
         }

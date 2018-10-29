@@ -365,7 +365,7 @@ public class DatabasePersistence extends Persistence {
             filter.deleteCharAt(filter.length() - 1);
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
-            System.arraycopy(pausedTargetKeys.toArray(), 0, selectionArgs, 1, pausedTargetKeys.size());
+            System.arraycopy(pausedTargetKeys.toArray(new String[0]), 0, selectionArgs, 1, pausedTargetKeys.size());
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.Set;
 
@@ -188,7 +189,7 @@ public class SharedPreferencesManager {
      * @param key The key for which the value is to be retrieved.
      * @return The value of {@code key} or {@code null} if key is not set.
      */
-    @SuppressWarnings("unused")
+    @Nullable
     public static String getString(@NonNull String key) {
         return getString(key, null);
     }
