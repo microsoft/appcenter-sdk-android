@@ -53,16 +53,6 @@ public class DatabaseManagerTest {
         mockStatic(AppCenterLog.class);
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.get(0);
-        verifyStatic();
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void getFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.put(new ContentValues());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));

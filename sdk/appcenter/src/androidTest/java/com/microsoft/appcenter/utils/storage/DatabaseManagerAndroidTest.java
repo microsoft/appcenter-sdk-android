@@ -16,8 +16,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Random;
 
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.ALLOWED_SIZE_MULTIPLE;
@@ -78,6 +76,23 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-setMaximumSize");
     }
 
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    private static ContentValues get(DatabaseManager databaseManager, long id) {
+        try {
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabaseManager.PRIMARY_KEY + " = ?");
+            String[] selectionArgs = new String[]{String.valueOf(id)};
+            Cursor cursor = databaseManager.getCursor(builder, selectionArgs, false);
+            try {
+                return databaseManager.nextValues(cursor);
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     @SuppressWarnings("SpellCheckingInspection")
     private static void runDatabaseManagerTest(DatabaseManager databaseManager) {
         ContentValues value1 = generateContentValues();
@@ -95,12 +110,12 @@ public class DatabaseManagerAndroidTest {
         /* Generate an ID that is neither value1Id nor value2Id. */
 
         /* Get. */
-        ContentValues value1FromDatabase = databaseManager.get(value1Id);
+        ContentValues value1FromDatabase = get(databaseManager, value1Id);
         assertContentValuesEquals(value1, value1FromDatabase);
-        ContentValues value2FromDatabase = databaseManager.get(DatabaseManager.PRIMARY_KEY, value2Id);
+        ContentValues value2FromDatabase = get(databaseManager, value2Id);
         assertContentValuesEquals(value2, value2FromDatabase);
         //noinspection ResourceType
-        ContentValues nullValueFromDatabase = databaseManager.get(-1);
+        ContentValues nullValueFromDatabase = get(databaseManager, -1);
         assertNull(nullValueFromDatabase);
 
         /* Count with scanner. */
@@ -138,7 +153,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Delete. */
         databaseManager.delete(value1Id);
-        assertNull(databaseManager.get(value1Id));
+        assertNull(get(databaseManager, value1Id));
         assertEquals(1, databaseManager.getRowCount());
         assertEquals(1, databaseManager.getCursor(null, null, false).getCount());
 
@@ -152,8 +167,8 @@ public class DatabaseManagerAndroidTest {
 
         /* Delete multiple logs. */
         databaseManager.delete(Arrays.asList(value4Id, value5Id));
-        assertNull(databaseManager.get(value4Id));
-        assertNull(databaseManager.get(value5Id));
+        assertNull(get(databaseManager, value4Id));
+        assertNull(get(databaseManager, value5Id));
         assertEquals(1, databaseManager.getRowCount());
 
         /* Put logs to delete with condition. */
@@ -169,7 +184,7 @@ public class DatabaseManagerAndroidTest {
         /* Delete logs with condition. */
         databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
         assertEquals(1, databaseManager.getRowCount());
-        ContentValues value7FromDatabase = databaseManager.get(value7Id);
+        ContentValues value7FromDatabase = get(databaseManager, value7Id);
         assertContentValuesEquals(value7, value7FromDatabase);
 
         /* Clear. */
@@ -196,6 +211,7 @@ public class DatabaseManagerAndroidTest {
     }
 
     private static void assertContentValuesEquals(ContentValues expected, ContentValues actual) {
+        assertNotNull(actual);
         assertEquals(expected.getAsString("COL_STRING"), actual.getAsString("COL_STRING"));
         assertEquals(expected.getAsString("COL_STRING_NULL"), actual.getAsString("COL_STRING_NULL"));
         assertEquals(expected.getAsByte("COL_BYTE"), actual.getAsByte("COL_BYTE"));
@@ -253,11 +269,13 @@ public class DatabaseManagerAndroidTest {
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
-            assertEquals(2, databaseManager.getColumnNames().length);
+            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, false);
+            assertEquals(2, cursor.getColumnCount());
             long id = databaseManager.put(oldVersionValue);
 
             /* Put data. */
-            ContentValues actual = databaseManager.get(id);
+            ContentValues actual = get(databaseManager, id);
+            assertNotNull(actual);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
             assertEquals(1, databaseManager.getRowCount());
@@ -278,7 +296,8 @@ public class DatabaseManagerAndroidTest {
 
         /* Verify data deleted since no handled upgrade. */
         try {
-            assertEquals(11, databaseManager.getColumnNames().length);
+            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, false);
+            assertEquals(11, cursor.getColumnCount());
             assertEquals(0, databaseManager.getRowCount());
         } finally {
 
@@ -311,7 +330,8 @@ public class DatabaseManagerAndroidTest {
         long id;
         try {
             id = databaseManager.put(oldVersionValue);
-            ContentValues actual = databaseManager.get(id);
+            ContentValues actual = get(databaseManager, id);
+            assertNotNull(actual);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
             assertEquals(1, databaseManager.getRowCount());
@@ -336,7 +356,8 @@ public class DatabaseManagerAndroidTest {
         try {
 
             /* Verify data still there. */
-            ContentValues actual = databaseManager.get(id);
+            ContentValues actual = get(databaseManager, id);
+            assertNotNull(actual);
             actual.remove("oid");
             assertEquals(oldVersionValue, actual);
             assertEquals(1, databaseManager.getRowCount());
@@ -346,7 +367,8 @@ public class DatabaseManagerAndroidTest {
             data.put("COL_STRING", "Hello World");
             data.put("COL_INT", 2);
             id = databaseManager.put(data);
-            actual = databaseManager.get(id);
+            actual = get(databaseManager, id);
+            assertNotNull(actual);
             actual.remove("oid");
             assertEquals(data, actual);
             assertEquals(2, databaseManager.getRowCount());

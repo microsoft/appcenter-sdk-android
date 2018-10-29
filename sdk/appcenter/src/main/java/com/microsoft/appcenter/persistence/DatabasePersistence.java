@@ -37,6 +37,7 @@ import java.util.TreeMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
+@SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
 
     /**
@@ -232,7 +233,7 @@ public class DatabasePersistence extends Persistence {
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
             long databaseId = mDatabaseManager.put(contentValues);
             if (databaseId == -1) {
-                AppCenterLog.warn(LOG_TAG, "Failed to store a log to the Persistence database for log type " + log.getType() + ".");
+                throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
             if (isLargePayload) {
@@ -337,8 +338,11 @@ public class DatabasePersistence extends Persistence {
         int count = 0;
         try {
             Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
-            count = cursor.getCount();
-            cursor.close();
+            try {
+                count = cursor.getCount();
+            } finally {
+                cursor.close();
+            }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs count: ", e);
         }
@@ -510,22 +514,19 @@ public class DatabasePersistence extends Persistence {
 
     private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
-        Cursor cursor = null;
         try {
-            cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
-            while (cursor.moveToNext()) {
-                ContentValues idValues = mDatabaseManager.buildValues(cursor);
-                Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
-                result.add(invalidId);
+            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            try {
+                while (cursor.moveToNext()) {
+                    ContentValues idValues = mDatabaseManager.buildValues(cursor);
+                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
+                    result.add(invalidId);
+                }
+            } finally {
+                cursor.close();
             }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
-        }
-        if (cursor != null) {
-            try {
-                cursor.close();
-            } catch (RuntimeException ignore) {
-            }
         }
         return result;
     }

@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.CursorWrapper;
+import android.database.sqlite.SQLiteDiskIOException;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
@@ -28,6 +29,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
@@ -51,7 +53,7 @@ public class DatabasePersistenceTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
-    public void databaseOperationException() throws Persistence.PersistenceException, JSONException {
+    public void databaseOperationException() throws JSONException {
 
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
@@ -64,6 +66,8 @@ public class DatabasePersistenceTest {
             /* Generate a log and persist. */
             Log log = mock(Log.class);
             mockPersistence.putLog("test-p1", log);
+            fail("Expected persistence exception");
+        } catch (Persistence.PersistenceException ignore) {
         } finally {
 
             /* Close. */
@@ -99,7 +103,7 @@ public class DatabasePersistenceTest {
             persistence.close();
         }
 
-        /* There is a error log. */
+        /* There is an error log. */
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -108,7 +112,7 @@ public class DatabasePersistenceTest {
     public void clearPendingLogState() throws Exception {
 
         /* groupCount should be <= 9. */
-        final int groupCount = 1;
+        final int groupCount = 4;
         final int logCount = 10;
 
         /* Mock logs. */
@@ -174,7 +178,7 @@ public class DatabasePersistenceTest {
         persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
-        /* There is a error log. */
+        /* There is an error log. */
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -197,7 +201,7 @@ public class DatabasePersistenceTest {
         persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
-        /* There is a error log. */
+        /* There is an error log. */
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -226,7 +230,9 @@ public class DatabasePersistenceTest {
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(false))).thenReturn(mockCursor);
 
         /* Mock second cursor with identifiers only. */
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenThrow(new RuntimeException());
+        Cursor failingCursor = mock(Cursor.class);
+        when(failingCursor.moveToNext()).thenThrow(new SQLiteDiskIOException());
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(true))).thenReturn(failingCursor);
 
         /* Get logs and verify we get only non corrupted logs. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
@@ -234,7 +240,7 @@ public class DatabasePersistenceTest {
         persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
-        /* There is a error log. */
+        /* There is an error log. */
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }

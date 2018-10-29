@@ -126,34 +126,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Get next entry from the cursor.
-     *
-     * @param cursor The cursor to be converted to an entry.
-     * @return An entry converted from the cursor.
-     */
-    @Nullable
-    public ContentValues nextValues(Cursor cursor) {
-        try {
-             if (cursor.moveToNext()) {
-                 return buildValues(cursor);
-             }
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to get next cursor value: ", e);
-        }
-        return null;
-    }
-
-    /**
-     * Converts a cursor to an entry.
-     *
-     * @param cursor The cursor to be converted to an entry.
-     * @return An entry converted from the cursor.
-     */
-    public ContentValues buildValues(Cursor cursor) {
-        return buildValues(cursor, mSchema);
-    }
-
-     /**
      * Converts a cursor to an entry.
      *
      * @param cursor The cursor to be converted to an entry.
@@ -191,6 +163,34 @@ public class DatabaseManager implements Closeable {
             }
         }
         return values;
+    }
+
+    /**
+     * Converts a cursor to an entry.
+     *
+     * @param cursor The cursor to be converted to an entry.
+     * @return An entry converted from the cursor.
+     */
+    public ContentValues buildValues(Cursor cursor) {
+        return buildValues(cursor, mSchema);
+    }
+
+    /**
+     * Get next entry from the cursor.
+     *
+     * @param cursor The cursor to be converted to an entry.
+     * @return An entry converted from the cursor.
+     */
+    @Nullable
+    public ContentValues nextValues(Cursor cursor) {
+        try {
+            if (cursor.moveToNext()) {
+                return buildValues(cursor);
+            }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get next cursor value: ", e);
+        }
+        return null;
     }
 
     /**
@@ -270,38 +270,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Gets the entry by the identifier.
-     *
-     * @param id The database identifier.
-     * @return An entry for the identifier or null if not found.
-     */
-    public ContentValues get(@IntRange(from = 0) long id) {
-        return get(PRIMARY_KEY, id);
-    }
-
-    /**
-     * Gets the entry that matches key == value.
-     *
-     * @param key   The optional key for query.
-     * @param value The optional value for query.
-     * @return A matching entry.
-     */
-    public ContentValues get(String key, Object value) {
-        try {
-            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-            builder.appendWhere(key + " = ?");
-            String[] selectionArgs = new String[]{value.toString()};
-            Cursor cursor = getCursor(builder, selectionArgs, false);
-            ContentValues values = cursor.moveToFirst() ? buildValues(cursor) : null;
-            cursor.close();
-            return values;
-        } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to get values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
-        }
-        return null;
-    }
-
-    /**
      * Clears the table in the database.
      */
     public void clear() {
@@ -334,8 +302,8 @@ public class DatabaseManager implements Closeable {
             return DatabaseUtils.queryNumEntries(getDatabase(), mTable);
         } catch (RuntimeException e) {
             AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get row count of database.", e);
+            return -1;
         }
-        return -1;
     }
 
     /**
@@ -390,20 +358,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Gets an array of column names in the table.
-     *
-     * @return An array of column names.
-     */
-    @VisibleForTesting
-    String[] getColumnNames() {
-
-        // TODO: Below line doesn't look efficient to get column names. Could use "PRAGMA table_info(table-name)" to avoid getting all data back from database just to get column names.
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.setTables(mTable);
-        return builder.query(getDatabase(), null, null, null, null, null, PRIMARY_KEY).getColumnNames();
-    }
-
-    /**
      * Set maximum SQLite database size.
      *
      * @param maxStorageSizeInBytes Maximum SQLite database size.
@@ -434,7 +388,8 @@ public class DatabaseManager implements Closeable {
      *
      * @return The maximum size of database in bytes.
      */
-    public long getMaxSize() {
+    @VisibleForTesting
+    long getMaxSize() {
         return getDatabase().getMaximumSize();
     }
 

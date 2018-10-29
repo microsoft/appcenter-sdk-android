@@ -43,7 +43,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -84,14 +83,6 @@ public class DatabasePersistenceAndroidTest {
         FileManager.initialize(sContext);
         SharedPreferencesManager.initialize(sContext);
         Constants.loadFromContext(sContext);
-    }
-
-    private static int getCursorSize(Cursor cursor) {
-        int count = 0;
-        while (cursor.moveToNext()) {
-            count++;
-        }
-        return count;
     }
 
     @Before
@@ -399,10 +390,13 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog("test-p1", log);
+            try {
+                persistence.putLog("test-p1", log);
+                fail("Expected persistence exception");
+            } catch (PersistenceException ignore) {
+            }
 
             /* Verify the behavior: not inserted and database now empty. */
-            assertEquals(-1, id);
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
 
@@ -487,9 +481,9 @@ public class DatabasePersistenceAndroidTest {
             try {
 
                 /* Verify. */
-                assertEquals(2, getCursorSize(cursor1));
-                assertEquals(1, getCursorSize(cursor2));
-                assertEquals(1, getCursorSize(cursor3));
+                assertEquals(2, cursor1.getCount());
+                assertEquals(1, cursor2.getCount());
+                assertEquals(1, cursor3.getCount());
             } finally {
 
                 /* Close. */
@@ -508,7 +502,7 @@ public class DatabasePersistenceAndroidTest {
             try {
 
                 /* Verify. */
-                assertEquals(0, getCursorSize(cursor4));
+                assertEquals(0, cursor4.getCount());
             } finally {
 
                 /* Close. */
@@ -565,7 +559,9 @@ public class DatabasePersistenceAndroidTest {
             /* Verify. */
             Map<String, List<Long>> pendingGroups = persistence.mPendingDbIdentifiersGroups;
             assertNull(pendingGroups.get("test-p1" + id1));
-            assertEquals(1, pendingGroups.get("test-p2" + id2).size());
+            List<Long> p2Logs = pendingGroups.get("test-p2" + id2);
+            assertNotNull(p2Logs);
+            assertEquals(1, p2Logs.size());
             assertEquals(1, pendingGroups.size());
             assertEquals(0, outputLogs.size());
             assertEquals(1, persistence.mDatabaseManager.getRowCount());
@@ -842,7 +838,12 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog, outputLogs.get(0));
 
             /* Verify target token is encrypted. */
-            ContentValues values = persistence.mDatabaseManager.get(DatabasePersistence.COLUMN_GROUP, "test/one");
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+            String[] selectionArgs = new String[]{"test/one"};
+            Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
+            ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
+            assertNotNull(values);
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
@@ -928,7 +929,12 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog, outputLogs.get(0));
 
             /* Verify target token is encrypted. */
-            ContentValues values = persistence.mDatabaseManager.get(DatabasePersistence.COLUMN_GROUP, "test/one");
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+            String[] selectionArgs = new String[]{"test/one"};
+            Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
+            ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
+            assertNotNull(values);
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
