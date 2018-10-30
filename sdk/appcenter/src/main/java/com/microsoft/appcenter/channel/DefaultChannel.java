@@ -518,7 +518,7 @@ public class DefaultChannel implements Channel {
 
                         @Override
                         public void run() {
-                            handleSendingSuccess(groupState, currentState, batchId);
+                            handleSendingSuccess(groupState, batchId);
                         }
                     });
                 }
@@ -529,7 +529,7 @@ public class DefaultChannel implements Channel {
 
                         @Override
                         public void run() {
-                            handleSendingFailure(groupState, currentState, batchId, e);
+                            handleSendingFailure(groupState, batchId, e);
                         }
                     });
                 }
@@ -555,15 +555,13 @@ public class DefaultChannel implements Channel {
     /**
      * The actual implementation to react to sending a batch to the server successfully.
      *
-     * @param groupState   The group state.
-     * @param currentState The current state.
-     * @param batchId      The batch ID.
+     * @param groupState The group state.
+     * @param batchId    The batch ID.
      */
-    private synchronized void handleSendingSuccess(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId) {
-        if (checkStateDidNotChange(groupState, currentState)) {
-            String groupName = groupState.mName;
-            mPersistence.deleteLogs(groupName, batchId);
-            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+    private synchronized void handleSendingSuccess(@NonNull GroupState groupState, @NonNull String batchId) {
+        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+        if (removedLogsForBatchId != null) {
+            mPersistence.deleteLogs(groupState.mName, batchId);
             GroupListener groupListener = groupState.mListener;
             if (groupListener != null) {
                 for (Log log : removedLogsForBatchId) {
@@ -579,16 +577,15 @@ public class DefaultChannel implements Channel {
      * Will disable the sender in case of a recoverable error.
      * Will delete batch of data in case of a non-recoverable error.
      *
-     * @param groupState   the group state
-     * @param currentState the current state
-     * @param batchId      the batch ID
-     * @param e            the exception
+     * @param groupState the group state
+     * @param batchId    the batch ID
+     * @param e          the exception
      */
-    private synchronized void handleSendingFailure(@NonNull final GroupState groupState, int currentState, @NonNull final String batchId, @NonNull final Exception e) {
-        if (checkStateDidNotChange(groupState, currentState)) {
-            String groupName = groupState.mName;
+    private synchronized void handleSendingFailure(@NonNull GroupState groupState, @NonNull String batchId, @NonNull Exception e) {
+        String groupName = groupState.mName;
+        List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
+        if (removedLogsForBatchId != null) {
             AppCenterLog.error(LOG_TAG, "Sending logs groupName=" + groupName + " id=" + batchId + " failed", e);
-            List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
             boolean recoverableError = HttpUtils.isRecoverableError(e);
             if (recoverableError) {
                 groupState.mPendingLogCount += removedLogsForBatchId.size();

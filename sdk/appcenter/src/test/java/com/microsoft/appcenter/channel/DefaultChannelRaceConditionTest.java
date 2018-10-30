@@ -131,6 +131,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                 return argument instanceof CancellationException;
             }
         }));
+        verify(mockPersistence, never()).deleteLogs(anyString(), anyString());
     }
 
     @Test
