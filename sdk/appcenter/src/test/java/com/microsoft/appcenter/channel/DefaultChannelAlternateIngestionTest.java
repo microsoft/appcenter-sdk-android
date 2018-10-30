@@ -52,9 +52,9 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         /* Check enqueue. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
-        verify(persistence, never()).putLog(eq(TEST_GROUP), eq(log), anyInt());
+        verify(persistence, never()).putLog(eq(log), eq(TEST_GROUP), anyInt());
         channel.enqueue(mock(Log.class), "other", Flags.DEFAULT_FLAGS);
-        verify(persistence, never()).putLog(anyString(), any(Log.class), anyInt());
+        verify(persistence, never()).putLog(any(Log.class), anyString(), anyInt());
 
         /* Check clear. Even without app secret it works as it could be logs from previous process. */
         channel.clear(TEST_GROUP);
@@ -129,7 +129,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify we didn't persist the log since AppCenter not started with app secret. */
-        verify(mockPersistence, never()).putLog(eq(appCenterGroup), any(Log.class), eq(Flags.PERSISTENCE_NORMAL));
+        verify(mockPersistence, never()).putLog(any(Log.class), eq(appCenterGroup), eq(Flags.PERSISTENCE_NORMAL));
 
         /* Enqueuing 1 event from one collector group. */
         channel.enqueue(mock(Log.class), oneCollectorGroup, Flags.DEFAULT_FLAGS);

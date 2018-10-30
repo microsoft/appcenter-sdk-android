@@ -14,6 +14,7 @@ import android.support.test.runner.AndroidJUnit4;
 import com.microsoft.appcenter.AndroidTestUtils;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
@@ -50,6 +51,7 @@ import java.util.Map;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_PRIORITY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -106,8 +108,7 @@ public class DatabasePersistenceAndroidTest {
         return values;
     }
 
-    @Test
-    public void putLog() throws PersistenceException {
+    private void putLog(int inputFlags, Integer persistedPriorityFlag) throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -123,7 +124,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate a log and persist. */
             Log log = AndroidTestUtils.generateMockLog();
-            persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test-p1", inputFlags);
 
             /* Count logs. */
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -134,9 +135,33 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
+
+            /* Check priority flag. */
+            ContentValues contentValues = getContentValues(persistence, "test-p1");
+            assertEquals(persistedPriorityFlag, contentValues.getAsInteger(COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
+    }
+
+    @Test
+    public void putLogDefaultFlags() throws PersistenceException {
+        putLog(Flags.DEFAULT_FLAGS, Flags.PERSISTENCE_NORMAL);
+    }
+
+    @Test
+    public void putLogNormal() throws PersistenceException {
+        putLog(Flags.PERSISTENCE_NORMAL, Flags.PERSISTENCE_NORMAL);
+    }
+
+    @Test
+    public void putLogCritical() throws PersistenceException {
+        putLog(Flags.PERSISTENCE_CRITICAL, Flags.PERSISTENCE_CRITICAL);
+    }
+
+    @Test
+    public void putLogCriticalPlusOtherFlags() throws PersistenceException {
+        putLog(Flags.PERSISTENCE_CRITICAL | 0x0300, Flags.PERSISTENCE_CRITICAL);
     }
 
     @Test
@@ -164,7 +189,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+            long id = persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
 
             /* Count logs. */
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -222,7 +247,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
             fail("putLog was expected to fail");
         } catch (Persistence.PersistenceException e) {
             assertTrue(e.getCause() instanceof IOException);
@@ -262,7 +287,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+            long id = persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
             assertEquals(1, persistence.countLogs("test-p1"));
 
             /* Verify large file. */
@@ -317,7 +342,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Persisting that log should fail. */
             try {
-                persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 fail("Inserting large common schema log is not supposed to work");
             } catch (PersistenceException e) {
 
@@ -345,7 +370,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate some logs that will be evicted. */
             for (int i = 0; i < 10; i++) {
-                persistence.putLog("test-p1", AndroidTestUtils.generateMockLog(), PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
             }
 
             /*
@@ -355,7 +380,7 @@ public class DatabasePersistenceAndroidTest {
             List<Log> expectedLogs = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 expectedLogs.add(log);
             }
 
@@ -387,7 +412,7 @@ public class DatabasePersistenceAndroidTest {
             /* Generate some logs that will be evicted. */
             int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
-                persistence.putLog("test-p1", AndroidTestUtils.generateMockLog(), PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
@@ -405,7 +430,7 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
             try {
-                persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 fail("Expected persistence exception");
             } catch (PersistenceException ignore) {
             }
@@ -433,7 +458,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate a log and persist. */
             Log log = AndroidTestUtils.generateMockLog();
-            persistence.putLog("test-p1", log, PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
         } finally {
             persistence.close();
         }
@@ -456,10 +481,10 @@ public class DatabasePersistenceAndroidTest {
             Log log2 = AndroidTestUtils.generateMockLog();
             Log log3 = AndroidTestUtils.generateMockLog();
             Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog("test-p1", log1, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p1", log2, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p2", log3, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p3", log4, PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test-p1", PERSISTENCE_NORMAL);
+            persistence.putLog(log2, "test-p1", PERSISTENCE_NORMAL);
+            persistence.putLog(log3, "test-p2", PERSISTENCE_NORMAL);
+            persistence.putLog(log4, "test-p3", PERSISTENCE_NORMAL);
             assertEquals(2, persistence.countLogs("test-p1"));
             assertEquals(1, persistence.countLogs("test-p2"));
             assertEquals(1, persistence.countLogs("test-p3"));
@@ -550,10 +575,10 @@ public class DatabasePersistenceAndroidTest {
             Log log2 = AndroidTestUtils.generateMockLog();
             Log log3 = AndroidTestUtils.generateMockLog();
             Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog("test-p1", log1, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p1", log2, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p2", log3, PERSISTENCE_NORMAL);
-            persistence.putLog("test-p3", log4, PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test-p1", PERSISTENCE_NORMAL);
+            persistence.putLog(log2, "test-p1", PERSISTENCE_NORMAL);
+            persistence.putLog(log3, "test-p2", PERSISTENCE_NORMAL);
+            persistence.putLog(log4, "test-p3", PERSISTENCE_NORMAL);
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
@@ -616,7 +641,7 @@ public class DatabasePersistenceAndroidTest {
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++) {
                 logs[i] = AndroidTestUtils.generateMockLog();
-                persistence.putLog("test", logs[i], PERSISTENCE_NORMAL);
+                persistence.putLog(logs[i], "test", PERSISTENCE_NORMAL);
             }
 
             /* Get. */
@@ -732,7 +757,7 @@ public class DatabasePersistenceAndroidTest {
             log.setTimestamp(new Date());
             log.setIKey(iKey);
             log.addTransmissionTarget(iKey + "-token");
-            persistence.putLog("test", log, PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test", PERSISTENCE_NORMAL);
         }
     }
 
@@ -767,7 +792,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Put. */
             for (Log log : logs)
-                persistence.putLog("test", log, PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test", PERSISTENCE_NORMAL);
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();
@@ -787,7 +812,7 @@ public class DatabasePersistenceAndroidTest {
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -836,10 +861,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog("test/one", commonSchemaLog, PERSISTENCE_NORMAL);
+            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
         } finally {
             persistence.close();
         }
@@ -868,7 +893,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -880,7 +905,7 @@ public class DatabasePersistenceAndroidTest {
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -930,10 +955,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog("test/one", commonSchemaLog, PERSISTENCE_NORMAL);
+            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
         } finally {
             persistence.close();
         }
@@ -962,7 +987,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -973,7 +998,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
-        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TARGET_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -1023,10 +1048,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog("test/one", commonSchemaLog, PERSISTENCE_CRITICAL);
+            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_CRITICAL);
         } finally {
             persistence.close();
         }
@@ -1055,7 +1080,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }

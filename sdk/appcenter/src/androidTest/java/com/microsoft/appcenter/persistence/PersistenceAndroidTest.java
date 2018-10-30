@@ -51,7 +51,7 @@ public class PersistenceAndroidTest {
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             /* Generate a log and persist. */
-            persistence.putLog("exception", new MockLog(), PERSISTENCE_NORMAL);
+            persistence.putLog(new MockLog(), "exception", PERSISTENCE_NORMAL);
         } finally {
             /* Close. */
             //noinspection ThrowFromFinallyBlock

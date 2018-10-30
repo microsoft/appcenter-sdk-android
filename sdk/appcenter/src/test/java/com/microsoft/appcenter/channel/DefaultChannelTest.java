@@ -59,7 +59,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(log, never()).setDevice(any(Device.class));
         verify(log, never()).setTimestamp(any(Date.class));
-        verify(persistence, never()).putLog(eq(TEST_GROUP), eq(log), anyInt());
+        verify(persistence, never()).putLog(eq(log), eq(TEST_GROUP), anyInt());
 
         /* Trying remove group that not registered. */
         channel.removeGroup(TEST_GROUP);
@@ -94,7 +94,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Verify that 5 items have been persisted. */
-        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -117,7 +117,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Schedule only 1 log after that. */
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         assertEquals(1, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(mockPersistence, times(51)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(51)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(50)).onSuccess(any(Log.class));
@@ -136,7 +136,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         assertEquals(2, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(mockPersistence, times(53)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(53)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(51)).onSuccess(any(Log.class));
@@ -232,7 +232,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler, times(4)).removeCallbacks(any(Runnable.class));
 
         /* Verify all logs stored, N requests sent, not log deleted yet. */
-        verify(mockPersistence, times(200)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(200)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
@@ -281,7 +281,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         }
 
         /* Verify all logs stored, N requests sent, not log deleted yet. */
-        verify(mockPersistence, times(100)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(100)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
@@ -328,7 +328,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
 
         /* Verify that 50 items have been persisted. */
-        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -406,7 +406,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
 
         /* Verify that 50 items have been persisted. */
-        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -481,7 +481,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
 
         /* Verify that 2 items have been persisted. */
-        verify(mockPersistence, times(2)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(2)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion twice as batch size is 1. */
         verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -521,7 +521,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
 
         /* Verify that n items have been persisted. */
-        verify(mockPersistence, times(logNumber)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(logNumber)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion once for the first item, but not more than that. */
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -639,7 +639,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Simulate Persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
-                when(mockPersistence).putLog(anyString(), any(Log.class), anyInt());
+                when(mockPersistence).putLog(any(Log.class), anyString(), anyInt());
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
@@ -648,7 +648,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         for (int i = 0; i < 50; i++) {
             channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         }
-        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -789,7 +789,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(listener).onPreparingLog(log, TEST_GROUP);
         verify(listener, never()).shouldFilter(log);
-        verify(persistence, never()).putLog(eq(TEST_GROUP), eq(log), anyInt());
+        verify(persistence, never()).putLog(eq(log), eq(TEST_GROUP), anyInt());
     }
 
     @Test
@@ -901,5 +901,34 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* But that we cleared batch state. */
         verify(mockPersistence).clearPendingLogState();
+    }
+
+    @Test
+    public void enqueueWithFlags() throws Persistence.PersistenceException {
+
+        /* Other tests use default flags, test explicit flags here. */
+
+        /* Setup persistence, channel and a listener. */
+        Persistence persistence = mock(Persistence.class);
+        Channel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mock(Channel.GroupListener.class));
+        Channel.Listener listener = mock(Channel.Listener.class);
+        channel.addListener(listener);
+
+        /* Enqueuing 1 event with normal persistence. */
+        Log normalLog = mock(Log.class);
+        channel.enqueue(normalLog, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+
+        /* Verify listener and database get the same flags. */
+        verify(listener).onPreparedLog(normalLog, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+        verify(persistence).putLog(normalLog, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+
+        /* Enqueuing 1 event with critical persistence. */
+        Log criticalLog = mock(Log.class);
+        channel.enqueue(criticalLog, TEST_GROUP, Flags.PERSISTENCE_CRITICAL);
+
+        /* Verify listener and database get the same flags. */
+        verify(listener).onPreparedLog(criticalLog, TEST_GROUP, Flags.PERSISTENCE_CRITICAL);
+        verify(persistence).putLog(criticalLog, TEST_GROUP, Flags.PERSISTENCE_CRITICAL);
     }
 }
