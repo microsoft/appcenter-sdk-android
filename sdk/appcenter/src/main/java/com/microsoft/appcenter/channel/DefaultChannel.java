@@ -601,17 +601,11 @@ public class DefaultChannel implements Channel {
         }
     }
 
-    /**
-     * Actual implementation of enqueue logic. Will increase counters, triggers of batching logic.
-     *
-     * @param log       the Log to be enqueued
-     * @param groupName the queue to use
-     */
     @Override
-    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
+    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
 
         /* Check group name is registered. */
-        final GroupState groupState = mGroupStates.get(groupName);
+        GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
             AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
             return;

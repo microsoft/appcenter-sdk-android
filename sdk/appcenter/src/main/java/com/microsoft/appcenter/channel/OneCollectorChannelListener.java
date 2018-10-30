@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -140,7 +141,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         /* Enqueue logs to one collector group. */
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
-            mChannel.enqueue(commonSchemaLog, oneCollectorGroupName);
+            mChannel.enqueue(commonSchemaLog, oneCollectorGroupName, Flags.DEFAULT_FLAGS);
         }
     }
 

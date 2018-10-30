@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -224,7 +225,7 @@ public class Push extends AbstractAppCenterService {
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
-        mChannel.enqueue(log, PUSH_GROUP);
+        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULT_FLAGS);
     }
 
     /**

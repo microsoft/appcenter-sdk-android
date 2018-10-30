@@ -1,9 +1,13 @@
 package com.microsoft.appcenter.channel;
 
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
+
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 
 /**
  * The interface for Channel.
@@ -62,12 +66,15 @@ public interface Channel {
     void resumeGroup(String groupName, String targetToken);
 
     /**
-     * Add Log to queue to be persisted and sent.
+     * Add log to queue to be persisted and sent.
      *
-     * @param log       the Log to be enqueued.
+     * @param log       the log to be enqueued.
      * @param groupName the group to use.
+     * @param flags     the flags for this log.
      */
-    void enqueue(@NonNull Log log, @NonNull String groupName);
+    void enqueue(@NonNull Log log,
+                 @NonNull String groupName,
+                 @IntRange(from = PERSISTENCE_NORMAL, to = PERSISTENCE_CRITICAL) int flags);
 
     /**
      * Check whether channel is enabled or disabled.

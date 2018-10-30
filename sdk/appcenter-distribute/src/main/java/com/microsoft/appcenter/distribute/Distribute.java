@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -1157,7 +1158,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
         String currentDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-        if (currentDistributionGroupId != null && lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
+        if (lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
             return;
         }
 
@@ -1868,7 +1869,7 @@ public class Distribute extends AbstractAppCenterService {
             @Override
             public void run() {
                 DistributionStartSessionLog log = new DistributionStartSessionLog();
-                mChannel.enqueue(log, DISTRIBUTE_GROUP);
+                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULT_FLAGS);
             }
         });
     }

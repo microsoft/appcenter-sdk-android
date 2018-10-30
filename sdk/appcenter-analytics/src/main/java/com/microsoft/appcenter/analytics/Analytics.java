@@ -9,6 +9,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -662,7 +663,7 @@ public class Analytics extends AbstractAppCenterService {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -694,7 +695,7 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setTypedProperties(properties);
-                mChannel.enqueue(eventLog, ANALYTICS_GROUP);
+                mChannel.enqueue(eventLog, ANALYTICS_GROUP, Flags.DEFAULT_FLAGS);
             }
         });
     }

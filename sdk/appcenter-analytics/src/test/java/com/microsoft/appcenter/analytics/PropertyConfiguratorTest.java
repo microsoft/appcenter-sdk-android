@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -330,7 +332,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check event. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -353,7 +355,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check event. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -375,7 +377,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -395,7 +397,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -430,7 +432,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -487,7 +489,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Verify log that was sent. */
         ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = logArgumentCaptor.getValue();
         assertNotNull(log);
         assertEquals("eventName", log.getName());
@@ -546,7 +548,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Verify log that was sent. */
         ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString(), eq(DEFAULT_FLAGS));
         EventLog log = logArgumentCaptor.getValue();
         assertNotNull(log);
         assertEquals("eventName", log.getName());

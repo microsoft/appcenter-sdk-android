@@ -17,8 +17,8 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -294,7 +296,7 @@ public class CrashesAndroidTest {
                 return o instanceof ManagedErrorLog;
             }
         };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
@@ -309,10 +311,10 @@ public class CrashesAndroidTest {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
 
@@ -349,7 +351,7 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -400,7 +402,7 @@ public class CrashesAndroidTest {
                 return o instanceof ManagedErrorLog;
             }
         };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
@@ -415,10 +417,10 @@ public class CrashesAndroidTest {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
@@ -435,10 +437,10 @@ public class CrashesAndroidTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
 
         /* Verify custom text attachment. */
-        verify(mChannel).enqueue(eq(textAttachment), anyString());
+        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULT_FLAGS));
     }
 
     @Test

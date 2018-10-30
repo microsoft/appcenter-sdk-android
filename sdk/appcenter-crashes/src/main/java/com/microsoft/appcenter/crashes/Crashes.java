@@ -8,6 +8,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
@@ -534,7 +535,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
-                mChannel.enqueue(errorLog, ERROR_GROUP);
+                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULT_FLAGS);
             }
         });
     }
@@ -820,7 +821,7 @@ public class Crashes extends AbstractAppCenterService {
                         }
 
                         /* Send report. */
-                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.PERSISTENCE_CRITICAL);
 
                         /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {
@@ -859,7 +860,7 @@ public class Crashes extends AbstractAppCenterService {
                     attachment.setErrorId(errorId);
                     if (attachment.isValid()) {
                         ++totalErrorAttachments;
-                        mChannel.enqueue(attachment, ERROR_GROUP);
+                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULT_FLAGS);
                     } else {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }

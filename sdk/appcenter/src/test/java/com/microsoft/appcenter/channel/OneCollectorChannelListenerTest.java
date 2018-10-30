@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_GROUP_NAME_SUFFIX;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_COUNT;
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -131,11 +133,11 @@ public class OneCollectorChannelListenerTest {
         assertEquals(installId, log2.getExt().getSdk().getInstallId());
 
         /* Verify enqueue. */
-        verify(channel).enqueue(log1, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
-        verify(channel).enqueue(log2, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verify(channel).enqueue(log1, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULT_FLAGS);
+        verify(channel).enqueue(log2, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULT_FLAGS);
 
         /* We simulated that we see on prepared log on the enqueued log, verify no more enqueuing. */
-        verify(channel, times(2)).enqueue(any(Log.class), anyString());
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), eq(DEFAULT_FLAGS));
 
         /* Mock log with another key to see new seq/epoch. */
         when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("t2")));
@@ -187,7 +189,7 @@ public class OneCollectorChannelListenerTest {
         verify(logSerializer).toCommonSchemaLog(any(Log.class));
 
         /* Verify no enqueuing as the log was invalid. */
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -205,7 +207,7 @@ public class OneCollectorChannelListenerTest {
         verify(logSerializer, never()).toCommonSchemaLog(any(Log.class));
 
         /* Verify no enqueuing. */
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test

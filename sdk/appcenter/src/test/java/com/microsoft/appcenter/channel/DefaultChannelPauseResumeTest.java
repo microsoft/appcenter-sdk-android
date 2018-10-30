@@ -54,7 +54,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Enqueue a log. */
         for (int i = 0; i < 50; i++) {
-            channel.enqueue(mock(Log.class), TEST_GROUP);
+            channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         }
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
 
@@ -142,7 +142,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Enqueue a log. */
         Log log = mock(Log.class);
         when(log.getTransmissionTargetTokens()).thenReturn(Collections.singleton(targetToken));
-        channel.enqueue(log, TEST_GROUP);
+        channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
 
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
@@ -157,7 +157,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Enqueueing a log from another transmission target works. */
         Log otherLog = mock(Log.class);
         when(otherLog.getTransmissionTargetTokens()).thenReturn(Collections.singleton("iKey2-apiKey2"));
-        channel.enqueue(otherLog, TEST_GROUP);
+        channel.enqueue(otherLog, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         reset(ingestion);
 
@@ -167,7 +167,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Sending more logs works now. */
         reset(ingestion);
-        channel.enqueue(log, TEST_GROUP);
+        channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Calling resume a second time has 0 effect. */
@@ -206,7 +206,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Enqueue a log. */
         Log log = mock(Log.class);
         when(log.getTransmissionTargetTokens()).thenReturn(Collections.singleton(targetToken));
-        channel.enqueue(log, TEST_GROUP);
+        channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
 
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
