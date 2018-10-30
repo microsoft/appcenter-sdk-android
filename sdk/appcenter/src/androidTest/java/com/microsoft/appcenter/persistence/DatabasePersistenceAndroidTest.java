@@ -95,6 +95,17 @@ public class DatabasePersistenceAndroidTest {
         sContext.deleteDatabase(DatabasePersistence.DATABASE);
     }
 
+    @NonNull
+    private ContentValues getContentValues(DatabasePersistence persistence, String group) {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
+        String[] selectionArgs = new String[]{group};
+        Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
+        ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
+        assertNotNull(values);
+        return values;
+    }
+
     @Test
     public void putLog() throws PersistenceException {
 
@@ -766,17 +777,6 @@ public class DatabasePersistenceAndroidTest {
         } finally {
             persistence.close();
         }
-    }
-
-    @NonNull
-    private ContentValues getContentValues(DatabasePersistence persistence, String group) {
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
-        String[] selectionArgs = new String[]{group};
-        Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, false);
-        ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
-        assertNotNull(values);
-        return values;
     }
 
     @Test

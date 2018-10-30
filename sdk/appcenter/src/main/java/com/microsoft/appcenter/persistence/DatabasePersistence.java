@@ -206,9 +206,9 @@ public class DatabasePersistence extends Persistence {
      *
      * @param group       The group of the storage for the log.
      * @param logJ        The JSON string for a log.
-     * @param targetToken target token if the log is common schema.
-     * @param targetKey   project identifier part of the target token in clear text.
-     * @param priority    priority.
+     * @param targetToken The target token if the log is common schema.
+     * @param targetKey   The project identifier part of the target token in clear text.
+     * @param priority    The persistence priority.
      * @return A {@link ContentValues} instance.
      */
     private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority) {

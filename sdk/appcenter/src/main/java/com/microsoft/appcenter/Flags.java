@@ -19,4 +19,9 @@ public final class Flags {
      * Used for events that should be prioritized over non-critical events.
      */
     public static final int PERSISTENCE_CRITICAL = 0x02;
+
+    /**
+     * Default combination of flags.
+     */
+    public static final int DEFAULT_FLAGS = PERSISTENCE_NORMAL;
 }
