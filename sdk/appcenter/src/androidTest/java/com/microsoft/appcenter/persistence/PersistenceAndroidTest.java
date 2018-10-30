@@ -14,6 +14,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+
 @SuppressWarnings("unused")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -49,7 +51,7 @@ public class PersistenceAndroidTest {
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             /* Generate a log and persist. */
-            persistence.putLog("exception", new MockLog());
+            persistence.putLog("exception", new MockLog(), PERSISTENCE_NORMAL);
         } finally {
             /* Close. */
             //noinspection ThrowFromFinallyBlock

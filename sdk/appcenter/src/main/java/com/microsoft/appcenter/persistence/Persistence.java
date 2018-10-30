@@ -24,12 +24,13 @@ public abstract class Persistence implements Closeable {
     /**
      * Writes a log to the storage with the given {@code group}.
      *
-     * @param group The group of the storage for the log.
-     * @param log   The log to be placed in the storage.
+     * @param group    The group of the storage for the log.
+     * @param log      The log to be placed in the storage.
+     * @param priority The persistence priority.
      * @return Log identifier from persistence after saving.
      * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
-    public abstract long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException;
+    public abstract long putLog(@NonNull String group, @NonNull Log log, int priority) throws PersistenceException;
 
     /**
      * Deletes a log with the give ID from the {@code group}.

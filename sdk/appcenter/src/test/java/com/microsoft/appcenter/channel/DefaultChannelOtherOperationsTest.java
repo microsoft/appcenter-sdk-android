@@ -2,6 +2,7 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -20,6 +21,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -135,7 +137,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             verify(listener1).shouldFilter(log);
             verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
-            verify(persistence, never()).putLog(TEST_GROUP, log);
+            verify(persistence, never()).putLog(eq(TEST_GROUP), eq(log), anyInt());
         }
 
         /* Given 1 log. */
@@ -155,7 +157,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
             /* Second listener skipped since first listener filtered out. */
             verify(listener2, never()).shouldFilter(log);
-            verify(persistence, never()).putLog(TEST_GROUP, log);
+            verify(persistence, never()).putLog(eq(TEST_GROUP), eq(log), anyInt());
         }
 
         /* Given 1 log. */
@@ -173,7 +175,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             verify(listener1).shouldFilter(log);
             verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
-            verify(persistence).putLog(TEST_GROUP, log);
+            verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
         }
     }
 

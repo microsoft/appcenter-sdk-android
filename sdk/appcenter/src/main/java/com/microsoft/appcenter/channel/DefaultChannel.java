@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.CancellationException;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -688,7 +689,8 @@ public class DefaultChannel implements Channel {
             try {
 
                 /* Persist log. */
-                mPersistence.putLog(groupName, log);
+                // TODO introduce parameter for flags and extract persistence from mask.
+                mPersistence.putLog(groupName, log, Flags.PERSISTENCE_NORMAL);
 
                 /* Nothing more to do if the log is from a paused transmission target. */
                 Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
