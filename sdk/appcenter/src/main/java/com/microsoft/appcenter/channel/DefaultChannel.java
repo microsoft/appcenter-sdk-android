@@ -440,7 +440,7 @@ public class DefaultChannel implements Channel {
         }
         int pendingLogCount = groupState.mPendingLogCount;
         int maxFetch = Math.min(pendingLogCount, groupState.mMaxLogsPerBatch);
-        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupState + ") pendingLogCount=" + pendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupState.mName + ") pendingLogCount=" + pendingLogCount);
         cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
@@ -714,11 +714,11 @@ public class DefaultChannel implements Channel {
     @VisibleForTesting
     synchronized void checkPendingLogs(@NonNull GroupState groupState) {
         if (groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, groupState + " is paused. Skip checking pending logs.");
+            AppCenterLog.debug(LOG_TAG, groupState.mName + " is paused. Skip checking pending logs.");
             return;
         }
         long pendingLogCount = groupState.mPendingLogCount;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState + ") pendingLogCount=" + pendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
             triggerIngestion(groupState);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
