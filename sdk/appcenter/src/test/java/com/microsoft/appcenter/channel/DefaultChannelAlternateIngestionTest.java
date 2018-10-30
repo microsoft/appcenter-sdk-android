@@ -84,7 +84,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* The counter should be 0 now as we sent data. */
-        assertEquals(0, channel.getCounter(TEST_GROUP));
+        assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Disabling the channel should close all channels */
         channel.setEnabled(false);

@@ -189,7 +189,7 @@ public class DefaultChannel implements Channel {
         if (mEnabled) {
             for (GroupState groupState : mGroupStates.values()) {
                 if (groupState.mIngestion == mIngestion) {
-                    checkPendingLogs(groupState.mName);
+                    checkPendingLogs(groupState);
                 }
             }
         }
@@ -216,7 +216,7 @@ public class DefaultChannel implements Channel {
         if (mAppSecret != null || mIngestion != ingestion) {
 
             /* Schedule sending any pending log. */
-            checkPendingLogs(groupState.mName);
+            checkPendingLogs(groupState);
         }
 
         /* Call listeners so that they can react on group adding. */
@@ -278,12 +278,12 @@ public class DefaultChannel implements Channel {
                      */
                     AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ", " + targetKey + ")");
                     groupState.mPendingLogCount = mPersistence.countLogs(groupName);
-                    checkPendingLogs(groupState.mName);
+                    checkPendingLogs(groupState);
                 }
             } else if (groupState.mPaused) {
                 AppCenterLog.debug(LOG_TAG, "resumeGroup(" + groupName + ")");
                 groupState.mPaused = false;
-                checkPendingLogs(groupState.mName);
+                checkPendingLogs(groupState);
             }
 
             /* Call listeners so that they can react on group resuming. */
@@ -317,8 +317,8 @@ public class DefaultChannel implements Channel {
             for (Ingestion ingestion : mIngestions) {
                 ingestion.reopen();
             }
-            for (String groupName : mGroupStates.keySet()) {
-                checkPendingLogs(groupName);
+            for (GroupState groupState : mGroupStates.values()) {
+                checkPendingLogs(groupState);
             }
         } else {
             suspend(true, new CancellationException());
@@ -375,12 +375,11 @@ public class DefaultChannel implements Channel {
             /* Delete all other batches and call callback method that are currently in progress. */
             for (Iterator<Map.Entry<String, List<Log>>> iterator = groupState.mSendingBatches.entrySet().iterator(); iterator.hasNext(); ) {
                 Map.Entry<String, List<Log>> entry = iterator.next();
-                List<Log> removedLogsForBatchId = groupState.mSendingBatches.get(entry.getKey());
                 iterator.remove();
                 if (deleteLogs) {
                     GroupListener groupListener = groupState.mListener;
                     if (groupListener != null) {
-                        for (Log log : removedLogsForBatchId) {
+                        for (Log log : entry.getValue()) {
                             groupListener.onFailure(log, exception);
                         }
                     }
@@ -427,28 +426,21 @@ public class DefaultChannel implements Channel {
         }
     }
 
-    @VisibleForTesting
-    @SuppressWarnings("SameParameterValue")
-    synchronized int getCounter(@NonNull String groupName) {
-        return mGroupStates.get(groupName).mPendingLogCount;
-    }
-
     /**
      * This will, if we're not using the limit for pending batches, trigger sending of a new request.
      * It will also reset the counters for sending out items for both the number of items enqueued and
      * the handlers. It will do this even if we don't have reached the limit
      * of pending batches or the time interval.
      *
-     * @param groupName the group name
+     * @param groupState the group state.
      */
-    private synchronized void triggerIngestion(final @NonNull String groupName) {
+    private synchronized void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
             return;
         }
-        final GroupState groupState = mGroupStates.get(groupName);
         int pendingLogCount = groupState.mPendingLogCount;
         int maxFetch = Math.min(pendingLogCount, groupState.mMaxLogsPerBatch);
-        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "triggerIngestion(" + groupState + ") pendingLogCount=" + pendingLogCount);
         cancelTimer(groupState);
 
         /* Check if we have reached the maximum number of pending batches, log to LogCat and don't trigger another sending. */
@@ -460,7 +452,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupName, groupState.mPausedTargetKeys, maxFetch, batch);
+        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;
@@ -556,7 +548,7 @@ public class DefaultChannel implements Channel {
 
     private void checkPendingLogsAfterPost(@NonNull final GroupState groupState, int currentState) {
         if (checkStateDidNotChange(groupState, currentState)) {
-            checkPendingLogs(groupState.mName);
+            checkPendingLogs(groupState);
         }
     }
 
@@ -578,7 +570,7 @@ public class DefaultChannel implements Channel {
                     groupListener.onSuccess(log);
                 }
             }
-            checkPendingLogs(groupName);
+            checkPendingLogs(groupState);
         }
     }
 
@@ -704,7 +696,7 @@ public class DefaultChannel implements Channel {
                 groupState.mPendingLogCount++;
                 AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
                 if (mEnabled) {
-                    checkPendingLogs(groupState.mName);
+                    checkPendingLogs(groupState);
                 } else {
                     AppCenterLog.debug(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
                 }
@@ -717,19 +709,18 @@ public class DefaultChannel implements Channel {
     /**
      * Check for logs to trigger immediately or schedule with a timer or does nothing if no logs.
      *
-     * @param groupName the group name.
+     * @param groupState the group state.
      */
     @VisibleForTesting
-    synchronized void checkPendingLogs(@NonNull String groupName) {
-        GroupState groupState = mGroupStates.get(groupName);
+    synchronized void checkPendingLogs(@NonNull GroupState groupState) {
         if (groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, groupName + " is paused. Skip checking pending logs.");
+            AppCenterLog.debug(LOG_TAG, groupState + " is paused. Skip checking pending logs.");
             return;
         }
         long pendingLogCount = groupState.mPendingLogCount;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupName + ") pendingLogCount=" + pendingLogCount);
+        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState + ") pendingLogCount=" + pendingLogCount);
         if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
-            triggerIngestion(groupName);
+            triggerIngestion(groupState);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
             mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
@@ -737,7 +728,7 @@ public class DefaultChannel implements Channel {
     }
 
     @VisibleForTesting
-    GroupState getGroupState(String groupName) {
+    GroupState getGroupState(@SuppressWarnings("SameParameterValue") String groupName) {
         return mGroupStates.get(groupName);
     }
 
@@ -826,7 +817,7 @@ public class DefaultChannel implements Channel {
             @Override
             public void run() {
                 mScheduled = false;
-                triggerIngestion(mName);
+                triggerIngestion(GroupState.this);
             }
         };
 

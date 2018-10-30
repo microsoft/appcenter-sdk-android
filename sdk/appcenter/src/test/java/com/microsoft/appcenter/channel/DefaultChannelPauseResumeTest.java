@@ -59,7 +59,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
 
         /* 50 logs are persisted but never being sent to Ingestion. */
-        assertEquals(50, channel.getCounter(TEST_GROUP));
+        assertEquals(50, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(Flags.PERSISTENCE_NORMAL));
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
@@ -67,7 +67,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         verify(mockListener, never()).onSuccess(any(Log.class));
 
         /* The counter should still be 50 now as we did NOT send data. */
-        assertEquals(50, channel.getCounter(TEST_GROUP));
+        assertEquals(50, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Resume group. */
         channel.resumeGroup(TEST_GROUP, null);
@@ -81,7 +81,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         verify(mockListener, times(50)).onSuccess(any(Log.class));
 
         /* The counter should be 0 now as we sent data. */
-        assertEquals(0, channel.getCounter(TEST_GROUP));
+        assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
     }
 
     @Test
@@ -104,15 +104,16 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
     public void resumeGroupWhileNotPaused() {
         DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mock(Channel.GroupListener.class));
-        verify(channel).checkPendingLogs(eq(TEST_GROUP));
-        assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
+        DefaultChannel.GroupState groupState = channel.getGroupState(TEST_GROUP);
+        verify(channel).checkPendingLogs(groupState);
+        assertFalse(groupState.mPaused);
 
         /* Resume group. */
         channel.resumeGroup(TEST_GROUP, null);
-        assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
+        assertFalse(groupState.mPaused);
 
         /* Verify resumeGroup doesn't resume the group while un-paused.  */
-        verify(channel).checkPendingLogs(eq(TEST_GROUP));
+        verify(channel).checkPendingLogs(groupState);
     }
 
     @Test
@@ -145,7 +146,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
-        assertEquals(0, channel.getCounter(TEST_GROUP));
+        assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(persistence, never()).countLogs(TEST_GROUP);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
@@ -209,7 +210,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
-        assertEquals(0, channel.getCounter(TEST_GROUP));
+        assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Resume group should not send the log. */
@@ -240,7 +241,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.resumeGroup(TEST_GROUP, null);
 
         /* Verify channel doesn't do anything on pause. */
-        verify(channel, never()).checkPendingLogs(eq(TEST_GROUP));
+        verify(channel, never()).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verify(listener, never()).onResumed(eq(TEST_GROUP), anyString());
     }
 }
