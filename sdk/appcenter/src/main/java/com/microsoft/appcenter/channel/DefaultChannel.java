@@ -650,7 +650,7 @@ public class DefaultChannel implements Channel {
 
         /* Notify listeners that log is prepared and is in a final state. */
         for (Listener listener : mListeners) {
-            listener.onPreparedLog(log, groupName);
+            listener.onPreparedLog(log, groupName, flags);
         }
 
         /* Call listeners so that they can filter the log. */

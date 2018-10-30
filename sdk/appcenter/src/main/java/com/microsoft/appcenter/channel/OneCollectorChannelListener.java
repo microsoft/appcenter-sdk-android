@@ -4,7 +4,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -78,10 +77,10 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     /**
      * Init with channel.
      *
-     * @param context context.
-     * @param channel channel.
+     * @param context       context.
+     * @param channel       channel.
      * @param logSerializer log serializer.
-     * @param installId installId.
+     * @param installId     installId.
      */
     public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
@@ -109,7 +108,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     }
 
     @Override
-    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName, int flags) {
 
         /* Nothing to do on common schema log prepared. */
         if (!isOneCollectorCompatible(log)) {
@@ -141,7 +140,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         /* Enqueue logs to one collector group. */
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
         for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
-            mChannel.enqueue(commonSchemaLog, oneCollectorGroupName, Flags.DEFAULT_FLAGS);
+            mChannel.enqueue(commonSchemaLog, oneCollectorGroupName, flags);
         }
     }
 

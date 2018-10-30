@@ -165,8 +165,9 @@ public interface Channel {
          *
          * @param log       prepared log.
          * @param groupName group of the log.
+         * @param flags     log flags.
          */
-        void onPreparedLog(@NonNull Log log, @NonNull String groupName);
+        void onPreparedLog(@NonNull Log log, @NonNull String groupName, int flags);
 
         /**
          * Called after a log has been fully prepared and properties are now final.

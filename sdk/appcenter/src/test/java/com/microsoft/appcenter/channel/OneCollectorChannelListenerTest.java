@@ -113,8 +113,8 @@ public class OneCollectorChannelListenerTest {
         /* Init listener. */
         UUID installId = UUIDUtils.randomUUID();
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, installId);
-        listener.onPreparedLog(originalLog, TEST_GROUP);
-        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULT_FLAGS);
+        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULT_FLAGS);
 
         /* Verify conversion. */
         verify(logSerializer).toCommonSchemaLog(originalLog);
@@ -147,7 +147,7 @@ public class OneCollectorChannelListenerTest {
         when(log3.getExt()).thenReturn(ext3);
         when(log3.getIKey()).thenReturn("t2");
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log3));
-        listener.onPreparedLog(originalLog, TEST_GROUP);
+        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULT_FLAGS);
         assertEquals((Long) 1L, log3.getExt().getSdk().getSeq());
         assertNotNull(log3.getExt().getSdk().getEpoch());
         assertNotEquals(log1.getExt().getSdk().getEpoch(), log3.getExt().getSdk().getEpoch());
@@ -163,7 +163,7 @@ public class OneCollectorChannelListenerTest {
         when(log4.getExt()).thenReturn(ext4);
         when(log4.getIKey()).thenReturn("t2");
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log4));
-        listener.onPreparedLog(originalLog, TEST_GROUP);
+        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULT_FLAGS);
 
         /* Verify reset of epoch/seq. */
         assertEquals((Long) 1L, log4.getExt().getSdk().getSeq());
@@ -183,7 +183,7 @@ public class OneCollectorChannelListenerTest {
 
         /* Init listener. */
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
-        listener.onPreparedLog(log, TEST_GROUP);
+        listener.onPreparedLog(log, TEST_GROUP, DEFAULT_FLAGS);
 
         /* Verify conversion attempted. */
         verify(logSerializer).toCommonSchemaLog(any(Log.class));
@@ -201,7 +201,7 @@ public class OneCollectorChannelListenerTest {
 
         /* Init listener. */
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
-        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP);
+        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP, DEFAULT_FLAGS);
 
         /* Verify no conversion. */
         verify(logSerializer, never()).toCommonSchemaLog(any(Log.class));

@@ -56,7 +56,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(listener).onPreparingLog(log, TEST_GROUP);
-        verify(listener).onPreparedLog(log, TEST_GROUP);
+        verify(listener).onPreparedLog(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(listener).shouldFilter(log);
         verifyNoMoreInteractions(listener);
 
