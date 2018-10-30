@@ -2,6 +2,7 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -51,9 +52,9 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         /* Check enqueue. */
         Log log = mock(Log.class);
         channel.enqueue(log, TEST_GROUP);
-        verify(persistence, never()).putLog(TEST_GROUP, log);
+        verify(persistence, never()).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
         channel.enqueue(mock(Log.class), "other");
-        verify(persistence, never()).putLog(anyString(), any(Log.class));
+        verify(persistence, never()).putLog(anyString(), any(Log.class), eq(Flags.PERSISTENCE_NORMAL));
 
         /* Check clear. Even without app secret it works as it could be logs from previous process. */
         channel.clear(TEST_GROUP);
@@ -128,7 +129,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify we didn't persist the log since AppCenter not started with app secret. */
-        verify(mockPersistence, never()).putLog(eq(appCenterGroup), any(Log.class));
+        verify(mockPersistence, never()).putLog(eq(appCenterGroup), any(Log.class), eq(Flags.PERSISTENCE_NORMAL));
 
         /* Enqueuing 1 event from one collector group. */
         channel.enqueue(mock(Log.class), oneCollectorGroup);

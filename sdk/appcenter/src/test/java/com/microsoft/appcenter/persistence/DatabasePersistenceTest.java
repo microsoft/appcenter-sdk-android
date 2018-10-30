@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDiskIOException;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -65,7 +66,7 @@ public class DatabasePersistenceTest {
 
             /* Generate a log and persist. */
             Log log = mock(Log.class);
-            mockPersistence.putLog("test-p1", log);
+            mockPersistence.putLog("test-p1", log, Flags.PERSISTENCE_NORMAL);
             fail("Expected persistence exception");
         } catch (Persistence.PersistenceException ignore) {
         } finally {

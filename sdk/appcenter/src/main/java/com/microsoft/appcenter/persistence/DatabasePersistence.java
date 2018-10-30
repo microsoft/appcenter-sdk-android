@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
@@ -36,6 +37,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
@@ -45,6 +47,12 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final int VERSION_TYPE_API_KEY = 2;
+
+    /**
+     * Version of the schema that introduced target key field.
+     */
+    @VisibleForTesting
+    static final int VERSION_TARGET_KEY = 3;
 
     /**
      * Name of group column in the table.
@@ -77,10 +85,16 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_TARGET_KEY = "target_key";
 
     /**
+     * Priority.
+     */
+    @VisibleForTesting
+    static final String COLUMN_PRIORITY = "priority";
+
+    /**
      * Table schema for Persistence.
      */
     @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "", "");
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
 
     /**
      * Database name.
@@ -97,7 +111,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Current version of the schema.
      */
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
 
     /**
      * Size limit (in bytes) for a database row log payload.
@@ -174,7 +188,10 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
+                if (oldVersion < VERSION_TARGET_KEY) {
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
+                }
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 return true;
             }
         });
@@ -189,17 +206,19 @@ public class DatabasePersistence extends Persistence {
      *
      * @param group       The group of the storage for the log.
      * @param logJ        The JSON string for a log.
-     * @param targetToken target token if the log is common schema.
-     * @param targetKey   project identifier part of the target token in clear text.
+     * @param targetToken The target token if the log is common schema.
+     * @param targetKey   The project identifier part of the target token in clear text.
+     * @param priority    The persistence priority.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
         values.put(COLUMN_TARGET_TOKEN, targetToken);
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
+        values.put(COLUMN_PRIORITY, priority);
         return values;
     }
 
@@ -209,7 +228,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public long putLog(@NonNull String group, @NonNull Log log) throws PersistenceException {
+    public long putLog(@NonNull String group, @NonNull Log log, @IntRange(from = Flags.PERSISTENCE_NORMAL, to = Flags.PERSISTENCE_CRITICAL) int priority) throws PersistenceException {
 
         /* Convert log to JSON string and put in the database. */
         try {
@@ -230,7 +249,7 @@ public class DatabasePersistence extends Persistence {
                 targetKey = null;
                 targetToken = null;
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
             long databaseId = mDatabaseManager.put(contentValues);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");

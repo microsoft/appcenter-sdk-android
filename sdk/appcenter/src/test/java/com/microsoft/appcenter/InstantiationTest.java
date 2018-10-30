@@ -55,4 +55,9 @@ public class InstantiationTest {
     public void appCenterLog() {
         new AppCenterLog();
     }
+
+    @Test
+    public void flags() {
+        new Flags();
+    }
 }

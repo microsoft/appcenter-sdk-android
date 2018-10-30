@@ -2,6 +2,7 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
@@ -59,7 +60,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* 50 logs are persisted but never being sent to Ingestion. */
         assertEquals(50, channel.getCounter(TEST_GROUP));
-        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class));
+        verify(mockPersistence, times(50)).putLog(eq(TEST_GROUP), any(Log.class), eq(Flags.PERSISTENCE_NORMAL));
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, never()).onBeforeSending(any(Log.class));
@@ -143,7 +144,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP);
 
         /* Verify persisted but not incrementing and checking logs. */
-        verify(persistence).putLog(TEST_GROUP, log);
+        verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
         assertEquals(0, channel.getCounter(TEST_GROUP));
         verify(persistence, never()).countLogs(TEST_GROUP);
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -207,7 +208,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP);
 
         /* Verify persisted but not incrementing and checking logs. */
-        verify(persistence).putLog(TEST_GROUP, log);
+        verify(persistence).putLog(TEST_GROUP, log, Flags.PERSISTENCE_NORMAL);
         assertEquals(0, channel.getCounter(TEST_GROUP));
         verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
