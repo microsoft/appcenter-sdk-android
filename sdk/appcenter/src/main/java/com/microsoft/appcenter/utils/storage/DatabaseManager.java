@@ -238,7 +238,10 @@ public class DatabaseManager implements Closeable {
             AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
         }
         if (cursor != null) {
-            cursor.close();
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
         }
         return id;
     }
