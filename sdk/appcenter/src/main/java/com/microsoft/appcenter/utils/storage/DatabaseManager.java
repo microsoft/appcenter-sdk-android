@@ -209,34 +209,38 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
+        Long id = null;
+        Cursor cursor = null;
         try {
-            while (true) {
+            while (id == null) {
                 try {
 
                     /* Insert data. */
-                    return getDatabase().insertOrThrow(mTable, null, values);
+                    id = getDatabase().insertOrThrow(mTable, null, values);
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    String priority = values.getAsString(priorityColumn);
-                    SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
-                    queryBuilder.appendWhere(priorityColumn + " <= ?");
-                    Cursor cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn);
-                    try {
-                        if (cursor.moveToNext()) {
-                            delete(cursor.getLong(0));
-                        } else {
-                            return -1;
-                        }
-                    } finally {
-                        cursor.close();
+                    if (cursor == null) {
+                        String priority = values.getAsString(priorityColumn);
+                        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+                        queryBuilder.appendWhere(priorityColumn + " <= ?");
+                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn);
+                    }
+                    if (cursor.moveToNext()) {
+                        delete(cursor.getLong(0));
+                    } else {
+                        throw e;
                     }
                 }
             }
         } catch (RuntimeException e) {
+            id = -1L;
             AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
         }
-        return -1;
+        if (cursor != null) {
+            cursor.close();
+        }
+        return id;
     }
 
     /**
