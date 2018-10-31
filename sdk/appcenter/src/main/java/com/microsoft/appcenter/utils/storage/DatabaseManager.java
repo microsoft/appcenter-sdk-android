@@ -213,11 +213,10 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    Cursor cursor;
                     String priority = values.getAsString(priorityColumn);
-                    SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-                    builder.appendWhere(priorityColumn + " <= ?");
-                    cursor = getCursor(builder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
+                    SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+                    queryBuilder.appendWhere(priorityColumn + " <= ?");
+                    Cursor cursor = getCursor(queryBuilder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
                     try {
                         if (cursor.moveToNext()) {
                             delete(cursor.getLong(0));
