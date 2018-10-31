@@ -8,6 +8,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
@@ -20,6 +21,8 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_GROUP_NAME_SUFFIX;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_COUNT;
@@ -92,18 +95,18 @@ public class OneCollectorChannelListenerTest {
         when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("t1")));
 
         /* Mock a log. */
-        CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log1 = new MockCommonSchemaLog();
+        log1.setIKey("t1");
         Extensions ext1 = new Extensions();
         ext1.setSdk(new SdkExtension());
-        when(log1.getExt()).thenReturn(ext1);
-        when(log1.getIKey()).thenReturn("t1");
+        log1.setExt(ext1);
 
         /* Mock another log. */
-        CommonSchemaLog log2 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log2 = new MockCommonSchemaLog();
+        log2.setIKey("t1");
         Extensions ext2 = new Extensions();
         ext2.setSdk(new SdkExtension());
-        when(log2.getExt()).thenReturn(ext2);
-        when(log2.getIKey()).thenReturn("t1");
+        log2.setExt(ext2);
 
         /* Mock conversion of logs. */
         Channel channel = mock(Channel.class);
@@ -119,6 +122,10 @@ public class OneCollectorChannelListenerTest {
         /* Verify conversion. */
         verify(logSerializer).toCommonSchemaLog(originalLog);
         verifyNoMoreInteractions(logSerializer);
+
+        /* Verify flags. */
+        assertEquals(new Long(DEFAULT_FLAGS), log1.getFlags());
+        assertEquals(new Long(DEFAULT_FLAGS), log2.getFlags());
 
         /* Verify same epoch. */
         assertNotNull(log1.getExt().getSdk().getEpoch());
@@ -141,13 +148,14 @@ public class OneCollectorChannelListenerTest {
 
         /* Mock log with another key to see new seq/epoch. */
         when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("t2")));
-        CommonSchemaLog log3 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log3 = new MockCommonSchemaLog();
+        log3.setIKey("t2");
         Extensions ext3 = new Extensions();
         ext3.setSdk(new SdkExtension());
-        when(log3.getExt()).thenReturn(ext3);
-        when(log3.getIKey()).thenReturn("t2");
+        log3.setExt(ext3);
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log3));
-        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULT_FLAGS);
+        listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_CRITICAL);
+        assertEquals(new Long(PERSISTENCE_CRITICAL), log3.getFlags());
         assertEquals((Long) 1L, log3.getExt().getSdk().getSeq());
         assertNotNull(log3.getExt().getSdk().getEpoch());
         assertNotEquals(log1.getExt().getSdk().getEpoch(), log3.getExt().getSdk().getEpoch());
@@ -157,15 +165,16 @@ public class OneCollectorChannelListenerTest {
         listener.onGloballyEnabled(true);
 
         /* Mock a 4rd log in first group to check reset. */
-        CommonSchemaLog log4 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log4 = new MockCommonSchemaLog();
+        log4.setIKey("t2");
         Extensions ext4 = new Extensions();
         ext4.setSdk(new SdkExtension());
-        when(log4.getExt()).thenReturn(ext4);
-        when(log4.getIKey()).thenReturn("t2");
+        log4.setExt(ext4);
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log4));
-        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULT_FLAGS);
+        listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_NORMAL);
 
-        /* Verify reset of epoch/seq. */
+        /* Verify flags and reset of epoch/seq. */
+        assertEquals(new Long(PERSISTENCE_NORMAL), log4.getFlags());
         assertEquals((Long) 1L, log4.getExt().getSdk().getSeq());
         assertNotNull(log4.getExt().getSdk().getEpoch());
         assertNotEquals(log3.getExt().getSdk().getEpoch(), log4.getExt().getSdk().getEpoch());

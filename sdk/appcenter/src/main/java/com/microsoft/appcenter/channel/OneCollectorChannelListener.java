@@ -124,8 +124,13 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             return;
         }
 
-        /* Add SDK extension part A fields. libVer is already set. */
+        /* Add additional part A fields that are not known by the modules during conversion. */
         for (CommonSchemaLog commonSchemaLog : commonSchemaLogs) {
+
+            /* Add flags. */
+            commonSchemaLog.setFlags((long) flags);
+
+            /* Add SDK extension missing fields: installId, epoch and seq. libVer is already set. */
             EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
             if (epochAndSeq == null) {
                 epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString());
