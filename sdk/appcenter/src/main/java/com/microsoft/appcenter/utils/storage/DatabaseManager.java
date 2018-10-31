@@ -199,11 +199,11 @@ public class DatabaseManager implements Closeable {
      * the log is not inserted.
      *
      * @param values         The entry to be stored.
-     * @param priorityColumn When storage full and deleting data,use this order by clause to determine which entries to delete first.
+     * @param priorityColumn When storage full and deleting data, optionally use this order by clause to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
+    public long put(@NonNull ContentValues values, @Nullable String priorityColumn) {
         try {
             while (true) {
                 try {
@@ -213,14 +213,12 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    int priority = values.getAsInteger(priorityColumn);
-
-                    // TODO this boolean for id only is all or nothing which is not efficient, just expose projection directly instead of using a boolean (and make it first parameter, pass through).
-                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, priorityColumn, false);
+                    int priority = priorityColumn == null ? 0 : values.getAsInteger(priorityColumn);
+                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), new String[]{PRIMARY_KEY, priorityColumn}, null, priorityColumn);
                     try {
                         boolean deletedEntry = false;
                         while (cursor.moveToNext()) {
-                            int existingPriority = cursor.getInt(cursor.getColumnIndex(priorityColumn));
+                            int existingPriority = priorityColumn == null ? 0 : cursor.getInt(cursor.getColumnIndex(priorityColumn));
                             if (priority >= existingPriority) {
                                 delete(cursor.getLong(0));
                                 deletedEntry = true;
@@ -321,19 +319,18 @@ public class DatabaseManager implements Closeable {
      * Gets a cursor for all rows in the table, all rows where key matches value if specified.
      *
      * @param queryBuilder  The query builder that contains SQL query.
+     * @param columns       Columns to select, null for all.
      * @param selectionArgs The array of values for selection.
      * @param sortOrder     Sorting order (ORDER BY clause without ORDER BY itself).
-     * @param idOnly        Return only row identifier if true, return all fields otherwise.
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, @Nullable String sortOrder, boolean idOnly) throws RuntimeException {
+    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
         queryBuilder.setTables(mTable);
-        String[] projectionIn = idOnly ? new String[]{PRIMARY_KEY} : null;
-        return queryBuilder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, sortOrder);
+        return queryBuilder.query(getDatabase(), columns, null, selectionArgs, null, null, sortOrder);
     }
 
     /**

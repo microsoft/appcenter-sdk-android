@@ -160,7 +160,7 @@ public class AbstractAppCenterTest {
         /* Mock empty database. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), anyString(), anyBoolean()))
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString()))
                 .thenReturn(mock(Cursor.class));
 
         /* Mock network state helper. */

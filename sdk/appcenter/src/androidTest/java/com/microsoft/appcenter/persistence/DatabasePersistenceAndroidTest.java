@@ -102,7 +102,7 @@ public class DatabasePersistenceAndroidTest {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
         String[] selectionArgs = new String[]{group};
-        Cursor cursor = persistence.mDatabaseManager.getCursor(builder, selectionArgs, null, false);
+        Cursor cursor = persistence.mDatabaseManager.getCursor(builder, null, selectionArgs, null);
         ContentValues values = persistence.mDatabaseManager.nextValues(cursor);
         assertNotNull(values);
         return values;
@@ -670,9 +670,9 @@ public class DatabasePersistenceAndroidTest {
             builder.appendWhere(DatabasePersistence.COLUMN_GROUP + " = ?");
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            Cursor cursor1 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, null, false);
-            Cursor cursor2 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p2"}, null, false);
-            Cursor cursor3 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p3"}, null, false);
+            Cursor cursor1 = persistence.mDatabaseManager.getCursor(builder, null, new String[]{"test-p1"}, null);
+            Cursor cursor2 = persistence.mDatabaseManager.getCursor(builder, null, new String[]{"test-p2"}, null);
+            Cursor cursor3 = persistence.mDatabaseManager.getCursor(builder, null, new String[]{"test-p3"}, null);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
@@ -693,7 +693,7 @@ public class DatabasePersistenceAndroidTest {
             persistence.deleteLogs("test-p1", id);
 
             /* Access DatabaseStorage directly to verify the deletions. */
-            Cursor cursor4 = persistence.mDatabaseManager.getCursor(builder, new String[]{"test-p1"}, null, false);
+            Cursor cursor4 = persistence.mDatabaseManager.getCursor(builder, null, new String[]{"test-p1"}, null);
 
             //noinspection TryFinallyCanBeTryWithResources
             try {
