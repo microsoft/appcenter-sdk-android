@@ -198,11 +198,12 @@ public class DatabaseManager implements Closeable {
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
      *
-     * @param values The entry to be stored.
+     * @param values         The entry to be stored.
+     * @param priorityColumn When storage full and deleting data,use this order by clause to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long put(@NonNull ContentValues values) {
+    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
         try {
             while (true) {
                 try {
@@ -212,11 +213,21 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, true);
+                    int priority = values.getAsInteger(priorityColumn);
+
+                    // TODO this boolean for id only is all or nothing which is not efficient, just expose projection directly instead of using a boolean (and make it first parameter, pass through).
+                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, priorityColumn, false);
                     try {
-                        if (cursor.moveToNext()) {
-                            delete(cursor.getLong(0));
-                        } else {
+                        boolean deletedEntry = false;
+                        while (cursor.moveToNext()) {
+                            int existingPriority = cursor.getInt(cursor.getColumnIndex(priorityColumn));
+                            if (priority >= existingPriority) {
+                                delete(cursor.getLong(0));
+                                deletedEntry = true;
+                                break;
+                            }
+                        }
+                        if (!deletedEntry) {
                             return -1;
                         }
                     } finally {
@@ -311,17 +322,18 @@ public class DatabaseManager implements Closeable {
      *
      * @param queryBuilder  The query builder that contains SQL query.
      * @param selectionArgs The array of values for selection.
+     * @param sortOrder     Sorting order (ORDER BY clause without ORDER BY itself).
      * @param idOnly        Return only row identifier if true, return all fields otherwise.
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, boolean idOnly) throws RuntimeException {
+    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, @Nullable String sortOrder, boolean idOnly) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
         queryBuilder.setTables(mTable);
         String[] projectionIn = idOnly ? new String[]{PRIMARY_KEY} : null;
-        return queryBuilder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, PRIMARY_KEY);
+        return queryBuilder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, sortOrder);
     }
 
     /**

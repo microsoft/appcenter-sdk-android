@@ -82,7 +82,7 @@ public class DatabaseManagerAndroidTest {
             SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
             builder.appendWhere(DatabaseManager.PRIMARY_KEY + " = ?");
             String[] selectionArgs = new String[]{String.valueOf(id)};
-            Cursor cursor = databaseManager.getCursor(builder, selectionArgs, false);
+            Cursor cursor = databaseManager.getCursor(builder, selectionArgs, null, false);
             try {
                 return databaseManager.nextValues(cursor);
             } finally {
@@ -100,11 +100,11 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseManager.put(value1);
+        Long value1Id = databaseManager.put(value1, null);
         assertNotNull(value1Id);
 
         /* Put another. */
-        Long value2Id = databaseManager.put(value2);
+        Long value2Id = databaseManager.put(value2, null);
         assertNotNull(value2Id);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
@@ -119,12 +119,12 @@ public class DatabaseManagerAndroidTest {
         assertNull(nullValueFromDatabase);
 
         /* Count with scanner. */
-        Cursor cursor = databaseManager.getCursor(null, null, false);
+        Cursor cursor = databaseManager.getCursor(null, null, null, false);
         assertEquals(2, cursor.getCount());
         assertEquals(2, cursor.getCount());
         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING = ?");
-        Cursor cursor1 = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        Cursor cursor1 = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, null, false);
         assertEquals(1, cursor1.getCount());
         assertTrue(cursor1.moveToNext());
         assertContentValuesEquals(value1, databaseManager.buildValues(cursor1));
@@ -133,20 +133,20 @@ public class DatabaseManagerAndroidTest {
         /* Null value matching. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING IS NULL");
-        assertEquals(0, databaseManager.getCursor(queryBuilder, null, false).getCount());
+        assertEquals(0, databaseManager.getCursor(queryBuilder, null, null, false).getCount());
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING_NULL IS NULL");
-        assertEquals(2, databaseManager.getCursor(queryBuilder, null, false).getCount());
+        assertEquals(2, databaseManager.getCursor(queryBuilder, null, null, false).getCount());
 
         /* Test null value filter does not exclude anything, so returns the 2 logs. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
-        cursor = databaseManager.getCursor(queryBuilder, null, false);
+        cursor = databaseManager.getCursor(queryBuilder, null, null, false);
         assertEquals(2, cursor.getCount());
 
         /* Test filtering only with the second key parameter to get only the second log. */
         queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere("COL_STRING NOT IN (?)");
-        cursor = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, false);
+        cursor = databaseManager.getCursor(queryBuilder, new String[]{value1.getAsString("COL_STRING")}, null, false);
         assertEquals(1, cursor.getCount());
         assertTrue(cursor.moveToNext());
         assertContentValuesEquals(value2, databaseManager.buildValues(cursor));
@@ -155,13 +155,13 @@ public class DatabaseManagerAndroidTest {
         databaseManager.delete(value1Id);
         assertNull(get(databaseManager, value1Id));
         assertEquals(1, databaseManager.getRowCount());
-        assertEquals(1, databaseManager.getCursor(null, null, false).getCount());
+        assertEquals(1, databaseManager.getCursor(null, null, null, false).getCount());
 
         /* Put logs to delete multiple IDs. */
         ContentValues value4 = generateContentValues();
         ContentValues value5 = generateContentValues();
-        Long value4Id = databaseManager.put(value4);
-        Long value5Id = databaseManager.put(value5);
+        Long value4Id = databaseManager.put(value4, null);
+        Long value5Id = databaseManager.put(value5, null);
         assertNotNull(value4Id);
         assertNotNull(value5Id);
 
@@ -176,8 +176,8 @@ public class DatabaseManagerAndroidTest {
         ContentValues value7 = generateContentValues();
         value6.put("COL_STRING", value2.getAsString("COL_STRING"));
         value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        Long value6Id = databaseManager.put(value6);
-        Long value7Id = databaseManager.put(value7);
+        Long value6Id = databaseManager.put(value6, null);
+        Long value7Id = databaseManager.put(value7, null);
         assertNotNull(value6Id);
         assertNotNull(value7Id);
 
@@ -269,9 +269,9 @@ public class DatabaseManagerAndroidTest {
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
-            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, false);
+            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, null, false);
             assertEquals(2, cursor.getColumnCount());
-            long id = databaseManager.put(oldVersionValue);
+            long id = databaseManager.put(oldVersionValue, null);
 
             /* Put data. */
             ContentValues actual = get(databaseManager, id);
@@ -296,7 +296,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Verify data deleted since no handled upgrade. */
         try {
-            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, false);
+            Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, null, false);
             assertEquals(11, cursor.getColumnCount());
             assertEquals(0, databaseManager.getRowCount());
         } finally {
@@ -329,7 +329,7 @@ public class DatabaseManagerAndroidTest {
         /* Put data. */
         long id;
         try {
-            id = databaseManager.put(oldVersionValue);
+            id = databaseManager.put(oldVersionValue, null);
             ContentValues actual = get(databaseManager, id);
             assertNotNull(actual);
             actual.remove("oid");
@@ -366,7 +366,7 @@ public class DatabaseManagerAndroidTest {
             ContentValues data = new ContentValues();
             data.put("COL_STRING", "Hello World");
             data.put("COL_INT", 2);
-            id = databaseManager.put(data);
+            id = databaseManager.put(data, null);
             actual = get(databaseManager, id);
             assertNotNull(actual);
             actual.remove("oid");

@@ -173,7 +173,6 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    @SuppressWarnings("SameParameterValue")
     DatabasePersistence(Context context, int version, ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
@@ -250,7 +249,7 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
-            long databaseId = mDatabaseManager.put(contentValues);
+            long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
@@ -293,6 +292,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     private void deleteLog(File groupLargePayloadDirectory, long id) {
+
         //noinspection ResultOfMethodCallIgnored SQLite delete does not have return type either.
         getLargePayloadFile(groupLargePayloadDirectory, id).delete();
         mDatabaseManager.delete(id);
@@ -356,7 +356,7 @@ public class DatabasePersistence extends Persistence {
         builder.appendWhere(COLUMN_GROUP + " = ?");
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, null, true);
             try {
                 count = cursor.getCount();
             } finally {
@@ -399,7 +399,7 @@ public class DatabasePersistence extends Persistence {
         Cursor cursor = null;
         ContentValues values;
         try {
-            cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
+            cursor = mDatabaseManager.getCursor(builder, selectionArgs, null, false);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
@@ -534,7 +534,7 @@ public class DatabasePersistence extends Persistence {
     private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, null, true);
             try {
                 while (cursor.moveToNext()) {
                     ContentValues idValues = mDatabaseManager.buildValues(cursor);
