@@ -886,21 +886,33 @@ public class CrashesTest {
         when(throwableFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
 
-        Exception classNotFoundException = mock(ClassNotFoundException.class);
-        Exception ioException = mock(IOException.class);
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenThrow(classNotFoundException).thenThrow(ioException);
-
+        /* Mock exceptions. */
+        Throwable classNotFoundException = mock(ClassNotFoundException.class);
+        Throwable ioException = mock(IOException.class);
+        Throwable stackOverflowError = mock(StackOverflowError.class);
+        when(StorageHelper.InternalStorage.readObject(any(File.class)))
+                .thenThrow(classNotFoundException)
+                .thenThrow(ioException)
+                .thenThrow(stackOverflowError);
         Crashes crashes = Crashes.getInstance();
 
+        /* Test ClassNotFoundException. */
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
         assertNull(report);
-        report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
-
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
+
+        /* Test IOException. */
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+
+        /* Test StackOverflowError. */
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNull(report);
+        verifyStatic();
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(stackOverflowError));
     }
 
     @Test
