@@ -25,40 +25,40 @@ public class FlagsTest {
 
     @Test
     public void persistenceNone() {
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(0, false));
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(0, true));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(0, false));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(0, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
     @Test
     public void persistenceNormal() {
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(Flags.PERSISTENCE_NORMAL, false));
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(Flags.PERSISTENCE_NORMAL, true));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_NORMAL, false));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_NORMAL, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
     @Test
     public void persistenceCritical() {
-        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistencePriority(Flags.PERSISTENCE_CRITICAL, false));
-        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistencePriority(Flags.PERSISTENCE_CRITICAL, true));
+        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL, false));
+        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
     @Test
     public void persistenceDefaults() {
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(Flags.DEFAULT_FLAGS, false));
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(Flags.DEFAULT_FLAGS, true));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, false));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
     @Test
     public void persistenceCriticalPlusOtherFlag() {
-        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistencePriority(Flags.PERSISTENCE_CRITICAL | 0x0100, false));
-        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistencePriority(Flags.PERSISTENCE_CRITICAL | 0x0200, true));
+        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL | 0x0100, false));
+        assertEquals(Flags.PERSISTENCE_CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL | 0x0200, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }
@@ -67,12 +67,12 @@ public class FlagsTest {
     public void persistenceInvalidFlag() {
 
         /* Fallback without warning. */
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(0x09, false));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(0x09, false));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
 
         /* Fallback with warning. */
-        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistencePriority(0x09, true));
+        assertEquals(Flags.PERSISTENCE_NORMAL, Flags.getPersistenceFlag(0x09, true));
         verifyStatic();
         AppCenterLog.warn(anyString(), anyString());
     }

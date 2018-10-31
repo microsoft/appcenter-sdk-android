@@ -51,7 +51,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_PRIORITY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -138,7 +137,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority flag. */
             ContentValues contentValues = getContentValues(persistence, "test-p1");
-            assertEquals(persistedPriorityFlag, contentValues.getAsInteger(COLUMN_PRIORITY));
+            assertEquals(persistedPriorityFlag, contentValues.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -812,7 +811,7 @@ public class DatabasePersistenceAndroidTest {
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_TOKEN);
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        oldSchema.remove(COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -861,7 +860,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
             persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
@@ -893,7 +892,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -905,7 +904,7 @@ public class DatabasePersistenceAndroidTest {
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
-        oldSchema.remove(COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -955,7 +954,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
             persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
@@ -987,7 +986,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -998,7 +997,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(DatabasePersistence.SCHEMA);
-        oldSchema.remove(COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TARGET_KEY, oldSchema, new DatabaseManager.Listener() {
 
             @Override
@@ -1048,7 +1047,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
             persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_CRITICAL);
@@ -1080,7 +1079,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(COLUMN_PRIORITY));
+            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }

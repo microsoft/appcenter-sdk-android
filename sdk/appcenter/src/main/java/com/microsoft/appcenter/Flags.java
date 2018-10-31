@@ -32,11 +32,11 @@ public final class Flags {
     /**
      * Get persistence priority flag.
      *
-     * @param flags        all flags to extract persistence priority from.
-     * @param warnFallback if true and falling back from an invalid value: print a warning.
-     * @return persistence priority flag.
+     * @param flags        All flags to extract persistence priority from.
+     * @param warnFallback If true and falling back from an invalid value: print a warning.
+     * @return persistence Priority flag for persistence.
      */
-    public static int getPersistencePriority(int flags, boolean warnFallback) {
+    public static int getPersistenceFlag(int flags, boolean warnFallback) {
         int persistencePriority = flags & PERSISTENCE_MASK;
         if (persistencePriority != PERSISTENCE_NORMAL && persistencePriority != PERSISTENCE_CRITICAL) {
             if (persistencePriority != 0 && warnFallback) {

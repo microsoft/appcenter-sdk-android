@@ -249,7 +249,7 @@ public class DatabasePersistence extends Persistence {
                 targetKey = null;
                 targetToken = null;
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistencePriority(flags, false));
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
             long databaseId = mDatabaseManager.put(contentValues);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
