@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
@@ -357,9 +358,10 @@ public class DatabasePersistence extends Persistence {
         builder.appendWhere(COLUMN_GROUP + " = ?");
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{PRIMARY_KEY}, new String[]{group}, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
             try {
-                count = cursor.getCount();
+                cursor.moveToNext();
+                count = cursor.getInt(0);
             } finally {
                 cursor.close();
             }
@@ -535,7 +537,7 @@ public class DatabasePersistence extends Persistence {
     private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{PRIMARY_KEY}, selectionArgs, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
                 while (cursor.moveToNext()) {
                     ContentValues idValues = mDatabaseManager.buildValues(cursor);

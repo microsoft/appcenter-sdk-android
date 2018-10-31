@@ -35,6 +35,11 @@ public class DatabaseManager implements Closeable {
     public static final String PRIMARY_KEY = "oid";
 
     /**
+     * Primary key selection for {@link #getCursor(SQLiteQueryBuilder, String[], String[], String)}.
+     */
+    public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
+
+    /**
      * Allowed multiple for maximum sizes.
      */
     @VisibleForTesting
@@ -216,7 +221,7 @@ public class DatabaseManager implements Closeable {
                     String priority = values.getAsString(priorityColumn);
                     SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
                     queryBuilder.appendWhere(priorityColumn + " <= ?");
-                    Cursor cursor = getCursor(queryBuilder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
+                    Cursor cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn);
                     try {
                         if (cursor.moveToNext()) {
                             delete(cursor.getLong(0));
