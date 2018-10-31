@@ -90,7 +90,7 @@ public class DatabasePersistenceTest {
         DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
         Cursor mockCursor = mock(Cursor.class);
-        when(mockCursor.getCount()).thenThrow(new RuntimeException());
+        when(mockCursor.moveToNext()).thenThrow(new RuntimeException());
         when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
 
