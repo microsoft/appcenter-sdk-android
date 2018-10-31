@@ -53,7 +53,7 @@ public class DatabaseManagerTest {
         mockStatic(AppCenterLog.class);
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.put(new ContentValues(), null);
+        databaseManagerMock.put(new ContentValues(), "priority");
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -172,6 +172,6 @@ public class DatabaseManagerTest {
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it will fail to purge. */
-        assertEquals(-1, databaseManager.put(mock(ContentValues.class), null));
+        assertEquals(-1, databaseManager.put(mock(ContentValues.class), "priority"));
     }
 }

@@ -100,11 +100,11 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseManager.put(value1, null);
+        Long value1Id = databaseManager.put(value1, "COL_INTEGER");
         assertNotNull(value1Id);
 
         /* Put another. */
-        Long value2Id = databaseManager.put(value2, null);
+        Long value2Id = databaseManager.put(value2, "COL_INTEGER");
         assertNotNull(value2Id);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
@@ -160,8 +160,8 @@ public class DatabaseManagerAndroidTest {
         /* Put logs to delete multiple IDs. */
         ContentValues value4 = generateContentValues();
         ContentValues value5 = generateContentValues();
-        Long value4Id = databaseManager.put(value4, null);
-        Long value5Id = databaseManager.put(value5, null);
+        Long value4Id = databaseManager.put(value4, "COL_INTEGER");
+        Long value5Id = databaseManager.put(value5, "COL_INTEGER");
         assertNotNull(value4Id);
         assertNotNull(value5Id);
 
@@ -176,8 +176,8 @@ public class DatabaseManagerAndroidTest {
         ContentValues value7 = generateContentValues();
         value6.put("COL_STRING", value2.getAsString("COL_STRING"));
         value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        Long value6Id = databaseManager.put(value6, null);
-        Long value7Id = databaseManager.put(value7, null);
+        Long value6Id = databaseManager.put(value6, "COL_INTEGER");
+        Long value7Id = databaseManager.put(value7, "COL_INTEGER");
         assertNotNull(value6Id);
         assertNotNull(value7Id);
 
@@ -271,7 +271,7 @@ public class DatabaseManagerAndroidTest {
             /* Database will always create a column for identifiers so default length of all tables is 1. */
             Cursor cursor = databaseManager.getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, null, null);
             assertEquals(2, cursor.getColumnCount());
-            long id = databaseManager.put(oldVersionValue, null);
+            long id = databaseManager.put(oldVersionValue, "COL_INTEGER");
 
             /* Put data. */
             ContentValues actual = get(databaseManager, id);
@@ -329,7 +329,7 @@ public class DatabaseManagerAndroidTest {
         /* Put data. */
         long id;
         try {
-            id = databaseManager.put(oldVersionValue, null);
+            id = databaseManager.put(oldVersionValue, "COL_INTEGER");
             ContentValues actual = get(databaseManager, id);
             assertNotNull(actual);
             actual.remove("oid");
@@ -366,7 +366,7 @@ public class DatabaseManagerAndroidTest {
             ContentValues data = new ContentValues();
             data.put("COL_STRING", "Hello World");
             data.put("COL_INT", 2);
-            id = databaseManager.put(data, null);
+            id = databaseManager.put(data, "COL_INTEGER");
             actual = get(databaseManager, id);
             assertNotNull(actual);
             actual.remove("oid");

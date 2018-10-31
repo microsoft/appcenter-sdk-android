@@ -199,11 +199,11 @@ public class DatabaseManager implements Closeable {
      * the log is not inserted.
      *
      * @param values         The entry to be stored.
-     * @param priorityColumn When storage full and deleting data, optionally use this order by clause to determine which entries to delete first.
+     * @param priorityColumn When storage full and deleting data, use this column to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long put(@NonNull ContentValues values, @Nullable String priorityColumn) {
+    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
         try {
             while (true) {
                 try {
@@ -214,14 +214,10 @@ public class DatabaseManager implements Closeable {
 
                     /* Delete the oldest log. */
                     Cursor cursor;
-                    if (priorityColumn == null) {
-                        cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), new String[]{PRIMARY_KEY}, null, null);
-                    } else {
-                        String priority = values.getAsString(priorityColumn);
-                        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-                        builder.appendWhere(priorityColumn + " <= ?");
-                        cursor = getCursor(builder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
-                    }
+                    String priority = values.getAsString(priorityColumn);
+                    SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+                    builder.appendWhere(priorityColumn + " <= ?");
+                    cursor = getCursor(builder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
                     try {
                         if (cursor.moveToNext()) {
                             delete(cursor.getLong(0));
