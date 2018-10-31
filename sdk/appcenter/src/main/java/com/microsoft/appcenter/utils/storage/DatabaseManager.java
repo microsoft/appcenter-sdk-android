@@ -213,19 +213,19 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    int priority = priorityColumn == null ? 0 : values.getAsInteger(priorityColumn);
-                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), new String[]{PRIMARY_KEY, priorityColumn}, null, priorityColumn);
+                    Cursor cursor;
+                    if (priorityColumn == null) {
+                        cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), new String[]{PRIMARY_KEY}, null, null);
+                    } else {
+                        String priority = values.getAsString(priorityColumn);
+                        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+                        builder.appendWhere(priorityColumn + " <= ?");
+                        cursor = getCursor(builder, new String[]{PRIMARY_KEY, priorityColumn}, new String[]{priority}, priorityColumn);
+                    }
                     try {
-                        boolean deletedEntry = false;
-                        while (cursor.moveToNext()) {
-                            int existingPriority = priorityColumn == null ? 0 : cursor.getInt(cursor.getColumnIndex(priorityColumn));
-                            if (priority >= existingPriority) {
-                                delete(cursor.getLong(0));
-                                deletedEntry = true;
-                                break;
-                            }
-                        }
-                        if (!deletedEntry) {
+                        if (cursor.moveToNext()) {
+                            delete(cursor.getLong(0));
+                        } else {
                             return -1;
                         }
                     } finally {
