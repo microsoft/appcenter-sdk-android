@@ -66,7 +66,7 @@ public class DatabasePersistenceTest {
 
             /* Generate a log and persist. */
             Log log = mock(Log.class);
-            mockPersistence.putLog("test-p1", log, Flags.PERSISTENCE_NORMAL);
+            mockPersistence.putLog(log, "test-p1", Flags.PERSISTENCE_NORMAL);
             fail("Expected persistence exception");
         } catch (Persistence.PersistenceException ignore) {
         } finally {

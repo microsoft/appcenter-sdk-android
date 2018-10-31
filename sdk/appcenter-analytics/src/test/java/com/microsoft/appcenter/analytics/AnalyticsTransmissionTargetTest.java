@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,9 +37,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -140,9 +143,9 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     }
                     return false;
                 }
-            }), anyString());
+            }), anyString(), eq(DEFAULT_FLAGS));
         } else {
-            verify(mChannel, never()).enqueue(isA(EventLog.class), anyString());
+            verify(mChannel, never()).enqueue(isA(EventLog.class), anyString(), anyInt());
         }
         reset(mChannel);
 
@@ -161,7 +164,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
         reset(mChannel);
 
         /* Track event via another transmission target method with properties. */
@@ -186,7 +189,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
         reset(mChannel);
 
         /* Create a child transmission target and track event. */
@@ -205,7 +208,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
         reset(mChannel);
 
         /* Another child transmission target with the same token should be the same instance. */
@@ -229,7 +232,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
 
         /* Set enabled to false and assert that it cannot track event. */
         transmissionTarget.setEnabledAsync(false).get();
@@ -245,7 +248,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), anyInt());
     }
 
     @Test
@@ -270,7 +273,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), anyInt());
 
         /* Set enabled to true on parent. Verify that child can track event. */
         parentTransmissionTarget.setEnabledAsync(true);
@@ -285,7 +288,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULT_FLAGS));
     }
 
     @Test
@@ -300,7 +303,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         childTransmissionTarget.setEnabledAsync(true);
         assertFalse(childTransmissionTarget.isEnabledAsync().get());
         childTransmissionTarget.trackEvent("eventName");
-        verify(mChannel, never()).enqueue(any(Log.class), anyString());
+        verify(mChannel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -454,7 +457,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
                 return null;
             }
-        }).when(mChannel).enqueue(any(Log.class), anyString());
+        }).when(mChannel).enqueue(any(Log.class), anyString(), anyInt());
 
         /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
         Analytics analytics = Analytics.getInstance();

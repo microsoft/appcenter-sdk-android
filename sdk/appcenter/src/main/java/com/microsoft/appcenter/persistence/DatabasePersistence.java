@@ -228,7 +228,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public long putLog(@NonNull String group, @NonNull Log log, @IntRange(from = Flags.PERSISTENCE_NORMAL, to = Flags.PERSISTENCE_CRITICAL) int priority) throws PersistenceException {
+    public long putLog(@NonNull Log log, @NonNull String group, @IntRange(from = Flags.PERSISTENCE_NORMAL, to = Flags.PERSISTENCE_CRITICAL) int flags) throws PersistenceException {
 
         /* Convert log to JSON string and put in the database. */
         try {
@@ -249,7 +249,7 @@ public class DatabasePersistence extends Persistence {
                 targetKey = null;
                 targetToken = null;
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
             long databaseId = mDatabaseManager.put(contentValues);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");

@@ -7,7 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.CancellationException;
-import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -601,17 +600,11 @@ public class DefaultChannel implements Channel {
         }
     }
 
-    /**
-     * Actual implementation of enqueue logic. Will increase counters, triggers of batching logic.
-     *
-     * @param log       the Log to be enqueued
-     * @param groupName the queue to use
-     */
     @Override
-    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName) {
+    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
 
         /* Check group name is registered. */
-        final GroupState groupState = mGroupStates.get(groupName);
+        GroupState groupState = mGroupStates.get(groupName);
         if (groupState == null) {
             AppCenterLog.error(LOG_TAG, "Invalid group name:" + groupName);
             return;
@@ -656,7 +649,7 @@ public class DefaultChannel implements Channel {
 
         /* Notify listeners that log is prepared and is in a final state. */
         for (Listener listener : mListeners) {
-            listener.onPreparedLog(log, groupName);
+            listener.onPreparedLog(log, groupName, flags);
         }
 
         /* Call listeners so that they can filter the log. */
@@ -678,8 +671,7 @@ public class DefaultChannel implements Channel {
             try {
 
                 /* Persist log. */
-                // TODO introduce parameter for flags and extract persistence from mask.
-                mPersistence.putLog(groupName, log, Flags.PERSISTENCE_NORMAL);
+                mPersistence.putLog(log, groupName, flags);
 
                 /* Nothing more to do if the log is from a paused transmission target. */
                 Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();

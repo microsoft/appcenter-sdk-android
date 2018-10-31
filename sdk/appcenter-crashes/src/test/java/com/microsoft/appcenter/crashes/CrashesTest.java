@@ -66,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
@@ -80,6 +82,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -281,7 +284,7 @@ public class CrashesTest {
         assertTrue(Crashes.isEnabled().get());
         verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
-        verify(mockChannel, times(1)).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
     }
 
     @Test
@@ -344,8 +347,8 @@ public class CrashesTest {
             public boolean matches(Object log) {
                 return log.equals(mErrorLog);
             }
-        }), eq(crashes.getGroupName()));
-        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName());
+        }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
+        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName(), DEFAULT_FLAGS);
     }
 
     @Test
@@ -379,7 +382,7 @@ public class CrashesTest {
         verify(mockListener, never()).shouldAwaitUserConfirmation();
 
         verify(mockListener, never()).getErrorAttachments(report);
-        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
     }
 
     @Test
@@ -433,9 +436,9 @@ public class CrashesTest {
             public boolean matches(Object log) {
                 return log.equals(mErrorLog);
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
 
-        verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName());
+        verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName(), DEFAULT_FLAGS);
     }
 
     @Test
@@ -458,7 +461,7 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), channel, "", null, true);
         verifyZeroInteractions(listener);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -470,7 +473,7 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -490,7 +493,7 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, mockChannel, "", null, true);
 
-        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -512,7 +515,7 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mockContext, mockChannel, "", null, true);
 
-        verify(mockChannel, never()).enqueue(any(Log.class), anyString());
+        verify(mockChannel, never()).enqueue(any(Log.class), anyString(), anyInt());
 
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
@@ -544,7 +547,7 @@ public class CrashesTest {
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             put(null, null);
@@ -559,7 +562,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 0;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
@@ -573,7 +576,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 20;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
@@ -595,7 +598,7 @@ public class CrashesTest {
                 }
                 return false;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
 
         HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -634,7 +637,7 @@ public class CrashesTest {
         Channel mockChannel = mock(Channel.class);
 
         WrapperSdkExceptionManager.trackException(exception);
-        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
         WrapperSdkExceptionManager.trackException(exception);
@@ -644,7 +647,7 @@ public class CrashesTest {
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(null, null);
@@ -659,7 +662,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
                         && ((HandledErrorLog) item).getProperties().size() == 0;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
@@ -673,7 +676,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
                         && ((HandledErrorLog) item).getProperties().size() == 20;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
         reset(mockChannel);
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
@@ -695,7 +698,7 @@ public class CrashesTest {
                 }
                 return false;
             }
-        }), eq(crashes.getGroupName()));
+        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
     }
 
     @Test
@@ -1207,7 +1210,7 @@ public class CrashesTest {
         crashes.onStarted(mockContext, mockChannel, "", null, true);
 
         /* No log queued. */
-        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
 
         /* Get crash reports. */
         Collection<ErrorReport> reports = WrapperSdkExceptionManager.getUnprocessedErrorReports().get();
@@ -1227,7 +1230,7 @@ public class CrashesTest {
         verifyZeroInteractions(listener);
 
         /* No log sent until manual user confirmation in that mode (we are not in always send). */
-        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
 
         /* Confirm with always send. */
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
@@ -1236,7 +1239,7 @@ public class CrashesTest {
         when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         /* 1 log sent. Other one is filtered. */
-        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
 
         /* We can send attachments via wrapper instead of using listener (both work but irrelevant to test with listener). */
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
@@ -1244,7 +1247,7 @@ public class CrashesTest {
         when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
         WrapperSdkExceptionManager.sendErrorAttachments(report1.getId(), Collections.singletonList(mockAttachment));
-        verify(mockChannel).enqueue(eq(mockAttachment), eq(crashes.getGroupName()));
+        verify(mockChannel).enqueue(eq(mockAttachment), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
 
         /* Send attachment with invalid UUID format for report identifier. */
         mockAttachment = mock(ErrorAttachmentLog.class);
@@ -1252,7 +1255,7 @@ public class CrashesTest {
         when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
         WrapperSdkExceptionManager.sendErrorAttachments("not-a-uuid", Collections.singletonList(mockAttachment));
-        verify(mockChannel, never()).enqueue(eq(mockAttachment), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(eq(mockAttachment), eq(crashes.getGroupName()), anyInt());
 
         /* We used manual process function, listener not called and our mock channel does not send events. */
         verifyZeroInteractions(listener);
@@ -1267,11 +1270,11 @@ public class CrashesTest {
         mockChannel = mock(Channel.class);
         crashes.onStarted(mockContext, mockChannel, "", null, true);
         assertTrue(Crashes.isEnabled().get());
-        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
 
         /* Get crash reports, check always sent was returned and sent without confirmation. */
         assertTrue(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report2.getId())).get());
-        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
     }
 
     @Test
@@ -1311,7 +1314,7 @@ public class CrashesTest {
         crashes.onStarted(mockContext, mockChannel, "", null, true);
 
         /* No log queued. */
-        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
 
         /* Get crash reports. */
         Collection<ErrorReport> reports = WrapperSdkExceptionManager.getUnprocessedErrorReports().get();
@@ -1325,7 +1328,7 @@ public class CrashesTest {
         assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(null).get());
 
         /* No log sent. */
-        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()));
+        verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
     }
 
     private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession) throws Exception {

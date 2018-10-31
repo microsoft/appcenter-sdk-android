@@ -3,6 +3,7 @@ package com.microsoft.appcenter.analytics.channel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
@@ -134,7 +135,7 @@ public class SessionTracker extends AbstractChannelListener {
             /* Enqueue a start session log. */
             StartSessionLog startSessionLog = new StartSessionLog();
             startSessionLog.setSid(mSid);
-            mChannel.enqueue(startSessionLog, mGroupName);
+            mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULT_FLAGS);
         }
     }
 
