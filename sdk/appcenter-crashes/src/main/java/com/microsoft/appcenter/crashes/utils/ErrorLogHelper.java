@@ -66,7 +66,7 @@ public class ErrorLogHelper {
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
      */
     @VisibleForTesting
-    static final int FRAME_LIMIT = 256;
+    public static final int FRAME_LIMIT = 256;
 
     /**
      * We keep the first half of the limit of frames from the beginning and the second half from end.
@@ -77,7 +77,7 @@ public class ErrorLogHelper {
      * For huge exception cause chains, we keep only beginning and end of causes according to this limit.
      */
     @VisibleForTesting
-    static final int CAUSE_LIMIT = 16;
+    public static final int CAUSE_LIMIT = 16;
 
     /**
      * We keep the first half of the limit of causes from the beginning and the second half from end.
@@ -320,6 +320,7 @@ public class ErrorLogHelper {
             causeChain.add(cause);
         }
         if (causeChain.size() > CAUSE_LIMIT) {
+            AppCenterLog.warn(Crashes.LOG_TAG, "Crash causes truncated from " + causeChain.size() + " to " + CAUSE_LIMIT + " causes.");
             causeChain.subList(CAUSE_LIMIT_HALF, causeChain.size() - CAUSE_LIMIT_HALF).clear();
         }
         for (Throwable cause: causeChain) {

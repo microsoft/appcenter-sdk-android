@@ -31,6 +31,7 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -158,6 +159,9 @@ public class CrashesAndroidTest {
         startFresh(null);
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
+        Throwable lastThrowable = errorReport.getThrowable();
+        assertTrue(lastThrowable instanceof StackOverflowError);
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
         assertTrue(Crashes.hasCrashedInLastSession().get());
     }
 
@@ -240,7 +244,7 @@ public class CrashesAndroidTest {
         });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         startFresh(crashesListener);
-        final Error exception = generateStackOverflowError();
+        final RuntimeException exception = generateHugeException(300, 100);
         assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
         final Thread thread = new Thread() {
 
@@ -267,7 +271,7 @@ public class CrashesAndroidTest {
             public void accept(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 Throwable lastThrowable = errorReport.getThrowable();
-                assertTrue(lastThrowable instanceof StackOverflowError);
+                assertTrue(lastThrowable instanceof RuntimeException);
                 assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
             }
         });
@@ -358,6 +362,12 @@ public class CrashesAndroidTest {
         assertNotNull(errorLog.getException());
         assertNotNull(errorLog.getException().getFrames());
         assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
+        int causesCount = 0;
+        com.microsoft.appcenter.crashes.ingestion.models.Exception e = errorLog.getException();
+        while (e.getInnerExceptions() != null && (e = e.getInnerExceptions().get(0)) != null) {
+            causesCount++;
+        }
+        assertEquals(ErrorLogHelper.CAUSE_LIMIT, causesCount + 1);
     }
 
     @Test
@@ -493,11 +503,24 @@ public class CrashesAndroidTest {
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
     }
 
-    private Error generateStackOverflowError() {
+    private static Error generateStackOverflowError() {
         try {
             return generateStackOverflowError();
         } catch (StackOverflowError error) {
             return error;
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static RuntimeException generateHugeException(int stacktraceIncrease, int causes) {
+        if (stacktraceIncrease <= 0) {
+            Exception e = new Exception();
+            for (int i = 0; i < causes; i++) {
+                e = new Exception(String.format(Locale.ROOT, "%d", i), e);
+            }
+            return new RuntimeException(e);
+        } else {
+            return generateHugeException(stacktraceIncrease - 1, causes);
         }
     }
 }
