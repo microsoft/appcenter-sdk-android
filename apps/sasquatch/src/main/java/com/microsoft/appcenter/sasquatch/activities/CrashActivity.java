@@ -64,7 +64,7 @@ public class CrashActivity extends AppCompatActivity {
                     run();
                 }
             }),
-            new Crash(R.string.title_deep_cause_exception_crash, R.string.description_deep_cause_exception_crash, new Runnable() {
+            new Crash(R.string.title_deeply_nested_exception_crash, R.string.description_deeply_nested_exception_crash, new Runnable() {
 
                 @Override
                 public void run() {
