@@ -31,10 +31,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
@@ -114,6 +114,11 @@ public class DatabasePersistence extends Persistence {
      * Current version of the schema.
      */
     private static final int VERSION = 4;
+
+    /**
+     * Order by clause to select logs.
+     */
+    private static final String GET_SORT_ORDER = COLUMN_PRIORITY + " DESC";
 
     /**
      * Size limit (in bytes) for a database row log payload.
@@ -396,13 +401,13 @@ public class DatabasePersistence extends Persistence {
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
         int count = 0;
-        Map<Long, Log> candidates = new TreeMap<>();
+        Map<Long, Log> candidates = new LinkedHashMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
         Cursor cursor = null;
         ContentValues values;
         try {
-            cursor = mDatabaseManager.getCursor(builder, null, selectionArgs, null);
+            cursor = mDatabaseManager.getCursor(builder, null, selectionArgs, GET_SORT_ORDER);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
@@ -499,7 +504,6 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Returning " + candidates.size() + " log(s) with an ID, " + id);
         AppCenterLog.debug(LOG_TAG, "The SID/ID pairs for returning log(s) is/are:");
-
         List<Long> pendingDbIdentifiersGroup = new ArrayList<>();
         for (Map.Entry<Long, Log> entry : candidates.entrySet()) {
             Long dbIdentifier = entry.getKey();
