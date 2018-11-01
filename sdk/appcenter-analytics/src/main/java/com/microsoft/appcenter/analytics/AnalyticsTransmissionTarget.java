@@ -6,6 +6,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -153,7 +154,7 @@ public class AnalyticsTransmissionTarget {
      * @param name An event name.
      */
     public void trackEvent(String name) {
-        trackEvent(name, (EventProperties) null);
+        trackEvent(name, null, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -178,7 +179,7 @@ public class AnalyticsTransmissionTarget {
                 eventProperties.set(entry.getKey(), entry.getValue());
             }
         }
-        trackEvent(name, eventProperties);
+        trackEvent(name, eventProperties, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -197,6 +198,27 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, EventProperties properties) {
+        trackEvent(name, properties, Flags.DEFAULT_FLAGS);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>Double values must be finite (NaN or Infinite values are discarded).</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Use {@link Flags#PERSISTENCE_CRITICAL} to send this event
+     *                   before events using that use default flags or {@link Flags#PERSISTENCE_NORMAL}.
+     */
+    public void trackEvent(String name, EventProperties properties, int flags) {
 
         /* Merge common properties. More specific target wins conflicts. */
         EventProperties mergedProperties = new EventProperties();
@@ -218,7 +240,7 @@ public class AnalyticsTransmissionTarget {
         }
 
         /* Track event with merged properties. */
-        Analytics.trackEvent(name, mergedProperties, this);
+        Analytics.trackEvent(name, mergedProperties, this, flags);
     }
 
     /**
