@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -65,18 +66,29 @@ public class ErrorLogHelper {
      * For huge stack traces such as giant StackOverflowError, we keep only beginning and end of frames according to this limit.
      */
     @VisibleForTesting
-    public static final int FRAME_LIMIT = 256;
+    static final int FRAME_LIMIT = 256;
+
+    /**
+     * We keep the first half of the limit of frames from the beginning and the second half from end.
+     */
+    private static final int FRAME_LIMIT_HALF = FRAME_LIMIT / 2;
+
+    /**
+     * For huge exception cause chains, we keep only beginning and end of causes according to this limit.
+     */
+    @VisibleForTesting
+    static final int CAUSE_LIMIT = 16;
+
+    /**
+     * We keep the first half of the limit of causes from the beginning and the second half from end.
+     */
+    private static final int CAUSE_LIMIT_HALF = CAUSE_LIMIT / 2;
 
     /**
      * Error log directory within application files.
      */
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
-
-    /**
-     * We keep the first half of the limit of frames from the beginning and the second half from end.
-     */
-    private static final int FRAME_LIMIT_HALF = FRAME_LIMIT / 2;
 
     /**
      * Root directory for error log and throwable files.
@@ -303,7 +315,14 @@ public class ErrorLogHelper {
     public static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
         Exception topException = null;
         Exception parentException = null;
+        List<Throwable> causeChain = new LinkedList<>();
         for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            causeChain.add(cause);
+        }
+        if (causeChain.size() > CAUSE_LIMIT) {
+            causeChain.subList(CAUSE_LIMIT_HALF, causeChain.size() - CAUSE_LIMIT_HALF).clear();
+        }
+        for (Throwable cause: causeChain) {
             Exception exception = new Exception();
             exception.setType(cause.getClass().getName());
             exception.setMessage(cause.getMessage());
@@ -315,6 +334,8 @@ public class ErrorLogHelper {
             }
             parentException = exception;
         }
+
+        //noinspection ConstantConditions
         return topException;
     }
 
