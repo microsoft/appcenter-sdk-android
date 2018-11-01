@@ -513,14 +513,17 @@ public class CrashesAndroidTest {
 
     @SuppressWarnings("SameParameterValue")
     private static RuntimeException generateHugeException(int stacktraceIncrease, int causes) {
-        if (stacktraceIncrease <= 0) {
-            Exception e = new Exception();
-            for (int i = 0; i < causes; i++) {
-                e = new Exception(String.format(Locale.ROOT, "%d", i), e);
+
+        if (stacktraceIncrease > 0) {
+            try {
+                return generateHugeException(stacktraceIncrease - 1, causes);
+            } catch (StackOverflowError ignore) {
             }
-            return new RuntimeException(e);
-        } else {
-            return generateHugeException(stacktraceIncrease - 1, causes);
         }
+        Exception e = new Exception();
+        for (int i = 0; i < causes; i++) {
+            e = new Exception(String.format(Locale.ROOT, "%d", i), e);
+        }
+        return new RuntimeException(e);
     }
 }
