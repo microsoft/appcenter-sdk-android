@@ -885,6 +885,7 @@ public class CrashesTest {
         File throwableFile = mock(File.class);
         when(throwableFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(mock(ErrorReport.class));
 
         /* Mock exceptions. */
         Throwable classNotFoundException = mock(ClassNotFoundException.class);
@@ -898,19 +899,21 @@ public class CrashesTest {
 
         /* Test ClassNotFoundException. */
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
+        assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
 
         /* Test IOException. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
+        assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         /* Test StackOverflowError. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
+        assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(stackOverflowError));
     }

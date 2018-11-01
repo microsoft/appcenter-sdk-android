@@ -744,19 +744,17 @@ public class Crashes extends AbstractAppCenterService {
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
-                try {
-                    Throwable throwable = null;
-                    if (file.length() > 0) {
+                Throwable throwable = null;
+                if (file.length() > 0) {
+                    try {
                         throwable = StorageHelper.InternalStorage.readObject(file);
+                    } catch (IOException | ClassNotFoundException | StackOverflowError e) {
+                        AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
                     }
-                    ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
-                    mErrorReportCache.put(id, new ErrorLogReport(log, report));
-                    return report;
-                } catch (ClassNotFoundException | StackOverflowError e) {
-                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
-                } catch (IOException e) {
-                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), e);
                 }
+                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
+                mErrorReportCache.put(id, new ErrorLogReport(log, report));
+                return report;
             }
         }
         return null;
