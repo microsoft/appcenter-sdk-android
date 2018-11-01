@@ -229,9 +229,7 @@ public class CrashesAndroidTest {
         File invalidFile1 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         File invalidFile2 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         assertTrue(invalidFile1.createNewFile());
-        FileWriter fw = new FileWriter(invalidFile2);
-        fw.write("{{{");
-        fw.close();
+        new FileWriter(invalidFile2).append("fake_data").close();
         assertEquals(2, ErrorLogHelper.getStoredErrorLogFiles().length);
 
         /* Invalid files should be cleared. */

@@ -617,6 +617,13 @@ public class Crashes extends AbstractAppCenterService {
 
             /* Check last session crash. */
             File logFile = ErrorLogHelper.getLastErrorLogFile();
+            while (logFile != null && logFile.length() == 0) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+
+                //noinspection ResultOfMethodCallIgnored
+                logFile.delete();
+                logFile = ErrorLogHelper.getLastErrorLogFile();
+            }
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
@@ -637,13 +644,6 @@ public class Crashes extends AbstractAppCenterService {
 
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-            if (logFile.length() == 0) {
-                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
-
-                //noinspection ResultOfMethodCallIgnored
-                logFile.delete();
-                continue;
-            }
             AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             if (logfileContents != null) {
