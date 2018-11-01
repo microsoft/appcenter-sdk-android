@@ -16,6 +16,7 @@ import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.StorageHelper;
 
@@ -30,8 +31,8 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileWriter;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -221,6 +222,22 @@ public class CrashesAndroidTest {
         } finally {
             assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().mkdir());
         }
+    }
+
+    @Test
+    public void clearInvalidFiles() throws Exception {
+        File invalidFile1 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        File invalidFile2 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        assertTrue(invalidFile1.createNewFile());
+        FileWriter fw = new FileWriter(invalidFile2);
+        fw.write("{{{");
+        fw.close();
+        assertEquals(2, ErrorLogHelper.getStoredErrorLogFiles().length);
+
+        /* Invalid files should be cleared. */
+        startFresh(null);
+        assertTrue(Crashes.isEnabled().get());
+        assertEquals(0, ErrorLogHelper.getStoredErrorLogFiles().length);
     }
 
     @Test
@@ -522,7 +539,7 @@ public class CrashesAndroidTest {
         }
         Exception e = new Exception();
         for (int i = 0; i < causes; i++) {
-            e = new Exception(String.format(Locale.ROOT, "%d", i), e);
+            e = new Exception(Integer.valueOf(i).toString(), e);
         }
         return new RuntimeException(e);
     }

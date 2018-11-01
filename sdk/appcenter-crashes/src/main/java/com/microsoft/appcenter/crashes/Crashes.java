@@ -637,6 +637,13 @@ public class Crashes extends AbstractAppCenterService {
 
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
+            if (logFile.length() == 0) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+
+                //noinspection ResultOfMethodCallIgnored
+                logFile.delete();
+                continue;
+            }
             AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
             String logfileContents = StorageHelper.InternalStorage.read(logFile);
             if (logfileContents != null) {
@@ -656,7 +663,10 @@ public class Crashes extends AbstractAppCenterService {
                         removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
-                    AppCenterLog.error(LOG_TAG, "Error parsing error log", e);
+                    AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
+
+                    //noinspection ResultOfMethodCallIgnored
+                    logFile.delete();
                 }
             }
         }
