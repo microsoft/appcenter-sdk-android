@@ -397,7 +397,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putTooManyLogsCritical() throws PersistenceException {
+    public void putTooManyLogsMixedPriorities() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -409,9 +409,9 @@ public class DatabasePersistenceAndroidTest {
         persistence.setLogSerializer(logSerializer);
         try {
 
-            /* Generate 3 critical logs to be kept first. */
-            List<Log> expectedLogs = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
+            /* Generate 2 critical logs to be kept first. */
+            ArrayList<Log> expectedLogs = new ArrayList<>();
+            for (int i = 0; i < 2; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
                 persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
                 expectedLogs.add(log);
@@ -431,6 +431,11 @@ public class DatabasePersistenceAndroidTest {
                 persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 expectedLogs.add(log);
             }
+
+            /* Add one more critical log should clean a normal log first. */
+            MockLog log = AndroidTestUtils.generateMockLog();
+            persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+            expectedLogs.add(log);
 
             /* Get logs from persistence. */
             List<Log> outputLogs = new ArrayList<>();
