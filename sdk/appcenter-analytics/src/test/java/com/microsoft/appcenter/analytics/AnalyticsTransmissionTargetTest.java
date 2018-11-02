@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -600,5 +602,28 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         parent.resume();
         verify(mChannel, never()).pauseGroup(anyString(), anyString());
         verify(mChannel, never()).resumeGroup(anyString(), anyString());
+    }
+
+    @Test
+    public void trackEventWithNormalPersistenceFlag() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName", null, PERSISTENCE_NORMAL);
+        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+    }
+
+    @Test
+    public void trackEventWithNormalCriticalPersistenceFlag() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName", null, PERSISTENCE_CRITICAL);
+        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+    }
+
+    @Test
+    public void trackEventWithInvalidFlags() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName", null, 0x03);
+        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(DEFAULT_FLAGS));
+        verifyStatic();
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 }
