@@ -124,16 +124,16 @@ public class OneCollectorChannelListenerTest {
         verifyNoMoreInteractions(logSerializer);
 
         /* Verify flags. */
-        assertEquals(new Long(DEFAULT_FLAGS), log1.getFlags());
-        assertEquals(new Long(DEFAULT_FLAGS), log2.getFlags());
+        assertEquals(Long.valueOf(DEFAULT_FLAGS), log1.getFlags());
+        assertEquals(Long.valueOf(DEFAULT_FLAGS), log2.getFlags());
 
         /* Verify same epoch. */
         assertNotNull(log1.getExt().getSdk().getEpoch());
         assertEquals(log1.getExt().getSdk().getEpoch(), log2.getExt().getSdk().getEpoch());
 
         /* Verify incremented sequence numbers. */
-        assertEquals((Long) 1L, log1.getExt().getSdk().getSeq());
-        assertEquals((Long) 2L, log2.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(1), log1.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(2), log2.getExt().getSdk().getSeq());
 
         /* Verify install ID set. */
         assertEquals(installId, log1.getExt().getSdk().getInstallId());
@@ -155,8 +155,8 @@ public class OneCollectorChannelListenerTest {
         log3.setExt(ext3);
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log3));
         listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_CRITICAL);
-        assertEquals(new Long(PERSISTENCE_CRITICAL), log3.getFlags());
-        assertEquals((Long) 1L, log3.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(PERSISTENCE_CRITICAL), log3.getFlags());
+        assertEquals(Long.valueOf(1), log3.getExt().getSdk().getSeq());
         assertNotNull(log3.getExt().getSdk().getEpoch());
         assertNotEquals(log1.getExt().getSdk().getEpoch(), log3.getExt().getSdk().getEpoch());
 
@@ -174,8 +174,8 @@ public class OneCollectorChannelListenerTest {
         listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_NORMAL);
 
         /* Verify flags and reset of epoch/seq. */
-        assertEquals(new Long(PERSISTENCE_NORMAL), log4.getFlags());
-        assertEquals((Long) 1L, log4.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(PERSISTENCE_NORMAL), log4.getFlags());
+        assertEquals(Long.valueOf(1), log4.getExt().getSdk().getSeq());
         assertNotNull(log4.getExt().getSdk().getEpoch());
         assertNotEquals(log3.getExt().getSdk().getEpoch(), log4.getExt().getSdk().getEpoch());
     }
