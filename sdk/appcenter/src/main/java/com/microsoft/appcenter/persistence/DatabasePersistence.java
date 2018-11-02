@@ -118,7 +118,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Order by clause to select logs.
      */
-    private static final String GET_SORT_ORDER = COLUMN_PRIORITY + " DESC";
+    private static final String GET_SORT_ORDER = COLUMN_PRIORITY + " DESC, " + PRIMARY_KEY;
 
     /**
      * Size limit (in bytes) for a database row log payload.
