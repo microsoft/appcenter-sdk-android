@@ -607,6 +607,48 @@ public class DatabasePersistenceAndroidTest {
         }
     }
 
+    @Test
+    public void putNormalLogFailsIfFullOfCritical() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+        assertTrue(persistence.setMaxStorageSize(MAX_STORAGE_SIZE_IN_BYTES));
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Fill storage with critical logs. */
+            List<Log> expectedLogs = new ArrayList<>();
+            int someLogCount = 6;
+            for (int i = 0; i < someLogCount; i++) {
+                MockLog log = AndroidTestUtils.generateMockLog();
+                persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+                expectedLogs.add(log);
+            }
+            assertEquals(someLogCount, persistence.countLogs("test-p1"));
+
+            /* Try to insert a normal log: that will fail and no log deleted. */
+            try {
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                fail("Put log was supposed to fail.");
+            } catch (PersistenceException ignore) {
+            }
+
+            /* Get logs from persistence: critical were kept. */
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test-p1", Collections.<String>emptyList(), 7, outputLogs);
+            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
+            assertEquals(expectedLogs, outputLogs);
+        } finally {
+
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
     @Test(expected = PersistenceException.class)
     public void putLogException() throws PersistenceException, JSONException {
 
