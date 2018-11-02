@@ -597,7 +597,6 @@ public class CrashesAndroidTest {
 
     @SuppressWarnings("SameParameterValue")
     private static RuntimeException generateHugeException(int stacktraceIncrease, int causes) {
-
         if (stacktraceIncrease > 0) {
             try {
                 return generateHugeException(stacktraceIncrease - 1, causes);
