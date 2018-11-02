@@ -63,6 +63,17 @@ public class CrashActivity extends AppCompatActivity {
                     run();
                 }
             }),
+            new Crash(R.string.title_deeply_nested_exception_crash, R.string.description_deeply_nested_exception_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    Exception e = new Exception();
+                    for (int i = 0; i < 1000; i++) {
+                        e = new Exception(String.valueOf(i), e);
+                    }
+                    throw new RuntimeException(e);
+                }
+            }),
             new Crash(R.string.title_memory_crash, R.string.description_memory_crash, new Runnable() {
 
                 @Override
