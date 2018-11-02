@@ -74,6 +74,19 @@
         android:onClick="toggleDeviceIdEnabled"
         android:visibility="gone" />
 
+    <TextView
+        android:id="@+id/persistence_flag_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/persistence_flag" />
+
+    <Spinner
+        android:id="@+id/persistence_flag_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
+
     <include layout="@layout/activity_log_bottom" />
 
 </LinearLayout>
