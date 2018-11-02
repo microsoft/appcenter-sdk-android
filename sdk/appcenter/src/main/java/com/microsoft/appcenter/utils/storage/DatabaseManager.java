@@ -35,6 +35,11 @@ public class DatabaseManager implements Closeable {
     public static final String PRIMARY_KEY = "oid";
 
     /**
+     * Primary key selection for {@link #getCursor(SQLiteQueryBuilder, String[], String[], String)}.
+     */
+    public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
+
+    /**
      * Allowed multiple for maximum sizes.
      */
     @VisibleForTesting
@@ -198,36 +203,47 @@ public class DatabaseManager implements Closeable {
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
      *
-     * @param values The entry to be stored.
+     * @param values         The entry to be stored.
+     * @param priorityColumn When storage full and deleting data, use this column to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long put(@NonNull ContentValues values) {
+    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
+        Long id = null;
+        Cursor cursor = null;
         try {
-            while (true) {
+            while (id == null) {
                 try {
 
                     /* Insert data. */
-                    return getDatabase().insertOrThrow(mTable, null, values);
+                    id = getDatabase().insertOrThrow(mTable, null, values);
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    Cursor cursor = getCursor(SQLiteUtils.newSQLiteQueryBuilder(), null, true);
-                    try {
-                        if (cursor.moveToNext()) {
-                            delete(cursor.getLong(0));
-                        } else {
-                            return -1;
-                        }
-                    } finally {
-                        cursor.close();
+                    if (cursor == null) {
+                        String priority = values.getAsString(priorityColumn);
+                        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+                        queryBuilder.appendWhere(priorityColumn + " <= ?");
+                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn + " , " + PRIMARY_KEY);
+                    }
+                    if (cursor.moveToNext()) {
+                        delete(cursor.getLong(0));
+                    } else {
+                        throw e;
                     }
                 }
             }
         } catch (RuntimeException e) {
+            id = -1L;
             AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
         }
-        return -1;
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
+        }
+        return id;
     }
 
     /**
@@ -310,18 +326,18 @@ public class DatabaseManager implements Closeable {
      * Gets a cursor for all rows in the table, all rows where key matches value if specified.
      *
      * @param queryBuilder  The query builder that contains SQL query.
+     * @param columns       Columns to select, null for all.
      * @param selectionArgs The array of values for selection.
-     * @param idOnly        Return only row identifier if true, return all fields otherwise.
+     * @param sortOrder     Sorting order (ORDER BY clause without ORDER BY itself).
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, @Nullable String[] selectionArgs, boolean idOnly) throws RuntimeException {
+    public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
         queryBuilder.setTables(mTable);
-        String[] projectionIn = idOnly ? new String[]{PRIMARY_KEY} : null;
-        return queryBuilder.query(getDatabase(), projectionIn, null, selectionArgs, null, null, PRIMARY_KEY);
+        return queryBuilder.query(getDatabase(), columns, null, selectionArgs, null, null, sortOrder);
     }
 
     /**

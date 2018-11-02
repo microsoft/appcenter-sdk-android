@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -53,7 +54,7 @@ public class DatabaseManagerTest {
         mockStatic(AppCenterLog.class);
         DatabaseManager databaseManagerMock;
         databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.put(new ContentValues());
+        databaseManagerMock.put(new ContentValues(), "priority");
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -172,6 +173,36 @@ public class DatabaseManagerTest {
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it will fail to purge. */
-        assertEquals(-1, databaseManager.put(mock(ContentValues.class)));
+        assertEquals(-1, databaseManager.put(mock(ContentValues.class), "priority"));
+    }
+
+    @Test
+    public void cursorFailsToCloseAfterPut() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
+        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
+
+        /* Mock the select cursor we are using to find logs to evict to fail. */
+        mockStatic(SQLiteUtils.class);
+        Cursor cursor = mock(Cursor.class);
+        SQLiteDiskIOException exception = new SQLiteDiskIOException();
+        doThrow(exception).when(cursor).close();
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+
+        /* Simulate that database is full only once (will work after purging 1 log). */
+        when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* When we put a log, it succeeds even if a problem occurred while closing purge cursor. */
+        long id = databaseManager.put(mock(ContentValues.class), "priority");
+        assertEquals(1, id);
     }
 }

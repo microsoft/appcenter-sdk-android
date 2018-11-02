@@ -38,6 +38,8 @@ import java.util.TreeMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
@@ -173,7 +175,6 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    @SuppressWarnings("SameParameterValue")
     DatabasePersistence(Context context, int version, ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
@@ -250,7 +251,7 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
-            long databaseId = mDatabaseManager.put(contentValues);
+            long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
@@ -293,6 +294,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     private void deleteLog(File groupLargePayloadDirectory, long id) {
+
         //noinspection ResultOfMethodCallIgnored SQLite delete does not have return type either.
         getLargePayloadFile(groupLargePayloadDirectory, id).delete();
         mDatabaseManager.delete(id);
@@ -356,9 +358,10 @@ public class DatabasePersistence extends Persistence {
         builder.appendWhere(COLUMN_GROUP + " = ?");
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{group}, true);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
             try {
-                count = cursor.getCount();
+                cursor.moveToNext();
+                count = cursor.getInt(0);
             } finally {
                 cursor.close();
             }
@@ -399,14 +402,14 @@ public class DatabasePersistence extends Persistence {
         Cursor cursor = null;
         ContentValues values;
         try {
-            cursor = mDatabaseManager.getCursor(builder, selectionArgs, false);
+            cursor = mDatabaseManager.getCursor(builder, null, selectionArgs, null);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
         while (cursor != null &&
                 (values = mDatabaseManager.nextValues(cursor)) != null &&
                 count < limit) {
-            Long dbIdentifier = values.getAsLong(DatabaseManager.PRIMARY_KEY);
+            Long dbIdentifier = values.getAsLong(PRIMARY_KEY);
 
             /*
              * When we can't even read the identifier (in this case ContentValues is most likely empty).
@@ -534,11 +537,11 @@ public class DatabasePersistence extends Persistence {
     private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, selectionArgs, true);
+            Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
                 while (cursor.moveToNext()) {
                     ContentValues idValues = mDatabaseManager.buildValues(cursor);
-                    Long invalidId = idValues.getAsLong(DatabaseManager.PRIMARY_KEY);
+                    Long invalidId = idValues.getAsLong(PRIMARY_KEY);
                     result.add(invalidId);
                 }
             } finally {

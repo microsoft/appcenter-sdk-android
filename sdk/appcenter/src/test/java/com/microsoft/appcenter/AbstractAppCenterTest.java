@@ -92,9 +92,9 @@ public class AbstractAppCenterTest {
 
     ApplicationInfo mApplicationInfo;
 
-    static void addArgumentToRegistry(String key, String value) {
+    static void addArgumentToRegistry(String value) {
         Bundle mockBundle = mock(Bundle.class);
-        when(mockBundle.getString(key)).thenReturn(value);
+        when(mockBundle.getString(ServiceInstrumentationUtils.DISABLE_SERVICES)).thenReturn(value);
         when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
     }
 
@@ -137,7 +137,7 @@ public class AbstractAppCenterTest {
         HandlerThread handlerThread = mock(HandlerThread.class);
         whenNew(HandlerThread.class).withAnyArguments().thenReturn(handlerThread);
         when(handlerThread.getLooper()).thenReturn(mock(Looper.class));
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
+        addArgumentToRegistry(null);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         when(SharedPreferencesManager.getBoolean(anyString(), eq(true))).thenReturn(true);
@@ -160,7 +160,7 @@ public class AbstractAppCenterTest {
         /* Mock empty database. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), anyBoolean()))
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString()))
                 .thenReturn(mock(Cursor.class));
 
         /* Mock network state helper. */
