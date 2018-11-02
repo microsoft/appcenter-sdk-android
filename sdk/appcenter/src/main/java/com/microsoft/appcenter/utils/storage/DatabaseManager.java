@@ -224,7 +224,7 @@ public class DatabaseManager implements Closeable {
                         String priority = values.getAsString(priorityColumn);
                         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
                         queryBuilder.appendWhere(priorityColumn + " <= ?");
-                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn);
+                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn + " , " + PRIMARY_KEY);
                     }
                     if (cursor.moveToNext()) {
                         delete(cursor.getLong(0));
