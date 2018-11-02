@@ -7,7 +7,6 @@ import android.support.test.InstrumentationRegistry;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
