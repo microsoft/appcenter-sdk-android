@@ -41,15 +41,25 @@ public class EventActivity extends AppCompatActivity {
      * It shouldn't be lost on recreate activity.
      */
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
+
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
+
     private Spinner mTransmissionTargetSpinner;
+
     private CheckBox mTransmissionEnabledCheckBox;
+
     private CheckBox mDeviceIdEnabledCheckBox;
+
     private Button mConfigureTargetPropertiesButton;
+
     private Button mOverrideCommonSchemaButton;
+
     private Button mPauseTransmissionButton;
+
     private Button mResumeTransmissionButton;
+
     private Spinner mPersistenceFlagSpinner;
+
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
     @Override
