@@ -29,6 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * TODO delete this version and move projectDependency version to main folder during release process.
+ */
 public class EventActivity extends AppCompatActivity {
 
     /**
@@ -135,6 +139,10 @@ public class EventActivity extends AppCompatActivity {
                 getSelectedTarget().resume();
             }
         });
+
+        /* Hide persistence flag UI as not supported by jCenter */
+        findViewById(R.id.persistence_flag_label).setVisibility(View.GONE);
+        findViewById(R.id.persistence_flag_spinner).setVisibility(View.GONE);
     }
 
 
