@@ -19,7 +19,6 @@ import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 
 import static com.microsoft.appcenter.sasquatch.activities.CrashSubActivity.INTENT_EXTRA_CRASH_TYPE;
@@ -70,7 +69,7 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     Exception e = new Exception();
                     for (int i = 0; i < 1000; i++) {
-                        e = new Exception(String.format(Locale.ROOT, "%d", i), e);
+                        e = new Exception(String.valueOf(i), e);
                     }
                     throw new RuntimeException(e);
                 }
