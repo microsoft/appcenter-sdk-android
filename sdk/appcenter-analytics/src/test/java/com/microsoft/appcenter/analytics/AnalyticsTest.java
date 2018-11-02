@@ -44,6 +44,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -99,12 +101,13 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackEvent("test", (Map<String, String>) null);
         Analytics.trackEvent("test", (EventProperties) null);
+        Analytics.trackEvent("test", null, 0);
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
         Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(7));
+        verifyStatic(times(8));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -326,6 +329,38 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertEquals(longTypedProperty, argumentCaptor.getValue().getTypedProperties().get(2));
         assertEquals(doubleTypedProperty, argumentCaptor.getValue().getTypedProperties().get(3));
         assertEquals(booleanTypedProperty, argumentCaptor.getValue().getTypedProperties().get(4));
+    }
+
+    @Test
+    public void trackEventWithNormalPersistenceFlag() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        Analytics.trackEvent("eventName", null, PERSISTENCE_NORMAL);
+        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+    }
+
+    @Test
+    public void trackEventWithNormalCriticalPersistenceFlag() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        Analytics.trackEvent("eventName", null, PERSISTENCE_CRITICAL);
+        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+    }
+
+    @Test
+    public void trackEventWithInvalidFlags() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        Analytics.trackEvent("eventName", null, 0x03);
+        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(DEFAULT_FLAGS));
+        verifyStatic();
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
