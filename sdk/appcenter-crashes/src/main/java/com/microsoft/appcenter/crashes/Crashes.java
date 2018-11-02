@@ -944,9 +944,18 @@ public class Crashes extends AbstractAppCenterService {
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
-            StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
-        } else {
+            try {
+                StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
+                AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
+            } catch (StackOverflowError e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
+                throwable = null;
+
+                //noinspection ResultOfMethodCallIgnored
+                throwableFile.delete();
+            }
+        }
+        if (throwable == null) {
 
             /*
              * If there is no Java Throwable to save as is (typical in wrapper SDKs),

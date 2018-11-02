@@ -131,7 +131,41 @@ public class CrashesAndroidTest {
     }
 
     @Test
-    public void getLastSessionCrashReport() throws Exception {
+    public void getLastSessionCrashReportSimpleException() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+
+        /* Crash on 1st process. */
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        final RuntimeException exception = new IllegalArgumentException();
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+
+        /* Get last session crash on 2nd process. */
+        startFresh(null);
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        Throwable lastThrowable = errorReport.getThrowable();
+        assertTrue(lastThrowable instanceof IllegalArgumentException);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void getLastSessionCrashReportStackOverflowException() throws Exception {
 
         /* Null before start. */
         Crashes.unsetInstance();
@@ -164,6 +198,56 @@ public class CrashesAndroidTest {
         assertTrue(lastThrowable instanceof StackOverflowError);
         assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
         assertTrue(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void getLastSessionCrashReportExceptionWithHugeFramesAndHugeCauses() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+
+        /* Crash on 1st process. */
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        final RuntimeException exception = generateHugeException(300, 300);
+        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+
+        /* Get last session crash on 2nd process. */
+        startFresh(null);
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+
+        /* The client side throwable failed to save as huge so will be null. */
+        assertNull(errorReport.getThrowable());
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Check managed error was sent as truncated. */
+        ArgumentCaptor<ManagedErrorLog> errorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
+        verify(mChannel).enqueue(errorLog.capture(), eq(Crashes.ERROR_GROUP));
+        assertNotNull(errorLog.getValue());
+        assertNotNull(errorLog.getValue().getException());
+        assertNotNull(errorLog.getValue().getException().getFrames());
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getValue().getException().getFrames().size());
+        int causesCount = 0;
+        com.microsoft.appcenter.crashes.ingestion.models.Exception e = errorLog.getValue().getException();
+        while (e.getInnerExceptions() != null && (e = e.getInnerExceptions().get(0)) != null) {
+            causesCount++;
+        }
+        assertEquals(ErrorLogHelper.CAUSE_LIMIT, causesCount + 1);
     }
 
     @Test
@@ -242,6 +326,7 @@ public class CrashesAndroidTest {
     public void testNoDuplicateCallbacksOrSending() throws Exception {
 
         /* Crash on 1st process. */
+        Crashes.unsetInstance();
         assertFalse(Crashes.hasCrashedInLastSession().get());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
@@ -259,8 +344,7 @@ public class CrashesAndroidTest {
         });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         startFresh(crashesListener);
-        final RuntimeException exception = generateHugeException(300, 100);
-        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
+        final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
             @Override
@@ -270,7 +354,6 @@ public class CrashesAndroidTest {
         };
         thread.start();
         thread.join();
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verifyZeroInteractions(crashesListener);
@@ -287,7 +370,6 @@ public class CrashesAndroidTest {
                 assertNotNull(errorReport);
                 Throwable lastThrowable = errorReport.getThrowable();
                 assertTrue(lastThrowable instanceof RuntimeException);
-                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
             }
         });
         assertTrue(Crashes.hasCrashedInLastSession().get());
@@ -370,19 +452,6 @@ public class CrashesAndroidTest {
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
-
-        /* Verify log was truncated to 256 frames. */
-        assertTrue(log.get() instanceof ManagedErrorLog);
-        ManagedErrorLog errorLog = (ManagedErrorLog) log.get();
-        assertNotNull(errorLog.getException());
-        assertNotNull(errorLog.getException().getFrames());
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
-        int causesCount = 0;
-        com.microsoft.appcenter.crashes.ingestion.models.Exception e = errorLog.getException();
-        while (e.getInnerExceptions() != null && (e = e.getInnerExceptions().get(0)) != null) {
-            causesCount++;
-        }
-        assertEquals(ErrorLogHelper.CAUSE_LIMIT, causesCount + 1);
     }
 
     @Test
