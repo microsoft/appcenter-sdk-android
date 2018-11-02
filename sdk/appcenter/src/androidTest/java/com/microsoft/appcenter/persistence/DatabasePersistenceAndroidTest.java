@@ -411,7 +411,8 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate 2 critical logs to be kept first. */
             ArrayList<Log> expectedLogs = new ArrayList<>();
-            for (int i = 0; i < 2; i++) {
+            int criticalLogCount = 2;
+            for (int i = 0; i < criticalLogCount; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
                 persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
                 expectedLogs.add(log);
@@ -435,7 +436,7 @@ public class DatabasePersistenceAndroidTest {
             /* Add one more critical log should clean a normal log first. */
             MockLog log = AndroidTestUtils.generateMockLog();
             persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
-            expectedLogs.add(log);
+            expectedLogs.add(criticalLogCount, log);
 
             /* Get logs from persistence. */
             List<Log> outputLogs = new ArrayList<>();
@@ -827,7 +828,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void getLogs() throws PersistenceException {
+    public void getLogsWithNormalPriority() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -886,6 +887,52 @@ public class DatabasePersistenceAndroidTest {
         /* Get should be 0 now. */
         persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs);
         assertEquals(0, outputLogs.size());
+    }
+
+    @Test
+    public void getLogsWithMixedPriorities() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Put a normal log. */
+            Log log1 = AndroidTestUtils.generateMockLog();
+            persistence.putLog(log1, "test", PERSISTENCE_NORMAL);
+
+            /* Put a critical log. */
+            Log log2 = AndroidTestUtils.generateMockLog();
+            persistence.putLog(log2, "test", PERSISTENCE_CRITICAL);
+
+            /* Put a normal log again. */
+            Log log3 = AndroidTestUtils.generateMockLog();
+            persistence.putLog(log3, "test", PERSISTENCE_NORMAL);
+
+            /* Put a critical log again. */
+            Log log4 = AndroidTestUtils.generateMockLog();
+            persistence.putLog(log4, "test", PERSISTENCE_CRITICAL);
+
+            /* Expected order. */
+            List<Log> expectedLogs = new ArrayList<>();
+            expectedLogs.add(log2);
+            expectedLogs.add(log4);
+            expectedLogs.add(log1);
+            expectedLogs.add(log3);
+
+            /* Get logs and check order. */
+            List<Log> actualLogs = new ArrayList<>();
+            persistence.getLogs("test", Collections.<String>emptyList(), expectedLogs.size(), actualLogs);
+            assertEquals(expectedLogs, actualLogs);
+        } finally {
+
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
     }
 
     @Test
