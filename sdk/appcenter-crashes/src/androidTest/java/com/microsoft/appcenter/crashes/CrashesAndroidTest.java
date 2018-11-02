@@ -7,6 +7,7 @@ import android.support.test.InstrumentationRegistry;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -241,7 +242,7 @@ public class CrashesAndroidTest {
 
         /* Check managed error was sent as truncated. */
         ArgumentCaptor<ManagedErrorLog> errorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
-        verify(mChannel).enqueue(errorLog.capture(), eq(Crashes.ERROR_GROUP));
+        verify(mChannel).enqueue(errorLog.capture(), eq(Crashes.ERROR_GROUP), eq(PERSISTENCE_CRITICAL));
         assertNotNull(errorLog.getValue());
         assertNotNull(errorLog.getValue().getException());
         assertNotNull(errorLog.getValue().getException().getFrames());
