@@ -702,7 +702,9 @@ public class CrashesTest {
         ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
 
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
+        File errorLogFile = mock(File.class);
+        when(errorLogFile.length()).thenReturn(1L);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         File throwableFile = mock(File.class);
@@ -885,22 +887,37 @@ public class CrashesTest {
         File throwableFile = mock(File.class);
         when(throwableFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(mock(ErrorReport.class));
 
-        Exception classNotFoundException = mock(ClassNotFoundException.class);
-        Exception ioException = mock(IOException.class);
-        when(StorageHelper.InternalStorage.readObject(any(File.class))).thenThrow(classNotFoundException).thenThrow(ioException);
-
+        /* Mock exceptions. */
+        Throwable classNotFoundException = mock(ClassNotFoundException.class);
+        Throwable ioException = mock(IOException.class);
+        Throwable stackOverflowError = mock(StackOverflowError.class);
+        when(StorageHelper.InternalStorage.readObject(any(File.class)))
+                .thenThrow(classNotFoundException)
+                .thenThrow(ioException)
+                .thenThrow(stackOverflowError);
         Crashes crashes = Crashes.getInstance();
 
+        /* Test ClassNotFoundException. */
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
-        report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
-
+        assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
+
+        /* Test IOException. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+
+        /* Test StackOverflowError. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNotNull(report);
+        verifyStatic();
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(stackOverflowError));
     }
 
     @Test
@@ -987,6 +1004,7 @@ public class CrashesTest {
 
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        new FileWriter(lastErrorLogFile).append("fake_data").close();
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         File throwableFile = errorStorageDirectory.newFile();
         new FileWriter(throwableFile).append("fake_data").close();
@@ -994,7 +1012,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, throwable)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("fake_data");
         when(StorageHelper.InternalStorage.readObject(any(File.class))).thenReturn(throwable);
 
         Crashes crashes = Crashes.getInstance();
@@ -1059,10 +1077,11 @@ public class CrashesTest {
 
         mockStatic(ErrorLogHelper.class);
         File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        new FileWriter(lastErrorLogFile).append("fake_data").close();
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("");
+        when(StorageHelper.InternalStorage.read(any(File.class))).thenReturn("fake_data");
 
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
@@ -1096,6 +1115,7 @@ public class CrashesTest {
     public void crashInLastSessionCorrupted() throws IOException {
         mockStatic(ErrorLogHelper.class);
         File file = errorStorageDirectory.newFile("last-error-log.json");
+        new FileWriter(file).append("fake_data").close();
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(file);
@@ -1345,7 +1365,9 @@ public class CrashesTest {
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
         ErrorReport report = new ErrorReport();
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(mock(File.class));
+        File errorLogFile = mock(File.class);
+        when(errorLogFile.length()).thenReturn(1L);
+        when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{minidumpFile});
         File pendingDir = mock(File.class);

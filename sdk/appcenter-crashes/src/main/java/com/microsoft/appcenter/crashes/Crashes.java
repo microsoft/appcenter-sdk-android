@@ -617,6 +617,13 @@ public class Crashes extends AbstractAppCenterService {
 
             /* Check last session crash. */
             File logFile = ErrorLogHelper.getLastErrorLogFile();
+            while (logFile != null && logFile.length() == 0) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+
+                //noinspection ResultOfMethodCallIgnored
+                logFile.delete();
+                logFile = ErrorLogHelper.getLastErrorLogFile();
+            }
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
                 String logFileContents = StorageHelper.InternalStorage.read(logFile);
@@ -656,7 +663,10 @@ public class Crashes extends AbstractAppCenterService {
                         removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
-                    AppCenterLog.error(LOG_TAG, "Error parsing error log", e);
+                    AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
+
+                    //noinspection ResultOfMethodCallIgnored
+                    logFile.delete();
                 }
             }
         }
@@ -744,19 +754,17 @@ public class Crashes extends AbstractAppCenterService {
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
-                try {
-                    Throwable throwable = null;
-                    if (file.length() > 0) {
+                Throwable throwable = null;
+                if (file.length() > 0) {
+                    try {
                         throwable = StorageHelper.InternalStorage.readObject(file);
+                    } catch (IOException | ClassNotFoundException | StackOverflowError e) {
+                        AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
                     }
-                    ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
-                    mErrorReportCache.put(id, new ErrorLogReport(log, report));
-                    return report;
-                } catch (ClassNotFoundException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
-                } catch (IOException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
                 }
+                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
+                mErrorReportCache.put(id, new ErrorLogReport(log, report));
+                return report;
             }
         }
         return null;
@@ -936,9 +944,18 @@ public class Crashes extends AbstractAppCenterService {
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
-            StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
-        } else {
+            try {
+                StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
+                AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
+            } catch (StackOverflowError e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
+                throwable = null;
+
+                //noinspection ResultOfMethodCallIgnored
+                throwableFile.delete();
+            }
+        }
+        if (throwable == null) {
 
             /*
              * If there is no Java Throwable to save as is (typical in wrapper SDKs),
