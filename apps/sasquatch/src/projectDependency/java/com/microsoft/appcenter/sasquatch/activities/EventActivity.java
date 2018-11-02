@@ -239,7 +239,7 @@ public class EventActivity extends AppCompatActivity {
                 return Flags.PERSISTENCE_CRITICAL;
 
             case INVALID:
-                return Flags.PERSISTENCE_CRITICAL + 1;
+                return 42;
         }
         throw new IllegalArgumentException();
     }
