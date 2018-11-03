@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -54,6 +55,7 @@ import org.powermock.reflect.Whitebox;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,11 +77,14 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -88,9 +93,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({ErrorLogHelper.class, SystemClock.class, StorageHelper.InternalStorage.class, StorageHelper.PreferencesStorage.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
@@ -1434,5 +1441,57 @@ public class CrashesTest {
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    public void stackOverflowOnSavingThrowable() throws Exception {
+
+        /* Mock error log utils. */
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class), anyMapOf(Thread.class, StackTraceElement[].class), anyLong(), anyBoolean())).thenReturn(mErrorLog);
+        File throwableFile = mock(File.class);
+        whenNew(File.class).withParameterTypes(File.class, String.class).withArguments(any(File.class), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().endsWith(ErrorLogHelper.THROWABLE_FILE_EXTENSION);
+            }
+        })).thenReturn(throwableFile);
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        String jsonCrash = "{}";
+        when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
+
+        /* Mock storage to fail on stack overflow when saving a Throwable as binary. */
+        doThrow(new StackOverflowError()).when(StorageHelper.InternalStorage.class);
+        StorageHelper.InternalStorage.writeObject(any(File.class), any(Serializable.class));
+
+        /* Simulate start SDK. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
+
+        /* Simulate crash. */
+        Throwable throwable = new Throwable();
+        Crashes.getInstance().saveUncaughtException(Thread.currentThread(), throwable);
+
+        /* Verify we gracefully abort saving throwable (no exception) and we created an empty file instead. */
+        verifyStatic();
+        StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
+        assertNotNull(throwableFile);
+        InOrder inOrder = inOrder(throwableFile);
+
+        //noinspection ResultOfMethodCallIgnored
+        inOrder.verify(throwableFile).delete();
+
+        //noinspection ResultOfMethodCallIgnored
+        inOrder.verify(throwableFile).createNewFile();
+
+        /* Verify it didn't prevent saving the JSON file. */
+        verifyStatic();
+        StorageHelper.InternalStorage.write(any(File.class), eq(jsonCrash));
     }
 }

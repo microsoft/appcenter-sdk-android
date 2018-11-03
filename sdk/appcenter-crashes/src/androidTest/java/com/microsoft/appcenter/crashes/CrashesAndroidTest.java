@@ -106,6 +106,23 @@ public class CrashesAndroidTest {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
     }
 
+    private static Error generateStackOverflowError() {
+        try {
+            return generateStackOverflowError();
+        } catch (StackOverflowError error) {
+            return error;
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static RuntimeException generateExceptionWithManyCauses(int causes) {
+        Exception e = new Exception();
+        for (int i = 0; i < causes; i++) {
+            e = new Exception(Integer.valueOf(i).toString(), e);
+        }
+        return new RuntimeException(e);
+    }
+
     private void startFresh(CrashesListener listener) {
 
         /* Configure new instance. */
@@ -120,6 +137,7 @@ public class CrashesAndroidTest {
 
         /* Replace channel. */
         AppCenter.getInstance().setChannel(mChannel);
+
         /* Set listener. */
         Crashes.setListener(listener);
 
@@ -201,7 +219,7 @@ public class CrashesAndroidTest {
     }
 
     @Test
-    public void getLastSessionCrashReportExceptionWithHugeFramesAndHugeCauses() throws Exception {
+    public void getLastSessionCrashReportExceptionWithALotOfCauses() throws Exception {
 
         /* Null before start. */
         Crashes.unsetInstance();
@@ -214,8 +232,7 @@ public class CrashesAndroidTest {
         startFresh(null);
         assertNull(Crashes.getLastSessionCrashReport().get());
         assertFalse(Crashes.hasCrashedInLastSession().get());
-        final RuntimeException exception = generateHugeException(300, 300);
-        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
+        final RuntimeException exception = generateExceptionWithManyCauses(17);
         final Thread thread = new Thread() {
 
             @Override
@@ -228,20 +245,20 @@ public class CrashesAndroidTest {
 
         /* Get last session crash on 2nd process. */
         startFresh(null);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
 
-        /* The client side throwable failed to save as huge so will be null. */
-        assertNull(errorReport.getThrowable());
-        assertTrue(Crashes.hasCrashedInLastSession().get());
+        /*
+         * We don't check throwable is set, it will randomly fail with StackOverflowError on a
+         * ARM emulator. In both case the JSON is saved and we check it.
+         * We also have a unit test that use mocks in CrashesTest to verify what happens on a
+         * simulated StackOverflowError, testing that on emulator is unreliable.
+         */
 
         /* Check managed error was sent as truncated. */
         ArgumentCaptor<ManagedErrorLog> errorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
         verify(mChannel).enqueue(errorLog.capture(), eq(Crashes.ERROR_GROUP));
-        assertNotNull(errorLog.getValue());
-        assertNotNull(errorLog.getValue().getException());
-        assertNotNull(errorLog.getValue().getException().getFrames());
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getValue().getException().getFrames().size());
         int causesCount = 0;
         com.microsoft.appcenter.crashes.ingestion.models.Exception e = errorLog.getValue().getException();
         while (e.getInnerExceptions() != null && (e = e.getInnerExceptions().get(0)) != null) {
@@ -585,28 +602,5 @@ public class CrashesAndroidTest {
 
         /* Check there are only 2 files: the throwable and the json one. */
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
-    }
-
-    private static Error generateStackOverflowError() {
-        try {
-            return generateStackOverflowError();
-        } catch (StackOverflowError error) {
-            return error;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static RuntimeException generateHugeException(int stacktraceIncrease, int causes) {
-        if (stacktraceIncrease > 0) {
-            try {
-                return generateHugeException(stacktraceIncrease - 1, causes);
-            } catch (StackOverflowError ignore) {
-            }
-        }
-        Exception e = new Exception();
-        for (int i = 0; i < causes; i++) {
-            e = new Exception(Integer.valueOf(i).toString(), e);
-        }
-        return new RuntimeException(e);
     }
 }
