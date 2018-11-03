@@ -114,15 +114,6 @@ public class CrashesAndroidTest {
         }
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private static RuntimeException generateExceptionWithManyCauses(int causes) {
-        Exception e = new Exception();
-        for (int i = 0; i < causes; i++) {
-            e = new Exception(Integer.valueOf(i).toString(), e);
-        }
-        return new RuntimeException(e);
-    }
-
     private void startFresh(CrashesListener listener) {
 
         /* Configure new instance. */
@@ -216,55 +207,6 @@ public class CrashesAndroidTest {
         assertTrue(lastThrowable instanceof StackOverflowError);
         assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
         assertTrue(Crashes.hasCrashedInLastSession().get());
-    }
-
-    @Test
-    public void getLastSessionCrashReportExceptionWithALotOfCauses() throws Exception {
-
-        /* Null before start. */
-        Crashes.unsetInstance();
-        assertNull(Crashes.getLastSessionCrashReport().get());
-        assertFalse(Crashes.hasCrashedInLastSession().get());
-
-        /* Crash on 1st process. */
-        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
-        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-        startFresh(null);
-        assertNull(Crashes.getLastSessionCrashReport().get());
-        assertFalse(Crashes.hasCrashedInLastSession().get());
-        final RuntimeException exception = generateExceptionWithManyCauses(17);
-        final Thread thread = new Thread() {
-
-            @Override
-            public void run() {
-                throw exception;
-            }
-        };
-        thread.start();
-        thread.join();
-
-        /* Get last session crash on 2nd process. */
-        startFresh(null);
-        assertTrue(Crashes.hasCrashedInLastSession().get());
-        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
-        assertNotNull(errorReport);
-
-        /*
-         * We don't check throwable is set, it will randomly fail with StackOverflowError on a
-         * ARM emulator. In both case the JSON is saved and we check it.
-         * We also have a unit test that use mocks in CrashesTest to verify what happens on a
-         * simulated StackOverflowError, testing that on emulator is unreliable.
-         */
-
-        /* Check managed error was sent as truncated. */
-        ArgumentCaptor<ManagedErrorLog> errorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
-        verify(mChannel).enqueue(errorLog.capture(), eq(Crashes.ERROR_GROUP));
-        int causesCount = 0;
-        com.microsoft.appcenter.crashes.ingestion.models.Exception e = errorLog.getValue().getException();
-        while (e.getInnerExceptions() != null && (e = e.getInnerExceptions().get(0)) != null) {
-            causesCount++;
-        }
-        assertEquals(ErrorLogHelper.CAUSE_LIMIT, causesCount + 1);
     }
 
     @Test
