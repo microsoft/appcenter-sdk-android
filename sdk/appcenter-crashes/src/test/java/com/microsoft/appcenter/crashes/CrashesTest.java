@@ -68,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
@@ -291,7 +291,7 @@ public class CrashesTest {
         assertTrue(Crashes.isEnabled().get());
         verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
-        verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULTS));
     }
 
     @Test
@@ -355,7 +355,7 @@ public class CrashesTest {
                 return log.equals(mErrorLog);
             }
         }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
-        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName(), DEFAULT_FLAGS);
+        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
 
     @Test
@@ -445,7 +445,7 @@ public class CrashesTest {
             }
         }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
 
-        verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName(), DEFAULT_FLAGS);
+        verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
 
     @Test
@@ -554,7 +554,7 @@ public class CrashesTest {
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             put(null, null);
@@ -569,7 +569,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 0;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
@@ -583,7 +583,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 20;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
@@ -605,7 +605,7 @@ public class CrashesTest {
                 }
                 return false;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
 
         HandledErrorLog mockLog = mock(HandledErrorLog.class);
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -654,7 +654,7 @@ public class CrashesTest {
             public boolean matches(Object item) {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(null, null);
@@ -669,7 +669,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
                         && ((HandledErrorLog) item).getProperties().size() == 0;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
@@ -683,7 +683,7 @@ public class CrashesTest {
                 return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
                         && ((HandledErrorLog) item).getProperties().size() == 20;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
@@ -705,7 +705,7 @@ public class CrashesTest {
                 }
                 return false;
             }
-        }), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        }), eq(crashes.getGroupName()), eq(DEFAULTS));
     }
 
     @Test
@@ -1274,7 +1274,7 @@ public class CrashesTest {
         when(mockAttachment.getData()).thenReturn(new byte[0]);
         when(mockAttachment.isValid()).thenReturn(true);
         WrapperSdkExceptionManager.sendErrorAttachments(report1.getId(), Collections.singletonList(mockAttachment));
-        verify(mockChannel).enqueue(eq(mockAttachment), eq(crashes.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(mockChannel).enqueue(eq(mockAttachment), eq(crashes.getGroupName()), eq(DEFAULTS));
 
         /* Send attachment with invalid UUID format for report identifier. */
         mockAttachment = mock(ErrorAttachmentLog.class);

@@ -41,7 +41,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -201,7 +201,7 @@ public class PushTest {
         verify(channel).removeGroup(eq(push.getGroupName()));
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
         verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
                 eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
 
@@ -211,7 +211,7 @@ public class PushTest {
 
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Disable. */
         Push.setEnabled(false).get();
@@ -235,7 +235,7 @@ public class PushTest {
 
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Make sure no logging when posting check activity intent commands. */
         Activity activity = mock(Activity.class);
@@ -291,7 +291,7 @@ public class PushTest {
 
         /* Refresh. */
         push.onTokenRefresh(testToken);
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Only once. */
         verify(mFirebaseInstanceId).getToken();

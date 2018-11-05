@@ -535,7 +535,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
-                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULT_FLAGS);
+                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
             }
         });
     }
@@ -868,7 +868,7 @@ public class Crashes extends AbstractAppCenterService {
                     attachment.setErrorId(errorId);
                     if (attachment.isValid()) {
                         ++totalErrorAttachments;
-                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULT_FLAGS);
+                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
                     } else {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }

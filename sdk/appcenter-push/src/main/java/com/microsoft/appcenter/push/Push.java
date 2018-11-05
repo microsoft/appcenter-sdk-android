@@ -225,7 +225,7 @@ public class Push extends AbstractAppCenterService {
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
-        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULT_FLAGS);
+        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
     }
 
     /**
