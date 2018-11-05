@@ -146,7 +146,7 @@ public class DatabasePersistenceAndroidTest {
 
     @Test
     public void putLogDefaultFlags() throws PersistenceException {
-        putLog(Flags.DEFAULT_FLAGS, Flags.PERSISTENCE_NORMAL);
+        putLog(Flags.DEFAULTS, Flags.PERSISTENCE_NORMAL);
     }
 
     @Test

@@ -266,7 +266,7 @@ public class EventActivity extends AppCompatActivity {
     private int getFlags(PersistenceFlag persistenceFlag) {
         switch (persistenceFlag) {
             case DEFAULT:
-                return Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, true);
+                return Flags.getPersistenceFlag(Flags.DEFAULTS, true);
 
             case NORMAL:
                 return Flags.PERSISTENCE_NORMAL;

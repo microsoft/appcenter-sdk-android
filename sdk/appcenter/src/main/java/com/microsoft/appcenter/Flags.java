@@ -27,7 +27,7 @@ public final class Flags {
     /**
      * Default combination of flags.
      */
-    public static final int DEFAULT_FLAGS = PERSISTENCE_NORMAL;
+    public static final int DEFAULTS = PERSISTENCE_NORMAL;
 
     /**
      * Get persistence priority flag.

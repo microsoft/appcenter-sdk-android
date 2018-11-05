@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -119,7 +119,7 @@ public class SessionTrackerTest {
             assertNotNull(log.getSid());
             firstSid = expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Verify session reused for second log. */
@@ -128,7 +128,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* No usage from background for a long time: new session. */
@@ -140,7 +140,7 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* App comes to foreground and sends a log, still session. */
@@ -150,7 +150,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* We are in foreground, even after timeout a log is still in session. */
@@ -160,7 +160,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Switch to another activity and send a log, still session. */
@@ -173,7 +173,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* We are in foreground, even after timeout a log is still in session. */
@@ -183,7 +183,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Background for a short time and send log: still in session. */
@@ -195,7 +195,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Background for a long time but correlating a log to first session: should not trigger new session. */
@@ -205,7 +205,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(firstSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Background for a long time and coming back to foreground: new session. */
@@ -218,7 +218,7 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Background for a long time sending a log: new session. */
@@ -231,7 +231,7 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
     }
 
@@ -249,7 +249,7 @@ public class SessionTrackerTest {
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Wait a long time. */
@@ -266,7 +266,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
     }
 
@@ -284,7 +284,7 @@ public class SessionTrackerTest {
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Go background. */
@@ -303,7 +303,7 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* In total we sent only 2 session logs. */
@@ -313,7 +313,7 @@ public class SessionTrackerTest {
             public boolean matches(Object argument) {
                 return argument instanceof StartSessionLog;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
     }
 
     @Test
@@ -331,7 +331,7 @@ public class SessionTrackerTest {
 
         /* Go foreground, start session is sent. */
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULT_FLAGS));
+        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
         assertNotNull(startSessionLog.get());
         UUID sid = startSessionLog.get().getSid();
         assertNotNull(sid);
@@ -341,14 +341,14 @@ public class SessionTrackerTest {
         mSessionTracker.onActivityPaused();
         spendTime(1);
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULT_FLAGS));
+        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
 
         /* Go background and come back after timeout, second session. */
         spendTime(1);
         mSessionTracker.onActivityPaused();
         spendTime(30000);
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(2)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULT_FLAGS));
+        verify(mChannel, times(2)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
         assertNotEquals(sid, startSessionLog.get().getSid());
     }
 
@@ -368,7 +368,7 @@ public class SessionTrackerTest {
             assertNotNull(log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* Verify session reused for second log. */
@@ -377,7 +377,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* No usage from background for a long time: new session. */
@@ -389,7 +389,7 @@ public class SessionTrackerTest {
             assertNotEquals(expectedSid, log.getSid());
             expectedSid = log.getSid();
             expectedStartSessionLog.setSid(expectedSid);
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* App comes to foreground and sends a log, we were in background for a long time but we sent a log recently, still session. */
@@ -399,7 +399,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
 
         /* We are in foreground, even after timeout a log is still in session. */
@@ -409,7 +409,7 @@ public class SessionTrackerTest {
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
             assertEquals(expectedSid, log.getSid());
-            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULT_FLAGS);
+            verify(mChannel).enqueue(expectedStartSessionLog, TEST_GROUP, DEFAULTS);
         }
     }
 
