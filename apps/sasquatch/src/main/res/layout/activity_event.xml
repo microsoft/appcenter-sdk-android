@@ -85,17 +85,29 @@
                 android:visibility="gone" />
 
             <TextView
-                android:id="@+id/persistence_flag_label"
+                android:id="@+id/event_priority_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/persistence_flag" />
+                android:text="@string/event_priority" />
 
             <Spinner
-                android:id="@+id/persistence_flag_spinner"
+                android:id="@+id/event_priority_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@android:drawable/btn_dropdown"
                 android:spinnerMode="dropdown" />
+
+            <TextView
+                android:id="@+id/number_of_logs_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/number_of_logs" />
+
+            <SeekBar
+                android:id="@+id/number_of_logs"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:max="1000" />
 
             <TextView
                 android:layout_width="match_parent"

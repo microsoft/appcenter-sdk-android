@@ -141,8 +141,10 @@ public class EventActivity extends AppCompatActivity {
         });
 
         /* Hide persistence flag UI as not supported by jCenter */
-        findViewById(R.id.persistence_flag_label).setVisibility(View.GONE);
-        findViewById(R.id.persistence_flag_spinner).setVisibility(View.GONE);
+        findViewById(R.id.event_priority_label).setVisibility(View.GONE);
+        findViewById(R.id.event_priority_spinner).setVisibility(View.GONE);
+        findViewById(R.id.number_of_logs_label).setVisibility(View.GONE);
+        findViewById(R.id.number_of_logs).setVisibility(View.GONE);
     }
 
 

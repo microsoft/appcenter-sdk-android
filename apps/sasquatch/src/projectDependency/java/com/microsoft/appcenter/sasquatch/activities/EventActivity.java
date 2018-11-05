@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -32,7 +33,7 @@ import java.util.Set;
 
 
 /**
- * TODO move to main resource folder and delete jCenter version during release process.
+ * TODO move to main folder and delete jCenter version during release process.
  */
 public class EventActivity extends AppCompatActivity {
 
@@ -43,6 +44,8 @@ public class EventActivity extends AppCompatActivity {
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
 
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
+
+    private TextView mName;
 
     private Spinner mTransmissionTargetSpinner;
 
@@ -60,6 +63,10 @@ public class EventActivity extends AppCompatActivity {
 
     private Spinner mPersistenceFlagSpinner;
 
+    private TextView mNumberOfLogsLabel;
+
+    private SeekBar mNumberOfLogs;
+
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
     @Override
@@ -69,6 +76,9 @@ public class EventActivity extends AppCompatActivity {
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
+
+        /* Init name field. */
+        mName = findViewById(R.id.name);
 
         /* Transmission target views init. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
@@ -144,9 +154,29 @@ public class EventActivity extends AppCompatActivity {
         });
 
         /* Persistence flag. */
-        mPersistenceFlagSpinner = findViewById(R.id.persistence_flag_spinner);
-        ArrayAdapter<String> persistenceFlagAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.persistence_flag_values));
+        mPersistenceFlagSpinner = findViewById(R.id.event_priority_spinner);
+        ArrayAdapter<String> persistenceFlagAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.event_priority_values));
         mPersistenceFlagSpinner.setAdapter(persistenceFlagAdapter);
+
+        /* Number of logs. */
+        mNumberOfLogsLabel = findViewById(R.id.number_of_logs_label);
+        mNumberOfLogs = findViewById(R.id.number_of_logs);
+        mNumberOfLogsLabel.setText(String.format(getString(R.string.number_of_logs), getNumberOfLogs()));
+        mNumberOfLogs.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mNumberOfLogsLabel.setText(String.format(getString(R.string.number_of_logs), getNumberOfLogs()));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
     }
 
     @Override
@@ -163,6 +193,10 @@ public class EventActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    private int getNumberOfLogs() {
+        return Math.max(mNumberOfLogs.getProgress(), 1);
     }
 
     private void addProperty() {
@@ -185,7 +219,7 @@ public class EventActivity extends AppCompatActivity {
     public void send(@SuppressWarnings("UnusedParameters") View view) {
         PersistenceFlag persistenceFlag = PersistenceFlag.values()[mPersistenceFlagSpinner.getSelectedItemPosition()];
         int flags = getFlags(persistenceFlag);
-        String name = ((TextView) findViewById(R.id.name)).getText().toString();
+        String name = mName.getText().toString();
         Map<String, String> properties = null;
         EventProperties typedProperties = null;
         if (mProperties.size() > 0) {
@@ -204,25 +238,27 @@ public class EventActivity extends AppCompatActivity {
 
         /* First item is always empty as it's default value which means either AppCenter, one collector or both. */
         AnalyticsTransmissionTarget target = getSelectedTarget();
-        if (target == null) {
-            if (persistenceFlag != PersistenceFlag.DEFAULT) {
-                Analytics.trackEvent(name, typedProperties, flags);
-            } else if (typedProperties != null) {
-                Analytics.trackEvent(name, typedProperties);
-            } else if (properties != null) {
-                Analytics.trackEvent(name, properties);
+        for (int i = 0; i < getNumberOfLogs(); i++) {
+            if (target == null) {
+                if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                    Analytics.trackEvent(name, typedProperties, flags);
+                } else if (typedProperties != null) {
+                    Analytics.trackEvent(name, typedProperties);
+                } else if (properties != null) {
+                    Analytics.trackEvent(name, properties);
+                } else {
+                    Analytics.trackEvent(name);
+                }
             } else {
-                Analytics.trackEvent(name);
-            }
-        } else {
-            if (persistenceFlag != PersistenceFlag.DEFAULT) {
-                target.trackEvent(name, typedProperties, flags);
-            } else if (typedProperties != null) {
-                target.trackEvent(name, typedProperties);
-            } else if (properties != null) {
-                target.trackEvent(name, properties);
-            } else {
-                target.trackEvent(name);
+                if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                    target.trackEvent(name, typedProperties, flags);
+                } else if (typedProperties != null) {
+                    target.trackEvent(name, typedProperties);
+                } else if (properties != null) {
+                    target.trackEvent(name, properties);
+                } else {
+                    target.trackEvent(name);
+                }
             }
         }
     }

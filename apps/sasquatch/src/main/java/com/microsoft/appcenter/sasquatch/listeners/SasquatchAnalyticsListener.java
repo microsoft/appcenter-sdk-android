@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.sasquatch.listeners;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.widget.Toast;
@@ -10,6 +11,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.PageLog;
 import com.microsoft.appcenter.ingestion.models.LogWithProperties;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.utils.HandlerUtils;
 
 import org.json.JSONObject;
 
@@ -20,6 +22,12 @@ public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analy
 
     private final Context mContext;
 
+    private static final long TOAST_DELAY = 2000;
+
+    private long mLastToastTime;
+
+    private long mPendingLogCount;
+
     public SasquatchAnalyticsListener(Context context) {
         this.mContext = context;
     }
@@ -27,9 +35,9 @@ public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analy
     @Override
     public void onBeforeSending(com.microsoft.appcenter.ingestion.models.Log log) {
         if (log instanceof EventLog || log instanceof CommonSchemaLog) {
-            Toast.makeText(mContext, R.string.event_before_sending, Toast.LENGTH_SHORT).show();
+            notifyBeforeSending(mContext.getString(R.string.event_before_sending));
         } else if (log instanceof PageLog) {
-            Toast.makeText(mContext, R.string.page_before_sending, Toast.LENGTH_SHORT).show();
+            notifyBeforeSending(mContext.getString(R.string.page_before_sending));
         }
         analyticsIdlingResource.increment();
     }
@@ -43,8 +51,7 @@ public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analy
             message = mContext.getString(R.string.page_sent_failed);
         }
         if (message != null) {
-            message = String.format("%s\nException: %s", message, e.toString());
-            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+            notifySendingCompletion(String.format("%s\nException: %s", message, e.toString()));
         }
         analyticsIdlingResource.decrement();
     }
@@ -69,8 +76,39 @@ public class SasquatchAnalyticsListener implements com.microsoft.appcenter.analy
             }
         }
         if (message != null) {
-            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+            notifySendingCompletion(message);
         }
         analyticsIdlingResource.decrement();
     }
+
+    private void notifyBeforeSending(String message) {
+        if (mPendingLogCount++ == 0) {
+            showOrDelayToast(message);
+        }
+    }
+
+    private void notifySendingCompletion(String message) {
+        if (--mPendingLogCount == 0) {
+            showOrDelayToast(message);
+        }
+    }
+
+    private void showOrDelayToast(final String message) {
+        long now = SystemClock.uptimeMillis();
+        long timeToWait = mLastToastTime + TOAST_DELAY - now;
+        if (timeToWait <= 0) {
+            Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+            mLastToastTime = now;
+        } else {
+            mLastToastTime = now + timeToWait;
+            HandlerUtils.getMainHandler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+                }
+            }, timeToWait);
+        }
+    }
+
 }

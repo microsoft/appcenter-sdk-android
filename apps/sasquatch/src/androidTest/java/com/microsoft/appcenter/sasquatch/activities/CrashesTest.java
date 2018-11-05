@@ -43,6 +43,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 import static android.support.test.espresso.matcher.ViewMatchers.withChild;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.CHECK_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.TOAST_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.onToast;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.waitFor;
@@ -193,12 +194,11 @@ public class CrashesTest {
         waitFor(onToast(mActivityTestRule.getActivity(),
                 withText(R.string.crash_before_sending)), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitFor(TOAST_DELAY));
+        onView(isRoot()).perform(waitFor(CHECK_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
                 withContainsText(R.string.crash_sent_succeeded),
                 withText(R.string.crash_sent_failed))), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitFor(TOAST_DELAY));
     }
 
     private ViewInteraction onCrash(@StringRes int titleId) {
