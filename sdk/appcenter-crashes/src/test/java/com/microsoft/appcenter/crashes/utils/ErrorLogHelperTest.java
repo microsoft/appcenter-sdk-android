@@ -344,4 +344,18 @@ public class ErrorLogHelperTest {
         assertEquals(1, actualProperties.size());
         assertEquals(truncatedMapItem, actualProperties.get(truncatedMapItem));
     }
+
+    @Test
+    public void truncateCauses() {
+        RuntimeException e = new RuntimeException();
+        for (int i = 0; i < 32; i++) {
+            e = new RuntimeException(Integer.valueOf(i).toString(), e);
+        }
+        int depth = 1;
+        Exception model = ErrorLogHelper.getModelExceptionFromThrowable(e);
+        while (model.getInnerExceptions() != null && (model = model.getInnerExceptions().get(0)) != null) {
+            depth++;
+        }
+        assertEquals(ErrorLogHelper.CAUSE_LIMIT, depth);
+    }
 }
