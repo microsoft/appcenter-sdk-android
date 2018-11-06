@@ -2,6 +2,10 @@
 
 ## Version 1.10.0 (Under active development)
 
+### AppCenter
+
+* **[Fix]** Do not delete old logs on try to add a log larger than the maximum storage capacity.
+
 ### AppCenterCrashes
 
 * **[Fix]** Preventing stack overflow crash while reading a huge throwable file.
