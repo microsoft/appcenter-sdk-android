@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -362,7 +363,8 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putLogLargerThanMaxSizeClearsEverything() throws PersistenceException {
+    public void putLogLargerThanMaxSizeDoNotClearsEverything() throws PersistenceException {
+        int someLogCount = 3;
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext, 2, DatabasePersistence.SCHEMA);
@@ -375,30 +377,26 @@ public class DatabasePersistenceAndroidTest {
         try {
 
             /* Generate some logs that will be evicted. */
-            int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
                 persistence.putLog("test-p1", AndroidTestUtils.generateMockLog());
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
-            /*
-             * Generate a log that is so large that will empty all the database and
-             * eventually fails.
-             */
+            /* Generate a log that is so large that it eventually fails. */
             LogWithProperties log = AndroidTestUtils.generateMockLog();
             int size = 30 * 1024;
-            StringBuilder largeValue = new StringBuilder(size);
-            for (int i = 0; i < size; i++) {
-                largeValue.append("x");
-            }
             Map<String, String> properties = new HashMap<>();
-            properties.put("key", largeValue.toString());
+            properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
-            long id = persistence.putLog("test-p1", log);
+            try {
+                persistence.putLog("test-p1", log);
+                fail("putLog was expected to fail");
+            } catch (PersistenceException e) {
+                e.printStackTrace();
 
-            /* Verify the behavior: not inserted and database now empty. */
-            assertEquals(-1, id);
-            assertEquals(0, persistence.countLogs("test-p1"));
+                /* Verify the behavior: not inserted and database isn't empty. */
+                assertEquals(someLogCount, persistence.countLogs("test-p1"));
+            }
         } finally {
 
             //noinspection ThrowFromFinallyBlock
