@@ -127,6 +127,11 @@ public class DatabaseManager implements Closeable {
                     onCreate(db);
                 }
             }
+
+            @Override
+            public void onOpen(SQLiteDatabase db) {
+                mListener.onOpen(db);
+            }
         };
     }
 
@@ -425,7 +430,17 @@ public class DatabaseManager implements Closeable {
          * @param newVersion new version of the schema.
          * @return true if upgrade was managed, false to drop/create table.
          */
-        @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+
+        /**
+         * Called when the database has been opened.
+         * <p>
+         * This method is called after the database connection has been configured
+         * and after the database schema has been created or upgraded as necessary.
+         *
+         * @param db The database.
+         */
+        void onOpen(SQLiteDatabase db);
     }
 }

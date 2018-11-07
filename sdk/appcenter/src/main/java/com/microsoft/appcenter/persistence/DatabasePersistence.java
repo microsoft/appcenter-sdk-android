@@ -93,6 +93,12 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_PRIORITY = "priority";
 
     /**
+     * Priority index.
+     */
+    @VisibleForTesting
+    static final String INDEX_PRIORITY = "idx_" + COLUMN_PRIORITY;
+
+    /**
      * Table schema for Persistence.
      */
     @VisibleForTesting
@@ -199,6 +205,14 @@ public class DatabasePersistence extends Persistence {
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 return true;
+            }
+
+            @Override
+            public void onOpen(SQLiteDatabase db) {
+                if (db.isReadOnly()) {
+                    return;
+                }
+                db.execSQL("CREATE INDEX IF NOT EXISTS " + INDEX_PRIORITY + " ON " + TABLE + " (" + COLUMN_PRIORITY + ")");
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
