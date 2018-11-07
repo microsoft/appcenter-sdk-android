@@ -100,14 +100,15 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("test");
         Analytics.trackEvent("test", new HashMap<String, String>());
         Analytics.trackEvent("test", (Map<String, String>) null);
+        Analytics.trackEvent("test", (Map<String, String>) null, 0);
         Analytics.trackEvent("test", (EventProperties) null);
-        Analytics.trackEvent("test", null, 0);
+        Analytics.trackEvent("test", (EventProperties) null, 0);
         Analytics.trackPage("test");
         Analytics.trackPage("test", new HashMap<String, String>());
         Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(8));
+        verifyStatic(times(9));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -337,8 +338,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("eventName", null, PERSISTENCE_NORMAL);
-        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+        Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_NORMAL);
+        Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_NORMAL);
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
     }
 
     @Test
@@ -347,8 +349,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("eventName", null, PERSISTENCE_CRITICAL);
-        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+        Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_CRITICAL);
+        Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_CRITICAL);
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
     }
 
     @Test
@@ -357,9 +360,10 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("eventName", null, 0x03);
-        verify(channel).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
-        verifyStatic();
+        Analytics.trackEvent("eventName1", (Map<String, String>) null, 0x03);
+        Analytics.trackEvent("eventName2", (EventProperties) null, 0x03);
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
+        verifyStatic(times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 
