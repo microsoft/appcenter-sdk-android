@@ -52,6 +52,8 @@ import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -73,7 +75,7 @@ public class DatabasePersistenceAndroidTest {
     /**
      * Maximum storage size in bytes for unit test case.
      */
-    private static final int MAX_STORAGE_SIZE_IN_BYTES = 20480;
+    private static final int MAX_STORAGE_SIZE_IN_BYTES = 32 * 1024;
 
     /**
      * Context instance.
@@ -369,7 +371,7 @@ public class DatabasePersistenceAndroidTest {
         try {
 
             /* Generate some logs that will be evicted. */
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 20; i++) {
                 persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
             }
 
@@ -378,7 +380,7 @@ public class DatabasePersistenceAndroidTest {
              * This will evict all previously stored logs.
              */
             List<Log> expectedLogs = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
+            for (int i = 0; i < 10; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
                 persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 expectedLogs.add(log);
@@ -386,9 +388,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 7, outputLogs);
-            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
-            assertEquals(expectedLogs, outputLogs);
+            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
+            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -419,7 +421,7 @@ public class DatabasePersistenceAndroidTest {
             }
 
             /* Generate some normal priority logs that will be evicted. */
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 20; i++) {
                 persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
             }
 
@@ -427,7 +429,7 @@ public class DatabasePersistenceAndroidTest {
              * Generate the maximum number of normal logs that we can store in this configuration.
              * This will evict all previously stored logs that are not critical.
              */
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 7; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
                 persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
                 expectedLogs.add(log);
@@ -440,9 +442,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 7, outputLogs);
-            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
-            assertEquals(expectedLogs, outputLogs);
+            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
+            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -573,7 +575,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
             /* Generate some normal priority logs that will be evicted. */
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 20; i++) {
                 persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
             }
 
@@ -598,9 +600,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence: critical were kept. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 7, outputLogs);
-            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
-            assertEquals(expectedLogs, outputLogs);
+            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
+            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -623,7 +625,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Fill storage with critical logs. */
             List<Log> expectedLogs = new ArrayList<>();
-            int someLogCount = 6;
+            int someLogCount = 12;
             for (int i = 0; i < someLogCount; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
                 persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
@@ -640,9 +642,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence: critical were kept. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 7, outputLogs);
-            assertEquals(expectedLogs.size(), persistence.countLogs("test-p1"));
-            assertEquals(expectedLogs, outputLogs);
+            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
+            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -1065,13 +1067,7 @@ public class DatabasePersistenceAndroidTest {
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -1158,13 +1154,7 @@ public class DatabasePersistenceAndroidTest {
         ContentValues oldSchema = new ContentValues(SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
@@ -1251,13 +1241,7 @@ public class DatabasePersistenceAndroidTest {
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TARGET_KEY, oldSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TARGET_KEY, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();

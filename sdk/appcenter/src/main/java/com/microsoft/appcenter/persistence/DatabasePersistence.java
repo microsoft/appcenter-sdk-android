@@ -209,9 +209,6 @@ public class DatabasePersistence extends Persistence {
 
             @Override
             public void onOpen(SQLiteDatabase db) {
-                if (db.isReadOnly()) {
-                    return;
-                }
                 db.execSQL("CREATE INDEX IF NOT EXISTS " + INDEX_PRIORITY + " ON " + TABLE + " (" + COLUMN_PRIORITY + ")");
             }
         });
