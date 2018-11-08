@@ -25,6 +25,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("unused")
 @SmallTest
@@ -228,13 +231,8 @@ public class DatabaseManagerAndroidTest {
     public void databaseManager() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManager", "databaseManager", 1, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManager", "databaseManager", 1, mSchema, listener);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -245,6 +243,7 @@ public class DatabaseManagerAndroidTest {
             //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
     }
 
     @Test
@@ -259,13 +258,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -286,13 +279,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -318,13 +305,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
 
         /* Put data. */
         long id;
@@ -346,6 +327,10 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database with a newer schema without handling upgrade. */
         databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+            }
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -383,13 +368,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.Listener() {
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -416,4 +395,15 @@ public class DatabaseManagerAndroidTest {
         }
     }
 
+    private static class DefaultListener implements DatabaseManager.Listener {
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+        }
+
+        @Override
+        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            return false;
+        }
+    }
 }

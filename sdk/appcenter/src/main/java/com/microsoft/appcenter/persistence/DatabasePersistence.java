@@ -57,6 +57,12 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
+     * Table name.
+     */
+    @VisibleForTesting
+    static final String TABLE = "logs";
+
+    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -92,6 +98,7 @@ public class DatabasePersistence extends Persistence {
     @VisibleForTesting
     static final String COLUMN_PRIORITY = "priority";
 
+
     /**
      * Table schema for Persistence.
      */
@@ -105,15 +112,14 @@ public class DatabasePersistence extends Persistence {
     static final String DATABASE = "com.microsoft.appcenter.persistence";
 
     /**
-     * Table name.
-     */
-    @VisibleForTesting
-    static final String TABLE = "logs";
-
-    /**
      * Current version of the schema.
      */
     private static final int VERSION = 4;
+
+    /**
+     * Priority index.
+     */
+    private static final String INDEX_PRIORITY = "ix_" + TABLE + "_" + COLUMN_PRIORITY;
 
     /**
      * Order by clause to select logs.
@@ -186,6 +192,15 @@ public class DatabasePersistence extends Persistence {
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
+            private void createPriorityIndex(SQLiteDatabase db) {
+                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                createPriorityIndex(db);
+            }
+
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
@@ -198,6 +213,7 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                createPriorityIndex(db);
                 return true;
             }
         });

@@ -116,6 +116,7 @@ public class DatabaseManager implements Closeable {
                 }
                 sql.append(");");
                 db.execSQL(sql.toString());
+                mListener.onCreate(db);
             }
 
             @Override
@@ -415,6 +416,13 @@ public class DatabaseManager implements Closeable {
     public interface Listener {
 
         /**
+         * Called when the database has been created.
+         *
+         * @param db The database.
+         **/
+        void onCreate(SQLiteDatabase db);
+
+        /**
          * Called when upgrade is performed on the database.
          * You can use this callback to alter table schema without losing data.
          * If schema is not migrated, return false and table will be recreated with new schema,
@@ -425,7 +433,7 @@ public class DatabaseManager implements Closeable {
          * @param newVersion new version of the schema.
          * @return true if upgrade was managed, false to drop/create table.
          */
-        @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "unused"})
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
     }
 }
