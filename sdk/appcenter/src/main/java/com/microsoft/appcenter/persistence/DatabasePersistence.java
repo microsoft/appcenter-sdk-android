@@ -238,7 +238,7 @@ public class DatabasePersistence extends Persistence {
 
         /* Convert log to JSON string and put in the database. */
         try {
-            AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with sid=" + log.getSid());
+            AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with flags=" + flags);
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
             boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
