@@ -57,6 +57,12 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
+     * Table name.
+     */
+    @VisibleForTesting
+    static final String TABLE = "logs";
+
+    /**
      * Name of group column in the table.
      */
     @VisibleForTesting
@@ -96,7 +102,7 @@ public class DatabasePersistence extends Persistence {
      * Priority index.
      */
     @VisibleForTesting
-    static final String INDEX_PRIORITY = "idx_" + COLUMN_PRIORITY;
+    static final String INDEX_PRIORITY = "ix_" + TABLE + "_" + COLUMN_PRIORITY;
 
     /**
      * Table schema for Persistence.
@@ -109,12 +115,6 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String DATABASE = "com.microsoft.appcenter.persistence";
-
-    /**
-     * Table name.
-     */
-    @VisibleForTesting
-    static final String TABLE = "logs";
 
     /**
      * Current version of the schema.
@@ -193,6 +193,11 @@ public class DatabasePersistence extends Persistence {
         mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
             @Override
+            public void onCreate(SQLiteDatabase db) {
+                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
+            }
+
+            @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
                 /* Update columns only if needed, this callback is called only on upgrade. */
@@ -204,12 +209,8 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
                 return true;
-            }
-
-            @Override
-            public void onOpen(SQLiteDatabase db) {
-                db.execSQL("CREATE INDEX IF NOT EXISTS " + INDEX_PRIORITY + " ON " + TABLE + " (" + COLUMN_PRIORITY + ")");
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);

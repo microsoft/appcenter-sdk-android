@@ -243,7 +243,7 @@ public class DatabaseManagerAndroidTest {
             //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
-        verify(listener).onOpen(any(SQLiteDatabase.class));
+        verify(listener).onCreate(any(SQLiteDatabase.class));
     }
 
     @Test
@@ -329,13 +329,13 @@ public class DatabaseManagerAndroidTest {
         databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
 
             @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                db.execSQL("ALTER TABLE databaseManagerUpgrade ADD COLUMN COL_INT INTEGER");
-                return true;
+            public void onCreate(SQLiteDatabase db) {
             }
 
             @Override
-            public void onOpen(SQLiteDatabase db) {
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                db.execSQL("ALTER TABLE databaseManagerUpgrade ADD COLUMN COL_INT INTEGER");
+                return true;
             }
         });
         try {
@@ -398,12 +398,12 @@ public class DatabaseManagerAndroidTest {
     private static class DefaultListener implements DatabaseManager.Listener {
 
         @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            return false;
+        public void onCreate(SQLiteDatabase db) {
         }
 
         @Override
-        public void onOpen(SQLiteDatabase db) {
+        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            return false;
         }
     }
 }
