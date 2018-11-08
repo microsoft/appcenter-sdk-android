@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
@@ -370,27 +369,26 @@ public class DatabasePersistenceAndroidTest {
         persistence.setLogSerializer(logSerializer);
         try {
 
-            /* Generate some logs that will be evicted. */
-            for (int i = 0; i < 20; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
-            }
-
-            /*
-             * Generate the maximum number of logs that we can store in this configuration.
-             * This will evict all previously stored logs.
-             */
-            List<Log> expectedLogs = new ArrayList<>();
-            for (int i = 0; i < 10; i++) {
+            /* Generate logs until we notice eviction. */
+            List<Log> allLogs = new ArrayList<>();
+            String group = "test-p1";
+            for (int i = 0; allLogs.size() == persistence.countLogs(group); i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
-                expectedLogs.add(log);
+                persistence.putLog(log, group, PERSISTENCE_NORMAL);
+                allLogs.add(log);
+
+                /* Fail if no eviction happen after a long time to avoid infinite loop on bug. */
+                assertTrue("No eviction is happening", i < 1000);
             }
 
-            /* Get logs from persistence. */
-            List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
-            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
-            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
+            /* When eviction happened it can be 1 or more logs, but deleted logs should be first ones. */
+            int databaseCount = persistence.countLogs(group);
+            List<Log> expectedLogs = allLogs.subList(allLogs.size() - databaseCount, allLogs.size());
+
+            /* Get logs from persistence and check we have all the most recent logs. */
+            List<Log> actualLogs = new ArrayList<>();
+            persistence.getLogs(group, Collections.<String>emptyList(), allLogs.size(), actualLogs);
+            assertEquals(expectedLogs, actualLogs);
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -420,31 +418,27 @@ public class DatabasePersistenceAndroidTest {
                 expectedLogs.add(log);
             }
 
-            /* Generate some normal priority logs that will be evicted. */
-            for (int i = 0; i < 20; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
-            }
-
-            /*
-             * Generate the maximum number of normal logs that we can store in this configuration.
-             * This will evict all previously stored logs that are not critical.
-             */
-            for (int i = 0; i < 7; i++) {
+            /* Generate normal priority logs until we notice eviction. */
+            List<Log> allNormalLogs = new ArrayList<>();
+            String group = "test-p1";
+            for (int i = 0; allNormalLogs.size() + criticalLogCount == persistence.countLogs(group); i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
-                expectedLogs.add(log);
+                persistence.putLog(log, group, PERSISTENCE_NORMAL);
+                allNormalLogs.add(log);
+
+                /* Fail if no eviction happen after a long time to avoid infinite loop on bug. */
+                assertTrue("No eviction is happening", i < 1000);
             }
 
-            /* Add one more critical log should clean a normal log first. */
-            MockLog log = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
-            expectedLogs.add(criticalLogCount, log);
+            /* When eviction happened it can be 1 or more logs, but deleted logs should be first normal ones. */
+            int databaseCount = persistence.countLogs(group);
+            int normalLogsStartIndex = allNormalLogs.size() - databaseCount + criticalLogCount;
+            expectedLogs.addAll(allNormalLogs.subList(normalLogsStartIndex, allNormalLogs.size()));
 
-            /* Get logs from persistence. */
-            List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
-            assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
-            assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
+            /* Get logs from persistence and check we have all the most recent logs. */
+            List<Log> actualLogs = new ArrayList<>();
+            persistence.getLogs(group, Collections.<String>emptyList(), 2000, actualLogs);
+            assertEquals(expectedLogs, actualLogs);
         } finally {
 
             //noinspection ThrowFromFinallyBlock
