@@ -98,11 +98,6 @@ public class DatabasePersistence extends Persistence {
     @VisibleForTesting
     static final String COLUMN_PRIORITY = "priority";
 
-    /**
-     * Priority index.
-     */
-    @VisibleForTesting
-    static final String INDEX_PRIORITY = "ix_" + TABLE + "_" + COLUMN_PRIORITY;
 
     /**
      * Table schema for Persistence.
@@ -120,6 +115,11 @@ public class DatabasePersistence extends Persistence {
      * Current version of the schema.
      */
     private static final int VERSION = 4;
+
+    /**
+     * Priority index.
+     */
+    private static final String INDEX_PRIORITY = "ix_" + TABLE + "_" + COLUMN_PRIORITY;
 
     /**
      * Order by clause to select logs.
@@ -192,9 +192,13 @@ public class DatabasePersistence extends Persistence {
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
+            private void createPriorityIndex(SQLiteDatabase db) {
+                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
+            }
+
             @Override
             public void onCreate(SQLiteDatabase db) {
-                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
+                createPriorityIndex(db);
             }
 
             @Override
@@ -209,7 +213,7 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
-                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
+                createPriorityIndex(db);
                 return true;
             }
         });
