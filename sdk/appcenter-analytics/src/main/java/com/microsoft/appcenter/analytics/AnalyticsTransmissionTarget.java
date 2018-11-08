@@ -154,7 +154,7 @@ public class AnalyticsTransmissionTarget {
      * @param name An event name.
      */
     public void trackEvent(String name) {
-        trackEvent(name, null, Flags.DEFAULTS);
+        trackEvent(name, (EventProperties) null, Flags.DEFAULTS);
     }
 
     /**
@@ -172,6 +172,26 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, Map<String, String> properties) {
+        trackEvent(name, properties, Flags.DEFAULTS);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Use {@link Flags#PERSISTENCE_CRITICAL} to send this event
+     *                   before events using that use default flags or {@link Flags#PERSISTENCE_NORMAL}.
+     */
+    public void trackEvent(String name, Map<String, String> properties, int flags) {
         EventProperties eventProperties = null;
         if (properties != null) {
             eventProperties = new EventProperties();
@@ -179,7 +199,7 @@ public class AnalyticsTransmissionTarget {
                 eventProperties.set(entry.getKey(), entry.getValue());
             }
         }
-        trackEvent(name, eventProperties, Flags.DEFAULTS);
+        trackEvent(name, eventProperties, flags);
     }
 
     /**

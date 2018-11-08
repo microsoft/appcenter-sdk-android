@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
@@ -607,23 +608,26 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     @Test
     public void trackEventWithNormalPersistenceFlag() {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
-        target.trackEvent("eventName", null, PERSISTENCE_NORMAL);
-        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+        target.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_NORMAL);
+        target.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_NORMAL);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
     }
 
     @Test
     public void trackEventWithNormalCriticalPersistenceFlag() {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
-        target.trackEvent("eventName", null, PERSISTENCE_CRITICAL);
-        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+        target.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_CRITICAL);
+        target.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_CRITICAL);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
     }
 
     @Test
     public void trackEventWithInvalidFlags() {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
-        target.trackEvent("eventName", null, 0x03);
-        verify(mChannel).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
-        verifyStatic();
+        target.trackEvent("eventName1", (Map<String, String>) null, 0x03);
+        target.trackEvent("eventName2", (EventProperties) null, 0x03);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
+        verifyStatic(times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 }
