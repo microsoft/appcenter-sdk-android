@@ -224,7 +224,7 @@ public class EventActivity extends AppCompatActivity {
         Map<String, String> properties = null;
         EventProperties typedProperties = null;
         if (mProperties.size() > 0) {
-            if (onlyStringProperties() && (persistenceFlag == PersistenceFlag.DEFAULT || target == null)) {
+            if (onlyStringProperties()) {
                 properties = new HashMap<>();
                 for (TypedPropertyFragment fragment : mProperties) {
                     fragment.set(properties);
@@ -256,12 +256,18 @@ public class EventActivity extends AppCompatActivity {
                     Analytics.trackEvent(name);
                 }
             } else {
-                if (persistenceFlag != PersistenceFlag.DEFAULT) {
-                    target.trackEvent(name, typedProperties, flags);
-                } else if (typedProperties != null) {
-                    target.trackEvent(name, typedProperties);
+                if (typedProperties != null) {
+                    if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                        target.trackEvent(name, typedProperties, flags);
+                    } else {
+                        target.trackEvent(name, typedProperties);
+                    }
                 } else if (properties != null) {
-                    target.trackEvent(name, properties);
+                    if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                        target.trackEvent(name, properties, flags);
+                    } else {
+                        target.trackEvent(name, properties);
+                    }
                 } else {
                     target.trackEvent(name);
                 }
