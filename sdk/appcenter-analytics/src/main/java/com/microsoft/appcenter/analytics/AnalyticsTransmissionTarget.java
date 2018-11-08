@@ -188,8 +188,11 @@ public class AnalyticsTransmissionTarget {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Use {@link Flags#PERSISTENCE_CRITICAL} to send this event
-     *                   before events using that use default flags or {@link Flags#PERSISTENCE_NORMAL}.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
      */
     public void trackEvent(String name, Map<String, String> properties, int flags) {
         EventProperties eventProperties = null;
@@ -235,8 +238,11 @@ public class AnalyticsTransmissionTarget {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Use {@link Flags#PERSISTENCE_CRITICAL} to send this event
-     *                   before events using that use default flags or {@link Flags#PERSISTENCE_NORMAL}.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
      */
     public void trackEvent(String name, EventProperties properties, int flags) {
 
