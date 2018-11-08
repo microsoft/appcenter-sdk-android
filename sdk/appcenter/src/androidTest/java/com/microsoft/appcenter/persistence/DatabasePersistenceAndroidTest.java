@@ -377,7 +377,7 @@ public class DatabasePersistenceAndroidTest {
                 persistence.putLog(log, group, PERSISTENCE_NORMAL);
                 allLogs.add(log);
 
-                /* Fail if no eviction happen after a long time to avoid infinite loop on bug. */
+                /* Fail if no eviction happens after a long time to avoid infinite loop on bug. */
                 assertTrue("No eviction is happening", i < 1000);
             }
 
@@ -426,7 +426,7 @@ public class DatabasePersistenceAndroidTest {
                 persistence.putLog(log, group, PERSISTENCE_NORMAL);
                 allNormalLogs.add(log);
 
-                /* Fail if no eviction happen after a long time to avoid infinite loop on bug. */
+                /* Fail if no eviction happens after a long time to avoid infinite loop on bug. */
                 assertTrue("No eviction is happening", i < 1000);
             }
 
