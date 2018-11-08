@@ -217,13 +217,14 @@ public class EventActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     public void send(@SuppressWarnings("UnusedParameters") View view) {
+        AnalyticsTransmissionTarget target = getSelectedTarget();
         PersistenceFlag persistenceFlag = PersistenceFlag.values()[mPersistenceFlagSpinner.getSelectedItemPosition()];
         int flags = getFlags(persistenceFlag);
         String name = mName.getText().toString();
         Map<String, String> properties = null;
         EventProperties typedProperties = null;
         if (mProperties.size() > 0) {
-            if (onlyStringProperties() && persistenceFlag == PersistenceFlag.DEFAULT) {
+            if (onlyStringProperties() && (persistenceFlag == PersistenceFlag.DEFAULT || target == null)) {
                 properties = new HashMap<>();
                 for (TypedPropertyFragment fragment : mProperties) {
                     fragment.set(properties);
@@ -237,15 +238,20 @@ public class EventActivity extends AppCompatActivity {
         }
 
         /* First item is always empty as it's default value which means either AppCenter, one collector or both. */
-        AnalyticsTransmissionTarget target = getSelectedTarget();
         for (int i = 0; i < getNumberOfLogs(); i++) {
             if (target == null) {
-                if (persistenceFlag != PersistenceFlag.DEFAULT) {
-                    Analytics.trackEvent(name, typedProperties, flags);
-                } else if (typedProperties != null) {
-                    Analytics.trackEvent(name, typedProperties);
+                if (typedProperties != null) {
+                    if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                        Analytics.trackEvent(name, typedProperties, flags);
+                    } else {
+                        Analytics.trackEvent(name, typedProperties);
+                    }
                 } else if (properties != null) {
-                    Analytics.trackEvent(name, properties);
+                    if (persistenceFlag != PersistenceFlag.DEFAULT) {
+                        Analytics.trackEvent(name, properties, flags);
+                    } else {
+                        Analytics.trackEvent(name, properties);
+                    }
                 } else {
                     Analytics.trackEvent(name);
                 }
