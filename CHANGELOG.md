@@ -1,9 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 1.10.0 (Under active development)
+## Version 1.10.0
 
 ### AppCenterCrashes
 
+* **[Feature]** Add API to specify event persistence priority.
 * **[Fix]** Preventing stack overflow crash while reading a huge throwable file.
 
 ___
