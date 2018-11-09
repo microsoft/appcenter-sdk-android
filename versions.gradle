@@ -2,7 +2,7 @@
 
 ext {
     versionCode = 39
-    versionName = '1.9.1'
+    versionName = '1.10.0'
     minSdkVersion = 16
     targetSdkVersion = 28
     compileSdkVersion = 28
