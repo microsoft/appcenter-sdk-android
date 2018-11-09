@@ -2,9 +2,12 @@
 
 ## Version 1.10.0
 
-### AppCenterCrashes
+### AppCenterAnalytics
 
 * **[Feature]** Add API to specify event persistence priority.
+
+### AppCenterCrashes
+
 * **[Fix]** Preventing stack overflow crash while reading a huge throwable file.
 
 ___
