@@ -14,13 +14,13 @@ public class AppCenterInstrumentationTest extends AbstractAppCenterTest {
     public void disableServicesViaInstrumentation() {
 
         /* Verify that when variable is not set, services are started. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
+        addArgumentToRegistry(null);
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Verify that when "All" is set, no service is started. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, ServiceInstrumentationUtils.DISABLE_ALL_SERVICES);
+        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_ALL_SERVICES);
         AppCenter.unsetInstance();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
@@ -28,13 +28,13 @@ public class AppCenterInstrumentationTest extends AbstractAppCenterTest {
 
         /* Verify single service can be disabled. */
         AppCenter.unsetInstance();
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, DummyService.getInstance().getServiceName());
+        addArgumentToRegistry(DummyService.getInstance().getServiceName());
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Verify that multiple services can be disabled. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, DummyService.getInstance().getServiceName()
+        addArgumentToRegistry(DummyService.getInstance().getServiceName()
                 + ",anotherService," + AnotherDummyService.getInstance().getServiceName());
         AppCenter.unsetInstance();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
@@ -42,7 +42,7 @@ public class AppCenterInstrumentationTest extends AbstractAppCenterTest {
         assertFalse(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
 
         /* Repeat last test with whitespace. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, " " + DummyService.getInstance().getServiceName()
+        addArgumentToRegistry(" " + DummyService.getInstance().getServiceName()
                 + " , anotherService, " + AnotherDummyService.getInstance().getServiceName() + " ");
         AppCenter.unsetInstance();
         AppCenter.start(mApplication, "app-secret", DummyService.class, AnotherDummyService.class);
@@ -97,31 +97,31 @@ public class AppCenterInstrumentationTest extends AbstractAppCenterTest {
     public void disableServicesFromLibraryViaInstrumentation() {
 
         /* Verify that when variable is not set, services are started. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
+        addArgumentToRegistry(null);
         AppCenter.startFromLibrary(mApplication, DummyService.class);
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
 
         /* Verify that when "All" is set, no service is started. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, ServiceInstrumentationUtils.DISABLE_ALL_SERVICES);
+        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_ALL_SERVICES);
         AppCenter.unsetInstance();
         AppCenter.startFromLibrary(mApplication, DummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
 
         /* Verify single service can be disabled. */
         AppCenter.unsetInstance();
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, DummyService.getInstance().getServiceName());
+        addArgumentToRegistry(DummyService.getInstance().getServiceName());
         AppCenter.startFromLibrary(mApplication, DummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
 
         /* Verify that multiple services can be disabled. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, DummyService.getInstance().getServiceName()
+        addArgumentToRegistry(DummyService.getInstance().getServiceName()
                 + ",anotherService," + AnotherDummyService.getInstance().getServiceName());
         AppCenter.unsetInstance();
         AppCenter.startFromLibrary(mApplication, DummyService.class);
         assertFalse(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
 
         /* Repeat last test with whitespace. */
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, " " + DummyService.getInstance().getServiceName()
+        addArgumentToRegistry(" " + DummyService.getInstance().getServiceName()
                 + " , anotherService, " + AnotherDummyService.getInstance().getServiceName() + " ");
         AppCenter.unsetInstance();
         AppCenter.startFromLibrary(mApplication, DummyService.class);

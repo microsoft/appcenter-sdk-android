@@ -18,6 +18,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Date;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -44,7 +45,7 @@ public class ChannelLogDecorateTest {
         /* Test a log that should be decorated. */
         for (int i = 0; i < 3; i++) {
             Log log = mock(Log.class);
-            channel.enqueue(log, "");
+            channel.enqueue(log, "", DEFAULTS);
             verify(log).setDevice(device);
             verify(log).setTimestamp(any(Date.class));
         }
@@ -57,7 +58,7 @@ public class ChannelLogDecorateTest {
         Log log2 = mock(Log.class);
         when(log2.getDevice()).thenReturn(device);
         when(log2.getTimestamp()).thenReturn(new Date(123L));
-        channel.enqueue(log2, "");
+        channel.enqueue(log2, "", DEFAULTS);
         verify(log2, never()).setDevice(any(Device.class));
         verify(log2, never()).setTimestamp(any(Date.class));
 
@@ -69,7 +70,7 @@ public class ChannelLogDecorateTest {
         /* Generate some logs to verify device properties have been updated. */
         for (int i = 0; i < 3; i++) {
             Log log3 = mock(Log.class);
-            channel.enqueue(log3, "");
+            channel.enqueue(log3, "", DEFAULTS);
             verify(log3).setDevice(device2);
             verify(log3).setTimestamp(any(Date.class));
         }

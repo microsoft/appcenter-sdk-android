@@ -1,9 +1,10 @@
 package com.microsoft.appcenter;
 
 import android.app.Application;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,7 +21,8 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -33,15 +35,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
 import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -58,10 +57,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         Constants.class,
         AppCenterLog.class,
         StartServiceLog.class,
-        StorageHelper.class,
-        StorageHelper.PreferencesStorage.class,
+        FileManager.class,
+        SharedPreferencesManager.class,
         IdHelper.class,
-        StorageHelper.DatabaseStorage.class,
         DeviceInfoHelper.class,
         Thread.class,
         ShutdownHelper.class,
@@ -81,9 +79,6 @@ public class AbstractAppCenterTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    private Iterator<ContentValues> mDataBaseScannerIterator;
-
-    @Mock
     DefaultChannel mChannel;
 
     @Mock
@@ -97,9 +92,9 @@ public class AbstractAppCenterTest {
 
     ApplicationInfo mApplicationInfo;
 
-    static void addArgumentToRegistry(String key, String value) {
+    static void addArgumentToRegistry(String value) {
         Bundle mockBundle = mock(Bundle.class);
-        when(mockBundle.getString(key)).thenReturn(value);
+        when(mockBundle.getString(ServiceInstrumentationUtils.DISABLE_SERVICES)).thenReturn(value);
         when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
     }
 
@@ -119,10 +114,9 @@ public class AbstractAppCenterTest {
 
         mockStatic(Constants.class);
         mockStatic(AppCenterLog.class);
-        mockStatic(StorageHelper.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
+        mockStatic(FileManager.class);
+        mockStatic(SharedPreferencesManager.class);
         mockStatic(IdHelper.class);
-        mockStatic(StorageHelper.DatabaseStorage.class);
         mockStatic(Thread.class);
         mockStatic(ShutdownHelper.class);
         mockStatic(DeviceInfoHelper.class);
@@ -143,10 +137,10 @@ public class AbstractAppCenterTest {
         HandlerThread handlerThread = mock(HandlerThread.class);
         whenNew(HandlerThread.class).withAnyArguments().thenReturn(handlerThread);
         when(handlerThread.getLooper()).thenReturn(mock(Looper.class));
-        addArgumentToRegistry(ServiceInstrumentationUtils.DISABLE_SERVICES, null);
+        addArgumentToRegistry(null);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
-        when(StorageHelper.PreferencesStorage.getBoolean(anyString(), eq(true))).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(anyString(), eq(true))).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Void>() {
@@ -157,18 +151,17 @@ public class AbstractAppCenterTest {
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 String key = (String) invocation.getArguments()[0];
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(StorageHelper.PreferencesStorage.getBoolean(key, true)).thenReturn(enabled);
+                when(SharedPreferencesManager.getBoolean(key, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(anyString(), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(anyString(), anyBoolean());
 
         /* Mock empty database. */
-        StorageHelper.DatabaseStorage databaseStorage = mock(StorageHelper.DatabaseStorage.class);
-        when(StorageHelper.DatabaseStorage.getDatabaseStorage(anyString(), anyString(), anyInt(), any(ContentValues.class), any(DatabaseManager.Listener.class))).thenReturn(databaseStorage);
-        StorageHelper.DatabaseStorage.DatabaseScanner databaseScanner = mock(StorageHelper.DatabaseStorage.DatabaseScanner.class);
-        when(databaseStorage.getScanner(anyString(), anyObject())).thenReturn(databaseScanner);
-        when(databaseScanner.iterator()).thenReturn(mDataBaseScannerIterator);
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString()))
+                .thenReturn(mock(Cursor.class));
 
         /* Mock network state helper. */
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);

@@ -3,7 +3,7 @@ package com.microsoft.appcenter.distribute;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 
@@ -43,7 +43,7 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
 
     @Test
     public void resumeForegroundThenPause() throws Exception {
-        when(StorageHelper.PreferencesStorage.getString(eq(PREFERENCE_KEY_UPDATE_TOKEN))).thenReturn("mock");
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_UPDATE_TOKEN))).thenReturn("mock");
         Intent clickIntent = mock(Intent.class);
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
         start();

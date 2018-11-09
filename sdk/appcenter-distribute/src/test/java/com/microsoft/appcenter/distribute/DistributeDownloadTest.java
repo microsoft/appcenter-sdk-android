@@ -18,7 +18,7 @@ import android.os.Build;
 
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -81,9 +81,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mDownloadManager).enqueue(mDownloadRequest);
         verifyNew(DownloadManager.Request.class).withArguments(mDownloadUrl);
         verifyStatic();
-        PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
 
         /* Pause/resume should do nothing excepting mentioning progress. */
         verify(mDialog).show();
@@ -94,9 +94,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Cancel download by disabling. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDownloadTask.get()).cancel(true);
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verify(mNotificationManager, never()).notify(anyInt(), any(Notification.class));
@@ -111,9 +111,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDownloadTask.get()).cancel(true);
         verify(mDownloadManager).enqueue(mDownloadRequest);
         verifyNew(DownloadManager.Request.class).withArguments(mDownloadUrl);
@@ -121,9 +121,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* And that we didn't persist the state. */
         verifyStatic(never());
-        PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
         verifyStatic(never());
-        PreferencesStorage.putString(PREFERENCE_KEY_DOWNLOAD_STATE, "");
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOAD_STATE, "");
         verifyZeroInteractions(mNotificationManager);
     }
 
@@ -139,7 +139,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Disable before completion. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         waitCheckDownloadTask();
 
         /* Verify cancellation. */
@@ -149,7 +149,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Check cleaned state only once, the completeWorkflow on failed download has to be ignored. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -166,7 +166,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Check failure processing. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Nothing should happen if just changing activities. */
         Activity activity = mock(Activity.class);
@@ -204,7 +204,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Check we completed workflow without starting activity because installer not found. */
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -225,7 +225,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(cursor).close();
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -246,7 +246,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(cursor).close();
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -268,7 +268,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(cursor).close();
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -283,7 +283,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* We receive intent from download manager when we remove download. */
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         completeDownload();
 
         /* Simulate task. */
@@ -295,15 +295,15 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify state deleted only at disable time. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no release hash+id were saved. */
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic(never());
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
 
         /* Verify enabling triggers update dialog again. */
         verify(mDialog).show();
@@ -328,15 +328,15 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify start activity and complete workflow. */
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify release hash+id were saved. */
         verifyStatic();
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic();
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyStatic();
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -394,15 +394,15 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify we complete workflow on failure. */
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no release hash+id were saved. */
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), anyString());
         verifyStatic(never());
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), anyInt());
         verifyStatic(never());
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), anyString());
         verifyZeroInteractions(mNotificationManager);
     }
 
@@ -428,11 +428,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         final Semaphore afterDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
-        final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+        final long downloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Overwrite next answer. */
         final Thread testThread = Thread.currentThread();
-        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
+        when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
 
             @Override
             public Long answer(InvocationOnMock invocation) {
@@ -474,11 +474,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         final Semaphore afterDisabledSemaphore = new Semaphore(0);
 
         /* Call get to execute last when so that we can override the answer for next calls. */
-        final long downloadId = PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+        final long downloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Overwrite next answer. */
         final Thread testThread = Thread.currentThread();
-        when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
+        when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).then(new Answer<Long>() {
 
             @Override
             public Long answer(InvocationOnMock invocation) {
@@ -505,7 +505,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Disable now. */
         Distribute.setEnabled(false);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Release task. */
         afterDisabledSemaphore.release();
@@ -517,7 +517,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext, never()).startActivity(any(Intent.class));
         verifyZeroInteractions(mNotificationManager);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -554,7 +554,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify start activity and complete workflow skipped, e.g. clean behavior happened only once. */
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyZeroInteractions(mNotificationManager);
         verify(cursor).close();
     }
@@ -595,7 +595,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify notification. */
         verify(mContext, never()).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
         verify(notificationBuilder).build();
         verify(mNotificationManager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
         verifyNoMoreInteractions(mNotificationManager);
@@ -619,11 +619,11 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verifyStatic();
 
         /* Verify workflow completed. */
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify however downloaded file was kept. */
         verifyStatic(never());
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verify(mDownloadManager, never()).remove(DOWNLOAD_ID);
 
         /* Verify second download (restart app again) cleans first one. */
@@ -636,7 +636,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify new download id in storage. */
         verifyStatic();
-        PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID + 1);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID + 1);
 
         /* Verify previous download removed. */
         verify(mDownloadManager).remove(DOWNLOAD_ID);
@@ -676,7 +676,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify notification. */
         verify(mContext, never()).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
         verify(mNotificationManager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
         verifyNoMoreInteractions(mNotificationManager);
         verify(cursor).getString(2);
@@ -694,9 +694,9 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         verify(mContext).startActivity(installIntent);
         verify(mNotificationManager).cancel(DistributeUtils.getNotificationId());
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
     }
 
     @Test
@@ -741,16 +741,16 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
             @Override
             public Object answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)).thenReturn((Long) invocation.getArguments()[1]);
+                when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
 
         /* Simulate async task. */
         waitDownloadTask();
         verifyStatic();
-        PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
 
         /* Mock download completion to notify. */
         mockSuccessCursor();

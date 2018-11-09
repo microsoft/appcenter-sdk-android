@@ -15,7 +15,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -52,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SystemClock.class, StorageHelper.PreferencesStorage.class, StorageHelper.InternalStorage.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
+@PrepareForTest({SystemClock.class, SharedPreferencesManager.class, FileManager.class, Crashes.class, ErrorLogHelper.class, DeviceInfoHelper.class, ShutdownHelper.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
 public class UncaughtExceptionHandlerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -70,8 +71,8 @@ public class UncaughtExceptionHandlerTest {
         mockStatic(AppCenter.class);
         mockStatic(AppCenterLog.class);
         mockStatic(SystemClock.class);
-        mockStatic(StorageHelper.PreferencesStorage.class);
-        mockStatic(StorageHelper.InternalStorage.class);
+        mockStatic(FileManager.class);
+        mockStatic(SharedPreferencesManager.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
         mockStatic(System.class);
@@ -80,7 +81,7 @@ public class UncaughtExceptionHandlerTest {
         AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
         when(AppCenter.isEnabled()).thenReturn(future);
         when(future.get()).thenReturn(true);
-        when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
 
         /* Then simulate further changes to state. */
         PowerMockito.doAnswer(new Answer<Object>() {
@@ -90,11 +91,11 @@ public class UncaughtExceptionHandlerTest {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
                 boolean enabled = (Boolean) invocation.getArguments()[1];
-                Mockito.when(StorageHelper.PreferencesStorage.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
+                Mockito.when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
-        }).when(StorageHelper.PreferencesStorage.class);
-        StorageHelper.PreferencesStorage.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
 
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(new File("."));
@@ -209,8 +210,8 @@ public class UncaughtExceptionHandlerTest {
         mExceptionHandler.register();
 
         IOException ioException = new IOException("Fake IO exception");
-        PowerMockito.doThrow(ioException).when(StorageHelper.InternalStorage.class);
-        StorageHelper.InternalStorage.write(any(File.class), anyString());
+        PowerMockito.doThrow(ioException).when(FileManager.class);
+        FileManager.write(any(File.class), anyString());
 
         final Thread thread = Thread.currentThread();
         final RuntimeException exception = new RuntimeException();

@@ -3,7 +3,7 @@ package com.microsoft.appcenter.crashes.utils;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -77,7 +77,7 @@ public class ErrorLogHelperAndroidTest {
              * file.setLastModified does not work on most devices or emulators and returns false.
              * So we can only sleep at least 1 second between each to make sure the time is different...
              */
-            StorageHelper.InternalStorage.write(file, "contents");
+            FileManager.write(file, "contents");
             testFiles[i] = file;
             Thread.sleep(1000);
         }
@@ -85,7 +85,7 @@ public class ErrorLogHelperAndroidTest {
         assertEquals(testFiles[2], ErrorLogHelper.getLastErrorLogFile());
 
         testFiles[3] = new File(mErrorDirectory, new UUID(0, 3).toString() + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
-        StorageHelper.InternalStorage.write(testFiles[3], "contents");
+        FileManager.write(testFiles[3], "contents");
 
         /* Get all error logs stored in the file system when logs exist. */
         files = ErrorLogHelper.getStoredErrorLogFiles();
@@ -133,6 +133,6 @@ public class ErrorLogHelperAndroidTest {
 
         /* Clean up. */
         for (int i = 0; i < 2; i++)
-            StorageHelper.InternalStorage.delete(testFiles[i]);
+            FileManager.delete(testFiles[i]);
     }
 }

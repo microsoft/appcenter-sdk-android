@@ -6,7 +6,7 @@ import android.content.Intent;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 
@@ -38,8 +38,8 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void recreateLauncherActivityBeforeFullInitialization() {
 
-        /* PreferencesStorage isn't initialized yet. */
-        when(StorageHelper.PreferencesStorage.getInt(anyString(), anyInt()))
+        /* SharedPreferencesManager isn't initialized yet. */
+        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
                 .thenThrow(new NullPointerException());
 
         /* Our activity is launch one. */

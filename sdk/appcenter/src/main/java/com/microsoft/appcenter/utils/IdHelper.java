@@ -3,7 +3,7 @@ package com.microsoft.appcenter.utils;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.UUID;
 
@@ -18,14 +18,14 @@ public class IdHelper {
      */
     @NonNull
     public static UUID getInstallId() {
-        String installIdString = StorageHelper.PreferencesStorage.getString(KEY_INSTALL_ID, "");
+        String installIdString = SharedPreferencesManager.getString(KEY_INSTALL_ID, "");
         UUID installId;
         try {
             installId = UUID.fromString(installIdString);
         } catch (Exception e) {
             AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to get installID from Shared Preferences");
             installId = UUIDUtils.randomUUID();
-            StorageHelper.PreferencesStorage.putString(KEY_INSTALL_ID, installId.toString());
+            SharedPreferencesManager.putString(KEY_INSTALL_ID, installId.toString());
         }
         return installId;
     }

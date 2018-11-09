@@ -23,7 +23,7 @@ public class AbstractChannelListener implements Channel.Listener {
     }
 
     @Override
-    public void onPreparedLog(@NonNull Log log, @NonNull String groupName) {
+    public void onPreparedLog(@NonNull Log log, @NonNull String groupName, int flags) {
     }
 
     @Override

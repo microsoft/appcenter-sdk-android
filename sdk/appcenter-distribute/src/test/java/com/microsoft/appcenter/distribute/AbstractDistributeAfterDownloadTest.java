@@ -21,7 +21,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.mockito.ArgumentCaptor;
@@ -117,60 +117,60 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
+                when(SharedPreferencesManager.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+                when(SharedPreferencesManager.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
+                when(SharedPreferencesManager.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn((Integer) invocation.getArguments()[1]);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), anyInt());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
+                when(SharedPreferencesManager.getInt(invocation.getArguments()[0].toString(), DOWNLOAD_STATE_COMPLETED)).thenReturn(DOWNLOAD_STATE_COMPLETED);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
+                when(SharedPreferencesManager.getString(invocation.getArguments()[0].toString())).thenReturn(invocation.getArguments()[1].toString());
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
         doAnswer(new Answer<Void>() {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(PreferencesStorage.getString(invocation.getArguments()[0].toString())).thenReturn(null);
+                when(SharedPreferencesManager.getString(invocation.getArguments()[0].toString())).thenReturn(null);
                 return null;
             }
-        }).when(PreferencesStorage.class);
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
 
         /* Mock everything that triggers a download. */
-        when(PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
         whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
