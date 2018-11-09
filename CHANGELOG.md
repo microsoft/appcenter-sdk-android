@@ -4,7 +4,7 @@
 
 ### AppCenterCrashes
 
-* **[Feature]**  Add API to specify event persistence priority.
+* **[Feature]** Add API to specify event persistence priority.
 * **[Fix]** Preventing stack overflow crash while reading a huge throwable file.
 
 ___
