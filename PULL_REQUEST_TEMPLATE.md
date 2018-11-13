@@ -14,6 +14,7 @@ Please have a look at our [guidelines for contributions](https://github.com/Micr
 * [ ] Are the files formatted correctly?
 * [ ] Did you add unit tests?
 * [ ] Did you test your change with either the sample apps that are included in the repository or with a blank app that uses your change?
+* [ ] Did you check UI tests on the sample app? They are not executed on CI.
 
 ## Description
 

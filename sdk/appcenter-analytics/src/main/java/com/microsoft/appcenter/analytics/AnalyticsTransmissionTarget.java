@@ -6,6 +6,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -14,7 +15,7 @@ import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -153,7 +154,7 @@ public class AnalyticsTransmissionTarget {
      * @param name An event name.
      */
     public void trackEvent(String name) {
-        trackEvent(name, (EventProperties) null);
+        trackEvent(name, (EventProperties) null, Flags.DEFAULTS);
     }
 
     /**
@@ -171,6 +172,29 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, Map<String, String> properties) {
+        trackEvent(name, properties, Flags.DEFAULTS);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     */
+    public void trackEvent(String name, Map<String, String> properties, int flags) {
         EventProperties eventProperties = null;
         if (properties != null) {
             eventProperties = new EventProperties();
@@ -178,7 +202,7 @@ public class AnalyticsTransmissionTarget {
                 eventProperties.set(entry.getKey(), entry.getValue());
             }
         }
-        trackEvent(name, eventProperties);
+        trackEvent(name, eventProperties, flags);
     }
 
     /**
@@ -197,6 +221,30 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, EventProperties properties) {
+        trackEvent(name, properties, Flags.DEFAULTS);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The following rules apply:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The property names or values cannot be null.</li>
+     * <li>Double values must be finite (NaN or Infinite values are discarded).</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     */
+    public void trackEvent(String name, EventProperties properties, int flags) {
 
         /* Merge common properties. More specific target wins conflicts. */
         EventProperties mergedProperties = new EventProperties();
@@ -218,7 +266,7 @@ public class AnalyticsTransmissionTarget {
         }
 
         /* Track event with merged properties. */
-        Analytics.trackEvent(name, mergedProperties, this);
+        Analytics.trackEvent(name, mergedProperties, this, flags);
     }
 
     /**
@@ -293,7 +341,7 @@ public class AnalyticsTransmissionTarget {
                         while (descendantIterator.hasNext()) {
                             AnalyticsTransmissionTarget descendantTarget = descendantIterator.next();
                             descendantIterator.remove();
-                            StorageHelper.PreferencesStorage.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
+                            SharedPreferencesManager.putBoolean(descendantTarget.getEnabledPreferenceKey(), enabled);
                             for (AnalyticsTransmissionTarget childTarget : descendantTarget.mChildrenTargets.values()) {
                                 descendantIterator.add(childTarget);
                             }
@@ -387,7 +435,7 @@ public class AnalyticsTransmissionTarget {
 
     @WorkerThread
     private boolean isEnabledInStorage() {
-        return StorageHelper.PreferencesStorage.getBoolean(getEnabledPreferenceKey(), true);
+        return SharedPreferencesManager.getBoolean(getEnabledPreferenceKey(), true);
     }
 
     @WorkerThread

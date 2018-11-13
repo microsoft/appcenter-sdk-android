@@ -153,6 +153,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @param popSample pop sample.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setPopSample(Double popSample) {
         this.popSample = popSample;
     }
@@ -181,7 +182,6 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @return flags.
      */
-    @SuppressWarnings("WeakerAccess")
     public Long getFlags() {
         return flags;
     }
@@ -210,6 +210,7 @@ public abstract class CommonSchemaLog extends AbstractLog {
      *
      * @param cV correlation vector.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setCV(String cV) {
         this.cV = cV;
     }

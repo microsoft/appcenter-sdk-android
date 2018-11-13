@@ -11,10 +11,12 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.EventProperties;
@@ -29,6 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * TODO move to main folder and delete jCenter version during release process.
+ */
 public class EventActivity extends AppCompatActivity {
 
     /**
@@ -36,6 +42,10 @@ public class EventActivity extends AppCompatActivity {
      * It shouldn't be lost on recreate activity.
      */
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
+
+    private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
+
+    private TextView mName;
 
     private Spinner mTransmissionTargetSpinner;
 
@@ -51,9 +61,13 @@ public class EventActivity extends AppCompatActivity {
 
     private Button mResumeTransmissionButton;
 
-    private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
+    private Spinner mPersistenceFlagSpinner;
 
-    private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
+    private TextView mNumberOfLogsLabel;
+
+    private SeekBar mNumberOfLogs;
+
+    private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,6 +76,9 @@ public class EventActivity extends AppCompatActivity {
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
+
+        /* Init name field. */
+        mName = findViewById(R.id.name);
 
         /* Transmission target views init. */
         mTransmissionTargetSpinner = findViewById(R.id.transmission_target);
@@ -135,8 +152,32 @@ public class EventActivity extends AppCompatActivity {
                 getSelectedTarget().resume();
             }
         });
-    }
 
+        /* Persistence flag. */
+        mPersistenceFlagSpinner = findViewById(R.id.event_priority_spinner);
+        ArrayAdapter<String> persistenceFlagAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.event_priority_values));
+        mPersistenceFlagSpinner.setAdapter(persistenceFlagAdapter);
+
+        /* Number of logs. */
+        mNumberOfLogsLabel = findViewById(R.id.number_of_logs_label);
+        mNumberOfLogs = findViewById(R.id.number_of_logs);
+        mNumberOfLogsLabel.setText(String.format(getString(R.string.number_of_logs), getNumberOfLogs()));
+        mNumberOfLogs.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mNumberOfLogsLabel.setText(String.format(getString(R.string.number_of_logs), getNumberOfLogs()));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -152,6 +193,10 @@ public class EventActivity extends AppCompatActivity {
                 break;
         }
         return true;
+    }
+
+    private int getNumberOfLogs() {
+        return Math.max(mNumberOfLogs.getProgress(), 1);
     }
 
     private void addProperty() {
@@ -172,7 +217,10 @@ public class EventActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     public void send(@SuppressWarnings("UnusedParameters") View view) {
-        String name = ((TextView) findViewById(R.id.name)).getText().toString();
+        AnalyticsTransmissionTarget target = getSelectedTarget();
+        PersistenceFlag persistenceFlag = PersistenceFlag.values()[mPersistenceFlagSpinner.getSelectedItemPosition()];
+        int flags = getFlags(persistenceFlag);
+        String name = mName.getText().toString();
         Map<String, String> properties = null;
         EventProperties typedProperties = null;
         if (mProperties.size() > 0) {
@@ -190,24 +238,59 @@ public class EventActivity extends AppCompatActivity {
         }
 
         /* First item is always empty as it's default value which means either AppCenter, one collector or both. */
-        AnalyticsTransmissionTarget target = getSelectedTarget();
-        if (target == null) {
-            if (typedProperties != null) {
-                Analytics.trackEvent(name, typedProperties);
-            } else if (properties != null) {
-                Analytics.trackEvent(name, properties);
+        for (int i = 0; i < getNumberOfLogs(); i++) {
+            boolean useExplicitFlags = persistenceFlag != PersistenceFlag.DEFAULT;
+            if (target == null) {
+                if (properties != null) {
+                    if (useExplicitFlags) {
+                        Analytics.trackEvent(name, properties, flags);
+                    } else {
+                        Analytics.trackEvent(name, properties);
+                    }
+                } else if (typedProperties != null || useExplicitFlags) {
+                    if (useExplicitFlags) {
+                        Analytics.trackEvent(name, typedProperties, flags);
+                    } else {
+                        Analytics.trackEvent(name, typedProperties);
+                    }
+                } else {
+                    Analytics.trackEvent(name);
+                }
             } else {
-                Analytics.trackEvent(name);
-            }
-        } else {
-            if (typedProperties != null) {
-                target.trackEvent(name, typedProperties);
-            } else if (properties != null) {
-                target.trackEvent(name, properties);
-            } else {
-                target.trackEvent(name);
+                if (properties != null) {
+                    if (useExplicitFlags) {
+                        target.trackEvent(name, properties, flags);
+                    } else {
+                        target.trackEvent(name, properties);
+                    }
+                } else if (typedProperties != null || useExplicitFlags) {
+                    if (useExplicitFlags) {
+                        target.trackEvent(name, typedProperties, flags);
+                    } else {
+                        target.trackEvent(name, typedProperties);
+                    }
+                } else {
+                    target.trackEvent(name);
+                }
             }
         }
+    }
+
+    private int getFlags(PersistenceFlag persistenceFlag) {
+        switch (persistenceFlag) {
+            case DEFAULT:
+                return Flags.getPersistenceFlag(Flags.DEFAULTS, true);
+
+            case NORMAL:
+                return Flags.PERSISTENCE_NORMAL;
+
+            case CRITICAL:
+                return Flags.PERSISTENCE_CRITICAL;
+
+            case INVALID:
+                return 42;
+        }
+        throw new IllegalArgumentException();
     }
 
     private AnalyticsTransmissionTarget getSelectedTarget() {
@@ -258,5 +341,12 @@ public class EventActivity extends AppCompatActivity {
             mDeviceIdEnabledCheckBox.setText(deviceIdEnabled ? R.string.device_id_enabled : R.string.device_id_disabled);
             mDeviceIdEnabledCheckBox.setEnabled(!deviceIdEnabled);
         }
+    }
+
+    private enum PersistenceFlag {
+        DEFAULT,
+        NORMAL,
+        CRITICAL,
+        INVALID
     }
 }

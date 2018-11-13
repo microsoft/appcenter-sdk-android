@@ -8,6 +8,8 @@ import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -35,6 +37,16 @@ public class AnalyticsTest {
     @Rule
     public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
+    @Before
+    public void setUp() {
+        IdlingRegistry.getInstance().register(SasquatchAnalyticsListener.analyticsIdlingResource);
+    }
+
+    @After
+    public void tearDown() {
+        IdlingRegistry.getInstance().unregister(SasquatchAnalyticsListener.analyticsIdlingResource);
+    }
+
     @Test
     public void sendEventTest() throws InterruptedException {
 
@@ -50,7 +62,7 @@ public class AnalyticsTest {
         waitFor(onToast(mActivityTestRule.getActivity(),
                 withText(R.string.event_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
                 .check(matches(isDisplayed()));
-        waitAnalytics();
+        onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
                 withContainsText(R.string.event_sent_succeeded),
                 withContainsText(R.string.event_sent_failed))), TOAST_DELAY)
@@ -71,16 +83,10 @@ public class AnalyticsTest {
         /* Check toasts. */
         waitFor(onToast(mActivityTestRule.getActivity(), withText(R.string.page_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
                 .check(matches(isDisplayed()));
-        waitAnalytics();
+        onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
                 withContainsText(R.string.page_sent_succeeded),
                 withContainsText(R.string.page_sent_failed))), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-    }
-
-    private void waitAnalytics() {
-        IdlingRegistry.getInstance().register(SasquatchAnalyticsListener.analyticsIdlingResource);
-        onView(isRoot()).perform(waitFor(CHECK_DELAY));
-        IdlingRegistry.getInstance().unregister(SasquatchAnalyticsListener.analyticsIdlingResource);
     }
 }

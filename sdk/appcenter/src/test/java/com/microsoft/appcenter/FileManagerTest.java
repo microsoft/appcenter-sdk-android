@@ -3,7 +3,7 @@ package com.microsoft.appcenter;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,8 +39,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({StorageHelper.InternalStorage.class, AppCenterLog.class, TextUtils.class})
-public class StorageHelperTest {
+@PrepareForTest({FileManager.class, AppCenterLog.class, TextUtils.class})
+public class FileManagerTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
@@ -50,7 +50,7 @@ public class StorageHelperTest {
         mockStatic(AppCenterLog.class);
         FileReader fileReader = mock(FileReader.class, new ThrowsException(new FileNotFoundException()));
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
-        assertNull(StorageHelper.InternalStorage.read(new File("")));
+        assertNull(FileManager.read(new File("")));
         verify(fileReader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
@@ -64,7 +64,7 @@ public class StorageHelperTest {
         whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
         when(reader.readLine()).thenReturn("incomplete");
         when(reader.readLine()).thenThrow(new EOFException());
-        assertNull(StorageHelper.InternalStorage.read(new File("")));
+        assertNull(FileManager.read(new File("")));
         verify(reader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
@@ -75,7 +75,7 @@ public class StorageHelperTest {
         mockStatic(AppCenterLog.class);
         FileReader fileReader = mock(FileReader.class, new ThrowsException(new IOException()));
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
-        assertNull(StorageHelper.InternalStorage.read(new File("")));
+        assertNull(FileManager.read(new File("")));
         verify(fileReader).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
@@ -90,7 +90,7 @@ public class StorageHelperTest {
         whenNew(BufferedWriter.class).withAnyArguments().thenReturn(writer);
         whenNew(FileWriter.class).withAnyArguments().thenReturn(mock(FileWriter.class));
         doThrow(new IOException("mock")).when(writer).write(anyString());
-        StorageHelper.InternalStorage.write(mock(File.class), "test");
+        FileManager.write(mock(File.class), "test");
         verify(writer).close();
     }
 
@@ -100,7 +100,7 @@ public class StorageHelperTest {
         whenNew(ObjectInputStream.class).withAnyArguments().thenReturn(reader);
         whenNew(FileInputStream.class).withAnyArguments().thenReturn(mock(FileInputStream.class));
         doThrow(new IOException("mock")).when(reader).readObject();
-        StorageHelper.InternalStorage.readObject(mock(File.class));
+        FileManager.readObject(mock(File.class));
         verify(reader).close();
     }
 
@@ -110,7 +110,7 @@ public class StorageHelperTest {
         whenNew(ObjectOutputStream.class).withAnyArguments().thenReturn(writer);
         whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mock(FileOutputStream.class));
         doThrow(new IOException("mock")).when(writer).writeObject(any());
-        StorageHelper.InternalStorage.writeObject(mock(File.class), "test");
+        FileManager.writeObject(mock(File.class), "test");
         verify(writer).close();
     }
 
@@ -121,7 +121,7 @@ public class StorageHelperTest {
         when(dir.exists()).thenReturn(true);
         when(dir.listFiles(any(FilenameFilter.class))).thenReturn(null);
 
-        assertNull(StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
+        assertNull(FileManager.lastModifiedFile(dir, filter));
 
         File file1 = mock(File.class);
         File file2 = mock(File.class);
@@ -131,7 +131,7 @@ public class StorageHelperTest {
         when(file3.lastModified()).thenReturn(3L);
         when(dir.listFiles(filter)).thenReturn(new File[]{file1, file3, file2});
 
-        assertEquals(file3, StorageHelper.InternalStorage.lastModifiedFile(dir, filter));
+        assertEquals(file3, FileManager.lastModifiedFile(dir, filter));
     }
 
     @Test
@@ -142,7 +142,7 @@ public class StorageHelperTest {
         DataInputStream dataInputStream = mock(DataInputStream.class);
         whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
         doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
-        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        assertNull(FileManager.readBytes(new File("")));
         verify(fileInputStream).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
@@ -157,7 +157,7 @@ public class StorageHelperTest {
         DataInputStream dataInputStream = mock(DataInputStream.class);
         whenNew(DataInputStream.class).withAnyArguments().thenReturn(dataInputStream);
         doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
-        assertNull(StorageHelper.InternalStorage.readBytes(new File("")));
+        assertNull(FileManager.readBytes(new File("")));
         verify(fileInputStream).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));

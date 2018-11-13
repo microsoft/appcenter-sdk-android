@@ -1,10 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 1.10.0 (Under active development)
+## Version 1.10.0
 
-### AppCenter
+### AppCenterAnalytics
 
-* **[Fix]** Do not delete old logs on try to add a log larger than the maximum storage capacity.
+* **[Feature]** Add API to specify event persistence priority.
 
 ### AppCenterCrashes
 
