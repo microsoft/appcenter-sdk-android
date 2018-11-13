@@ -19,7 +19,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,15 +69,26 @@ public class ErrorLogHelper {
     public static final int FRAME_LIMIT = 256;
 
     /**
+     * We keep the first half of the limit of frames from the beginning and the second half from end.
+     */
+    private static final int FRAME_LIMIT_HALF = FRAME_LIMIT / 2;
+
+    /**
+     * For huge exception cause chains, we keep only beginning and end of causes according to this limit.
+     */
+    @VisibleForTesting
+    public static final int CAUSE_LIMIT = 16;
+
+    /**
+     * We keep the first half of the limit of causes from the beginning and the second half from end.
+     */
+    private static final int CAUSE_LIMIT_HALF = CAUSE_LIMIT / 2;
+
+    /**
      * Error log directory within application files.
      */
     @VisibleForTesting
     static final String ERROR_DIRECTORY = "error";
-
-    /**
-     * We keep the first half of the limit of frames from the beginning and the second half from end.
-     */
-    private static final int FRAME_LIMIT_HALF = FRAME_LIMIT / 2;
 
     /**
      * Root directory for error log and throwable files.
@@ -190,7 +202,7 @@ public class ErrorLogHelper {
     public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
             sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sErrorLogDirectory.getAbsolutePath());
+            FileManager.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
         return sErrorLogDirectory;
     }
@@ -201,7 +213,7 @@ public class ErrorLogHelper {
             File errorStorageDirectory = getErrorStorageDirectory();
             File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
             sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sNewMinidumpDirectory.getPath());
+            FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
         return sNewMinidumpDirectory;
     }
@@ -212,7 +224,7 @@ public class ErrorLogHelper {
             File errorStorageDirectory = getErrorStorageDirectory();
             File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
             sPendingMinidumpDirectory = new File(minidumpDirectory, PENDING_MINIDUMP_DIRECTORY);
-            StorageHelper.InternalStorage.mkdir(sPendingMinidumpDirectory.getPath());
+            FileManager.mkdir(sPendingMinidumpDirectory.getPath());
         }
         return sPendingMinidumpDirectory;
     }
@@ -236,7 +248,7 @@ public class ErrorLogHelper {
 
     @Nullable
     public static File getLastErrorLogFile() {
-        return StorageHelper.InternalStorage.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
+        return FileManager.lastModifiedFile(getErrorStorageDirectory(), new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(ERROR_LOG_FILE_EXTENSION);
@@ -253,7 +265,7 @@ public class ErrorLogHelper {
         File file = getStoredThrowableFile(id);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
-            StorageHelper.InternalStorage.delete(file);
+            FileManager.delete(file);
         }
     }
 
@@ -266,7 +278,7 @@ public class ErrorLogHelper {
         File file = getStoredErrorLogFile(id);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting error log file " + file.getName());
-            StorageHelper.InternalStorage.delete(file);
+            FileManager.delete(file);
         }
     }
 
@@ -303,7 +315,15 @@ public class ErrorLogHelper {
     public static Exception getModelExceptionFromThrowable(@NonNull Throwable t) {
         Exception topException = null;
         Exception parentException = null;
+        List<Throwable> causeChain = new LinkedList<>();
         for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            causeChain.add(cause);
+        }
+        if (causeChain.size() > CAUSE_LIMIT) {
+            AppCenterLog.warn(Crashes.LOG_TAG, "Crash causes truncated from " + causeChain.size() + " to " + CAUSE_LIMIT + " causes.");
+            causeChain.subList(CAUSE_LIMIT_HALF, causeChain.size() - CAUSE_LIMIT_HALF).clear();
+        }
+        for (Throwable cause: causeChain) {
             Exception exception = new Exception();
             exception.setType(cause.getClass().getName());
             exception.setMessage(cause.getMessage());
@@ -315,6 +335,8 @@ public class ErrorLogHelper {
             }
             parentException = exception;
         }
+
+        //noinspection ConstantConditions
         return topException;
     }
 

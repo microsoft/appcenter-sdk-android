@@ -28,7 +28,7 @@ public class MetadataExtension implements Model {
     }
 
     @Override
-    public void read(JSONObject object) throws JSONException {
+    public void read(JSONObject object) {
         mMetadata = object;
     }
 

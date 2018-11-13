@@ -9,6 +9,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -80,7 +81,8 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * The default transmission target.
      */
-    private AnalyticsTransmissionTarget mDefaultTransmissionTarget;
+    @VisibleForTesting
+    AnalyticsTransmissionTarget mDefaultTransmissionTarget;
 
     /**
      * Current activity to replay onResume when enabled in foreground.
@@ -276,7 +278,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param name An event name.
      */
     public static void trackEvent(String name) {
-        trackEvent(name, null, null);
+        trackEvent(name, null, null, Flags.DEFAULTS);
     }
 
     /**
@@ -307,7 +309,43 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, Map<String, String> properties) {
-        getInstance().trackEventAsync(name, convertProperties(properties), null);
+        getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULTS);
+    }
+
+    /**
+     * Track a custom event with name and optional string properties.
+     * <p>
+     * The name cannot be null or empty.
+     * <p>
+     * The property names or values cannot be null.
+     * <p>
+     * Additional validation rules apply depending on the configured secret.
+     * <p>
+     * For App Center:
+     * <ul>
+     * <li>The event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>The property names cannot be empty.</li>
+     * <li>The property names and values are limited to 125 characters each (truncated).</li>
+     * <li>The number of properties per event is limited to 20 (truncated).</li>
+     * </ul>
+     * <p>
+     * For One Collector:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     */
+    public static void trackEvent(String name, Map<String, String> properties, int flags) {
+        getInstance().trackEventAsync(name, convertProperties(properties), null, flags);
     }
 
     /**
@@ -340,14 +378,52 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, EventProperties properties) {
-        trackEvent(name, properties, null);
+        trackEvent(name, properties, Flags.DEFAULTS);
+    }
+
+    /**
+     * Track a custom event with name and optional typed properties.
+     * <p>
+     * The name cannot be null or empty.
+     * <p>
+     * The property names or values cannot be null.
+     * <p>
+     * Double values must be finite (NaN or Infinite values are discarded).
+     * <p>
+     * Additional validation rules apply depending on the configured secret.
+     * <p>
+     * For App Center:
+     * <ul>
+     * <li>The event name cannot be longer than 256 and is truncated otherwise.</li>
+     * <li>The property names cannot be empty.</li>
+     * <li>The property names and values are limited to 125 characters each (truncated).</li>
+     * <li>The number of properties per event is limited to 20 (truncated).</li>
+     * </ul>
+     * <p>
+     * For One Collector:
+     * <ul>
+     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
+     * </ul>
+     *
+     * @param name       An event name.
+     * @param properties Optional properties.
+     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     *                   flag will take precedence over all other events in storage.
+     *                   An event tracked with this option will only be dropped
+     *                   if storage must make room for a newer event that is also marked with the
+     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     */
+    public static void trackEvent(String name, EventProperties properties, int flags) {
+        trackEvent(name, properties, null, flags);
     }
 
     /**
      * Internal method redirection for trackEvent.
      */
-    static void trackEvent(String name, EventProperties properties, AnalyticsTransmissionTarget transmissionTarget) {
-        getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget);
+    static void trackEvent(String name, EventProperties properties, AnalyticsTransmissionTarget transmissionTarget, int flags) {
+        getInstance().trackEventAsync(name, convertProperties(properties), transmissionTarget, flags);
     }
 
     /**
@@ -430,19 +506,29 @@ public class Analytics extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Returning transmission target found with token " + transmissionTargetToken);
                 return transmissionTarget;
             }
-            transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
-            AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+            transmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
             mTransmissionTargets.put(transmissionTargetToken, transmissionTarget);
-            final AnalyticsTransmissionTarget finalTransmissionTarget = transmissionTarget;
-            postCommandEvenIfDisabled(new Runnable() {
-
-                @Override
-                public void run() {
-                    finalTransmissionTarget.initInBackground(mContext, mChannel);
-                }
-            });
             return transmissionTarget;
         }
+    }
+
+    /**
+     * Unconditionally create a new transmission target at root level, even if one exists with the given token.
+     *
+     * @param transmissionTargetToken the token.
+     * @return the created target.
+     */
+    private AnalyticsTransmissionTarget createAnalyticsTransmissionTarget(String transmissionTargetToken) {
+        final AnalyticsTransmissionTarget transmissionTarget = new AnalyticsTransmissionTarget(transmissionTargetToken, null);
+        AppCenterLog.debug(LOG_TAG, "Created transmission target with token " + transmissionTargetToken);
+        postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                transmissionTarget.initInBackground(mContext, mChannel);
+            }
+        });
+        return transmissionTarget;
     }
 
     @Override
@@ -651,7 +737,7 @@ public class Analytics extends AbstractAppCenterService {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
     }
 
     /**
@@ -660,8 +746,9 @@ public class Analytics extends AbstractAppCenterService {
      * @param name               event name.
      * @param properties         optional properties.
      * @param transmissionTarget optional target.
+     * @param flags              optional flags.
      */
-    private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget) {
+    private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget, final int flags) {
         post(new Runnable() {
 
             @Override
@@ -671,6 +758,7 @@ public class Analytics extends AbstractAppCenterService {
                 if (aTransmissionTarget != null) {
                     if (aTransmissionTarget.isEnabled()) {
                         eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
+                        eventLog.setTag(aTransmissionTarget);
                     } else {
                         AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");
                         return;
@@ -682,7 +770,10 @@ public class Analytics extends AbstractAppCenterService {
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
                 eventLog.setTypedProperties(properties);
-                mChannel.enqueue(eventLog, ANALYTICS_GROUP);
+
+                /* Filter and validate flags. For now we support only persistence. */
+                int filteredFlags = Flags.getPersistenceFlag(flags, true);
+                mChannel.enqueue(eventLog, ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
@@ -760,7 +851,7 @@ public class Analytics extends AbstractAppCenterService {
     @WorkerThread
     private void setDefaultTransmissionTarget(String transmissionTargetToken) {
         if (transmissionTargetToken != null) {
-            mDefaultTransmissionTarget = getInstanceTransmissionTarget(transmissionTargetToken);
+            mDefaultTransmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
         }
     }
 

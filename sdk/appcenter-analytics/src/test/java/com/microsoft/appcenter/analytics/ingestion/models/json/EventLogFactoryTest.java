@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
@@ -77,14 +78,27 @@ public class EventLogFactoryTest {
         /* With 2 targets. */
         log.addTransmissionTarget("t1");
         log.addTransmissionTarget("t2");
+
+        /* And with a tag. */
+        Object tag = new Object();
+        log.setTag(tag);
+
+        /* When we convert logs. */
         Collection<CommonSchemaLog> convertedLogs = new EventLogFactory().toCommonSchemaLogs(log);
+
+        /* Check number of logs: 1 per target. */
         assertNotNull(convertedLogs);
         assertEquals(2, convertedLogs.size());
 
-        /* Check name was added. */
+        /* For each target. */
         for (CommonSchemaLog commonSchemaLog : convertedLogs) {
+
+            /* Check name was added. */
             verifyStatic();
             PartAUtils.setName(same(commonSchemaLog), eq("test"));
+
+            /* Check tag was added. */
+            assertSame(tag, commonSchemaLog.getTag());
         }
 
         /* Check Part A was added with target tokens. */

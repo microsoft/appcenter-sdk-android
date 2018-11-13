@@ -32,6 +32,7 @@ import java.util.List;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
+@SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @VisibleForTesting
@@ -148,7 +149,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     private void notifySending(final String message) {
-        long timeToWait = SystemClock.uptimeMillis() - mBeforeSendingToastTime + TOAST_DELAY;
+        long timeToWait = mBeforeSendingToastTime + TOAST_DELAY - SystemClock.uptimeMillis();
         if (timeToWait <= 0) {
             Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
         } else {
@@ -234,7 +235,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     private String getFileAttachmentMimeType() {
         String mimeType;
-        if (mFileAttachment.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+        if (ContentResolver.SCHEME_CONTENT.equals(mFileAttachment.getScheme())) {
             mimeType = mContext.getContentResolver().getType(mFileAttachment);
         } else {
             String fileExtension = MimeTypeMap.getFileExtensionFromUrl(mFileAttachment.toString());

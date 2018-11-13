@@ -16,8 +16,10 @@ import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -30,10 +32,13 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileWriter;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -77,14 +82,15 @@ public class CrashesAndroidTest {
     public static void setUpClass() {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
         sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
-        StorageHelper.initialize(sApplication);
+        FileManager.initialize(sApplication);
+        SharedPreferencesManager.initialize(sApplication);
         Constants.loadFromContext(sApplication);
     }
 
     @Before
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.clear();
         for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
             if (logFile.isDirectory()) {
                 for (File dumpDir : logFile.listFiles()) {
@@ -104,6 +110,14 @@ public class CrashesAndroidTest {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
     }
 
+    private static Error generateStackOverflowError() {
+        try {
+            return generateStackOverflowError();
+        } catch (StackOverflowError error) {
+            return error;
+        }
+    }
+
     private void startFresh(CrashesListener listener) {
 
         /* Configure new instance. */
@@ -118,6 +132,7 @@ public class CrashesAndroidTest {
 
         /* Replace channel. */
         AppCenter.getInstance().setChannel(mChannel);
+
         /* Set listener. */
         Crashes.setListener(listener);
 
@@ -129,7 +144,41 @@ public class CrashesAndroidTest {
     }
 
     @Test
-    public void getLastSessionCrashReport() throws Exception {
+    public void getLastSessionCrashReportSimpleException() throws Exception {
+
+        /* Null before start. */
+        Crashes.unsetInstance();
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+
+        /* Crash on 1st process. */
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        startFresh(null);
+        assertNull(Crashes.getLastSessionCrashReport().get());
+        assertFalse(Crashes.hasCrashedInLastSession().get());
+        final RuntimeException exception = new IllegalArgumentException();
+        final Thread thread = new Thread() {
+
+            @Override
+            public void run() {
+                throw exception;
+            }
+        };
+        thread.start();
+        thread.join();
+
+        /* Get last session crash on 2nd process. */
+        startFresh(null);
+        ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNotNull(errorReport);
+        Throwable lastThrowable = errorReport.getThrowable();
+        assertTrue(lastThrowable instanceof IllegalArgumentException);
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+    }
+
+    @Test
+    public void getLastSessionCrashReportStackOverflowException() throws Exception {
 
         /* Null before start. */
         Crashes.unsetInstance();
@@ -158,6 +207,9 @@ public class CrashesAndroidTest {
         startFresh(null);
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
+        Throwable lastThrowable = errorReport.getThrowable();
+        assertTrue(lastThrowable instanceof StackOverflowError);
+        assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
         assertTrue(Crashes.hasCrashedInLastSession().get());
     }
 
@@ -173,7 +225,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Start crashes now. */
         startFresh(null);
@@ -201,7 +253,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Make moving fail. */
         assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
@@ -220,9 +272,24 @@ public class CrashesAndroidTest {
     }
 
     @Test
+    public void clearInvalidFiles() throws Exception {
+        File invalidFile1 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        File invalidFile2 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        assertTrue(invalidFile1.createNewFile());
+        new FileWriter(invalidFile2).append("fake_data").close();
+        assertEquals(2, ErrorLogHelper.getStoredErrorLogFiles().length);
+
+        /* Invalid files should be cleared. */
+        startFresh(null);
+        assertTrue(Crashes.isEnabled().get());
+        assertEquals(0, ErrorLogHelper.getStoredErrorLogFiles().length);
+    }
+
+    @Test
     public void testNoDuplicateCallbacksOrSending() throws Exception {
 
         /* Crash on 1st process. */
+        Crashes.unsetInstance();
         assertFalse(Crashes.hasCrashedInLastSession().get());
         android.util.Log.i(TAG, "Process 1");
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
@@ -240,8 +307,7 @@ public class CrashesAndroidTest {
         });
         when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
         startFresh(crashesListener);
-        final Error exception = generateStackOverflowError();
-        assertTrue(exception.getStackTrace().length > ErrorLogHelper.FRAME_LIMIT);
+        final RuntimeException exception = new RuntimeException();
         final Thread thread = new Thread() {
 
             @Override
@@ -251,7 +317,6 @@ public class CrashesAndroidTest {
         };
         thread.start();
         thread.join();
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, exception.getStackTrace().length);
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verifyZeroInteractions(crashesListener);
@@ -267,8 +332,7 @@ public class CrashesAndroidTest {
             public void accept(ErrorReport errorReport) {
                 assertNotNull(errorReport);
                 Throwable lastThrowable = errorReport.getThrowable();
-                assertTrue(lastThrowable instanceof StackOverflowError);
-                assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+                assertTrue(lastThrowable instanceof RuntimeException);
             }
         });
         assertTrue(Crashes.hasCrashedInLastSession().get());
@@ -292,7 +356,7 @@ public class CrashesAndroidTest {
                 return o instanceof ManagedErrorLog;
             }
         };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
@@ -307,10 +371,10 @@ public class CrashesAndroidTest {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
 
@@ -347,17 +411,10 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
-
-        /* Verify log was truncated to 256 frames. */
-        assertTrue(log.get() instanceof ManagedErrorLog);
-        ManagedErrorLog errorLog = (ManagedErrorLog) log.get();
-        assertNotNull(errorLog.getException());
-        assertNotNull(errorLog.getException().getFrames());
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, errorLog.getException().getFrames().size());
     }
 
     @Test
@@ -366,7 +423,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        StorageHelper.InternalStorage.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "mock minidump");
 
         /* Set up crash listener. */
         CrashesListener crashesListener = mock(CrashesListener.class);
@@ -398,7 +455,7 @@ public class CrashesAndroidTest {
                 return o instanceof ManagedErrorLog;
             }
         };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
@@ -413,10 +470,10 @@ public class CrashesAndroidTest {
                 log.set((Log) invocationOnMock.getArguments()[0]);
                 return null;
             }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString());
+        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
         assertNotNull(log.get());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
@@ -433,10 +490,10 @@ public class CrashesAndroidTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
 
         /* Verify custom text attachment. */
-        verify(mChannel).enqueue(eq(textAttachment), anyString());
+        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULTS));
     }
 
     @Test
@@ -491,13 +548,5 @@ public class CrashesAndroidTest {
 
         /* Check there are only 2 files: the throwable and the json one. */
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
-    }
-
-    private Error generateStackOverflowError() {
-        try {
-            return generateStackOverflowError();
-        } catch (StackOverflowError error) {
-            return error;
-        }
     }
 }

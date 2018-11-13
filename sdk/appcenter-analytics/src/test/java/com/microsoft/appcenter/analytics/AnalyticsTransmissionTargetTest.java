@@ -27,7 +27,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,9 +40,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -111,7 +117,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         mChannel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, startFromApp);
-        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        final AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 
         /* Getting a reference to the same target a second time actually returns the same. */
@@ -128,18 +134,21 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                         EventLog eventLog = (EventLog) item;
                         boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                         boolean tokenMatch;
+                        boolean tagMatch;
                         if (defaultToken != null) {
                             tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains(defaultToken);
+                            tagMatch = Analytics.getInstance().mDefaultTransmissionTarget.equals(eventLog.getTag());
                         } else {
                             tokenMatch = eventLog.getTransmissionTargetTokens().isEmpty();
+                            tagMatch = eventLog.getTag() == null;
                         }
-                        return nameAndPropertiesMatch && tokenMatch;
+                        return nameAndPropertiesMatch && tokenMatch && tagMatch;
                     }
                     return false;
                 }
-            }), anyString());
+            }), anyString(), eq(DEFAULTS));
         } else {
-            verify(mChannel, never()).enqueue(isA(EventLog.class), anyString());
+            verify(mChannel, never()).enqueue(isA(EventLog.class), anyString(), anyInt());
         }
         reset(mChannel);
 
@@ -153,11 +162,12 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     EventLog eventLog = (EventLog) item;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    boolean tagMatch = target.equals(eventLog.getTag());
+                    return nameAndPropertiesMatch && tokenMatch && tagMatch;
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Track event via another transmission target method with properties. */
@@ -177,15 +187,16 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     stringTypedProperty.setValue("valid");
                     typedProperties.add(stringTypedProperty);
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token2");
-                    return nameMatches && tokenMatch && typedProperties.equals(eventLog.getTypedProperties());
+                    boolean tagMatch = Analytics.getTransmissionTarget("token2").equals(eventLog.getTag());
+                    return nameMatches && tokenMatch && tagMatch && typedProperties.equals(eventLog.getTypedProperties());
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Create a child transmission target and track event. */
-        AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
+        final AnalyticsTransmissionTarget childTarget = target.getTransmissionTarget("token3");
         childTarget.trackEvent("name");
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -195,11 +206,12 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     EventLog eventLog = (EventLog) item;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
-                    return nameAndPropertiesMatch && tokenMatch;
+                    boolean tagMatch = childTarget.equals(eventLog.getTag());
+                    return nameAndPropertiesMatch && tokenMatch && tagMatch;
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Another child transmission target with the same token should be the same instance. */
@@ -223,7 +235,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
 
         /* Set enabled to false and assert that it cannot track event. */
         transmissionTarget.setEnabledAsync(false).get();
@@ -239,7 +251,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), anyInt());
     }
 
     @Test
@@ -264,7 +276,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), anyInt());
 
         /* Set enabled to true on parent. Verify that child can track event. */
         parentTransmissionTarget.setEnabledAsync(true);
@@ -279,7 +291,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString());
+        }), anyString(), eq(DEFAULTS));
     }
 
     @Test
@@ -294,7 +306,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         childTransmissionTarget.setEnabledAsync(true);
         assertFalse(childTransmissionTarget.isEnabledAsync().get());
         childTransmissionTarget.trackEvent("eventName");
-        verify(mChannel, never()).enqueue(any(Log.class), anyString());
+        verify(mChannel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -448,7 +460,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(log, "test");
                 return null;
             }
-        }).when(mChannel).enqueue(any(Log.class), anyString());
+        }).when(mChannel).enqueue(any(Log.class), anyString(), anyInt());
 
         /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
         Analytics analytics = Analytics.getInstance();
@@ -591,5 +603,31 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         parent.resume();
         verify(mChannel, never()).pauseGroup(anyString(), anyString());
         verify(mChannel, never()).resumeGroup(anyString(), anyString());
+    }
+
+    @Test
+    public void trackEventWithNormalPersistenceFlag() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_NORMAL);
+        target.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_NORMAL);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+    }
+
+    @Test
+    public void trackEventWithNormalCriticalPersistenceFlag() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_CRITICAL);
+        target.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_CRITICAL);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+    }
+
+    @Test
+    public void trackEventWithInvalidFlags() {
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
+        target.trackEvent("eventName1", (Map<String, String>) null, 0x03);
+        target.trackEvent("eventName2", (EventProperties) null, 0x03);
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
+        verifyStatic(times(2));
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 }

@@ -8,7 +8,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,7 @@ public class WrapperSdkExceptionManager {
             if (errorId != null && rawSerializedException != null) {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
-                StorageHelper.InternalStorage.writeObject(dataFile, rawSerializedException);
+                FileManager.writeObject(dataFile, rawSerializedException);
                 AppCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
             }
             return errorId;
@@ -77,7 +77,7 @@ public class WrapperSdkExceptionManager {
             if (loadResult == null) {
                 AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
             }
-            StorageHelper.InternalStorage.delete(dataFile);
+            FileManager.delete(dataFile);
         }
     }
 
@@ -99,7 +99,7 @@ public class WrapperSdkExceptionManager {
         File dataFile = getFile(errorId);
         if (dataFile.exists()) {
             try {
-                dataBytes = StorageHelper.InternalStorage.readObject(dataFile);
+                dataBytes = FileManager.readObject(dataFile);
                 if (dataBytes != null) {
                     sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
                 }
@@ -136,7 +136,7 @@ public class WrapperSdkExceptionManager {
      * Send an handled exception (used by wrapper SDKs).
      *
      * @param modelException An handled exception already in JSON model form.
-     * @param properties optional properties.
+     * @param properties     optional properties.
      */
     public static void trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
         Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");

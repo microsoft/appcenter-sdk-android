@@ -132,15 +132,14 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * @return true if log should be overridden, false otherwise.
      */
     private boolean shouldOverridePartAProperties(@NonNull Log log) {
-        String targetToken = mTransmissionTarget.getTransmissionTargetToken();
-        return log instanceof CommonSchemaLog && mTransmissionTarget.isEnabled()
-                && log.getTransmissionTargetTokens().contains(targetToken);
+        return log instanceof CommonSchemaLog && log.getTag() == mTransmissionTarget &&
+                mTransmissionTarget.isEnabled();
     }
 
     /**
      * Get app name. Used for checking parents for property inheritance.
      *
-     * @return App name
+     * @return App name.
      */
     private String getAppName() {
         return mAppName;
@@ -149,16 +148,22 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Override common schema Part A property App.Name.
      *
-     * @param appName App name
+     * @param appName App name.
      */
-    public void setAppName(String appName) {
-        mAppName = appName;
+    public void setAppName(final String appName) {
+        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                mAppName = appName;
+            }
+        });
     }
 
     /**
      * Get app version. Used for checking parents for property inheritance.
      *
-     * @return App version
+     * @return App version.
      */
     private String getAppVersion() {
         return mAppVersion;
@@ -169,8 +174,14 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param appVersion App version
      */
-    public void setAppVersion(String appVersion) {
-        mAppVersion = appVersion;
+    public void setAppVersion(final String appVersion) {
+        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                mAppVersion = appVersion;
+            }
+        });
     }
 
     /**
@@ -187,8 +198,14 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param appLocale App Locale
      */
-    public void setAppLocale(String appLocale) {
-        mAppLocale = appLocale;
+    public void setAppLocale(final String appLocale) {
+        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                mAppLocale = appLocale;
+            }
+        });
     }
 
     /**
@@ -260,7 +277,13 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * This does not have any effect on child transmission targets.
      */
     public void collectDeviceId() {
-        mDeviceIdEnabled = true;
+        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                mDeviceIdEnabled = true;
+            }
+        });
     }
 
     /*

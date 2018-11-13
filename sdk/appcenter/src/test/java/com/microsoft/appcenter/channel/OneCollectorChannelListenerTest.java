@@ -8,6 +8,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.Extensions;
+import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
@@ -19,6 +20,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_GROUP_NAME_SUFFIX;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_COUNT;
@@ -30,6 +34,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -90,18 +95,18 @@ public class OneCollectorChannelListenerTest {
         when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("t1")));
 
         /* Mock a log. */
-        CommonSchemaLog log1 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log1 = new MockCommonSchemaLog();
+        log1.setIKey("t1");
         Extensions ext1 = new Extensions();
         ext1.setSdk(new SdkExtension());
-        when(log1.getExt()).thenReturn(ext1);
-        when(log1.getIKey()).thenReturn("t1");
+        log1.setExt(ext1);
 
         /* Mock another log. */
-        CommonSchemaLog log2 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log2 = new MockCommonSchemaLog();
+        log2.setIKey("t1");
         Extensions ext2 = new Extensions();
         ext2.setSdk(new SdkExtension());
-        when(log2.getExt()).thenReturn(ext2);
-        when(log2.getIKey()).thenReturn("t1");
+        log2.setExt(ext2);
 
         /* Mock conversion of logs. */
         Channel channel = mock(Channel.class);
@@ -111,42 +116,47 @@ public class OneCollectorChannelListenerTest {
         /* Init listener. */
         UUID installId = UUIDUtils.randomUUID();
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, installId);
-        listener.onPreparedLog(originalLog, TEST_GROUP);
-        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        listener.onPreparedLog(originalLog, TEST_GROUP, DEFAULTS);
+        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULTS);
 
         /* Verify conversion. */
         verify(logSerializer).toCommonSchemaLog(originalLog);
         verifyNoMoreInteractions(logSerializer);
+
+        /* Verify flags. */
+        assertEquals(Long.valueOf(DEFAULTS), log1.getFlags());
+        assertEquals(Long.valueOf(DEFAULTS), log2.getFlags());
 
         /* Verify same epoch. */
         assertNotNull(log1.getExt().getSdk().getEpoch());
         assertEquals(log1.getExt().getSdk().getEpoch(), log2.getExt().getSdk().getEpoch());
 
         /* Verify incremented sequence numbers. */
-        assertEquals((Long) 1L, log1.getExt().getSdk().getSeq());
-        assertEquals((Long) 2L, log2.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(1), log1.getExt().getSdk().getSeq());
+        assertEquals(Long.valueOf(2), log2.getExt().getSdk().getSeq());
 
         /* Verify install ID set. */
         assertEquals(installId, log1.getExt().getSdk().getInstallId());
         assertEquals(installId, log2.getExt().getSdk().getInstallId());
 
         /* Verify enqueue. */
-        verify(channel).enqueue(log1, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
-        verify(channel).enqueue(log2, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX);
+        verify(channel).enqueue(log1, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULTS);
+        verify(channel).enqueue(log2, TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, DEFAULTS);
 
         /* We simulated that we see on prepared log on the enqueued log, verify no more enqueuing. */
-        verify(channel, times(2)).enqueue(any(Log.class), anyString());
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), eq(DEFAULTS));
 
         /* Mock log with another key to see new seq/epoch. */
         when(originalLog.getTransmissionTargetTokens()).thenReturn(new HashSet<>(Collections.singletonList("t2")));
-        CommonSchemaLog log3 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log3 = new MockCommonSchemaLog();
+        log3.setIKey("t2");
         Extensions ext3 = new Extensions();
         ext3.setSdk(new SdkExtension());
-        when(log3.getExt()).thenReturn(ext3);
-        when(log3.getIKey()).thenReturn("t2");
+        log3.setExt(ext3);
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log3));
-        listener.onPreparedLog(originalLog, TEST_GROUP);
-        assertEquals((Long) 1L, log3.getExt().getSdk().getSeq());
+        listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_CRITICAL);
+        assertEquals(Long.valueOf(PERSISTENCE_CRITICAL), log3.getFlags());
+        assertEquals(Long.valueOf(1), log3.getExt().getSdk().getSeq());
         assertNotNull(log3.getExt().getSdk().getEpoch());
         assertNotEquals(log1.getExt().getSdk().getEpoch(), log3.getExt().getSdk().getEpoch());
 
@@ -155,16 +165,17 @@ public class OneCollectorChannelListenerTest {
         listener.onGloballyEnabled(true);
 
         /* Mock a 4rd log in first group to check reset. */
-        CommonSchemaLog log4 = mock(CommonSchemaLog.class);
+        CommonSchemaLog log4 = new MockCommonSchemaLog();
+        log4.setIKey("t2");
         Extensions ext4 = new Extensions();
         ext4.setSdk(new SdkExtension());
-        when(log4.getExt()).thenReturn(ext4);
-        when(log4.getIKey()).thenReturn("t2");
+        log4.setExt(ext4);
         when(logSerializer.toCommonSchemaLog(any(Log.class))).thenReturn(Collections.singletonList(log4));
-        listener.onPreparedLog(originalLog, TEST_GROUP);
+        listener.onPreparedLog(originalLog, TEST_GROUP, PERSISTENCE_NORMAL);
 
-        /* Verify reset of epoch/seq. */
-        assertEquals((Long) 1L, log4.getExt().getSdk().getSeq());
+        /* Verify flags and reset of epoch/seq. */
+        assertEquals(Long.valueOf(PERSISTENCE_NORMAL), log4.getFlags());
+        assertEquals(Long.valueOf(1), log4.getExt().getSdk().getSeq());
         assertNotNull(log4.getExt().getSdk().getEpoch());
         assertNotEquals(log3.getExt().getSdk().getEpoch(), log4.getExt().getSdk().getEpoch());
     }
@@ -181,13 +192,13 @@ public class OneCollectorChannelListenerTest {
 
         /* Init listener. */
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
-        listener.onPreparedLog(log, TEST_GROUP);
+        listener.onPreparedLog(log, TEST_GROUP, DEFAULTS);
 
         /* Verify conversion attempted. */
         verify(logSerializer).toCommonSchemaLog(any(Log.class));
 
         /* Verify no enqueuing as the log was invalid. */
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -199,13 +210,13 @@ public class OneCollectorChannelListenerTest {
 
         /* Init listener. */
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, logSerializer, UUIDUtils.randomUUID());
-        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP);
+        listener.onPreparedLog(mock(CommonSchemaLog.class), TEST_GROUP, DEFAULTS);
 
         /* Verify no conversion. */
         verify(logSerializer, never()).toCommonSchemaLog(any(Log.class));
 
         /* Verify no enqueuing. */
-        verify(channel, never()).enqueue(any(Log.class), anyString());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test

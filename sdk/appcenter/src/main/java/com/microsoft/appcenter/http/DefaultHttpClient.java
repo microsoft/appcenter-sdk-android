@@ -99,6 +99,11 @@ public class DefaultHttpClient implements HttpClient {
     private static final int MIN_GZIP_LENGTH = 1400;
 
     /**
+     * Maximum payload length to use prettify for logging.
+     */
+    private static final int MAX_PRETTIFY_LOG_LENGTH = 4 * 1024;
+
+    /**
      * Pattern used to replace token in url encoded parameters.
      */
     private static final Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
@@ -215,14 +220,18 @@ public class DefaultHttpClient implements HttpClient {
             /* Send payload. */
             if (binaryPayload != null) {
 
-                /* Compress payload if large enough to be worth it. */
+                /* Log payload. */
                 if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
-                    payload = TOKEN_REGEX_URL_ENCODED.matcher(payload).replaceAll("token=***");
-                    if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
-                        payload = new JSONObject(payload).toString(2);
+                    if (payload.length() < MAX_PRETTIFY_LOG_LENGTH) {
+                        payload = TOKEN_REGEX_URL_ENCODED.matcher(payload).replaceAll("token=***");
+                        if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
+                            payload = new JSONObject(payload).toString(2);
+                        }
                     }
                     AppCenterLog.verbose(LOG_TAG, payload);
                 }
+
+                /* Compress payload if large enough to be worth it. */
                 if (shouldCompress) {
                     ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(binaryPayload.length);
                     GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);

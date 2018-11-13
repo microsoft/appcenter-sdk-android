@@ -20,7 +20,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -43,6 +43,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 import static android.support.test.espresso.matcher.ViewMatchers.withChild;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.CHECK_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.TOAST_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.onToast;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.waitFor;
@@ -87,8 +88,8 @@ public class CrashesTest {
         mContext = getInstrumentation().getTargetContext();
 
         /* Clear preferences. */
-        StorageHelper.initialize(mContext);
-        StorageHelper.PreferencesStorage.clear();
+        SharedPreferencesManager.initialize(mContext);
+        SharedPreferencesManager.clear();
 
         /* Clear crashes. */
         Constants.loadFromContext(mContext);
@@ -193,12 +194,11 @@ public class CrashesTest {
         waitFor(onToast(mActivityTestRule.getActivity(),
                 withText(R.string.crash_before_sending)), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitFor(TOAST_DELAY));
+        onView(isRoot()).perform(waitFor(CHECK_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
                 withContainsText(R.string.crash_sent_succeeded),
                 withText(R.string.crash_sent_failed))), TOAST_DELAY)
                 .check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitFor(TOAST_DELAY));
     }
 
     private ViewInteraction onCrash(@StringRes int titleId) {

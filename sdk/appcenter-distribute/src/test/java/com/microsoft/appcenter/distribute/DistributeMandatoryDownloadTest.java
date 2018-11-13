@@ -10,7 +10,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.junit.Before;
@@ -192,7 +192,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyNoMoreInteractions(mNotificationManager);
 
         /* Start activity paused the app. */
@@ -268,7 +268,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         /* Verify disabled. */
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -324,9 +324,9 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         /* Verify start activity and complete workflow skipped, e.g. clean behavior happened only once. */
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyZeroInteractions(mNotificationManager);
 
         /* Check semaphores. */
@@ -352,7 +352,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitDownloadTask();
 
         /* Make JSON disappear for some reason (should not happen for real). */
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         verifyWithInvalidOrMissingCachedJson();
     }
 
@@ -369,7 +369,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
         /* Verify JSON removed. */
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
 
         /* In that case the SDK will think its not mandatory but anyway this case never happens. */
         mockSuccessCursor();
@@ -378,7 +378,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext).startActivity(intent);
         verifyStatic();
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
 
     @Test
@@ -393,9 +393,9 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyNoMoreInteractions(mNotificationManager);
 
         /* Restart will restore install. */
@@ -404,7 +404,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext, times(2)).startActivity(installIntent);
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         Distribute.getInstance().onActivityPaused(mActivity);
 
         /* Change what the next detected release will be: a more recent mandatory one. */
@@ -416,11 +416,11 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Check no more going to installed state. I.e. still happened twice. */
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
 
         /* Check next restart will use new release. */
         restartProcessAndSdk();
@@ -442,9 +442,9 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext).startActivity(installIntent);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
         verifyStatic();
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         verifyNoMoreInteractions(mNotificationManager);
 
         /* Restart will restore install. */
@@ -453,7 +453,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         waitCheckDownloadTask();
         verify(mContext, times(2)).startActivity(installIntent);
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         Distribute.getInstance().onActivityPaused(mActivity);
 
         /* Change what the next detected release will be: a more recent mandatory one. */
@@ -466,11 +466,11 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Check no more going to installed state. I.e. still happened twice. */
         verifyStatic(times(2));
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
 
         /* Check next restart will use new release. */
         restartProcessAndSdk();

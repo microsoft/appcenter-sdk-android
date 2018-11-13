@@ -8,6 +8,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
@@ -30,7 +31,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 
@@ -533,7 +535,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
-                mChannel.enqueue(errorLog, ERROR_GROUP);
+                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
             }
         });
     }
@@ -617,9 +619,16 @@ public class Crashes extends AbstractAppCenterService {
 
             /* Check last session crash. */
             File logFile = ErrorLogHelper.getLastErrorLogFile();
+            while (logFile != null && logFile.length() == 0) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+
+                //noinspection ResultOfMethodCallIgnored
+                logFile.delete();
+                logFile = ErrorLogHelper.getLastErrorLogFile();
+            }
             if (logFile != null) {
                 AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
-                String logFileContents = StorageHelper.InternalStorage.read(logFile);
+                String logFileContents = FileManager.read(logFile);
                 if (logFileContents == null) {
                     AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
                 } else {
@@ -638,7 +647,7 @@ public class Crashes extends AbstractAppCenterService {
     private void processPendingErrors() {
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
             AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
-            String logfileContents = StorageHelper.InternalStorage.read(logFile);
+            String logfileContents = FileManager.read(logFile);
             if (logfileContents != null) {
                 try {
                     ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents, null);
@@ -656,7 +665,10 @@ public class Crashes extends AbstractAppCenterService {
                         removeAllStoredErrorLogFiles(id);
                     }
                 } catch (JSONException e) {
-                    AppCenterLog.error(LOG_TAG, "Error parsing error log", e);
+                    AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
+
+                    //noinspection ResultOfMethodCallIgnored
+                    logFile.delete();
                 }
             }
         }
@@ -677,7 +689,7 @@ public class Crashes extends AbstractAppCenterService {
     private boolean sendCrashReportsOrAwaitUserConfirmation() {
 
         /* Handle user confirmation in UI thread. */
-        final boolean alwaysSend = StorageHelper.PreferencesStorage.getBoolean(PREF_KEY_ALWAYS_SEND, false);
+        final boolean alwaysSend = SharedPreferencesManager.getBoolean(PREF_KEY_ALWAYS_SEND, false);
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -744,19 +756,17 @@ public class Crashes extends AbstractAppCenterService {
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
-                try {
-                    Throwable throwable = null;
-                    if (file.length() > 0) {
-                        throwable = StorageHelper.InternalStorage.readObject(file);
+                Throwable throwable = null;
+                if (file.length() > 0) {
+                    try {
+                        throwable = FileManager.readObject(file);
+                    } catch (IOException | ClassNotFoundException | StackOverflowError e) {
+                        AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
                     }
-                    ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
-                    mErrorReportCache.put(id, new ErrorLogReport(log, report));
-                    return report;
-                } catch (ClassNotFoundException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), ignored);
-                } catch (IOException ignored) {
-                    AppCenterLog.error(LOG_TAG, "Cannot access serialized throwable file " + file.getName(), ignored);
                 }
+                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
+                mErrorReportCache.put(id, new ErrorLogReport(log, report));
+                return report;
             }
         }
         return null;
@@ -798,7 +808,7 @@ public class Crashes extends AbstractAppCenterService {
 
                     /* Always send: we remember. */
                     if (userConfirmation == ALWAYS_SEND) {
-                        StorageHelper.PreferencesStorage.putBoolean(PREF_KEY_ALWAYS_SEND, true);
+                        SharedPreferencesManager.putBoolean(PREF_KEY_ALWAYS_SEND, true);
                     }
 
                     /* Send every pending report. */
@@ -814,12 +824,12 @@ public class Crashes extends AbstractAppCenterService {
                             Exception exception = errorLogReport.log.getException();
                             dumpFile = new File(exception.getStackTrace());
                             exception.setStackTrace(null);
-                            byte[] logfileContents = StorageHelper.InternalStorage.readBytes(dumpFile);
+                            byte[] logfileContents = FileManager.readBytes(dumpFile);
                             dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                         }
 
                         /* Send report. */
-                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP);
+                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.PERSISTENCE_CRITICAL);
 
                         /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {
@@ -858,7 +868,7 @@ public class Crashes extends AbstractAppCenterService {
                     attachment.setErrorId(errorId);
                     if (attachment.isValid()) {
                         ++totalErrorAttachments;
-                        mChannel.enqueue(attachment, ERROR_GROUP);
+                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
                     } else {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }
@@ -932,13 +942,22 @@ public class Crashes extends AbstractAppCenterService {
         AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         String errorLogString = mLogSerializer.serializeLog(errorLog);
-        StorageHelper.InternalStorage.write(errorLogFile, errorLogString);
+        FileManager.write(errorLogFile, errorLogString);
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
-            StorageHelper.InternalStorage.writeObject(throwableFile, throwable);
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
-        } else {
+            try {
+                FileManager.writeObject(throwableFile, throwable);
+                AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
+            } catch (StackOverflowError e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
+                throwable = null;
+
+                //noinspection ResultOfMethodCallIgnored
+                throwableFile.delete();
+            }
+        }
+        if (throwable == null) {
 
             /*
              * If there is no Java Throwable to save as is (typical in wrapper SDKs),

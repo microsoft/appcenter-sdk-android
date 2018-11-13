@@ -5,7 +5,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 
@@ -16,10 +17,13 @@ import org.junit.Test;
 public class InstantiationTest {
 
     @Test
-    public void storageHelper() {
-        new StorageHelper();
-        new StorageHelper.PreferencesStorage();
-        new StorageHelper.InternalStorage();
+    public void fileManager() {
+        new FileManager();
+    }
+
+    @Test
+    public void sharedPreferencesManager() {
+        new SharedPreferencesManager();
     }
 
     @Test
@@ -50,5 +54,10 @@ public class InstantiationTest {
     @Test
     public void appCenterLog() {
         new AppCenterLog();
+    }
+
+    @Test
+    public void flags() {
+        new Flags();
     }
 }

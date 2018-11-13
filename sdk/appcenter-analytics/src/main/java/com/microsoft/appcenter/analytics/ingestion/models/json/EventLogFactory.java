@@ -36,6 +36,9 @@ public class EventLogFactory extends AbstractLogFactory {
             /* Properties go to Part C. */
             PartCUtils.addPartCFromLog(eventLog.getTypedProperties(), commonSchemaEventLog);
             commonSchemaLogs.add(commonSchemaEventLog);
+
+            /* Copy tag. */
+            commonSchemaEventLog.setTag(log.getTag());
         }
         return commonSchemaLogs;
     }

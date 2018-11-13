@@ -7,12 +7,14 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.appcenter.ingestion.models.json.MockLog;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 
 @SuppressWarnings("unused")
 @SmallTest
@@ -28,7 +30,7 @@ public class PersistenceAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
-        StorageHelper.initialize(sContext);
+        SharedPreferencesManager.initialize(sContext);
 
         /* Clean up database. */
         sContext.deleteDatabase("test-persistence");
@@ -36,6 +38,7 @@ public class PersistenceAndroidTest {
 
     @AfterClass
     public static void tearDownClass() {
+
         /* Clean up database. */
         sContext.deleteDatabase("test-persistence");
     }
@@ -48,9 +51,11 @@ public class PersistenceAndroidTest {
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
+
             /* Generate a log and persist. */
-            persistence.putLog("exception", new MockLog());
+            persistence.putLog(new MockLog(), "exception", PERSISTENCE_NORMAL);
         } finally {
+
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             persistence.close();

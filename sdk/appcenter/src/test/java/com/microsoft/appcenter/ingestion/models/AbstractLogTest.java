@@ -90,6 +90,12 @@ public class AbstractLogTest {
         checkNotEquals(a, b);
         b.setDevice(d1);
         checkEquals(a, b);
+
+        /* Tag. */
+        a.setTag(new Object());
+        checkNotEquals(a, b);
+        b.setTag(a.getTag());
+        checkEquals(a, b);
     }
 
     @Test

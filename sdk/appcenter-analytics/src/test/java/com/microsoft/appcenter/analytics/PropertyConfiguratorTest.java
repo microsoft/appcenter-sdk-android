@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.provider.Settings.Secure;
 
+import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.channel.Channel;
@@ -23,6 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
@@ -30,15 +33,21 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -116,7 +125,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         pc.setAppVersion("appVersion");
         pc.setAppName("appName");
         pc.setAppLocale("appLocale");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
         pc.onPreparingLog(log, "groupName");
 
         /* Assert properties set on common schema. */
@@ -138,7 +150,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Get property configurator and collect device ID. */
         PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
         pc.collectDeviceId();
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
         pc.onPreparingLog(log, "groupName");
 
         /* Assert device ID is collected. */
@@ -161,7 +176,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         /* Get property configurator and collect device ID. */
         PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
         pc.collectDeviceId();
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
 
         /* Enable and simulate log preparing. */
         Analytics.setEnabled(true).get();
@@ -183,7 +201,10 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setAppVersion("appVersion");
         target.getPropertyConfigurator().setAppName("appName");
         target.getPropertyConfigurator().setAppLocale("appLocale");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
+        log.setTag(target);
         target.getPropertyConfigurator().onPreparingLog(log, "groupName");
 
         /* Assert properties are null. */
@@ -211,16 +232,13 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         grandparent.getPropertyConfigurator().setAppName("appName");
         grandparent.getPropertyConfigurator().setAppLocale("appLocale");
 
-        /* Mock Secure and set device ID. */
-        mockStatic(Secure.class);
-        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
-
         /* Set up hierarchy. */
         AnalyticsTransmissionTarget parent = grandparent.getTransmissionTarget("parent");
         AnalyticsTransmissionTarget child = parent.getTransmissionTarget("child");
 
         /* Simulate channel callbacks. */
         log.addTransmissionTarget("child");
+        log.setTag(child);
         grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         child.getPropertyConfigurator().onPreparingLog(log, "groupName");
@@ -252,6 +270,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Simulate channel callbacks. */
         log.addTransmissionTarget("grandParent");
+        log.setTag(grandparent);
         grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         child.getPropertyConfigurator().onPreparingLog(log, "groupName");
@@ -275,6 +294,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Simulate channel callbacks. */
         log.addTransmissionTarget("child");
+        log.setTag(child);
         grandparent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         parent.getPropertyConfigurator().onPreparingLog(log, "groupName");
         child.getPropertyConfigurator().onPreparingLog(log, "groupName");
@@ -312,7 +332,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check event. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULTS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -335,7 +355,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check event. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULTS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -357,7 +377,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULTS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -377,7 +397,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULTS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -412,7 +432,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(eventLogArg.capture(), anyString());
+        verify(mChannel).enqueue(eventLogArg.capture(), anyString(), eq(DEFAULTS));
         EventLog log = eventLogArg.getValue();
         assertNotNull(log);
         assertEquals(Collections.singleton("test"), log.getTransmissionTargetTokens());
@@ -469,7 +489,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Verify log that was sent. */
         ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
         EventLog log = logArgumentCaptor.getValue();
         assertNotNull(log);
         assertEquals("eventName", log.getName());
@@ -528,7 +548,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Verify log that was sent. */
         ArgumentCaptor<EventLog> logArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
-        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString());
+        verify(mChannel).enqueue(logArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
         EventLog log = logArgumentCaptor.getValue();
         assertNotNull(log);
         assertEquals("eventName", log.getName());
@@ -546,5 +566,117 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         typedProperties.add(typedProperty("f", new Date(6666)));
         typedProperties.add(typedProperty("g", "7777"));
         assertUnorderedListEquals(typedProperties, log.getTypedProperties());
+    }
+
+    @Test
+    public void defaultTargetIsNotReturnedFromGetTransmissionTarget() {
+
+        /* Start the application with a token. */
+        Analytics analytics = Analytics.getInstance();
+        analytics.onStarting(mAppCenterHandler);
+        String defaultToken = "test";
+        analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, true);
+
+        /* Create the test target with the same default token. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget(defaultToken);
+
+        /* Verify it's not the same instance. */
+        assertNotSame(target, analytics.mDefaultTransmissionTarget);
+
+        /* Set a Part A property on the target. */
+        target.getPropertyConfigurator().setAppName("someName");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+        log.addTransmissionTarget("test");
+        log.setTag(target);
+
+        /* When the callback is called on the default target. */
+        analytics.mDefaultTransmissionTarget.getPropertyConfigurator().onPreparingLog(log, "groupName");
+
+        /* Then the log is not modified. */
+        assertNull(log.getExt().getApp().getName());
+
+        /* When the callback is called on the returned target. */
+        target.getPropertyConfigurator().onPreparingLog(log, "groupName");
+
+        /* Check the property is added to the log. */
+        assertEquals("someName", log.getExt().getApp().getName());
+    }
+
+    @Test
+    public void overridingPartAIsNotRetroactive() {
+
+        /* Mock deviceId. */
+        mockStatic(Secure.class);
+        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+
+        /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
+        Analytics analytics = Analytics.getInstance();
+        AppCenterHandler handler = mock(AppCenterHandler.class);
+        final LinkedList<Runnable> backgroundCommands = new LinkedList<>();
+        doAnswer(new Answer() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                backgroundCommands.add((Runnable) invocation.getArguments()[0]);
+                return null;
+            }
+        }).when(handler).post(notNull(Runnable.class), any(Runnable.class));
+        analytics.onStarting(handler);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, true);
+
+        /* Create a target. */
+        AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
+
+        /* Init target background code now. */
+        backgroundCommands.removeFirst().run();
+
+        /* Simulate a track event call with no property. */
+        CommonSchemaLog logBeforeSetProperty = new CommonSchemaEventLog();
+        logBeforeSetProperty.setExt(new Extensions());
+        logBeforeSetProperty.getExt().setApp(new AppExtension());
+        logBeforeSetProperty.getExt().setDevice(new DeviceExtension());
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        logBeforeSetProperty.addTransmissionTarget("test");
+        logBeforeSetProperty.setTag(target);
+
+        /* Set all common properties that should not be set retroactively before first log persisted. */
+        target.getPropertyConfigurator().setAppVersion("appVersion");
+        target.getPropertyConfigurator().setAppLocale("appLocale");
+        target.getPropertyConfigurator().setAppName("appName");
+        target.getPropertyConfigurator().collectDeviceId();
+
+        /* Run background commands in order: first prepare first log, then all the set property calls. */
+        target.getPropertyConfigurator().onPreparingLog(logBeforeSetProperty, "groupName");
+        for (Runnable command : backgroundCommands) {
+            command.run();
+        }
+
+        /* Simulate the second track event call. */
+        CommonSchemaLog logAfterSetProperty = new CommonSchemaEventLog();
+        logAfterSetProperty.setExt(new Extensions());
+        logAfterSetProperty.getExt().setApp(new AppExtension());
+        logAfterSetProperty.getExt().setDevice(new DeviceExtension());
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        logAfterSetProperty.addTransmissionTarget("test");
+        logAfterSetProperty.setTag(target);
+        target.getPropertyConfigurator().onPreparingLog(logAfterSetProperty, "groupName");
+
+        /* Check first log has no property. */
+        assertNull(logBeforeSetProperty.getExt().getApp().getVer());
+        assertNull(logBeforeSetProperty.getExt().getApp().getLocale());
+        assertNull(logBeforeSetProperty.getExt().getApp().getName());
+        assertNull(logBeforeSetProperty.getExt().getDevice().getLocalId());
+
+        /* Check second log has all of them. */
+        assertEquals("appVersion", logAfterSetProperty.getExt().getApp().getVer());
+        assertEquals("appLocale", logAfterSetProperty.getExt().getApp().getLocale());
+        assertEquals("appName", logAfterSetProperty.getExt().getApp().getName());
+        assertEquals("a:mockDeviceId", logAfterSetProperty.getExt().getDevice().getLocalId());
     }
 }

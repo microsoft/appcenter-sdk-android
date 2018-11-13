@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -54,8 +55,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
-import com.microsoft.appcenter.utils.storage.StorageHelper;
-import com.microsoft.appcenter.utils.storage.StorageHelper.PreferencesStorage;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 
@@ -427,7 +427,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
-            StorageHelper.initialize(mContext);
+            SharedPreferencesManager.initialize(mContext);
             mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
         }
@@ -479,7 +479,7 @@ public class Distribute extends AbstractAppCenterService {
             changeDistributionGroupIdAfterAppUpdateIfNeeded();
 
             /* Enable the distribute info tracker. */
-            String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+            String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             mDistributeInfoTracker = new DistributeInfoTracker(distributionGroupId);
             mChannel.addListener(mDistributeInfoTracker);
             HandlerUtils.runOnUiThread(new Runnable() {
@@ -496,11 +496,11 @@ public class Distribute extends AbstractAppCenterService {
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
             cancelPreviousTasks();
-            PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
-            PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
 
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
@@ -607,10 +607,10 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
     }
 
     /**
@@ -638,16 +638,16 @@ public class Distribute extends AbstractAppCenterService {
              * Only if the app build is different (different package hash), try enabling in-app updates again.
              */
             String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
-            String updateSetupFailedPackageHash = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
             if (updateSetupFailedPackageHash != null) {
                 if (releaseHash.equals(updateSetupFailedPackageHash)) {
                     AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
                     return;
                 } else {
                     AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
-                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-                    PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
                 }
             }
 
@@ -678,7 +678,7 @@ public class Distribute extends AbstractAppCenterService {
             if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && !mCheckedDownload) {
 
                 /* Discard release if application updated. Then immediately check release. */
-                if (mPackageInfo.lastUpdateTime > StorageHelper.PreferencesStorage.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
+                if (mPackageInfo.lastUpdateTime > SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
                     AppCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
                     cancelPreviousTasks();
                 }
@@ -755,7 +755,7 @@ public class Distribute extends AbstractAppCenterService {
              * message and also store the package hash that the failure occurred on. The setup
              * will only be re-attempted the next time the app gets updated (and package hash changes).
              */
-            String updateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            String updateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
             if (updateSetupFailedMessage != null) {
                 AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
                 showUpdateSetupFailedDialog();
@@ -777,8 +777,8 @@ public class Distribute extends AbstractAppCenterService {
              * especially if we decide to tie private in-app updates to a specific group. That is
              * also why we already store the group for future use even for private group updates.
              */
-            String updateToken = PreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN);
-            String distributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+            String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
+            String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             if (updateToken != null || distributionGroupId != null) {
                 decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
                 return;
@@ -794,7 +794,7 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
-            String testerAppUpdateSetupFailedMessage = PreferencesStorage.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            String testerAppUpdateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
             boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !mContext.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
             if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
                 DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
@@ -824,20 +824,20 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Store new encrypted value if updated. */
             if (newEncryptedData != null) {
-                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
+                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
             }
             updateToken = decryptedData.getDecryptedData();
             if (mobileCenterFailOver) {
 
                 /* Store the token from Mobile Center into App Center storage, re-encrypting it */
                 String encryptedUpdateToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
-                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
+                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
             }
         }
 
         /* If the group was from Mobile Center storage, save it in the new storage. */
         if (mobileCenterFailOver) {
-            PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
             mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
         }
 
@@ -874,8 +874,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     synchronized void completeWorkflow() {
         cancelNotification();
-        PreferencesStorage.remove(PREFERENCE_KEY_RELEASE_DETAILS);
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
@@ -892,9 +892,9 @@ public class Distribute extends AbstractAppCenterService {
      * Store update setup failure message used later to show in setup failure dialog for user.
      */
     synchronized void storeUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
-        if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+        if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
-            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
         }
     }
 
@@ -902,9 +902,9 @@ public class Distribute extends AbstractAppCenterService {
      * Store a flag for failure to enable updates from the tester apps, to later reattempt using the browser update setup.
      */
     synchronized void storeTesterAppUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
-        if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+        if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored tester app update setup failed parameter.");
-            PreferencesStorage.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
         }
     }
 
@@ -919,16 +919,16 @@ public class Distribute extends AbstractAppCenterService {
             mBeforeStartRequestId = requestId;
             mBeforeStartUpdateToken = updateToken;
             mBeforeStartDistributionGroupId = distributionGroupId;
-        } else if (requestId.equals(PreferencesStorage.getString(PREFERENCE_KEY_REQUEST_ID))) {
+        } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             if (updateToken != null) {
                 String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
-                PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
+                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedToken);
             } else {
-                PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             }
-            PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
-            PreferencesStorage.remove(PREFERENCE_KEY_REQUEST_ID);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
             mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
             enqueueDistributionStartSessionLog();
             cancelPreviousTasks();
@@ -1048,8 +1048,8 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.info(LOG_TAG, "No release available to the current user.");
                 } else {
                     AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
-                    PreferencesStorage.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-                    PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
                     mDistributeInfoTracker.removeDistributionGroupId();
                 }
             }
@@ -1060,12 +1060,12 @@ public class Distribute extends AbstractAppCenterService {
      * Handle API call success.
      */
     private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
-        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Successfully reported app update for downloaded release hash (" + lastDownloadedReleaseHash + "), removing from store..");
-                PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-                PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
             } else {
                 AppCenterLog.debug(LOG_TAG, "Stored release hash doesn't match current installation, probably downloaded but not installed yet, keep in store");
             }
@@ -1083,13 +1083,13 @@ public class Distribute extends AbstractAppCenterService {
                 if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
 
                     /* Update cache. */
-                    PreferencesStorage.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
+                    SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
 
                     /* If previous release is mandatory and still processing, don't do anything right now. */
                     if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
                         if (mReleaseDetails.getId() != releaseDetails.getId()) {
                             AppCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
-                            PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                         } else {
                             AppCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
                         }
@@ -1099,7 +1099,7 @@ public class Distribute extends AbstractAppCenterService {
                     /* Show update dialog. */
                     mReleaseDetails = releaseDetails;
                     AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
-                    PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                    SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
                         showUpdateDialog();
                     }
@@ -1126,7 +1126,7 @@ public class Distribute extends AbstractAppCenterService {
     private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
         String reportingParameters = "";
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
-        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
@@ -1135,7 +1135,7 @@ public class Distribute extends AbstractAppCenterService {
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
-                int lastDownloadedReleaseId = PreferencesStorage.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
+                int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
             } else {
                 AppCenterLog.debug(LOG_TAG, "New release was downloaded but not installed yet, skip reporting.");
@@ -1152,22 +1152,22 @@ public class Distribute extends AbstractAppCenterService {
      * was distributed to another group.
      */
     private void changeDistributionGroupIdAfterAppUpdateIfNeeded() {
-        String lastDownloadedReleaseHash = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        String lastDownloadedDistributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+        String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        String lastDownloadedDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
         if (!isCurrentReleaseWasUpdated(lastDownloadedReleaseHash) || TextUtils.isEmpty(lastDownloadedDistributionGroupId)) {
             return;
         }
-        String currentDistributionGroupId = PreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-        if (currentDistributionGroupId != null && lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
+        String currentDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+        if (lastDownloadedDistributionGroupId.equals(currentDistributionGroupId)) {
             return;
         }
 
         /* Set group ID from downloaded release details. */
         AppCenterLog.debug(LOG_TAG, "Current group ID doesn't match the group ID of downloaded release, updating current group id=" + lastDownloadedDistributionGroupId);
-        PreferencesStorage.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, lastDownloadedDistributionGroupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, lastDownloadedDistributionGroupId);
 
         /* Remove saved downloaded group ID. */
-        PreferencesStorage.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
     }
 
     /**
@@ -1214,10 +1214,10 @@ public class Distribute extends AbstractAppCenterService {
             return true;
         }
         long now = System.currentTimeMillis();
-        long postponedTime = PreferencesStorage.getLong(PREFERENCE_KEY_POSTPONE_TIME, 0);
+        long postponedTime = SharedPreferencesManager.getLong(PREFERENCE_KEY_POSTPONE_TIME, 0);
         if (now < postponedTime) {
             AppCenterLog.debug(LOG_TAG, "User clock has been changed in past, cleaning postpone state and showing dialog");
-            PreferencesStorage.remove(PREFERENCE_KEY_POSTPONE_TIME);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
             return true;
         }
         long postponedUntil = postponedTime + POSTPONE_TIME_THRESHOLD;
@@ -1343,7 +1343,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void storeUpdateSetupFailedPackageHash(DialogInterface dialog) {
         if (mUpdateSetupFailedDialog == dialog) {
-            PreferencesStorage.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, DistributeUtils.computeReleaseHash(mPackageInfo));
+            SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY, DistributeUtils.computeReleaseHash(mPackageInfo));
         } else {
             showDisabledToast();
         }
@@ -1365,8 +1365,8 @@ public class Distribute extends AbstractAppCenterService {
             BrowserUtils.openBrowser(url, mForegroundActivity);
 
             /* Clear the update setup failure info from storage, to re-attempt setup on reinstall. */
-            PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-            PreferencesStorage.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
         } else {
             showDisabledToast();
         }
@@ -1461,7 +1461,7 @@ public class Distribute extends AbstractAppCenterService {
         showAndRememberDialogActivity(mUpdateSetupFailedDialog);
 
         /* Don't show this dialog again. */
-        PreferencesStorage.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
 
     /**
@@ -1505,7 +1505,7 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void postponeRelease(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             AppCenterLog.debug(LOG_TAG, "Postpone updates for a day.");
-            PreferencesStorage.putLong(PREFERENCE_KEY_POSTPONE_TIME, System.currentTimeMillis());
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_POSTPONE_TIME, System.currentTimeMillis());
             completeWorkflow();
         } else {
             showDisabledToast();
@@ -1577,9 +1577,9 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /* Store new download identifier. */
-            PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
-            PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
-            PreferencesStorage.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
+            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
 
             /* Start monitoring progress for mandatory update. */
             if (mReleaseDetails.isMandatoryUpdate()) {
@@ -1681,7 +1681,7 @@ public class Distribute extends AbstractAppCenterService {
 
         //noinspection ConstantConditions
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
-        PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
@@ -1843,7 +1843,7 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void setInstalling(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             cancelNotification();
-            PreferencesStorage.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         }
     }
 
@@ -1869,7 +1869,7 @@ public class Distribute extends AbstractAppCenterService {
             @Override
             public void run() {
                 DistributionStartSessionLog log = new DistributionStartSessionLog();
-                mChannel.enqueue(log, DISTRIBUTE_GROUP);
+                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULTS);
             }
         });
     }
