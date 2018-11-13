@@ -23,7 +23,6 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
-
 /**
  * Database manager for SQLite.
  */
