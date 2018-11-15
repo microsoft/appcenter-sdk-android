@@ -56,6 +56,20 @@ public interface Log extends Model {
     void setDistributionGroupId(String distributionGroupId);
 
     /**
+     * Get the userId value.
+     *
+     * @return the userId value.
+     */
+    String getUserId();
+
+    /**
+     * Set the userId value.
+     *
+     * @param userId the userId value to set.
+     */
+    void setUserId(String userId);
+
+    /**
      * Get the device value.
      *
      * @return the device value

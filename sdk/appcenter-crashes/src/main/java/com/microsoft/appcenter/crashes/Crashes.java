@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
@@ -533,6 +534,7 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
+                errorLog.setUserId(AppCenter.getInstance().getUserId());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
@@ -597,10 +599,11 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setProcessName("");
 
                 /*
-                 * TODO device properties are read after restart contrary to Java crashes.
-                 * We should have a device property history like we did for session to fix that issue.
-                 * The main issue with the current code is that app version can change between crash and reporting.
+                 * TODO user id and device properties are read after restart contrary to Java crashes.
+                 * We should have a user/device property history like we did for session to fix that issue.
+                 * The main issue with the current code is that app version or userId can change between crash and reporting.
                  */
+                errorLog.setUserId(AppCenter.getInstance().getUserId());
                 try {
                     errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
                     errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);

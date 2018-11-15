@@ -25,6 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
@@ -33,9 +35,10 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
@@ -50,8 +53,8 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -59,8 +62,16 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("unused")
+@RunWith(Parameterized.class)
 public class CrashesAndroidTest {
+
+    @Parameterized.Parameter
+    public String mUserId;
+
+    @Parameterized.Parameters(name = "userId={0}")
+    public static Collection<String> userIds() {
+        return Arrays.asList(null, "alice");
+    }
 
     @SuppressLint("StaticFieldLeak")
     private static Application sApplication;
@@ -135,6 +146,9 @@ public class CrashesAndroidTest {
 
         /* Set listener. */
         Crashes.setListener(listener);
+
+        /* Set user identifier. */
+        AppCenter.setUserId(mUserId);
 
         /* Start crashes. */
         AppCenter.start(Crashes.class);
@@ -349,33 +363,19 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         /* Waiting user confirmation so no log sent yet. */
-        ArgumentMatcher<Log> matchCrashLog = new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object o) {
-                return o instanceof ManagedErrorLog;
-            }
-        };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
+        verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
 
         /* Confirm to resume processing. */
-        final AtomicReference<Log> log = new AtomicReference<>();
-        doAnswer(new Answer() {
-
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) {
-                log.set((Log) invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
-        assertNotNull(log.get());
+        ArgumentCaptor<ManagedErrorLog> log = ArgumentCaptor.forClass(ManagedErrorLog.class);
+        verify(mChannel).enqueue(log.capture(), anyString(), eq(PERSISTENCE_CRITICAL));
+        assertNotNull(log.getValue());
+        assertEquals(mUserId, log.getValue().getUserId());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
 
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
@@ -387,8 +387,8 @@ public class CrashesAndroidTest {
         ArgumentCaptor<Channel.GroupListener> groupListener = ArgumentCaptor.forClass(Channel.GroupListener.class);
         startFresh(crashesListener);
         verify(mChannel).addGroup(anyString(), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), groupListener.capture());
-        groupListener.getValue().onBeforeSending(log.get());
-        groupListener.getValue().onSuccess(log.get());
+        groupListener.getValue().onBeforeSending(log.getValue());
+        groupListener.getValue().onSuccess(log.getValue());
 
         /* Wait callback to be processed in background thread (file manipulations) then called back in UI. */
 
@@ -411,7 +411,7 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
+        verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -448,33 +448,19 @@ public class CrashesAndroidTest {
         semaphore.acquire();
 
         /* Waiting user confirmation so no log sent yet. */
-        ArgumentMatcher<Log> matchCrashLog = new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object o) {
-                return o instanceof ManagedErrorLog;
-            }
-        };
-        verify(mChannel, never()).enqueue(argThat(matchCrashLog), anyString(), anyInt());
+        verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
         assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
 
         /* Confirm to resume processing. */
-        final AtomicReference<Log> log = new AtomicReference<>();
-        doAnswer(new Answer() {
-
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) {
-                log.set((Log) invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(mChannel).enqueue(argThat(matchCrashLog), anyString(), anyInt());
         Crashes.notifyUserConfirmation(Crashes.SEND);
         assertTrue(Crashes.isEnabled().get());
-        verify(mChannel).enqueue(argThat(matchCrashLog), anyString(), eq(PERSISTENCE_CRITICAL));
-        assertNotNull(log.get());
+        ArgumentCaptor<ManagedErrorLog> managedErrorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
+        verify(mChannel).enqueue(managedErrorLog.capture(), anyString(), eq(PERSISTENCE_CRITICAL));
+        assertNotNull(managedErrorLog.getValue());
+        assertEquals(mUserId, managedErrorLog.getValue().getUserId());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
