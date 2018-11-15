@@ -61,11 +61,10 @@ public class AppCenter {
     static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
 
     /**
-     * Minimum size allowed for set maximum size (SQL limitation). setMaxStorageSize could accept values
-     * as low as 16385 but in practice the lowest size set is the next highest multiple of 4096.
+     * Minimum size allowed for set maximum size (SQL limitation).
      */
     @VisibleForTesting
-    static final long MINIMUM_STORAGE_SIZE = 20480;
+    static final long MINIMUM_STORAGE_SIZE = 24 * 1024;
 
     /**
      * Group for sending logs.
