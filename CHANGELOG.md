@@ -6,6 +6,10 @@
 
 * **[Fix]** Fix minimum storage size verification to match actual value.
 
+### AppCenterCrashes
+
+* **[Fix]** Fix a bug where crash data file could leak when the database is full.
+
 ___
 
 ## Version 1.10.0
