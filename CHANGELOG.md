@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.0 (Under active development)
+
+### AppCenterCrashes
+
+* **[Fix]** Fix a bug where crash data file could leak when the database is full.
+
+___
+
 ## Version 1.10.0
 
 ### AppCenterAnalytics
