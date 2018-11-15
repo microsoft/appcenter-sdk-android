@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.0 (Under active development)
+
+### AppCenter
+
+* **[Fix]** Fix minimum storage size verification to match actual value.
+
+___
+
 ## Version 1.10.0
 
 ### AppCenterAnalytics
