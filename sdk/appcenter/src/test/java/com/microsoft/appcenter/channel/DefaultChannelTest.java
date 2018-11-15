@@ -636,13 +636,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void enqueuePersistenceFailure() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         /* Simulate Persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(any(Log.class), anyString(), anyInt());
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
-        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Verify no request is sent if Persistence fails. */
         for (int i = 0; i < 50; i++) {
@@ -653,6 +654,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
+        verify(mockListener, times(50)).onBeforeSending(any(Log.class));
+        verify(mockListener, times(50)).onFailure(any(Log.class), any(Persistence.PersistenceException.class));
     }
 
     @Test
