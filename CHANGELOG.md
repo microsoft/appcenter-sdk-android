@@ -1,6 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.0 (Under active development)
+## Version 1.10.1 (Under active development)
+
+### AppCenter
+
+* **[Fix]** Do not delete old logs on try to add a log larger than the maximum storage capacity.
 
 ### AppCenterCrashes
 
