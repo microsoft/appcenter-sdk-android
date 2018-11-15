@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.0 (Under active development)
+
+### AppCenterPush
+
+* **[Fix]** Fix push foreground listener after re-enabling push service.
+
+___
+
 ## Version 1.10.0
 
 ### AppCenterAnalytics
