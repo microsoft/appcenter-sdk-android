@@ -326,13 +326,7 @@ public class Push extends AbstractAppCenterService {
 
     @Override
     public void onActivityPaused(Activity activity) {
-        postOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                mActivity = null;
-            }
-        });
+        mActivity = null;
     }
 
     private void checkPushInActivityIntent(Activity activity) {
@@ -348,11 +342,11 @@ public class Push extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
             return;
         }
+        mActivity = activity;
         postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                mActivity = activity;
                 checkPushInIntent(intent);
             }
         });
