@@ -300,6 +300,10 @@ public class PushTest {
     @Test
     public void receivedInForeground() {
 
+        /* Was disabled before start. */
+        when(SharedPreferencesManager.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(false);
+
+        /* Start. */
         PushListener pushListener = mock(PushListener.class);
         Push.setListener(pushListener);
         Push push = Push.getInstance();
@@ -307,7 +311,10 @@ public class PushTest {
         start(push, channel);
         Activity activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(mock(Intent.class));
+
+        /* Enable after activity resume. */
         push.onActivityResumed(activity);
+        Push.setEnabled(true);
 
         /* Mock some message. */
         Intent pushIntent = createPushIntent("some title", "some message", null);
