@@ -46,8 +46,8 @@ public class PartAUtils {
     /**
      * Adds part A extension to common schema log from device object in Log.
      *
-     * @param src  source log.
-     * @param dest destination common schema log.
+     * @param src                source log.
+     * @param dest               destination common schema log.
      * @param transmissionTarget transmission target to use.
      */
     public static void addPartAFromLog(Log src, CommonSchemaLog dest, String transmissionTarget) {
@@ -58,6 +58,7 @@ public class PartAUtils {
         /* Add top level part A fields. */
         dest.setVer("3.0");
         dest.setTimestamp(src.getTimestamp());
+
         /* TODO: We should cache the ikey for transmission target */
         dest.setIKey("o:" + getTargetKey(transmissionTarget));
 
@@ -76,7 +77,6 @@ public class PartAUtils {
 
         /* Add user extension. */
         dest.getExt().setUser(new UserExtension());
-        dest.getExt().getUser().setLocalId(src.getUserId());
         dest.getExt().getUser().setLocale(device.getLocale().replace("_", "-"));
 
         /* Add OS extension. */
@@ -89,8 +89,9 @@ public class PartAUtils {
         dest.getExt().setApp(new AppExtension());
         dest.getExt().getApp().setVer(device.getAppVersion());
         dest.getExt().getApp().setId("a:" + device.getAppNamespace());
-        // TODO Not sure if to use this one or the locale ID
-        dest.getExt().getApp().setUserId("TODO");
+
+        /* We use userId from AppCenter.setUserId into app.userId and leave user.localId null for now. */
+        dest.getExt().getApp().setUserId(src.getUserId());
 
         /* TODO: Add network type. */
         /* Add net extension. */

@@ -171,7 +171,6 @@ public class AppExtension implements Model {
         JSONUtils.write(writer, USER_ID, getUserId());
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -109,7 +109,6 @@ public class PartAUtilsTest {
         assertEquals("model", commonSchemaLog.getExt().getProtocol().getDevModel());
         assertEquals("oemName", commonSchemaLog.getExt().getProtocol().getDevMake());
         assertNotNull(commonSchemaLog.getExt().getUser());
-        assertEquals(userId, commonSchemaLog.getExt().getUser().getLocalId());
         assertEquals("en-US", commonSchemaLog.getExt().getUser().getLocale());
         assertNotNull(commonSchemaLog.getExt().getOs());
         assertEquals("osName", commonSchemaLog.getExt().getOs().getName());
@@ -117,6 +116,7 @@ public class PartAUtilsTest {
         assertNotNull(commonSchemaLog.getExt().getApp());
         assertEquals("1.0.0", commonSchemaLog.getExt().getApp().getVer());
         assertEquals("a:com.appcenter.test", commonSchemaLog.getExt().getApp().getId());
+        assertEquals(userId, commonSchemaLog.getExt().getApp().getUserId());
         assertNotNull(commonSchemaLog.getExt().getNet());
         assertEquals("carrierName", commonSchemaLog.getExt().getNet().getProvider());
         assertNotNull(commonSchemaLog.getExt().getSdk());

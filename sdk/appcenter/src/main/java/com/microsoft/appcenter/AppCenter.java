@@ -45,7 +45,8 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.Constants.USER_ID_MAX_LENGTH;
+import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
+import static com.microsoft.appcenter.Constants.USER_ID_ONE_COLLECTOR_PATTERN;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -418,16 +419,23 @@ public class AppCenter {
      * {@link #setUserId(String)} implementation at instance level.
      */
     private synchronized void setInstanceUserId(String userId) {
-        if (!checkPrecondition()) {
+        if (!mConfiguredFromApp) {
+            AppCenterLog.error(LOG_TAG, "AppCenter must be configured from application, libraries cannot use call setUserId.");
             return;
         }
-        if (mAppSecret != null && userId != null && userId.length() > USER_ID_MAX_LENGTH) {
-            AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_MAX_LENGTH + " characters.");
+        if (mAppSecret == null && mTransmissionTargetToken == null) {
+            AppCenterLog.error(LOG_TAG, "AppCenter must be configured with a secret from application to call setUserId.");
             return;
         }
-        if (/* one collector validation? */) {
-
-            return;
+        if (userId != null) {
+            if (mAppSecret != null && userId.length() > USER_ID_APP_CENTER_MAX_LENGTH) {
+                AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
+                return;
+            }
+            if (mTransmissionTargetToken != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(userId).matches()) {
+                AppCenterLog.error(LOG_TAG, "userId is must match " + USER_ID_ONE_COLLECTOR_PATTERN);
+                return;
+            }
         }
         mUserId = userId;
     }

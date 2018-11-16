@@ -760,6 +760,9 @@ public class Analytics extends AbstractAppCenterService {
                     if (aTransmissionTarget.isEnabled()) {
                         eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
                         eventLog.setTag(aTransmissionTarget);
+                        if (aTransmissionTarget == mDefaultTransmissionTarget) {
+                            eventLog.setUserId(userId);
+                        }
                     } else {
                         AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");
                         return;
@@ -767,9 +770,6 @@ public class Analytics extends AbstractAppCenterService {
                 } else if (!mStartedFromApp) {
                     AppCenterLog.error(LOG_TAG, "Cannot track event using Analytics.trackEvent if not started from app, please start from the application or use Analytics.getTransmissionTarget.");
                     return;
-                }
-                if (aTransmissionTarget == mDefaultTransmissionTarget) {
-                    eventLog.setUserId(userId);
                 }
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
