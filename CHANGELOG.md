@@ -4,7 +4,7 @@
 
 ### AppCenter
 
-* **[Fix]** Do not delete old logs on try to add a log larger than the maximum storage capacity.
+* **[Fix]** Do not delete old logs when trying to add a log larger than the maximum storage capacity.
 
 ### AppCenterCrashes
 
