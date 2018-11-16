@@ -77,7 +77,7 @@ public class ErrorLogHelper {
      * For huge exception cause chains, we keep only beginning and end of causes according to this limit.
      */
     @VisibleForTesting
-    public static final int CAUSE_LIMIT = 16;
+    static final int CAUSE_LIMIT = 16;
 
     /**
      * We keep the first half of the limit of causes from the beginning and the second half from end.
