@@ -273,7 +273,7 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             long maxSize = mDatabaseManager.getMaxSize();
-            if (!isLargePayload && maxSize < payloadSize) {
+            if (!isLargePayload && maxSize <= payloadSize) {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }

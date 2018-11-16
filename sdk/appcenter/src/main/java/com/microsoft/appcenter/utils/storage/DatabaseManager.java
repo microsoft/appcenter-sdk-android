@@ -220,7 +220,7 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
-                    AppCenterLog.debug(LOG_TAG, "Storage full, trying to delete oldest log with lowest priority...");
+                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority and with lower or equal priority than the new log...");
                     if (cursor == null) {
                         String priority = values.getAsString(priorityColumn);
                         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
