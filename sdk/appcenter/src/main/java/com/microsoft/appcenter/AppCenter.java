@@ -423,9 +423,13 @@ public class AppCenter {
         }
         if (mAppSecret != null && userId != null && userId.length() > USER_ID_MAX_LENGTH) {
             AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_MAX_LENGTH + " characters.");
-        } else {
-            mUserId = userId;
+            return;
         }
+        if (/* one collector validation? */) {
+
+            return;
+        }
+        mUserId = userId;
     }
 
     /**

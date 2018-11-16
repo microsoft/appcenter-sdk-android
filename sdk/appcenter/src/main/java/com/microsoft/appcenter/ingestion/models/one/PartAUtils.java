@@ -89,6 +89,8 @@ public class PartAUtils {
         dest.getExt().setApp(new AppExtension());
         dest.getExt().getApp().setVer(device.getAppVersion());
         dest.getExt().getApp().setId("a:" + device.getAppNamespace());
+        // TODO Not sure if to use this one or the locale ID
+        dest.getExt().getApp().setUserId("TODO");
 
         /* TODO: Add network type. */
         /* Add net extension. */
