@@ -433,7 +433,7 @@ public class AppCenter {
                 return;
             }
             if (mTransmissionTargetToken != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(userId).matches()) {
-                AppCenterLog.error(LOG_TAG, "userId is must match " + USER_ID_ONE_COLLECTOR_PATTERN);
+                AppCenterLog.error(LOG_TAG, "userId must match the " + USER_ID_ONE_COLLECTOR_PATTERN + " regular expression.");
                 return;
             }
         }
