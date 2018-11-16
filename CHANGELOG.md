@@ -6,6 +6,10 @@
 
 * **[Fix]** Do not delete old logs when trying to add a log larger than the maximum storage capacity.
 
+### AppCenter
+
+* **[Fix]** Fix minimum storage size verification to match minimum possible value.
+
 ### AppCenterCrashes
 
 * **[Fix]** Fix a bug where crash data file could leak when the database is full.
