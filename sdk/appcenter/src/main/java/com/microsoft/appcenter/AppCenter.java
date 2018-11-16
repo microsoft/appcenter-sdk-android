@@ -398,7 +398,8 @@ public class AppCenter {
      * the new size, then the operation will fail and a warning will be emitted. Can only be called
      * once per app lifetime and only before AppCenter.start(...).
      * <p>
-     * If the size is not a multiple of 4096 bytes, the next multiple of 4096 is used as the new maximum size.
+     * If the size is not a multiple of database page size (default is 4096 bytes), the next multiple
+     * of page size is used as the new maximum size.
      *
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.
