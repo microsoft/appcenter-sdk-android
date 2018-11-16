@@ -62,11 +62,10 @@ public class AppCenter {
     static final long DEFAULT_MAX_STORAGE_SIZE_IN_BYTES = 10 * 1024 * 1024;
 
     /**
-     * Minimum size allowed for set maximum size (SQL limitation). setMaxStorageSize could accept values
-     * as low as 16385 but in practice the lowest size set is the next highest multiple of 4096.
+     * Minimum size allowed for set maximum size (SQL limitation).
      */
     @VisibleForTesting
-    static final long MINIMUM_STORAGE_SIZE = 20480;
+    static final long MINIMUM_STORAGE_SIZE = 24 * 1024;
 
     /**
      * Group for sending logs.
@@ -404,7 +403,8 @@ public class AppCenter {
      * the new size, then the operation will fail and a warning will be emitted. Can only be called
      * once per app lifetime and only before AppCenter.start(...).
      * <p>
-     * If the size is not a multiple of 4096 bytes, the next multiple of 4096 is used as the new maximum size.
+     * If the size is not a multiple of database page size (default is 4096 bytes), the next multiple
+     * of page size is used as the new maximum size.
      *
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.

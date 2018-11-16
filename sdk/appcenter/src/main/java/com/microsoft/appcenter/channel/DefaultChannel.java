@@ -672,25 +672,30 @@ public class DefaultChannel implements Channel {
 
                 /* Persist log. */
                 mPersistence.putLog(log, groupName, flags);
-
-                /* Nothing more to do if the log is from a paused transmission target. */
-                Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
-                String targetKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
-                if (groupState.mPausedTargetKeys.contains(targetKey)) {
-                    AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + targetKey + " is paused.");
-                    return;
-                }
-
-                /* Increment counters and schedule ingestion if we are enabled. */
-                groupState.mPendingLogCount++;
-                AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
-                if (mEnabled) {
-                    checkPendingLogs(groupState);
-                } else {
-                    AppCenterLog.debug(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
-                }
             } catch (Persistence.PersistenceException e) {
-                AppCenterLog.error(LOG_TAG, "Error persisting log with exception: " + e.toString());
+                AppCenterLog.error(LOG_TAG, "Error persisting log", e);
+                if (groupState.mListener != null) {
+                    groupState.mListener.onBeforeSending(log);
+                    groupState.mListener.onFailure(log, e);
+                }
+                return;
+            }
+
+            /* Nothing more to do if the log is from a paused transmission target. */
+            Iterator<String> targetKeys = log.getTransmissionTargetTokens().iterator();
+            String targetKey = targetKeys.hasNext() ? PartAUtils.getTargetKey(targetKeys.next()) : null;
+            if (groupState.mPausedTargetKeys.contains(targetKey)) {
+                AppCenterLog.debug(LOG_TAG, "Transmission target ikey=" + targetKey + " is paused.");
+                return;
+            }
+
+            /* Increment counters and schedule ingestion if we are enabled. */
+            groupState.mPendingLogCount++;
+            AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
+            if (mEnabled) {
+                checkPendingLogs(groupState);
+            } else {
+                AppCenterLog.debug(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");
             }
         }
     }
@@ -743,7 +748,7 @@ public class DefaultChannel implements Channel {
     class GroupState {
 
         /**
-         * Group name
+         * Group name.
          */
         final String mName;
 

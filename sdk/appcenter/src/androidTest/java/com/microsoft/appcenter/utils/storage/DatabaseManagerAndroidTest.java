@@ -18,7 +18,6 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Random;
 
-import static com.microsoft.appcenter.utils.storage.DatabaseManager.ALLOWED_SIZE_MULTIPLE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -380,7 +379,7 @@ public class DatabaseManagerAndroidTest {
             /* Test inexact value, it will use next multiple of 4KB. */
             long desiredSize = MAX_SIZE_IN_BYTES * 2 + 1;
             assertTrue(databaseManager.setMaxSize(desiredSize));
-            assertEquals(desiredSize - 1 + ALLOWED_SIZE_MULTIPLE, databaseManager.getMaxSize());
+            assertEquals(desiredSize - 1 + 4096, databaseManager.getMaxSize());
 
             /* Try to set to a very small value. */
             assertFalse(databaseManager.setMaxSize(2));

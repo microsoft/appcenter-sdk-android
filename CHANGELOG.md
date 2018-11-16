@@ -1,5 +1,22 @@
 # App Center SDK for Android Change Log
 
+## Version 1.10.1 (Under active development)
+
+### AppCenter
+
+* **[Fix]** Do not delete old logs when trying to add a log larger than the maximum storage capacity.
+* **[Fix]** Fix error detection of `setMaxStorageSize` API if database uses custom page size.
+
+### AppCenter
+
+* **[Fix]** Fix minimum storage size verification to match minimum possible value.
+
+### AppCenterCrashes
+
+* **[Fix]** Fix a bug where crash data file could leak when the database is full.
+
+___
+
 ## Version 1.10.0
 
 ### AppCenterAnalytics

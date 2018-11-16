@@ -7,7 +7,6 @@ import android.support.test.rule.ActivityTestRule;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
-import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 
 import org.junit.After;
 import org.junit.Before;

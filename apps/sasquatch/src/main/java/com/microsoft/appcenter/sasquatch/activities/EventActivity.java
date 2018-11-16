@@ -32,9 +32,6 @@ import java.util.Map;
 import java.util.Set;
 
 
-/**
- * TODO move to main folder and delete jCenter version during release process.
- */
 public class EventActivity extends AppCompatActivity {
 
     /**
