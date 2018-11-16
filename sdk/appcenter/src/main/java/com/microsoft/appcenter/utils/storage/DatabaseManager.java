@@ -39,12 +39,6 @@ public class DatabaseManager implements Closeable {
     public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
 
     /**
-     * Allowed multiple for maximum sizes.
-     */
-    @VisibleForTesting
-    static final int ALLOWED_SIZE_MULTIPLE = 4096;
-
-    /**
      * Application context instance.
      */
     private final Context mContext;
@@ -386,10 +380,15 @@ public class DatabaseManager implements Closeable {
         SQLiteDatabase db = getDatabase();
         long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
-        /* SQLite always use the next multiple of 4KB as maximum size. */
-        long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSizeInBytes / (double) ALLOWED_SIZE_MULTIPLE) * ALLOWED_SIZE_MULTIPLE;
+        /* SQLite always use the next multiple of page size as maximum size. */
+        long pageSize = db.getPageSize();
+        long expectedMultipleMaxSize = maxStorageSizeInBytes / pageSize;
+        if (maxStorageSizeInBytes % pageSize != 0) {
+            expectedMultipleMaxSize++;
+        }
+        expectedMultipleMaxSize *= pageSize;
 
-        /* So to check the resize works, we need to check new max size against the next multiple of 4KB. */
+        /* So to check the resize works, we need to check new max size against the next multiple of page size. */
         if (newMaxSize != expectedMultipleMaxSize) {
             AppCenterLog.error(LOG_TAG, "Could not change maximum database size to " + maxStorageSizeInBytes + " bytes, current maximum size is " + newMaxSize + " bytes.");
             return false;
@@ -397,7 +396,7 @@ public class DatabaseManager implements Closeable {
         if (maxStorageSizeInBytes == newMaxSize) {
             AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes.");
         } else {
-            AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes (next multiple of 4KiB).");
+            AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes (next multiple of page size).");
         }
         return true;
     }
