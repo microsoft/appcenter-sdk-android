@@ -109,4 +109,40 @@ public class AppCenterUserIdTest extends AbstractAppCenterTest {
         AppCenter.setUserId("x:test");
         assertNull(AppCenter.getInstance().getUserId());
     }
+
+    @Test
+    public void checkOneCollectorUserIdPatterns() {
+        AppCenter.start(mApplication, DUMMY_TARGET_TOKEN_STRING, DummyService.class);
+        AppCenter.setUserId("");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("alice");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("p:test");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("c:alice");
+        assertEquals("c:alice", AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("i:user@microsoft.com");
+        assertEquals("i:user@microsoft.com", AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("d:adc44f2dc6915cc8823711a90dbe802a93845625cc3ad75bab6c033a230855c1");
+        assertEquals("d:adc44f2dc6915cc8823711a90dbe802a93845625cc3ad75bab6c033a230855c1", AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D");
+        assertEquals("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D", AppCenter.getInstance().getUserId());
+    }
+
+    @Test
+    public void setInvalidUserIdDoesNotUpdatePreviousUserId() {
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        AppCenter.setUserId("valid");
+        AppCenter.setUserId(longUserId());
+        assertEquals("valid", AppCenter.getInstance().getUserId());
+    }
+
+    @Test
+    public void unsetUserId() {
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        AppCenter.setUserId("valid");
+        assertEquals("valid", AppCenter.getInstance().getUserId());
+        AppCenter.setUserId(null);
+        assertNull(AppCenter.getInstance().getUserId());
+    }
 }
