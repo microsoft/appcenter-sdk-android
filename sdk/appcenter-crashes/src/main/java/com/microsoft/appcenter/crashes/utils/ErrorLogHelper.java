@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -129,6 +130,9 @@ public class ErrorLogHelper {
 
         /* Set current time. Will be correlated to session after restart. */
         errorLog.setTimestamp(new Date());
+
+        /* Set user identifier. */
+        errorLog.setUserId(AppCenter.getInstance().getUserId());
 
         /* Snapshot device properties. */
         try {
@@ -323,7 +327,7 @@ public class ErrorLogHelper {
             AppCenterLog.warn(Crashes.LOG_TAG, "Crash causes truncated from " + causeChain.size() + " to " + CAUSE_LIMIT + " causes.");
             causeChain.subList(CAUSE_LIMIT_HALF, causeChain.size() - CAUSE_LIMIT_HALF).clear();
         }
-        for (Throwable cause: causeChain) {
+        for (Throwable cause : causeChain) {
             Exception exception = new Exception();
             exception.setType(cause.getClass().getName());
             exception.setMessage(cause.getMessage());

@@ -13,8 +13,6 @@ import java.util.UUID;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -79,6 +77,16 @@ public class AbstractLogTest {
         b.setDistributionGroupId(distributionGroupId1);
         checkEquals(a, b);
 
+        /* User ID. */
+        String userId1 = "alice";
+        String userId2 = "bob";
+        a.setUserId(userId1);
+        checkNotEquals(a, b);
+        b.setUserId(userId2);
+        checkNotEquals(a, b);
+        b.setUserId(userId1);
+        checkEquals(a, b);
+
         /* Device. */
         Device d1 = new Device();
         d1.setLocale("a");
@@ -120,33 +128,6 @@ public class AbstractLogTest {
         when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn("type");
         AbstractLog mockLog = new MockLog();
         mockLog.read(mockJsonObject);
-    }
-
-    @Test
-    public void readWithoutOptionalPropertiesTest() throws JSONException {
-        AbstractLog mockLog = new MockLogWithType();
-        UUID uuid = UUID.randomUUID();
-        String distributionGroupId = UUID.randomUUID().toString();
-
-        JSONObject mockJsonObject = mock(JSONObject.class);
-        when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn(mockLog.getType());
-        when(mockJsonObject.getString(AbstractLog.TIMESTAMP)).thenReturn("2017-07-08T01:17:43.245Z");
-        when(mockJsonObject.has(AbstractLog.SID)).thenReturn(false).thenReturn(true);
-        when(mockJsonObject.has(AbstractLog.DISTRIBUTION_GROUP_ID)).thenReturn(false).thenReturn(true);
-        when(mockJsonObject.has(AbstractLog.DEVICE)).thenReturn(false).thenReturn(true);
-        when(mockJsonObject.getString(AbstractLog.SID)).thenReturn(uuid.toString());
-        when(mockJsonObject.getString(AbstractLog.DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
-        when(mockJsonObject.getJSONObject(AbstractLog.DEVICE)).thenReturn(mock(JSONObject.class));
-
-        mockLog.read(mockJsonObject);
-        assertNull(mockLog.getSid());
-        assertNull(mockLog.getDistributionGroupId());
-        assertNull(mockLog.getDevice());
-
-        mockLog.read(mockJsonObject);
-        assertEquals(uuid, mockLog.getSid());
-        assertEquals(distributionGroupId, mockLog.getDistributionGroupId());
-        assertNotNull(mockLog.getDevice());
     }
 
     @Test

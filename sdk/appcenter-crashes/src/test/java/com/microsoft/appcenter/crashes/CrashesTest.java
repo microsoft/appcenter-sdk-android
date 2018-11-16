@@ -121,6 +121,9 @@ public class CrashesTest {
     private ManagedErrorLog mErrorLog;
 
     @Mock
+    private AppCenter mAppCenter;
+
+    @Mock
     private AppCenterHandler mAppCenterHandler;
 
     private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
@@ -143,8 +146,8 @@ public class CrashesTest {
         mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
-
         mockStatic(AppCenter.class);
+        when(AppCenter.getInstance()).thenReturn(mAppCenter);
 
         @SuppressWarnings("unchecked")
         AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
@@ -542,6 +545,7 @@ public class CrashesTest {
 
     @Test
     public void trackException() {
+
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
@@ -706,6 +710,25 @@ public class CrashesTest {
                 return false;
             }
         }), eq(crashes.getGroupName()), eq(DEFAULTS));
+    }
+
+    @Test
+    public void trackExceptionWithUserId() {
+
+        /* Mock userId. */
+        when(mAppCenter.getUserId()).thenReturn("charlie");
+
+        /* Track exception test. */
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
+        Crashes.trackException(EXCEPTION);
+        ArgumentCaptor<HandledErrorLog> log = ArgumentCaptor.forClass(HandledErrorLog.class);
+        verify(mockChannel).enqueue(log.capture(), eq(crashes.getGroupName()), eq(DEFAULTS));
+        assertNotNull(log.getValue());
+        assertEquals(EXCEPTION.getMessage(), log.getValue().getException().getMessage());
+        assertEquals("charlie", log.getValue().getUserId());
     }
 
     @Test
