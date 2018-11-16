@@ -53,5 +53,13 @@ public class AppExtensionTest {
         checkNotEquals(a, b);
         b.setLocale("a3");
         checkEquals(a, b);
+
+        /* User ID. */
+        a.setUserId("a4");
+        checkNotEquals(a, b);
+        b.setUserId("b4");
+        checkNotEquals(a, b);
+        b.setUserId("a4");
+        checkEquals(a, b);
     }
 }
