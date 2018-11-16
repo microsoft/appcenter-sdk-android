@@ -14,7 +14,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
@@ -221,6 +220,7 @@ public class DatabaseManager implements Closeable {
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
+                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log");
                     if (cursor == null) {
                         String priority = values.getAsString(priorityColumn);
                         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
@@ -228,7 +228,9 @@ public class DatabaseManager implements Closeable {
                         cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn + " , " + PRIMARY_KEY);
                     }
                     if (cursor.moveToNext()) {
-                        delete(cursor.getLong(0));
+                        long deletedId = cursor.getLong(0);
+                        delete(deletedId);
+                        AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
                     } else {
                         throw e;
                     }
@@ -236,7 +238,7 @@ public class DatabaseManager implements Closeable {
             }
         } catch (RuntimeException e) {
             id = -1L;
-            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
         }
         if (cursor != null) {
             try {
@@ -268,7 +270,7 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
         } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to delete IDs (%s) from database.", Arrays.toString(idList.toArray())), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database.", Arrays.toString(idList.toArray())), e);
         }
     }
 
@@ -282,7 +284,7 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
         } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
         }
     }
 
@@ -293,7 +295,7 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().delete(mTable, null, null);
         } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to clear the table.", e);
+            AppCenterLog.error(LOG_TAG, "Failed to clear the table.", e);
         }
     }
 
@@ -305,7 +307,7 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().close();
         } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to close the database.", e);
+            AppCenterLog.error(LOG_TAG, "Failed to close the database.", e);
         }
     }
 
@@ -318,7 +320,7 @@ public class DatabaseManager implements Closeable {
         try {
             return DatabaseUtils.queryNumEntries(getDatabase(), mTable);
         } catch (RuntimeException e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Failed to get row count of database.", e);
+            AppCenterLog.error(LOG_TAG, "Failed to get row count of database.", e);
             return -1;
         }
     }
@@ -405,8 +407,7 @@ public class DatabaseManager implements Closeable {
      *
      * @return The maximum size of database in bytes.
      */
-    @VisibleForTesting
-    long getMaxSize() {
+    public long getMaxSize() {
         return getDatabase().getMaximumSize();
     }
 
