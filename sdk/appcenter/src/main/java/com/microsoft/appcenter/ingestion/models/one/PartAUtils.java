@@ -76,6 +76,7 @@ public class PartAUtils {
 
         /* Add user extension. */
         dest.getExt().setUser(new UserExtension());
+        dest.getExt().getUser().setLocalId(src.getUserId());
         dest.getExt().getUser().setLocale(device.getLocale().replace("_", "-"));
 
         /* Add OS extension. */

@@ -749,6 +749,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param flags              optional flags.
      */
     private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget, final int flags) {
+        final String userId = AppCenter.getInstance().getUserId();
         post(new Runnable() {
 
             @Override
@@ -766,6 +767,9 @@ public class Analytics extends AbstractAppCenterService {
                 } else if (!mStartedFromApp) {
                     AppCenterLog.error(LOG_TAG, "Cannot track event using Analytics.trackEvent if not started from app, please start from the application or use Analytics.getTransmissionTarget.");
                     return;
+                }
+                if (aTransmissionTarget == mDefaultTransmissionTarget) {
+                    eventLog.setUserId(userId);
                 }
                 eventLog.setId(UUIDUtils.randomUUID());
                 eventLog.setName(name);
