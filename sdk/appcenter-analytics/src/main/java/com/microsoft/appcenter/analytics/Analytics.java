@@ -749,6 +749,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param flags              optional flags.
      */
     private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget, final int flags) {
+        final String userId = AppCenter.getInstance().getUserId();
         post(new Runnable() {
 
             @Override
@@ -759,6 +760,9 @@ public class Analytics extends AbstractAppCenterService {
                     if (aTransmissionTarget.isEnabled()) {
                         eventLog.addTransmissionTarget(aTransmissionTarget.getTransmissionTargetToken());
                         eventLog.setTag(aTransmissionTarget);
+                        if (aTransmissionTarget == mDefaultTransmissionTarget) {
+                            eventLog.setUserId(userId);
+                        }
                     } else {
                         AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");
                         return;

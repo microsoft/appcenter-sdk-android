@@ -90,9 +90,11 @@ public class PartAUtilsTest {
         /* App Center timestamp and transmission targets. */
         Date timestamp = new Date();
         String transmissionTarget = "T1UUID1-T2UUID2";
+        String userId = "alice";
         Log log = mock(Log.class);
         when(log.getDevice()).thenReturn(device);
         when(log.getTimestamp()).thenReturn(timestamp);
+        when(log.getUserId()).thenReturn(userId);
 
         /* Convert. */
         MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
@@ -114,6 +116,7 @@ public class PartAUtilsTest {
         assertNotNull(commonSchemaLog.getExt().getApp());
         assertEquals("1.0.0", commonSchemaLog.getExt().getApp().getVer());
         assertEquals("a:com.appcenter.test", commonSchemaLog.getExt().getApp().getId());
+        assertEquals(userId, commonSchemaLog.getExt().getApp().getUserId());
         assertNotNull(commonSchemaLog.getExt().getNet());
         assertEquals("carrierName", commonSchemaLog.getExt().getNet().getProvider());
         assertNotNull(commonSchemaLog.getExt().getSdk());
@@ -126,6 +129,7 @@ public class PartAUtilsTest {
 
     @NonNull
     private Device getDevice(int appCenterTimeZoneOffset) {
+
         /* Create App Center models, starting with the device object. */
         Device device = new Device();
         device.setModel("model");

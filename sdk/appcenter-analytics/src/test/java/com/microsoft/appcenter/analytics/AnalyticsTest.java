@@ -368,6 +368,45 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void trackEventWithUserIdWhenConfiguredForTarget() {
+        when(mAppCenter.getUserId()).thenReturn("c:alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, "target", true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
+    }
+
+    @Test
+    public void trackEventWithoutUserIdWhenConfiguredForAppSecretOnly() {
+        when(mAppCenter.getUserId()).thenReturn("alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", null, true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertNull(eventLogArgumentCaptor.getValue().getUserId());
+    }
+
+    @Test
+    public void trackEventWithoutUserIdWhenConfiguredForBothSecrets() {
+        when(mAppCenter.getUserId()).thenReturn("c:alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", "target", true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
+    }
+
+    @Test
     public void trackEventFromLibrary() {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);

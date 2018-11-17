@@ -33,6 +33,11 @@ public class AppExtension implements Model {
     private static final String LOCALE = "locale";
 
     /**
+     * User ID.
+     */
+    private static final String USER_ID = "userId";
+
+    /**
      * Application identifier.
      */
     private String id;
@@ -51,6 +56,11 @@ public class AppExtension implements Model {
      * Application locale.
      */
     private String locale;
+
+    /**
+     * User ID.
+     */
+    private String userId;
 
     /**
      * Get application id.
@@ -125,12 +135,31 @@ public class AppExtension implements Model {
         this.locale = locale;
     }
 
+    /**
+     * Get user ID.
+     *
+     * @return user ID.
+     */
+    public String getUserId() {
+        return userId;
+    }
+
+    /**
+     * Set user ID.
+     *
+     * @param userId user ID.
+     */
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     @Override
     public void read(JSONObject object) {
         setId(object.optString(ID, null));
         setVer(object.optString(VER, null));
         setName(object.optString(NAME, null));
         setLocale(object.optString(LOCALE, null));
+        setUserId(object.optString(USER_ID, null));
     }
 
     @Override
@@ -139,9 +168,9 @@ public class AppExtension implements Model {
         JSONUtils.write(writer, VER, getVer());
         JSONUtils.write(writer, NAME, getName());
         JSONUtils.write(writer, LOCALE, getLocale());
+        JSONUtils.write(writer, USER_ID, getUserId());
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -152,7 +181,8 @@ public class AppExtension implements Model {
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (ver != null ? !ver.equals(that.ver) : that.ver != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        return locale != null ? locale.equals(that.locale) : that.locale == null;
+        if (locale != null ? !locale.equals(that.locale) : that.locale != null) return false;
+        return userId != null ? userId.equals(that.userId) : that.userId == null;
     }
 
     @Override
@@ -161,6 +191,7 @@ public class AppExtension implements Model {
         result = 31 * result + (ver != null ? ver.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (locale != null ? locale.hashCode() : 0);
+        result = 31 * result + (userId != null ? userId.hashCode() : 0);
         return result;
     }
 }

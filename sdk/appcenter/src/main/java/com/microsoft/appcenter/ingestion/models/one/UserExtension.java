@@ -13,14 +13,44 @@ import org.json.JSONStringer;
 public class UserExtension implements Model {
 
     /**
+     * LocalId property.
+     */
+    private static final String LOCAL_ID = "localId";
+
+    /**
      * Locale property.
      */
     private static final String LOCALE = "locale";
 
     /**
+     * Local Id.
+     */
+    private String localId;
+
+    /**
      * User locale.
      */
     private String locale;
+
+    /**
+     * Get localId.
+     *
+     * @return localId.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public String getLocalId() {
+        return localId;
+    }
+
+    /**
+     * set localId.
+     *
+     * @param localId localId.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setLocalId(String localId) {
+        this.localId = localId;
+    }
 
     /**
      * Get user locale.
@@ -42,11 +72,13 @@ public class UserExtension implements Model {
 
     @Override
     public void read(JSONObject object) {
+        setLocalId(object.optString(LOCAL_ID, null));
         setLocale(object.optString(LOCALE, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
+        JSONUtils.write(writer, LOCAL_ID, getLocalId());
         JSONUtils.write(writer, LOCALE, getLocale());
     }
 
@@ -57,11 +89,14 @@ public class UserExtension implements Model {
 
         UserExtension that = (UserExtension) o;
 
+        if (localId != null ? !localId.equals(that.localId) : that.localId != null) return false;
         return locale != null ? locale.equals(that.locale) : that.locale == null;
     }
 
     @Override
     public int hashCode() {
-        return locale != null ? locale.hashCode() : 0;
+        int result = localId != null ? localId.hashCode() : 0;
+        result = 31 * result + (locale != null ? locale.hashCode() : 0);
+        return result;
     }
 }
