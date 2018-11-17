@@ -369,7 +369,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void trackEventWithUserIdWhenConfiguredForTarget() {
-        when(mAppCenter.getUserId()).thenReturn("alice");
+        when(mAppCenter.getUserId()).thenReturn("c:alice");
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
@@ -377,7 +377,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("eventName1");
         ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
-        assertEquals("alice", eventLogArgumentCaptor.getValue().getUserId());
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
     }
 
     @Test
@@ -395,7 +395,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void trackEventWithoutUserIdWhenConfiguredForBothSecrets() {
-        when(mAppCenter.getUserId()).thenReturn("alice");
+        when(mAppCenter.getUserId()).thenReturn("c:alice");
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
@@ -403,7 +403,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("eventName1");
         ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
-        assertEquals("alice", eventLogArgumentCaptor.getValue().getUserId());
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
     }
 
     @Test

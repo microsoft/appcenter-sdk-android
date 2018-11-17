@@ -37,6 +37,7 @@ public class UserExtension implements Model {
      *
      * @return localId.
      */
+    @SuppressWarnings("WeakerAccess")
     public String getLocalId() {
         return localId;
     }
@@ -46,6 +47,7 @@ public class UserExtension implements Model {
      *
      * @param localId localId.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setLocalId(String localId) {
         this.localId = localId;
     }
