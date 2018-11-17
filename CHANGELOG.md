@@ -6,9 +6,6 @@
 
 * **[Fix]** Do not delete old logs when trying to add a log larger than the maximum storage capacity.
 * **[Fix]** Fix error detection of `setMaxStorageSize` API if database uses custom page size.
-
-### AppCenter
-
 * **[Fix]** Fix minimum storage size verification to match minimum possible value.
 
 ### AppCenterCrashes
