@@ -36,7 +36,7 @@ public class Constants {
     /**
      * Valid application userId for One Collector.
      */
-    static final Pattern USER_ID_ONE_COLLECTOR_PATTERN = Pattern.compile("[cidw]:.*");
+    public static final Pattern USER_ID_ONE_COLLECTOR_PATTERN = Pattern.compile("[cidw]:.*");
 
     /**
      * Path where crash logs and temporary files are stored.
