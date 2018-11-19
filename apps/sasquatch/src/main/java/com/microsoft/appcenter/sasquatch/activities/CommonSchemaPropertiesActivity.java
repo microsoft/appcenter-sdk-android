@@ -30,7 +30,8 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
     private enum PropertyName {
         APP_NAME,
         APP_VERSION,
-        APP_LOCALE
+        APP_LOCALE,
+        APP_USER_ID
     }
 
     @Override
@@ -60,6 +61,10 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
 
                     case APP_LOCALE:
                         methodName = "getAppLocale";
+                        break;
+
+                    case APP_USER_ID:
+                        methodName = "getAppUserId";
                         break;
 
                     default:
@@ -108,6 +113,16 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
 
             case APP_LOCALE:
                 mPropertyConfigurator.setAppLocale(value);
+                break;
+
+            case APP_USER_ID:
+                // TODO remove reflection once new APIs available in jCenter.
+                // mPropertyConfigurator.setAppUserId(value);
+                try {
+                    Method method = PropertyConfigurator.class.getDeclaredMethod("setAppUserId", String.class);
+                    method.invoke(mPropertyConfigurator, value);
+                } catch (Exception ignored) {
+                }
                 break;
         }
     }
