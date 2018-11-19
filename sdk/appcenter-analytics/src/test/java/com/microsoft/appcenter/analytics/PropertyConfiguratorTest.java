@@ -203,6 +203,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setAppVersion("appVersion");
         target.getPropertyConfigurator().setAppName("appName");
         target.getPropertyConfigurator().setAppLocale("appLocale");
+        target.getPropertyConfigurator().setAppUserId("c:alice");
 
         /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
@@ -213,6 +214,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
+        assertNull(log.getExt().getApp().getUserId());
 
         /* The properties are not applied but are saved, if we enable now we can see the values. */
         target.setEnabledAsync(true).get();
@@ -220,6 +222,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
+        assertEquals("c:alice", log.getExt().getApp().getUserId());
     }
 
     @Test
@@ -309,6 +312,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
+        assertNull(log.getExt().getApp().getUserId());
     }
 
     @Test
