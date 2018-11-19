@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
 
     static final String TARGET_KEY = "target";
 
+    static final String USER_ID_KEY = "userId";
+
     static final String APPCENTER_START_TYPE = "appCenterStartType";
 
     static final String LOG_URL_KEY = "logUrl";
@@ -155,6 +157,12 @@ public class MainActivity extends AppCompatActivity {
         String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
+        /* Set user id. */
+        String userId = sSharedPreferences.getString(USER_ID_KEY, null);
+        if (userId != null) {
+            setUserId(userId);
+        }
+
         /* Attach NDK Crash Handler after SDK is initialized. */
         Crashes.getMinidumpDirectory().thenAccept(new AppCenterConsumer<String>() {
 
@@ -236,6 +244,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    public static void setUserId(String userId) {
+        AppCenter.setUserId(userId);
     }
 
     @Override
