@@ -38,6 +38,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -247,7 +248,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void setUserId(String userId) {
-        AppCenter.setUserId(userId);
+        // TODO remove reflection once new APIs available in jCenter.
+        // AppCenter.setUserId(userId);
+        try {
+            Method method = AppCenter.class.getMethod("setUserId", String.class);
+            method.invoke(null, userId);
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -30,6 +31,7 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
+import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -455,20 +457,27 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
                 }
             });
-            initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
 
-                @Override
-                public void onSave(String value) {
-                    setKeyValue(USER_ID_KEY, value);
-                    MainActivity.setUserId(value);
-                }
+            // TODO remove this check once new APIs available in jCenter
+            if (BuildConfig.FLAVOR.contains("project")) {
+                initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
 
-                @Override
-                public void onReset() {
-                    setKeyValue(USER_ID_KEY, null);
-                    MainActivity.setUserId(null);
-                }
-            });
+                    @Override
+                    public void onSave(String value) {
+                        setKeyValue(USER_ID_KEY, value);
+                        MainActivity.setUserId(value);
+                    }
+
+                    @Override
+                    public void onReset() {
+                        setKeyValue(USER_ID_KEY, null);
+                        MainActivity.setUserId(null);
+                    }
+                });
+            } else {
+                PreferenceGroup preference = (PreferenceGroup) findPreference(getString(R.string.miscellaneous_key));
+                preference.removePreference(findPreference(getString(R.string.user_id_key)));
+            }
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
                 @Override
