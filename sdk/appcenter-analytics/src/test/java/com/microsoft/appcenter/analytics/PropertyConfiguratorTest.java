@@ -140,6 +140,60 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void setInvalidAppUserId() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Get property configurator and set properties. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.setAppUserId("bob");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log.getExt().getApp().getUserId());
+    }
+
+    @Test
+    public void unsetUserId() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Get property configurator and set properties. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.setAppUserId("c:bob");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertEquals("c:bob", log.getExt().getApp().getUserId());
+
+        /* Create second log. */
+        CommonSchemaLog log2 = new CommonSchemaEventLog();
+        log2.setExt(new Extensions());
+        log2.getExt().setApp(new AppExtension());
+
+        /* Un-set user ID. */
+        pc.setAppUserId(null);
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log2.addTransmissionTarget("test");
+        log2.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log2, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log2.getExt().getApp().getUserId());
+    }
+
+    @Test
     public void collectDeviceId() {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
@@ -203,6 +257,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         target.getPropertyConfigurator().setAppVersion("appVersion");
         target.getPropertyConfigurator().setAppName("appName");
         target.getPropertyConfigurator().setAppLocale("appLocale");
+        target.getPropertyConfigurator().setAppUserId("c:alice");
 
         /* Simulate what the pipeline does to convert from App Center to Common Schema. */
         log.addTransmissionTarget("test");
@@ -213,6 +268,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
+        assertNull(log.getExt().getApp().getUserId());
 
         /* The properties are not applied but are saved, if we enable now we can see the values. */
         target.setEnabledAsync(true).get();
@@ -220,6 +276,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("appVersion", log.getExt().getApp().getVer());
         assertEquals("appName", log.getExt().getApp().getName());
         assertEquals("appLocale", log.getExt().getApp().getLocale());
+        assertEquals("c:alice", log.getExt().getApp().getUserId());
     }
 
     @Test
@@ -309,6 +366,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertNull(log.getExt().getApp().getVer());
         assertNull(log.getExt().getApp().getName());
         assertNull(log.getExt().getApp().getLocale());
+        assertNull(log.getExt().getApp().getUserId());
     }
 
     @Test
