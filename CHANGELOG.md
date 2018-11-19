@@ -12,6 +12,10 @@
 
 * **[Fix]** Fix a bug where crash data file could leak when the database is full.
 
+### AppCenterPush
+
+* **[Fix]** Fix push foreground listener after re-enabling push service.
+
 ___
 
 ## Version 1.10.0
