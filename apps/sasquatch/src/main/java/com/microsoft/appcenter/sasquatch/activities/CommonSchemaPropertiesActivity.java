@@ -8,6 +8,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.PropertyConfigurator;
@@ -125,5 +126,6 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
                 }
                 break;
         }
+        Toast.makeText(this, R.string.property_saved, Toast.LENGTH_SHORT).show();
     }
 }
