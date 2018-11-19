@@ -140,6 +140,60 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void setInvalidAppUserId() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Get property configurator and set properties. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.setAppUserId("bob");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log.getExt().getApp().getUserId());
+    }
+
+    @Test
+    public void unsetUserId() {
+        CommonSchemaLog log = new CommonSchemaEventLog();
+        log.setExt(new Extensions());
+        log.getExt().setApp(new AppExtension());
+
+        /* Get property configurator and set properties. */
+        PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
+        pc.setAppUserId("c:bob");
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log.addTransmissionTarget("test");
+        log.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertEquals("c:bob", log.getExt().getApp().getUserId());
+
+        /* Create second log. */
+        CommonSchemaLog log2 = new CommonSchemaEventLog();
+        log2.setExt(new Extensions());
+        log2.getExt().setApp(new AppExtension());
+
+        /* Un-set user ID. */
+        pc.setAppUserId(null);
+
+        /* Simulate what the pipeline does to convert from App Center to Common Schema. */
+        log2.addTransmissionTarget("test");
+        log2.setTag(Analytics.getTransmissionTarget("test"));
+        pc.onPreparingLog(log2, "groupName");
+
+        /* Assert properties set on common schema. */
+        assertNull(log2.getExt().getApp().getUserId());
+    }
+
+    @Test
     public void collectDeviceId() {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
