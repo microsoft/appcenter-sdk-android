@@ -299,11 +299,6 @@ public class PushTest {
 
     @Test
     public void receivedInForeground() {
-
-        /* Was disabled before start. */
-        when(SharedPreferencesManager.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(false);
-
-        /* Start. */
         PushListener pushListener = mock(PushListener.class);
         Push.setListener(pushListener);
         Push push = Push.getInstance();
@@ -311,10 +306,7 @@ public class PushTest {
         start(push, channel);
         Activity activity = mock(Activity.class);
         when(activity.getIntent()).thenReturn(mock(Intent.class));
-
-        /* Enable after activity resume. */
         push.onActivityResumed(activity);
-        Push.setEnabled(true);
 
         /* Mock some message. */
         Intent pushIntent = createPushIntent("some title", "some message", null);
@@ -388,6 +380,37 @@ public class PushTest {
         runnable.get().run();
         verify(pushListener, never()).onPushNotificationReceived(eq(activity), captor.capture());
         verify(pushListener2).onPushNotificationReceived(eq(activity), captor.capture());
+    }
+
+    @Test
+    public void receivedInForegroundWhenInitiallyDisabled() {
+
+        /* Was disabled before start. */
+        when(SharedPreferencesManager.getBoolean(PUSH_ENABLED_KEY, true)).thenReturn(false);
+
+        /* Start. */
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+
+        /* Enable after activity resume. */
+        push.onActivityResumed(activity);
+        Push.setEnabled(true);
+
+        /* Mock some message. */
+        Intent pushIntent = createPushIntent("some title", "some message", null);
+        Push.getInstance().onMessageReceived(mContext, pushIntent);
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+        PushNotification pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertEquals("some title", pushNotification.getTitle());
+        assertEquals("some message", pushNotification.getMessage());
+        assertEquals(new HashMap<String, String>(), pushNotification.getCustomData());
     }
 
     @Test
