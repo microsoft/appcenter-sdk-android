@@ -117,6 +117,7 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
                 break;
 
             case APP_USER_ID:
+
                 // TODO remove reflection once new APIs available in jCenter.
                 // mPropertyConfigurator.setAppUserId(value);
                 try {
