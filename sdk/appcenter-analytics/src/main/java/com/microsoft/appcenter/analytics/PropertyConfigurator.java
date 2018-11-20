@@ -10,9 +10,13 @@ import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.Date;
 import java.util.Map;
+
+import static com.microsoft.appcenter.Constants.USER_ID_ONE_COLLECTOR_PATTERN;
+import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
 /**
  * Allow overriding Part A properties.
@@ -38,6 +42,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * App locale to override common schema part A 'app.locale'.
      */
     private String mAppLocale;
+
+    /**
+     * User identifier to override common schema part A 'app.userId'.
+     */
+    private String mAppUserId;
 
     /**
      * Flag to enable populating common schema 'device.localId'.
@@ -114,6 +123,19 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 }
             }
 
+            /* Override app userId if not null, else use the userId of the nearest parent. */
+            if (mAppUserId != null) {
+                app.setUserId(mAppUserId);
+            } else {
+                for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
+                    String parentAppUserId = target.getPropertyConfigurator().getAppUserId();
+                    if (parentAppUserId != null) {
+                        app.setUserId(parentAppUserId);
+                        break;
+                    }
+                }
+            }
+
             /* Fill out the device id if it has been collected. */
             if (mDeviceIdEnabled) {
 
@@ -137,7 +159,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app name. Used for checking parents for property inheritance.
+     * Get app name.
      *
      * @return App name.
      */
@@ -161,7 +183,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app version. Used for checking parents for property inheritance.
+     * Get app version.
      *
      * @return App version.
      */
@@ -172,7 +194,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Override common schema Part A property App.Version.
      *
-     * @param appVersion App version
+     * @param appVersion App version.
      */
     public void setAppVersion(final String appVersion) {
         Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
@@ -185,9 +207,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app locale. Used for checking parents for property inheritance.
+     * Get app locale.
      *
-     * @return App locale
+     * @return App locale.
      */
     private String getAppLocale() {
         return mAppLocale;
@@ -196,7 +218,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Override common schema Part A property App.Locale.
      *
-     * @param appLocale App Locale
+     * @param appLocale App Locale.
      */
     public void setAppLocale(final String appLocale) {
         Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
@@ -204,6 +226,35 @@ public class PropertyConfigurator extends AbstractChannelListener {
             @Override
             public void run() {
                 mAppLocale = appLocale;
+            }
+        });
+    }
+
+    /**
+     * Get app user id.
+     *
+     * @return App user id.
+     */
+    private String getAppUserId() {
+        return mAppUserId;
+    }
+
+    /**
+     * Override common schema Part A property App.UserId.
+     *
+     * @param appUserId App UserId.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setAppUserId(final String appUserId) {
+        if (appUserId != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(appUserId).matches()) {
+            AppCenterLog.error(LOG_TAG, "appUserId must match the " + USER_ID_ONE_COLLECTOR_PATTERN + " regular expression.");
+            return;
+        }
+        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+            @Override
+            public void run() {
+                mAppUserId = appUserId;
             }
         });
     }
