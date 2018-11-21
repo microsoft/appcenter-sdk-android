@@ -7,12 +7,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("unused")
 public class UserIdUtilsTest {
 
     @Test
+    public void utilsCoverage() {
+        new UserIdUtils();
+    }
+
+    @Test
     public void userIdInvalid() {
-        assertFalse(UserIdUtils.checkUserIdValidForOneCollector(null));
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector(""));
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector(":alice"));
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector("c:"));
@@ -21,6 +24,7 @@ public class UserIdUtilsTest {
 
     @Test
     public void userIdValid() {
+        assertTrue(UserIdUtils.checkUserIdValidForOneCollector(null));
         assertTrue(UserIdUtils.checkUserIdValidForOneCollector("c:alice"));
     }
 

@@ -3,6 +3,8 @@ package com.microsoft.appcenter.utils;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import org.junit.Test;
+
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
 
