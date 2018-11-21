@@ -26,6 +26,7 @@ public class UserIdUtilsTest {
     public void userIdValid() {
         assertTrue(UserIdUtils.checkUserIdValidForOneCollector(null));
         assertTrue(UserIdUtils.checkUserIdValidForOneCollector("c:alice"));
+        assertTrue(UserIdUtils.checkUserIdValidForOneCollector("alice"));
     }
 
     @Test

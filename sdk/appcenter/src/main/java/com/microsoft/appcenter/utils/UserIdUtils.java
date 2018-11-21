@@ -1,10 +1,5 @@
 package com.microsoft.appcenter.utils;
 
-import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.junit.Test;
-
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
 
@@ -30,15 +25,13 @@ public class UserIdUtils {
                 AppCenterLog.error(LOG_TAG, "userId must not be empty.");
                 return false;
             }
-            if (prefixIndex > 0) {
+            if (prefixIndex >= 0) {
                 String prefix = userId.substring(0, prefixIndex);
                 if (!prefix.equals(CUSTOM_PREFIX)) {
                     AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s:' is not supported.", CUSTOM_PREFIX, PREFIX_SEPARATOR, prefix, PREFIX_SEPARATOR));
                     return false;
                 }
-                return true;
             }
-            return false;
         }
         return true;
     }
