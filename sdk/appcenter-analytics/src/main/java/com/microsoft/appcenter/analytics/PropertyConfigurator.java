@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.provider.Settings.Secure;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.utils.UserIdUtils;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
@@ -12,6 +11,7 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.UserExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
+import com.microsoft.appcenter.utils.UserIdUtils;
 
 import java.util.Date;
 import java.util.Map;
@@ -253,7 +253,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
 
                 @Override
                 public void run() {
-                    mUserId = userId;
+                    mUserId = UserIdUtils.getPrefixedUserId(userId);
                 }
             });
         }
