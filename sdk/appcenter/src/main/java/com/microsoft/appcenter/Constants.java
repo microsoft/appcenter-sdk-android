@@ -29,11 +29,6 @@ public class Constants {
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
-     * Maximum allowed length for user identifier for App Center server.
-     */
-    public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
-
-    /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;

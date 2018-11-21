@@ -1,7 +1,8 @@
 package com.microsoft.appcenter.utils;
 
+import android.support.annotation.VisibleForTesting;
+
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
 
 /**
  * Utility to store and retrieve values for user identifiers.
@@ -11,6 +12,12 @@ public class UserIdUtils {
     private static final String CUSTOM_PREFIX = "c";
 
     private static final String PREFIX_SEPARATOR = ":";
+
+    /**
+     * Maximum allowed length for user identifier for App Center server.
+     */
+    @VisibleForTesting
+    public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
 
     /**
      * Check if userId is valid for One Collector.

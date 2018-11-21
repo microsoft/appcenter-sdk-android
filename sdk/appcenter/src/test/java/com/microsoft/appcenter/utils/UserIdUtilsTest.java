@@ -34,7 +34,7 @@ public class UserIdUtilsTest {
     @Test
     public void userIdInvalidForAppCenter() {
         StringBuilder userId = new StringBuilder();
-        for (int i = 0; i <= Constants.USER_ID_APP_CENTER_MAX_LENGTH; i++) {
+        for (int i = 0; i <= UserIdUtils.USER_ID_APP_CENTER_MAX_LENGTH; i++) {
             userId.append("x");
         }
         assertFalse(UserIdUtils.checkUserIdValidForAppCenter(userId.toString()));
