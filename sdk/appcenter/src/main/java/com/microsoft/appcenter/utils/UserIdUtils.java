@@ -14,6 +14,7 @@ public class UserIdUtils {
     private static final String CUSTOM_PREFIX = "c";
 
     private static final String PREFIX_SEPARATOR = ":";
+
     /**
      * Check if userId is valid for One Collector.
      *

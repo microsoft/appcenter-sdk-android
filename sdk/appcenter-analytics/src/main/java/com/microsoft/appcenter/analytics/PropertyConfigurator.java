@@ -250,8 +250,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void setUserId(final String userId) {
         if (userId == null) {
             mUserId = userId;
-        }
-        else {
+        } else {
             final String prefixedUserId = UserIdUtils.getPrefixedUserId(userId);
             if (UserIdUtils.checkUserIdValidForOneCollector(prefixedUserId)) {
                 Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
