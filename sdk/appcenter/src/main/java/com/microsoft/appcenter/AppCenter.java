@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
+import com.microsoft.appcenter.utils.UserIdUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -431,7 +432,7 @@ public class AppCenter {
                 AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
                 return;
             }
-            if (mTransmissionTargetToken != null && !UserIdUtils.checkUserIdForOneCollector(userId)) {
+            if (mTransmissionTargetToken != null && !UserIdUtils.checkUserIdValidForOneCollector(userId)) {
                 return;
             }
         }

@@ -1,4 +1,4 @@
-package com.microsoft.appcenter;
+package com.microsoft.appcenter.utils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -19,7 +19,7 @@ public class UserIdUtils {
      * @param userId userId.
      * @return true if valid, false otherwise.
      */
-    public static boolean checkUserIdForOneCollector(String userId) {
+    public static boolean checkUserIdValidForOneCollector(String userId) {
         if (userId != null) {
             int prefixIndex = userId.indexOf(PREFIX_SEPARATOR);
             if (prefixIndex == userId.length() - 1) {
@@ -32,9 +32,11 @@ public class UserIdUtils {
                     AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s:' is not supported.", CUSTOM_PREFIX, PREFIX_SEPARATOR, prefix, PREFIX_SEPARATOR));
                     return false;
                 }
+                return true;
             }
+            return false;
         }
-        return true;
+        return false;
     }
 
     /**
