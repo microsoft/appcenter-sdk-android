@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.utils;
 
+import com.microsoft.appcenter.Constants;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -15,7 +17,7 @@ public class UserIdUtilsTest {
     }
 
     @Test
-    public void userIdInvalid() {
+    public void userIdInvalidForOneCollector() {
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector(""));
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector(":alice"));
         assertFalse(UserIdUtils.checkUserIdValidForOneCollector("c:"));
@@ -23,9 +25,25 @@ public class UserIdUtilsTest {
     }
 
     @Test
-    public void userIdValid() {
+    public void userIdValidForOneCollector() {
         assertTrue(UserIdUtils.checkUserIdValidForOneCollector(null));
         assertTrue(UserIdUtils.checkUserIdValidForOneCollector("c:alice"));
+        assertTrue(UserIdUtils.checkUserIdValidForOneCollector("alice"));
+    }
+
+    @Test
+    public void userIdInvalidForAppCenter() {
+        StringBuilder userId = new StringBuilder();
+        for (int i = 0; i <= Constants.USER_ID_APP_CENTER_MAX_LENGTH; i++) {
+            userId.append("x");
+        }
+        assertFalse(UserIdUtils.checkUserIdValidForAppCenter(userId.toString()));
+    }
+
+    @Test
+    public void userIdValidForAppCenter() {
+        assertTrue(UserIdUtils.checkUserIdValidForAppCenter("alice"));
+        assertTrue(UserIdUtils.checkUserIdValidForAppCenter(null));
     }
 
     @Test
