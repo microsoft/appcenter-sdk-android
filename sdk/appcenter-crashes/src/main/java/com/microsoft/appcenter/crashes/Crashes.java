@@ -535,11 +535,7 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
-                String result;
-                synchronized (AppCenter.getInstance()) {
-                    result = UserIdContext.getInstance().getUserId();
-                }
-                errorLog.setUserId(result);
+                errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
@@ -615,11 +611,7 @@ public class Crashes extends AbstractAppCenterService {
              * We should have a user/device property history like we did for session to fix that issue.
              * The main issue with the current code is that app version or userId can change between crash and reporting.
              */
-            String result;
-            synchronized (AppCenter.getInstance()) {
-                result = UserIdContext.getInstance().getUserId();
-            }
-            errorLog.setUserId(result);
+            errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
                 errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
                 errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);

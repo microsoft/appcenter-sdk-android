@@ -715,13 +715,7 @@ public class CrashesTest {
 
     @Test
     public void trackExceptionWithUserId() {
-
-        /* Mock userId. */
-        String result;
-        synchronized (mAppCenter) {
-            result = UserIdContext.getInstance().getUserId();
-        }
-        when(result).thenReturn("charlie");
+        UserIdContext.getInstance().setUserId("charlie");
 
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();

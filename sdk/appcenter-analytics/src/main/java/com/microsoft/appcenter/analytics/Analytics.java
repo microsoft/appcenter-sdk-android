@@ -750,11 +750,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param flags              optional flags.
      */
     private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget, final int flags) {
-        String result;
-        synchronized (AppCenter.getInstance()) {
-            result = UserIdContext.getInstance().getUserId();
-        }
-        final String userId = result;
+        final String userId = UserIdContext.getInstance().getUserId();
         post(new Runnable() {
 
             @Override

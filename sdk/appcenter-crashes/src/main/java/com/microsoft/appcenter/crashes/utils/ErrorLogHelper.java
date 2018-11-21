@@ -133,11 +133,7 @@ public class ErrorLogHelper {
         errorLog.setTimestamp(new Date());
 
         /* Set user identifier. */
-        String result;
-        synchronized (AppCenter.getInstance()) {
-            result = UserIdContext.getInstance().getUserId();
-        }
-        errorLog.setUserId(result);
+        errorLog.setUserId(UserIdContext.getInstance().getUserId());
 
         /* Snapshot device properties. */
         try {
