@@ -125,10 +125,10 @@ public class AppCenterUserIdTest extends AbstractAppCenterTest {
         assertNull(AppCenter.getInstance().getUserId());
         AppCenter.setUserId("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D");
         assertNull(AppCenter.getInstance().getUserId());
-        AppCenter.setUserId("alice");
-        assertNull(AppCenter.getInstance().getUserId());
         AppCenter.setUserId(":alice");
         assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("alice");
+        assertEquals("alice", AppCenter.getInstance().getUserId());
         AppCenter.setUserId("c:alice");
         assertEquals("c:alice", AppCenter.getInstance().getUserId());
     }

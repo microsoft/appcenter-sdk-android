@@ -141,7 +141,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         assertEquals("c:bob", log.getExt().getUser().getLocalId());
     }
 
-
     @Test
     public void setNonPrefixUserId() {
         CommonSchemaLog log = new CommonSchemaEventLog();
