@@ -10,11 +10,6 @@ import static org.junit.Assert.assertTrue;
 public class UserIdContextTest {
 
     @Test
-    public void utilsCoverage() {
-        new UserIdContext();
-    }
-
-    @Test
     public void userIdInvalidForOneCollector() {
         assertFalse(UserIdContext.checkUserIdValidForOneCollector(""));
         assertFalse(UserIdContext.checkUserIdValidForOneCollector(":alice"));
