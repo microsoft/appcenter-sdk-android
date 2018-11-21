@@ -46,7 +46,6 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -428,8 +427,7 @@ public class AppCenter {
             return;
         }
         if (userId != null) {
-            if (mAppSecret != null && userId.length() > USER_ID_APP_CENTER_MAX_LENGTH) {
-                AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
+            if (mAppSecret != null && !UserIdUtils.checkUserIdValidForAppCenter(userId)) {
                 return;
             }
             if (mTransmissionTargetToken != null && !UserIdUtils.checkUserIdValidForOneCollector(userId)) {

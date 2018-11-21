@@ -248,14 +248,20 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @SuppressWarnings("WeakerAccess")
     public void setUserId(final String userId) {
-        if (UserIdUtils.checkUserIdValidForOneCollector(userId)) {
-            Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+        if (userId == null) {
+            mUserId = userId;
+        }
+        else {
+            final String prefixedUserId = UserIdUtils.getPrefixedUserId(userId);
+            if (UserIdUtils.checkUserIdValidForOneCollector(prefixedUserId)) {
+                Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
 
-                @Override
-                public void run() {
-                    mUserId = UserIdUtils.getPrefixedUserId(userId);
-                }
-            });
+                    @Override
+                    public void run() {
+                        mUserId = prefixedUserId;
+                    }
+                });
+            }
         }
     }
 

@@ -1,8 +1,10 @@
 package com.microsoft.appcenter.utils;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
 
 /**
  * Utility to store and retrieve values for user identifiers.
@@ -12,7 +14,6 @@ public class UserIdUtils {
     private static final String CUSTOM_PREFIX = "c";
 
     private static final String PREFIX_SEPARATOR = ":";
-
     /**
      * Check if userId is valid for One Collector.
      *
@@ -36,7 +37,21 @@ public class UserIdUtils {
             }
             return false;
         }
-        return false;
+        return true;
+    }
+
+    /**
+     * Check if userId is valid for App Center.
+     *
+     * @param userId userId.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean checkUserIdValidForAppCenter(String userId) {
+        if (userId.length() > USER_ID_APP_CENTER_MAX_LENGTH) {
+            AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
+            return false;
+        }
+        return true;
     }
 
     /**
