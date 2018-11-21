@@ -30,6 +30,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -716,7 +717,11 @@ public class CrashesTest {
     public void trackExceptionWithUserId() {
 
         /* Mock userId. */
-        when(mAppCenter.getUserId()).thenReturn("charlie");
+        String result;
+        synchronized (mAppCenter) {
+            result = UserIdContext.getInstance().getUserId();
+        }
+        when(result).thenReturn("charlie");
 
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();

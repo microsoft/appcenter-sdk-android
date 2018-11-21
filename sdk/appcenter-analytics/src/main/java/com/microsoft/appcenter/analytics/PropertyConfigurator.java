@@ -11,7 +11,7 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.UserExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
-import com.microsoft.appcenter.utils.UserIdUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 
 import java.util.Date;
 import java.util.Map;
@@ -248,12 +248,12 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @SuppressWarnings("WeakerAccess")
     public void setUserId(final String userId) {
-        if (UserIdUtils.checkUserIdValidForOneCollector(userId)) {
+        if (UserIdContext.checkUserIdValidForOneCollector(userId)) {
             Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
 
                 @Override
                 public void run() {
-                    mUserId = UserIdUtils.getPrefixedUserId(userId);
+                    mUserId = UserIdContext.getPrefixedUserId(userId);
                 }
             });
         }

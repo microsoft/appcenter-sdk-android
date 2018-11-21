@@ -28,6 +28,7 @@ import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
@@ -749,7 +750,11 @@ public class Analytics extends AbstractAppCenterService {
      * @param flags              optional flags.
      */
     private synchronized void trackEventAsync(final String name, final List<TypedProperty> properties, final AnalyticsTransmissionTarget transmissionTarget, final int flags) {
-        final String userId = AppCenter.getInstance().getUserId();
+        String result;
+        synchronized (AppCenter.getInstance()) {
+            result = UserIdContext.getInstance().getUserId();
+        }
+        final String userId = result;
         post(new Runnable() {
 
             @Override

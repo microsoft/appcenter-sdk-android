@@ -30,6 +30,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -534,7 +535,11 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
-                errorLog.setUserId(AppCenter.getInstance().getUserId());
+                String result;
+                synchronized (AppCenter.getInstance()) {
+                    result = UserIdContext.getInstance().getUserId();
+                }
+                errorLog.setUserId(result);
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
@@ -610,7 +615,11 @@ public class Crashes extends AbstractAppCenterService {
              * We should have a user/device property history like we did for session to fix that issue.
              * The main issue with the current code is that app version or userId can change between crash and reporting.
              */
-            errorLog.setUserId(AppCenter.getInstance().getUserId());
+            String result;
+            synchronized (AppCenter.getInstance()) {
+                result = UserIdContext.getInstance().getUserId();
+            }
+            errorLog.setUserId(result);
             try {
                 errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
                 errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
