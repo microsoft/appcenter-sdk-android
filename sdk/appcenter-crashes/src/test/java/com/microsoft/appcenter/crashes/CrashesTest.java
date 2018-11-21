@@ -37,6 +37,7 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -186,6 +187,11 @@ public class CrashesTest {
         doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+    }
+
+    @After
+    public void tearDown() {
+        UserIdContext.unsetInstance();
     }
 
     @Test
