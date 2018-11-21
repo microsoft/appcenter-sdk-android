@@ -35,7 +35,7 @@ public class UserIdUtils {
             if (prefixIndex >= 0) {
                 String prefix = userId.substring(0, prefixIndex);
                 if (!prefix.equals(CUSTOM_PREFIX)) {
-                    AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s:' is not supported.", CUSTOM_PREFIX, PREFIX_SEPARATOR, prefix, PREFIX_SEPARATOR));
+                    AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s' is not supported.", CUSTOM_PREFIX, PREFIX_SEPARATOR, prefix, PREFIX_SEPARATOR));
                     return false;
                 }
             }
