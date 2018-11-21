@@ -162,7 +162,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void setInvalidAppUserId() {
+    public void setInvalidUserId() {
         CommonSchemaLog log = new CommonSchemaEventLog();
         log.setExt(new Extensions());
         log.getExt().setApp(new AppExtension());
@@ -177,7 +177,19 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         log.setTag(Analytics.getTransmissionTarget("test"));
         pc.onPreparingLog(log, "groupName");
 
-        /* Assert properties set on common schema. */
+        /* Assert property not set on common schema. */
+        assertNull(log.getExt().getUser().getLocalId());
+
+        /* Set user id with just the prefix. */
+        pc.setUserId("c:");
+
+        /* Assert property not set on common schema. */
+        assertNull(log.getExt().getUser().getLocalId());
+
+        /* Set empty user id. */
+        pc.setUserId("");
+
+        /* Assert property not set on common schema. */
         assertNull(log.getExt().getUser().getLocalId());
     }
 
