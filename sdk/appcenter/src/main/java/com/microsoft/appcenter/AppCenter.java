@@ -431,7 +431,7 @@ public class AppCenter {
                 AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
                 return;
             }
-            if (mTransmissionTargetToken != null && !UserIdContext.checkUserId(userId)) {
+            if (mTransmissionTargetToken != null && !UserIdUtils.checkUserIdForOneCollector(userId)) {
                 return;
             }
         }

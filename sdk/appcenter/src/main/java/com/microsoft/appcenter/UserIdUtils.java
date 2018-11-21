@@ -1,7 +1,5 @@
 package com.microsoft.appcenter;
 
-import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
@@ -9,13 +7,19 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 /**
  * Utility to store and retrieve values for user identifiers.
  */
-public class UserIdContext {
+public class UserIdUtils {
 
     private static final String CUSTOM_PREFIX = "c";
 
     private static final String PREFIX_SEPARATOR = ":";
 
-    public static boolean checkUserId(String userId) {
+    /**
+     * Check if userId is valid for One Collector.
+     *
+     * @param userId userId.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean checkUserIdForOneCollector(String userId) {
         if (userId != null) {
             int prefixIndex = userId.indexOf(PREFIX_SEPARATOR);
             if (prefixIndex == userId.length() - 1) {
@@ -33,6 +37,12 @@ public class UserIdContext {
         return true;
     }
 
+    /**
+     * Add 'c:' prefix to userId if the userId has no prefix.
+     *
+     * @param userId userId.
+     * @return prefixed userId or null if the userId was null.
+     */
     public static String getPrefixedUserId(String userId) {
         if (userId != null && !userId.contains(PREFIX_SEPARATOR)) {
             return CUSTOM_PREFIX + PREFIX_SEPARATOR + userId;

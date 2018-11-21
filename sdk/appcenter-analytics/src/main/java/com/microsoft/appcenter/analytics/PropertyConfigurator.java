@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.provider.Settings.Secure;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.UserIdContext;
+import com.microsoft.appcenter.UserIdUtils;
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
@@ -248,12 +248,12 @@ public class PropertyConfigurator extends AbstractChannelListener {
      */
     @SuppressWarnings("WeakerAccess")
     public void setUserId(final String userId) {
-        if (UserIdContext.checkUserId(userId)) {
+        if (UserIdUtils.checkUserIdForOneCollector(userId)) {
             Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
 
                 @Override
                 public void run() {
-                    mUserId = UserIdContext.getPrefixedUserId(userId);
+                    mUserId = UserIdUtils.getPrefixedUserId(userId);
                 }
             });
         }
