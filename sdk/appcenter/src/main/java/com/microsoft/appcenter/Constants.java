@@ -34,11 +34,6 @@ public class Constants {
     static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
 
     /**
-     * Valid application userId for One Collector.
-     */
-    public static final Pattern USER_ID_ONE_COLLECTOR_PATTERN = Pattern.compile("[cidw]:.*");
-
-    /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;

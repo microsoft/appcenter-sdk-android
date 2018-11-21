@@ -115,18 +115,20 @@ public class AppCenterUserIdTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_TARGET_TOKEN_STRING, DummyService.class);
         AppCenter.setUserId("");
         assertNull(AppCenter.getInstance().getUserId());
-        AppCenter.setUserId("alice");
+        AppCenter.setUserId("c:");
         assertNull(AppCenter.getInstance().getUserId());
         AppCenter.setUserId("p:test");
         assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("i:user@microsoft.com");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("d:adc44f2dc6915cc8823711a90dbe802a93845625cc3ad75bab6c033a230855c1");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D");
+        assertNull(AppCenter.getInstance().getUserId());
+        AppCenter.setUserId("alice");
+        assertEquals("alice", AppCenter.getInstance().getUserId());
         AppCenter.setUserId("c:alice");
         assertEquals("c:alice", AppCenter.getInstance().getUserId());
-        AppCenter.setUserId("i:user@microsoft.com");
-        assertEquals("i:user@microsoft.com", AppCenter.getInstance().getUserId());
-        AppCenter.setUserId("d:adc44f2dc6915cc8823711a90dbe802a93845625cc3ad75bab6c033a230855c1");
-        assertEquals("d:adc44f2dc6915cc8823711a90dbe802a93845625cc3ad75bab6c033a230855c1", AppCenter.getInstance().getUserId());
-        AppCenter.setUserId("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D");
-        assertEquals("w:1BD8FC6E-98CE-E03D-B19D-BFD5A9BA712D", AppCenter.getInstance().getUserId());
     }
 
     @Test

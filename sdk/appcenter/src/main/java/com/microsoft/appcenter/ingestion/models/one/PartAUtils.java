@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.UserIdContext;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 
@@ -77,6 +79,7 @@ public class PartAUtils {
 
         /* Add user extension. */
         dest.getExt().setUser(new UserExtension());
+        dest.getExt().getUser().setLocalId(UserIdContext.getPrefixedUserId(src.getUserId()));
         dest.getExt().getUser().setLocale(device.getLocale().replace("_", "-"));
 
         /* Add OS extension. */
@@ -89,9 +92,6 @@ public class PartAUtils {
         dest.getExt().setApp(new AppExtension());
         dest.getExt().getApp().setVer(device.getAppVersion());
         dest.getExt().getApp().setId("a:" + device.getAppNamespace());
-
-        /* We use userId from AppCenter.setUserId into app.userId and leave user.localId null for now. */
-        dest.getExt().getApp().setUserId(src.getUserId());
 
         /* TODO: Add network type. */
         /* Add net extension. */

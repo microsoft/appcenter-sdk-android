@@ -46,7 +46,6 @@ import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
-import static com.microsoft.appcenter.Constants.USER_ID_ONE_COLLECTOR_PATTERN;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -432,8 +431,7 @@ public class AppCenter {
                 AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
                 return;
             }
-            if (mTransmissionTargetToken != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(userId).matches()) {
-                AppCenterLog.error(LOG_TAG, "userId must match the " + USER_ID_ONE_COLLECTOR_PATTERN + " regular expression.");
+            if (mTransmissionTargetToken != null && !UserIdContext.checkUserId(userId)) {
                 return;
             }
         }
