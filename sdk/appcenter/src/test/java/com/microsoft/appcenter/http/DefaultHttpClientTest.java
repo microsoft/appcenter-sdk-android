@@ -864,7 +864,7 @@ public class DefaultHttpClientTest {
         /* Verify payload compressed. */
         assertArrayEquals(compressedBytes, buffer.toByteArray());
 
-        /* Check payload logged but not as JSON since different content type. */
+        /* Check payload logged. */
         verifyStatic();
         AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
             @Override
