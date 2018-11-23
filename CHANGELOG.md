@@ -6,14 +6,15 @@
 
 * **[Fix]** Do not delete old logs when trying to add a log larger than the maximum storage capacity.
 * **[Fix]** Fix error detection of `setMaxStorageSize` API if database uses custom page size.
-
-### AppCenter
-
 * **[Fix]** Fix minimum storage size verification to match minimum possible value.
 
 ### AppCenterCrashes
 
 * **[Fix]** Fix a bug where crash data file could leak when the database is full.
+
+### AppCenterPush
+
+* **[Fix]** Fix push foreground listener after re-enabling push service.
 
 ___
 

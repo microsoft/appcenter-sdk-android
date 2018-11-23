@@ -326,13 +326,7 @@ public class Push extends AbstractAppCenterService {
 
     @Override
     public void onActivityPaused(Activity activity) {
-        postOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                mActivity = null;
-            }
-        });
+        mActivity = null;
     }
 
     private void checkPushInActivityIntent(Activity activity) {
@@ -348,12 +342,12 @@ public class Push extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Push.checkLaunchedFromNotification: intent may not be null");
             return;
         }
+        mActivity = activity;
         postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                mActivity = activity;
-                checkPushInIntent(intent);
+                checkPushInIntent(activity, intent);
             }
         });
     }
@@ -363,7 +357,7 @@ public class Push extends AbstractAppCenterService {
      *
      * @param intent intent to inspect.
      */
-    private synchronized void checkPushInIntent(Intent intent) {
+    private synchronized void checkPushInIntent(Activity activity, Intent intent) {
         if (mInstanceListener != null) {
             String googleMessageId = PushIntentUtils.getMessageId(intent);
             if (googleMessageId != null && !googleMessageId.equals(mLastGoogleMessageId)
@@ -375,7 +369,7 @@ public class Push extends AbstractAppCenterService {
                 AppCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                 mLastGoogleMessageId = googleMessageId;
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
-                mInstanceListener.onPushNotificationReceived(mActivity, notification);
+                mInstanceListener.onPushNotificationReceived(activity, notification);
             }
         }
     }
