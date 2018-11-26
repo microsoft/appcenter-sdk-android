@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 /**
  * Various constants and meta information loaded from the context.
@@ -27,6 +26,11 @@ public class Constants {
      * Maximum number of requests being sent for the group.
      */
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+
+    /**
+     * Common schema prefix separator used in various field values.
+     */
+    public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
 
     /**
      * Path where crash logs and temporary files are stored.
