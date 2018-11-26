@@ -20,6 +20,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
@@ -132,7 +133,7 @@ public class ErrorLogHelper {
         errorLog.setTimestamp(new Date());
 
         /* Set user identifier. */
-        errorLog.setUserId(AppCenter.getInstance().getUserId());
+        errorLog.setUserId(UserIdContext.getInstance().getUserId());
 
         /* Snapshot device properties. */
         try {

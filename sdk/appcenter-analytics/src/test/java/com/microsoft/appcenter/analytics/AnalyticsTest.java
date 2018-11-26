@@ -25,9 +25,11 @@ import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -71,6 +73,11 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
+
+    @After
+    public void resetUserId() {
+        UserIdContext.unsetInstance();
+    }
 
     @Test
     public void singleton() {
@@ -369,7 +376,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void trackEventWithUserIdWhenConfiguredForTarget() {
-        when(mAppCenter.getUserId()).thenReturn("c:alice");
+        UserIdContext.getInstance().setUserId("c:alice");
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
@@ -382,7 +389,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void trackEventWithoutUserIdWhenConfiguredForAppSecretOnly() {
-        when(mAppCenter.getUserId()).thenReturn("alice");
+        UserIdContext.getInstance().setUserId("alice");
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
@@ -395,7 +402,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void trackEventWithoutUserIdWhenConfiguredForBothSecrets() {
-        when(mAppCenter.getUserId()).thenReturn("c:alice");
+        UserIdContext.getInstance().setUserId("c:alice");
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);

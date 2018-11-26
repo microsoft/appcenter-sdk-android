@@ -9,14 +9,14 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.ingestion.models.one.UserExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
-import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.UserIdContext;
 
 import java.util.Date;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Constants.USER_ID_ONE_COLLECTOR_PATTERN;
-import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 
 /**
  * Allow overriding Part A properties.
@@ -26,7 +26,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common schema prefix for Android device IDs.
      */
-    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a" + COMMON_SCHEMA_PREFIX_SEPARATOR;
 
     /**
      * App name to override common schema part A 'app.name'.
@@ -44,9 +44,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
     private String mAppLocale;
 
     /**
-     * User identifier to override common schema part A 'app.userId'.
+     * User identifier to override common schema part A 'user.localId'.
      */
-    private String mAppUserId;
+    private String mUserId;
 
     /**
      * Flag to enable populating common schema 'device.localId'.
@@ -82,6 +82,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
+            UserExtension user = ((CommonSchemaLog) log).getExt().getUser();
             DeviceExtension device = ((CommonSchemaLog) log).getExt().getDevice();
 
             /* Override app name if not null, else use the name of the nearest parent. */
@@ -123,14 +124,14 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 }
             }
 
-            /* Override app userId if not null, else use the userId of the nearest parent. */
-            if (mAppUserId != null) {
-                app.setUserId(mAppUserId);
+            /* Override userId if not null, else use the userId of the nearest parent. */
+            if (mUserId != null) {
+                user.setLocalId(mUserId);
             } else {
                 for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
-                    String parentAppUserId = target.getPropertyConfigurator().getAppUserId();
-                    if (parentAppUserId != null) {
-                        app.setUserId(parentAppUserId);
+                    String parentUserId = target.getPropertyConfigurator().getUserId();
+                    if (parentUserId != null) {
+                        user.setLocalId(parentUserId);
                         break;
                     }
                 }
@@ -231,32 +232,33 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app user id.
+     * Get user id.
      *
-     * @return App user id.
+     * @return user id.
      */
-    private String getAppUserId() {
-        return mAppUserId;
+    private String getUserId() {
+        return mUserId;
     }
 
     /**
-     * Override common schema Part A property App.UserId.
+     * Set the user identifier.
+     * The user identifier needs to start with the c: prefix or must not have a prefix.
+     * If the prefix is missing, the c: prefix will be automatically added.
+     * The userId cannot be empty or just "c:".
      *
-     * @param appUserId App UserId.
+     * @param userId user identifier.
      */
     @SuppressWarnings("WeakerAccess")
-    public void setAppUserId(final String appUserId) {
-        if (appUserId != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(appUserId).matches()) {
-            AppCenterLog.error(LOG_TAG, "appUserId must match the " + USER_ID_ONE_COLLECTOR_PATTERN + " regular expression.");
-            return;
-        }
-        Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+    public void setUserId(final String userId) {
+        if (UserIdContext.checkUserIdValidForOneCollector(userId)) {
+            Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
 
-            @Override
-            public void run() {
-                mAppUserId = appUserId;
-            }
-        });
+                @Override
+                public void run() {
+                    mUserId = UserIdContext.getPrefixedUserId(userId);
+                }
+            });
+        }
     }
 
     /**

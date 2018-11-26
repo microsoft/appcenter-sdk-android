@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -45,8 +46,6 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
-import static com.microsoft.appcenter.Constants.USER_ID_APP_CENTER_MAX_LENGTH;
-import static com.microsoft.appcenter.Constants.USER_ID_ONE_COLLECTOR_PATTERN;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -190,11 +189,6 @@ public class AppCenter {
      * AppCenterFuture of set maximum storage size.
      */
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
-
-    /**
-     * User identifier.
-     */
-    private String mUserId;
 
     /**
      * Get unique instance.
@@ -428,16 +422,14 @@ public class AppCenter {
             return;
         }
         if (userId != null) {
-            if (mAppSecret != null && userId.length() > USER_ID_APP_CENTER_MAX_LENGTH) {
-                AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
+            if (mAppSecret != null && !UserIdContext.checkUserIdValidForAppCenter(userId)) {
                 return;
             }
-            if (mTransmissionTargetToken != null && !USER_ID_ONE_COLLECTOR_PATTERN.matcher(userId).matches()) {
-                AppCenterLog.error(LOG_TAG, "userId must match the " + USER_ID_ONE_COLLECTOR_PATTERN + " regular expression.");
+            if (mTransmissionTargetToken != null && !UserIdContext.checkUserIdValidForOneCollector(userId)) {
                 return;
             }
         }
-        mUserId = userId;
+        UserIdContext.getInstance().setUserId(userId);
     }
 
     /**
@@ -1102,15 +1094,6 @@ public class AppCenter {
             future.complete(null);
         }
         return future;
-    }
-
-    /**
-     * Get user identifier. This API should be used only by App Center services.
-     *
-     * @return the user identifier.
-     */
-    public synchronized String getUserId() {
-        return mUserId;
     }
 
     /**

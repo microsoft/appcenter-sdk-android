@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.File;
-import java.util.regex.Pattern;
 
 /**
  * Various constants and meta information loaded from the context.
@@ -29,14 +28,9 @@ public class Constants {
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
-     * Maximum allowed length for user identifier for App Center server.
+     * Common schema prefix separator used in various field values.
      */
-    static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
-
-    /**
-     * Valid application userId for One Collector.
-     */
-    public static final Pattern USER_ID_ONE_COLLECTOR_PATTERN = Pattern.compile("[cidw]:.*");
+    public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
 
     /**
      * Path where crash logs and temporary files are stored.

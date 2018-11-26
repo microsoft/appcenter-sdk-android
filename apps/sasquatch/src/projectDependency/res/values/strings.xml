@@ -7,6 +7,6 @@
         <item>App Name</item>
         <item>App Version</item>
         <item>App Locale</item>
-        <item>App User Id</item>
+        <item>User Id</item>
     </string-array>
 </resources>
