@@ -243,7 +243,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Set the user identifier.
      * The user identifier needs to start with the c: prefix or must not have a prefix.
-     * If the prefix is missing, the c: prefix it will be automatically added.
+     * If the prefix is missing, the c: prefix will be automatically added.
      * The userId cannot be empty or just "c:".
      *
      * @param userId user identifier.
