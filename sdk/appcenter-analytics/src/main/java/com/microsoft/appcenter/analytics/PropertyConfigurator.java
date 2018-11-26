@@ -16,6 +16,8 @@ import com.microsoft.appcenter.utils.UserIdContext;
 import java.util.Date;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
+
 /**
  * Allow overriding Part A properties.
  */
@@ -24,7 +26,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common schema prefix for Android device IDs.
      */
-    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a" + COMMON_SCHEMA_PREFIX_SEPARATOR;
 
     /**
      * App name to override common schema part A 'app.name'.
