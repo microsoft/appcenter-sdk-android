@@ -30,12 +30,14 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -185,6 +187,11 @@ public class CrashesTest {
         doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+    }
+
+    @After
+    public void tearDown() {
+        UserIdContext.unsetInstance();
     }
 
     @Test
@@ -714,9 +721,7 @@ public class CrashesTest {
 
     @Test
     public void trackExceptionWithUserId() {
-
-        /* Mock userId. */
-        when(mAppCenter.getUserId()).thenReturn("charlie");
+        UserIdContext.getInstance().setUserId("charlie");
 
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
