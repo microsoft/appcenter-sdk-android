@@ -27,7 +27,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.UserIdUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -189,11 +189,6 @@ public class AppCenter {
      * AppCenterFuture of set maximum storage size.
      */
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
-
-    /**
-     * User identifier.
-     */
-    private String mUserId;
 
     /**
      * Get unique instance.
@@ -427,14 +422,14 @@ public class AppCenter {
             return;
         }
         if (userId != null) {
-            if (mAppSecret != null && !UserIdUtils.checkUserIdValidForAppCenter(userId)) {
+            if (mAppSecret != null && !UserIdContext.checkUserIdValidForAppCenter(userId)) {
                 return;
             }
-            if (mTransmissionTargetToken != null && !UserIdUtils.checkUserIdValidForOneCollector(userId)) {
+            if (mTransmissionTargetToken != null && !UserIdContext.checkUserIdValidForOneCollector(userId)) {
                 return;
             }
         }
-        mUserId = userId;
+        UserIdContext.getInstance().setUserId(userId);
     }
 
     /**
@@ -1099,15 +1094,6 @@ public class AppCenter {
             future.complete(null);
         }
         return future;
-    }
-
-    /**
-     * Get user identifier. This API should be used only by App Center services.
-     *
-     * @return the user identifier.
-     */
-    public synchronized String getUserId() {
-        return mUserId;
     }
 
     /**

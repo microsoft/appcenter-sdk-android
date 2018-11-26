@@ -7,7 +7,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 /**
  * Utility to store and retrieve values for user identifiers.
  */
-public class UserIdUtils {
+public class UserIdContext {
 
     private static final String CUSTOM_PREFIX = "c";
 
@@ -18,6 +18,33 @@ public class UserIdUtils {
      */
     @VisibleForTesting
     public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
+
+    /**
+     * Unique instance.
+     */
+    private static UserIdContext sInstance;
+
+    /**
+     * Current user identifier.
+     */
+    private String mUserId;
+
+    /**
+     * Get unique instance.
+     *
+     * @return unique instance.
+     */
+    public static synchronized UserIdContext getInstance() {
+        if (sInstance == null) {
+            sInstance = new UserIdContext();
+        }
+        return sInstance;
+    }
+
+    @VisibleForTesting
+    public static synchronized void unsetInstance() {
+        sInstance = null;
+    }
 
     /**
      * Check if userId is valid for One Collector.
@@ -68,5 +95,23 @@ public class UserIdUtils {
             return CUSTOM_PREFIX + PREFIX_SEPARATOR + userId;
         }
         return userId;
+    }
+
+    /**
+     * Get current identifier.
+     *
+     * @return user identifier.
+     */
+    public synchronized String getUserId() {
+        return mUserId;
+    }
+
+    /**
+     * Set current user identifier.
+     *
+     * @param userId user identifier.
+     */
+    public synchronized void setUserId(String userId) {
+        mUserId = userId;
     }
 }
