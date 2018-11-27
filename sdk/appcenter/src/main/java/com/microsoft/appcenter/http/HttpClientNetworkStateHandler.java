@@ -82,7 +82,17 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     }
 
     private synchronized void callRunAsync(Call call) {
+        if (ensureCallFinished(call)) {
+            return;
+        }
         call.mServiceCall = call.mDecoratedApi.callAsync(call.mUrl, call.mMethod, call.mHeaders, call.mCallTemplate, call);
+    }
+
+    private synchronized boolean ensureCallFinished(Call call) {
+        if (call.mServiceCall != null) {
+            return call.mServiceCall.ensureFinished();
+        }
+        return false;
     }
 
     private synchronized void cancelCall(Call call) {
@@ -128,6 +138,11 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         @Override
         public void run() {
             callRunAsync(this);
+        }
+
+        @Override
+        public boolean ensureFinished() {
+            return ensureCallFinished(this);
         }
 
         @Override

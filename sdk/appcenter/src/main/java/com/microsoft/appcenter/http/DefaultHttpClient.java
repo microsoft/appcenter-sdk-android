@@ -149,18 +149,6 @@ public class DefaultHttpClient implements HttpClient {
     }
 
     /**
-     * Do call and tag socket to avoid strict mode issue.
-     */
-    private static String doCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {
-        TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
-        try {
-            return doHttpCall(urlString, method, headers, callTemplate);
-        } finally {
-            TrafficStats.clearThreadStatsTag();
-        }
-    }
-
-    /**
      * Do http call.
      */
     private static String doHttpCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {
@@ -251,14 +239,16 @@ public class DefaultHttpClient implements HttpClient {
             /* Read response. */
             int status = urlConnection.getResponseCode();
             String response = dump(urlConnection);
-            String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
-            String logPayload;
-            if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
-                logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
-            } else {
-                logPayload = "<binary>";
+            if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
+                String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
+                String logPayload;
+                if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
+                    logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
+                } else {
+                    logPayload = "<binary>";
+                }
+                AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
             }
-            AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {
@@ -298,10 +288,17 @@ public class DefaultHttpClient implements HttpClient {
         return new ServiceCall() {
 
             @Override
-            public void cancel() {
-                if (!call.isCancelled()) {
-                    call.cancel(true);
+            public boolean ensureFinished() {
+                try {
+                    return call.isHttpResult(call.get());
+                } catch (Exception ignored) {
+                    return false;
                 }
+            }
+
+            @Override
+            public void cancel() {
+                call.cancel(true);
             }
         };
     }
@@ -339,12 +336,21 @@ public class DefaultHttpClient implements HttpClient {
             mServiceCallback = serviceCallback;
         }
 
+        public boolean isHttpResult(Object result) {
+            return result instanceof String || result instanceof HttpException;
+        }
+
         @Override
         protected Object doInBackground(Void... params) {
+
+            /* Do tag socket to avoid strict mode issue. */
+            TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             try {
-                return doCall(mUrl, mMethod, mHeaders, mCallTemplate);
+                return doHttpCall(mUrl, mMethod, mHeaders, mCallTemplate);
             } catch (Exception e) {
                 return e;
+            } finally {
+                TrafficStats.clearThreadStatsTag();
             }
         }
 
@@ -354,6 +360,15 @@ public class DefaultHttpClient implements HttpClient {
                 mServiceCallback.onCallFailed((Exception) result);
             } else {
                 mServiceCallback.onCallSucceeded(result.toString());
+            }
+        }
+
+        @Override
+        protected void onCancelled(Object result) {
+
+            /* Handle the result even if it was cancelled. */
+            if (isHttpResult(result)) {
+                onPostExecute(result);
             }
         }
     }
