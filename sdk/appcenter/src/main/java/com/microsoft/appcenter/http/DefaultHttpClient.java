@@ -141,6 +141,8 @@ public class DefaultHttpClient implements HttpClient {
             int len;
             while ((len = in.read(buffer)) > 0) {
                 builder.append(buffer, 0, len);
+
+                // TODO Check if cancelled.
             }
             return builder.toString();
         } finally {
@@ -181,6 +183,8 @@ public class DefaultHttpClient implements HttpClient {
 
                 /* Get bytes, check if large enough to compress. */
                 payload = callTemplate.buildRequestBody();
+
+                // TODO Use stream instead of large buffers.
                 binaryPayload = payload.getBytes(CHARSET_NAME);
                 shouldCompress = binaryPayload.length >= MIN_GZIP_LENGTH;
 
@@ -232,12 +236,17 @@ public class DefaultHttpClient implements HttpClient {
                 urlConnection.setDoOutput(true);
                 urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
                 OutputStream out = urlConnection.getOutputStream();
+
+                // TODO Check if cancelled after write each chunk.
                 out.write(binaryPayload);
                 out.close();
             }
 
             /* Read response. */
             int status = urlConnection.getResponseCode();
+
+            // TODO Treat as finished after this line.
+
             String response = dump(urlConnection);
             if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
                 String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
@@ -298,6 +307,9 @@ public class DefaultHttpClient implements HttpClient {
 
             @Override
             public void cancel() {
+
+                // FIXME This doesn't kill the AsyncTask!
+                // https://developer.android.com/reference/android/os/AsyncTask.html#cancelling-a-task
                 call.cancel(true);
             }
         };
@@ -336,7 +348,7 @@ public class DefaultHttpClient implements HttpClient {
             mServiceCallback = serviceCallback;
         }
 
-        public boolean isHttpResult(Object result) {
+        boolean isHttpResult(Object result) {
             return result instanceof String || result instanceof HttpException;
         }
 
