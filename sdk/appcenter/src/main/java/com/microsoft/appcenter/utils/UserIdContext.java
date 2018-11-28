@@ -58,15 +58,18 @@ public class UserIdContext {
         if (userId == null) {
             return true;
         }
-        int prefixIndex = userId.indexOf(COMMON_SCHEMA_PREFIX_SEPARATOR);
-        if (prefixIndex == userId.length() - 1) {
+        if (userId.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "userId must not be empty.");
             return false;
         }
+        int prefixIndex = userId.indexOf(COMMON_SCHEMA_PREFIX_SEPARATOR);
         if (prefixIndex >= 0) {
             String prefix = userId.substring(0, prefixIndex);
             if (!prefix.equals(CUSTOM_PREFIX)) {
                 AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s' is not supported.", CUSTOM_PREFIX, COMMON_SCHEMA_PREFIX_SEPARATOR, prefix, COMMON_SCHEMA_PREFIX_SEPARATOR));
+                return false;
+            } else if (prefixIndex == userId.length() - 1) {
+                AppCenterLog.error(LOG_TAG, "userId must not be empty.");
                 return false;
             }
         }
