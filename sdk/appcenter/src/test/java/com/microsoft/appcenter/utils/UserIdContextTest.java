@@ -14,6 +14,7 @@ public class UserIdContextTest {
         assertFalse(UserIdContext.checkUserIdValidForOneCollector(""));
         assertFalse(UserIdContext.checkUserIdValidForOneCollector(":alice"));
         assertFalse(UserIdContext.checkUserIdValidForOneCollector("c:"));
+        assertFalse(UserIdContext.checkUserIdValidForOneCollector("x:"));
         assertFalse(UserIdContext.checkUserIdValidForOneCollector("x:alice"));
     }
 
