@@ -133,7 +133,7 @@ public class NetworkStateHelper implements Closeable {
              * Can be security exception if permission missing or sometimes another runtime exception
              * on some customized firmwares.
              */
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Cannot access network state information", e);
+            AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
         }
     }
 
