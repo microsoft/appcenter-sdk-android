@@ -13,7 +13,6 @@ import android.net.NetworkRequest;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 
@@ -22,7 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
-import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
 /**
  * Network state helper.
@@ -134,7 +133,7 @@ public class NetworkStateHelper implements Closeable {
              * Can be security exception if permission missing or sometimes another runtime exception
              * on some customized firmwares.
              */
-            AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "Cannot access network state information", e);
         }
     }
 
@@ -157,9 +156,9 @@ public class NetworkStateHelper implements Closeable {
      * Handle network available update on API level >= 21.
      */
     private synchronized void onNetworkAvailable(Network network) {
-        Log.d(AppCenter.LOG_TAG, "Network available netId: " + network);
+        AppCenterLog.debug(LOG_TAG, "Network available netId: " + network);
         mAvailableNetworks.add(network);
-        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+        AppCenterLog.debug(LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
 
         /*
          * Trigger event only once if we gain a new network while one was already
@@ -183,9 +182,9 @@ public class NetworkStateHelper implements Closeable {
          * and fast. This notification scheme is similar to the old connectivity receiver
          * implementation.
          */
-        Log.d(AppCenter.LOG_TAG, "Network lost netId: " + network);
+        AppCenterLog.debug(LOG_TAG, "Network lost netId: " + network);
         mAvailableNetworks.remove(network);
-        Log.d(AppCenter.LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
+        AppCenterLog.debug(LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
         notifyNetworkStateUpdated(false);
         if (!mAvailableNetworks.isEmpty()) {
             notifyNetworkStateUpdated(true);
