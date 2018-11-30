@@ -64,11 +64,12 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
 
     @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
-        if (connected) {
+        if (connected && mCalls.size() > 0) {
             AppCenterLog.debug(LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");
             for (Call call : mCalls) {
                 call.run();
             }
+            mCalls.clear();
         }
     }
 
