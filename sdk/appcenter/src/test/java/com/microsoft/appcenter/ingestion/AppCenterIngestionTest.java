@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -56,15 +57,15 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 public class AppCenterIngestionTest {
 
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public PowerMockRule mRule = new PowerMockRule();
 
     @Mock
     private HttpClient mHttpClient;
 
     @Before
-    public void setUp() {
-        mockStatic(HttpUtils.class);
-        when(HttpUtils.createHttpClient(any(Context.class))).thenReturn(mHttpClient);
+    public void setUp() throws Exception {
+        PowerMockito.spy(HttpUtils.class);
+        PowerMockito.doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
     }
 
     @Test

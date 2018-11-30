@@ -11,7 +11,6 @@ import android.os.Build;
 import android.provider.Settings;
 
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
@@ -79,9 +78,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         /* Mock we already have redirection parameters. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

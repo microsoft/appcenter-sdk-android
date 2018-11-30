@@ -5,12 +5,10 @@ import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -143,11 +141,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarted(mContext, mock(Channel.class), appSecret, null, true);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        mockStatic(NetworkStateHelper.class);
-        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mock(NetworkStateHelper.class));
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

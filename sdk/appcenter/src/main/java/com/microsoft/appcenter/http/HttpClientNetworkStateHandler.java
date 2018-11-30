@@ -73,13 +73,25 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         }
     }
 
+    private synchronized void cancelCall(Call call) {
+        if (call.mServiceCall != null) {
+            call.mServiceCall.cancel();
+        }
+        mCalls.remove(call);
+    }
+
     /**
      * Call wrapper logic.
      */
-    private static class Call extends HttpClientCallDecorator {
+    private class Call extends HttpClientCallDecorator {
 
         Call(HttpClient decoratedApi, String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
             super(decoratedApi, url, method, headers, callTemplate, serviceCallback);
+        }
+
+        @Override
+        public synchronized void cancel() {
+            cancelCall(this);
         }
     }
 }

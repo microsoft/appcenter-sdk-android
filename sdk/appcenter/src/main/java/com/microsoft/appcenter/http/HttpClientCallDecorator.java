@@ -41,7 +41,9 @@ class HttpClientCallDecorator implements Runnable, ServiceCall, ServiceCallback 
 
     @Override
     public synchronized void cancel() {
-        mServiceCall.cancel();
+        if (mServiceCall != null) {
+            mServiceCall.cancel();
+        }
     }
 
     @Override
