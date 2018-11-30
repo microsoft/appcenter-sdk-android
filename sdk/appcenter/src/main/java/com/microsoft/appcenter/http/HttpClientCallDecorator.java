@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * Helper class used to share logic with multiple decorators.
  */
-abstract class HttpClientCallDecorator implements Runnable, ServiceCall, ServiceCallback {
+class HttpClientCallDecorator implements Runnable, ServiceCall, ServiceCallback {
 
     /**
      * Decorated API.
@@ -52,5 +52,10 @@ abstract class HttpClientCallDecorator implements Runnable, ServiceCall, Service
     @Override
     public void onCallSucceeded(String payload) {
         mServiceCallback.onCallSucceeded(payload);
+    }
+
+    @Override
+    public void onCallFailed(Exception e) {
+        mServiceCallback.onCallFailed(e);
     }
 }

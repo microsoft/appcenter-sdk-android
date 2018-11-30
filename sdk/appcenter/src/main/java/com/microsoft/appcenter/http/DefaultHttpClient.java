@@ -1,41 +1,18 @@
 package com.microsoft.appcenter.http;
 
-import android.net.TrafficStats;
 import android.os.AsyncTask;
-import android.os.Build;
-import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.regex.Pattern;
-import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 /**
  * Default HTTP client without the additional behaviors.
  */
-public class DefaultHttpClient implements HttpClient {
+public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.Tracker {
 
     /**
      * HTTP GET method.
@@ -48,11 +25,6 @@ public class DefaultHttpClient implements HttpClient {
     public static final String METHOD_POST = "POST";
 
     /**
-     * Thread stats tag for App Center HTTP calls.
-     */
-    private static final int THREAD_STATS_TAG = 0xD83DDC19;
-
-    /**
      * Content type header key.
      */
     public static final String CONTENT_TYPE_KEY = "Content-Type";
@@ -60,267 +32,31 @@ public class DefaultHttpClient implements HttpClient {
     /**
      * Content type header value.
      */
-    private static final String CONTENT_TYPE_VALUE = "application/json";
+    static final String CONTENT_TYPE_VALUE = "application/json";
 
     /**
      * Character encoding.
      */
-    private static final String CHARSET_NAME = "UTF-8";
+    static final String CHARSET_NAME = "UTF-8";
 
     /**
      * Content encoding header key.
      */
-    private static final String CONTENT_ENCODING_KEY = "Content-Encoding";
+    static final String CONTENT_ENCODING_KEY = "Content-Encoding";
 
     /**
      * Content encoding header key.
      */
-    private static final String CONTENT_ENCODING_VALUE = "gzip";
+    static final String CONTENT_ENCODING_VALUE = "gzip";
 
-    /**
-     * Default string builder capacity.
-     */
-    private static final int DEFAULT_STRING_BUILDER_CAPACITY = 16;
 
-    /**
-     * Read buffer size.
-     */
-    private static final int READ_BUFFER_SIZE = 1024;
-
-    /**
-     * Write buffer size.
-     */
-    private static final int WRUTE_BUFFER_SIZE = 1024;
-
-    /**
-     * HTTP connection timeout.
-     */
-    private static final int CONNECT_TIMEOUT = 60000;
-
-    /**
-     * HTTP read timeout.
-     */
-    private static final int READ_TIMEOUT = 20000;
-
-    /**
-     * Minimum payload length in bytes to use gzip.
-     */
-    private static final int MIN_GZIP_LENGTH = 1400;
-
-    /**
-     * Maximum payload length to use prettify for logging.
-     */
-    private static final int MAX_PRETTIFY_LOG_LENGTH = 4 * 1024;
-
-    /**
-     * Pattern used to replace token in url encoded parameters.
-     */
-    private static final Pattern TOKEN_REGEX_URL_ENCODED = Pattern.compile("token=[^&]+");
-
-    /**
-     * Pattern used to replace token in json responses.
-     */
-    private static final Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
-
-    /**
-     * Determine if payload should be compressed.
-     */
-    private static boolean shouldCompressPayload(String payload) {
-        if (payload.length() >= MIN_GZIP_LENGTH) {
-            return true;
-        }
-
-        /*
-         * UTF-8 is variable width character encoding, so the check is valid only for ASCII string.
-         * For small strings, it's not expensive to allocate an additional buffer.
-         */
-        try {
-            return payload.getBytes(CHARSET_NAME).length >= MIN_GZIP_LENGTH;
-        } catch (UnsupportedEncodingException ignored) {
-            return false;
-        }
-    }
-
-    /**
-     * Write payload to output stream.
-     */
-    private static void writePayload(OutputStream out, String payload, Call call) throws IOException {
-        Writer writer = new OutputStreamWriter(out, CHARSET_NAME);
-        for (int i = 0; i < payload.length(); i += WRUTE_BUFFER_SIZE) {
-            writer.write(payload, i, min(payload.length() - i, WRUTE_BUFFER_SIZE));
-            if (call.isCancelled()) {
-                break;
-            }
-        }
-    }
-
-    /**
-     * Dump response stream to a string.
-     */
-    private static String readResponse(HttpURLConnection urlConnection, Call call) throws IOException {
-
-        /*
-         * Though content length header value is less than actual payload length (gzip), we want to init
-         * buffer with a reasonable start size to optimize (default is 16 and is way too low for this
-         * use case).
-         */
-        StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
-        InputStream stream = getInputStream(urlConnection);
-
-        //noinspection TryFinallyCanBeTryWithResources
-        try {
-            Reader reader = new InputStreamReader(stream, CHARSET_NAME);
-            char[] buffer = new char[READ_BUFFER_SIZE];
-            int len;
-            while ((len = reader.read(buffer)) > 0) {
-                builder.append(buffer, 0, len);
-                if (call.isCancelled()) {
-                    break;
-                }
-            }
-            return builder.toString();
-        } finally {
-            stream.close();
-        }
-    }
-
-    private static OutputStream getOutputStream(HttpURLConnection urlConnection, boolean shouldCompress) throws IOException {
-        OutputStream out = urlConnection.getOutputStream();
-        if (shouldCompress) {
-            out = new GZIPOutputStream(out);
-        }
-        return out;
-    }
-
-    private static InputStream getInputStream(HttpURLConnection urlConnection) throws IOException {
-        int status = urlConnection.getResponseCode();
-        if (status >= 200 && status < 400) {
-            return urlConnection.getInputStream();
-        } else {
-            return urlConnection.getErrorStream();
-        }
-    }
-
-    /**
-     * Do http call.
-     */
-    private static String doHttpCall(Call call) throws Exception {
-
-        /* HTTP session. */
-        URL url = new URL(call.mUrl);
-        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-        try {
-
-            /*
-             * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
-             * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
-             * to support future versions of TLS such as say 1.3 without having to patch this code.
-             */
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH) {
-                urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
-            }
-
-            /* Configure connection timeouts. */
-            urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
-            urlConnection.setReadTimeout(READ_TIMEOUT);
-
-            /* Build payload now if POST. */
-            urlConnection.setRequestMethod(call.mMethod);
-            String payload = null;
-            boolean shouldCompress = false;
-            boolean isPost = call.mMethod.equals(METHOD_POST);
-            if (isPost && call.mCallTemplate != null) {
-
-                /* Get bytes, check if large enough to compress. */
-                payload = call.mCallTemplate.buildRequestBody();
-                shouldCompress = shouldCompressPayload(payload);
-
-                /* If no content type specified, assume json. */
-                if (!call.mHeaders.containsKey(CONTENT_TYPE_KEY)) {
-                    call.mHeaders.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
-                }
-            }
-
-            /* If about to compress, add corresponding header. */
-            if (shouldCompress) {
-                call.mHeaders.put(CONTENT_ENCODING_KEY, CONTENT_ENCODING_VALUE);
-            }
-
-            /* Send headers. */
-            for (Map.Entry<String, String> header : call.mHeaders.entrySet()) {
-                urlConnection.setRequestProperty(header.getKey(), header.getValue());
-            }
-            if (call.isCancelled()) {
-                return null;
-            }
-
-            /* Call back before the payload is sent. */
-            if (call.mCallTemplate != null) {
-                call.mCallTemplate.onBeforeCalling(url, call.mHeaders);
-            }
-
-            /* Send payload. */
-            if (payload != null) {
-
-                /* Log payload. */
-                if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
-                    if (payload.length() < MAX_PRETTIFY_LOG_LENGTH) {
-                        payload = TOKEN_REGEX_URL_ENCODED.matcher(payload).replaceAll("token=***");
-                        if (CONTENT_TYPE_VALUE.equals(call.mHeaders.get(CONTENT_TYPE_KEY))) {
-                            payload = new JSONObject(payload).toString(2);
-                        }
-                    }
-                    AppCenterLog.verbose(LOG_TAG, payload);
-                }
-
-                /* Send payload on the wire. */
-                urlConnection.setDoOutput(true);
-                OutputStream out = getOutputStream(urlConnection, shouldCompress);
-
-                //noinspection TryFinallyCanBeTryWithResources
-                try {
-                    writePayload(out, payload, call);
-                } finally {
-                    out.close();
-                }
-            }
-            if (call.isCancelled()) {
-                return null;
-            }
-
-            /* Read response. */
-            int status = urlConnection.getResponseCode();
-            String response = readResponse(urlConnection, call);
-            if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
-                String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
-                String logPayload;
-                if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
-                    logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
-                } else {
-                    logPayload = "<binary>";
-                }
-                AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
-            }
-
-            /* Accept all 2xx codes. */
-            if (status >= 200 && status < 300) {
-                return response;
-            }
-
-            /* Generate exception on failure. */
-            throw new HttpException(status, response);
-        } finally {
-
-            /* Release connection. */
-            urlConnection.disconnect();
-        }
-    }
+    private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
 
     @Override
-    public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
-        final Call call = new Call(url, method, headers, callTemplate, serviceCallback);
+    public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
+        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this);
         try {
-            call.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (final RejectedExecutionException e) {
 
             /*
@@ -340,95 +76,36 @@ public class DefaultHttpClient implements HttpClient {
         return new ServiceCall() {
 
             @Override
-            public boolean ensureFinished() {
-                try {
-                    return call.isHttpResult(call.get());
-                } catch (Exception ignored) {
-                    return false;
-                }
-            }
-
-            @Override
             public void cancel() {
 
                 /* This doesn't kill the AsyncTask, so we should check the state manually. */
-                call.cancel(true);
+                task.cancel(true);
             }
         };
     }
 
     @Override
-    public void close() {
+    public synchronized void onStart(DefaultHttpClientCallTask task) {
+        mTasks.add(task);
 
-        /* No-op. A decorator can take care of tracking calls to cancel. */
+    }
+
+    @Override
+    public synchronized void onFinish(DefaultHttpClientCallTask task) {
+        mTasks.remove(task);
+    }
+
+    @Override
+    public synchronized void close() {
+        for (DefaultHttpClientCallTask task : mTasks) {
+            task.cancel(true);
+        }
+        mTasks.clear();
     }
 
     @Override
     public void reopen() {
 
         /* Nothing to do. */
-    }
-
-    @VisibleForTesting
-    static class Call extends AsyncTask<Void, Void, Object> {
-
-        private final String mUrl;
-
-        private final String mMethod;
-
-        private final Map<String, String> mHeaders;
-
-        private final CallTemplate mCallTemplate;
-
-        private final ServiceCallback mServiceCallback;
-
-        public Call(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
-            mUrl = url;
-            mMethod = method;
-            mHeaders = headers;
-            mCallTemplate = callTemplate;
-            mServiceCallback = serviceCallback;
-        }
-
-        boolean isHttpResult(Object result) {
-            return result instanceof String || result instanceof HttpException;
-        }
-
-        @Override
-        protected Object doInBackground(Void... params) {
-
-            /* Do tag socket to avoid strict mode issue. */
-            TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
-            try {
-                return doHttpCall(this);
-            } catch (Exception e) {
-                return e;
-            } finally {
-                TrafficStats.clearThreadStatsTag();
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Object result) {
-            if (result == null) {
-
-                /* Cancelled on early stages. */
-                return;
-            }
-            if (result instanceof Exception) {
-                mServiceCallback.onCallFailed((Exception) result);
-            } else {
-                mServiceCallback.onCallSucceeded(result.toString());
-            }
-        }
-
-        @Override
-        protected void onCancelled(Object result) {
-
-            /* Handle the result even if it was cancelled. */
-            if (isHttpResult(result)) {
-                onPostExecute(result);
-            }
-        }
     }
 }

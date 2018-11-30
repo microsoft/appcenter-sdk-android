@@ -5,6 +5,7 @@ import android.support.annotation.VisibleForTesting;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -149,4 +150,5 @@ public class HttpUtils {
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
+
 }
