@@ -2,12 +2,15 @@ package com.microsoft.appcenter.http;
 
 import android.os.AsyncTask;
 
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
+
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
 /**
  * Default HTTP client without the additional behaviors.
@@ -87,7 +90,6 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     @Override
     public synchronized void onStart(DefaultHttpClientCallTask task) {
         mTasks.add(task);
-
     }
 
     @Override
@@ -97,10 +99,13 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
     @Override
     public synchronized void close() {
-        for (DefaultHttpClientCallTask task : mTasks) {
-            task.cancel(true);
+        if (mTasks.size() > 0) {
+            AppCenterLog.debug(LOG_TAG, "Cancelling " + mTasks.size() + " network call(s).");
+            for (DefaultHttpClientCallTask task : mTasks) {
+                task.cancel(true);
+            }
+            mTasks.clear();
         }
-        mTasks.clear();
     }
 
     @Override
