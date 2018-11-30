@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -406,6 +407,29 @@ public class AppCenter {
     @SuppressWarnings("WeakerAccess") // TODO remove annotation when updating demo app for release.
     public static AppCenterFuture<Boolean> setMaxStorageSize(long storageSizeInBytes) {
         return getInstance().setInstanceMaxStorageSizeAsync(storageSizeInBytes);
+    }
+
+    /**
+     * {@link #setUserId(String)} implementation at instance level.
+     */
+    private synchronized void setInstanceUserId(String userId) {
+        if (!mConfiguredFromApp) {
+            AppCenterLog.error(LOG_TAG, "AppCenter must be configured from application, libraries cannot use call setUserId.");
+            return;
+        }
+        if (mAppSecret == null && mTransmissionTargetToken == null) {
+            AppCenterLog.error(LOG_TAG, "AppCenter must be configured with a secret from application to call setUserId.");
+            return;
+        }
+        if (userId != null) {
+            if (mAppSecret != null && !UserIdContext.checkUserIdValidForAppCenter(userId)) {
+                return;
+            }
+            if (mTransmissionTargetToken != null && !UserIdContext.checkUserIdValidForOneCollector(userId)) {
+                return;
+            }
+        }
+        UserIdContext.getInstance().setUserId(userId);
     }
 
     /**
@@ -1070,6 +1094,23 @@ public class AppCenter {
             future.complete(null);
         }
         return future;
+    }
+
+    /**
+     * Set the user identifier for logs sent for the default target token when the secret
+     * passed in {@link AppCenter#start(Application, String, Class[])} contains "target={targetToken}".
+     * <p>
+     * The App Center servers currently do not yet use the user identifier so this API has not yet a use case
+     * when the secret passed to AppCenter.start contains a App Center application secret.
+     * <p>
+     * For App Center servers the user identifier maximum length is 256 characters.
+     * <p>
+     * AppCenter must be configured or started before this API can be used.
+     *
+     * @param userId user identifier.
+     */
+    public static void setUserId(String userId) {
+        getInstance().setInstanceUserId(userId);
     }
 
     @VisibleForTesting

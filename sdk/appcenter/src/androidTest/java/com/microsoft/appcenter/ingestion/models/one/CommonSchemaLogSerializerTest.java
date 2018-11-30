@@ -71,6 +71,8 @@ public class CommonSchemaLogSerializerTest {
         /* User extension. */
         log.getExt().setUser(new UserExtension());
         checkSerialization(serializer, log);
+        log.getExt().getUser().setLocalId("d:1234");
+        checkSerialization(serializer, log);
         log.getExt().getUser().setLocale("en-US");
         checkSerialization(serializer, log);
 
@@ -96,6 +98,8 @@ public class CommonSchemaLogSerializerTest {
         log.getExt().getApp().setVer("1.2.3");
         checkSerialization(serializer, log);
         log.getExt().getApp().setLocale("fr-FR");
+        checkSerialization(serializer, log);
+        log.getExt().getApp().setUserId("c:charlie");
         checkSerialization(serializer, log);
 
         /* Net extension. */

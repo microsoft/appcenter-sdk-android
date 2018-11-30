@@ -8,7 +8,6 @@ import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -21,6 +20,7 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -35,7 +35,7 @@ public class LogSerializerAndroidTest {
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
         LogContainer actualContainer = serializer.deserializeContainer(payload, null);
-        Assert.assertEquals(expectedContainer, actualContainer);
+        assertEquals(expectedContainer, actualContainer);
     }
 
     @Test
@@ -46,8 +46,8 @@ public class LogSerializerAndroidTest {
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);
         LogContainer actualContainer = serializer.deserializeContainer(payload, null);
-        Assert.assertEquals(expectedContainer, actualContainer);
-        Assert.assertEquals(expectedContainer.hashCode(), actualContainer.hashCode());
+        assertEquals(expectedContainer, actualContainer);
+        assertEquals(expectedContainer.hashCode(), actualContainer.hashCode());
     }
 
     @Test(expected = JSONException.class)
@@ -76,7 +76,22 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         String payload = serializer.serializeLog(log);
         Log actualContainer = serializer.deserializeLog(payload, null);
-        Assert.assertEquals(log, actualContainer);
+        assertEquals(log, actualContainer);
+    }
+
+    @Test
+    public void logWithUserId() throws JSONException {
+        MockLog expectedLog = AndroidTestUtils.generateMockLog();
+        expectedLog.setTimestamp(new Date());
+        expectedLog.setUserId("charlie");
+
+        /* Verify serialize and deserialize. */
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        String payload = serializer.serializeLog(expectedLog);
+        Log actualLog = serializer.deserializeLog(payload, null);
+        assertEquals(expectedLog, actualLog);
+        assertEquals("charlie", actualLog.getUserId());
     }
 
     @Test
@@ -87,6 +102,8 @@ public class LogSerializerAndroidTest {
         properties.put("t2", new Date(0));
         properties.put("t3", 0);
         properties.put("t4", false);
+
+        //noinspection ConstantConditions
         properties.put("t5", null);
         log.setProperties(properties);
         UUID sid = UUIDUtils.randomUUID();
@@ -98,7 +115,7 @@ public class LogSerializerAndroidTest {
         serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         String payload = serializer.serializeLog(log);
         Log actualContainer = serializer.deserializeLog(payload, null);
-        Assert.assertEquals(log, actualContainer);
+        assertEquals(log, actualContainer);
     }
 
     @Test(expected = JSONException.class)

@@ -30,12 +30,14 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -121,6 +123,9 @@ public class CrashesTest {
     private ManagedErrorLog mErrorLog;
 
     @Mock
+    private AppCenter mAppCenter;
+
+    @Mock
     private AppCenterHandler mAppCenterHandler;
 
     private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
@@ -143,8 +148,8 @@ public class CrashesTest {
         mockStatic(SharedPreferencesManager.class);
         mockStatic(AppCenterLog.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
-
         mockStatic(AppCenter.class);
+        when(AppCenter.getInstance()).thenReturn(mAppCenter);
 
         @SuppressWarnings("unchecked")
         AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
@@ -182,6 +187,11 @@ public class CrashesTest {
         doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
 
         mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+    }
+
+    @After
+    public void tearDown() {
+        UserIdContext.unsetInstance();
     }
 
     @Test
@@ -542,6 +552,7 @@ public class CrashesTest {
 
     @Test
     public void trackException() {
+
         /* Track exception test. */
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
@@ -706,6 +717,23 @@ public class CrashesTest {
                 return false;
             }
         }), eq(crashes.getGroupName()), eq(DEFAULTS));
+    }
+
+    @Test
+    public void trackExceptionWithUserId() {
+        UserIdContext.getInstance().setUserId("charlie");
+
+        /* Track exception test. */
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
+        Crashes.trackException(EXCEPTION);
+        ArgumentCaptor<HandledErrorLog> log = ArgumentCaptor.forClass(HandledErrorLog.class);
+        verify(mockChannel).enqueue(log.capture(), eq(crashes.getGroupName()), eq(DEFAULTS));
+        assertNotNull(log.getValue());
+        assertEquals(EXCEPTION.getMessage(), log.getValue().getException().getMessage());
+        assertEquals("charlie", log.getValue().getUserId());
     }
 
     @Test

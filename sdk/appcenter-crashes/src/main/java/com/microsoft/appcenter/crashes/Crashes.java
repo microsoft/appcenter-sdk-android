@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.SessionContext;
@@ -29,6 +30,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -533,6 +535,7 @@ public class Crashes extends AbstractAppCenterService {
             public void run() {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
+                errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(properties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
@@ -554,91 +557,98 @@ public class Crashes extends AbstractAppCenterService {
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
 
-            /* Convert minidump files to App Center crash files. */
-            for (File logFile : ErrorLogHelper.getNewMinidumpFiles()) {
+            /* Process minidump files. */
+            processMinidumpFiles();
+        }
+    }
 
-                /* Create missing files from the native crash that we detected. */
-                AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
-                long minidumpDate = logFile.lastModified();
-                File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
-                NativeException nativeException = new NativeException();
-                Exception modelException = new Exception();
-                modelException.setType("minidump");
-                modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                modelException.setStackTrace(dest.getPath());
-                ManagedErrorLog errorLog = new ManagedErrorLog();
-                errorLog.setException(modelException);
-                errorLog.setTimestamp(new Date(minidumpDate));
-                errorLog.setFatal(true);
-                errorLog.setId(UUID.randomUUID());
+    private void processMinidumpFiles() {
 
-                /* Lookup app launch timestamp in session history. */
-                SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
-                if (session != null && session.getAppLaunchTimestamp() <= minidumpDate) {
-                    errorLog.setAppLaunchTimestamp(new Date(session.getAppLaunchTimestamp()));
-                } else {
+        /* Convert minidump files to App Center crash files. */
+        for (File logFile : ErrorLogHelper.getNewMinidumpFiles()) {
 
-                    /*
-                     * Fall back to log date if app launch timestamp information lost
-                     * or in the future compared to crash time.
-                     * This also covers the case where app launches then crashes within 1s:
-                     * app launch timestamp would have ms accuracy while minidump file is without
-                     * ms, in that case we also falls back to log timestamp
-                     * (this would be same result as truncating ms).
-                     */
-                    errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
-                }
+            /* Create missing files from the native crash that we detected. */
+            AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
+            long minidumpDate = logFile.lastModified();
+            File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
+            NativeException nativeException = new NativeException();
+            Exception modelException = new Exception();
+            modelException.setType("minidump");
+            modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+            modelException.setStackTrace(dest.getPath());
+            ManagedErrorLog errorLog = new ManagedErrorLog();
+            errorLog.setException(modelException);
+            errorLog.setTimestamp(new Date(minidumpDate));
+            errorLog.setFatal(true);
+            errorLog.setId(UUID.randomUUID());
+
+            /* Lookup app launch timestamp in session history. */
+            SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
+            if (session != null && session.getAppLaunchTimestamp() <= minidumpDate) {
+                errorLog.setAppLaunchTimestamp(new Date(session.getAppLaunchTimestamp()));
+            } else {
 
                 /*
-                 * TODO The following properties are placeholders because fields are required.
-                 * They should be removed from schema as not used by server.
+                 * Fall back to log date if app launch timestamp information lost
+                 * or in the future compared to crash time.
+                 * This also covers the case where app launches then crashes within 1s:
+                 * app launch timestamp would have ms accuracy while minidump file is without
+                 * ms, in that case we also falls back to log timestamp
+                 * (this would be same result as truncating ms).
                  */
-                errorLog.setProcessId(0);
-                errorLog.setProcessName("");
-
-                /*
-                 * TODO device properties are read after restart contrary to Java crashes.
-                 * We should have a device property history like we did for session to fix that issue.
-                 * The main issue with the current code is that app version can change between crash and reporting.
-                 */
-                try {
-                    errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
-                    errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                    saveErrorLogFiles(nativeException, errorLog);
-                    if (!logFile.renameTo(dest)) {
-                        throw new IOException("Failed to move file");
-                    }
-                } catch (java.lang.Exception e) {
-
-                    //noinspection ResultOfMethodCallIgnored
-                    logFile.delete();
-                    removeAllStoredErrorLogFiles(errorLog.getId());
-                    AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
-                }
+                errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
             }
 
-            /* Check last session crash. */
-            File logFile = ErrorLogHelper.getLastErrorLogFile();
-            while (logFile != null && logFile.length() == 0) {
-                AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+            /*
+             * TODO The following properties are placeholders because fields are required.
+             * They should be removed from schema as not used by server.
+             */
+            errorLog.setProcessId(0);
+            errorLog.setProcessName("");
+
+            /*
+             * TODO user id and device properties are read after restart contrary to Java crashes.
+             * We should have a user/device property history like we did for session to fix that issue.
+             * The main issue with the current code is that app version or userId can change between crash and reporting.
+             */
+            errorLog.setUserId(UserIdContext.getInstance().getUserId());
+            try {
+                errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
+                errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+                saveErrorLogFiles(nativeException, errorLog);
+                if (!logFile.renameTo(dest)) {
+                    throw new IOException("Failed to move file");
+                }
+            } catch (java.lang.Exception e) {
 
                 //noinspection ResultOfMethodCallIgnored
                 logFile.delete();
-                logFile = ErrorLogHelper.getLastErrorLogFile();
+                removeAllStoredErrorLogFiles(errorLog.getId());
+                AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
             }
-            if (logFile != null) {
-                AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
-                String logFileContents = FileManager.read(logFile);
-                if (logFileContents == null) {
-                    AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
-                } else {
-                    try {
-                        ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents, null);
-                        mLastSessionErrorReport = buildErrorReport(log);
-                        AppCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
-                    } catch (JSONException e) {
-                        AppCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
-                    }
+        }
+
+        /* Check last session crash. */
+        File logFile = ErrorLogHelper.getLastErrorLogFile();
+        while (logFile != null && logFile.length() == 0) {
+            AppCenterLog.warn(Crashes.LOG_TAG, "Deleting empty error file: " + logFile);
+
+            //noinspection ResultOfMethodCallIgnored
+            logFile.delete();
+            logFile = ErrorLogHelper.getLastErrorLogFile();
+        }
+        if (logFile != null) {
+            AppCenterLog.debug(LOG_TAG, "Processing crash report for the last session.");
+            String logFileContents = FileManager.read(logFile);
+            if (logFileContents == null) {
+                AppCenterLog.error(LOG_TAG, "Error reading last session error log.");
+            } else {
+                try {
+                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logFileContents, null);
+                    mLastSessionErrorReport = buildErrorReport(log);
+                    AppCenterLog.debug(LOG_TAG, "Processed crash report for the last session.");
+                } catch (JSONException e) {
+                    AppCenterLog.error(LOG_TAG, "Error parsing last session error log.", e);
                 }
             }
         }

@@ -6,6 +6,7 @@ import com.microsoft.appcenter.utils.TicketCache;
 
 import java.util.Date;
 
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
 /**
@@ -185,11 +186,6 @@ public class AuthenticationProvider {
         MSA_DELEGATE("d");
 
         /**
-         * Token prefix separator.
-         */
-        private static final String TOKEN_PREFIX_SEPARATOR = ":";
-
-        /**
          * Token value prefix.
          */
         private final String mTokenPrefix;
@@ -200,7 +196,7 @@ public class AuthenticationProvider {
          * @param tokenPrefix token value prefix.
          */
         Type(String tokenPrefix) {
-            mTokenPrefix = tokenPrefix + TOKEN_PREFIX_SEPARATOR;
+            mTokenPrefix = tokenPrefix + COMMON_SCHEMA_PREFIX_SEPARATOR;
         }
     }
 

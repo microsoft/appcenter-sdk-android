@@ -25,9 +25,11 @@ import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -71,6 +73,11 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
+
+    @After
+    public void resetUserId() {
+        UserIdContext.unsetInstance();
+    }
 
     @Test
     public void singleton() {
@@ -365,6 +372,45 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
         verifyStatic(times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void trackEventWithUserIdWhenConfiguredForTarget() {
+        UserIdContext.getInstance().setUserId("c:alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, "target", true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
+    }
+
+    @Test
+    public void trackEventWithoutUserIdWhenConfiguredForAppSecretOnly() {
+        UserIdContext.getInstance().setUserId("alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", null, true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertNull(eventLogArgumentCaptor.getValue().getUserId());
+    }
+
+    @Test
+    public void trackEventWithoutUserIdWhenConfiguredForBothSecrets() {
+        UserIdContext.getInstance().setUserId("c:alice");
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", "target", true);
+        Analytics.trackEvent("eventName1");
+        ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
+        verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
+        assertEquals("c:alice", eventLogArgumentCaptor.getValue().getUserId());
     }
 
     @Test
