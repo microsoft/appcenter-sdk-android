@@ -63,7 +63,12 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultHttpClient.class, TrafficStats.class, AppCenterLog.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        DefaultHttpClient.class,
+        DefaultHttpClientCallTask.class,
+        TrafficStats.class
+})
 public class DefaultHttpClientTest {
 
     @Rule
@@ -75,22 +80,29 @@ public class DefaultHttpClientTest {
     }
 
     /**
-     * Simulate ASyncTask. It's not in @Before because some tests like cancel must not use this.
+     * Simulate AsyncTask. It's not in @Before because some tests like cancel must not use this.
      */
     private static void mockCall() throws Exception {
 
         /* Mock AsyncTask... */
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenAnswer(new Answer<Object>() {
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
 
-                @SuppressWarnings("unchecked") final DefaultHttpClient.Call call = new DefaultHttpClient.Call(invocation.getArguments()[0].toString(), invocation.getArguments()[1].toString(), (Map<String, String>) invocation.getArguments()[2], (HttpClient.CallTemplate) invocation.getArguments()[3], (ServiceCallback) invocation.getArguments()[4]);
-                DefaultHttpClient.Call spyCall = spy(call);
-                when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClient.Call>() {
+                @SuppressWarnings("unchecked")
+                final DefaultHttpClientCallTask call = new DefaultHttpClientCallTask(
+                        invocation.getArguments()[0].toString(),
+                        invocation.getArguments()[1].toString(),
+                        (Map<String, String>) invocation.getArguments()[2],
+                        (HttpClient.CallTemplate) invocation.getArguments()[3],
+                        (ServiceCallback) invocation.getArguments()[4],
+                        (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5]);
+                DefaultHttpClientCallTask spyCall = spy(call);
+                when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
 
                     @Override
-                    public DefaultHttpClient.Call answer(InvocationOnMock invocation) {
+                    public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
                         call.onPostExecute(call.doInBackground());
                         return call;
                     }
@@ -536,9 +548,8 @@ public class DefaultHttpClientTest {
     public void cancel() throws Exception {
 
         /* Mock AsyncTask... */
-        DefaultHttpClient.Call mockCall = mock(DefaultHttpClient.Call.class);
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(mockCall);
-        when(mockCall.isCancelled()).thenReturn(false).thenReturn(true);
+        DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         ServiceCall call = httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
@@ -546,11 +557,6 @@ public class DefaultHttpClientTest {
         /* Cancel and verify. */
         call.cancel();
         verify(mockCall).cancel(true);
-
-        /* Calling cancel a second time should be allowed and ignored. */
-        call.cancel();
-        verify(mockCall, times(1)).cancel(true);
-        verify(mockCall, never()).cancel(false);
     }
 
     @Test
@@ -649,8 +655,8 @@ public class DefaultHttpClientTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock ingestion to fail on saturated executor in AsyncTask. */
-        DefaultHttpClient.Call call = mock(DefaultHttpClient.Call.class);
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(call);
+        DefaultHttpClientCallTask call = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(call);
         RejectedExecutionException exception = new RejectedExecutionException();
         when(call.executeOnExecutor(any(Executor.class))).thenThrow(exception);
         DefaultHttpClient httpClient = new DefaultHttpClient();
