@@ -11,11 +11,14 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -27,6 +30,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * Default HTTP client without the additional behaviors.
@@ -84,6 +88,11 @@ public class DefaultHttpClient implements HttpClient {
     private static final int READ_BUFFER_SIZE = 1024;
 
     /**
+     * Write buffer size.
+     */
+    private static final int WRUTE_BUFFER_SIZE = 1024;
+
+    /**
      * HTTP connection timeout.
      */
     private static final int CONNECT_TIMEOUT = 60000;
@@ -114,13 +123,41 @@ public class DefaultHttpClient implements HttpClient {
     private static final Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
 
     /**
-     * Dump stream to string.
-     *
-     * @param urlConnection URL connection.
-     * @return dumped string.
-     * @throws IOException if an error occurred.
+     * Determine if payload should be compressed.
      */
-    private static String dump(HttpURLConnection urlConnection) throws IOException {
+    private static boolean shouldCompressPayload(String payload) {
+        if (payload.length() >= MIN_GZIP_LENGTH) {
+            return true;
+        }
+
+        /*
+         * UTF-8 is variable width character encoding, so the check is valid only for ASCII string.
+         * For small strings, it's not expensive to allocate an additional buffer.
+         */
+        try {
+            return payload.getBytes(CHARSET_NAME).length >= MIN_GZIP_LENGTH;
+        } catch (UnsupportedEncodingException ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * Write payload to output stream.
+     */
+    private static void writePayload(OutputStream out, String payload, Call call) throws IOException {
+        Writer writer = new OutputStreamWriter(out, CHARSET_NAME);
+        for (int i = 0; i < payload.length(); i += WRUTE_BUFFER_SIZE) {
+            writer.write(payload, i, min(payload.length() - i, WRUTE_BUFFER_SIZE));
+            if (call.isCancelled()) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Dump response stream to a string.
+     */
+    private static String readResponse(HttpURLConnection urlConnection, Call call) throws IOException {
 
         /*
          * Though content length header value is less than actual payload length (gzip), we want to init
@@ -128,21 +165,18 @@ public class DefaultHttpClient implements HttpClient {
          * use case).
          */
         StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
-        InputStream stream;
-        int status = urlConnection.getResponseCode();
-        if (status >= 200 && status < 400) {
-            stream = urlConnection.getInputStream();
-        } else {
-            stream = urlConnection.getErrorStream();
-        }
+        InputStream stream = getInputStream(urlConnection);
+
+        //noinspection TryFinallyCanBeTryWithResources
         try {
-            InputStreamReader in = new InputStreamReader(stream, CHARSET_NAME);
+            Reader reader = new InputStreamReader(stream, CHARSET_NAME);
             char[] buffer = new char[READ_BUFFER_SIZE];
             int len;
-            while ((len = in.read(buffer)) > 0) {
+            while ((len = reader.read(buffer)) > 0) {
                 builder.append(buffer, 0, len);
-
-                // TODO Check if cancelled.
+                if (call.isCancelled()) {
+                    break;
+                }
             }
             return builder.toString();
         } finally {
@@ -150,13 +184,30 @@ public class DefaultHttpClient implements HttpClient {
         }
     }
 
+    private static OutputStream getOutputStream(HttpURLConnection urlConnection, boolean shouldCompress) throws IOException {
+        OutputStream out = urlConnection.getOutputStream();
+        if (shouldCompress) {
+            out = new GZIPOutputStream(out);
+        }
+        return out;
+    }
+
+    private static InputStream getInputStream(HttpURLConnection urlConnection) throws IOException {
+        int status = urlConnection.getResponseCode();
+        if (status >= 200 && status < 400) {
+            return urlConnection.getInputStream();
+        } else {
+            return urlConnection.getErrorStream();
+        }
+    }
+
     /**
      * Do http call.
      */
-    private static String doHttpCall(String urlString, String method, Map<String, String> headers, CallTemplate callTemplate) throws Exception {
+    private static String doHttpCall(Call call) throws Exception {
 
         /* HTTP session. */
-        URL url = new URL(urlString);
+        URL url = new URL(call.mUrl);
         HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
         try {
 
@@ -174,80 +225,72 @@ public class DefaultHttpClient implements HttpClient {
             urlConnection.setReadTimeout(READ_TIMEOUT);
 
             /* Build payload now if POST. */
-            urlConnection.setRequestMethod(method);
+            urlConnection.setRequestMethod(call.mMethod);
             String payload = null;
-            byte[] binaryPayload = null;
             boolean shouldCompress = false;
-            boolean isPost = method.equals(METHOD_POST);
-            if (isPost && callTemplate != null) {
+            boolean isPost = call.mMethod.equals(METHOD_POST);
+            if (isPost && call.mCallTemplate != null) {
 
                 /* Get bytes, check if large enough to compress. */
-                payload = callTemplate.buildRequestBody();
-
-                // TODO Use stream instead of large buffers.
-                binaryPayload = payload.getBytes(CHARSET_NAME);
-                shouldCompress = binaryPayload.length >= MIN_GZIP_LENGTH;
+                payload = call.mCallTemplate.buildRequestBody();
+                shouldCompress = shouldCompressPayload(payload);
 
                 /* If no content type specified, assume json. */
-                if (!headers.containsKey(CONTENT_TYPE_KEY)) {
-                    headers.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+                if (!call.mHeaders.containsKey(CONTENT_TYPE_KEY)) {
+                    call.mHeaders.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
                 }
             }
 
             /* If about to compress, add corresponding header. */
             if (shouldCompress) {
-                headers.put(CONTENT_ENCODING_KEY, CONTENT_ENCODING_VALUE);
+                call.mHeaders.put(CONTENT_ENCODING_KEY, CONTENT_ENCODING_VALUE);
             }
 
             /* Send headers. */
-            for (Map.Entry<String, String> header : headers.entrySet()) {
+            for (Map.Entry<String, String> header : call.mHeaders.entrySet()) {
                 urlConnection.setRequestProperty(header.getKey(), header.getValue());
+            }
+            if (call.isCancelled()) {
+                return null;
             }
 
             /* Call back before the payload is sent. */
-            if (callTemplate != null) {
-                callTemplate.onBeforeCalling(url, headers);
+            if (call.mCallTemplate != null) {
+                call.mCallTemplate.onBeforeCalling(url, call.mHeaders);
             }
 
             /* Send payload. */
-            if (binaryPayload != null) {
+            if (payload != null) {
 
                 /* Log payload. */
                 if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
                     if (payload.length() < MAX_PRETTIFY_LOG_LENGTH) {
                         payload = TOKEN_REGEX_URL_ENCODED.matcher(payload).replaceAll("token=***");
-                        if (CONTENT_TYPE_VALUE.equals(headers.get(CONTENT_TYPE_KEY))) {
+                        if (CONTENT_TYPE_VALUE.equals(call.mHeaders.get(CONTENT_TYPE_KEY))) {
                             payload = new JSONObject(payload).toString(2);
                         }
                     }
                     AppCenterLog.verbose(LOG_TAG, payload);
                 }
 
-                /* Compress payload if large enough to be worth it. */
-                if (shouldCompress) {
-                    ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(binaryPayload.length);
-                    GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
-                    gzipStream.write(binaryPayload);
-                    gzipStream.close();
-                    binaryPayload = gzipBuffer.toByteArray();
-                }
-
                 /* Send payload on the wire. */
                 urlConnection.setDoOutput(true);
-                urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
-                OutputStream out = urlConnection.getOutputStream();
+                OutputStream out = getOutputStream(urlConnection, shouldCompress);
 
-                // TODO Check if cancelled after write each chunk.
-                out.write(binaryPayload);
-                out.close();
+                //noinspection TryFinallyCanBeTryWithResources
+                try {
+                    writePayload(out, payload, call);
+                } finally {
+                    out.close();
+                }
+            }
+            if (call.isCancelled()) {
+                return null;
             }
 
             /* Read response. */
             int status = urlConnection.getResponseCode();
-
-            // TODO Treat as finished after this line.
-
-            String response = dump(urlConnection);
+            String response = readResponse(urlConnection, call);
             if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
                 String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
                 String logPayload;
@@ -308,8 +351,7 @@ public class DefaultHttpClient implements HttpClient {
             @Override
             public void cancel() {
 
-                // FIXME This doesn't kill the AsyncTask!
-                // https://developer.android.com/reference/android/os/AsyncTask.html#cancelling-a-task
+                /* This doesn't kill the AsyncTask, so we should check the state manually. */
                 call.cancel(true);
             }
         };
@@ -358,7 +400,7 @@ public class DefaultHttpClient implements HttpClient {
             /* Do tag socket to avoid strict mode issue. */
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             try {
-                return doHttpCall(mUrl, mMethod, mHeaders, mCallTemplate);
+                return doHttpCall(this);
             } catch (Exception e) {
                 return e;
             } finally {
@@ -368,6 +410,11 @@ public class DefaultHttpClient implements HttpClient {
 
         @Override
         protected void onPostExecute(Object result) {
+            if (result == null) {
+
+                /* Cancelled on early stages. */
+                return;
+            }
             if (result instanceof Exception) {
                 mServiceCallback.onCallFailed((Exception) result);
             } else {
