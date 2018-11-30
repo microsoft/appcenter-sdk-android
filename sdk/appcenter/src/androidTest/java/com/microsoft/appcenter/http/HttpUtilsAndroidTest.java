@@ -52,6 +52,7 @@ public class HttpUtilsAndroidTest {
         assertFalse(isRecoverableError(new SSLException(null, new CertPathValidatorException("Trust anchor for certification path not found."))));
         assertFalse(isRecoverableError(new SSLException("java.lang.RuntimeException: Unexpected error: java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty")));
         assertTrue(isRecoverableError(new SSLException("Read error: ssl=0x9dd07200: I/O error during system call, Connection reset by peer")));
+        assertTrue(isRecoverableError(new SSLException("Read error: ssl=0x79cc1e4880: I/O error during system call, Software caused connection abort")));
         assertTrue(isRecoverableError(new SSLException("SSL handshake aborted: ssl=0x1cc160: I/O error during system call, Connection reset by peer")));
         assertTrue(isRecoverableError(new SSLHandshakeException("java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.")));
         assertTrue(isRecoverableError(new SSLHandshakeException("javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x870c918: Failure in SSL library, usually a protocol error\nerror:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure (external/openssl/ssl/s23_clnt.c:658 0xb7c393a1:0x00000000)")));
