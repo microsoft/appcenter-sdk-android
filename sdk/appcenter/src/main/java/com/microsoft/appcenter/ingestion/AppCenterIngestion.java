@@ -27,6 +27,7 @@ import java.util.UUID;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 public class AppCenterIngestion implements Ingestion {
 
@@ -77,9 +78,7 @@ public class AppCenterIngestion implements Ingestion {
      */
     public AppCenterIngestion(@NonNull Context context, @NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
-        HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
-        NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+        mHttpClient = createHttpClient(context);
         mLogUrl = DEFAULT_LOG_URL;
     }
 

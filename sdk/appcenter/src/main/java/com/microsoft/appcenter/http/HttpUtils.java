@@ -1,7 +1,10 @@
 package com.microsoft.appcenter.http;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
@@ -151,4 +154,12 @@ public class HttpUtils {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 
+    public static HttpClient createHttpClient(@NonNull Context context) {
+        HttpClient httpClient = new DefaultHttpClient();
+        NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
+        httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+
+        /* Retryer should be applied last to avoid retries in offline. */
+        return new HttpClientRetryer(httpClient);
+    }
 }

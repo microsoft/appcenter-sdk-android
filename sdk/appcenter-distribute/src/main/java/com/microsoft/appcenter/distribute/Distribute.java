@@ -108,6 +108,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAM
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 
 /**
@@ -947,9 +948,7 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
-        NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(mContext);
-        HttpClient httpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+        HttpClient httpClient = createHttpClient(mContext);
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
