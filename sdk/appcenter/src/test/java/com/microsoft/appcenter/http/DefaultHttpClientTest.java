@@ -14,13 +14,10 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.ByteArrayInputStream;
@@ -28,16 +25,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -55,6 +51,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -751,6 +748,31 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(callTemplate);
         verifyZeroInteractions(serviceCallback);
+    }
+
+    @Test
+    public void failedToWritePayload() throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        IOException exception = new IOException("mock");
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        OutputStream out = mock(OutputStream.class);
+        when(urlConnection.getOutputStream()).thenReturn(out);
+        doThrow(exception).when(out).write(any(byte[].class), anyInt(), anyInt());
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn("{}");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync("", METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(exception);
+        verifyZeroInteractions(serviceCallback);
+        verify(out).close();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
