@@ -92,8 +92,12 @@ public class HttpClientNetworkStateHandlerTest {
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
+        /* Simulate state updated events first. It should no affect behaviour. */
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.onNetworkStateUpdated(false);
+        decorator.onNetworkStateUpdated(true);
+
         /* Test call. */
-        HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(callback).onCallFailed(new HttpException(503));

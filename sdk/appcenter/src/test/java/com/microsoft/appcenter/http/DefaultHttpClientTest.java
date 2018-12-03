@@ -564,7 +564,7 @@ public class DefaultHttpClientTest {
     @Test
     public void cancel() throws Exception {
 
-        /* Mock AsyncTask... */
+        /* Mock AsyncTask. */
         DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
         whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
         DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -576,6 +576,22 @@ public class DefaultHttpClientTest {
         verify(mockCall).cancel(true);
     }
 
+    @Test
+    public void cancelCurrentCallsOnClose() throws Exception {
+
+        /* Mock AsyncTask. */
+        DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
+        httpClient.onStart(mockCall);
+
+        /* Close and verify. */
+        httpClient.close();
+        verify(mockCall).cancel(true);
+        assertEquals(0, httpClient.mTasks.size());
+    }
 
     @Test
     public void cancelledBeforeSending() throws Exception {
