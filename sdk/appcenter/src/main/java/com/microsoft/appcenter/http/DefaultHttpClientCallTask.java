@@ -310,11 +310,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     @Override
     protected void onPostExecute(Object result) {
         mTracker.onFinish(this);
-        if (result == null) {
-
-            /* Cancelled on early stages. */
-            return;
-        }
         if (result instanceof Exception) {
             mServiceCallback.onCallFailed((Exception) result);
         } else {

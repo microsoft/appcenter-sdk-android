@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.http;
 
 import android.os.AsyncTask;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -52,8 +53,8 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
      */
     static final String CONTENT_ENCODING_VALUE = "gzip";
 
-
-    private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+    @VisibleForTesting
+    Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
 
     @Override
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
