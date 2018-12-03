@@ -29,5 +29,13 @@ public class UserExtensionTest {
         checkNotEquals(a, b);
         b.setLocale("a1");
         checkEquals(a, b);
+
+        /* LocalId */
+        a.setLocalId("id-a");
+        checkNotEquals(a, b);
+        b.setLocalId("id-b");
+        checkNotEquals(a, b);
+        b.setLocalId("id-a");
+        checkEquals(a, b);
     }
 }

@@ -26,20 +26,22 @@ public abstract class AbstractLog implements Log {
     /**
      * timestamp property.
      */
-    @VisibleForTesting
-    static final String TIMESTAMP = "timestamp";
+    private static final String TIMESTAMP = "timestamp";
 
     /**
      * Session identifier property.
      */
-    @VisibleForTesting
-    static final String SID = "sid";
+    private static final String SID = "sid";
 
     /**
      * Distribution group ID property.
      */
-    @VisibleForTesting
-    static final String DISTRIBUTION_GROUP_ID = "distributionGroupId";
+    private static final String DISTRIBUTION_GROUP_ID = "distributionGroupId";
+
+    /**
+     * UserID property.
+     */
+    private static final String USER_ID = "userId";
 
     /**
      * device property.
@@ -68,6 +70,11 @@ public abstract class AbstractLog implements Log {
     private String distributionGroupId;
 
     /**
+     * The optional user identifier.
+     */
+    private String userId;
+
+    /**
      * Device characteristics associated to this log.
      */
     private Device device;
@@ -87,56 +94,42 @@ public abstract class AbstractLog implements Log {
         this.timestamp = timestamp;
     }
 
-    /**
-     * Get the sid value.
-     *
-     * @return the sid value
-     */
+    @Override
     public UUID getSid() {
         return this.sid;
     }
 
-    /**
-     * Set the sid value.
-     *
-     * @param sid the sid value to set
-     */
+    @Override
     public void setSid(UUID sid) {
         this.sid = sid;
     }
 
-    /**
-     * Get the distributionGroupId value.
-     *
-     * @return the distributionGroupId value.
-     */
+    @Override
     public String getDistributionGroupId() {
         return this.distributionGroupId;
     }
 
-    /**
-     * Set the distributionGroupId value.
-     *
-     * @param distributionGroupId the distributionGroupId value to set.
-     */
+    @Override
     public void setDistributionGroupId(String distributionGroupId) {
         this.distributionGroupId = distributionGroupId;
     }
 
-    /**
-     * Get the device value.
-     *
-     * @return the device value
-     */
+    @Override
+    public String getUserId() {
+        return userId;
+    }
+
+    @Override
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    @Override
     public Device getDevice() {
         return this.device;
     }
 
-    /**
-     * Set the device value.
-     *
-     * @param device the device value to set
-     */
+    @Override
     public void setDevice(Device device) {
         this.device = device;
     }
@@ -151,21 +144,11 @@ public abstract class AbstractLog implements Log {
         this.tag = tag;
     }
 
-    /**
-     * Adds a transmission target that this log should be sent to.
-     *
-     * @param transmissionTargetToken the identifier of the transmission target.
-     */
     @Override
     public synchronized void addTransmissionTarget(String transmissionTargetToken) {
         transmissionTargetTokens.add(transmissionTargetToken);
     }
 
-    /**
-     * Gets all transmissionTargetTokens that this log should be sent to.
-     *
-     * @return Collection of transmissionTargetTokens that this log should be sent to.
-     */
     @Override
     public synchronized Set<String> getTransmissionTargetTokens() {
         return Collections.unmodifiableSet(transmissionTargetTokens);
@@ -177,6 +160,7 @@ public abstract class AbstractLog implements Log {
         writer.key(TIMESTAMP).value(JSONDateUtils.toString(getTimestamp()));
         JSONUtils.write(writer, SID, getSid());
         JSONUtils.write(writer, DISTRIBUTION_GROUP_ID, getDistributionGroupId());
+        JSONUtils.write(writer, USER_ID, getUserId());
         if (getDevice() != null) {
             writer.key(DEVICE).object();
             getDevice().write(writer);
@@ -193,9 +177,8 @@ public abstract class AbstractLog implements Log {
         if (object.has(SID)) {
             setSid(UUID.fromString(object.getString(SID)));
         }
-        if (object.has(DISTRIBUTION_GROUP_ID)) {
-            setDistributionGroupId(object.getString(DISTRIBUTION_GROUP_ID));
-        }
+        setDistributionGroupId(object.optString(DISTRIBUTION_GROUP_ID, null));
+        setUserId(object.optString(USER_ID, null));
         if (object.has(DEVICE)) {
             Device device = new Device();
             device.read(object.getJSONObject(DEVICE));
@@ -216,6 +199,7 @@ public abstract class AbstractLog implements Log {
         if (sid != null ? !sid.equals(that.sid) : that.sid != null) return false;
         if (distributionGroupId != null ? !distributionGroupId.equals(that.distributionGroupId) : that.distributionGroupId != null)
             return false;
+        if (userId != null ? !userId.equals(that.userId) : that.userId != null) return false;
         if (device != null ? !device.equals(that.device) : that.device != null) return false;
         return tag != null ? tag.equals(that.tag) : that.tag == null;
     }
@@ -226,6 +210,7 @@ public abstract class AbstractLog implements Log {
         result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         result = 31 * result + (sid != null ? sid.hashCode() : 0);
         result = 31 * result + (distributionGroupId != null ? distributionGroupId.hashCode() : 0);
+        result = 31 * result + (userId != null ? userId.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
         result = 31 * result + (tag != null ? tag.hashCode() : 0);
         return result;

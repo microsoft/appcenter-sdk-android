@@ -2,9 +2,12 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.utils.UserIdContext;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
+
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 
 /**
  * Populate Part A properties.
@@ -46,8 +49,8 @@ public class PartAUtils {
     /**
      * Adds part A extension to common schema log from device object in Log.
      *
-     * @param src  source log.
-     * @param dest destination common schema log.
+     * @param src                source log.
+     * @param dest               destination common schema log.
      * @param transmissionTarget transmission target to use.
      */
     public static void addPartAFromLog(Log src, CommonSchemaLog dest, String transmissionTarget) {
@@ -58,8 +61,9 @@ public class PartAUtils {
         /* Add top level part A fields. */
         dest.setVer("3.0");
         dest.setTimestamp(src.getTimestamp());
+
         /* TODO: We should cache the ikey for transmission target */
-        dest.setIKey("o:" + getTargetKey(transmissionTarget));
+        dest.setIKey("o" + COMMON_SCHEMA_PREFIX_SEPARATOR + getTargetKey(transmissionTarget));
 
         /* Copy target token also in the set. */
         dest.addTransmissionTarget(transmissionTarget);
@@ -76,6 +80,7 @@ public class PartAUtils {
 
         /* Add user extension. */
         dest.getExt().setUser(new UserExtension());
+        dest.getExt().getUser().setLocalId(UserIdContext.getPrefixedUserId(src.getUserId()));
         dest.getExt().getUser().setLocale(device.getLocale().replace("_", "-"));
 
         /* Add OS extension. */
@@ -87,7 +92,7 @@ public class PartAUtils {
         /* Add app extension. */
         dest.getExt().setApp(new AppExtension());
         dest.getExt().getApp().setVer(device.getAppVersion());
-        dest.getExt().getApp().setId("a:" + device.getAppNamespace());
+        dest.getExt().getApp().setId("a" + COMMON_SCHEMA_PREFIX_SEPARATOR + device.getAppNamespace());
 
         /* TODO: Add network type. */
         /* Add net extension. */

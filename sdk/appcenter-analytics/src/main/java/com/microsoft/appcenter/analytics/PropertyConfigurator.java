@@ -9,10 +9,14 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.AppExtension;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
+import com.microsoft.appcenter.ingestion.models.one.UserExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
+import com.microsoft.appcenter.utils.UserIdContext;
 
 import java.util.Date;
 import java.util.Map;
+
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 
 /**
  * Allow overriding Part A properties.
@@ -22,7 +26,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Common schema prefix for Android device IDs.
      */
-    private static final String ANDROID_DEVICE_ID_PREFIX = "a:";
+    private static final String ANDROID_DEVICE_ID_PREFIX = "a" + COMMON_SCHEMA_PREFIX_SEPARATOR;
 
     /**
      * App name to override common schema part A 'app.name'.
@@ -38,6 +42,11 @@ public class PropertyConfigurator extends AbstractChannelListener {
      * App locale to override common schema part A 'app.locale'.
      */
     private String mAppLocale;
+
+    /**
+     * User identifier to override common schema part A 'user.localId'.
+     */
+    private String mUserId;
 
     /**
      * Flag to enable populating common schema 'device.localId'.
@@ -73,6 +82,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     public void onPreparingLog(@NonNull Log log, @NonNull String groupName) {
         if (shouldOverridePartAProperties(log)) {
             AppExtension app = ((CommonSchemaLog) log).getExt().getApp();
+            UserExtension user = ((CommonSchemaLog) log).getExt().getUser();
             DeviceExtension device = ((CommonSchemaLog) log).getExt().getDevice();
 
             /* Override app name if not null, else use the name of the nearest parent. */
@@ -114,6 +124,19 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 }
             }
 
+            /* Override userId if not null, else use the userId of the nearest parent. */
+            if (mUserId != null) {
+                user.setLocalId(mUserId);
+            } else {
+                for (AnalyticsTransmissionTarget target = mTransmissionTarget.mParentTarget; target != null; target = target.mParentTarget) {
+                    String parentUserId = target.getPropertyConfigurator().getUserId();
+                    if (parentUserId != null) {
+                        user.setLocalId(parentUserId);
+                        break;
+                    }
+                }
+            }
+
             /* Fill out the device id if it has been collected. */
             if (mDeviceIdEnabled) {
 
@@ -137,7 +160,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app name. Used for checking parents for property inheritance.
+     * Get app name.
      *
      * @return App name.
      */
@@ -161,7 +184,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app version. Used for checking parents for property inheritance.
+     * Get app version.
      *
      * @return App version.
      */
@@ -172,7 +195,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Override common schema Part A property App.Version.
      *
-     * @param appVersion App version
+     * @param appVersion App version.
      */
     public void setAppVersion(final String appVersion) {
         Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
@@ -185,9 +208,9 @@ public class PropertyConfigurator extends AbstractChannelListener {
     }
 
     /**
-     * Get app locale. Used for checking parents for property inheritance.
+     * Get app locale.
      *
-     * @return App locale
+     * @return App locale.
      */
     private String getAppLocale() {
         return mAppLocale;
@@ -196,7 +219,7 @@ public class PropertyConfigurator extends AbstractChannelListener {
     /**
      * Override common schema Part A property App.Locale.
      *
-     * @param appLocale App Locale
+     * @param appLocale App Locale.
      */
     public void setAppLocale(final String appLocale) {
         Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
@@ -206,6 +229,36 @@ public class PropertyConfigurator extends AbstractChannelListener {
                 mAppLocale = appLocale;
             }
         });
+    }
+
+    /**
+     * Get user id.
+     *
+     * @return user id.
+     */
+    private String getUserId() {
+        return mUserId;
+    }
+
+    /**
+     * Set the user identifier.
+     * The user identifier needs to start with the c: prefix or must not have a prefix.
+     * If the prefix is missing, the c: prefix will be automatically added.
+     * The userId cannot be empty or just "c:".
+     *
+     * @param userId user identifier.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public void setUserId(final String userId) {
+        if (UserIdContext.checkUserIdValidForOneCollector(userId)) {
+            Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {
+
+                @Override
+                public void run() {
+                    mUserId = UserIdContext.getPrefixedUserId(userId);
+                }
+            });
+        }
     }
 
     /**

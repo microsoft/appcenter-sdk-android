@@ -28,6 +28,11 @@ public class Constants {
     static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
 
     /**
+     * Common schema prefix separator used in various field values.
+     */
+    public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
+
+    /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;

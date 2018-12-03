@@ -8,6 +8,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.PropertyConfigurator;
@@ -30,7 +31,8 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
     private enum PropertyName {
         APP_NAME,
         APP_VERSION,
-        APP_LOCALE
+        APP_LOCALE,
+        USER_ID
     }
 
     @Override
@@ -60,6 +62,10 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
 
                     case APP_LOCALE:
                         methodName = "getAppLocale";
+                        break;
+
+                    case USER_ID:
+                        methodName = "getUserId";
                         break;
 
                     default:
@@ -109,6 +115,18 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
             case APP_LOCALE:
                 mPropertyConfigurator.setAppLocale(value);
                 break;
+
+            case USER_ID:
+
+                // TODO remove reflection once new APIs available in jCenter.
+                // mPropertyConfigurator.setUserId(value);
+                try {
+                    Method method = PropertyConfigurator.class.getDeclaredMethod("setUserId", String.class);
+                    method.invoke(mPropertyConfigurator, value);
+                } catch (Exception ignored) {
+                }
+                break;
         }
+        Toast.makeText(this, R.string.property_saved, Toast.LENGTH_SHORT).show();
     }
 }
