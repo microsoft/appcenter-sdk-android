@@ -71,6 +71,11 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
             }
             mCalls.clear();
         }
+
+        /*
+         * Loss of network may not lead to call failure. Also, cancelling the ongoing requests
+         * can cause requests duplication, so let it fail and then retry when we're online again.
+         */
     }
 
     private synchronized void cancelCall(Call call) {

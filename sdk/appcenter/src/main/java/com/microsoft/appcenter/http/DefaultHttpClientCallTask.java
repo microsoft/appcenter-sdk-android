@@ -33,6 +33,9 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+/**
+ * Async task for default HTTP client.
+ */
 class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
     /**
@@ -324,10 +327,19 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         }
     }
 
+    /**
+     * The callback used for maintain ongoing call tasks.
+     */
     interface Tracker {
 
+        /**
+         * Called before the http call operation.
+         */
         void onStart(DefaultHttpClientCallTask task);
 
+        /**
+         * Called after the http call operation.
+         */
         void onFinish(DefaultHttpClientCallTask task);
     }
 }
