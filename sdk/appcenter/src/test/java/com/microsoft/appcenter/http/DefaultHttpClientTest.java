@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -42,6 +44,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -49,6 +52,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -63,11 +67,16 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DefaultHttpClient.class, TrafficStats.class, AppCenterLog.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        DefaultHttpClient.class,
+        DefaultHttpClientCallTask.class,
+        TrafficStats.class
+})
 public class DefaultHttpClientTest {
 
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public PowerMockRule mRule = new PowerMockRule();
 
     @After
     public void tearDown() throws Exception {
@@ -75,30 +84,48 @@ public class DefaultHttpClientTest {
     }
 
     /**
-     * Simulate ASyncTask. It's not in @Before because some tests like cancel must not use this.
+     * Simulate AsyncTask.
      */
-    private static void mockCall() throws Exception {
+    private static void mockCall(final Consumer<DefaultHttpClientCallTask> callback) throws Exception {
 
-        /* Mock AsyncTask... */
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenAnswer(new Answer<Object>() {
+        /* Mock AsyncTask. */
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
 
-                @SuppressWarnings("unchecked") final DefaultHttpClient.Call call = new DefaultHttpClient.Call(invocation.getArguments()[0].toString(), invocation.getArguments()[1].toString(), (Map<String, String>) invocation.getArguments()[2], (HttpClient.CallTemplate) invocation.getArguments()[3], (ServiceCallback) invocation.getArguments()[4]);
-                DefaultHttpClient.Call spyCall = spy(call);
-                when(spyCall.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClient.Call>() {
+                @SuppressWarnings("unchecked")
+                final DefaultHttpClientCallTask call = spy(new DefaultHttpClientCallTask(
+                        invocation.getArguments()[0].toString(),
+                        invocation.getArguments()[1].toString(),
+                        (Map<String, String>) invocation.getArguments()[2],
+                        (HttpClient.CallTemplate) invocation.getArguments()[3],
+                        (ServiceCallback) invocation.getArguments()[4],
+                        (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5]));
+                when(call.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
 
                     @Override
-                    public DefaultHttpClient.Call answer(InvocationOnMock invocation) {
-                        call.onPostExecute(call.doInBackground());
+                    public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
+                        Object result = call.doInBackground();
+                        if (call.isCancelled()) {
+                            call.onCancelled(result);
+                        } else {
+                            call.onPostExecute(result);
+                        }
                         return call;
                     }
                 });
-                return spyCall;
+                if (callback != null) {
+                    callback.accept(call);
+                }
+                return call;
             }
         });
         mockStatic(TrafficStats.class);
+    }
+
+    private static void mockCall() throws Exception {
+        mockCall(null);
     }
 
     @Test
@@ -535,10 +562,9 @@ public class DefaultHttpClientTest {
     @Test
     public void cancel() throws Exception {
 
-        /* Mock AsyncTask... */
-        DefaultHttpClient.Call mockCall = mock(DefaultHttpClient.Call.class);
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(mockCall);
-        when(mockCall.isCancelled()).thenReturn(false).thenReturn(true);
+        /* Mock AsyncTask. */
+        DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         ServiceCall call = httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
@@ -546,11 +572,167 @@ public class DefaultHttpClientTest {
         /* Cancel and verify. */
         call.cancel();
         verify(mockCall).cancel(true);
+    }
 
-        /* Calling cancel a second time should be allowed and ignored. */
-        call.cancel();
-        verify(mockCall, times(1)).cancel(true);
-        verify(mockCall, never()).cancel(false);
+    @Test
+    public void cancelCurrentCallsOnClose() throws Exception {
+
+        /* Mock AsyncTask. */
+        DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        httpClient.callAsync("", "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
+        httpClient.onStart(mockCall);
+
+        /* Close and verify. */
+        httpClient.close();
+        verify(mockCall).cancel(true);
+        assertEquals(0, httpClient.getTasks().size());
+    }
+
+    @Test
+    public void cancelledBeforeSending() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        mockCall(new Consumer<DefaultHttpClientCallTask>() {
+
+            @Override
+            public void accept(final DefaultHttpClientCallTask call) {
+                when(call.isCancelled()).thenReturn(true);
+            }
+        });
+
+        /* Call and verify */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(urlConnection, never()).getResponseCode();
+        verifyNoMoreInteractions(serviceCallback);
+        assertEquals(0, httpClient.getTasks().size());
+    }
+
+    @Test
+    public void cancelledOnSending() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/post";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        mockCall(new Consumer<DefaultHttpClientCallTask>() {
+
+            @Override
+            public void accept(final DefaultHttpClientCallTask call) {
+                when(call.isCancelled()).thenReturn(false, true);
+            }
+        });
+
+        /* Call and verify */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn("{a:1,b:2}");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCall call = httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(urlConnection, never()).getResponseCode();
+        verifyNoMoreInteractions(serviceCallback);
+        assertEquals(0, httpClient.getTasks().size());
+    }
+
+    @Test
+    public void cancelledBeforeReceiving() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        mockCall(new Consumer<DefaultHttpClientCallTask>() {
+
+            @Override
+            public void accept(final DefaultHttpClientCallTask call) {
+                when(call.isCancelled()).thenReturn(false, true);
+            }
+        });
+
+        /* Call and verify */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(urlConnection, never()).getResponseCode();
+        verifyNoMoreInteractions(serviceCallback);
+        assertEquals(0, httpClient.getTasks().size());
+    }
+
+    @Test
+    public void cancelledOnReceiving() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+        mockCall(new Consumer<DefaultHttpClientCallTask>() {
+
+            @Override
+            public void accept(final DefaultHttpClientCallTask call) {
+                when(call.isCancelled()).thenReturn(false, false, true);
+            }
+        });
+
+        /* Call and verify */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded(anyString());
+        assertEquals(0, httpClient.getTasks().size());
+    }
+
+    @Test
+    public void cancelledOnReceivingError() throws Exception {
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(503);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getErrorStream()).thenReturn(new ByteArrayInputStream("Busy".getBytes()));
+        mockCall(new Consumer<DefaultHttpClientCallTask>() {
+
+            @Override
+            public void accept(final DefaultHttpClientCallTask call) {
+                when(call.isCancelled()).thenReturn(false, false, true);
+            }
+        });
+
+        /* Call and verify */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(new HttpException(503, "Busy"));
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -567,6 +749,31 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(callTemplate);
         verifyZeroInteractions(serviceCallback);
+    }
+
+    @Test
+    public void failedToWritePayload() throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        IOException exception = new IOException("mock");
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        OutputStream out = mock(OutputStream.class);
+        when(urlConnection.getOutputStream()).thenReturn(out);
+        doThrow(exception).when(out).write(any(byte[].class), anyInt(), anyInt());
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn("{}");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync("", METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(exception);
+        verifyZeroInteractions(serviceCallback);
+        verify(out).close();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
@@ -590,6 +797,27 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(serviceCallback);
         verify(inputStream).close();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+    }
+
+    @Test
+    public void failedWithError() throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.openConnection()).thenThrow(new Error());
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        try {
+            httpClient.callAsync("", "", new HashMap<String, String>(), callTemplate, serviceCallback);
+            fail();
+        } catch (Error ignored) {
+        }
+        verifyZeroInteractions(serviceCallback);
         verifyStatic();
         TrafficStats.setThreadStatsTag(anyInt());
         verifyStatic();
@@ -649,8 +877,8 @@ public class DefaultHttpClientTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock ingestion to fail on saturated executor in AsyncTask. */
-        DefaultHttpClient.Call call = mock(DefaultHttpClient.Call.class);
-        whenNew(DefaultHttpClient.Call.class).withAnyArguments().thenReturn(call);
+        DefaultHttpClientCallTask call = mock(DefaultHttpClientCallTask.class);
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(call);
         RejectedExecutionException exception = new RejectedExecutionException();
         when(call.executeOnExecutor(any(Executor.class))).thenThrow(exception);
         DefaultHttpClient httpClient = new DefaultHttpClient();

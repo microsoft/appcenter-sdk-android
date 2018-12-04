@@ -9,6 +9,7 @@
 * **[Fix]** Fix error detection of `setMaxStorageSize` API if database uses custom page size.
 * **[Fix]** Fix minimum storage size verification to match minimum possible value.
 * **[Fix]** Fix disabling logging of network state changes according to `AppCenter.getLogLevel`.
+* **[Fix]** Fix logs duplication on unstable network.
 
 ### AppCenterCrashes
 

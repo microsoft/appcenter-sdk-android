@@ -5,7 +5,6 @@ import android.content.Context;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -28,6 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -59,16 +59,19 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({
-        OneCollectorIngestion.class,
         AppCenterLog.class,
-        JSONObject.class
+        JSONObject.class,
+        OneCollectorIngestion.class,
+        HttpUtils.class
 })
 public class OneCollectorIngestionTest {
 
@@ -78,9 +81,14 @@ public class OneCollectorIngestionTest {
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
+    @Mock
+    private HttpClient mHttpClient;
+
     @Before
     public void setUp() throws Exception {
         TicketCache.clear();
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);
@@ -117,7 +125,7 @@ public class OneCollectorIngestionTest {
     @Test
     public void sendAsync() throws Exception {
 
-        /* Mock time */
+        /* Mock time. */
         mockStatic(System.class);
         when(System.currentTimeMillis()).thenReturn(1234L);
 
@@ -142,11 +150,9 @@ public class OneCollectorIngestionTest {
         when(serializer.serializeLog(log2)).thenReturn("mockPayload2");
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
@@ -160,17 +166,17 @@ public class OneCollectorIngestionTest {
         expectedHeaders.put(OneCollectorIngestion.CLIENT_VERSION_KEY, String.format("ACS-Android-Java-no-%s-no", VERSION_NAME));
         expectedHeaders.put(OneCollectorIngestion.UPLOAD_TIME_KEY, "1234");
         expectedHeaders.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-json-stream; charset=utf-8");
-        verify(httpClient).callAsync(eq("http://mock"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.getValue());
         assertEquals("mockPayload1\nmockPayload2\n", callTemplate.getValue().buildRequestBody());
 
         /* Verify close. */
         ingestion.close();
-        verify(httpClient).close();
+        verify(mHttpClient).close();
 
         /* Verify reopen. */
         ingestion.reopen();
-        verify(httpClient).reopen();
+        verify(mHttpClient).reopen();
     }
 
     @Test
@@ -215,10 +221,8 @@ public class OneCollectorIngestionTest {
         }};
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall call = mock(ServiceCall.class);
-        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
 
         /* Verify call to http client. */
         LogSerializer serializer = mock(LogSerializer.class);
@@ -260,10 +264,8 @@ public class OneCollectorIngestionTest {
         when(ticketJson.put(anyString(), anyString())).thenThrow(new JSONException("mock"));
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall call = mock(ServiceCall.class);
-        when(httpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(call);
 
         /* Verify call to http client. */
         LogSerializer serializer = mock(LogSerializer.class);
@@ -295,11 +297,9 @@ public class OneCollectorIngestionTest {
         when(serializer.serializeLog(log)).thenThrow(exception);
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
@@ -317,7 +317,7 @@ public class OneCollectorIngestionTest {
 
         /* Verify close. */
         ingestion.close();
-        verify(httpClient).close();
+        verify(mHttpClient).close();
     }
 
     @Test
@@ -387,9 +387,7 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         assertEquals(call, ingestion.sendAsync(null, null, mock(LogContainer.class), mock(ServiceCallback.class)));

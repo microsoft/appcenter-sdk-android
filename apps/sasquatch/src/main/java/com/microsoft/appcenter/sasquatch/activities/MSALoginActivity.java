@@ -122,9 +122,11 @@ public class MSALoginActivity extends AppCompatActivity {
 
         /* Init API client only once. */
         if (sHttpClient == null) {
-            HttpClientRetryer retryer = new HttpClientRetryer(new DefaultHttpClient());
+
+            // TODO replace this once new APIs available in jCenter
+            // sHttpClient = createHttpClient(this);
             NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(this);
-            sHttpClient = new HttpClientNetworkStateHandler(retryer, networkStateHelper);
+            sHttpClient = new HttpClientRetryer(new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper));
         }
 
         /* Configure web view. */
