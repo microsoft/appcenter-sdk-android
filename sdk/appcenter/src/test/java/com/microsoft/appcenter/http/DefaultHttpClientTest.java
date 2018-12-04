@@ -44,6 +44,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -796,6 +797,27 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyZeroInteractions(serviceCallback);
         verify(inputStream).close();
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(anyInt());
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+    }
+
+    @Test
+    public void failedWithError() throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.openConnection()).thenThrow(new Error());
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        try {
+            httpClient.callAsync("", "", new HashMap<String, String>(), callTemplate, serviceCallback);
+            fail();
+        } catch (Error ignored) {
+        }
+        verifyZeroInteractions(serviceCallback);
         verifyStatic();
         TrafficStats.setThreadStatsTag(anyInt());
         verifyStatic();
