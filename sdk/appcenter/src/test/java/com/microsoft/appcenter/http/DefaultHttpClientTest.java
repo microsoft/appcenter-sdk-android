@@ -587,7 +587,7 @@ public class DefaultHttpClientTest {
         /* Close and verify. */
         httpClient.close();
         verify(mockCall).cancel(true);
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -614,7 +614,7 @@ public class DefaultHttpClientTest {
         ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(urlConnection, never()).getResponseCode();
         verifyNoMoreInteractions(serviceCallback);
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -644,7 +644,7 @@ public class DefaultHttpClientTest {
         ServiceCall call = httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(urlConnection, never()).getResponseCode();
         verifyNoMoreInteractions(serviceCallback);
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -671,7 +671,7 @@ public class DefaultHttpClientTest {
         ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(urlConnection, never()).getResponseCode();
         verifyNoMoreInteractions(serviceCallback);
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -701,7 +701,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallSucceeded(anyString());
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test
@@ -731,7 +731,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(new HttpException(503, "Busy"));
-        assertEquals(0, httpClient.mTasks.size());
+        assertEquals(0, httpClient.getTasks().size());
     }
 
     @Test

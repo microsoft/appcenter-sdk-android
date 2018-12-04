@@ -34,7 +34,6 @@ import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
@@ -51,7 +50,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
@@ -199,8 +200,8 @@ public class AbstractDistributeTest {
         mockStatic(NetworkStateHelper.class);
         mNetworkStateHelper = mock(NetworkStateHelper.class, new Returns(true));
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
-        PowerMockito.spy(HttpUtils.class);
-        PowerMockito.doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);

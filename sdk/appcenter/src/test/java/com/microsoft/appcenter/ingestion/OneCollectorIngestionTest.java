@@ -30,7 +30,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -60,8 +59,10 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -86,8 +87,8 @@ public class OneCollectorIngestionTest {
     @Before
     public void setUp() throws Exception {
         TicketCache.clear();
-        PowerMockito.spy(HttpUtils.class);
-        PowerMockito.doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);

@@ -58,7 +58,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Write buffer size.
      */
-    private static final int WRUTE_BUFFER_SIZE = 1024;
+    private static final int WRITE_BUFFER_SIZE = 1024;
 
     /**
      * HTTP connection timeout.
@@ -110,8 +110,8 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
      * Write payload to output stream.
      */
     private void writePayload(OutputStream out, byte[] payload) throws IOException {
-        for (int i = 0; i < payload.length; i += WRUTE_BUFFER_SIZE) {
-            out.write(payload, i, min(payload.length - i, WRUTE_BUFFER_SIZE));
+        for (int i = 0; i < payload.length; i += WRITE_BUFFER_SIZE) {
+            out.write(payload, i, min(payload.length - i, WRITE_BUFFER_SIZE));
             if (isCancelled()) {
                 break;
             }
@@ -284,10 +284,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         }
     }
 
-    private boolean isHttpResult(Object result) {
-        return result instanceof String || result instanceof HttpException;
-    }
-
     @Override
     protected Object doInBackground(Void... params) {
 
@@ -321,7 +317,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     protected void onCancelled(Object result) {
 
         /* Handle the result even if it was cancelled. */
-        if (isHttpResult(result)) {
+        if (result instanceof String || result instanceof HttpException) {
             onPostExecute(result);
         } else {
             mTracker.onFinish(this);

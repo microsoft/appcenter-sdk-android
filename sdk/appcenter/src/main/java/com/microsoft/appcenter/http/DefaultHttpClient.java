@@ -53,11 +53,18 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
      */
     static final String CONTENT_ENCODING_VALUE = "gzip";
 
+    /**
+     * List of ongoing call tasks.
+     */
+    private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+
     @VisibleForTesting
-    Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+    Set<DefaultHttpClientCallTask> getTasks() {
+        return mTasks;
+    }
 
     @Override
-    public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
+    public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
         final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this);
         try {
             task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);

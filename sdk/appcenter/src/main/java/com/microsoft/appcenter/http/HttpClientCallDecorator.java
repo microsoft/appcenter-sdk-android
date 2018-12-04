@@ -5,20 +5,20 @@ import java.util.Map;
 /**
  * Helper class used to share logic with multiple decorators.
  */
-class HttpClientCallDecorator implements Runnable, ServiceCall, ServiceCallback {
+abstract class HttpClientCallDecorator implements Runnable, ServiceCall, ServiceCallback {
 
     /**
      * Decorated API.
      */
-    final HttpClient mDecoratedApi;
+    private final HttpClient mDecoratedApi;
 
-    final String mUrl;
+    private final String mUrl;
 
-    final String mMethod;
+    private final String mMethod;
 
-    final Map<String, String> mHeaders;
+    private final Map<String, String> mHeaders;
 
-    final HttpClient.CallTemplate mCallTemplate;
+    private final HttpClient.CallTemplate mCallTemplate;
 
     /**
      * Callback.

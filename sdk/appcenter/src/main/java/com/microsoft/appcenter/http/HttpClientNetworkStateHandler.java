@@ -90,7 +90,7 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         }
 
         @Override
-        public synchronized void cancel() {
+        public void cancel() {
             cancelCall(this);
         }
     }

@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -44,8 +43,10 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
@@ -64,8 +65,8 @@ public class AppCenterIngestionTest {
 
     @Before
     public void setUp() throws Exception {
-        PowerMockito.spy(HttpUtils.class);
-        PowerMockito.doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
     }
 
     @Test
