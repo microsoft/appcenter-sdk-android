@@ -42,7 +42,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class MSALoginActivity extends AppCompatActivity {
@@ -123,7 +122,11 @@ public class MSALoginActivity extends AppCompatActivity {
 
         /* Init API client only once. */
         if (sHttpClient == null) {
-            sHttpClient = createHttpClient(this);
+
+            // TODO replace this once new APIs available in jCenter
+            // sHttpClient = createHttpClient(this);
+            NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(this);
+            sHttpClient = new HttpClientRetryer(new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper));
         }
 
         /* Configure web view. */
