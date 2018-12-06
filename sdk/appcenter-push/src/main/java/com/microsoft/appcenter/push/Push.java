@@ -19,6 +19,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
@@ -225,6 +226,7 @@ public class Push extends AbstractAppCenterService {
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
+        log.setUserId(UserIdContext.getInstance().getUserId());
         mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
     }
 
