@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,12 +53,18 @@ public class Data implements Model {
     @Override
     public void write(JSONStringer writer) throws JSONException {
 
-        /* Part B and C. */
+        /* Serialize part B before. */
+        JSONUtils.write(writer, BASE_TYPE, mProperties.optString(BASE_TYPE, null));
+        JSONUtils.write(writer, BASE_DATA, mProperties.optJSONObject(BASE_DATA));
+
+        /* Then part C. */
         JSONArray names = mProperties.names();
         if (names != null) {
             for (int i = 0; i < names.length(); i++) {
                 String name = names.getString(i);
-                writer.key(name).value(mProperties.get(name));
+                if (!name.equals(BASE_TYPE) && !name.equals(BASE_DATA)) {
+                    writer.key(name).value(mProperties.get(name));
+                }
             }
         }
     }
