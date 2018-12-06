@@ -17,17 +17,17 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_DATETIME;
-import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_DOUBLE;
-import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.DATA_TYPE_INT64;
-import static com.microsoft.appcenter.ingestion.models.one.PartCUtils.METADATA_FIELDS;
+import static com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils.DATA_TYPE_DATETIME;
+import static com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils.DATA_TYPE_DOUBLE;
+import static com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils.DATA_TYPE_INT64;
+import static com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils.METADATA_FIELDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public class PartCUtilsAndroidTest {
+public class CommonSchemaDataUtilsAndroidTest {
 
     private static StringTypedProperty typedProperty(String key, String value) {
         StringTypedProperty stringTypedProperty = new StringTypedProperty();
@@ -38,13 +38,13 @@ public class PartCUtilsAndroidTest {
 
     @Test
     public void coverInit() {
-        new PartCUtils();
+        new CommonSchemaDataUtils();
     }
 
     @Test
     public void nullProperties() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
-        PartCUtils.addPartCFromLog(null, log);
+        CommonSchemaDataUtils.addCommonSchemaData(null, log);
         assertNull(log.getData());
         assertNull(log.getExt());
     }
@@ -52,7 +52,7 @@ public class PartCUtilsAndroidTest {
     @Test
     public void emptyProperties() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
-        PartCUtils.addPartCFromLog(Collections.<TypedProperty>emptyList(), log);
+        CommonSchemaDataUtils.addCommonSchemaData(Collections.<TypedProperty>emptyList(), log);
         assertEquals(0, log.getData().getProperties().length());
         assertNull(log.getExt());
     }
@@ -62,7 +62,7 @@ public class PartCUtilsAndroidTest {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         List<TypedProperty> properties = new ArrayList<>();
         properties.add(typedProperty("", ""));
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals("", log.getData().getProperties().getString(""));
         assertNull(log.getExt());
@@ -75,9 +75,7 @@ public class PartCUtilsAndroidTest {
         properties.add(typedProperty("a", "b"));
         properties.add(typedProperty(null, "c"));
         properties.add(typedProperty("d", null));
-        properties.add(typedProperty("baseData", "{}"));
-        properties.add(typedProperty("baseDataType", "custom"));
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals("b", log.getData().getProperties().getString("a"));
         assertNull(log.getExt());
@@ -90,7 +88,7 @@ public class PartCUtilsAndroidTest {
         properties.add(typedProperty("a.b", "1"));
         properties.add(typedProperty("a.c.d", "2"));
         properties.add(typedProperty("a.c.e", "3"));
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         JSONObject a = log.getData().getProperties().optJSONObject("a");
         assertNotNull(a);
@@ -109,7 +107,7 @@ public class PartCUtilsAndroidTest {
         properties.add(typedProperty("a.b", "1"));
         properties.add(typedProperty("a.b.c.d", "2"));
         properties.add(typedProperty("a.b.c", "3"));
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         JSONObject b = log.getData().getProperties().optJSONObject("a").optJSONObject("b");
         assertNotNull(b);
         assertEquals("3", b.optString("c", null));
@@ -124,7 +122,7 @@ public class PartCUtilsAndroidTest {
         property.setName("a");
         property.setValue(true);
         properties.add(property);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertTrue(log.getData().getProperties().getBoolean("a"));
     }
@@ -137,7 +135,7 @@ public class PartCUtilsAndroidTest {
         property.setName("a");
         property.setValue(new Date(100));
         properties.add(property);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         assertEquals(1, log.getData().getProperties().length());
@@ -161,7 +159,7 @@ public class PartCUtilsAndroidTest {
         property.setName("a");
         property.setValue(1.1);
         properties.add(property);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         assertEquals(1, log.getData().getProperties().length());
@@ -185,7 +183,7 @@ public class PartCUtilsAndroidTest {
         property.setName("a");
         property.setValue(10000000000L);
         properties.add(property);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals(10000000000L, log.getData().getProperties().getLong("a"));
 
@@ -209,7 +207,7 @@ public class PartCUtilsAndroidTest {
         property.setName("a");
         property.setValue(10000000000L);
         properties.add(property);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
         assertEquals(1, log.getData().getProperties().length());
         assertEquals(10000000000L, log.getData().getProperties().getLong("a"));
 
@@ -234,7 +232,7 @@ public class PartCUtilsAndroidTest {
             }
         };
         typedProperty.setName("a");
-        PartCUtils.addPartCFromLog(Collections.singletonList(typedProperty), log);
+        CommonSchemaDataUtils.addCommonSchemaData(Collections.singletonList(typedProperty), log);
 
         /* Data is empty because the invalid property filtered out. */
         assertEquals(0, log.getData().getProperties().length());
@@ -247,6 +245,7 @@ public class PartCUtilsAndroidTest {
     public void nestingWithTypes() throws JSONException {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         List<TypedProperty> properties = new ArrayList<>();
+        properties.add(typedProperty("baseType", "Some.Type"));
         LongTypedProperty a = new LongTypedProperty();
         a.setName("p.a");
         a.setValue(1);
@@ -259,27 +258,42 @@ public class PartCUtilsAndroidTest {
         c.setName("p.c");
         c.setValue(true);
         properties.add(c);
-        PartCUtils.addPartCFromLog(properties, log);
+        LongTypedProperty baseDataD = new LongTypedProperty();
+        baseDataD.setName("baseData.d");
+        baseDataD.setValue(4);
+        properties.add(baseDataD);
+        properties.add(typedProperty("baseData.e", "5"));
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         JSONObject p = new JSONObject();
         p.put("a", 1);
         p.put("b", 2.0);
         p.put("c", true);
+        JSONObject baseData = new JSONObject();
+        baseData.put("d", 4);
+        baseData.put("e", "5");
         JSONObject expectedData = new JSONObject();
+        expectedData.put("baseType", "Some.Type");
         expectedData.put("p", p);
+        expectedData.put("baseData", baseData);
         assertEquals(expectedData.toString(), log.getData().getProperties().toString());
 
         /* Check metadata, boolean is a default type. */
-        JSONObject f2 = new JSONObject();
-        f2.put("a", DATA_TYPE_INT64);
-        f2.put("b", DATA_TYPE_DOUBLE);
-        JSONObject mp = new JSONObject();
-        mp.put(METADATA_FIELDS, f2);
-        JSONObject f1 = new JSONObject();
-        f1.put("p", mp);
+        JSONObject metadataPChildren = new JSONObject();
+        metadataPChildren.put("a", DATA_TYPE_INT64);
+        metadataPChildren.put("b", DATA_TYPE_DOUBLE);
+        JSONObject metadataPFields = new JSONObject();
+        metadataPFields.put(METADATA_FIELDS, metadataPChildren);
+        JSONObject metadataBaseDataChildren = new JSONObject();
+        metadataBaseDataChildren.put("d", DATA_TYPE_INT64);
+        JSONObject metadataBaseDataFields = new JSONObject();
+        metadataBaseDataFields.put(METADATA_FIELDS, metadataBaseDataChildren);
+        JSONObject metadataFields = new JSONObject();
+        metadataFields.put("p", metadataPFields);
+        metadataFields.put("baseData", metadataBaseDataFields);
         JSONObject expectedMetadata = new JSONObject();
-        expectedMetadata.put(METADATA_FIELDS, f1);
+        expectedMetadata.put(METADATA_FIELDS, metadataFields);
         assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
     }
 
@@ -296,7 +310,7 @@ public class PartCUtilsAndroidTest {
         b.setName("a.b");
         b.setValue("2");
         properties.add(b);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         JSONObject aData = new JSONObject();
@@ -325,7 +339,7 @@ public class PartCUtilsAndroidTest {
         c.setName("a.c");
         c.setValue(3.14);
         properties.add(c);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         JSONObject aData = new JSONObject();
@@ -360,7 +374,7 @@ public class PartCUtilsAndroidTest {
         b.setName("b.c");
         b.setValue(2.2);
         properties.add(b);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         JSONObject aData = new JSONObject();
@@ -408,7 +422,7 @@ public class PartCUtilsAndroidTest {
         b.setName("b.c");
         b.setValue("2");
         properties.add(b);
-        PartCUtils.addPartCFromLog(properties, log);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
 
         /* Check data. */
         JSONObject aData = new JSONObject();
@@ -430,5 +444,77 @@ public class PartCUtilsAndroidTest {
         JSONObject expectedMetadata = new JSONObject();
         expectedMetadata.put(METADATA_FIELDS, rootFields);
         assertEquals(expectedMetadata.toString(), log.getExt().getMetadata().getMetadata().toString());
+    }
+
+    @Test
+    public void invalidBaseType() {
+
+        /* When using invalid base type. */
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("baseType");
+        a.setValue(1);
+        properties.add(a);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check data and metadata is missing type. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void invalidBaseData() {
+
+        /* When using invalid base data. */
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        StringTypedProperty a = new StringTypedProperty();
+        a.setName("baseData");
+        a.setValue("myData");
+        properties.add(a);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check data and metadata is missing type. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void baseDataMissing() {
+
+        /* When using invalid base data. */
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        StringTypedProperty a = new StringTypedProperty();
+        a.setName("baseType");
+        a.setValue("Some.Type");
+        properties.add(a);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check data and metadata is missing type. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void baseTypeMissing() {
+
+        /* When using invalid base data. */
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        StringTypedProperty a = new StringTypedProperty();
+        a.setName("baseData.test");
+        a.setValue("test");
+        properties.add(a);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check data and metadata is missing type. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
     }
 }
