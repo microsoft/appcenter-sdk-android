@@ -137,13 +137,10 @@ public class CommonSchemaLogSerializerTest {
 
         /*
          * equals method not defined in JSONObject so it's comparing strings, which is order sensitive.
-         * Since now Part B is serialized first, it's order sensitive for those 2 keys.
-         * Need to compare Part B, then remove Part B then compare the rest with equals...
+         * JSONObject uses a private LinkedHashMap so it keeps order of insertion, so if the test
+         * inserts first baseType then baseData, the order is predictable in assert equals.
          */
         assertTrue(copy instanceof CommonSchemaLog);
-        CommonSchemaLog csCopy = (CommonSchemaLog) copy;
-        assertEquals(log.getData().getProperties().remove("baseType"), csCopy.getData().getProperties().remove("baseType"));
-        assertEquals(log.getData().getProperties().remove("baseData").toString(), csCopy.getData().getProperties().remove("baseData").toString());
         assertEquals(log, copy);
 
         /* Check deserialize fails without data type */
