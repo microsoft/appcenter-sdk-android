@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings("unused")
@@ -129,10 +130,20 @@ public class CommonSchemaLogSerializerTest {
         /* Data. */
         log.setData(new Data());
         checkSerialization(serializer, log);
-        log.getData().getProperties().put("a", "b");
-        log.getData().getProperties().put("baseDataType", "custom");
+        log.getData().getProperties().put("baseType", "custom");
         log.getData().getProperties().put("baseData", new JSONObject());
+        log.getData().getProperties().put("a", "b");
         Log copy = serializer.deserializeLog(serializer.serializeLog(log), MockCommonSchemaLog.TYPE);
+
+        /*
+         * equals method not defined in JSONObject so it's comparing strings, which is order sensitive.
+         * Since now Part B is serialized first, it's order sensitive for those 2 keys.
+         * Need to compare Part B, then remove Part B then compare the rest with equals...
+         */
+        assertTrue(copy instanceof CommonSchemaLog);
+        CommonSchemaLog csCopy = (CommonSchemaLog) copy;
+        assertEquals(log.getData().getProperties().remove("baseType"), csCopy.getData().getProperties().remove("baseType"));
+        assertEquals(log.getData().getProperties().remove("baseData").toString(), csCopy.getData().getProperties().remove("baseData").toString());
         assertEquals(log, copy);
 
         /* Check deserialize fails without data type */
