@@ -19,6 +19,7 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -106,6 +107,7 @@ public class PushTest {
     @Before
     public void setUp() {
         Push.unsetInstance();
+        UserIdContext.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
         mockStatic(PushNotifier.class);
@@ -201,7 +203,9 @@ public class PushTest {
         verify(channel).removeGroup(eq(push.getGroupName()));
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+        assertEquals(testToken, log.getValue().getPushToken());
         verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
                 eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
 
@@ -284,6 +288,7 @@ public class PushTest {
         String testToken = "TEST";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
+        UserIdContext.getInstance().setUserId("alice");
         start(push, channel);
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
@@ -291,7 +296,10 @@ public class PushTest {
 
         /* Refresh. */
         push.onTokenRefresh(testToken);
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+        assertEquals(testToken, log.getValue().getPushToken());
+        assertEquals("alice", log.getValue().getUserId());
 
         /* Only once. */
         verify(mFirebaseInstanceId).getToken();
