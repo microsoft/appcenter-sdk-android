@@ -2,6 +2,7 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
@@ -17,12 +18,15 @@ import org.json.JSONObject;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.microsoft.appcenter.ingestion.models.one.Data.BASE_DATA;
+import static com.microsoft.appcenter.ingestion.models.one.Data.BASE_TYPE;
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
- * Populate Part C properties.
+ * Populate Part B and Part C of common schema logs (the data property).
+ * Also populate Part A metadata extension.
  */
-public class PartCUtils {
+public class CommonSchemaDataUtils {
 
     @VisibleForTesting
     static final String METADATA_FIELDS = "f";
@@ -37,18 +41,18 @@ public class PartCUtils {
     static final int DATA_TYPE_DATETIME = 9;
 
     /**
-     * Adds part C properties to a log.
+     * Adds part B and part C properties to a log and Part A metadata.
      *
-     * @param properties custom properties.
+     * @param properties custom properties as source of data.
      * @param dest       destination common schema log.
      */
-    public static void addPartCFromLog(List<TypedProperty> properties, CommonSchemaLog dest) {
+    public static void addCommonSchemaData(List<TypedProperty> properties, CommonSchemaLog dest) {
         if (properties == null) {
             return;
         }
         try {
 
-            /* Part C creates properties in a deep structure using dot as an object separator. */
+            /* Part B and C are mixed into the same top level data property. */
             Data data = new Data();
             dest.setData(data);
 
@@ -107,6 +111,23 @@ public class PartCUtils {
                 addLeafMetadata(metadataType, destMetadata, lastKey);
             }
 
+            /* Warn/cleanup if baseData and baseType are not paired. */
+            JSONObject dataObject = data.getProperties();
+            String baseType = dataObject.optString(BASE_TYPE, null);
+            JSONObject baseData = dataObject.optJSONObject(BASE_DATA);
+            if (baseType == null && baseData != null) {
+                AppCenterLog.warn(LOG_TAG, "baseData was set but baseType is missing.");
+                dataObject.remove(BASE_DATA);
+                JSONObject baseMetaData = metadata.getMetadata().optJSONObject(METADATA_FIELDS);
+                if (baseMetaData != null) {
+                    baseMetaData.remove(BASE_DATA);
+                }
+            }
+            if (baseType != null && baseData == null) {
+                AppCenterLog.warn(LOG_TAG, "baseType was set but baseData is missing.");
+                dataObject.remove(BASE_TYPE);
+            }
+
             /* Add metadata extension only if not empty after cleanup. */
             if (!cleanUpEmptyObjectsInMetadata(metadata.getMetadata())) {
                 if (dest.getExt() == null) {
@@ -136,9 +157,14 @@ public class PartCUtils {
             throw new IllegalArgumentException("Property key cannot be null.");
         }
 
-        /* Validate key is not Part B. */
-        if (Data.BASE_DATA.equals(key) || Data.BASE_DATA_TYPE.equals(key)) {
-            throw new IllegalArgumentException("Property key '" + key + "' is reserved.");
+        /* Validate baseType. */
+        if (key.equals(BASE_TYPE) && !(property instanceof StringTypedProperty)) {
+            throw new IllegalArgumentException("baseType must be a string.");
+        }
+
+        /* Validate baseData is an object, meaning it has at least 1 dot. */
+        if (key.equals(BASE_DATA)) {
+            throw new IllegalArgumentException("baseData must be an object.");
         }
 
         /* Get value from property. */

@@ -130,14 +130,9 @@ public class CommonSchemaLogSerializerTest {
         log.setData(new Data());
         checkSerialization(serializer, log);
         log.getData().getProperties().put("a", "b");
-        checkSerialization(serializer, log);
-
-        /* Check baseData and baseDataType from Part B not read into Part C. */
         log.getData().getProperties().put("baseDataType", "custom");
         log.getData().getProperties().put("baseData", new JSONObject());
         Log copy = serializer.deserializeLog(serializer.serializeLog(log), MockCommonSchemaLog.TYPE);
-        log.getData().getProperties().remove("baseData");
-        log.getData().getProperties().remove("baseDataType");
         assertEquals(log, copy);
 
         /* Check deserialize fails without data type */

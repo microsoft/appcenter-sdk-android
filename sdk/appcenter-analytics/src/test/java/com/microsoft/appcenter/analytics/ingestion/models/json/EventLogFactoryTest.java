@@ -4,7 +4,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
-import com.microsoft.appcenter.ingestion.models.one.PartCUtils;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 
@@ -51,12 +51,12 @@ public class EventLogFactoryTest {
     }
 
     @Test
-    @PrepareForTest({PartAUtils.class, PartCUtils.class})
+    @PrepareForTest({PartAUtils.class, CommonSchemaDataUtils.class})
     public void convertEventWithoutProperties() {
 
         /* Mock utilities. */
         mockStatic(PartAUtils.class);
-        mockStatic(PartCUtils.class);
+        mockStatic(CommonSchemaDataUtils.class);
 
         /* Create event log. */
         EventLog log = new EventLog();
@@ -107,8 +107,8 @@ public class EventLogFactoryTest {
         verifyStatic();
         PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t2"));
 
-        /* Check Part C was added with typed properties (and thus not old ones). */
+        /* Check data was added with typed properties (and thus not old ones). */
         verifyStatic(times(2));
-        PartCUtils.addPartCFromLog(eq(properties), notNull(CommonSchemaLog.class));
+        CommonSchemaDataUtils.addCommonSchemaData(eq(properties), notNull(CommonSchemaLog.class));
     }
 }

@@ -6,7 +6,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.AbstractLogFactory;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
-import com.microsoft.appcenter.ingestion.models.one.PartCUtils;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -34,7 +34,7 @@ public class EventLogFactory extends AbstractLogFactory {
             PartAUtils.addPartAFromLog(log, commonSchemaEventLog, transmissionTarget);
 
             /* Properties go to Part C. */
-            PartCUtils.addPartCFromLog(eventLog.getTypedProperties(), commonSchemaEventLog);
+            CommonSchemaDataUtils.addCommonSchemaData(eventLog.getTypedProperties(), commonSchemaEventLog);
             commonSchemaLogs.add(commonSchemaEventLog);
 
             /* Copy tag. */
