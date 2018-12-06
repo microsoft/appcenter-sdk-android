@@ -2,7 +2,6 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.DateTimeTypedProperty;
@@ -116,14 +115,18 @@ public class CommonSchemaDataUtils {
             String baseType = dataObject.optString(BASE_TYPE, null);
             JSONObject baseData = dataObject.optJSONObject(BASE_DATA);
             if (baseType == null && baseData != null) {
+
+                /* Discard unpaired data and metadata. */
                 AppCenterLog.warn(LOG_TAG, "baseData was set but baseType is missing.");
                 dataObject.remove(BASE_DATA);
                 JSONObject baseMetaData = metadata.getMetadata().optJSONObject(METADATA_FIELDS);
-                if (baseMetaData != null) {
-                    baseMetaData.remove(BASE_DATA);
-                }
+
+                /* baseMetaData is always non null as baseData has at least 1 sub object and not cleaned up yet if empty. */
+                baseMetaData.remove(BASE_DATA);
             }
             if (baseType != null && baseData == null) {
+
+                /* Discard unpaired base type. */
                 AppCenterLog.warn(LOG_TAG, "baseType was set but baseData is missing.");
                 dataObject.remove(BASE_TYPE);
             }
