@@ -164,6 +164,9 @@ public class CommonSchemaDataUtils {
         if (key.equals(BASE_TYPE) && !(property instanceof StringTypedProperty)) {
             throw new IllegalArgumentException("baseType must be a string.");
         }
+        if (key.startsWith(BASE_TYPE + ".")) {
+            throw new IllegalArgumentException("baseType must be a string.");
+        }
 
         /* Validate baseData is an object, meaning it has at least 1 dot. */
         if (key.equals(BASE_DATA)) {

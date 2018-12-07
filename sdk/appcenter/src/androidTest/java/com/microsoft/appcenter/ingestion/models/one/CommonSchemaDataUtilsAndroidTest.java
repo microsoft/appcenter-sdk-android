@@ -517,4 +517,53 @@ public class CommonSchemaDataUtilsAndroidTest {
         assertEquals(0, log.getData().getProperties().length());
         assertNull(log.getExt().getMetadata());
     }
+
+    @Test
+    public void invalidBaseTypeRemovesBaseData() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        LongTypedProperty a = new LongTypedProperty();
+        a.setName("baseType");
+        a.setValue(3);
+        properties.add(a);
+        properties.add(typedProperty("baseData.something", "value"));
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check everything removed. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void invalidBaseDataRemovesBaseType() {
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        properties.add(typedProperty("baseType", "Some.Type"));
+        properties.add(typedProperty("baseData", "value"));
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check everything removed. */
+        assertEquals(0, log.getData().getProperties().length());
+        assertNull(log.getExt().getMetadata());
+    }
+
+    @Test
+    public void baseTypeOverriddenToBeInvalid() {
+
+        /* When using invalid base data. */
+        MockCommonSchemaLog log = new MockCommonSchemaLog();
+        log.setExt(new Extensions());
+        List<TypedProperty> properties = new ArrayList<>();
+        properties.add(typedProperty("baseType", "Some.Type"));
+        properties.add(typedProperty("baseType.something", "test"));
+        properties.add(typedProperty("baseData.something", "test"));
+        CommonSchemaDataUtils.addCommonSchemaData(properties, log);
+
+        /* Check only string base type was kept. */
+        assertEquals(2, log.getData().getProperties().length());
+        assertEquals("Some.Type", log.getData().getProperties().optString("baseType"));
+        assertNull(log.getExt().getMetadata());
+    }
 }
