@@ -551,8 +551,6 @@ public class CommonSchemaDataUtilsAndroidTest {
 
     @Test
     public void baseTypeOverriddenToBeInvalid() {
-
-        /* When using invalid base data. */
         MockCommonSchemaLog log = new MockCommonSchemaLog();
         log.setExt(new Extensions());
         List<TypedProperty> properties = new ArrayList<>();
