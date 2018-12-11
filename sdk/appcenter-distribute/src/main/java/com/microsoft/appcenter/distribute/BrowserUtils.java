@@ -43,65 +43,57 @@ class BrowserUtils {
      * @param activity activity from which to open browser.
      */
     static void openBrowser(@NonNull String url, @NonNull Activity activity) {
+        /* Open a browser but we don't want a chooser U.I. to pop. */
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
+        if (browsers.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
+        } else {
 
-        /* Try to force using Chrome first, we want fall back url support for intent. */
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(GOOGLE_CHROME_URL_SCHEME + url));
-        try {
-            activity.startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-
-            /* Fall back using a browser but we don't want a chooser U.I. to pop. */
-            AppCenterLog.debug(LOG_TAG, "Google Chrome not found, pick another one.");
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
-            if (browsers.isEmpty()) {
-                AppCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
-            } else {
-
-                /*
-                 * Check the default browser is not the picker,
-                 * last thing we want is app to start and suddenly asks user to pick
-                 * between 2 browsers without explaining why.
-                 */
-                String defaultBrowserPackageName = null;
-                String defaultBrowserClassName = null;
-                ResolveInfo defaultBrowser = activity.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                if (defaultBrowser != null) {
-                    ActivityInfo activityInfo = defaultBrowser.activityInfo;
-                    defaultBrowserPackageName = activityInfo.packageName;
-                    defaultBrowserClassName = activityInfo.name;
-                    AppCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
-                }
-                String selectedPackageName = null;
-                String selectedClassName = null;
-                for (ResolveInfo browser : browsers) {
-                    ActivityInfo activityInfo = browser.activityInfo;
-                    if (activityInfo.packageName.equals(defaultBrowserPackageName) && activityInfo.name.equals(defaultBrowserClassName)) {
-                        selectedPackageName = defaultBrowserPackageName;
-                        selectedClassName = defaultBrowserClassName;
-                        AppCenterLog.debug(LOG_TAG, "And its not the picker.");
-                        break;
-                    }
-                }
-                if (defaultBrowser != null && selectedPackageName == null) {
-                    AppCenterLog.debug(LOG_TAG, "Default browser is actually a picker...");
-                }
-
-                /* If no default browser found, pick first one we can find. */
-                if (selectedPackageName == null) {
-                    AppCenterLog.debug(LOG_TAG, "Picking first browser in list.");
-                    ResolveInfo browser = browsers.iterator().next();
-                    ActivityInfo activityInfo = browser.activityInfo;
-                    selectedPackageName = activityInfo.packageName;
-                    selectedClassName = activityInfo.name;
-                }
-
-                /* Launch generic browser. */
-                AppCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
-                intent.setClassName(selectedPackageName, selectedClassName);
-                activity.startActivity(intent);
+            /*
+             * Check the default browser is not the picker,
+             * last thing we want is app to start and suddenly asks user to pick
+             * between 2 browsers without explaining why.
+             */
+            String defaultBrowserPackageName = null;
+            String defaultBrowserClassName = null;
+            ResolveInfo defaultBrowser = activity.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            if (defaultBrowser != null) {
+                ActivityInfo activityInfo = defaultBrowser.activityInfo;
+                defaultBrowserPackageName = activityInfo.packageName;
+                defaultBrowserClassName = activityInfo.name;
+                AppCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
             }
+            String selectedPackageName = null;
+            String selectedClassName = null;
+            for (ResolveInfo browser : browsers) {
+                ActivityInfo activityInfo = browser.activityInfo;
+                if (activityInfo.packageName.equals(defaultBrowserPackageName) && activityInfo.name.equals(defaultBrowserClassName)) {
+                    selectedPackageName = defaultBrowserPackageName;
+                    selectedClassName = defaultBrowserClassName;
+                    AppCenterLog.debug(LOG_TAG, "And its not the picker.");
+                    break;
+                }
+            }
+            if (defaultBrowser != null && selectedPackageName == null) {
+                AppCenterLog.debug(LOG_TAG, "Default browser is actually a picker...");
+            }
+
+            /* If no default browser found, pick first one we can find. */
+            if (selectedPackageName == null) {
+                AppCenterLog.debug(LOG_TAG, "Picking first browser in list.");
+                ResolveInfo browser = browsers.iterator().next();
+                ActivityInfo activityInfo = browser.activityInfo;
+                selectedPackageName = activityInfo.packageName;
+                selectedClassName = activityInfo.name;
+            }
+
+            /* Launch generic browser. */
+            AppCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
+            intent.setClassName(selectedPackageName, selectedClassName);
+            activity.startActivity(intent);
         }
+
     }
 
     /**
