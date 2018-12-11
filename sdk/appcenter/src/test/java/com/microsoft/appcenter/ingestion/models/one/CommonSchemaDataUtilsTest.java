@@ -22,7 +22,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Data.class)
-public class PartCUtilsTest {
+public class CommonSchemaDataUtilsTest {
 
     @Test
     public void coverJSONException() throws Exception {
@@ -37,7 +37,7 @@ public class PartCUtilsTest {
         stringTypedProperty.setName("a");
         stringTypedProperty.setValue("b");
         properties.add(stringTypedProperty);
-        PartCUtils.addPartCFromLog(properties, commonSchemaLog);
+        CommonSchemaDataUtils.addCommonSchemaData(properties, commonSchemaLog);
         assertEquals(0, commonSchemaLog.getData().getProperties().length());
     }
 }

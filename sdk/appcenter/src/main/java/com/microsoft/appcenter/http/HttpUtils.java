@@ -1,10 +1,14 @@
 package com.microsoft.appcenter.http;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.utils.NetworkStateHelper;
+
 import java.io.EOFException;
 import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -39,7 +43,7 @@ public class HttpUtils {
     /**
      * Some transient exceptions can only be detected by interpreting the message...
      */
-    private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset)|failure in ssl library, usually a protocol error|anchor for certification path not found");
+    private static final Pattern CONNECTION_ISSUE_PATTERN = Pattern.compile("connection (time|reset|abort)|failure in ssl library, usually a protocol error|anchor for certification path not found");
 
     /**
      * Pattern for token value within ticket header (to replace with * characters).
@@ -148,5 +152,14 @@ public class HttpUtils {
      */
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
+    }
+
+    public static HttpClient createHttpClient(@NonNull Context context) {
+        HttpClient httpClient = new DefaultHttpClient();
+        NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
+        httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+
+        /* Retryer should be applied last to avoid retries in offline. */
+        return new HttpClientRetryer(httpClient);
     }
 }

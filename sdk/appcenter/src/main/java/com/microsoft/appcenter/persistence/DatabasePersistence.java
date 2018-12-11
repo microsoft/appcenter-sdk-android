@@ -257,7 +257,8 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with flags=" + flags);
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
-            boolean isLargePayload = payload.getBytes("UTF-8").length >= PAYLOAD_MAX_SIZE;
+            int payloadSize = payload.getBytes("UTF-8").length;
+            boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
             String targetToken;
             if (log instanceof CommonSchemaLog) {
@@ -270,6 +271,11 @@ public class DatabasePersistence extends Persistence {
             } else {
                 targetKey = null;
                 targetToken = null;
+            }
+            long maxSize = mDatabaseManager.getMaxSize();
+            if (!isLargePayload && maxSize <= payloadSize) {
+                throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
+                        "Current maximum database size is " + maxSize + " bytes.");
             }
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
             long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);

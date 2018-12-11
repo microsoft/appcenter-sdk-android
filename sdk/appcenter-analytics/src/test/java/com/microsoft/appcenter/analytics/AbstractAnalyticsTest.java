@@ -37,6 +37,9 @@ abstract class AbstractAnalyticsTest {
     AppCenterHandler mAppCenterHandler;
 
     @Mock
+    AppCenter mAppCenter;
+
+    @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Before
@@ -46,6 +49,7 @@ abstract class AbstractAnalyticsTest {
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
         when(AppCenter.isConfigured()).thenReturn(true);
+        when(AppCenter.getInstance()).thenReturn(mAppCenter);
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
         Answer<Void> runNow = new Answer<Void>() {

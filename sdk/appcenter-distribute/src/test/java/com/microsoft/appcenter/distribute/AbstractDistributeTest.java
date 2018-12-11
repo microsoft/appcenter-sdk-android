@@ -15,6 +15,8 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -48,11 +50,29 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
-@PrepareForTest({Distribute.class, SharedPreferencesManager.class, AppNameHelper.class, AppCenterLog.class, AppCenter.class, NetworkStateHelper.class, BrowserUtils.class, UUIDUtils.class, ReleaseDetails.class, TextUtils.class, CryptoUtils.class, InstallerUtils.class, Toast.class, HandlerUtils.class})
+@PrepareForTest({
+        AppCenter.class,
+        AppCenterLog.class,
+        AppNameHelper.class,
+        BrowserUtils.class,
+        CryptoUtils.class,
+        Distribute.class,
+        HandlerUtils.class,
+        HttpUtils.class,
+        InstallerUtils.class,
+        NetworkStateHelper.class,
+        ReleaseDetails.class,
+        SharedPreferencesManager.class,
+        TextUtils.class,
+        Toast.class,
+        UUIDUtils.class
+})
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
@@ -108,6 +128,9 @@ public class AbstractDistributeTest {
 
     @Mock
     DistributeInfoTracker mDistributeInfoTracker;
+
+    @Mock
+    HttpClient mHttpClient;
 
     @Before
     @SuppressLint("ShowToast")
@@ -177,6 +200,8 @@ public class AbstractDistributeTest {
         mockStatic(NetworkStateHelper.class);
         mNetworkStateHelper = mock(NetworkStateHelper.class, new Returns(true));
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);

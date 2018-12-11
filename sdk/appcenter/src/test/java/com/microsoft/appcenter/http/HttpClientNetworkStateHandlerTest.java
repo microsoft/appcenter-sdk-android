@@ -41,7 +41,6 @@ public class HttpClientNetworkStateHandlerTest {
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
                 serviceCallback.onCallSucceeded("mockPayload");
-                serviceCallback.onCallSucceeded("duplicateCallbackPayloadToIgnore");
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -56,7 +55,6 @@ public class HttpClientNetworkStateHandlerTest {
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(callback).onCallSucceeded("mockPayload");
-        verify(callback, never()).onCallSucceeded("duplicateCallbackPayloadToIgnore");
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -86,7 +84,6 @@ public class HttpClientNetworkStateHandlerTest {
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
                 serviceCallback.onCallFailed(new HttpException(503));
-                serviceCallback.onCallFailed(new SocketException());
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -95,8 +92,12 @@ public class HttpClientNetworkStateHandlerTest {
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
         when(networkStateHelper.isNetworkConnected()).thenReturn(true);
 
+        /* Simulate state updated events first. It should not affect behavior. */
+        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+        decorator.onNetworkStateUpdated(false);
+        decorator.onNetworkStateUpdated(true);
+
         /* Test call. */
-        HttpClient decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(callback).onCallFailed(new HttpException(503));
@@ -158,14 +159,14 @@ public class HttpClientNetworkStateHandlerTest {
         final ServiceCallback callback = mock(ServiceCallback.class);
         final ServiceCall call = mock(ServiceCall.class);
         HttpClient httpClient = mock(HttpClient.class);
-        doAnswer(new Answer<ServiceCall>() {
+        when(httpClient.callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
                 return call;
             }
-        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
+        });
 
         /* Simulate network down then becomes up. */
         NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
@@ -213,85 +214,6 @@ public class HttpClientNetworkStateHandlerTest {
         /* Verify that the call was attempted then canceled. */
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
         verify(call).cancel();
-        verifyNoMoreInteractions(callback);
-
-        /* Close. */
-        decorator.close();
-        verify(httpClient).close();
-    }
-
-    @Test
-    public void cancelRunningCallByClosing() throws IOException {
-
-        /* Configure mock wrapped API. */
-        String url = "http://mock/call";
-        Map<String, String> headers = new HashMap<>();
-        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
-        final ServiceCallback callback = mock(ServiceCallback.class);
-        final ServiceCall call = mock(ServiceCall.class);
-        HttpClient httpClient = mock(HttpClient.class);
-        when(httpClient.callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class)))
-                .thenReturn(call);
-
-        /* Simulate network down then becomes up. */
-        NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
-        when(networkStateHelper.isNetworkConnected()).thenReturn(true);
-
-        /* Test call. */
-        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
-        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
-
-        /* Cancel by closing. */
-        decorator.close();
-
-        /* Verify that the call was attempted then canceled. */
-        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(httpClient).close();
-        verify(call).cancel();
-        verifyNoMoreInteractions(callback);
-    }
-
-    @Test
-    public void networkLossDuringCall() throws IOException {
-
-        /* Configure mock wrapped API. */
-        String url = "http://mock/call";
-        Map<String, String> headers = new HashMap<>();
-        final HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
-        final ServiceCallback callback = mock(ServiceCallback.class);
-        final ServiceCall call = mock(ServiceCall.class);
-        HttpClient httpClient = mock(HttpClient.class);
-        when(httpClient.callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class)))
-                .thenReturn(call);
-
-        /* Simulate network up then down then up again. */
-        NetworkStateHelper networkStateHelper = mock(NetworkStateHelper.class);
-        when(networkStateHelper.isNetworkConnected()).thenReturn(true).thenReturn(false).thenReturn(true);
-
-        /* Test call. */
-        HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
-        decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
-
-        /* Lose network. */
-        decorator.onNetworkStateUpdated(false);
-
-        /* Verify that the call was attempted then canceled. */
-        verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(call).cancel();
-        verifyNoMoreInteractions(callback);
-
-        /* Then up again. */
-        doAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockPayload");
-                return call;
-            }
-        }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        decorator.onNetworkStateUpdated(true);
-        verify(httpClient, times(2)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded("mockPayload");
         verifyNoMoreInteractions(callback);
 
         /* Close. */

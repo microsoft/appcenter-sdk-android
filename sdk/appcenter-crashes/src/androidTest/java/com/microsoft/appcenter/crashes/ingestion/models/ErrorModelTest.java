@@ -23,7 +23,7 @@ import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static com.microsoft.appcenter.test.TestUtils.compareSelfNullClass;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @SuppressWarnings("unused")
 public class ErrorModelTest {
@@ -41,7 +41,7 @@ public class ErrorModelTest {
             checkEquals(ex.getClass(), expectedException);
             return;
         }
-        assertTrue(false);
+        fail();
     }
 
     private static void checkExceptions(LogSerializer serializer, ManagedErrorLog errorLog1, ManagedErrorLog errorLog2, Exception exception1, Exception exception2) throws JSONException {

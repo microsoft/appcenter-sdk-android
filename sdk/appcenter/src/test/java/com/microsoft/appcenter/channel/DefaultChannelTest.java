@@ -636,23 +636,30 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void enqueuePersistenceFailure() throws Persistence.PersistenceException {
         Persistence mockPersistence = mock(Persistence.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         /* Simulate Persistence failing. */
         doThrow(new Persistence.PersistenceException("mock", new IOException("mock"))).
                 when(mockPersistence).putLog(any(Log.class), anyString(), anyInt());
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
-        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(TEST_GROUP, 10, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+        channel.addGroup(TEST_GROUP + "2", 10, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Verify no request is sent if Persistence fails. */
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 10; i++) {
             channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
+            channel.enqueue(mock(Log.class), TEST_GROUP + "2", Flags.DEFAULTS);
         }
-        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(10)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(10)).putLog(any(Log.class), eq(TEST_GROUP + "2"), eq(PERSISTENCE_NORMAL));
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
+        verify(mockListener, times(10)).onBeforeSending(any(Log.class));
+        verify(mockListener, times(10)).onFailure(any(Log.class), any(Persistence.PersistenceException.class));
     }
 
     @Test

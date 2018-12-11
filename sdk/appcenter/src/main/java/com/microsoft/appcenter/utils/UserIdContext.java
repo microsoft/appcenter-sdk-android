@@ -1,0 +1,123 @@
+package com.microsoft.appcenter.utils;
+
+import android.support.annotation.VisibleForTesting;
+
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
+
+/**
+ * Utility to store and retrieve values for user identifiers.
+ */
+public class UserIdContext {
+
+    /**
+     * Custom App User ID prefix for Common Schema.
+     */
+    private static final String CUSTOM_PREFIX = "c";
+
+    /**
+     * Maximum allowed length for user identifier for App Center server.
+     */
+    @VisibleForTesting
+    public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
+
+    /**
+     * Unique instance.
+     */
+    private static UserIdContext sInstance;
+
+    /**
+     * Current user identifier.
+     */
+    private String mUserId;
+
+    /**
+     * Get unique instance.
+     *
+     * @return unique instance.
+     */
+    public static synchronized UserIdContext getInstance() {
+        if (sInstance == null) {
+            sInstance = new UserIdContext();
+        }
+        return sInstance;
+    }
+
+    @VisibleForTesting
+    public static synchronized void unsetInstance() {
+        sInstance = null;
+    }
+
+    /**
+     * Check if userId is valid for One Collector.
+     *
+     * @param userId userId.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean checkUserIdValidForOneCollector(String userId) {
+        if (userId == null) {
+            return true;
+        }
+        if (userId.isEmpty()) {
+            AppCenterLog.error(LOG_TAG, "userId must not be empty.");
+            return false;
+        }
+        int prefixIndex = userId.indexOf(COMMON_SCHEMA_PREFIX_SEPARATOR);
+        if (prefixIndex >= 0) {
+            String prefix = userId.substring(0, prefixIndex);
+            if (!prefix.equals(CUSTOM_PREFIX)) {
+                AppCenterLog.error(LOG_TAG, String.format("userId prefix must be '%s%s', '%s%s' is not supported.", CUSTOM_PREFIX, COMMON_SCHEMA_PREFIX_SEPARATOR, prefix, COMMON_SCHEMA_PREFIX_SEPARATOR));
+                return false;
+            } else if (prefixIndex == userId.length() - 1) {
+                AppCenterLog.error(LOG_TAG, "userId must not be empty.");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Check if userId is valid for App Center.
+     *
+     * @param userId userId.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean checkUserIdValidForAppCenter(String userId) {
+        if (userId != null && userId.length() > USER_ID_APP_CENTER_MAX_LENGTH) {
+            AppCenterLog.error(LOG_TAG, "userId is limited to " + USER_ID_APP_CENTER_MAX_LENGTH + " characters.");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Add 'c:' prefix to userId if the userId has no prefix.
+     *
+     * @param userId userId.
+     * @return prefixed userId or null if the userId was null.
+     */
+    public static String getPrefixedUserId(String userId) {
+        if (userId != null && !userId.contains(COMMON_SCHEMA_PREFIX_SEPARATOR)) {
+            return CUSTOM_PREFIX + COMMON_SCHEMA_PREFIX_SEPARATOR + userId;
+        }
+        return userId;
+    }
+
+    /**
+     * Get current identifier.
+     *
+     * @return user identifier.
+     */
+    public synchronized String getUserId() {
+        return mUserId;
+    }
+
+    /**
+     * Set current user identifier.
+     *
+     * @param userId user identifier.
+     */
+    public synchronized void setUserId(String userId) {
+        mUserId = userId;
+    }
+}

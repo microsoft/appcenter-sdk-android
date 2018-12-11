@@ -108,6 +108,9 @@
             android:key="@string/target_id_key"
             android:title="@string/target_id_title" />
         <Preference
+            android:key="@string/user_id_key"
+            android:title="@string/user_id_title" />
+        <Preference
             android:key="@string/clear_crash_user_confirmation_key"
             android:title="@string/clear_crash_user_confirmation_title" />
         <Preference

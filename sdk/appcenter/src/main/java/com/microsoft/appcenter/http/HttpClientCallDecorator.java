@@ -10,15 +10,15 @@ abstract class HttpClientCallDecorator implements Runnable, ServiceCall, Service
     /**
      * Decorated API.
      */
-    final HttpClient mDecoratedApi;
+    private final HttpClient mDecoratedApi;
 
-    final String mUrl;
+    private final String mUrl;
 
-    final String mMethod;
+    private final String mMethod;
 
-    final Map<String, String> mHeaders;
+    private final Map<String, String> mHeaders;
 
-    final HttpClient.CallTemplate mCallTemplate;
+    private final HttpClient.CallTemplate mCallTemplate;
 
     /**
      * Callback.
@@ -52,5 +52,10 @@ abstract class HttpClientCallDecorator implements Runnable, ServiceCall, Service
     @Override
     public void onCallSucceeded(String payload) {
         mServiceCallback.onCallSucceeded(payload);
+    }
+
+    @Override
+    public void onCallFailed(Exception e) {
+        mServiceCallback.onCallFailed(e);
     }
 }

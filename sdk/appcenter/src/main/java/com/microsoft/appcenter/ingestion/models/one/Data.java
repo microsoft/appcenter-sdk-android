@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Model;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,12 +14,12 @@ import org.json.JSONStringer;
 public class Data implements Model {
 
     /**
-     * Part B data type property.
+     * Part B base type property.
      */
-    static final String BASE_DATA_TYPE = "baseDataType";
+    static final String BASE_TYPE = "baseType";
 
     /**
-     * Part B data property.
+     * Part B base data property.
      */
     static final String BASE_DATA = "baseData";
 
@@ -39,14 +40,12 @@ public class Data implements Model {
     @Override
     public void read(JSONObject object) throws JSONException {
 
-        /* Part C. */
+        /* Part B and C. */
         JSONArray names = object.names();
         if (names != null) {
             for (int i = 0; i < names.length(); i++) {
                 String name = names.getString(i);
-                if (!name.equals(BASE_DATA) && !name.equals(BASE_DATA_TYPE)) {
-                    mProperties.put(name, object.get(name));
-                }
+                mProperties.put(name, object.get(name));
             }
         }
     }
@@ -54,12 +53,18 @@ public class Data implements Model {
     @Override
     public void write(JSONStringer writer) throws JSONException {
 
-        /* Part C. */
+        /* Serialize part B before. */
+        JSONUtils.write(writer, BASE_TYPE, mProperties.optString(BASE_TYPE, null));
+        JSONUtils.write(writer, BASE_DATA, mProperties.optJSONObject(BASE_DATA));
+
+        /* Then part C. */
         JSONArray names = mProperties.names();
         if (names != null) {
             for (int i = 0; i < names.length(); i++) {
                 String name = names.getString(i);
-                writer.key(name).value(mProperties.get(name));
+                if (!name.equals(BASE_TYPE) && !name.equals(BASE_DATA)) {
+                    writer.key(name).value(mProperties.get(name));
+                }
             }
         }
     }

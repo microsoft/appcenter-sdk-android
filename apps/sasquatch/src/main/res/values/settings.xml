@@ -94,6 +94,9 @@
     <string name="target_id_changed_format" tools:ignore="MissingTranslation">Target Id has been changed to %s successfully. Please close the application completely and relaunch again.</string>
     <string name="target_id_invalid" tools:ignore="MissingTranslation">Target Id is not valid.</string>
 
+    <string name="user_id_key" tools:ignore="MissingTranslation">user_id_key</string>
+    <string name="user_id_title" tools:ignore="MissingTranslation">User Id</string>
+
     <string name="application_info_key" tools:ignore="MissingTranslation">application_info</string>
     <string name="application_info_title" tools:ignore="MissingTranslation">Application Information</string>
 
@@ -120,6 +123,8 @@
     <string name="log_url_invalid" tools:ignore="MissingTranslation">Log URL is not valid.</string>
     <string name="log_url_set_to_production" tools:ignore="MissingTranslation">Log URL currently set to the production.</string>
     <string name="log_url_production" tools:ignore="MissingTranslation">production</string>
+
+    <string name="property_saved" tools:ignore="MissingTranslation">Property saved</string>
 
     <string name="save" tools:ignore="MissingTranslation">Save</string>
     <string name="reset" tools:ignore="MissingTranslation">Reset</string>

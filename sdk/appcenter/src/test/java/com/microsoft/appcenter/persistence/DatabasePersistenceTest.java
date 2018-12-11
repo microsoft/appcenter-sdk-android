@@ -8,14 +8,11 @@ import android.database.sqlite.SQLiteDiskIOException;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
-import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
-import org.json.JSONException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -30,17 +27,13 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNotNull;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -53,34 +46,6 @@ public class DatabasePersistenceTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
-
-    @Test
-    public void databaseOperationException() throws JSONException {
-
-        /* Mock instances. */
-        mockStatic(AppCenterLog.class);
-        LogSerializer mockSerializer = mock(DefaultLogSerializer.class);
-        when(mockSerializer.serializeLog(any(Log.class))).thenReturn("{}");
-        DatabasePersistence mockPersistence = spy(new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA));
-        doReturn(mockSerializer).when(mockPersistence).getLogSerializer();
-        try {
-
-            /* Generate a log and persist. */
-            Log log = mock(Log.class);
-            mockPersistence.putLog(log, "test-p1", Flags.PERSISTENCE_NORMAL);
-            fail("Expected persistence exception");
-        } catch (Persistence.PersistenceException ignore) {
-        } finally {
-
-            /* Close. */
-            //noinspection ThrowFromFinallyBlock
-            mockPersistence.close();
-        }
-
-        /* There are two error logs on putLog and close. */
-        verifyStatic(times(2));
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
 
     @Test
     public void countLogsWithGetCountException() throws Exception {

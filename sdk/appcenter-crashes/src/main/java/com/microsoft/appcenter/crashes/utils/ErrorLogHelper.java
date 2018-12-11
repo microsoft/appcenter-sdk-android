@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -19,6 +20,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
@@ -77,7 +79,7 @@ public class ErrorLogHelper {
      * For huge exception cause chains, we keep only beginning and end of causes according to this limit.
      */
     @VisibleForTesting
-    public static final int CAUSE_LIMIT = 16;
+    static final int CAUSE_LIMIT = 16;
 
     /**
      * We keep the first half of the limit of causes from the beginning and the second half from end.
@@ -129,6 +131,9 @@ public class ErrorLogHelper {
 
         /* Set current time. Will be correlated to session after restart. */
         errorLog.setTimestamp(new Date());
+
+        /* Set user identifier. */
+        errorLog.setUserId(UserIdContext.getInstance().getUserId());
 
         /* Snapshot device properties. */
         try {
@@ -323,7 +328,7 @@ public class ErrorLogHelper {
             AppCenterLog.warn(Crashes.LOG_TAG, "Crash causes truncated from " + causeChain.size() + " to " + CAUSE_LIMIT + " causes.");
             causeChain.subList(CAUSE_LIMIT_HALF, causeChain.size() - CAUSE_LIMIT_HALF).clear();
         }
-        for (Throwable cause: causeChain) {
+        for (Throwable cause : causeChain) {
             Exception exception = new Exception();
             exception.setType(cause.getClass().getName());
             exception.setMessage(cause.getMessage());

@@ -51,6 +51,7 @@ import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
+import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -447,7 +448,48 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putNormalLogLargerThanMaxSizeClearsEverythingWithNormalPriority() throws PersistenceException {
+    public void putLogTooLargeIsNotEvenTried() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        int someLogCount = 3;
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+        assertTrue(persistence.setMaxStorageSize(MAX_STORAGE_SIZE_IN_BYTES));
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Generate some logs that will be evicted. */
+            for (int i = 0; i < someLogCount; i++) {
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+            }
+            assertEquals(someLogCount, persistence.countLogs("test-p1"));
+
+            /* Generate a log that is so large that it eventually fails. */
+            LogWithProperties log = AndroidTestUtils.generateMockLog();
+            int size = 32 * 1024;
+            Map<String, String> properties = new HashMap<>();
+            properties.put("key", generateString(size, 'x'));
+            log.setProperties(properties);
+            try {
+                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+                fail("putLog was expected to fail");
+            } catch (PersistenceException e) {
+
+                /* Verify the behavior: not inserted and database isn't empty. */
+                assertEquals(someLogCount, persistence.countLogs("test-p1"));
+            }
+        } finally {
+
+            //noinspection ThrowFromFinallyBlock
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void putNormalLogCloseToMaxSizeClearsEverything() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -459,7 +501,7 @@ public class DatabasePersistenceAndroidTest {
         persistence.setLogSerializer(logSerializer);
         try {
 
-            /* Generate some logs that will be evicted. */
+            /* Generate some logs of both priority that will be evicted. */
             int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
                 persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
@@ -468,16 +510,13 @@ public class DatabasePersistenceAndroidTest {
 
             /*
              * Generate a log that is so large that will empty all the database and
-             * eventually fails.
+             * eventually fails because close to the limit we check and the overhead of columns/index
+             * is larger than max size.
              */
             LogWithProperties log = AndroidTestUtils.generateMockLog();
             int size = 30 * 1024;
-            StringBuilder largeValue = new StringBuilder(size);
-            for (int i = 0; i < size; i++) {
-                largeValue.append("x");
-            }
             Map<String, String> properties = new HashMap<>();
-            properties.put("key", largeValue.toString());
+            properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
                 persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
@@ -495,7 +534,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putCriticalLogLargerThanMaxSizeClearsEverything() throws PersistenceException {
+    public void putCriticalLogCloseToMaxSizeClearsEverything() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -519,16 +558,13 @@ public class DatabasePersistenceAndroidTest {
 
             /*
              * Generate a log that is so large that will empty all the database and
-             * eventually fails.
+             * eventually fails because close to the limit we check and the overhead of columns/index
+             * is larger than max size.
              */
             LogWithProperties log = AndroidTestUtils.generateMockLog();
             int size = 30 * 1024;
-            StringBuilder largeValue = new StringBuilder(size);
-            for (int i = 0; i < size; i++) {
-                largeValue.append("x");
-            }
             Map<String, String> properties = new HashMap<>();
-            properties.put("key", largeValue.toString());
+            properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
                 persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
@@ -546,7 +582,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void putNormalLogLargerThanMaxSizeKeepsCritical() throws PersistenceException {
+    public void putNormalLogCloseToMaxSizeKeepsCritical() throws PersistenceException {
 
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
@@ -579,12 +615,8 @@ public class DatabasePersistenceAndroidTest {
              */
             LogWithProperties log = AndroidTestUtils.generateMockLog();
             int size = 30 * 1024;
-            StringBuilder largeValue = new StringBuilder(size);
-            for (int i = 0; i < size; i++) {
-                largeValue.append("x");
-            }
             Map<String, String> properties = new HashMap<>();
-            properties.put("key", largeValue.toString());
+            properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
                 persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);

@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -30,6 +31,7 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
+import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -47,6 +49,7 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MAX_STORAGE_SIZE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TARGET_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.USER_ID_KEY;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -390,40 +393,23 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.app_secret_key, MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)), new Preference.OnPreferenceClickListener() {
+            initEditText(R.string.app_secret_key, R.string.app_secret_title, APP_SECRET_KEY, getString(R.string.app_secret), new EditTextListener() {
 
                 @Override
-                public boolean onPreferenceClick(final Preference preference) {
-                    final EditText input = new EditText(getActivity());
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, getString(R.string.app_secret)));
+                public void onSave(String value) {
+                    if (!TextUtils.isEmpty(value)) {
+                        setKeyValue(APP_SECRET_KEY, value);
+                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                    new AlertDialog.Builder(getActivity()).setTitle(R.string.app_secret_title).setView(input)
-                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String appSecret = input.getText().toString();
-                                    if (!TextUtils.isEmpty(appSecret)) {
-                                        setKeyValue(APP_SECRET_KEY, appSecret);
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), appSecret), Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
-                                    }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
-                                }
-                            })
-                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String defaultAppSecret = getString(R.string.app_secret);
-                                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
-                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
-                                }
-                            })
-                            .setNegativeButton(R.string.cancel, null)
-                            .create().show();
-                    return true;
+                @Override
+                public void onReset() {
+                    String defaultAppSecret = getString(R.string.app_secret);
+                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -452,42 +438,46 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initClickableSetting(R.string.target_id_key, MainActivity.sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id)), new Preference.OnPreferenceClickListener() {
+            initEditText(R.string.target_id_key, R.string.target_id_title, TARGET_KEY, getString(R.string.target_id), new EditTextListener() {
 
                 @Override
-                public boolean onPreferenceClick(final Preference preference) {
-                    final EditText input = new EditText(getActivity());
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(TARGET_KEY, getString(R.string.target_id)));
+                public void onSave(String value) {
+                    if (!TextUtils.isEmpty(value)) {
+                        setKeyValue(TARGET_KEY, value);
+                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), value), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getActivity(), R.string.target_id_invalid, Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                    new AlertDialog.Builder(getActivity()).setTitle(R.string.target_id_title).setView(input)
-                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String targetId = input.getText().toString();
-                                    if (!TextUtils.isEmpty(targetId)) {
-                                        setKeyValue(TARGET_KEY, targetId);
-                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), targetId), Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(getActivity(), R.string.target_id_invalid, Toast.LENGTH_SHORT).show();
-                                    }
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(TARGET_KEY, null));
-                                }
-                            })
-                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    String defaultTargetId = getString(R.string.target_id);
-                                    setKeyValue(TARGET_KEY, defaultTargetId);
-                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(TARGET_KEY, null));
-                                }
-                            })
-                            .setNegativeButton(R.string.cancel, null)
-                            .create().show();
-                    return true;
+                @Override
+                public void onReset() {
+                    String defaultTargetId = getString(R.string.target_id);
+                    setKeyValue(TARGET_KEY, defaultTargetId);
+                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
                 }
             });
+
+            // TODO remove this check once new APIs available in jCenter
+            if (BuildConfig.FLAVOR.contains("project")) {
+                initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
+
+                    @Override
+                    public void onSave(String value) {
+                        setKeyValue(USER_ID_KEY, value);
+                        MainActivity.setUserId(value);
+                    }
+
+                    @Override
+                    public void onReset() {
+                        setKeyValue(USER_ID_KEY, null);
+                        MainActivity.setUserId(null);
+                    }
+                });
+            } else {
+                PreferenceGroup preference = (PreferenceGroup) findPreference(getString(R.string.miscellaneous_key));
+                preference.removePreference(findPreference(getString(R.string.user_id_key)));
+            }
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -628,6 +618,43 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
+        private void initEditText(int key, final int title, final String preferencesKey, final String defaultValue, final EditTextListener listener) {
+            Preference preference = getPreferenceManager().findPreference(getString(key));
+            if (preference == null) {
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                return;
+            }
+            preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+            preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setText(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+
+                    new AlertDialog.Builder(getActivity()).setTitle(title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    listener.onSave(input.getText().toString());
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                }
+                            })
+                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    listener.onReset();
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+            });
+        }
+
         private void initCheckBoxSetting(int key, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
@@ -664,7 +691,7 @@ public class SettingsActivity extends AppCompatActivity {
         private void initClickableSetting(int key, String summary, Preference.OnPreferenceClickListener clickListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
-                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + getString(key));
                 return;
             }
             preference.setOnPreferenceClickListener(clickListener);
@@ -676,7 +703,7 @@ public class SettingsActivity extends AppCompatActivity {
         private void initChangeableSetting(@SuppressWarnings("SameParameterValue") int key, String summary, Preference.OnPreferenceChangeListener changeListener) {
             Preference preference = getPreferenceManager().findPreference(getString(key));
             if (preference == null) {
-                Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
+                Log.w(LOG_TAG, "Couldn't find preference for key: " + getString(key));
                 return;
             }
             preference.setOnPreferenceChangeListener(changeListener);
@@ -729,6 +756,13 @@ public class SettingsActivity extends AppCompatActivity {
             boolean isEnabled();
 
             void setEnabled(boolean enabled);
+        }
+
+        private interface EditTextListener {
+
+            void onSave(String value);
+
+            void onReset();
         }
     }
 }

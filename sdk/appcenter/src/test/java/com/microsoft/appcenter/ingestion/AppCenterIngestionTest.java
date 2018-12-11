@@ -3,7 +3,6 @@ package com.microsoft.appcenter.ingestion;
 import android.content.Context;
 
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -15,8 +14,10 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -42,17 +43,31 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({AppCenterIngestion.class, AppCenterLog.class})
+@PrepareForTest({
+        AppCenterIngestion.class,
+        AppCenterLog.class,
+        HttpUtils.class
+})
 public class AppCenterIngestionTest {
 
     @Rule
-    public PowerMockRule rule = new PowerMockRule();
+    public PowerMockRule mRule = new PowerMockRule();
+
+    @Mock
+    private HttpClient mHttpClient;
+
+    @Before
+    public void setUp() throws Exception {
+        spy(HttpUtils.class);
+        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+    }
 
     @Test
     public void sendAsync() throws Exception {
@@ -67,11 +82,9 @@ public class AppCenterIngestionTest {
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -92,17 +105,17 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(httpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
         /* Verify close. */
         ingestion.close();
-        verify(httpClient).close();
+        verify(mHttpClient).close();
 
         /* Verify reopen. */
         ingestion.reopen();
-        verify(httpClient).reopen();
+        verify(mHttpClient).reopen();
     }
 
     @Test
@@ -119,11 +132,9 @@ public class AppCenterIngestionTest {
         when(serializer.serializeContainer(any(LogContainer.class))).thenThrow(exception);
 
         /* Configure mock HTTP. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -144,7 +155,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(httpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
 
         try {
@@ -155,7 +166,7 @@ public class AppCenterIngestionTest {
 
         /* Verify close. */
         ingestion.close();
-        verify(httpClient).close();
+        verify(mHttpClient).close();
     }
 
     @Test
@@ -217,9 +228,7 @@ public class AppCenterIngestionTest {
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

@@ -17,7 +17,6 @@ import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -136,11 +135,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
          */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     private void showUpdateSetupFailedDialog() {
@@ -262,8 +259,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
 
         /* Store token before start, start in background, no storage access. */
         Distribute.getInstance().storeRedirectionParameters("r", "g", "some token");
@@ -288,7 +283,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -296,8 +291,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
 
         /* Store token before start, start in background, no storage access. */
         Distribute.getInstance().storeRedirectionParameters("r", "g", null);
@@ -321,7 +314,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -590,8 +583,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void happyPathUsingTesterAppUpdateSetup() throws Exception {
 
         /* Setup mock. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
@@ -629,7 +620,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -652,7 +643,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -675,7 +666,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -688,7 +679,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -701,8 +692,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void happyPathUntilHangingCallWithToken() throws Exception {
 
         /* Setup mock. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
@@ -755,7 +744,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -779,7 +768,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -804,7 +793,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -817,7 +806,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -830,8 +819,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void happyPathUntilHangingCallWithoutToken() throws Exception {
 
         /* Setup mock. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
@@ -883,7 +870,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -907,7 +894,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -932,7 +919,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -944,7 +931,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(httpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -959,8 +946,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Setup mock. */
         Distribute.setInstallUrl("http://mock");
         Distribute.setApiUrl("https://mock2");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         UUID requestId = UUID.randomUUID();
         when(UUIDUtils.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
@@ -992,7 +977,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        verify(httpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -1090,18 +1075,16 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         ServiceCall firstCall = mock(ServiceCall.class);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(firstCall).thenReturn(mock(ServiceCall.class));
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(firstCall).thenReturn(mock(ServiceCall.class));
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* The call is only triggered when app is resumed. */
         start();
-        verify(httpClient, never()).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify cancel on disabling. */
         verify(firstCall, never()).cancel();
@@ -1118,9 +1101,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -1134,7 +1115,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
@@ -1147,7 +1128,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1195,9 +1176,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -1212,7 +1191,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
@@ -1221,7 +1200,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1229,11 +1208,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         final Semaphore beforeSemaphore = new Semaphore(0);
         final Semaphore afterSemaphore = new Semaphore(0);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(final InvocationOnMock invocation) {
@@ -1255,7 +1232,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it fails. */
         Distribute.setEnabled(false);
@@ -1273,7 +1250,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1281,11 +1258,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         final Semaphore beforeSemaphore = new Semaphore(0);
         final Semaphore afterSemaphore = new Semaphore(0);
-        when(httpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(final InvocationOnMock invocation) {
@@ -1307,7 +1282,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it succeeds. */
         Distribute.setEnabled(false);
@@ -1325,7 +1300,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialog, never()).show();
     }
 
@@ -1335,15 +1310,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
         when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify storage was updated with new encrypted value. */
         verifyStatic();
@@ -1354,15 +1327,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void useMobileCenterFailOverForDecryptAndReleaseDetailsPrivate() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
 
         /* Primary storage will be missing data. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify the new strings were put into SharedPreferencesManager */
         verifyStatic();
@@ -1376,14 +1347,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void useMobileCenterFailOverForDecryptAndReleaseDetailsPublic() throws Exception {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
 
         /* Primary storage will be missing data. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(httpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify the group was saved into new storage. */
         verifyStatic(never());
@@ -1399,8 +1368,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
 
         /* Mock httpClient. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
@@ -1414,7 +1381,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
             }
         };
-        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1424,8 +1391,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
 
         /* Mock httpClient. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
 
@@ -1439,7 +1404,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
             }
         };
-        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1456,8 +1421,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Mock httpClient. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
 
@@ -1471,7 +1434,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$");
             }
         };
-        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1487,8 +1450,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Mock httpClient. */
-        HttpClientNetworkStateHandler httpClient = mock(HttpClientNetworkStateHandler.class);
-        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(httpClient);
         HashMap<String, String> headers = new HashMap<>();
 
         /* Primary storage will be missing data. */
@@ -1501,7 +1462,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return argument.toString().matches("^https://.*?/public/sdk/apps/a/distribution_groups/fake-distribution-id/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + installId + "&downloaded_release_id=4$");
             }
         };
-        verify(httpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test

@@ -40,10 +40,10 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     @Override
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
         Call call = new Call(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
-        mCalls.add(call);
         if (mNetworkStateHelper.isNetworkConnected()) {
             call.run();
         } else {
+            mCalls.add(call);
             AppCenterLog.debug(LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
         }
         return call;
@@ -52,9 +52,6 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
     @Override
     public synchronized void close() throws IOException {
         mNetworkStateHelper.removeListener(this);
-        for (Call call : mCalls) {
-            pauseCall(call);
-        }
         mCalls.clear();
         super.close();
     }
@@ -67,82 +64,39 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
 
     @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
-        if (connected) {
+        if (connected && mCalls.size() > 0) {
             AppCenterLog.debug(LOG_TAG, "Network is available. " + mCalls.size() + " pending call(s) to submit now.");
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Network is down. Pausing " + mCalls.size() + " network call(s).");
-        }
-        for (Call call : mCalls) {
-            if (connected) {
+            for (Call call : mCalls) {
                 call.run();
-            } else {
-                pauseCall(call);
             }
+            mCalls.clear();
         }
-    }
 
-    private synchronized void callRunAsync(Call call) {
-        call.mServiceCall = call.mDecoratedApi.callAsync(call.mUrl, call.mMethod, call.mHeaders, call.mCallTemplate, call);
+        /*
+         * Loss of network may not lead to call failure. Also, cancelling the ongoing requests
+         * can cause requests duplication, so let it fail and then retry when we're online again.
+         */
     }
 
     private synchronized void cancelCall(Call call) {
-        mCalls.remove(call);
-        pauseCall(call);
-    }
-
-    private synchronized void pauseCall(Call call) {
         if (call.mServiceCall != null) {
             call.mServiceCall.cancel();
         }
-    }
-
-    /**
-     * Guard against multiple calls since this call can be retried on network state change.
-     */
-    private synchronized void onCallSucceeded(Call call, String payload) {
-        if (mCalls.contains(call)) {
-            call.mServiceCallback.onCallSucceeded(payload);
-            mCalls.remove(call);
-        }
-    }
-
-    /**
-     * Guard against multiple calls since this call can be retried on network state change.
-     */
-    private synchronized void onCallFailed(Call call, Exception e) {
-        if (mCalls.contains(call)) {
-            call.mServiceCallback.onCallFailed(e);
-            mCalls.remove(call);
-        }
+        mCalls.remove(call);
     }
 
     /**
      * Call wrapper logic.
      */
-    private class Call extends HttpClientCallDecorator implements Runnable, ServiceCallback {
+    private class Call extends HttpClientCallDecorator {
 
         Call(HttpClient decoratedApi, String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
             super(decoratedApi, url, method, headers, callTemplate, serviceCallback);
         }
 
         @Override
-        public void run() {
-            callRunAsync(this);
-        }
-
-        @Override
         public void cancel() {
             cancelCall(this);
-        }
-
-        @Override
-        public void onCallSucceeded(String payload) {
-            HttpClientNetworkStateHandler.this.onCallSucceeded(this, payload);
-        }
-
-        @Override
-        public void onCallFailed(Exception e) {
-            HttpClientNetworkStateHandler.this.onCallFailed(this, e);
         }
     }
 }
