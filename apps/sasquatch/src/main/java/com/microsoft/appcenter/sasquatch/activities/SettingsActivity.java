@@ -458,7 +458,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            // TODO remove this check once new APIs available in jCenter
             if (BuildConfig.FLAVOR.contains("project")) {
                 initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
 
