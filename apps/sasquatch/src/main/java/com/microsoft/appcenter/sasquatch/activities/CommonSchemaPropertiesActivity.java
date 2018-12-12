@@ -117,14 +117,7 @@ public class CommonSchemaPropertiesActivity extends AppCompatActivity {
                 break;
 
             case USER_ID:
-
-                // TODO remove reflection once new APIs available in jCenter.
-                // mPropertyConfigurator.setUserId(value);
-                try {
-                    Method method = PropertyConfigurator.class.getDeclaredMethod("setUserId", String.class);
-                    method.invoke(mPropertyConfigurator, value);
-                } catch (Exception ignored) {
-                }
+                mPropertyConfigurator.setUserId(value);
                 break;
         }
         Toast.makeText(this, R.string.property_saved, Toast.LENGTH_SHORT).show();
