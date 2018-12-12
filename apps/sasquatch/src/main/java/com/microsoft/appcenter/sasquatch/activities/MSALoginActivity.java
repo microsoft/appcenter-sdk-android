@@ -123,11 +123,7 @@ public class MSALoginActivity extends AppCompatActivity {
 
         /* Init API client only once. */
         if (sHttpClient == null) {
-
-
-             sHttpClient = createHttpClient(this);
-            NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(this);
-            sHttpClient = new HttpClientRetryer(new HttpClientNetworkStateHandler(new DefaultHttpClient(), networkStateHelper));
+            sHttpClient = createHttpClient(this);
         }
 
         /* Configure web view. */

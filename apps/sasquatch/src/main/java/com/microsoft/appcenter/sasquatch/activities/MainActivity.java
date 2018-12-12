@@ -249,11 +249,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static void setUserId(String userId) {
         AppCenter.setUserId(userId);
-        try {
-            Method method = AppCenter.class.getMethod("setUserId", String.class);
-            method.invoke(null, userId);
-        } catch (Exception ignored) {
-        }
     }
 
     @Override
