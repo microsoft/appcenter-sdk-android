@@ -60,6 +60,7 @@
         <item>App Name</item>
         <item>App Version</item>
         <item>App Locale</item>
+        <item>User Id</item>
     </string-array>
     <string name="common_schema_property_value" tools:ignore="MissingTranslation">Value</string>
     <string name="sign_in" tools:ignore="MissingTranslation">Sign in</string>
