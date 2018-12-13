@@ -219,6 +219,9 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressWarnings("unchecked")
     private void setMaxStorageSize() {
+        if (AppCenter.isConfigured()) {
+            return;
+        }
         final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
         if (maxStorageSize <= 0) {
             return;
