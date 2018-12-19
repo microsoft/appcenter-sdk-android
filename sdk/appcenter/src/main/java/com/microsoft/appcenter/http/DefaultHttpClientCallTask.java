@@ -175,7 +175,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
              * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
              * to support future versions of TLS such as say 1.3 without having to patch this code.
              */
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH) {
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
                 urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
             }
 
