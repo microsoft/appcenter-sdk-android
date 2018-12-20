@@ -6,3 +6,7 @@
 -keepclasseswithmembers class * implements com.microsoft.appcenter.AppCenterService {
     public static ** getInstance();
 }
+
+-keepclassmembers class * implements javax.net.ssl.SSLSocketFactory {
+    private javax.net.ssl.SSLSocketFactory delegate;
+}

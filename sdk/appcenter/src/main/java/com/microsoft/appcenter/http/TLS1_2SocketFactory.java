@@ -27,18 +27,23 @@ class TLS1_2SocketFactory extends SSLSocketFactory {
      */
     private static final String[] ENABLED_PROTOCOLS = { TLS1_2_PROTOCOL };
 
-    private SSLSocketFactory mSocketFactory;
+    /**
+     * Socket factory.
+     *
+     * DO NOT RENAME IT! See https://github.com/square/okhttp/issues/2323
+     */
+    private SSLSocketFactory delegate;
 
     TLS1_2SocketFactory() {
         try {
             SSLContext sc = SSLContext.getInstance(TLS1_2_PROTOCOL);
             sc.init(null, null, null);
-            mSocketFactory = sc.getSocketFactory();
+            delegate = sc.getSocketFactory();
         } catch (KeyManagementException ignored) {
         } catch (NoSuchAlgorithmException ignored) {
         }
-        if (mSocketFactory == null) {
-            mSocketFactory = getDefaultSSLSocketFactory();
+        if (delegate == null) {
+            delegate = getDefaultSSLSocketFactory();
         }
     }
 
@@ -56,41 +61,41 @@ class TLS1_2SocketFactory extends SSLSocketFactory {
 
     @Override
     public String[] getDefaultCipherSuites() {
-        return mSocketFactory.getDefaultCipherSuites();
+        return delegate.getDefaultCipherSuites();
     }
 
     @Override
     public String[] getSupportedCipherSuites() {
-        return mSocketFactory.getSupportedCipherSuites();
+        return delegate.getSupportedCipherSuites();
     }
 
     @Override
     public SSLSocket createSocket() throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket());
+        return forceTLS1_2(delegate.createSocket());
     }
 
     @Override
     public SSLSocket createSocket(String host, int port) throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket(host, port));
+        return forceTLS1_2(delegate.createSocket(host, port));
     }
 
     @Override
     public SSLSocket createSocket(InetAddress host, int port) throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket(host, port));
+        return forceTLS1_2(delegate.createSocket(host, port));
     }
 
     @Override
     public SSLSocket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket(host, port, localHost, localPort));
+        return forceTLS1_2(delegate.createSocket(host, port, localHost, localPort));
     }
 
     @Override
     public SSLSocket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket(address, port, localAddress, localPort));
+        return forceTLS1_2(delegate.createSocket(address, port, localAddress, localPort));
     }
 
     @Override
     public SSLSocket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
-        return forceTLS1_2(mSocketFactory.createSocket(socket, host, port, autoClose));
+        return forceTLS1_2(delegate.createSocket(socket, host, port, autoClose));
     }
 }
