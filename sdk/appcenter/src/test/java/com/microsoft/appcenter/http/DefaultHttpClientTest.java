@@ -133,10 +133,10 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTP. */
         mockCall();
-        for (int apiLevel = Build.VERSION_CODES.JELLY_BEAN; apiLevel < Build.VERSION_CODES.KITKAT_WATCH; apiLevel++) {
+        for (int apiLevel = Build.VERSION_CODES.JELLY_BEAN; apiLevel <= Build.VERSION_CODES.LOLLIPOP; apiLevel++) {
             testTls1_2Setting(apiLevel, 1);
         }
-        for (int apiLevel = Build.VERSION_CODES.KITKAT_WATCH; apiLevel <= Build.VERSION_CODES.O_MR1; apiLevel++) {
+        for (int apiLevel = Build.VERSION_CODES.LOLLIPOP_MR1; apiLevel <= Build.VERSION_CODES.O_MR1; apiLevel++) {
             testTls1_2Setting(apiLevel, 0);
         }
     }
