@@ -22,13 +22,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
  * Browser utils.
  */
 class BrowserUtils {
-
-    /**
-     * Scheme used to open URLs in Google Chrome instead of any browser.
-     */
-    @VisibleForTesting
-    static final String GOOGLE_CHROME_URL_SCHEME = "googlechrome://navigate?url=";
-
+    
     @VisibleForTesting
     BrowserUtils() {
 
