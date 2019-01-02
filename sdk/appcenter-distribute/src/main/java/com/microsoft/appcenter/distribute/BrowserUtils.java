@@ -37,6 +37,7 @@ class BrowserUtils {
      * @param activity activity from which to open browser.
      */
     static void openBrowser(@NonNull String url, @NonNull Activity activity) {
+
         /* Open a browser but we don't want a chooser U.I. to pop. */
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
