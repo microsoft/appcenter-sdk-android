@@ -45,7 +45,8 @@ public class ManagedErrorActivity extends AppCompatActivity {
             AssertionError.class,
             LinkageError.class,
             ThreadDeath.class,
-            VirtualMachineError.class);
+            InternalError.class,
+            OutOfMemoryError.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +70,13 @@ public class ManagedErrorActivity extends AppCompatActivity {
                 try {
                     @SuppressWarnings("unchecked")
                     Class<? extends Throwable> clazz = (Class<? extends Throwable>) parent.getItemAtPosition(position);
-                    CrashesPrivateHelper.trackException(clazz.getConstructor(String.class).newInstance("Test Exception"),
+                    Throwable e;
+                    try {
+                        e = clazz.getConstructor(String.class).newInstance("Test Exception");
+                    } catch (NoSuchMethodException ignored) {
+                        e = clazz.getConstructor().newInstance();
+                    }
+                    CrashesPrivateHelper.trackException(e,
                             new HashMap<String, String>() {{
                                 put("prop1", "value1");
                                 put("prop2", "value2");

@@ -219,6 +219,9 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressWarnings("unchecked")
     private void setMaxStorageSize() {
+        if (AppCenter.isConfigured()) {
+            return;
+        }
         final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
         if (maxStorageSize <= 0) {
             return;
@@ -248,13 +251,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void setUserId(String userId) {
-        // TODO remove reflection once new APIs available in jCenter.
-        // AppCenter.setUserId(userId);
-        try {
-            Method method = AppCenter.class.getMethod("setUserId", String.class);
-            method.invoke(null, userId);
-        } catch (Exception ignored) {
-        }
+        AppCenter.setUserId(userId);
     }
 
     @Override
