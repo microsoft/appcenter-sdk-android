@@ -57,7 +57,6 @@ class BrowserUtils {
                 ActivityInfo activityInfo = defaultBrowser.activityInfo;
                 defaultBrowserPackageName = activityInfo.packageName;
                 defaultBrowserClassName = activityInfo.name;
-
                 AppCenterLog.debug(LOG_TAG, "Default browser seems to be " + defaultBrowserPackageName + "/" + defaultBrowserClassName);
             }
             String selectedPackageName = null;
@@ -89,7 +88,6 @@ class BrowserUtils {
             intent.setClassName(selectedPackageName, selectedClassName);
             activity.startActivity(intent);
         }
-
     }
 
     /**
