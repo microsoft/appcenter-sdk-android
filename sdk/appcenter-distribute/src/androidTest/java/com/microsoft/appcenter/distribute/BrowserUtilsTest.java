@@ -33,15 +33,6 @@ public class BrowserUtilsTest {
 
     private static final String TEST_URL = "https://www.contoso.com?a=b";
 
-//    private static final ArgumentMatcher<Intent> CHROME_MATCHER = new ArgumentMatcher<Intent>() {
-//
-//        @Override
-//        public boolean matches(Object o) {
-//            Intent intent = (Intent) o;
-//            return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + TEST_URL).equals(intent.getData());
-//        }
-//    };
-
     @Test
     public void init() {
         new BrowserUtils();
@@ -62,23 +53,23 @@ public class BrowserUtilsTest {
     }
 
 
-//    @Test
-//    public void noBrowserFound() {
-//
-//        /* Mock no browser. */
-//        Activity activity = mock(Activity.class);
-//        PackageManager packageManager = mock(PackageManager.class);
-//        doThrow(new ActivityNotFoundException()).when(activity).startActivity(any(Intent.class));
-//        when(activity.getPackageManager()).thenReturn(packageManager);
-//        when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.<ResolveInfo>emptyList());
-//
-//        /* Open Chrome then abort. */
-//        BrowserUtils.openBrowser(TEST_URL, activity);
-//        verify(activity).startActivity(new Intent());
-//
-//        /* Verify no more call to startActivity. */
-//        verify(activity).startActivity(any(Intent.class));
-//    }
+    @Test
+    public void noBrowserFound() {
+
+        /* Mock no browser. */
+        Activity activity = mock(Activity.class);
+        PackageManager packageManager = mock(PackageManager.class);
+        doThrow(new ActivityNotFoundException()).when(activity).startActivity(any(Intent.class));
+        when(activity.getPackageManager()).thenReturn(packageManager);
+        when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.<ResolveInfo>emptyList());
+
+        /* Open Browser then abort. */
+        BrowserUtils.openBrowser(TEST_URL, activity);
+        // verify(activity).startActivity(argThat(CHROME_MATCHER));
+
+        /* Verify no more call to startActivity. */
+        verify(activity).startActivity(any(Intent.class));
+    }
 
     @Test
     public void onlySystemBrowserNoDefaultAsNull() {
