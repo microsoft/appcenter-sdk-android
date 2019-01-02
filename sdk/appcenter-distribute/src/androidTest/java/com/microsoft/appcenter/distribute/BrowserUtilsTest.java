@@ -52,7 +52,6 @@ public class BrowserUtilsTest {
         assertEquals(url, "http://mock?a=b&x=y");
     }
 
-
     @Test
     public void noBrowserFound() {
 
@@ -65,7 +64,14 @@ public class BrowserUtilsTest {
 
         /* Open Browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
-        // verify(activity).startActivity(argThat(CHROME_MATCHER));
+        verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
+
+            @Override
+            public boolean matches(Object o) {
+                Intent intent = (Intent) o;
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
+            }
+        }));
 
         /* Verify no more call to startActivity. */
         verify(activity).startActivity(any(Intent.class));
@@ -167,7 +173,6 @@ public class BrowserUtilsTest {
         /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        //order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
