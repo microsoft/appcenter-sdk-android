@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
