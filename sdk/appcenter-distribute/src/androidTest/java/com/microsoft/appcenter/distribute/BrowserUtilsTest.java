@@ -24,8 +24,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("WrongConstant")
@@ -64,17 +64,9 @@ public class BrowserUtilsTest {
 
         /* Open Browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
-        verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
-            }
-        }));
 
         /* Verify no more call to startActivity. */
-        verify(activity).startActivity(any(Intent.class));
+        verify(activity, never()).startActivity(any(Intent.class));
     }
 
     @Test
