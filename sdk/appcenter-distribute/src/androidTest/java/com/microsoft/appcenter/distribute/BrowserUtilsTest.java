@@ -15,7 +15,6 @@ import org.mockito.InOrder;
 import java.net.URISyntaxException;
 import java.util.Collections;
 
-import static com.microsoft.appcenter.distribute.BrowserUtils.GOOGLE_CHROME_URL_SCHEME;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -25,23 +24,14 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("WrongConstant")
 public class BrowserUtilsTest {
 
     private static final String TEST_URL = "https://www.contoso.com?a=b";
-
-    private static final ArgumentMatcher<Intent> CHROME_MATCHER = new ArgumentMatcher<Intent>() {
-
-        @Override
-        public boolean matches(Object o) {
-            Intent intent = (Intent) o;
-            return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(GOOGLE_CHROME_URL_SCHEME + TEST_URL).equals(intent.getData());
-        }
-    };
 
     @Test
     public void init() {
@@ -63,14 +53,6 @@ public class BrowserUtilsTest {
     }
 
     @Test
-    public void chrome() {
-        Activity activity = mock(Activity.class);
-        BrowserUtils.openBrowser(TEST_URL, activity);
-        verify(activity).startActivity(argThat(CHROME_MATCHER));
-        verifyNoMoreInteractions(activity);
-    }
-
-    @Test
     public void noBrowserFound() {
 
         /* Mock no browser. */
@@ -80,12 +62,11 @@ public class BrowserUtilsTest {
         when(activity.getPackageManager()).thenReturn(packageManager);
         when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.<ResolveInfo>emptyList());
 
-        /* Open Chrome then abort. */
+        /* Open Browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
-        verify(activity).startActivity(argThat(CHROME_MATCHER));
 
         /* Verify no more call to startActivity. */
-        verify(activity).startActivity(any(Intent.class));
+        verify(activity, never()).startActivity(any(Intent.class));
     }
 
     @Test
@@ -93,7 +74,6 @@ public class BrowserUtilsTest {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         when(packageManager.resolveActivity(any(Intent.class), eq(PackageManager.MATCH_DEFAULT_ONLY))).thenReturn(null);
@@ -106,10 +86,9 @@ public class BrowserUtilsTest {
             when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.singletonList(resolveInfo));
         }
 
-        /* Open Chrome then abort. */
+        /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
@@ -126,7 +105,6 @@ public class BrowserUtilsTest {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -146,10 +124,9 @@ public class BrowserUtilsTest {
             when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.singletonList(resolveInfo));
         }
 
-        /* Open Chrome then abort. */
+        /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
@@ -166,7 +143,6 @@ public class BrowserUtilsTest {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(BrowserUtilsTest.CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -186,10 +162,9 @@ public class BrowserUtilsTest {
             when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.singletonList(resolveInfo));
         }
 
-        /* Open Chrome then abort. */
+        /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
@@ -206,7 +181,6 @@ public class BrowserUtilsTest {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -231,10 +205,9 @@ public class BrowserUtilsTest {
             when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(asList(resolveInfo, resolveInfo2));
         }
 
-        /* Open Chrome then abort. */
+        /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override
@@ -251,7 +224,6 @@ public class BrowserUtilsTest {
 
         /* Mock no browser. */
         Activity activity = mock(Activity.class);
-        doThrow(new ActivityNotFoundException()).when(activity).startActivity(argThat(CHROME_MATCHER));
         PackageManager packageManager = mock(PackageManager.class);
         when(activity.getPackageManager()).thenReturn(packageManager);
         {
@@ -276,10 +248,9 @@ public class BrowserUtilsTest {
             when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(asList(resolveInfo, resolveInfo2));
         }
 
-        /* Open Chrome then abort. */
+        /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(CHROME_MATCHER));
         order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
 
             @Override

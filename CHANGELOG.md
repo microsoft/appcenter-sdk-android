@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.1
+
+### AppCenterDistribute
+
+* **[Fix]** Fix issue with forcing Chrome to open links when other browsers are the default.
+
 ## Version 1.11.0
 
 ### AppCenter
