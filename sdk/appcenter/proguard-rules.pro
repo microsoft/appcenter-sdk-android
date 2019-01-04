@@ -8,5 +8,5 @@
 }
 
 -keepclassmembers class * implements javax.net.ssl.SSLSocketFactory {
-    private javax.net.ssl.SSLSocketFactory delegate;
+    private final javax.net.ssl.SSLSocketFactory delegate;
 }

@@ -78,22 +78,22 @@ public class Tls1_2SocketFactoryTest {
                 .thenReturn(sslContext)
                 .thenThrow(new NoSuchAlgorithmException());
 
-        // Mock default factory.
+        /* Mock default factory. */
         mockStatic(HttpsURLConnection.class);
         when(HttpsURLConnection.getDefaultSSLSocketFactory())
                 .thenReturn(sslSocketFactory);
 
-        // Get factory from context.
+        /* Get factory from context. */
         assertNotNull(new TLS1_2SocketFactory());
         verifyStatic(never());
         HttpsURLConnection.getDefaultSSLSocketFactory();
 
-        // KeyManagementException
+        /* KeyManagementException */
         assertNotNull(new TLS1_2SocketFactory());
         verifyStatic(times(1));
         HttpsURLConnection.getDefaultSSLSocketFactory();
 
-        // NoSuchAlgorithmException
+        /* NoSuchAlgorithmException */
         assertNotNull(new TLS1_2SocketFactory());
         verifyStatic(times(2));
         HttpsURLConnection.getDefaultSSLSocketFactory();

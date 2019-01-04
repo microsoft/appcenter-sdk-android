@@ -30,21 +30,24 @@ class TLS1_2SocketFactory extends SSLSocketFactory {
     /**
      * Socket factory.
      *
-     * DO NOT RENAME IT! See https://github.com/square/okhttp/issues/2323
+     * Do not rename it! See https://github.com/square/okhttp/issues/2323
      */
-    private SSLSocketFactory delegate;
+    private final SSLSocketFactory delegate;
 
     TLS1_2SocketFactory() {
+        SSLSocketFactory socketFactory = null;
         try {
+
+            /*
+             * Explicitly specify protocol for SSL context.
+             * See https://www.java.com/en/configure_crypto.html#enableTLSv1_2
+             */
             SSLContext sc = SSLContext.getInstance(TLS1_2_PROTOCOL);
             sc.init(null, null, null);
-            delegate = sc.getSocketFactory();
-        } catch (KeyManagementException ignored) {
-        } catch (NoSuchAlgorithmException ignored) {
+            socketFactory = sc.getSocketFactory();
+        } catch (KeyManagementException | NoSuchAlgorithmException ignored) {
         }
-        if (delegate == null) {
-            delegate = getDefaultSSLSocketFactory();
-        }
+        delegate = socketFactory != null ? socketFactory : getDefaultSSLSocketFactory();
     }
 
     /**
