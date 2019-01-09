@@ -1,10 +1,16 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.1
+## Version 1.11.1 (Under active development)
+
+### AppCenterAnalytics
+
+* **[Fix]** Don't start a new session from logs in the background.
 
 ### AppCenterDistribute
 
 * **[Fix]** Fix issue with forcing Chrome to open links when other browsers are the default.
+
+___
 
 ## Version 1.11.0
 
