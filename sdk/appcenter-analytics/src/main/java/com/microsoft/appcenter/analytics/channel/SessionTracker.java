@@ -97,9 +97,6 @@ public class SessionTracker extends AbstractChannelListener {
         /* If the log does not have a timestamp yet, then we just correlate with current session. */
         else {
 
-            /* Send a new start session log if needed. */
-            sendStartSessionIfNeeded();
-
             /* Set current session identifier. */
             log.setSid(mSid);
 
@@ -110,7 +107,7 @@ public class SessionTracker extends AbstractChannelListener {
 
     /**
      * Generate a new session identifier if the first time or
-     * we went in background for more X seconds or
+     * we went in background for more X seconds before resume or
      * if enough time has elapsed since the last background usage of the API.
      * <p>
      * Indeed the API can be used for events or crashes only for example, we need to renew
@@ -174,28 +171,20 @@ public class SessionTracker extends AbstractChannelListener {
      */
     private boolean hasSessionTimedOut() {
 
-        /* Compute how long we have not sent a log. */
-        long now = SystemClock.elapsedRealtime();
-        boolean noLogSentForLong = now - mLastQueuedLogTime >= SESSION_TIMEOUT;
-
-        /* Corner case: we have not been paused yet, typically we stayed on the first activity or we are called from background (for example a broadcast intent that wakes up application, new process). */
+        /*
+         * Corner case: we have not been paused yet, typically we stayed on the first activity or
+         * we are called from background (for example a broadcast intent that wakes up application,
+         * new process).
+         */
         if (mLastPausedTime == null) {
-
-            /* If we saw a resume in event, we are in foreground, so no expiration. If we are in background, check how long. */
-            return mLastResumedTime == null && noLogSentForLong;
-        }
-
-        /* Corner case 2: we saw a pause but not a resume event: we are in background, check how long. */
-        if (mLastResumedTime == null) {
-
-            /* Note that this corner case is likely an integration issue. It's not supposed to happen. Likely the SDK has been configured too late. */
-            return noLogSentForLong;
+            return false;
         }
 
         /* Normal case: we saw both resume and paused events, compare all times. */
-        boolean isBackgroundForLong = mLastPausedTime >= mLastResumedTime && now - mLastPausedTime >= SESSION_TIMEOUT;
+        long now = SystemClock.elapsedRealtime();
+        boolean noLogSentForLong = now - mLastQueuedLogTime >= SESSION_TIMEOUT;
         boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
-        AppCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " isBackgroundForLong=" + isBackgroundForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
-        return noLogSentForLong && (isBackgroundForLong || wasBackgroundForLong);
+        AppCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
+        return noLogSentForLong && wasBackgroundForLong;
     }
 }
