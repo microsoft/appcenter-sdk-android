@@ -4,7 +4,7 @@
 
 ### AppCenterAnalytics
 
-* **[Fix]** Extend the current session instead of starting a new session when sending events from the background.
+* **[Fix]** Extend the current session instead of starting a new session when sending events from the background. Sessions are also no longer started in background by sending an event or a log from another service such as push, as a consequence the push registration information will be missing from crash events information.
 
 ### AppCenterDistribute
 
