@@ -107,7 +107,7 @@ public class SessionTracker extends AbstractChannelListener {
 
     /**
      * Generate a new session identifier if the first time or
-     * we went in background for more X seconds or
+     * we went in background for more X seconds before resume or
      * if enough time has elapsed since the last background usage of the API.
      * <p>
      * Indeed the API can be used for events or crashes only for example, we need to renew
