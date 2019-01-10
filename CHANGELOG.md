@@ -4,7 +4,7 @@
 
 ### AppCenterAnalytics
 
-* **[Fix]** Don't start a new session from logs in the background.
+* **[Fix]** Extend the current session instead of starting a new session when sending events from the background.
 
 ### AppCenterDistribute
 
