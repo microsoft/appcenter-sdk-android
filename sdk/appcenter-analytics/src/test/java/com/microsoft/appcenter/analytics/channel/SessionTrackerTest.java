@@ -123,7 +123,6 @@ public class SessionTrackerTest {
         /* Start session. */
         {
             mSessionTracker.onActivityResumed();
-            mSessionTracker.onActivityPaused();
             Log log = newEvent();
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
@@ -144,6 +143,7 @@ public class SessionTrackerTest {
 
         /* No usage from background for a long time: same session. */
         {
+            mSessionTracker.onActivityPaused();
             spendTime(30000);
             Log log = newEvent();
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
@@ -368,7 +368,6 @@ public class SessionTrackerTest {
         /* Start session. */
         {
             mSessionTracker.onActivityResumed();
-            mSessionTracker.onActivityPaused();
             Log log = newEvent();
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
             mSessionTracker.onPreparingLog(expectedStartSessionLog, TEST_GROUP);
@@ -389,6 +388,7 @@ public class SessionTrackerTest {
 
         /* No usage from background for a long time: same session. */
         {
+            mSessionTracker.onActivityPaused();
             spendTime(30000);
             Log log = newEvent();
             mSessionTracker.onPreparingLog(log, TEST_GROUP);
@@ -450,6 +450,8 @@ public class SessionTrackerTest {
 
     @Test
     public void pastSessions() {
+
+        /* Start session. */
         mSessionTracker.onActivityResumed();
 
         /* Get a current session. */

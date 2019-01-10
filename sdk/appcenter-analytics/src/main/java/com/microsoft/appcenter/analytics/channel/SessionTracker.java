@@ -170,6 +170,7 @@ public class SessionTracker extends AbstractChannelListener {
      * @return true if current session has timed out, false otherwise.
      */
     private boolean hasSessionTimedOut() {
+
         /*
          * Corner case: we have not been paused yet, typically we stayed on the first activity or
          * we are called from background (for example a broadcast intent that wakes up application,
