@@ -1,5 +1,17 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.1
+
+### AppCenterAnalytics
+
+* **[Fix]** Extend the current session instead of starting a new session when sending events from the background. Sessions are also no longer started in background by sending an event or a log from another service such as push, as a consequence the push registration information will be missing from crash events information.
+
+### AppCenterDistribute
+
+* **[Fix]** Fix issue with forcing Chrome to open links when other browsers are the default.
+
+___
+
 ## Version 1.11.0
 
 ### AppCenter
