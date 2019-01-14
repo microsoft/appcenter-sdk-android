@@ -8,23 +8,34 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
-@PrepareForTest(HttpsURLConnection.class)
+@PrepareForTest({ HttpsURLConnection.class, SSLContext.class })
 @RunWith(PowerMockRunner.class)
 public class Tls1_2SocketFactoryTest {
 
@@ -50,6 +61,42 @@ public class Tls1_2SocketFactoryTest {
 
     private void checkProtocol(SSLSocket socket) {
         verify(socket).setEnabledProtocols(new String[]{"TLSv1.2"});
+    }
+
+    @SuppressWarnings("ObviousNullCheck")
+    @Test
+    public void createFactory() throws Exception {
+        SSLContext sslContext = mock(SSLContext.class);
+        doNothing().doThrow(new KeyManagementException())
+                .when(sslContext).init(any(KeyManager[].class), any(TrustManager[].class), any(SecureRandom.class));
+        SSLSocketFactory sslSocketFactory = mock(SSLSocketFactory.class);
+        when(sslContext.getSocketFactory())
+                .thenReturn(sslSocketFactory);
+        mockStatic(SSLContext.class);
+        when(SSLContext.getInstance("TLSv1.2"))
+                .thenReturn(sslContext)
+                .thenReturn(sslContext)
+                .thenThrow(new NoSuchAlgorithmException());
+
+        /* Mock default factory. */
+        mockStatic(HttpsURLConnection.class);
+        when(HttpsURLConnection.getDefaultSSLSocketFactory())
+                .thenReturn(sslSocketFactory);
+
+        /* Get factory from context. */
+        assertNotNull(new TLS1_2SocketFactory());
+        verifyStatic(never());
+        HttpsURLConnection.getDefaultSSLSocketFactory();
+
+        /* KeyManagementException */
+        assertNotNull(new TLS1_2SocketFactory());
+        verifyStatic(times(1));
+        HttpsURLConnection.getDefaultSSLSocketFactory();
+
+        /* NoSuchAlgorithmException */
+        assertNotNull(new TLS1_2SocketFactory());
+        verifyStatic(times(2));
+        HttpsURLConnection.getDefaultSSLSocketFactory();
     }
 
     @Test
