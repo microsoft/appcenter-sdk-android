@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.1
+## Version 1.11.2
 
 ### AppCenter
 
