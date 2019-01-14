@@ -1,6 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.1
+## Version 1.11.2
+
+### AppCenter
+
+* **[Fix]** Fix TLS 1.2 configuration for some specific devices running API level <21. The bug did not affect all devices running older API levels, only some models/brands, and prevented any data from being sent.
 
 ### AppCenterAnalytics
 
