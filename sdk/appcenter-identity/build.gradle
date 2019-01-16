@@ -1,0 +1,6 @@
+project.description = 'This package contains functionalities to identify and authenticate a user of your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    api project(':sdk:appcenter')
+}
