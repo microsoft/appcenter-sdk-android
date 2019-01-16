@@ -3,37 +3,11 @@ package com.microsoft.appcenter.identity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.http.DefaultHttpClient;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Random;
-
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 
 /**
  * identity service.
@@ -111,8 +85,7 @@ public class Identity extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             //TODO: add implementation.
-        }
-        else if (mHttpClient != null) {
+        } else {
              //TODO: add implementation.
         }
     }
