@@ -3,6 +3,7 @@ package com.microsoft.appcenter.identity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
@@ -46,6 +47,11 @@ public class Identity extends AbstractAppCenterService {
             sInstance = new Identity();
         }
         return sInstance;
+    }
+
+    @VisibleForTesting
+    static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     /**
