@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -41,13 +40,12 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Test
     public void isAppSecretRequired() {
-        assertFalse(Identity.getInstance().isAppSecretRequired());
+        assertTrue(Identity.getInstance().isAppSecretRequired());
     }
 
     @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = Identity.getInstance().getLogFactories();
-        assertNotNull(factories);
         assertTrue(factories.isEmpty());
     }
 
