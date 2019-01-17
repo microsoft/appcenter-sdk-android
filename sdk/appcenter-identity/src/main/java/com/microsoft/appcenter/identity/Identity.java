@@ -26,6 +26,11 @@ public class Identity extends AbstractAppCenterService {
     private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
+     * Constant marking event of the identity group.
+     */
+    static final String IDENTITY_GROUP = "group_identity";
+
+    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -98,7 +103,7 @@ public class Identity extends AbstractAppCenterService {
 
     @Override
     protected String getGroupName() {
-        return null;
+        return IDENTITY_GROUP;
     }
 
     @Override

@@ -46,14 +46,14 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = Identity.getInstance().getLogFactories();
-        assertTrue(factories.isEmpty());
+        assertTrue(factories == null);
     }
 
     @Test
     public void setEnabled() {
 
         /* Before start it does not work to change state, it's disabled. */
-        Identity analytics = Identity.getInstance();
+        Identity identity = Identity.getInstance();
         Identity.setEnabled(true);
         assertFalse(Identity.isEnabled().get());
         Identity.setEnabled(false);
@@ -61,10 +61,10 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Start. */
         Channel channel = mock(Channel.class);
-        analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        identity.onStarting(mAppCenterHandler);
+        identity.onStarted(mock(Context.class), channel, "", null, true);
+        verify(channel).removeGroup(eq(identity.getGroupName()));
+        verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Identity.isEnabled().get());
