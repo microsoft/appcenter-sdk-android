@@ -11,7 +11,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 /**
- * identity service.
+ * Identity service.
  */
 public class Identity extends AbstractAppCenterService {
 
