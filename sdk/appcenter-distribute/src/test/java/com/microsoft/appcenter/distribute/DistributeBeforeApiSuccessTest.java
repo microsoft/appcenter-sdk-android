@@ -120,7 +120,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(activity);
     }
 
-    private void testDistributeInactive() throws Exception {
+    private void testDistributeInactive() {
 
         /* Check browser not opened. */
         start();
@@ -215,8 +215,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        start();
         Distribute.getInstance().storeUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic(never());
+        SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID);
+        start();
+        verifyStatic(never());
+        SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
@@ -226,8 +231,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        start();
         Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter("r", "error_message");
+        verifyStatic(never());
+        SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID);
+        start();
+        verifyStatic(never());
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
@@ -237,8 +247,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        start();
         Distribute.getInstance().storeUpdateSetupFailedParameter("r2", "error_message");
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
@@ -248,14 +259,15 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
-        start();
         Distribute.getInstance().storeTesterAppUpdateSetupFailedParameter("r2", "error_message");
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
         SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, "error_message");
     }
 
     @Test
-    public void storePrivateRedirectionBeforeStart() throws Exception {
+    public void storePrivateRedirectionBeforeStart() {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
@@ -287,7 +299,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void storePublicRedirectionBeforeStart() throws Exception {
+    public void storePublicRedirectionBeforeStart() {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
@@ -1071,7 +1083,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableWhileCheckingRelease() throws Exception {
+    public void disableWhileCheckingRelease() {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -1097,7 +1109,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verify(firstCall).cancel();
     }
 
-    private void checkReleaseFailure(final Exception exception, VerificationMode deleteTokenVerificationMode) throws Exception {
+    private void checkReleaseFailure(final Exception exception, VerificationMode deleteTokenVerificationMode) {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -1204,7 +1216,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableBeforeCheckReleaseFails() throws Exception {
+    public void disableBeforeCheckReleaseFails() {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -1254,7 +1266,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void disableBeforeCheckReleaseSucceed() throws Exception {
+    public void disableBeforeCheckReleaseSucceed() {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -1305,7 +1317,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void storeBetterEncryptedToken() throws Exception {
+    public void storeBetterEncryptedToken() {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
@@ -1324,7 +1336,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPrivate() throws Exception {
+    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPrivate() {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
         HashMap<String, String> headers = new HashMap<>();
@@ -1344,7 +1356,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPublic() throws Exception {
+    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPublic() {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
         HashMap<String, String> headers = new HashMap<>();
@@ -1363,7 +1375,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void willNotReportReleaseInstallForPrivateGroupWithoutStoredReleaseHash() throws Exception {
+    public void willNotReportReleaseInstallForPrivateGroupWithoutStoredReleaseHash() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
         when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
 
@@ -1385,7 +1397,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void willNotReportReleaseInstallForPrivateGroupWhenReleaseHashesDontMatch() throws Exception {
+    public void willNotReportReleaseInstallForPrivateGroupWhenReleaseHashesDontMatch() {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
@@ -1408,7 +1420,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() throws Exception {
+    public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() {
         final String distributionGroupId = "fake-distribution-id";
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn(distributionGroupId);
@@ -1438,7 +1450,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() throws Exception {
+    public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() {
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
         when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
