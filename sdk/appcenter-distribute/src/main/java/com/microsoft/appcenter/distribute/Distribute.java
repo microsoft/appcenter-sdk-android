@@ -183,6 +183,16 @@ public class Distribute extends AbstractAppCenterService {
     private String mBeforeStartUpdateToken;
 
     /**
+     * In memory update setup failure error message if we receive deep link intent before onStart.
+     */
+    private String mBeforeStartUpdateSetupFailed;
+
+    /**
+     * In memory tester app update setup failure error message if we receive deep link intent before onStart.
+     */
+    private String mBeforeStartTesterAppUpdateSetupFailed;
+
+    /**
      * Current API call identifier to check latest release from server, used for state check.
      * We can't use the ServiceCall object for that purpose because of a chicken and egg problem.
      */
@@ -654,11 +664,20 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If we received the redirection parameters before App Center was started/enabled, process them now. */
             if (mBeforeStartRequestId != null) {
-                AppCenterLog.debug(LOG_TAG, "Processing update token we kept in memory before onStarted");
-                storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
+                AppCenterLog.debug(LOG_TAG, "Processing redirection parameters we kept in memory before onStarted");
+                if (mBeforeStartDistributionGroupId != null) {
+                    storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
+                } else if (mBeforeStartUpdateSetupFailed != null) {
+                    storeUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartUpdateSetupFailed);
+                }
+                if (mBeforeStartTesterAppUpdateSetupFailed != null) {
+                    storeTesterAppUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartTesterAppUpdateSetupFailed);
+                }
                 mBeforeStartRequestId = null;
                 mBeforeStartDistributionGroupId = null;
                 mBeforeStartUpdateToken = null;
+                mBeforeStartUpdateSetupFailed = null;
+                mBeforeStartTesterAppUpdateSetupFailed = null;
                 return;
             }
 
@@ -893,7 +912,13 @@ public class Distribute extends AbstractAppCenterService {
      * Store update setup failure message used later to show in setup failure dialog for user.
      */
     synchronized void storeUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
-        if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
+
+        /* Keep redirection parameters for later if we are not started and enabled yet. */
+        if (mContext == null) {
+            AppCenterLog.debug(LOG_TAG, "Update setup failed parameter received before onStart, keep it in memory.");
+            mBeforeStartRequestId = requestId;
+            mBeforeStartUpdateSetupFailed = updateSetupFailed;
+        } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
         }
@@ -902,10 +927,16 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Store a flag for failure to enable updates from the tester apps, to later reattempt using the browser update setup.
      */
-    synchronized void storeTesterAppUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String updateSetupFailed) {
-        if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
+    synchronized void storeTesterAppUpdateSetupFailedParameter(@NonNull String requestId, @NonNull String testerAppUpdateSetupFailed) {
+
+        /* Keep redirection parameters for later if we are not started and enabled yet. */
+        if (mContext == null) {
+            AppCenterLog.debug(LOG_TAG, "Tester app update setup failed parameter received before onStart, keep it in memory.");
+            mBeforeStartRequestId = requestId;
+            mBeforeStartTesterAppUpdateSetupFailed = testerAppUpdateSetupFailed;
+        } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored tester app update setup failed parameter.");
-            SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, testerAppUpdateSetupFailed);
         }
     }
 

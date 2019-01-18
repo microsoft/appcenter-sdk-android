@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.3 (Under active development)
+
+### AppCenterDistribute
+
+* **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
+
+___
+
 ## Version 1.11.2
 
 ### AppCenter
