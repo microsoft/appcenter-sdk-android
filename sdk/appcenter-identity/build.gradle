@@ -3,4 +3,6 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     api project(':sdk:appcenter')
+
+    api 'com.microsoft.identity.client:msal:0.2.1'
 }

@@ -79,7 +79,7 @@ public class AbstractDefaultChannelTest {
                 Object[] args = invocation.getArguments();
                 if (args[3] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("");
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("", null);
                     else
                         ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
                 }

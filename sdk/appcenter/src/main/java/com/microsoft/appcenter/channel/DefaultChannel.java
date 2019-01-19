@@ -512,7 +512,7 @@ public class DefaultChannel implements Channel {
             groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload) {
+                public void onCallSucceeded(String payload, Map<String, String> headers) {
                     mAppCenterHandler.post(new Runnable() {
 
                         @Override

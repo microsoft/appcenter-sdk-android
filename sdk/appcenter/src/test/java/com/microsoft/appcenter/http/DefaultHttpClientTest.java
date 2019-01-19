@@ -198,7 +198,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
@@ -252,7 +252,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, headers, null, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
@@ -296,7 +296,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
@@ -338,7 +338,7 @@ public class DefaultHttpClientTest {
             /* Test calling code. */
             ServiceCallback serviceCallback = mock(ServiceCallback.class);
             httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
-            verify(serviceCallback).onCallSucceeded("OK");
+            verify(serviceCallback).onCallSucceeded("OK", null);
             verifyNoMoreInteractions(serviceCallback);
 
             /* Reset response stream. */
@@ -399,7 +399,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
@@ -439,7 +439,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded(payload);
+        verify(serviceCallback).onCallSucceeded(payload, null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
@@ -499,7 +499,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("fake binary");
+        verify(serviceCallback).onCallSucceeded("fake binary", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
@@ -701,7 +701,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCall call = httpClient.callAsync(urlString, METHOD_GET, new HashMap<String, String>(), callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded(anyString());
+        verify(serviceCallback).onCallSucceeded(anyString(), null);
         assertEquals(0, httpClient.getTasks().size());
     }
 
@@ -890,7 +890,7 @@ public class DefaultHttpClientTest {
         /* Verify the callback call from "main" thread. */
         semaphore.acquireUninterruptibly();
         verify(serviceCallback).onCallFailed(exception);
-        verify(serviceCallback, never()).onCallSucceeded(notNull(String.class));
+        verify(serviceCallback, never()).onCallSucceeded(notNull(String.class), null);
     }
 
     @Test
@@ -938,7 +938,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "custom");
 
@@ -1003,7 +1003,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "custom");
 
@@ -1075,7 +1075,7 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("OK");
+        verify(serviceCallback).onCallSucceeded("OK", null);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "custom");
 

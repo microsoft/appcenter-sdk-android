@@ -1180,7 +1180,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -1269,7 +1269,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                     @Override
                     public void run() {
                         beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                         afterSemaphore.release();
                     }
                 }.start();

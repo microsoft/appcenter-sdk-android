@@ -27,6 +27,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.identity.Identity;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
 import com.microsoft.appcenter.sasquatch.R;
@@ -323,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
                 AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, Identity.class);
     }
 
     public enum StartType {

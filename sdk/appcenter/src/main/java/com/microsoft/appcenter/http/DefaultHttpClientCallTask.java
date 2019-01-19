@@ -4,6 +4,7 @@ import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+import android.util.Pair;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -17,6 +18,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -153,7 +156,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
     private static InputStream getInputStream(HttpURLConnection urlConnection) throws IOException {
         int status = urlConnection.getResponseCode();
-        if (status >= 200 && status < 400) {
+        if (status >= 200 && status < 300) {
             return urlConnection.getInputStream();
         } else {
             return urlConnection.getErrorStream();
@@ -163,7 +166,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Do http call.
      */
-    private String doHttpCall() throws Exception {
+    private Pair<String, Map<String, String>> doHttpCall() throws Exception {
 
         /* HTTP session. */
         URL url = new URL(mUrl);
@@ -216,6 +219,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             }
 
             /* Send headers. */
+            urlConnection.setRequestProperty("If-Modified-Since", "Sat, 20 Jan 2019 00:02:18 GMT");
             for (Map.Entry<String, String> header : mHeaders.entrySet()) {
                 urlConnection.setRequestProperty(header.getKey(), header.getValue());
             }
@@ -282,8 +286,12 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             }
 
             /* Accept all 2xx codes. */
-            if (status >= 200 && status < 300) {
-                return response;
+            if (status >= 200 && status < 400) {
+                Map<String, String> responseHeaders = new HashMap<>();
+                for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
+                    responseHeaders.put(header.getKey(), header.getValue().iterator().next());
+                }
+                return new Pair<>(response, responseHeaders);
             }
 
             /* Generate exception on failure. */
@@ -320,7 +328,10 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         if (result instanceof Exception) {
             mServiceCallback.onCallFailed((Exception) result);
         } else {
-            mServiceCallback.onCallSucceeded(result.toString());
+
+            @SuppressWarnings("unchecked")
+            Pair<String, Map<String, String>> response = (Pair<String, Map<String, String>>) result;
+            mServiceCallback.onCallSucceeded(response.first, response.second);
         }
     }
 

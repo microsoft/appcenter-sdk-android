@@ -62,6 +62,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
     projectDependencyImplementation project(':sdk:appcenter-distribute')
+    projectDependencyImplementation project(':sdk:appcenter-identity')
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 

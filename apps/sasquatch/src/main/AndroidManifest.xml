@@ -8,9 +8,11 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:ignore="AllowBackup,GoogleAppIndexingWarning,UnpackedNativeCode">
+        tools:ignore="AllowBackup,GoogleAppIndexingWarning,UnpackedNativeCode"
+        tools:targetApi="n">
         <activity
             android:name=".activities.MainActivity"
             android:launchMode="singleTop">
@@ -58,6 +60,18 @@
         <activity
             android:name=".activities.MSALoginActivity"
             android:label="@string/msa_title" />
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:scheme="msal3be1df1d-9765-41f4-822c-44f6fd0f7f3e" />
+            </intent-filter>
+        </activity>
 
         <!-- Set default notification icon and color. -->
         <meta-data

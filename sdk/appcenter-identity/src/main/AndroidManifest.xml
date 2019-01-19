@@ -1,2 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.microsoft.appcenter.identity" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.microsoft.appcenter.identity">
+
+    <uses-sdk tools:overrideLibrary="com.microsoft.identity.msal" />
+
+    <!--
+        For now this is inactive as msal does not allow dynamic file configuration and thus
+        will force the default redirect_uri that developers have to put in manifest.
+        Once the new msal SDK is released with file configuration, this will allow developers
+        manifest free configuration as our library will configure msal to use this redirection.
+    -->
+    <application>
+        <activity android:name="com.microsoft.identity.client.BrowserTabActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:scheme="msal.${applicationId}" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

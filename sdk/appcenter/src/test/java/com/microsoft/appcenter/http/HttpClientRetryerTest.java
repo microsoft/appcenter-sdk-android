@@ -56,13 +56,13 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload", null);
                 return call;
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         HttpClientRetryer retryer = new HttpClientRetryer(httpClient);
         retryer.callAsync(null, null, null, null, callback);
-        verify(callback).onCallSucceeded("mockSuccessPayload");
+        verify(callback).onCallSucceeded("mockSuccessPayload", null);
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -82,7 +82,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload", null);
                 return mock(ServiceCall.class);
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -92,7 +92,7 @@ public class HttpClientRetryerTest {
         retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded("mockSuccessPayload");
+        verify(callback).onCallSucceeded("mockSuccessPayload", null);
         verifyNoMoreInteractions(callback);
     }
 
