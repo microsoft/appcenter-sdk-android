@@ -2,6 +2,10 @@
 
 ## Version 1.11.3 (Under active development)
 
+### AppCenter
+
+* **[Fix]** Handle some SQLite errors gracefully.
+
 ### AppCenterDistribute
 
 * **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
