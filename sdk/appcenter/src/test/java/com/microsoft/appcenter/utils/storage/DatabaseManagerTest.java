@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.internal.stubbing.answers.Returns;
@@ -49,11 +50,14 @@ public class DatabaseManagerTest {
         return databaseManagerMock;
     }
 
+    @Before
+    public void setUp() {
+        mockStatic(AppCenterLog.class);
+    }
+
     @Test
     public void putFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.put(new ContentValues(), "priority");
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -61,9 +65,7 @@ public class DatabaseManagerTest {
 
     @Test
     public void deleteFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(0);
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -71,9 +73,7 @@ public class DatabaseManagerTest {
 
     @Test
     public void deleteMultipleIDsFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(new ArrayList<Long>());
         verifyStatic(never());
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -84,9 +84,7 @@ public class DatabaseManagerTest {
 
     @Test
     public void clearFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.clear();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -94,9 +92,7 @@ public class DatabaseManagerTest {
 
     @Test
     public void closeFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.close();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
@@ -104,10 +100,24 @@ public class DatabaseManagerTest {
 
     @Test
     public void rowCountFailed() {
-        mockStatic(AppCenterLog.class);
-        DatabaseManager databaseManagerMock;
-        databaseManagerMock = getDatabaseManagerMock();
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.getRowCount();
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void setMaxSizeFailed() {
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.setMaxSize(1024 * 1024);
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void getMaxSizeFailed() {
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
+        assertEquals(-1, databaseManagerMock.getMaxSize());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
