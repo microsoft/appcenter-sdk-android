@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -101,7 +102,7 @@ public class DatabaseManagerTest {
     @Test
     public void rowCountFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.getRowCount();
+        assertEquals(-1, databaseManagerMock.getRowCount());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -109,7 +110,7 @@ public class DatabaseManagerTest {
     @Test
     public void setMaxSizeFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.setMaxSize(1024 * 1024);
+        assertFalse(databaseManagerMock.setMaxSize(1024 * 1024));
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
