@@ -299,7 +299,7 @@ public class DatabaseManager implements Closeable {
     @Override
     public void close() {
         try {
-            getDatabase().close();
+            mSQLiteOpenHelper.close();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to close the database.", e);
         }
@@ -350,9 +350,14 @@ public class DatabaseManager implements Closeable {
         try {
             return mSQLiteOpenHelper.getWritableDatabase();
         } catch (RuntimeException e) {
+            AppCenterLog.warn(LOG_TAG, "Failed to open database. Trying to delete database (may be corrupted).", e);
 
             /* First error, try to delete database (may be corrupted). */
-            mContext.deleteDatabase(mDatabase);
+            if (mContext.deleteDatabase(mDatabase)) {
+                AppCenterLog.info(LOG_TAG, "The database was successfully deleted.");
+            } else {
+                AppCenterLog.warn(LOG_TAG, "Failed to delete database.");
+            }
 
             /* Retry, let exception thrown if it fails this time. */
             return mSQLiteOpenHelper.getWritableDatabase();
