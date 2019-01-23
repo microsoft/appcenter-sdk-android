@@ -97,6 +97,7 @@ subprojects {
         ])
         executionData = fileTree(dir: buildDir, includes: [
                 'jacoco/testDebugUnitTest.exec',
+                'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec',
                 'outputs/code-coverage/connected/*coverage.ec'
         ])
     }
