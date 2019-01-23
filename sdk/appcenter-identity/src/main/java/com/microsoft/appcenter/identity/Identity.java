@@ -8,6 +8,7 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -20,7 +21,6 @@ import org.json.JSONObject;
 
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static android.util.Log.VERBOSE;
@@ -157,7 +157,7 @@ public class Identity extends AbstractAppCenterService {
         HttpClient httpClient = createHttpClient(mContext);
         Map<String, String> headers = new HashMap<>();
         // TODO add if-none-match with etag value
-        //headers.put("If-None-Match", "\"0x8D67DA160EB33ED\"");
+        headers.put("If-None-Match", "\"0x8D67DB2781606C9\"");
         String url = String.format(CONFIG_URL, mAppSecret);
         httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
@@ -183,7 +183,11 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void onCallFailed(Exception e) {
-                AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+                if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
+                    AppCenterLog.info(LOG_TAG, "Identify configuration didn't change.");
+                } else {
+                    AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+                }
             }
         });
     }

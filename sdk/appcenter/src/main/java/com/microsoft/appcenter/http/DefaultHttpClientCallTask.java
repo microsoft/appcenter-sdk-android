@@ -156,7 +156,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
     private static InputStream getInputStream(HttpURLConnection urlConnection) throws IOException {
         int status = urlConnection.getResponseCode();
-        if (status >= 200 && status < 300) {
+        if (status >= 200 && status < 400) {
             return urlConnection.getInputStream();
         } else {
             return urlConnection.getErrorStream();
@@ -219,7 +219,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             }
 
             /* Send headers. */
-            urlConnection.setRequestProperty("If-Modified-Since", "Sat, 20 Jan 2019 00:02:18 GMT");
             for (Map.Entry<String, String> header : mHeaders.entrySet()) {
                 urlConnection.setRequestProperty(header.getKey(), header.getValue());
             }
@@ -286,7 +285,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             }
 
             /* Accept all 2xx codes. */
-            if (status >= 200 && status < 400) {
+            if (status >= 200 && status < 300) {
                 Map<String, String> responseHeaders = new HashMap<>();
                 for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
                     responseHeaders.put(header.getKey(), header.getValue().iterator().next());
