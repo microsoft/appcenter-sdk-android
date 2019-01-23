@@ -13,12 +13,16 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.PublicClientApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +52,12 @@ public class Identity extends AbstractAppCenterService {
     static final String IDENTITY_GROUP = "group_identity";
 
     private static final String CONFIG_URL = "https://mobilecentersdkdev.blob.core.windows.net/identity/%s.json";
+
+    private static final String FILE_PATH = "appcenter/identity/config.json";
+
+    private static final String STORAGE_ETAG_KEY = SERVICE_NAME + ".configFileETag";
+
+    private static final String HEADER_IF_NONE_MATCH = "If-None-Match";
 
     /**
      * Shared instance.
@@ -129,6 +139,20 @@ public class Identity extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             if (mAppSecret != null) {
+
+                /* Use cached config file if available. */
+                File configFile = getConfigFile();
+                if (configFile.exists()) {
+                    try {
+                        // TODO init auth client from file, requires msal SDK with patch
+                        // or parse JSON and create manually like in download method.
+                    } catch (RuntimeException e) {
+                        AppCenterLog.warn(LOG_TAG, "Cannot used cached config.", e);
+                        SharedPreferencesManager.remove(STORAGE_ETAG_KEY);
+                    }
+                }
+
+                /* Either way, refresh configuration file in background. */
                 downloadConfiguration();
             } else {
                 AppCenterLog.error(LOG_TAG, "Identity needs to be started with an application secret.");
@@ -156,8 +180,10 @@ public class Identity extends AbstractAppCenterService {
     private void downloadConfiguration() {
         HttpClient httpClient = createHttpClient(mContext);
         Map<String, String> headers = new HashMap<>();
-        // TODO add if-none-match with etag value
-        headers.put("If-None-Match", "\"0x8D67DB2781606C9\"");
+        String eTag = SharedPreferencesManager.getString(STORAGE_ETAG_KEY);
+        if (eTag != null) {
+            headers.put(HEADER_IF_NONE_MATCH, eTag);
+        }
         String url = String.format(CONFIG_URL, mAppSecret);
         httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
@@ -208,14 +234,32 @@ public class Identity extends AbstractAppCenterService {
                 }
             }
             if (authorityUrl != null) {
+                // TODO handle thread safety with disable and flows being executed.
                 mAuthenticationClient = new PublicClientApplication(mContext, clientId, authorityUrl);
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
+                saveConfigFile(payload, eTag);
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The download configuration is invalid.", e);
         }
+    }
+
+    private void saveConfigFile(String payload, String eTag) {
+        File file = getConfigFile();
+        FileManager.mkdir(file.getParent());
+        try {
+            FileManager.write(file, payload);
+            SharedPreferencesManager.putString(STORAGE_ETAG_KEY, eTag);
+        } catch (IOException e) {
+            AppCenterLog.warn(LOG_TAG, "Failed to cache identity configuration.", e);
+        }
+    }
+
+    @NonNull
+    private File getConfigFile() {
+        return new File(mContext.getFilesDir(), FILE_PATH);
     }
 }
