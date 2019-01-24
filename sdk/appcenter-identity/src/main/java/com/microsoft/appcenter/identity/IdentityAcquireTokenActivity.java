@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.microsoft.identity.client.internal.controllers.MSALApiDispatcher;
+import com.microsoft.identity.common.internal.controllers.ApiDispatcher;
 
 public class IdentityAcquireTokenActivity extends Activity {
 
@@ -26,7 +26,12 @@ public class IdentityAcquireTokenActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        MSALApiDispatcher.completeInteractive(requestCode, resultCode, data);
+
+        /*
+         * TODO call via PublicClientApplication.handleInteractive instead of using internal API.
+         * Was already renamed once. Drawback of PublicClientApplication is that it's not static.
+         */
+        ApiDispatcher.completeInteractive(requestCode, resultCode, data);
         finish();
     }
 }

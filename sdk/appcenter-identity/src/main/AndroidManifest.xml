@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="com.microsoft.appcenter.identity">
-
-    <!--
-     TODO temporary disable minApiLevel 21 requirement, next release of msal will be minApiLevel 16.
-     Need to disable Identity for now if running on API level < 21.
-     -->
-    <uses-sdk tools:overrideLibrary="com.microsoft.identity.msal" />
 
     <application>
         <activity

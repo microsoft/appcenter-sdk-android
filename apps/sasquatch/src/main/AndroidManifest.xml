@@ -69,7 +69,7 @@
 
                 <data
                     android:host="auth"
-                    android:scheme="msal3be1df1d-9765-41f4-822c-44f6fd0f7f3e" />
+                    android:scheme="msal9e0d97c1-7838-46d0-9dab-1a0ef66aec6e" />
             </intent-filter>
         </activity>
 

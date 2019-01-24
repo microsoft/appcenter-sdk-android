@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
@@ -23,7 +22,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
-import com.microsoft.identity.client.AuthenticationResult;
+import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
 
@@ -45,7 +44,6 @@ import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
-import static com.microsoft.appcenter.identity.Constants.CLIENT_ID;
 import static com.microsoft.appcenter.identity.Constants.CONFIG_URL;
 import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
 import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
@@ -76,11 +74,6 @@ public class Identity extends AbstractAppCenterService {
      * Application secret.
      */
     private String mAppSecret;
-
-    /**
-     * True when identity module can be used (API level >= 21).
-     */
-    private boolean mIdentityModuleAvailable;
 
     /**
      * Authentication client.
@@ -165,14 +158,6 @@ public class Identity extends AbstractAppCenterService {
     @WorkerThread
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-
-            /* Make module no-op if running on API level < 21, TODO this check can be removed when next msal lib released. */
-            int minApiLevel = Build.VERSION_CODES.LOLLIPOP;
-            mIdentityModuleAvailable = Build.VERSION.SDK_INT >= minApiLevel;
-            if (!mIdentityModuleAvailable) {
-                AppCenterLog.error(LOG_TAG, "Identity requires API level " + minApiLevel);
-                return;
-            }
             if (mAppSecret != null) {
 
                 /* Download fresh configuration first instead of using cache directly. */
@@ -275,9 +260,8 @@ public class Identity extends AbstractAppCenterService {
     @WorkerThread
     private void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
-        if (initAuthenticationClient(payload)) {
-            saveConfigFile(payload, eTag);
-        }
+        saveConfigFile(payload, eTag);
+        initAuthenticationClient(payload);
     }
 
     @WorkerThread
@@ -296,17 +280,17 @@ public class Identity extends AbstractAppCenterService {
             configurationSucceeded = initAuthenticationClient(configurationPayload);
         }
         if (!configurationSucceeded) {
-            clearCache();
             downloadConfiguration();
         }
     }
 
     @WorkerThread
     private boolean initAuthenticationClient(String configurationPayload) {
+
+        /* Parse configuration. */
         try {
             JSONObject configuration = new JSONObject(configurationPayload);
             String identityScope = configuration.getString(IDENTITY_SCOPE);
-            String clientId = configuration.getString(CLIENT_ID);
             String authorityUrl = null;
             JSONArray authorities = configuration.getJSONArray(AUTHORITIES);
             for (int i = 0; i < authorities.length(); i++) {
@@ -318,16 +302,17 @@ public class Identity extends AbstractAppCenterService {
             }
             if (authorityUrl != null) {
 
-                // TODO use file to allow redirect_uri to be passed, need next msal version.
-                mAuthenticationClient = new PublicClientApplication(mContext, clientId, authorityUrl);
+                /* The remaining validation is done by the library. */
+                mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
                 mIdentityScope = identityScope;
+                AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
+                return true;
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
-            AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
-            return true;
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
+            clearCache();
         }
         return false;
     }
@@ -361,9 +346,7 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                if (mIdentityModuleAvailable) {
-                    loginAsync();
-                }
+                loginAsync();
             }
         });
     }
@@ -392,7 +375,7 @@ public class Identity extends AbstractAppCenterService {
         mAuthenticationClient.acquireToken(activity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
             @Override
-            public void onSuccess(AuthenticationResult authenticationResult) {
+            public void onSuccess(IAuthenticationResult authenticationResult) {
                 AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
                 // TODO send id token (not access token) to ingestion.
             }

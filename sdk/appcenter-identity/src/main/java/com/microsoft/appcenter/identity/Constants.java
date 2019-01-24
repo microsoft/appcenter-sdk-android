@@ -48,11 +48,6 @@ final class Constants {
     static final String HEADER_IF_NONE_MATCH = "If-None-Match";
 
     /**
-     * JSON configuration key for clientId.
-     */
-    static final String CLIENT_ID = "client_id";
-
-    /**
      * JSON configuration key for authorities array.
      */
     static final String AUTHORITIES = "authorities";
