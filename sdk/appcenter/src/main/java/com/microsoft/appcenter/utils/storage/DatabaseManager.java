@@ -344,7 +344,7 @@ public class DatabaseManager implements Closeable {
      * @throws RuntimeException if an error occurs.
      */
     @VisibleForTesting
-    SQLiteDatabase getDatabase() throws RuntimeException {
+    SQLiteDatabase getDatabase() {
 
         /* Try opening database. */
         try {
@@ -382,28 +382,33 @@ public class DatabaseManager implements Closeable {
      * @return true if database size was set, otherwise false.
      */
     public boolean setMaxSize(long maxStorageSizeInBytes) {
-        SQLiteDatabase db = getDatabase();
-        long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
+        try {
+            SQLiteDatabase db = getDatabase();
+            long newMaxSize = db.setMaximumSize(maxStorageSizeInBytes);
 
-        /* SQLite always use the next multiple of page size as maximum size. */
-        long pageSize = db.getPageSize();
-        long expectedMultipleMaxSize = maxStorageSizeInBytes / pageSize;
-        if (maxStorageSizeInBytes % pageSize != 0) {
-            expectedMultipleMaxSize++;
-        }
-        expectedMultipleMaxSize *= pageSize;
+            /* SQLite always use the next multiple of page size as maximum size. */
+            long pageSize = db.getPageSize();
+            long expectedMultipleMaxSize = maxStorageSizeInBytes / pageSize;
+            if (maxStorageSizeInBytes % pageSize != 0) {
+                expectedMultipleMaxSize++;
+            }
+            expectedMultipleMaxSize *= pageSize;
 
-        /* So to check the resize works, we need to check new max size against the next multiple of page size. */
-        if (newMaxSize != expectedMultipleMaxSize) {
-            AppCenterLog.error(LOG_TAG, "Could not change maximum database size to " + maxStorageSizeInBytes + " bytes, current maximum size is " + newMaxSize + " bytes.");
+            /* So to check the resize works, we need to check new max size against the next multiple of page size. */
+            if (newMaxSize != expectedMultipleMaxSize) {
+                AppCenterLog.error(LOG_TAG, "Could not change maximum database size to " + maxStorageSizeInBytes + " bytes, current maximum size is " + newMaxSize + " bytes.");
+                return false;
+            }
+            if (maxStorageSizeInBytes == newMaxSize) {
+                AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes.");
+            } else {
+                AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes (next multiple of page size).");
+            }
+            return true;
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Could not change maximum database size.", e);
             return false;
         }
-        if (maxStorageSizeInBytes == newMaxSize) {
-            AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes.");
-        } else {
-            AppCenterLog.info(LOG_TAG, "Changed maximum database size to " + newMaxSize + " bytes (next multiple of page size).");
-        }
-        return true;
     }
 
     /**
@@ -412,7 +417,12 @@ public class DatabaseManager implements Closeable {
      * @return The maximum size of database in bytes.
      */
     public long getMaxSize() {
-        return getDatabase().getMaximumSize();
+        try {
+            return getDatabase().getMaximumSize();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Could not get maximum database size.", e);
+            return -1;
+        }
     }
 
     /**

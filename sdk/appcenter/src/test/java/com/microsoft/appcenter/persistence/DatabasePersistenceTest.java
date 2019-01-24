@@ -10,9 +10,11 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
+import org.json.JSONException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -381,6 +384,37 @@ public class DatabasePersistenceTest {
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         assertTrue(persistence.setMaxStorageSize(20480));
         assertFalse(persistence.setMaxStorageSize(2));
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void putLogWithJSONException() throws Exception {
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(any(Log.class))).thenThrow(new JSONException("JSON exception"));
+        persistence.setLogSerializer(logSerializer);
+
+        /* Persist a log. */
+        persistence.putLog(mock(Log.class), "test-p1", PERSISTENCE_NORMAL);
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void putLogWithOpenDatabaseException() throws Exception {
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+        when(databaseManager.getMaxSize()).thenReturn(-1L);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(any(Log.class))).thenReturn("mock");
+        persistence.setLogSerializer(logSerializer);
+
+        /* Persist a log. */
+        persistence.putLog(mock(Log.class), "test-p1", PERSISTENCE_NORMAL);
     }
 
     private static class MockCursor extends CursorWrapper {
