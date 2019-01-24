@@ -18,6 +18,7 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -184,6 +185,8 @@ public class Identity extends AbstractAppCenterService {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
             }
+            mAuthenticationClient = null;
+            mIdentityScope = null;
             clearCache();
         }
     }
@@ -354,7 +357,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void instanceLogin() {
-        postOnUiThread(new Runnable() {
+        post(new Runnable() {
 
             @Override
             public void run() {
@@ -365,15 +368,23 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    @UiThread
+    @WorkerThread
     private void loginAsync() {
-        if (mAuthenticationClient != null && mActivity != null) {
-            mActivity.startActivityForResult(new Intent(mContext, IdentityAcquireTokenActivity.class), 0);
-        } else {
+        final PublicClientApplication authenticationClient = mAuthenticationClient;
+        HandlerUtils.runOnUiThread(new Runnable() {
 
-            // TODO handle that when both configuration and activity become available.
-            mLoginDelayed = true;
-        }
+            @Override
+            public void run() {
+                if (authenticationClient != null && mActivity != null) {
+                    Intent intent = new Intent(mContext, IdentityAcquireTokenActivity.class);
+                    mActivity.startActivityForResult(intent, Constants.ACTIVITY_REQUEST_CODE);
+                } else {
+
+                    // TODO handle that when both configuration and activity become available.
+                    mLoginDelayed = true;
+                }
+            }
+        });
     }
 
     @UiThread
