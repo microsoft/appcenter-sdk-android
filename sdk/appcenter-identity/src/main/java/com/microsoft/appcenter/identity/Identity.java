@@ -159,7 +159,10 @@ public class Identity extends AbstractAppCenterService {
         if (enabled) {
             if (mAppSecret != null) {
 
-                /* Download fresh configuration first instead of using cache directly. */
+                /* Load cached configuration in case APIs are called early. */
+                loadConfigurationFromCache();
+
+                /* Download the latest configuration in background. */
                 downloadConfiguration();
             } else {
                 AppCenterLog.error(LOG_TAG, "Identity needs to be started with an application secret.");
@@ -246,7 +249,7 @@ public class Identity extends AbstractAppCenterService {
                     @Override
                     public void run() {
                         if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
-                            loadConfigurationFromCache();
+                            processDownloadNotModified();
                         } else {
                             processDownloadError(e);
                         }
@@ -260,7 +263,23 @@ public class Identity extends AbstractAppCenterService {
     private void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
+        AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         initAuthenticationClient(payload);
+    }
+
+    @WorkerThread
+    private void processDownloadNotModified() {
+        mGetConfigCall = null;
+        AppCenterLog.info(LOG_TAG, "Identity configuration didn't change.");
+    }
+
+    @WorkerThread
+    private void loadConfigurationFromCache() {
+        File configFile = getConfigFile();
+        if (configFile.exists()) {
+            AppCenterLog.info(LOG_TAG, "Configure identity from cached configuration.");
+            initAuthenticationClient(FileManager.read(configFile));
+        }
     }
 
     @WorkerThread
@@ -270,21 +289,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private void loadConfigurationFromCache() {
-        mGetConfigCall = null;
-        AppCenterLog.info(LOG_TAG, "Identify configuration didn't change, will use cache.");
-        boolean configurationSucceeded = false;
-        String configurationPayload = FileManager.read(getConfigFile());
-        if (configurationPayload != null) {
-            configurationSucceeded = initAuthenticationClient(configurationPayload);
-        }
-        if (!configurationSucceeded) {
-            downloadConfiguration();
-        }
-    }
-
-    @WorkerThread
-    private boolean initAuthenticationClient(String configurationPayload) {
+    private void initAuthenticationClient(String configurationPayload) {
 
         /* Parse configuration. */
         try {
@@ -305,7 +310,6 @@ public class Identity extends AbstractAppCenterService {
                 mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
-                return true;
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
@@ -313,7 +317,6 @@ public class Identity extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
         }
-        return false;
     }
 
     @NonNull
@@ -338,6 +341,7 @@ public class Identity extends AbstractAppCenterService {
     private void clearCache() {
         SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);
         FileManager.delete(getConfigFile());
+        AppCenterLog.debug(LOG_TAG, "Identity configuration cache cleared.");
     }
 
     private void instanceLogin() {
