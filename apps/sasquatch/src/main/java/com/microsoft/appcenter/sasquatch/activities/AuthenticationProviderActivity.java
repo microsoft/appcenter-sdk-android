@@ -18,6 +18,8 @@ import java.util.List;
 
 public class AuthenticationProviderActivity extends AppCompatActivity {
 
+    private boolean mUserLeaving;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,12 +57,21 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
         Intent intent = new Intent(getApplication(), MSALoginActivity.class);
         intent.putExtra(AuthenticationProvider.Type.class.getName(), type);
-        startActivityForResult(intent, 0);
+        startActivity(intent);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        finish();
+    protected void onUserLeaveHint() {
+        mUserLeaving = true;
+    }
+
+    @Override
+    protected void onRestart() {
+
+        /* When coming back from browser, finish this intermediate menu screen too. */
+        super.onRestart();
+        if (mUserLeaving) {
+            finish();
+        }
     }
 }

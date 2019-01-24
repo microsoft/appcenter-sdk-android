@@ -3,7 +3,6 @@ package com.microsoft.appcenter.identity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
@@ -359,8 +358,7 @@ public class Identity extends AbstractAppCenterService {
             @Override
             public void run() {
                 if (authenticationClient != null && mActivity != null) {
-                    Intent intent = new Intent(mContext, IdentityAcquireTokenActivity.class);
-                    mActivity.startActivityForResult(intent, Constants.ACTIVITY_REQUEST_CODE);
+                    login(mActivity);
                 } else {
 
                     // TODO handle that when both configuration and activity become available.
@@ -371,7 +369,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @UiThread
-    void login(Activity activity) {
+    private void login(Activity activity) {
         mAuthenticationClient.acquireToken(activity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
             @Override
