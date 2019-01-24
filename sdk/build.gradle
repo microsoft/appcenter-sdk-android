@@ -80,6 +80,9 @@ subprojects {
         androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
         androidTestImplementation 'com.android.support.test:runner:1.0.2'
         androidTestImplementation 'com.android.support.test:rules:1.0.2'
+        androidTestImplementation ("com.android.support:support-annotations:${ext.supportLibVersion}") {
+            force = true
+        }
         androidTestImplementation project(':test')
     }
 
@@ -97,8 +100,7 @@ subprojects {
         ])
         executionData.from = fileTree(dir: buildDir, includes: [
                 'jacoco/testDebugUnitTest.exec',
-                'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec',
-                'outputs/code-coverage/connected/*coverage.ec'
+                'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
         ])
     }
 
