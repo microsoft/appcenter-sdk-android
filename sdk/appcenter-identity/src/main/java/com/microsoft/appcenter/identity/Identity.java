@@ -94,6 +94,9 @@ public class Identity extends AbstractAppCenterService {
      */
     private Activity mActivity;
 
+    /**
+     * True if login was delayed because called in background or configuration not ready.
+     */
     private boolean mLoginDelayed;
 
     /**
@@ -174,6 +177,7 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
+            mLoginDelayed = false;
             clearCache();
         }
     }
@@ -194,11 +198,16 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @Override
+    @UiThread
     public void onActivityResumed(Activity activity) {
         mActivity = activity;
+        if (mLoginDelayed) {
+            instanceLogin();
+        }
     }
 
     @Override
+    @UiThread
     public void onActivityPaused(Activity activity) {
         mActivity = null;
     }
@@ -265,6 +274,16 @@ public class Identity extends AbstractAppCenterService {
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         initAuthenticationClient(payload);
+        final PublicClientApplication authenticationClient = mAuthenticationClient;
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mLoginDelayed) {
+                    login(authenticationClient);
+                }
+            }
+        });
     }
 
     @WorkerThread
@@ -331,10 +350,10 @@ public class Identity extends AbstractAppCenterService {
         try {
             FileManager.write(file, payload);
             SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, eTag);
+            AppCenterLog.debug(LOG_TAG, "Identity configuration saved in cache.");
         } catch (IOException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to cache identity configuration.", e);
         }
-        AppCenterLog.debug(LOG_TAG, "Identity configuration saved in cache.");
     }
 
     @WorkerThread
@@ -349,48 +368,44 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                loginAsync();
-            }
-        });
-    }
+                final PublicClientApplication authenticationClient = mAuthenticationClient;
+                HandlerUtils.runOnUiThread(new Runnable() {
 
-    @WorkerThread
-    private void loginAsync() {
-        final PublicClientApplication authenticationClient = mAuthenticationClient;
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                if (authenticationClient != null && mActivity != null) {
-                    login(mActivity);
-                } else {
-
-                    // TODO handle that when both configuration and activity become available.
-                    mLoginDelayed = true;
-                }
+                    @Override
+                    public void run() {
+                        login(authenticationClient);
+                    }
+                });
             }
         });
     }
 
     @UiThread
-    private void login(Activity activity) {
-        mAuthenticationClient.acquireToken(activity, new String[]{mIdentityScope}, new AuthenticationCallback() {
+    private void login(PublicClientApplication authenticationClient) {
+        if (authenticationClient != null && mActivity != null) {
+            authenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
-            @Override
-            public void onSuccess(IAuthenticationResult authenticationResult) {
-                AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                // TODO send id token (not access token) to ingestion.
-            }
+                @Override
+                public void onSuccess(IAuthenticationResult authenticationResult) {
+                    AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
+                    // TODO send id token (not access token) to ingestion.
+                }
 
-            @Override
-            public void onError(MsalException exception) {
-                AppCenterLog.error(LOG_TAG, "User login failed.", exception);
-            }
+                @Override
+                public void onError(MsalException exception) {
+                    AppCenterLog.error(LOG_TAG, "User login failed.", exception);
+                }
 
-            @Override
-            public void onCancel() {
-                AppCenterLog.warn(LOG_TAG, "User canceled login.");
-            }
-        });
+                @Override
+                public void onCancel() {
+                    AppCenterLog.warn(LOG_TAG, "User canceled login.");
+                }
+            });
+        } else {
+
+            // TODO handle that when both configuration and activity become available.
+            mLoginDelayed = true;
+        }
     }
+
 }
