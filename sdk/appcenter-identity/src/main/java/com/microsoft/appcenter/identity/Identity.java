@@ -1,10 +1,14 @@
 package com.microsoft.appcenter.identity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
@@ -17,7 +21,10 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.AuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.exception.MsalException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -70,6 +77,11 @@ public class Identity extends AbstractAppCenterService {
     private String mAppSecret;
 
     /**
+     * True when identity module can be used (API level >= 21).
+     */
+    private boolean mIdentityModuleAvailable;
+
+    /**
      * Authentication client.
      */
     private PublicClientApplication mAuthenticationClient;
@@ -83,6 +95,13 @@ public class Identity extends AbstractAppCenterService {
      * HTTP client call, for cancellation.
      */
     private ServiceCall mGetConfigCall;
+
+    /**
+     * Current activity.
+     */
+    private Activity mActivity;
+
+    private boolean mLoginDelayed;
 
     /**
      * Get shared instance.
@@ -124,8 +143,13 @@ public class Identity extends AbstractAppCenterService {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
+    public static void login() {
+        getInstance().instanceLogin();
+    }
+
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    @WorkerThread
+    public void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
@@ -137,12 +161,14 @@ public class Identity extends AbstractAppCenterService {
      * @param enabled current state.
      */
     @Override
+    @WorkerThread
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
 
             /* Make module no-op if running on API level < 21, TODO this check can be removed when next msal lib released. */
             int minApiLevel = Build.VERSION_CODES.LOLLIPOP;
-            if (Build.VERSION.SDK_INT <= minApiLevel) {
+            mIdentityModuleAvailable = Build.VERSION.SDK_INT >= minApiLevel;
+            if (!mIdentityModuleAvailable) {
                 AppCenterLog.error(LOG_TAG, "Identity requires API level " + minApiLevel);
                 return;
             }
@@ -177,6 +203,17 @@ public class Identity extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
+    @Override
+    public void onActivityResumed(Activity activity) {
+        mActivity = activity;
+    }
+
+    @Override
+    public void onActivityPaused(Activity activity) {
+        mActivity = null;
+    }
+
+    @WorkerThread
     private void downloadConfiguration() {
 
         /* Configure http call to download the configuration. Add ETag if we have a cached entry. */
@@ -205,34 +242,49 @@ public class Identity extends AbstractAppCenterService {
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(String payload, Map<String, String> headers) {
-                processDownloadedConfig(payload, headers.get(HEADER_E_TAG));
+            public void onCallSucceeded(final String payload, final Map<String, String> headers) {
+                post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        processDownloadedConfig(payload, headers.get(HEADER_E_TAG));
+                    }
+                });
             }
 
             @Override
-            public void onCallFailed(Exception e) {
-                if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
-                    loadConfigurationFromCache();
-                } else {
-                    processDownloadError(e);
-                }
+            public void onCallFailed(final Exception e) {
+                post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
+                            loadConfigurationFromCache();
+                        } else {
+                            processDownloadError(e);
+                        }
+                    }
+                });
             }
         });
     }
 
-    private synchronized void processDownloadedConfig(String payload, String eTag) {
+    @WorkerThread
+    private void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
         if (initAuthenticationClient(payload)) {
             saveConfigFile(payload, eTag);
         }
     }
 
-    private synchronized void processDownloadError(Exception e) {
+    @WorkerThread
+    private void processDownloadError(Exception e) {
         mGetConfigCall = null;
         AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
     }
 
-    private synchronized void loadConfigurationFromCache() {
+    @WorkerThread
+    private void loadConfigurationFromCache() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Identify configuration didn't change, will use cache.");
         boolean configurationSucceeded = false;
@@ -246,7 +298,8 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
-    private synchronized boolean initAuthenticationClient(String configurationPayload) {
+    @WorkerThread
+    private boolean initAuthenticationClient(String configurationPayload) {
         try {
             JSONObject configuration = new JSONObject(configurationPayload);
             String identityScope = configuration.getString(IDENTITY_SCOPE);
@@ -281,6 +334,7 @@ public class Identity extends AbstractAppCenterService {
         return new File(mContext.getFilesDir(), FILE_PATH);
     }
 
+    @WorkerThread
     private void saveConfigFile(String payload, String eTag) {
         File file = getConfigFile();
         FileManager.mkdir(file.getParent());
@@ -293,8 +347,54 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.debug(LOG_TAG, "Identity configuration saved in cache.");
     }
 
+    @WorkerThread
     private void clearCache() {
         SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);
         FileManager.delete(getConfigFile());
+    }
+
+    private void instanceLogin() {
+        postOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mIdentityModuleAvailable) {
+                    loginAsync();
+                }
+            }
+        });
+    }
+
+    @UiThread
+    private void loginAsync() {
+        if (mAuthenticationClient != null && mActivity != null) {
+            mActivity.startActivityForResult(new Intent(mContext, IdentityAcquireTokenActivity.class), 0);
+        } else {
+
+            // TODO handle that when both configuration and activity become available.
+            mLoginDelayed = true;
+        }
+    }
+
+    @UiThread
+    void login(Activity activity) {
+        mAuthenticationClient.acquireToken(activity, new String[]{mIdentityScope}, new AuthenticationCallback() {
+
+            @Override
+            public void onSuccess(AuthenticationResult authenticationResult) {
+                AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
+                // TODO send id token (not access token) to ingestion.
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                AppCenterLog.error(LOG_TAG, "User login failed.", exception);
+            }
+
+            @Override
+            public void onCancel() {
+                AppCenterLog.warn(LOG_TAG, "User canceled login.");
+            }
+        });
     }
 }

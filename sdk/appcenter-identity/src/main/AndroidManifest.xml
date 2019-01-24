@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:tools="http://schemas.android.com/tools"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.microsoft.appcenter.identity">
 
     <!--
@@ -7,4 +8,10 @@
      Need to disable Identity for now if running on API level < 21.
      -->
     <uses-sdk tools:overrideLibrary="com.microsoft.identity.msal" />
+
+    <application>
+        <activity
+            android:name="com.microsoft.appcenter.identity.IdentityAcquireTokenActivity"
+            android:theme="@style/AppCenter.Identity.Theme.NoDisplay" />
+    </application>
 </manifest>
