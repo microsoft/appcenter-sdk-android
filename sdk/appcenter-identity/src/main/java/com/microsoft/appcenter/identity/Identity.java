@@ -11,6 +11,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -31,36 +32,26 @@ import java.util.Map;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.identity.Constants.AUTHORITIES;
+import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
+import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
+import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
+import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
+import static com.microsoft.appcenter.identity.Constants.CLIENT_ID;
+import static com.microsoft.appcenter.identity.Constants.CONFIG_URL;
+import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
+import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
+import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
+import static com.microsoft.appcenter.identity.Constants.IDENTITY_GROUP;
+import static com.microsoft.appcenter.identity.Constants.IDENTITY_SCOPE;
+import static com.microsoft.appcenter.identity.Constants.LOG_TAG;
+import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
+import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
 
 /**
  * Identity service.
  */
 public class Identity extends AbstractAppCenterService {
-
-    /**
-     * Name of the service.
-     */
-    private static final String SERVICE_NAME = "Identity";
-
-    /**
-     * TAG used in logging for Identity.
-     */
-    private static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Constant marking event of the identity group.
-     */
-    private static final String IDENTITY_GROUP = "group_identity";
-
-    private static final String CONFIG_URL = "https://mobilecentersdkdev.blob.core.windows.net/identity/%s.json";
-
-    private static final String FILE_PATH = "appcenter/identity/config.json";
-
-    private static final String PREFERENCE_ETAG_KEY = SERVICE_NAME + ".configFileETag";
-
-    private static final String HEADER_E_TAG = "ETag";
-
-    private static final String HEADER_IF_NONE_MATCH = "If-None-Match";
 
     /**
      * Shared instance.
@@ -88,6 +79,10 @@ public class Identity extends AbstractAppCenterService {
      */
     private String mIdentityScope;
 
+    /**
+     * HTTP client call, for cancellation.
+     */
+    private ServiceCall mGetConfigCall;
 
     /**
      * Get shared instance.
@@ -159,7 +154,10 @@ public class Identity extends AbstractAppCenterService {
                 AppCenterLog.error(LOG_TAG, "Identity needs to be started with an application secret.");
             }
         } else {
-            //TODO: cancel tasks.
+            if (mGetConfigCall != null) {
+                mGetConfigCall.cancel();
+                mGetConfigCall = null;
+            }
             clearCache();
         }
     }
@@ -184,12 +182,12 @@ public class Identity extends AbstractAppCenterService {
         /* Configure http call to download the configuration. Add ETag if we have a cached entry. */
         HttpClient httpClient = createHttpClient(mContext);
         Map<String, String> headers = new HashMap<>();
-        String eTag = SharedPreferencesManager.getString(PREFERENCE_ETAG_KEY);
+        String eTag = SharedPreferencesManager.getString(PREFERENCE_E_TAG_KEY);
         if (eTag != null) {
             headers.put(HEADER_IF_NONE_MATCH, eTag);
         }
         String url = String.format(CONFIG_URL, mAppSecret);
-        httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
+        mGetConfigCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
             public String buildRequestBody() {
@@ -216,19 +214,26 @@ public class Identity extends AbstractAppCenterService {
                 if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
                     loadConfigurationFromCache();
                 } else {
-                    AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+                    processDownloadError(e);
                 }
             }
         });
     }
 
     private synchronized void processDownloadedConfig(String payload, String eTag) {
+        mGetConfigCall = null;
         if (initAuthenticationClient(payload)) {
             saveConfigFile(payload, eTag);
         }
     }
 
+    private synchronized void processDownloadError(Exception e) {
+        mGetConfigCall = null;
+        AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+    }
+
     private synchronized void loadConfigurationFromCache() {
+        mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Identify configuration didn't change, will use cache.");
         boolean configurationSucceeded = false;
         String configurationPayload = FileManager.read(getConfigFile());
@@ -244,14 +249,14 @@ public class Identity extends AbstractAppCenterService {
     private synchronized boolean initAuthenticationClient(String configurationPayload) {
         try {
             JSONObject configuration = new JSONObject(configurationPayload);
-            String identityScope = configuration.getString("identity_scope");
-            String clientId = configuration.getString("client_id");
+            String identityScope = configuration.getString(IDENTITY_SCOPE);
+            String clientId = configuration.getString(CLIENT_ID);
             String authorityUrl = null;
-            JSONArray authorities = configuration.getJSONArray("authorities");
+            JSONArray authorities = configuration.getJSONArray(AUTHORITIES);
             for (int i = 0; i < authorities.length(); i++) {
                 JSONObject authority = authorities.getJSONObject(i);
-                if (authority.optBoolean("default") && "B2C".equals(authority.getString("type"))) {
-                    authorityUrl = authority.getString("authority_url");
+                if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_B2C.equals(authority.getString(AUTHORITY_TYPE))) {
+                    authorityUrl = authority.getString(AUTHORITY_URL);
                     break;
                 }
             }
@@ -281,7 +286,7 @@ public class Identity extends AbstractAppCenterService {
         FileManager.mkdir(file.getParent());
         try {
             FileManager.write(file, payload);
-            SharedPreferencesManager.putString(PREFERENCE_ETAG_KEY, eTag);
+            SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, eTag);
         } catch (IOException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to cache identity configuration.", e);
         }
@@ -289,7 +294,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void clearCache() {
-        SharedPreferencesManager.remove(PREFERENCE_ETAG_KEY);
+        SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);
         FileManager.delete(getConfigFile());
     }
 }
