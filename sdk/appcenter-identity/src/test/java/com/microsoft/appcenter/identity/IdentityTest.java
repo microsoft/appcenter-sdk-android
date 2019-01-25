@@ -24,9 +24,11 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -231,6 +234,13 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
 
+        /* Verify configuration is cached. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
+
         /* Verify login still delayed in background. */
         assertTrue(identity.isLoginDelayed());
 
@@ -267,8 +277,21 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
+        /* Mock storage to fail caching configuration, this does not prevent login. */
+        doThrow(new IOException()).when(FileManager.class);
+        FileManager.write(any(File.class), anyString());
+
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* ETag not saved as file write failed. */
+        verifyStatic(never());
+        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
 
         /* Go foreground. */
         Activity activity = mock(Activity.class);
@@ -288,7 +311,9 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), new HashMap<String, String>());
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
     }
 
     @NonNull
