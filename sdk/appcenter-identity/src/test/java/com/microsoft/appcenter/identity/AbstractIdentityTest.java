@@ -4,10 +4,12 @@ import android.os.SystemClock;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
@@ -24,19 +26,25 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SystemClock.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, HandlerUtils.class})
-abstract class AbstractIdentityTest {
+@PrepareForTest({
+        SystemClock.class,
+        SharedPreferencesManager.class,
+        FileManager.class,
+        AppCenterLog.class,
+        AppCenter.class,
+        HandlerUtils.class,
+        HttpUtils.class
+})
+abstract public class AbstractIdentityTest {
 
     static final String IDENTITY_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Identity.getInstance().getServiceName();
 
     @Mock
     AppCenterHandler mAppCenterHandler;
-
-    @Mock
-    AppCenter mAppCenter;
 
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
@@ -48,7 +56,7 @@ abstract class AbstractIdentityTest {
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
         when(AppCenter.isConfigured()).thenReturn(true);
-        when(AppCenter.getInstance()).thenReturn(mAppCenter);
+        when(AppCenter.getInstance()).thenReturn(mock(AppCenter.class));
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
         Answer<Void> runNow = new Answer<Void>() {
@@ -82,5 +90,8 @@ abstract class AbstractIdentityTest {
             }
         }).when(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(anyString(), anyBoolean());
+
+        /* Mock file storage. */
+        mockStatic(FileManager.class);
     }
 }

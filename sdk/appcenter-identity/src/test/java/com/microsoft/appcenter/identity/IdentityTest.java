@@ -1,36 +1,51 @@
 package com.microsoft.appcenter.identity;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpClientRetryer;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyMapOf;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class IdentityTest extends AbstractIdentityTest {
 
-    @After
-    public void resetUserId() {
-        UserIdContext.unsetInstance();
+    @NonNull
+    private Channel start(Identity identity) {
+        Channel channel = mock(Channel.class);
+        identity.onStarting(mAppCenterHandler);
+        identity.onStarted(mock(Context.class), channel, "", null, true);
+        return channel;
     }
 
     @Test
@@ -46,7 +61,7 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void checkFactories() {
         Map<String, LogFactory> factories = Identity.getInstance().getLogFactories();
-        assertTrue(factories == null);
+        assertNull(factories);
     }
 
     @Test
@@ -60,9 +75,7 @@ public class IdentityTest extends AbstractIdentityTest {
         assertFalse(Identity.isEnabled().get());
 
         /* Start. */
-        Channel channel = mock(Channel.class);
-        identity.onStarting(mAppCenterHandler);
-        identity.onStarted(mock(Context.class), channel, "", null, true);
+        Channel channel = start(identity);
         verify(channel).removeGroup(eq(identity.getGroupName()));
         verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
@@ -77,13 +90,31 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void disablePersisted() {
         when(SharedPreferencesManager.getBoolean(IDENTITY_ENABLED_KEY, true)).thenReturn(false);
-        Identity analytics = Identity.getInstance();
+        Identity identity = Identity.getInstance();
 
         /* Start. */
-        Channel channel = mock(Channel.class);
-        analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        Channel channel = start(identity);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
+    }
+
+    @Test
+    public void downloadFullInvalidConfiguration() throws Exception {
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        start(Identity.getInstance());
+
+        /* When we get an invalid payload. */
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+        serviceCallback.onCallSucceeded("invalid", new HashMap<String, String>());
+
+        /* We didn't attempt to even save. */
+        verifyStatic();
+        FileManager.write(any(File.class), anyString());
     }
 }
