@@ -144,8 +144,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @Override
-    @WorkerThread
-    public void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
@@ -157,7 +156,6 @@ public class Identity extends AbstractAppCenterService {
      * @param enabled current state.
      */
     @Override
-    @WorkerThread
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             if (mAppSecret != null) {
@@ -198,8 +196,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @Override
-    @UiThread
-    public void onActivityResumed(Activity activity) {
+    public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
         if (mLoginDelayed) {
             instanceLogin();
@@ -207,13 +204,11 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @Override
-    @UiThread
-    public void onActivityPaused(Activity activity) {
+    public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
     }
 
-    @WorkerThread
-    private void downloadConfiguration() {
+    private synchronized void downloadConfiguration() {
 
         /* Configure http call to download the configuration. Add ETag if we have a cached entry. */
         HttpClient httpClient = createHttpClient(mContext);
@@ -269,25 +264,23 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private void processDownloadedConfig(String payload, String eTag) {
+    private synchronized void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         initAuthenticationClient(payload);
-        final PublicClientApplication authenticationClient = mAuthenticationClient;
-        HandlerUtils.runOnUiThread(new Runnable() {
+        if (mLoginDelayed) {
+            HandlerUtils.runOnUiThread(new Runnable() {
 
-            @Override
-            public void run() {
-                if (mLoginDelayed) {
-                    login(authenticationClient);
+                @Override
+                public void run() {
+                    loginFromUI();
                 }
-            }
-        });
+            });
+        }
     }
 
-    @WorkerThread
-    private void processDownloadNotModified() {
+    private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Identity configuration didn't change.");
     }
@@ -301,14 +294,13 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
-    @WorkerThread
-    private void processDownloadError(Exception e) {
+    private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
         AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
     }
 
     @WorkerThread
-    private void initAuthenticationClient(String configurationPayload) {
+    private synchronized void initAuthenticationClient(String configurationPayload) {
 
         /* Parse configuration. */
         try {
@@ -364,26 +356,20 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void instanceLogin() {
-        post(new Runnable() {
+        postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                final PublicClientApplication authenticationClient = mAuthenticationClient;
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        login(authenticationClient);
-                    }
-                });
+                loginFromUI();
             }
         });
     }
 
     @UiThread
-    private void login(PublicClientApplication authenticationClient) {
-        if (authenticationClient != null && mActivity != null) {
-            authenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
+    private synchronized void loginFromUI() {
+        if (mAuthenticationClient != null && mActivity != null) {
+            mLoginDelayed = false;
+            mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(IAuthenticationResult authenticationResult) {
@@ -402,8 +388,6 @@ public class Identity extends AbstractAppCenterService {
                 }
             });
         } else {
-
-            // TODO handle that when both configuration and activity become available.
             mLoginDelayed = true;
         }
     }
