@@ -368,13 +368,14 @@ public class Identity extends AbstractAppCenterService {
     @UiThread
     private synchronized void loginFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
+            AppCenterLog.info(LOG_TAG, "Login using browser.");
             mLoginDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    // TODO send id token (not access token) to ingestion.
+                    // TODO send id token (not access token) to ingestion, if sdk still enabled.
                 }
 
                 @Override
@@ -388,6 +389,7 @@ public class Identity extends AbstractAppCenterService {
                 }
             });
         } else {
+            AppCenterLog.debug(LOG_TAG, "Login called while not configured or not in foreground, waiting.");
             mLoginDelayed = true;
         }
     }
