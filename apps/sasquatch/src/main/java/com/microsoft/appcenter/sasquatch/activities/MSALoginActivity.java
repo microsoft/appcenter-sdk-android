@@ -315,7 +315,12 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    @Override
+                    /* TODO remove this method once Identity published to jCenter. */
+                    public void onCallSucceeded(String payload) {
+                        onCallSucceeded(payload, null);
+                    }
+
+                    /* TODO add @Override once Identity published to jCenter. */
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
@@ -359,7 +364,12 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    @Override
+                    /* TODO remove this method once Identity published to jCenter. */
+                    public void onCallSucceeded(String payload) {
+                        onCallSucceeded(payload, null);
+                    }
+
+                    /* TODO add @Override once Identity published to jCenter. */
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
