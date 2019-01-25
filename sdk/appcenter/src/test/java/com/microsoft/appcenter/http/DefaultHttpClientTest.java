@@ -208,10 +208,10 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. Use shorter but valid app secret. */
-        String appSecret = "SHORT";
+        String appId = "SHORT";
         UUID installId = UUIDUtils.randomUUID();
         Map<String, String> headers = new HashMap<>();
-        headers.put("App-Secret", appSecret);
+        headers.put("App-Secret", appId);
         headers.put("Install-ID", installId.toString());
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
@@ -220,7 +220,7 @@ public class DefaultHttpClientTest {
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestProperty("Content-Type", "application/json");
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
-        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
+        verify(urlConnection).setRequestProperty("App-Secret", appId);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
@@ -262,10 +262,10 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. Use shorter but valid app secret. */
-        String appSecret = "SHORT";
+        String appId = "SHORT";
         UUID installId = UUIDUtils.randomUUID();
         Map<String, String> headers = new HashMap<>();
-        headers.put("App-Secret", appSecret);
+        headers.put("App-Secret", appId);
         headers.put("Install-ID", installId.toString());
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
@@ -274,7 +274,7 @@ public class DefaultHttpClientTest {
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection, never()).setRequestProperty(eq("Content-Type"), anyString());
         verify(urlConnection, never()).setRequestProperty(eq("Content-Encoding"), anyString());
-        verify(urlConnection).setRequestProperty("App-Secret", appSecret);
+        verify(urlConnection).setRequestProperty("App-Secret", appId);
         verify(urlConnection).setRequestProperty("Install-ID", installId.toString());
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection, never()).setDoOutput(true);
