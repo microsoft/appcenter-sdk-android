@@ -320,8 +320,9 @@ public class MSALoginActivity extends AppCompatActivity {
                         onCallSucceeded(payload, null);
                     }
 
-                    /* TODO add @Override once Identity published to jCenter. */
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                    /* TODO add @Override once Identity published to jCenter. Remove also suppress warnings. */
+                    @SuppressWarnings("WeakerAccess")
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString(USER_ID);
@@ -369,8 +370,9 @@ public class MSALoginActivity extends AppCompatActivity {
                         onCallSucceeded(payload, null);
                     }
 
-                    /* TODO add @Override once Identity published to jCenter. */
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                    /* TODO add @Override once Identity published to jCenter. Remove also suppress warnings. */
+                    @SuppressWarnings("WeakerAccess")
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");
