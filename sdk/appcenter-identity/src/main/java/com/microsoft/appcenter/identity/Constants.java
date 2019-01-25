@@ -76,9 +76,4 @@ final class Constants {
      * JSON configuration key for identity scope.
      */
     static final String IDENTITY_SCOPE = "identity_scope";
-
-    /**
-     * Activity request code used by msal library, using the same as we use a proxy activity.
-     */
-    static final int ACTIVITY_REQUEST_CODE = 1001;
 }
