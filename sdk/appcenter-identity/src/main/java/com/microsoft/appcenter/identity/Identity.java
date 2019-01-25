@@ -268,8 +268,8 @@ public class Identity extends AbstractAppCenterService {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
-        initAuthenticationClient(payload);
-        if (mLoginDelayed) {
+        boolean configurationValid = initAuthenticationClient(payload);
+        if (configurationValid && mLoginDelayed) {
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
@@ -300,7 +300,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private synchronized void initAuthenticationClient(String configurationPayload) {
+    private synchronized boolean initAuthenticationClient(String configurationPayload) {
 
         /* Parse configuration. */
         try {
@@ -321,12 +321,14 @@ public class Identity extends AbstractAppCenterService {
                 mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
+                return true;
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
+            return false;
         }
     }
 
@@ -394,4 +396,8 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
+    @VisibleForTesting
+    boolean isLoginDelayed() {
+        return mLoginDelayed;
+    }
 }
