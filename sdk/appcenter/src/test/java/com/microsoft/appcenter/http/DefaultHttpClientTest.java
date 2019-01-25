@@ -15,7 +15,9 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Captor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -31,6 +33,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -80,6 +83,9 @@ public class DefaultHttpClientTest {
 
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
+
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
     @After
     public void tearDown() throws Exception {
@@ -501,6 +507,9 @@ public class DefaultHttpClientTest {
         ByteArrayInputStream inputStream = spy(new ByteArrayInputStream("fake binary".getBytes()));
         when(urlConnection.getInputStream()).thenReturn(inputStream);
         when(urlConnection.getHeaderField("Content-Type")).thenReturn("image/png");
+        Map<String, List<String>> responseHeaders = new HashMap<>();
+        responseHeaders.put("ETag", Collections.singletonList("\"0x1234\""));
+        when(urlConnection.getHeaderFields()).thenReturn(responseHeaders);
 
         /* Configure API client. */
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
@@ -511,7 +520,10 @@ public class DefaultHttpClientTest {
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         mockCall();
         httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
-        verify(serviceCallback).onCallSucceeded("fake binary", Collections.<String, String>emptyMap());
+        verify(serviceCallback).onCallSucceeded(eq("fake binary"), mHeadersCaptor.capture());
+        assertNotNull(mHeadersCaptor.getValue());
+        assertEquals(1, mHeadersCaptor.getValue().size());
+        assertEquals("\"0x1234\"", mHeadersCaptor.getValue().get("ETag"));
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).setRequestMethod("GET");
         verify(urlConnection, never()).setDoOutput(true);
@@ -531,6 +543,39 @@ public class DefaultHttpClientTest {
                 return logMessage.contains("<binary>") && !logMessage.contains("fake binary");
             }
         }));
+    }
+
+    @Test
+    public void get304() throws Exception {
+
+        /* Mock verbose logs. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(304);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        ByteArrayInputStream inputStream = spy(new ByteArrayInputStream("".getBytes()));
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(new HttpException(304));
+        verifyNoMoreInteractions(serviceCallback);
+        httpClient.close();
     }
 
     @Test
