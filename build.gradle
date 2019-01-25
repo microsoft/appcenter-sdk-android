@@ -26,7 +26,7 @@ def file = rootProject.file('local.properties')
 if (file.exists()) {
     localProperties.load(file.newDataInputStream())
 }
-def azureArtifactsGradleAccessToken=properties['azure.artifacts.gradle.access.token']
+def azureArtifactsGradleAccessToken=localProperties['azure.artifacts.gradle.access.token']
 
 allprojects {
     repositories {
