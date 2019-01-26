@@ -9,6 +9,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -223,7 +224,7 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void onBeforeCalling(URL url, Map<String, String> headers) {
-                if (AppCenterLog.getLogLevel() <= VERBOSE) {
+                if (AppCenter.getLogLevel() <= VERBOSE) {
                     String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
                     AppCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
                     AppCenterLog.verbose(LOG_TAG, "Headers: " + headers);

@@ -3,7 +3,9 @@ package com.microsoft.appcenter.identity;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
@@ -25,6 +27,7 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +36,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -48,15 +53,21 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class IdentityTest extends AbstractIdentityTest {
+
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
     @NonNull
     private Channel start(Identity identity) {
@@ -316,8 +327,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
     }
 
-    @Test
-    public void downloadConfigurationFailed() throws Exception {
+    private void testDownloadFailed(Exception e) throws Exception {
 
         /* Mock http and start identity service. */
         HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
@@ -333,13 +343,88 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
-        serviceCallback.onCallFailed(new HttpException(404));
+        serviceCallback.onCallFailed(e);
 
         /* If we login. */
         Identity.login();
 
         /* Then nothing happens, we are delayed. */
         assertTrue(identity.isLoginDelayed());
+    }
+
+    @Test
+    public void downloadConfigurationFailedHttp() throws Exception {
+        testDownloadFailed(new HttpException(404));
+    }
+
+    @Test
+    public void downloadConfigurationFailedNetwork() throws Exception {
+        testDownloadFailed(new IOException());
+    }
+
+    @Test
+    public void readCacheAndRefreshNotModified() throws Exception {
+
+        /* Mock verbose logs. */
+        when(AppCenter.getLogLevel()).thenReturn(Log.VERBOSE);
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        /* Mock ETag. */
+        when(SharedPreferencesManager.getString(PREFERENCE_E_TAG_KEY)).thenReturn("cachedETag");
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Mock foreground. */
+        Activity activity = mock(Activity.class);
+        identity.onActivityResumed(activity);
+
+        /* We can login right away even when http call has not yet finished. */
+        Identity.login();
+        assertFalse(identity.isLoginDelayed());
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+
+        /* Check http call. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(httpClient).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+
+        /* Check ETag was used. */
+        Map<String, String> headers = mHeadersCaptor.getValue();
+        assertNotNull(headers);
+        assertEquals("cachedETag", headers.get(HEADER_IF_NONE_MATCH));
+
+        /* Check headers url/headers was logged. */
+        templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), headers);
+        verifyStatic(atLeastOnce());
+        AppCenterLog.verbose(anyString(), anyString());
+
+        /* Simulate response 304 not modified. */
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+        serviceCallback.onCallFailed(new HttpException(304));
+
+        /* Configuration not refreshed. */
+        verifyNew(PublicClientApplication.class, times(1));
     }
 
     private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {

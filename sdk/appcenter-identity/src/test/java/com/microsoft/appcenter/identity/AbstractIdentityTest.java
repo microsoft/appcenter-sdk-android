@@ -58,8 +58,8 @@ abstract public class AbstractIdentityTest {
         Identity.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
-        when(AppCenterLog.getLogLevel()).thenReturn(Log.WARN);
         mockStatic(AppCenter.class);
+        when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
         when(AppCenter.isConfigured()).thenReturn(true);
         when(AppCenter.getInstance()).thenReturn(mock(AppCenter.class));
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
