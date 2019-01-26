@@ -69,6 +69,11 @@ subprojects {
     dependencies {
         compileOnly "com.android.support:support-annotations:${ext.supportLibVersion}"
         javadocDeps "com.android.support:support-annotations:${ext.supportLibVersion}"
+        configurations.all {
+            resolutionStrategy {
+                force "com.android.support:support-annotations:${ext.supportLibVersion}"
+            }
+        }
 
         testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
         testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
