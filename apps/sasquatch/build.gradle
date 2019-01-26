@@ -58,6 +58,7 @@ repositories {
 dependencies {
     implementation "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:customtabs:${rootProject.ext.supportLibVersion}"
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
