@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
+import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -228,6 +229,10 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
+        /* Mock foreground then background again. */
+        identity.onActivityResumed(mock(Activity.class));
+        identity.onActivityPaused(mock(Activity.class));
+
         /* Login, will be delayed until configuration ready. */
         Identity.login();
 
@@ -304,6 +309,32 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify login still delayed in background. */
         assertFalse(identity.isLoginDelayed());
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+    }
+
+    @Test
+    public void downloadConfigurationFailed() throws Exception {
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Mock foreground. */
+        identity.onActivityResumed(mock(Activity.class));
+
+        /* Mock http call fails. */
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+        serviceCallback.onCallFailed(new HttpException(404));
+
+        /* If we login. */
+        Identity.login();
+
+        /* Then nothing happens, we are delayed. */
+        assertTrue(identity.isLoginDelayed());
     }
 
     private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) {
