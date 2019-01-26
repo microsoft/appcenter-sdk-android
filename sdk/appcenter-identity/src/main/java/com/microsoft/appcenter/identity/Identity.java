@@ -158,16 +158,12 @@ public class Identity extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            if (mAppSecret != null) {
 
-                /* Load cached configuration in case APIs are called early. */
-                loadConfigurationFromCache();
+            /* Load cached configuration in case APIs are called early. */
+            loadConfigurationFromCache();
 
-                /* Download the latest configuration in background. */
-                downloadConfiguration();
-            } else {
-                AppCenterLog.error(LOG_TAG, "Identity needs to be started with an application secret.");
-            }
+            /* Download the latest configuration in background. */
+            downloadConfiguration();
         } else {
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
