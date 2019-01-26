@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.identity;
 
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
@@ -57,6 +58,7 @@ abstract public class AbstractIdentityTest {
         Identity.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.WARN);
         mockStatic(AppCenter.class);
         when(AppCenter.isConfigured()).thenReturn(true);
         when(AppCenter.getInstance()).thenReturn(mock(AppCenter.class));

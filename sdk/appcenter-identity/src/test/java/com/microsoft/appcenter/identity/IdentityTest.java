@@ -11,6 +11,7 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -19,6 +20,7 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,6 +28,8 @@ import org.mockito.ArgumentCaptor;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -337,11 +342,28 @@ public class IdentityTest extends AbstractIdentityTest {
         assertTrue(identity.isLoginDelayed());
     }
 
-    private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) {
+    private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+
+        /* Intercept parameters. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
+        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
+
+        /* Verify call template. */
+        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+
+        /* Verify no logging if verbose log not enabled (default). */
+        try {
+            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
+        } catch (MalformedURLException e) {
+            fail("test url should always be valid " + e.getMessage());
+        }
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
+
+        /* Simulate response. */
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
         serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
