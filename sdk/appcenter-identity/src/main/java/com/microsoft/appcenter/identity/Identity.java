@@ -140,6 +140,9 @@ public class Identity extends AbstractAppCenterService {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
+    /**
+     * Login to get user information.
+     */
     public static void login() {
         getInstance().instanceLogin();
     }
