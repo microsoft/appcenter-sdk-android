@@ -4,6 +4,8 @@ evaluationDependsOn(':sdk')
 dependencies {
     api project(':sdk:appcenter')
 
+    //noinspection GradleDependency cannot update this without sync error, but app can update
     api "com.google.firebase:firebase-core:16.0.1"
+    //noinspection GradleDependency cannot update this without sync error, but app can update
     api "com.google.firebase:firebase-messaging:17.0.0"
 }
