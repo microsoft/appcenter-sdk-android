@@ -338,7 +338,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     protected void onCancelled(Object result) {
 
         /* Handle the result even if it was cancelled. */
-        if (result instanceof String || result instanceof HttpException) {
+        if (result instanceof Pair || result instanceof HttpException) {
             onPostExecute(result);
         } else {
             mTracker.onFinish(this);

@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -978,7 +979,7 @@ public class DefaultHttpClientTest {
         /* Compress payload for verification. */
         ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(payload.length());
         GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
-        gzipStream.write(payload.getBytes("UTF-8"));
+        gzipStream.write(payload.getBytes(StandardCharsets.UTF_8));
         gzipStream.close();
         byte[] compressedBytes = gzipBuffer.toByteArray();
 
@@ -1115,7 +1116,7 @@ public class DefaultHttpClientTest {
         /* Compress payload for verification. */
         ByteArrayOutputStream gzipBuffer = new ByteArrayOutputStream(payload.length());
         GZIPOutputStream gzipStream = new GZIPOutputStream(gzipBuffer);
-        gzipStream.write(payload.getBytes("UTF-8"));
+        gzipStream.write(payload.getBytes(StandardCharsets.UTF_8));
         gzipStream.close();
         byte[] compressedBytes = gzipBuffer.toByteArray();
 
