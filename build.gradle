@@ -16,7 +16,9 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.3.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
-        classpath 'com.google.gms:google-services:4.2.0'
+
+        //noinspection GradleDependency later versions incompatible with msal dependency because of the jwt lib, see https://github.com/invertase/react-native-firebase/issues/1676#issuecomment-442308862
+        classpath 'com.google.gms:google-services:4.1.0'
         classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
     }
 }
@@ -26,7 +28,7 @@ def file = rootProject.file('local.properties')
 if (file.exists()) {
     localProperties.load(file.newDataInputStream())
 }
-def azureArtifactsGradleAccessToken=localProperties['azure.artifacts.gradle.access.token']
+def azureArtifactsGradleAccessToken = localProperties['azure.artifacts.gradle.access.token']
 
 allprojects {
     repositories {
