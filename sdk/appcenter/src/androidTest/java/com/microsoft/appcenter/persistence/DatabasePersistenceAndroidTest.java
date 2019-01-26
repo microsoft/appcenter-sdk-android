@@ -61,7 +61,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -674,26 +673,6 @@ public class DatabasePersistenceAndroidTest {
         } finally {
 
             //noinspection ThrowFromFinallyBlock
-            persistence.close();
-        }
-    }
-
-    @Test(expected = PersistenceException.class)
-    public void putLogException() throws PersistenceException, JSONException {
-
-        /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext);
-
-        /* Set a mock log serializer. */
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        doThrow(new JSONException("JSON exception")).when(logSerializer).serializeLog(any(Log.class));
-        persistence.setLogSerializer(logSerializer);
-        try {
-
-            /* Generate a log and persist. */
-            Log log = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
-        } finally {
             persistence.close();
         }
     }

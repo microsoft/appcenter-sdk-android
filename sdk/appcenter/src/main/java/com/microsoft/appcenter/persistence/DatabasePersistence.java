@@ -273,6 +273,9 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             long maxSize = mDatabaseManager.getMaxSize();
+            if (maxSize == -1) {
+                throw new PersistenceException("Failed to store a log to the Persistence database.");
+            }
             if (!isLargePayload && maxSize <= payloadSize) {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
@@ -302,9 +305,9 @@ public class DatabasePersistence extends Persistence {
             }
             return databaseId;
         } catch (JSONException e) {
-            throw new PersistenceException("Cannot convert to JSON string", e);
+            throw new PersistenceException("Cannot convert to JSON string.", e);
         } catch (IOException e) {
-            throw new PersistenceException("Cannot save large payload in a file", e);
+            throw new PersistenceException("Cannot save large payload in a file.", e);
         }
     }
 
