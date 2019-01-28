@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
-import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -31,7 +30,6 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
-import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -255,6 +253,56 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled().get();
                 }
             });
+
+            /* Identity. */
+            /*
+             * TODO: change to real implementation when released.
+             *
+             * initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+             *
+             *  @Override
+             *  public void setEnabled(boolean enabled) {
+             *      Identity.setEnabled(enabled);
+             *  }
+             *
+             *  @Override
+             *  public boolean isEnabled() {
+             *      return Identity.isEnabled().get();
+             *  }
+             * });
+             */
+
+            try {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.identity.Identity");
+                final Method isEnabled = identity.getMethod("isEnabled");
+                final Method setEnabled = identity.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public boolean isEnabled() {
+                        try {
+                            AppCenterFuture<Boolean> result = (AppCenterFuture<Boolean>) isEnabled.invoke(null);
+                            return result.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.identity_key)));
+            }
+
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
