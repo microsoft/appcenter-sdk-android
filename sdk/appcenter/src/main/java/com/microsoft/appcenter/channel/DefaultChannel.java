@@ -160,7 +160,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+    public synchronized boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         return mPersistence.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
