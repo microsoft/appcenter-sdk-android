@@ -60,6 +60,9 @@
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>
 
+    <string name="identity_key" tools:ignore="MissingTranslation">appcenter_identity</string>
+    <string name="identity_title" tools:ignore="MissingTranslation">Identity</string>
+
     <string name="appcenter_push_firebase_state_key" tools:ignore="MissingTranslation">appcenter_push_firebase_state_key</string>
     <string name="appcenter_push_firebase_state_title" tools:ignore="MissingTranslation">Firebase analytics state</string>
     <string name="appcenter_push_firebase_summary_enabled" tools:ignore="MissingTranslation">Firebase analytics is enabled</string>
@@ -68,6 +71,11 @@
     <string name="appcenter_push_state_title" tools:ignore="MissingTranslation">Push state</string>
     <string name="appcenter_push_state_summary_enabled" tools:ignore="MissingTranslation">Push is enabled</string>
     <string name="appcenter_push_state_summary_disabled" tools:ignore="MissingTranslation">Push is disabled</string>
+
+    <string name="appcenter_identity_state_key" tools:ignore="MissingTranslation">appcenter_identity_state_key</string>
+    <string name="appcenter_identity_state_title" tools:ignore="MissingTranslation">Identity state</string>
+    <string name="appcenter_identity_state_summary_enabled" tools:ignore="MissingTranslation">Identity is enabled</string>
+    <string name="appcenter_identity_state_summary_disabled" tools:ignore="MissingTranslation">Identity is disabled</string>
 
     <string name="real_user_measurements_key" tools:ignore="MissingTranslation">appcenter_rum</string>
     <string name="real_user_measurements_title" tools:ignore="MissingTranslation">Real User Measurements</string>
