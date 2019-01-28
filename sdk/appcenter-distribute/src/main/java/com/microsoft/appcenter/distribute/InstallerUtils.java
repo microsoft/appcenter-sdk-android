@@ -37,6 +37,7 @@ class InstallerUtils {
         LOCAL_STORES.add("adb");
         LOCAL_STORES.add("com.android.packageinstaller");
         LOCAL_STORES.add("com.google.android.packageinstaller");
+        LOCAL_STORES.add("com.android.managedprovisioning");
     }
 
     @VisibleForTesting
