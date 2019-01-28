@@ -299,6 +299,8 @@ public class DatabaseManager implements Closeable {
     @Override
     public void close() {
         try {
+
+            /* Close opened database (Do not force open). */
             mSQLiteOpenHelper.close();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to close the database.", e);
