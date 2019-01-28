@@ -255,6 +255,23 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Identity. */
+            /*
+             * TODO: change to real implementation when released.
+             *
+             * initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+             *
+             *  @Override
+             *  public void setEnabled(boolean enabled) {
+             *      Identity.setEnabled(enabled);
+             *  }
+             *
+             *  @Override
+             *  public boolean isEnabled() {
+             *      return Identity.isEnabled().get();
+             *  }
+             * });
+             */
+
             try {
                 @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.identity.Identity");
                 final Method isEnabled = identity.getMethod("isEnabled");
@@ -282,7 +299,6 @@ public class SettingsActivity extends AppCompatActivity {
                         }
                     }
                 });
-
             } catch (Exception e) {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.identity_key)));
             }
