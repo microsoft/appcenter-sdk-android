@@ -9,6 +9,7 @@
 ### AppCenterDistribute
 
 * **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
+* **[Fix]** Fix checking updates for applications installed on corporate-owned single-use devices.
 
 ___
 
