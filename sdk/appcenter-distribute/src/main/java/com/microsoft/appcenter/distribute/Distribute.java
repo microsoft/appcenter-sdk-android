@@ -37,10 +37,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
-import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -1021,7 +1018,7 @@ public class Distribute extends AbstractAppCenterService {
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(final String payload) {
+            public void onCallSucceeded(final String payload, Map<String, String> headers) {
 
                 /* onPostExecute is not always called on UI thread due to an old Android bug. */
                 HandlerUtils.runOnUiThread(new Runnable() {

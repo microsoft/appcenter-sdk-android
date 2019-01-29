@@ -4,6 +4,7 @@ import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+import android.util.Pair;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -17,6 +18,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -163,7 +166,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Do http call.
      */
-    private String doHttpCall() throws Exception {
+    private Pair<String, Map<String, String>> doHttpCall() throws Exception {
 
         /* HTTP session. */
         URL url = new URL(mUrl);
@@ -283,7 +286,11 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {
-                return response;
+                Map<String, String> responseHeaders = new HashMap<>();
+                for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
+                    responseHeaders.put(header.getKey(), header.getValue().iterator().next());
+                }
+                return new Pair<>(response, responseHeaders);
             }
 
             /* Generate exception on failure. */
@@ -320,7 +327,10 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         if (result instanceof Exception) {
             mServiceCallback.onCallFailed((Exception) result);
         } else {
-            mServiceCallback.onCallSucceeded(result.toString());
+
+            @SuppressWarnings("unchecked")
+            Pair<String, Map<String, String>> response = (Pair<String, Map<String, String>>) result;
+            mServiceCallback.onCallSucceeded(response.first, response.second);
         }
     }
 
@@ -328,7 +338,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     protected void onCancelled(Object result) {
 
         /* Handle the result even if it was cancelled. */
-        if (result instanceof String || result instanceof HttpException) {
+        if (result instanceof Pair || result instanceof HttpException) {
             onPostExecute(result);
         } else {
             mTracker.onFinish(this);

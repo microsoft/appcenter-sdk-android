@@ -16,13 +16,29 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.3.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
-        classpath 'com.google.gms:google-services:4.2.0'
+
+        //noinspection GradleDependency upgrading this is not compatible with the pinned firebase versions
+        classpath 'com.google.gms:google-services:4.0.1'
         classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
     }
 }
 
+def localProperties = new Properties()
+def file = rootProject.file('local.properties')
+if (file.exists()) {
+    localProperties.load(file.newDataInputStream())
+}
+def azureArtifactsGradleAccessToken = localProperties['azure.artifacts.gradle.access.token']
+
 allprojects {
     repositories {
+        maven {
+            url 'https://identitydivision.pkgs.visualstudio.com/_packaging/AndroidADAL/maven/v1'
+            credentials {
+                username "AZURE_ARTIFACTS"
+                password System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") ?: "${azureArtifactsGradleAccessToken}"
+            }
+        }
         google()
         jcenter()
     }

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
@@ -15,7 +16,11 @@ import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+
 public class AuthenticationProviderActivity extends AppCompatActivity {
+
+    private boolean mUserLeaving;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,6 +44,23 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_DELEGATE);
             }
         }));
+
+        /* TODO remove reflection once Identity published to jCenter. */
+        try {
+            final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
+            featureList.add(new TestFeatures.TestFeature(R.string.b2c_login_title, R.string.b2c_login_description, new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    try {
+                        identity.getMethod("login").invoke(null);
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "Identity.login failed", e);
+                    }
+                }
+            }));
+        } catch (ClassNotFoundException ignore) {
+        }
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(featureList));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
@@ -47,12 +69,21 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
         Intent intent = new Intent(getApplication(), MSALoginActivity.class);
         intent.putExtra(AuthenticationProvider.Type.class.getName(), type);
-        startActivityForResult(intent, 0);
+        startActivity(intent);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        finish();
+    protected void onUserLeaveHint() {
+        mUserLeaving = true;
+    }
+
+    @Override
+    protected void onRestart() {
+
+        /* When coming back from browser, finish this intermediate menu screen too. */
+        super.onRestart();
+        if (mUserLeaving) {
+            finish();
+        }
     }
 }

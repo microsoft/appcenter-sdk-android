@@ -7,7 +7,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -40,7 +38,7 @@ public class HttpClientNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
-                serviceCallback.onCallSucceeded("mockPayload");
+                serviceCallback.onCallSucceeded("mockPayload", null);
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -54,7 +52,7 @@ public class HttpClientNetworkStateHandlerTest {
         verify(networkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded("mockPayload");
+        verify(callback).onCallSucceeded("mockPayload", null);
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -122,7 +120,7 @@ public class HttpClientNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("", null);
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -137,12 +135,12 @@ public class HttpClientNetworkStateHandlerTest {
 
         /* Network is down: no call to target API must be done. */
         verify(httpClient, times(0)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback, times(0)).onCallSucceeded("");
+        verify(callback, times(0)).onCallSucceeded("", null);
 
         /* Network now up: call must be done and succeed. */
         decorator.onNetworkStateUpdated(true);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded("");
+        verify(callback).onCallSucceeded("", null);
 
         /* Close. */
         decorator.close();
@@ -163,7 +161,7 @@ public class HttpClientNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("", null);
                 return call;
             }
         });
