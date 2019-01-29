@@ -9,7 +9,8 @@ public interface ServiceCallback {
 
     /**
      * Implement this method to handle successful REST call results.
-     *  @param payload HTTP payload.
+     *
+     * @param payload HTTP payload.
      * @param headers response headers.
      */
     void onCallSucceeded(String payload, Map<String, String> headers);
