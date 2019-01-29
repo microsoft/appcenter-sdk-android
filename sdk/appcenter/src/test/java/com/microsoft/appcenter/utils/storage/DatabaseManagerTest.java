@@ -93,7 +93,10 @@ public class DatabaseManagerTest {
 
     @Test
     public void closeFailed() {
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        doThrow(new RuntimeException()).when(helperMock).close();
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
+        databaseManagerMock.setSQLiteOpenHelper(helperMock);
         databaseManagerMock.close();
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
