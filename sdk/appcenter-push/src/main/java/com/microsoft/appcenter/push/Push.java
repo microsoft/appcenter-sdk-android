@@ -80,6 +80,12 @@ public class Push extends AbstractAppCenterService {
     private String mFirstGoogleMessageId;
 
     /**
+     * Save Recived message Intent to generate push notification
+     * when click notification from background
+     */
+    private Intent mRecivedIntent;
+
+    /**
      * Current activity.
      */
     private Activity mActivity;
@@ -367,10 +373,18 @@ public class Push extends AbstractAppCenterService {
                 if (mFirstGoogleMessageId == null) {
                     mFirstGoogleMessageId = googleMessageId;
                 }
-                PushNotification notification = new PushNotification(intent);
+
                 AppCenterLog.info(LOG_TAG, "Clicked push message from background id=" + googleMessageId);
                 mLastGoogleMessageId = googleMessageId;
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
+
+                PushNotification notification;
+                if (mRecivedIntent != null && googleMessageId.equals(PushIntentUtils.getMessageId(mRecivedIntent))) {
+                    notification = new PushNotification(mRecivedIntent);
+                }
+                else {
+                    notification = new PushNotification(intent);
+                }
                 mInstanceListener.onPushNotificationReceived(activity, notification);
             }
         }
@@ -408,6 +422,8 @@ public class Push extends AbstractAppCenterService {
             } else {
                 PushNotifier.handleNotification(context, pushIntent);
             }
+
+            mRecivedIntent = pushIntent;
         } else {
             final PushNotification notification = new PushNotification(pushIntent);
             postOnUiThread(new Runnable() {
