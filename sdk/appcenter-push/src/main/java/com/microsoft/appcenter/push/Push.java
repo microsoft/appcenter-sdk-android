@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -80,10 +81,10 @@ public class Push extends AbstractAppCenterService {
     private String mFirstGoogleMessageId;
 
     /**
-     * Save Recived message Intent to generate push notification
+     * Save Received message Intents to generate push notification
      * when click notification from background
      */
-    private Intent mRecivedIntent;
+    private HashSet<Intent> mReceivedIntents;
 
     /**
      * Current activity.
@@ -378,9 +379,18 @@ public class Push extends AbstractAppCenterService {
                 mLastGoogleMessageId = googleMessageId;
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
 
+                Intent currentPushIntent = null;
+                for (Intent receivedIntent : mReceivedIntents) {
+                    if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
+                        currentPushIntent = receivedIntent;
+                        mReceivedIntents.remove(currentPushIntent);
+                        break;
+                    }
+                }
+
                 PushNotification notification;
-                if (mRecivedIntent != null && googleMessageId.equals(PushIntentUtils.getMessageId(mRecivedIntent))) {
-                    notification = new PushNotification(mRecivedIntent);
+                if (currentPushIntent != null) {
+                    notification = new PushNotification(currentPushIntent);
                 }
                 else {
                     notification = new PushNotification(intent);
@@ -423,7 +433,11 @@ public class Push extends AbstractAppCenterService {
                 PushNotifier.handleNotification(context, pushIntent);
             }
 
-            mRecivedIntent = pushIntent;
+            if(mReceivedIntents == null){
+                mReceivedIntents = new HashSet<>();
+            }
+
+            mReceivedIntents.add(pushIntent);
         } else {
             final PushNotification notification = new PushNotification(pushIntent);
             postOnUiThread(new Runnable() {
