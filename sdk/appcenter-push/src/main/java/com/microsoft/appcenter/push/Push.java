@@ -433,10 +433,9 @@ public class Push extends AbstractAppCenterService {
                 PushNotifier.handleNotification(context, pushIntent);
             }
 
-            if(mReceivedIntents == null){
+            if (mReceivedIntents == null) {
                 mReceivedIntents = new HashSet<>();
             }
-
             mReceivedIntents.add(pushIntent);
         } else {
             final PushNotification notification = new PushNotification(pushIntent);
