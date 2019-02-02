@@ -380,11 +380,13 @@ public class Push extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
 
                 Intent currentPushIntent = null;
-                for (Intent receivedIntent : mReceivedIntents) {
-                    if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
-                        currentPushIntent = receivedIntent;
-                        mReceivedIntents.remove(currentPushIntent);
-                        break;
+                if (mReceivedIntents != null) {
+                    for (Intent receivedIntent : mReceivedIntents) {
+                        if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
+                            currentPushIntent = receivedIntent;
+                            mReceivedIntents.remove(currentPushIntent);
+                            break;
+                        }
                     }
                 }
 
