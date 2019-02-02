@@ -11,6 +11,10 @@
 * **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
 * **[Fix]** Fix checking updates for applications installed on corporate-owned single-use devices.
 
+### AppCenterPush
+
+* **[Feature]** Expose Title and Message when System/Background notification is pressed.
+
 ___
 
 ## Version 1.11.2
