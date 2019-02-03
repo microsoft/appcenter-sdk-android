@@ -112,6 +112,7 @@ public class Push extends AbstractAppCenterService {
     private Push() {
         mFactories = new HashMap<>();
         mFactories.put(PushInstallationLog.TYPE, new PushInstallationLogFactory());
+        mReceivedIntents = new HashSet<>();
     }
 
     /**
@@ -380,13 +381,11 @@ public class Push extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
 
                 Intent currentPushIntent = intent;
-                if (mReceivedIntents != null && !mReceivedIntents.isEmpty()) {
-                    for (Intent receivedIntent : mReceivedIntents) {
-                        if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
-                            currentPushIntent = receivedIntent;
-                            mReceivedIntents.remove(receivedIntent);
-                            break;
-                        }
+                for (Intent receivedIntent : mReceivedIntents) {
+                    if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
+                        currentPushIntent = receivedIntent;
+                        mReceivedIntents.remove(receivedIntent);
+                        break;
                     }
                 }
 
@@ -427,10 +426,6 @@ public class Push extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Background notifications are handled by Firebase SDK when integrated.");
             } else {
                 PushNotifier.handleNotification(context, pushIntent);
-            }
-
-            if (mReceivedIntents == null) {
-                mReceivedIntents = new HashSet<>();
             }
             mReceivedIntents.add(pushIntent);
         } else {
