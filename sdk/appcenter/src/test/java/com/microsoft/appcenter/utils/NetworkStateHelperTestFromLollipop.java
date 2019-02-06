@@ -89,9 +89,10 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         NetworkStateHelper.Listener listener2 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener2);
         callback.getValue().onLost(network);
-        network = mock(Network.class);
-        callback.getValue().onAvailable(network);
         verify(listener2).onNetworkStateUpdated(false);
+        network = mock(Network.class);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
+        callback.getValue().onAvailable(network);
         verify(listener2).onNetworkStateUpdated(true);
         assertTrue(helper.isNetworkConnected());
 
@@ -100,29 +101,44 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         NetworkStateHelper.Listener listener3 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener3);
         Network network2 = mock(Network.class);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network, network2 });
         callback.getValue().onAvailable(network2);
+        verify(listener3, never()).onNetworkStateUpdated(anyBoolean());
         assertTrue(helper.isNetworkConnected());
 
         /* The callbacks are triggered only when losing previous network. */
-        verify(listener3, never()).onNetworkStateUpdated(anyBoolean());
         callback.getValue().onLost(network);
         verify(listener3, never()).onNetworkStateUpdated(anyBoolean());
         assertTrue(helper.isNetworkConnected());
 
         /* Lose second network. */
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network2 });
         callback.getValue().onLost(network2);
         verify(listener3).onNetworkStateUpdated(false);
+
+        /* It should rely on active network state. */
+        assertTrue(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(false);
         assertFalse(helper.isNetworkConnected());
 
         /* Make it connected again before closing with no listener. */
         helper.removeListener(listener3);
         network = mock(Network.class);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
         callback.getValue().onAvailable(network);
         verifyNoMoreInteractions(listener3);
+
+        /* It should rely on active network state. */
+        assertFalse(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
 
-        /* Close and verify interactions. This will also reset to disconnected. */
+        /* Close and verify interactions. */
         helper.close();
+
+        /* It should rely on active network state. */
+        assertTrue(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(false);
         assertFalse(helper.isNetworkConnected());
         verify(mConnectivityManager).unregisterNetworkCallback(callback.getValue());
 
@@ -131,6 +147,10 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         assertFalse(helper.isNetworkConnected());
         network = mock(Network.class);
         callback.getValue().onAvailable(network);
+
+        /* It should rely on active network state. */
+        assertFalse(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
         verify(mConnectivityManager, times(2)).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
 
@@ -142,7 +162,6 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         /* Verify we didn't try to use older APIs after Lollipop on newer devices. */
         verify(mContext, never()).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
         verify(mContext, never()).unregisterReceiver(any(BroadcastReceiver.class));
-        verify(mConnectivityManager, never()).getActiveNetworkInfo();
     }
 
     @Test
