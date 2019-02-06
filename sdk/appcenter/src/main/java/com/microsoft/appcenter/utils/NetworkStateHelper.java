@@ -176,7 +176,8 @@ public class NetworkStateHelper implements Closeable {
     private synchronized void onNetworkLost(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network "+ network + " is lost.");
         Network[] networks = mConnectivityManager.getAllNetworks();
-        boolean noNetworks = networks.length == 0 || Arrays.equals(networks, new Network[] { network });
+        boolean noNetworks = networks == null || networks.length == 0 ||
+                Arrays.equals(networks, new Network[] { network });
         if (mConnected && noNetworks) {
             notifyNetworkStateUpdated(false);
             mConnected = false;

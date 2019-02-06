@@ -49,7 +49,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
     public void permissionDenied() {
         when(mConnectivityManager.getActiveNetworkInfo()).thenThrow(new SecurityException());
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
-        assertFalse(helper.isNetworkConnected());
+        assertTrue(helper.isNetworkConnected());
     }
 
     @Test
@@ -82,8 +82,6 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         /* Change state to up. */
         NetworkInfo networkInfo = mock(NetworkInfo.class);
         when(networkInfo.isConnected()).thenReturn(true);
-        when(networkInfo.getTypeName()).thenReturn("MOBILE");
-        when(networkInfo.getSubtypeName()).thenReturn("EDGE");
         when(mConnectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
         when(intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO)).thenReturn(networkInfo);
         receiver.onReceive(mContext, intent);
@@ -95,11 +93,8 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         helper.removeListener(listener);
         NetworkStateHelper.Listener listener2 = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener2);
-        when(networkInfo.getTypeName()).thenReturn("WIFI");
-        when(networkInfo.getSubtypeName()).thenReturn(null);
         receiver.onReceive(mContext, intent);
-        verify(listener2).onNetworkStateUpdated(false);
-        verify(listener2).onNetworkStateUpdated(true);
+        verify(listener2, never()).onNetworkStateUpdated(anyBoolean());
         assertTrue(helper.isNetworkConnected());
 
         /* Duplicate WIFI callback. */
@@ -122,13 +117,17 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
         verify(listener3, never()).onNetworkStateUpdated(true);
         assertTrue(helper.isNetworkConnected());
 
-        /* Close and verify interactions. This will also reset to disconnected. */
+        /* Close and verify interactions. This will not affect current state. */
         helper.close();
+        assertTrue(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(false);
         assertFalse(helper.isNetworkConnected());
         verify(mContext).unregisterReceiver(receiver);
 
         /* Reopening will not restore removed listeners by close. */
         helper.reopen();
+        assertFalse(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
         verify(mContext, times(2)).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
