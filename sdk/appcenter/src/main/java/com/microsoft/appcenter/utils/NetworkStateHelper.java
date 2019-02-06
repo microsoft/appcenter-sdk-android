@@ -12,11 +12,11 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.AppCenter;
-
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,24 +50,19 @@ public class NetworkStateHelper implements Closeable {
     private final Set<Listener> mListeners = new HashSet<>();
 
     /**
-     * Currently available networks, always empty on API level < 21.
-     */
-    private final Set<Network> mAvailableNetworks = new HashSet<>();
-
-    /**
      * Network callback, null on API level < 21.
      */
     private ConnectivityManager.NetworkCallback mNetworkCallback;
 
     /**
-     * Current network type, null for disconnected or API level >= 21.
-     */
-    private String mNetworkType;
-
-    /**
      * Our connectivity event receiver, null on API level >= 21.
      */
     private ConnectivityReceiver mConnectivityReceiver;
+
+    /**
+     * Current network state.
+     */
+    private boolean mConnected;
 
     /**
      * Init.
@@ -123,9 +118,9 @@ public class NetworkStateHelper implements Closeable {
                 //noinspection ConstantConditions
                 mConnectivityManager.registerNetworkCallback(request.build(), mNetworkCallback);
             } else {
-                updateNetworkType();
                 mConnectivityReceiver = new ConnectivityReceiver();
                 mContext.registerReceiver(mConnectivityReceiver, getOldIntentFilter());
+                handleNetworkStateUpdate();
             }
         } catch (RuntimeException e) {
 
@@ -133,7 +128,7 @@ public class NetworkStateHelper implements Closeable {
              * Can be security exception if permission missing or sometimes another runtime exception
              * on some customized firmwares.
              */
-            AppCenterLog.error(LOG_TAG, "Cannot access network state information", e);
+            AppCenterLog.error(LOG_TAG, "Cannot access network state information.", e);
         }
     }
 
@@ -149,59 +144,42 @@ public class NetworkStateHelper implements Closeable {
      * @return true for connected, false for disconnected.
      */
     public synchronized boolean isNetworkConnected() {
-        return mNetworkType != null || !mAvailableNetworks.isEmpty();
+
+        /* The actual current state should be checked here instead of using a value based on connection change events. */
+        try {
+            NetworkInfo info = mConnectivityManager.getActiveNetworkInfo();
+            return info != null && info.isConnected();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Cannot access network state information.", e);
+
+            /* We should try to send the data, even if we can't get the current network state. */
+            return true;
+        }
     }
 
     /**
      * Handle network available update on API level >= 21.
      */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkAvailable(Network network) {
-        AppCenterLog.debug(LOG_TAG, "Network available netId: " + network);
-        mAvailableNetworks.add(network);
-        AppCenterLog.debug(LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
-
-        /*
-         * Trigger event only once if we gain a new network while one was already
-         * available. Special logic is handled in network lost events.
-         */
-        if (mAvailableNetworks.size() == 1) {
+        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is available.");
+        if (!mConnected) {
             notifyNetworkStateUpdated(true);
+            mConnected = true;
         }
     }
 
     /**
      * Handle network available update on API level >= 21.
      */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkLost(Network network) {
-
-        /*
-         * We will have WIFI network available event before we lose mobile network.
-         * This notification scheme is similar to the old connectivity receiver implementation.
-         */
-        AppCenterLog.debug(LOG_TAG, "Network lost netId: " + network);
-        mAvailableNetworks.remove(network);
-        AppCenterLog.debug(LOG_TAG, "Available networks netIds: " + mAvailableNetworks);
-        notifyNetworkStateUpdated(false);
-        if (!mAvailableNetworks.isEmpty()) {
-            notifyNetworkStateUpdated(true);
-        }
-    }
-
-    /**
-     * Update network type by polling on API level < 21.
-     */
-    @SuppressWarnings("deprecation")
-    private void updateNetworkType() {
-
-        /* Get active network info */
-        NetworkInfo networkInfo = mConnectivityManager.getActiveNetworkInfo();
-        AppCenterLog.debug(AppCenter.LOG_TAG, "Active network info=" + networkInfo);
-
-        /* Update network type. null for not connected. */
-        if (networkInfo != null && networkInfo.isConnected()) {
-            mNetworkType = networkInfo.getTypeName() + networkInfo.getSubtypeName();
-        } else {
-            mNetworkType = null;
+        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is lost.");
+        Network[] networks = mConnectivityManager.getAllNetworks();
+        boolean noNetworks = networks.length == 0 || Arrays.equals(networks, new Network[] { network });
+        if (mConnected && noNetworks) {
+            notifyNetworkStateUpdated(false);
+            mConnected = false;
         }
     }
 
@@ -209,21 +187,10 @@ public class NetworkStateHelper implements Closeable {
      * Handle network state update on API level < 21.
      */
     private synchronized void handleNetworkStateUpdate() {
-
-        /*
-         * This code is used to notify listeners only when the network state goes from
-         * connected to disconnected and vice versa
-         * (without duplicate calls, the sequence will be consistent).
-         */
-        String previousNetworkType = mNetworkType;
-        updateNetworkType();
-        boolean networkTypeChanged = previousNetworkType == null ? mNetworkType != null : !previousNetworkType.equals(mNetworkType);
-        if (networkTypeChanged) {
-            boolean connected = isNetworkConnected();
-            if (connected && previousNetworkType != null) {
-                notifyNetworkStateUpdated(false);
-            }
+        boolean connected = isNetworkConnected();
+        if (connected != mConnected) {
             notifyNetworkStateUpdated(connected);
+            mConnected = connected;
         }
     }
 
@@ -233,6 +200,7 @@ public class NetworkStateHelper implements Closeable {
      * @param connected whether the network is connected or not.
      */
     private void notifyNetworkStateUpdated(boolean connected) {
+        AppCenterLog.debug(LOG_TAG, "Network has been " + (connected ? "connected." : "disconnected."));
         for (Listener listener : mListeners) {
             listener.onNetworkStateUpdated(connected);
         }
@@ -242,10 +210,8 @@ public class NetworkStateHelper implements Closeable {
     public synchronized void close() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
-            mAvailableNetworks.clear();
         } else {
             mContext.unregisterReceiver(mConnectivityReceiver);
-            mNetworkType = null;
         }
     }
 

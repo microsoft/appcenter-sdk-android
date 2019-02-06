@@ -42,6 +42,9 @@ public class HttpClientNetworkStateHandler extends HttpClientDecorator implement
         Call call = new Call(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
         if (mNetworkStateHelper.isNetworkConnected()) {
             call.run();
+
+            /* Send pending call(s), if any. It can be the case if a network state update event is missing. */
+            onNetworkStateUpdated(true);
         } else {
             mCalls.add(call);
             AppCenterLog.debug(LOG_TAG, "Call triggered with no network connectivity, waiting network to become available...");
