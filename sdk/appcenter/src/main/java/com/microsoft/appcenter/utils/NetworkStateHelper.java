@@ -96,12 +96,15 @@ public class NetworkStateHelper implements Closeable {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-                /* Build query to get a working network listener. */
+                /*
+                 * Build query to get a working network listener.
+                 *
+                 * NetworkCapabilities.NET_CAPABILITY_VALIDATED (that indicates that connectivity
+                 * on this network was successfully validated) shouldn't be applied here because it
+                 * might miss networks with partial internet availability.
+                 */
                 NetworkRequest.Builder request = new NetworkRequest.Builder();
                 request.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    request.addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
-                }
                 mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 
                     @Override
@@ -129,6 +132,9 @@ public class NetworkStateHelper implements Closeable {
              * on some customized firmwares.
              */
             AppCenterLog.error(LOG_TAG, "Cannot access network state information.", e);
+
+            /* We should try to send the data, even if we can't get the current network state. */
+            mConnected = true;
         }
     }
 
@@ -144,17 +150,38 @@ public class NetworkStateHelper implements Closeable {
      * @return true for connected, false for disconnected.
      */
     public synchronized boolean isNetworkConnected() {
+        return mConnected || isAnyNetworkConnected();
+    }
 
-        /* The actual current state should be checked here instead of using a value based on connection change events. */
-        try {
-            NetworkInfo info = mConnectivityManager.getActiveNetworkInfo();
-            return info != null && info.isConnected();
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Cannot access network state information.", e);
-
-            /* We should try to send the data, even if we can't get the current network state. */
-            return true;
+    /**
+     * Check if any network is connected.
+     *
+     * @return true for connected, false for disconnected.
+     */
+    private boolean isAnyNetworkConnected() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Network[] networks = mConnectivityManager.getAllNetworks();
+            if (networks == null) {
+                return false;
+            }
+            for (Network network : networks) {
+                NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+                if (info != null && info.isConnected()) {
+                    return true;
+                }
+            }
+        } else {
+            NetworkInfo[] networks = mConnectivityManager.getAllNetworkInfo();
+            if (networks == null) {
+                return false;
+            }
+            for (NetworkInfo info : networks) {
+                if (info != null && info.isConnected()) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
 
     /**
@@ -188,7 +215,7 @@ public class NetworkStateHelper implements Closeable {
      * Handle network state update on API level < 21.
      */
     private synchronized void handleNetworkStateUpdate() {
-        boolean connected = isNetworkConnected();
+        boolean connected = isAnyNetworkConnected();
         if (connected != mConnected) {
             notifyNetworkStateUpdated(connected);
             mConnected = connected;
