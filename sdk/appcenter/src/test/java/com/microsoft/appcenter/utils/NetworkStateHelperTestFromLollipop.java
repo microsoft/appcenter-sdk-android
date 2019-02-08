@@ -50,7 +50,6 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
 
     @Test
     public void permissionDenied() {
-        when(mConnectivityManager.getActiveNetworkInfo()).thenThrow(new SecurityException());
         doThrow(new SecurityException())
                 .when(mConnectivityManager)
                 .registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
@@ -71,17 +70,13 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
 
         /* Change state to up, say WIFI. */
         NetworkInfo networkInfo = mock(NetworkInfo.class);
-        when(networkInfo.isConnected()).thenReturn(false);
-        when(mConnectivityManager.getActiveNetworkInfo()).thenReturn(networkInfo);
+        when(networkInfo.isConnected()).thenReturn(true);
         Network network = mock(Network.class);
         when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
+        when(mConnectivityManager.getNetworkInfo(network)).thenReturn(networkInfo);
         callback.getValue().onAvailable(network);
         verify(listener).onNetworkStateUpdated(true);
         verify(listener, never()).onNetworkStateUpdated(false);
-
-        /* It should rely on active network state. */
-        assertFalse(helper.isNetworkConnected());
-        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
 
         /* Change to say, Mobile. */
@@ -112,14 +107,20 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         assertTrue(helper.isNetworkConnected());
 
         /* Lose second network. */
-        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network2 });
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { });
+        callback.getValue().onLost(network2);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(null);
         callback.getValue().onLost(network2);
         verify(listener3).onNetworkStateUpdated(false);
+        assertFalse(helper.isNetworkConnected());
 
-        /* It should rely on active network state. */
-        assertTrue(helper.isNetworkConnected());
+        /* Get the current state of network. */
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network, network2 });
+        when(mConnectivityManager.getNetworkInfo(network2)).thenReturn(networkInfo);
         when(networkInfo.isConnected()).thenReturn(false);
         assertFalse(helper.isNetworkConnected());
+        when(networkInfo.isConnected()).thenReturn(true);
+        assertTrue(helper.isNetworkConnected());
 
         /* Make it connected again before closing with no listener. */
         helper.removeListener(listener3);
@@ -127,18 +128,10 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
         callback.getValue().onAvailable(network);
         verifyNoMoreInteractions(listener3);
-
-        /* It should rely on active network state. */
-        assertFalse(helper.isNetworkConnected());
-        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
 
         /* Close and verify interactions. */
         helper.close();
-
-        /* It should rely on active network state. */
-        assertTrue(helper.isNetworkConnected());
-        when(networkInfo.isConnected()).thenReturn(false);
         assertFalse(helper.isNetworkConnected());
         verify(mConnectivityManager).unregisterNetworkCallback(callback.getValue());
 
@@ -147,10 +140,6 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         assertFalse(helper.isNetworkConnected());
         network = mock(Network.class);
         callback.getValue().onAvailable(network);
-
-        /* It should rely on active network state. */
-        assertFalse(helper.isNetworkConnected());
-        when(networkInfo.isConnected()).thenReturn(true);
         assertTrue(helper.isNetworkConnected());
         verify(mConnectivityManager, times(2)).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
 
@@ -180,6 +169,6 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         whenNew(NetworkRequest.Builder.class).withAnyArguments().thenReturn(builder);
         new NetworkStateHelper(mContext);
         verify(builder).addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-        verify(builder).addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+        verify(builder, never()).addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
     }
 }

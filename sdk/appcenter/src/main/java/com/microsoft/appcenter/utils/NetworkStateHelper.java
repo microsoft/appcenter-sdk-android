@@ -190,8 +190,8 @@ public class NetworkStateHelper implements Closeable {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkAvailable(@SuppressWarnings("unused") Network network) {
         if (!mConnected) {
-            notifyNetworkStateUpdated(true);
             mConnected = true;
+            notifyNetworkStateUpdated(true);
         }
     }
 
@@ -234,6 +234,7 @@ public class NetworkStateHelper implements Closeable {
 
     @Override
     public synchronized void close() {
+        mConnected = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         } else {
