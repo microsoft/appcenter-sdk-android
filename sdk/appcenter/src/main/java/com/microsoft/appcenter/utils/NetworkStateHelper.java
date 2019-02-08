@@ -196,16 +196,16 @@ public class NetworkStateHelper implements Closeable {
     }
 
     /**
-     * Handle network available update on API level >= 21.
+     * Handle network lost update on API level >= 21.
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkLost(Network network) {
         Network[] networks = mConnectivityManager.getAllNetworks();
-        boolean noNetworks = networks == null || networks.length == 0 ||
+        boolean noNetwork = networks == null || networks.length == 0 ||
                 Arrays.equals(networks, new Network[] { network });
-        if (mConnected && noNetworks) {
-            notifyNetworkStateUpdated(false);
+        if (mConnected && noNetwork) {
             mConnected = false;
+            notifyNetworkStateUpdated(false);
         }
     }
 
@@ -215,8 +215,8 @@ public class NetworkStateHelper implements Closeable {
     private synchronized void handleNetworkStateUpdate() {
         boolean connected = isAnyNetworkConnected();
         if (connected != mConnected) {
-            notifyNetworkStateUpdated(connected);
             mConnected = connected;
+            notifyNetworkStateUpdated(connected);
         }
     }
 
