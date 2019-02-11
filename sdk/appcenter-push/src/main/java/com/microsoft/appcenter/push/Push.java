@@ -23,7 +23,6 @@ import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -84,7 +83,7 @@ public class Push extends AbstractAppCenterService {
      * Save Received message Intents to generate push notification
      * when click notification from background
      */
-    private HashSet<Intent> mReceivedIntents;
+    private final Map<String, Intent> mReceivedIntents;
 
     /**
      * Current activity.
@@ -112,7 +111,7 @@ public class Push extends AbstractAppCenterService {
     private Push() {
         mFactories = new HashMap<>();
         mFactories.put(PushInstallationLog.TYPE, new PushInstallationLogFactory());
-        mReceivedIntents = new HashSet<>();
+        mReceivedIntents = new HashMap<>();
     }
 
     /**
@@ -380,15 +379,11 @@ public class Push extends AbstractAppCenterService {
                 mLastGoogleMessageId = googleMessageId;
                 AppCenterLog.debug(LOG_TAG, "Push intent extras=" + intent.getExtras());
 
-                Intent currentPushIntent = intent;
-                for (Intent receivedIntent : mReceivedIntents) {
-                    if (googleMessageId.equals(PushIntentUtils.getMessageId(receivedIntent))) {
-                        currentPushIntent = receivedIntent;
-                        mReceivedIntents.remove(receivedIntent);
-                        break;
-                    }
+                /* Try to get the received push intent via google message id. */
+                Intent currentPushIntent = mReceivedIntents.get(googleMessageId);
+                if(currentPushIntent == null){
+                    currentPushIntent = intent;
                 }
-
                 PushNotification notification = new PushNotification(currentPushIntent);
                 mInstanceListener.onPushNotificationReceived(activity, notification);
             }
@@ -427,7 +422,10 @@ public class Push extends AbstractAppCenterService {
             } else {
                 PushNotifier.handleNotification(context, pushIntent);
             }
-            mReceivedIntents.add(pushIntent);
+
+            /* Store the received push intent. */
+            String googleMessageId = PushIntentUtils.getMessageId(pushIntent);
+            mReceivedIntents.put(googleMessageId, pushIntent);
         } else {
             final PushNotification notification = new PushNotification(pushIntent);
             postOnUiThread(new Runnable() {
