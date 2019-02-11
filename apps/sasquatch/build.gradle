@@ -65,7 +65,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
 
-    def appCenterSdkVersion = "1.11.2"
+    def appCenterSdkVersion = "1.11.3"
     //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     //noinspection GradleDependency
