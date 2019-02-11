@@ -188,7 +188,8 @@ public class NetworkStateHelper implements Closeable {
      * Handle network available update on API level >= 21.
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private synchronized void onNetworkAvailable(@SuppressWarnings("unused") Network network) {
+    private synchronized void onNetworkAvailable(Network network) {
+        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is available.");
         if (!mConnected) {
             mConnected = true;
             notifyNetworkStateUpdated(true);
@@ -200,6 +201,7 @@ public class NetworkStateHelper implements Closeable {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkLost(Network network) {
+        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is lost.");
         Network[] networks = mConnectivityManager.getAllNetworks();
         boolean noNetwork = networks == null || networks.length == 0 ||
                 Arrays.equals(networks, new Network[] { network });
