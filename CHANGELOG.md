@@ -1,5 +1,18 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.3
+
+### AppCenter
+
+* **[Fix]** The SDK normally disables storing and sending logs when SQLite is failing instead of crashing the application. New SQLite APIs were introduced in version 1.9.0 and the new API exceptions were not caught, this is now fixed.
+
+### AppCenterDistribute
+
+* **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
+* **[Fix]** Fix checking updates for applications installed on corporate-owned single-use devices.
+
+___
+
 ## Version 1.11.2
 
 ### AppCenter

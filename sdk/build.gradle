@@ -69,6 +69,11 @@ subprojects {
     dependencies {
         compileOnly "com.android.support:support-annotations:${ext.supportLibVersion}"
         javadocDeps "com.android.support:support-annotations:${ext.supportLibVersion}"
+        configurations.all {
+            resolutionStrategy {
+                force "com.android.support:support-annotations:${ext.supportLibVersion}"
+            }
+        }
 
         testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
         testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
@@ -80,6 +85,9 @@ subprojects {
         androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
         androidTestImplementation 'com.android.support.test:runner:1.0.2'
         androidTestImplementation 'com.android.support.test:rules:1.0.2'
+        androidTestImplementation ("com.android.support:support-annotations:${ext.supportLibVersion}") {
+            force = true
+        }
         androidTestImplementation project(':test')
     }
 
@@ -90,14 +98,14 @@ subprojects {
         }
 
         def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-        sourceDirectories = files(["$projectDir/src/main/java"])
-        classDirectories = files([
+        sourceDirectories.from = files(["$projectDir/src/main/java"])
+        classDirectories.from = files([
                 fileTree(dir: "$buildDir/intermediates/classes/debug", excludes: fileFilter),
                 fileTree(dir: "$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: fileFilter)
         ])
-        executionData = fileTree(dir: buildDir, includes: [
+        executionData.from = fileTree(dir: buildDir, includes: [
                 'jacoco/testDebugUnitTest.exec',
-                'outputs/code-coverage/connected/*coverage.ec'
+                'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
         ])
     }
 
@@ -214,11 +222,11 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
     def coverageReports = subprojects.coverageReport.findAll { !it.project.name.contains("rum") }
 
     //noinspection GroovyAssignabilityCheck
-    sourceDirectories = files(coverageReports.sourceDirectories)
+    sourceDirectories.from = files(coverageReports.sourceDirectories)
     //noinspection GroovyAssignabilityCheck
-    classDirectories = files(coverageReports.classDirectories)
+    classDirectories.from = files(coverageReports.classDirectories)
     //noinspection GroovyAssignabilityCheck
-    executionData = files(coverageReports.executionData)
+    executionData.from = files(coverageReports.executionData)
 }
 
 apply plugin: 'com.github.kt3k.coveralls'

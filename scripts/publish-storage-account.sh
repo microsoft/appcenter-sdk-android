@@ -3,7 +3,7 @@ set -e
 
 AZURE_STORAGE_ACCESS_KEY=${1:-$AZURE_STORAGE_ACCESS_KEY}
 
-BINARY_FILE_FILTER="*release.aar"
+BINARY_FILE_FILTER="*.aar"
 PUBLISH_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
 ARCHIVE=AppCenter-SDK-Android-${PUBLISH_VERSION}
 ZIP_FILE=$ARCHIVE.zip
