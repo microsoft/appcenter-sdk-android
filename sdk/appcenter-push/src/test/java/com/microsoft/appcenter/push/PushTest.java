@@ -617,6 +617,32 @@ public class PushTest {
     }
 
     @Test
+    public void clickedFromBackgroundWithReceivedIntent() {
+
+        PushListener pushListener = mock(PushListener.class);
+        Push.setListener(pushListener);
+        start(Push.getInstance(), mock(Channel.class));
+
+        /* Mock new intent to contain push, but activity with no push in original activity.  */
+        Activity activity = mock(Activity.class);
+        when(activity.getIntent()).thenReturn(mock(Intent.class));
+
+        /* Mock some message. */
+        Intent pushIntent = createPushIntent("some title", "some message", null);
+        when(PushIntentUtils.getMessageId(pushIntent)).thenReturn("some id");
+        Push.getInstance().onMessageReceived(mContext, pushIntent);
+
+        /* Simulate we detect push in onCreate. */
+        Push.checkLaunchedFromNotification(activity, pushIntent);
+        ArgumentCaptor<PushNotification> captor = ArgumentCaptor.forClass(PushNotification.class);
+        verify(pushListener).onPushNotificationReceived(eq(activity), captor.capture());
+        PushNotification pushNotification = captor.getValue();
+        assertNotNull(pushNotification);
+        assertEquals("some title", pushNotification.getTitle());
+        assertEquals("some message", pushNotification.getMessage());
+    }
+
+    @Test
     public void validateCheckLaunchedFromNotification() {
         start(Push.getInstance(), mock(Channel.class));
         Push.checkLaunchedFromNotification(null, mock(Intent.class));

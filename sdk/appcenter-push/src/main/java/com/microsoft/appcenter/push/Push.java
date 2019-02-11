@@ -381,7 +381,7 @@ public class Push extends AbstractAppCenterService {
 
                 /* Try to get the received push intent via google message id. */
                 Intent currentPushIntent = mReceivedIntents.get(googleMessageId);
-                if(currentPushIntent == null){
+                if (currentPushIntent == null) {
                     currentPushIntent = intent;
                 }
                 PushNotification notification = new PushNotification(currentPushIntent);
