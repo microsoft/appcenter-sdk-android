@@ -162,6 +162,7 @@ public class DefaultChannel implements Channel {
                 newTokenCallback();
             }
         });
+        mIdentityTokenContext = identityTokenContext;
     }
 
     private void newTokenCallback() {
