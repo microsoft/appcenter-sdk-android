@@ -1,0 +1,6 @@
+project.description = 'This package contains functinality to manage data in your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    api project(':sdk:appcenter')
+}
