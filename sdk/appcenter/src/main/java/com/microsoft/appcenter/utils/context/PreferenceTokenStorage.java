@@ -13,10 +13,11 @@ public class PreferenceTokenStorage implements TokenStorage {
     /**
      * Context instance.
      */
-    private Context mContext;
+    private final Context mContext;
 
     /**
      * Default constructor.
+     *
      * @param context context instance.
      */
     public PreferenceTokenStorage(Context context) {

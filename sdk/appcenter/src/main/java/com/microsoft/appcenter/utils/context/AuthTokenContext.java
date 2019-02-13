@@ -20,6 +20,7 @@ public class AuthTokenContext {
 
     /**
      * Initializes token context with the given token storage.
+     *
      * @param tokenStorage token storage to save token.
      */
     public AuthTokenContext(TokenStorage tokenStorage) {
@@ -29,6 +30,7 @@ public class AuthTokenContext {
 
     /**
      * Adds listener to token context.
+     *
      * @param listener listener to be notified of changes.
      */
     public synchronized void addListener(Listener listener) {
@@ -37,6 +39,7 @@ public class AuthTokenContext {
 
     /**
      * Removes a specific listener.
+     *
      * @param listener listener to be removed.
      */
     public synchronized void removeListener(Listener listener) {
