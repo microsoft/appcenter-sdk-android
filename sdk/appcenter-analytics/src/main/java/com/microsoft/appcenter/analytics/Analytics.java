@@ -28,9 +28,10 @@ import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -836,10 +837,10 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mStartedFromApp = startedFromApp;
-        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
+        super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
         setDefaultTransmissionTarget(transmissionTargetToken);
     }
 
