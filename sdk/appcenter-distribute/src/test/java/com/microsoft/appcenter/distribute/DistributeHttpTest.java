@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.distribute;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 public class DistributeHttpTest extends AbstractDistributeTest {
@@ -136,7 +138,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, mock(Channel.class), mAuthTokenContext, appSecret, null, true);
+        Distribute.getInstance().onStarted(mContext, mock(Channel.class), appSecret, null, true);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {

@@ -20,7 +20,6 @@ import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -105,9 +104,6 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
     @Mock
     private Channel mChannel;
 
-    @Mock
-    private AuthTokenContext mAuthTokenContext;
-
     @Before
     public void setUp() {
 
@@ -115,7 +111,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         super.setUp();
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, null, false);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, false);
 
     }
 
@@ -684,7 +680,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
         String defaultToken = "test";
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, defaultToken, true);
+        analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, true);
 
         /* Create the test target with the same default token. */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget(defaultToken);
@@ -736,7 +732,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
             }
         }).when(handler).post(notNull(Runnable.class), any(Runnable.class));
         analytics.onStarting(handler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, null, true);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, true);
 
         /* Create a target. */
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");

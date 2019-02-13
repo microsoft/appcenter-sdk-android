@@ -92,9 +92,6 @@ public class AbstractDistributeTest {
     Context mContext;
 
     @Mock
-    AuthTokenContext mAuthTokenContext;
-
-    @Mock
     Activity mActivity;
 
     @Mock
@@ -122,6 +119,9 @@ public class AbstractDistributeTest {
 
     @Mock
     Channel mChannel;
+
+    @Mock
+    AuthTokenContext mAuthTokenContext;
 
     @Mock
     SharedPreferences mMobileCenterPreferencesStorage;

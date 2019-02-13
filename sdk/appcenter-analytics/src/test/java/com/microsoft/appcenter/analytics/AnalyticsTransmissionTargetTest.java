@@ -14,7 +14,6 @@ import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -64,9 +63,6 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
     @Mock
     private Channel mChannel;
 
-    @Mock
-    private AuthTokenContext mAuthTokenContext;
-
     @Before
     public void setUp() {
 
@@ -74,7 +70,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         super.setUp();
         Analytics analytics = Analytics.getInstance();
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, null, false);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, false);
         AnalyticsTransmissionTarget.sAuthenticationProvider = null;
     }
 
@@ -120,7 +116,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         mChannel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, defaultToken, startFromApp);
+        analytics.onStarted(mock(Context.class), mChannel, null, defaultToken, startFromApp);
         final AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         assertNotNull(target);
 
@@ -424,7 +420,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         ArgumentCaptor<Runnable> disabledRunnable = ArgumentCaptor.forClass(Runnable.class);
         doNothing().when(handler).post(normalRunnable.capture(), disabledRunnable.capture());
         analytics.onStarting(handler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, null, false);
+        analytics.onStarted(mock(Context.class), mChannel, null, null, false);
 
         /* No actions are prepared with no CommonSchemaLog. */
         AnalyticsTransmissionTarget.getChannelListener().onPreparingLog(mock(Log.class), "test");
@@ -472,7 +468,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
         doNothing().when(handler).post(backgroundRunnable.capture(), any(Runnable.class));
         analytics.onStarting(handler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, "test", true);
+        analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
 
         /* Add first authentication provider. */
         AuthenticationProvider.TokenProvider tokenProvider1 = mock(AuthenticationProvider.TokenProvider.class);
@@ -531,7 +527,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         ArgumentCaptor<Runnable> disabledRunnable = ArgumentCaptor.forClass(Runnable.class);
         doNothing().when(handler).post(backgroundRunnable.capture(), disabledRunnable.capture());
         analytics.onStarting(handler);
-        analytics.onStarted(mock(Context.class), mChannel, mAuthTokenContext, null, "test", true);
+        analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
 
         /* Disable. */
         Analytics.setEnabled(false);
