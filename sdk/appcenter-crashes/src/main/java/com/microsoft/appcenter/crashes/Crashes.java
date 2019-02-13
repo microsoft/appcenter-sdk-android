@@ -9,7 +9,6 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -29,9 +28,11 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -363,9 +364,9 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
-        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
+        super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
         }
