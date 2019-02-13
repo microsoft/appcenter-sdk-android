@@ -97,15 +97,15 @@ public class AppCenterIngestionTest {
         AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
-        String identityToken = UUIDUtils.randomUUID().toString();
+        String authToken = UUIDUtils.randomUUID().toString();
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(identityToken, appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.IDENTITY_TOKEN, identityToken));
+        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -157,7 +157,7 @@ public class AppCenterIngestionTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.IDENTITY_TOKEN, identityToken));
+        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, identityToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -203,7 +203,7 @@ public class AppCenterIngestionTest {
 
         /* Put app secret to header. */
         headers.put(AppCenterIngestion.APP_SECRET, appSecret);
-        headers.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.IDENTITY_TOKEN, identityToken));
+        headers.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, identityToken));
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */

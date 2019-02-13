@@ -121,7 +121,7 @@ public class AbstractDefaultChannelTest {
 
     public AuthTokenContext mockIdentityContext() {
         AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
-        when(mockAuthTokenContext.getIdentityToken()).thenReturn(MOCK_IDENTITY_TOKEN);
+        when(mockAuthTokenContext.getAuthToken()).thenReturn(MOCK_IDENTITY_TOKEN);
         doNothing().when(mockAuthTokenContext).setAuthToken(anyString());
         return mockAuthTokenContext;
     }
