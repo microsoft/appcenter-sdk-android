@@ -76,6 +76,7 @@ public class IdentityTest extends AbstractIdentityTest {
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
+    @Mock
     private AuthTokenContext mAuthTokenContext;
 
     @Mock
@@ -84,7 +85,6 @@ public class IdentityTest extends AbstractIdentityTest {
     @NonNull
     private Channel start(Identity identity) {
         Channel channel = mock(Channel.class);
-        mAuthTokenContext = mock(AuthTokenContext.class);
         identity.onStarting(mAppCenterHandler);
         identity.onStarted(mock(Context.class), channel, mAuthTokenContext, "", null, true);
         return channel;
@@ -350,6 +350,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify login still delayed in background. */
         assertFalse(identity.isLoginDelayed());
 
+        /* Disable Identity. */
         Identity.setEnabled(false).get();
 
         /* Login with identity disabled. */
@@ -362,11 +363,13 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Login with Identity and App Center disabled. */
         Identity.login();
 
+        /* Enable Identity. */
         Identity.setEnabled(true).get();
 
         /* Login with Identity enabled and App Center disabled. */
         Identity.login();
 
+        /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mAuthTokenContext, times(1)).setAuthToken(eq(mockIdToken));
     }
