@@ -16,7 +16,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -193,9 +192,9 @@ public class RealUserMeasurements extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
-        super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
     /**
