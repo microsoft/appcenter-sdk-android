@@ -378,10 +378,9 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onSuccess(IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    if (isInstanceEnabled()) {
+                    if (isInstanceEnabled() && AppCenter.isEnabled().get()) {
                         AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken());
                     }
-                    // TODO [Identity56021] send id token (not access token) to ingestion, if sdk still enabled. If not enabled?
                 }
 
                 @Override
