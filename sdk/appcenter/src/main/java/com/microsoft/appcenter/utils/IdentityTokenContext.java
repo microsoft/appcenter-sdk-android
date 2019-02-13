@@ -20,7 +20,6 @@ public class IdentityTokenContext {
      */
     private String mIdentityToken;
 
-
     /**
      * Global listeners.
      */
@@ -73,13 +72,14 @@ public class IdentityTokenContext {
      */
     public synchronized void setIdentityToken(String identityToken) {
 
-        // TODO [Identity56021] Encrypt/use MSAL Cache ?
-        mIdentityToken = identityToken;
-
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewToken();
         }
+
+        // TODO [Identity56021] Encrypt/use MSAL Cache ?
+        // TODO [Identity56021] Update the token here or later?
+        mIdentityToken = identityToken;
     }
 
     /**
