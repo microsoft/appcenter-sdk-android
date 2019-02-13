@@ -20,6 +20,7 @@ import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -82,6 +83,9 @@ public class AbstractAppCenterTest {
     DefaultChannel mChannel;
 
     @Mock
+    AuthTokenContext mTokenContext;
+
+    @Mock
     NetworkStateHelper mNetworkStateHelper;
 
     @Mock
@@ -105,6 +109,7 @@ public class AbstractAppCenterTest {
         AnotherDummyService.sharedInstance = null;
 
         whenNew(DefaultChannel.class).withAnyArguments().thenReturn(mChannel);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mTokenContext);
         whenNew(StartServiceLog.class).withAnyArguments().thenReturn(mStartServiceLog);
 
         when(mApplication.getApplicationContext()).thenReturn(mApplication);

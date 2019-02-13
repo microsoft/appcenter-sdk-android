@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Assert;
@@ -134,7 +135,7 @@ public class AbstractAppCenterServiceTest {
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
+        mService.onStarted(mock(Context.class), mock(Channel.class), mock(AuthTokenContext.class), "", null, true);
 
         /* Enabled at first. */
         assertTrue(mService.isInstanceEnabledAsync().get());
@@ -188,7 +189,7 @@ public class AbstractAppCenterServiceTest {
             }
         }).when(appCenterHandler).post(any(Runnable.class), any(Runnable.class));
         mService.onStarting(appCenterHandler);
-        mService.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
+        mService.onStarted(mock(Context.class), mock(Channel.class), mock(AuthTokenContext.class), "", null, true);
 
         /* Whatever we do it stays disabled. */
         assertFalse(mService.isInstanceEnabledAsync().get());
@@ -208,7 +209,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyEnabledThenDisable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), channel, "", null, true);
+        mService.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mService.getChannelListener());
         verifyNoMoreInteractions(channel);
@@ -223,7 +224,7 @@ public class AbstractAppCenterServiceTest {
     @Test
     public void onChannelReadyDisabledThenEnable() {
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), channel, "", null, true);
+        mService.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
         verify(channel).removeGroup(mService.getGroupName());
         verify(channel).addGroup(eq(mService.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         mService.setInstanceEnabled(false);
@@ -266,7 +267,7 @@ public class AbstractAppCenterServiceTest {
             }
         };
         Channel channel = mock(Channel.class);
-        mService.onStarted(mock(Context.class), channel, "", null, true);
+        mService.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
         mService.setInstanceEnabled(false);
         mService.setInstanceEnabled(true);
         verifyZeroInteractions(channel);
