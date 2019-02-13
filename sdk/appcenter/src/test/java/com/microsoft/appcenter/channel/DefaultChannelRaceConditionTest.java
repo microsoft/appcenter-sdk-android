@@ -65,7 +65,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mockIdentityContext());
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -78,7 +78,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         afterCallSemaphore.acquireUninterruptibly();
 
         /* Verify ingestion not sent. */
-        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -101,7 +101,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
                         afterCallSemaphore.release();
                     }
                 }.start();
@@ -110,7 +110,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mockIdentityContext());
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -146,7 +146,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         final Exception mockException = new IOException();
-        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -155,7 +155,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(mockException);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(mockException);
                         afterCallSemaphore.release();
                     }
                 }.start();
@@ -164,7 +164,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mockIdentityContext());
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);

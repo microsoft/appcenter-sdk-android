@@ -9,6 +9,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +40,7 @@ public class ChannelLogDecorateTest {
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
         mockStatic(IdHelper.class);
-        Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class));
+        Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class), mock(AuthTokenContext.class));
         channel.addGroup("", 0, 0, 0, null, null);
 
         /* Test a log that should be decorated. */

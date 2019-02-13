@@ -10,6 +10,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Before;
@@ -24,6 +25,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.ArrayList;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -38,6 +41,8 @@ public class AbstractDefaultChannelTest {
     static final long BATCH_TIME_INTERVAL = 500;
 
     static final int MAX_PARALLEL_BATCHES = 3;
+
+    static final String MOCK_IDENTITY_TOKEN = UUIDUtils.randomUUID().toString();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -77,11 +82,11 @@ public class AbstractDefaultChannelTest {
             @Override
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[3] instanceof ServiceCallback) {
+                if (args[4] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
                     else
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(e);
                 }
                 return null;
             }
@@ -112,5 +117,12 @@ public class AbstractDefaultChannelTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
+    }
+
+    public AuthTokenContext mockIdentityContext() {
+        AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
+        when(mockAuthTokenContext.getIdentityToken()).thenReturn(MOCK_IDENTITY_TOKEN);
+        doNothing().when(mockAuthTokenContext).setAuthToken(anyString());
+        return mockAuthTokenContext;
     }
 }
