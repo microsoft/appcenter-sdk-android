@@ -25,7 +25,6 @@ import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -138,7 +137,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class),"", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Test resume/pause. */
         analytics.onActivityResumed(activity);
@@ -179,7 +178,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertFalse(Analytics.isAutoPageTrackingEnabled());
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         analytics.onActivityResumed(new MyActivity());
         verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
@@ -217,7 +216,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event without properties. */
         Analytics.trackEvent("eventName");
@@ -233,7 +232,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty Map properties. */
         Analytics.trackEvent("eventName", (Map<String, String>) null);
@@ -249,7 +248,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty Map properties. */
         Analytics.trackEvent("eventName", new HashMap<String, String>());
@@ -265,7 +264,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with non-empty Map properties. */
         Analytics.trackEvent("eventName", new HashMap<String, String>() {{
@@ -286,7 +285,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty EventProperties. */
         Analytics.trackEvent("eventName", new EventProperties());
@@ -302,7 +301,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         ArgumentCaptor<EventLog> argumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Prepare typed properties. */
         Date date = new Date();
@@ -345,7 +344,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_NORMAL);
         Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_NORMAL);
         verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
@@ -356,7 +355,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_CRITICAL);
         Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_CRITICAL);
         verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
@@ -367,7 +366,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackEvent("eventName1", (Map<String, String>) null, 0x03);
         Analytics.trackEvent("eventName2", (EventProperties) null, 0x03);
         verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
@@ -381,7 +380,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), null, "target", true);
+        analytics.onStarted(mock(Context.class), channel, null, "target", true);
         Analytics.trackEvent("eventName1");
         ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
@@ -394,7 +393,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "appSecret", null, true);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", null, true);
         Analytics.trackEvent("eventName1");
         ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
@@ -407,7 +406,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "appSecret", "target", true);
+        analytics.onStarted(mock(Context.class), channel, "appSecret", "target", true);
         Analytics.trackEvent("eventName1");
         ArgumentCaptor<EventLog> eventLogArgumentCaptor = ArgumentCaptor.forClass(EventLog.class);
         verify(channel).enqueue(eventLogArgumentCaptor.capture(), anyString(), eq(DEFAULTS));
@@ -419,7 +418,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), null, null, false);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
 
         /* Static track call forbidden if app didn't start Analytics. */
         Analytics.trackEvent("eventName");
@@ -440,7 +439,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.trackPage("pageName");
         verify(channel).enqueue(isA(PageLog.class), anyString(), eq(DEFAULTS));
     }
@@ -450,7 +449,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, false);
+        analytics.onStarted(mock(Context.class), channel, "", null, false);
 
         /* Page tracking does not work from library. */
         Analytics.trackPage("pageName");
@@ -470,7 +469,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
@@ -541,7 +540,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
@@ -555,7 +554,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
@@ -592,7 +591,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Start. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
@@ -631,7 +630,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -676,7 +675,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         Analytics.setEnabled(false);
 
         /* App in foreground: no log yet, we are disabled. */
@@ -696,7 +695,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), "", null, true);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
         verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
         doAnswer(new Answer<Void>() {
@@ -740,7 +739,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
-        analytics.onStarted(mock(Context.class), channel, mock(AuthTokenContext.class), null, null, false);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
 
         /* Session tracker not initialized. */
         verify(channel, never()).addListener(isA(SessionTracker.class));

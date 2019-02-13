@@ -24,7 +24,6 @@ import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -285,6 +284,6 @@ public class AbstractDistributeTest {
 
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, mChannel, mAuthTokenContext, "a", null, true);
+        Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
     }
 }
