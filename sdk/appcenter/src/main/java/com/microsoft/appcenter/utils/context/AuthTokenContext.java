@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 /**
- * Utility to store and retrieve the latest identity token.
+ * Utility to store and retrieve the latest authorization token.
  */
 public class AuthTokenContext {
 
@@ -50,10 +50,18 @@ public class AuthTokenContext {
         sInstance = null;
     }
 
+    /**
+     * Adds listener to token context.
+     * @param listener listener to be notified of changes.
+     */
     public synchronized void addListener(Listener listener) {
         mListeners.add(listener);
     }
 
+    /**
+     * Removes a specific listener.
+     * @param listener listener to be removed.
+     */
     public synchronized void removeListener(Listener listener) {
         mListeners.remove(listener);
     }
@@ -63,7 +71,7 @@ public class AuthTokenContext {
      *
      * @return authorization token.
      */
-    public synchronized String getIdentityToken() {
+    public synchronized String getAuthToken() {
         return mTokenStorage.getToken();
     }
 

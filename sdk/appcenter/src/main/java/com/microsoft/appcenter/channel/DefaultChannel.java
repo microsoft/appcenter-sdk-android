@@ -116,7 +116,7 @@ public class DefaultChannel implements Channel {
     private int mCurrentState;
 
     /**
-     * The Identity context object to retrieve identity token value.
+     * The Auth context object to retrieve auth token value.
      */
     private AuthTokenContext mAuthTokenContext;
 
@@ -516,7 +516,7 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAuthTokenContext.getIdentityToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAuthTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {

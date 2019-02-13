@@ -743,7 +743,7 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
-        /* Init Identity token context. */
+        /* Init Auth token context. */
         TokenStorage tokenStorage = new PreferenceTokenStorage(mApplication);
         AuthTokenContext tokenContext = AuthTokenContext.getInstance();
         tokenContext.setTokenStorage(tokenStorage);

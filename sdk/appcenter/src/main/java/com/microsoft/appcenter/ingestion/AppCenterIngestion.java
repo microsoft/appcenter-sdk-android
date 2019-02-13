@@ -52,11 +52,11 @@ public class AppCenterIngestion implements Ingestion {
     static final String APP_SECRET = "App-Secret";
 
     /**
-     * Identity token format for Authorization header.
+     * Auth token format for Authorization header.
      */
     @VisibleForTesting
     @SuppressWarnings("WeakerAccess")
-    static final String IDENTITY_TOKEN = "Bearer %s";
+    static final String AUTH_TOKEN = "Bearer %s";
 
     /**
      * Authorization HTTP Header.
@@ -104,12 +104,12 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String identityToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
-        if (identityToken != null && identityToken.length() > 0) {
-            headers.put(AUTHORIZATION, String.format(IDENTITY_TOKEN, identityToken));
+        if (authToken != null && authToken.length() > 0) {
+            headers.put(AUTHORIZATION, String.format(AUTH_TOKEN, authToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
@@ -159,9 +159,9 @@ public class AppCenterIngestion implements Ingestion {
                 if (appSecret != null) {
                     logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
                 }
-                String identityToken = logHeaders.get(AUTHORIZATION);
-                if (identityToken != null) {
-                    logHeaders.put(AUTHORIZATION, HttpUtils.hideSecret(identityToken));
+                String authToken = logHeaders.get(AUTHORIZATION);
+                if (authToken != null) {
+                    logHeaders.put(AUTHORIZATION, HttpUtils.hideSecret(authToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
