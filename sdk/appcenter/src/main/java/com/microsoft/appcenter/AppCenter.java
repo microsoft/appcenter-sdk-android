@@ -25,6 +25,7 @@ import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.IdentityTokenContext;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UserIdContext;
@@ -739,11 +740,14 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
+        /* Init Identity token context. */
+        IdentityTokenContext tokenContext = IdentityTokenContext.getInstance();
+
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, tokenContext);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {

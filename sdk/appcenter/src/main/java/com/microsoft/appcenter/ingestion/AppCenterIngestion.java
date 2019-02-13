@@ -4,17 +4,13 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 
@@ -56,6 +52,20 @@ public class AppCenterIngestion implements Ingestion {
     static final String APP_SECRET = "App-Secret";
 
     /**
+     * Identity token format for Authorization header.
+     */
+    @VisibleForTesting
+    @SuppressWarnings("WeakerAccess")
+    static final String IDENTITY_TOKEN = "Bearer %s";
+
+    /**
+     * Authorization HTTP Header.
+     */
+    @VisibleForTesting
+    @SuppressWarnings("WeakerAccess")
+    static final String AUTHORIZATION = "Authorization";
+
+    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -94,10 +104,13 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String identityToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
+        if (identityToken != null && identityToken.length() > 0) {
+            headers.put(AUTHORIZATION, String.format(IDENTITY_TOKEN, identityToken));
+        }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
@@ -145,6 +158,10 @@ public class AppCenterIngestion implements Ingestion {
                 String appSecret = logHeaders.get(APP_SECRET);
                 if (appSecret != null) {
                     logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
+                }
+                String identityToken = logHeaders.get(AUTHORIZATION);
+                if (identityToken != null) {
+                    logHeaders.put(AUTHORIZATION, HttpUtils.hideSecret(identityToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
