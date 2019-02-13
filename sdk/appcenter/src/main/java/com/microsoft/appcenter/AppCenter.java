@@ -170,6 +170,11 @@ public class AppCenter {
     private Channel mChannel;
 
     /**
+     * Token context.
+     */
+    private AuthTokenContext mAuthTokenContext;
+
+    /**
      * Background handler thread.
      */
     private HandlerThread mHandlerThread;
@@ -745,14 +750,13 @@ public class AppCenter {
 
         /* Init Auth token context. */
         TokenStorage tokenStorage = new PreferenceTokenStorage(mApplication);
-        AuthTokenContext tokenContext = AuthTokenContext.getInstance();
-        tokenContext.setTokenStorage(tokenStorage);
+        mAuthTokenContext = new AuthTokenContext(tokenStorage);
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, tokenContext);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, mAuthTokenContext);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -903,10 +907,10 @@ public class AppCenter {
                 service.setInstanceEnabled(false);
             }
             if (startFromApp) {
-                service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, true);
+                service.onStarted(mApplication, mChannel, mAuthTokenContext, mAppSecret, mTransmissionTargetToken, true);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
             } else {
-                service.onStarted(mApplication, mChannel, null, null, false);
+                service.onStarted(mApplication, mChannel, mAuthTokenContext,null, null, false);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
             }
         }

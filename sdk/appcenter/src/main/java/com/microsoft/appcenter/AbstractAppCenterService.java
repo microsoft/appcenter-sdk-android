@@ -11,6 +11,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Map;
@@ -32,6 +33,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      * Channel instance.
      */
     protected Channel mChannel;
+
+    /**
+     * Auth context instance.
+     */
+    protected AuthTokenContext mAuthTokenContext;
 
     /**
      * Background thread handler.
@@ -181,7 +187,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         String groupName = getGroupName();
         boolean enabled = isInstanceEnabled();
         if (groupName != null) {
@@ -198,6 +204,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
+        mAuthTokenContext = authTokenContext;
         applyEnabledState(enabled);
     }
 
