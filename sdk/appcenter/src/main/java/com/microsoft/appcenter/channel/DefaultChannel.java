@@ -128,7 +128,7 @@ public class DefaultChannel implements Channel {
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
      */
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, AuthTokenContext authTokenContext) {
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, @NonNull AuthTokenContext authTokenContext) {
         this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler, authTokenContext);
     }
 

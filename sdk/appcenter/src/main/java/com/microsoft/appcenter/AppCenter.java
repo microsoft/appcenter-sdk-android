@@ -910,7 +910,7 @@ public class AppCenter {
                 service.onStarted(mApplication, mChannel, mAuthTokenContext, mAppSecret, mTransmissionTargetToken, true);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
             } else {
-                service.onStarted(mApplication, mChannel, mAuthTokenContext,null, null, false);
+                service.onStarted(mApplication, mChannel, mAuthTokenContext, null, null, false);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
             }
         }
