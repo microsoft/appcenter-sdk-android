@@ -14,7 +14,6 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
@@ -122,8 +121,8 @@ public class AppCenterAndroidTest {
         }
 
         @Override
-        public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
-            super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
+        public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+            super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
 
             /* Check no dead lock if we do that. */
             mInstallId = AppCenter.getInstallId().get();
