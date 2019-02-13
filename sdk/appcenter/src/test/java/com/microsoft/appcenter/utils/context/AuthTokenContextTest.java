@@ -2,6 +2,7 @@ package com.microsoft.appcenter.utils.context;
 
 import com.microsoft.appcenter.utils.UUIDUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,8 +20,10 @@ public class AuthTokenContextTest {
     public void setUp() {
         TokenStorage mockTokenStorage = mock(TokenStorage.class);
         when(mockTokenStorage.getToken()).thenReturn(MOCK_TOKEN);
-        mAuthTokenContext = new AuthTokenContext(mockTokenStorage);
+        mAuthTokenContext = AuthTokenContext.getInstance();
+        mAuthTokenContext.setTokenStorage(mockTokenStorage);
     }
+
 
     @Test
     public void setAuthTokenTest() {
@@ -37,5 +40,10 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called on a new token. */
         verify(mockListener).onNewToken(MOCK_TOKEN);
+    }
+
+    @After
+    public void tearDown() {
+        AuthTokenContext.unsetInstance();
     }
 }
