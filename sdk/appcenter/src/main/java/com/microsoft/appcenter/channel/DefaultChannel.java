@@ -18,12 +18,11 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
-import com.microsoft.appcenter.utils.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.IdentityTokenContext;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -119,7 +118,7 @@ public class DefaultChannel implements Channel {
     /**
      * The Identity context object to retrieve identity token value.
      */
-    private IdentityTokenContext mIdentityTokenContext;
+    private AuthTokenContext mAuthTokenContext;
 
     /**
      * Creates and initializes a new instance.
@@ -129,8 +128,8 @@ public class DefaultChannel implements Channel {
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
      */
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, IdentityTokenContext identityTokenContext) {
-        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler, identityTokenContext);
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, AuthTokenContext authTokenContext) {
+        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler, authTokenContext);
     }
 
     /**
@@ -143,7 +142,7 @@ public class DefaultChannel implements Channel {
      * @param appCenterHandler App Center looper thread handler.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler, IdentityTokenContext identityTokenContext) {
+    DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler, AuthTokenContext authTokenContext) {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
@@ -155,18 +154,7 @@ public class DefaultChannel implements Channel {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        identityTokenContext.addListener(new AbstractTokenContextListener() {
-
-            @Override
-            public void onNewToken() {
-                newTokenCallback();
-            }
-        });
-        mIdentityTokenContext = identityTokenContext;
-    }
-
-    private void newTokenCallback() {
-        // TODO [Identity56021 Add implementation here]
+        mAuthTokenContext = authTokenContext;
     }
 
     /**
@@ -528,7 +516,7 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mIdentityTokenContext.getIdentityToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAuthTokenContext.getIdentityToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {

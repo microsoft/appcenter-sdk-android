@@ -18,7 +18,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.IdentityTokenContext;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -379,7 +379,7 @@ public class Identity extends AbstractAppCenterService {
                 public void onSuccess(IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
                     if (isInstanceEnabled()) {
-                        IdentityTokenContext.getInstance().setIdentityToken(authenticationResult.getIdToken());
+                        AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken());
                     }
                     // TODO [Identity56021] send id token (not access token) to ingestion, if sdk still enabled. If not enabled?
                 }

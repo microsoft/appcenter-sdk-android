@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.utils;
+package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.VisibleForTesting;
 
@@ -8,17 +8,12 @@ import java.util.LinkedHashSet;
 /**
  * Utility to store and retrieve the latest identity token.
  */
-public class IdentityTokenContext {
+public class AuthTokenContext {
 
     /**
      * Unique instance.
      */
-    private static IdentityTokenContext sInstance;
-
-    /**
-     * Current identity token.
-     */
-    private String mIdentityToken;
+    private static AuthTokenContext sInstance;
 
     /**
      * Global listeners.
@@ -26,20 +21,28 @@ public class IdentityTokenContext {
     private final Collection<Listener> mListeners;
 
     /**
+     * Storage that handles saving and encrypting token.
+     */
+    private TokenStorage mTokenStorage;
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
      */
-    public static synchronized IdentityTokenContext getInstance() {
+    public static synchronized AuthTokenContext getInstance() {
         if (sInstance == null) {
-            sInstance = new IdentityTokenContext();
+            sInstance = new AuthTokenContext();
         }
         return sInstance;
     }
 
-    private IdentityTokenContext() {
+    private AuthTokenContext() {
         mListeners = new LinkedHashSet<>();
-        mIdentityToken = ""; // TODO [Identity56021] def. value?
+    }
+
+    public void setTokenStorage(TokenStorage tokenStorage) {
+        mTokenStorage = tokenStorage;
     }
 
     @VisibleForTesting
@@ -56,30 +59,26 @@ public class IdentityTokenContext {
     }
 
     /**
-     * Get current identity token.
+     * Get current authorization token.
      *
-     * @return identity id token.
+     * @return authorization token.
      */
     public synchronized String getIdentityToken() {
-        // TODO [Identity56021] Decrypt/use MSAL Cache ?
-        return mIdentityToken;
+        return mTokenStorage.getToken();
     }
 
     /**
-     * Set new identity token.
+     * Set new authorization token.
      *
-     * @param identityToken identity id token.
+     * @param authToken authorization token.
      */
-    public synchronized void setIdentityToken(String identityToken) {
+    public synchronized void setAuthToken(String authToken) {
+        mTokenStorage.saveToken(authToken);
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
-            listener.onNewToken();
+            listener.onNewToken(authToken);
         }
-
-        // TODO [Identity56021] Encrypt/use MSAL Cache ?
-        // TODO [Identity56021] Update the token here or later?
-        mIdentityToken = identityToken;
     }
 
     /**
@@ -90,7 +89,7 @@ public class IdentityTokenContext {
         /**
          * Called whenever a new token is set.
          */
-        void onNewToken();
+        void onNewToken(String authToken);
     }
 }
 

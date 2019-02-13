@@ -1,4 +1,4 @@
-package com.microsoft.appcenter;
+package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
