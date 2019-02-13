@@ -8,6 +8,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
@@ -37,7 +38,6 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest(DistributeUtils.class)
@@ -45,7 +45,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {
         distribute.onStarting(mAppCenterHandler);
-        distribute.onStarted(mContext, mock(Channel.class), "a", null, true);
+        distribute.onStarted(mContext, mock(Channel.class), mock(AuthTokenContext.class), "a", null, true);
     }
 
     @Test
