@@ -149,10 +149,10 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
     /**
@@ -378,8 +378,8 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onSuccess(IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    if (Identity.isEnabled().get()) {
-                        mAuthTokenContext.setAuthToken(authenticationResult.getIdToken());
+                    if (isInstanceEnabled() && AppCenter.isEnabled().get()) {
+                        AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken());
                     }
                 }
 
