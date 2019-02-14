@@ -82,11 +82,11 @@ public class AbstractDefaultChannelTest {
             @Override
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[4] instanceof ServiceCallback) {
+                if (args[3] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("", null);
                     else
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(e);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
                 }
                 return null;
             }
