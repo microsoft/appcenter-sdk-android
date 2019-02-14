@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.utils.context;
 
+import android.support.annotation.VisibleForTesting;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -7,6 +9,11 @@ import java.util.LinkedHashSet;
  * Utility to store and retrieve the latest authorization token.
  */
 public class AuthTokenContext {
+
+    /**
+     * Unique instance.
+     */
+    private static AuthTokenContext sInstance;
 
     /**
      * Global listeners.
@@ -19,13 +26,28 @@ public class AuthTokenContext {
     private TokenStorage mTokenStorage;
 
     /**
-     * Initializes token context with the given token storage.
+     * Get unique instance.
      *
-     * @param tokenStorage token storage to save token.
+     * @return unique instance.
      */
-    public AuthTokenContext(TokenStorage tokenStorage) {
-        mTokenStorage = tokenStorage;
+    public static synchronized AuthTokenContext getInstance() {
+        if (sInstance == null) {
+            sInstance = new AuthTokenContext();
+        }
+        return sInstance;
+    }
+
+    private AuthTokenContext() {
         mListeners = new LinkedHashSet<>();
+    }
+
+    public void setTokenStorage(TokenStorage tokenStorage) {
+        mTokenStorage = tokenStorage;
+    }
+
+    @VisibleForTesting
+    public static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     /**
