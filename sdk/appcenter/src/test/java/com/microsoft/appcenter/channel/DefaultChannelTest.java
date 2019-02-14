@@ -216,8 +216,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[4] instanceof ServiceCallback) {
-                    callbacks.add((ServiceCallback) invocation.getArguments()[4]);
+                if (args[3] instanceof ServiceCallback) {
+                    callbacks.add((ServiceCallback) invocation.getArguments()[3]);
                 }
                 return null;
             }
@@ -267,8 +267,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[4] instanceof ServiceCallback) {
-                    callbacks.add((ServiceCallback) invocation.getArguments()[4]);
+                if (args[3] instanceof ServiceCallback) {
+                    callbacks.add((ServiceCallback) invocation.getArguments()[3]);
                 }
                 return null;
             }
@@ -710,7 +710,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             public Void answer(InvocationOnMock invocation) {
 
                 /* Simulate a service disabled in the middle of network transaction. */
-                ServiceCallback callback = (ServiceCallback) invocation.getArguments()[4];
+                ServiceCallback callback = (ServiceCallback) invocation.getArguments()[3];
                 channel.removeGroup(TEST_GROUP);
                 callback.onCallSucceeded("", null);
                 return null;
