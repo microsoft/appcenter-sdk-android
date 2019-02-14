@@ -44,7 +44,7 @@ public class AuthTokenContext {
      * @param context application context instance.
      */
     private AuthTokenContext(Context context) {
-        mTokenStorage = TokenStorageFactory.getTokenStorage(context.getApplicationContext());
+        mTokenStorage = TokenStorageFactory.getTokenStorage(context);
         mListeners = new LinkedHashSet<>();
     }
 
