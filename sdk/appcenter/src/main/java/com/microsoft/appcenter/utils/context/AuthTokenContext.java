@@ -17,12 +17,12 @@ public class AuthTokenContext {
     private static AuthTokenContext sInstance;
 
     /**
-     * Global listeners.
+     * Global listeners collection.
      */
     private final Collection<Listener> mListeners;
 
     /**
-     * Storage that handles saving and encrypting token.
+     * {@link ITokenStorage} instance that handles saving and encrypting token.
      */
     private ITokenStorage mTokenStorage;
 

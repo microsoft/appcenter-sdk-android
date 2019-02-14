@@ -127,6 +127,7 @@ public class DefaultChannel implements Channel {
      * @param appSecret        The application secret.
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
+     * @param authTokenContext Authorization token context.
      */
     public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, @NonNull AuthTokenContext authTokenContext) {
         this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler, authTokenContext);
@@ -140,6 +141,7 @@ public class DefaultChannel implements Channel {
      * @param persistence      Persistence object for dependency injection.
      * @param ingestion        Ingestion object for dependency injection.
      * @param appCenterHandler App Center looper thread handler.
+     * @param authTokenContext Authorization token context.
      */
     @VisibleForTesting
     DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler, AuthTokenContext authTokenContext) {
