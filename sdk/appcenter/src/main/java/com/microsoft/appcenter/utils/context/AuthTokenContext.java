@@ -1,5 +1,8 @@
 package com.microsoft.appcenter.utils.context;
 
+import android.content.Context;
+import android.support.annotation.VisibleForTesting;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -9,6 +12,11 @@ import java.util.LinkedHashSet;
 public class AuthTokenContext {
 
     /**
+     * Unique instance.
+     */
+    private static AuthTokenContext sInstance;
+
+    /**
      * Global listeners.
      */
     private final Collection<Listener> mListeners;
@@ -16,16 +24,36 @@ public class AuthTokenContext {
     /**
      * Storage that handles saving and encrypting token.
      */
-    private TokenStorage mTokenStorage;
+    private ITokenStorage mTokenStorage;
 
     /**
-     * Initializes token context with the given token storage.
+     * Get unique instance.
      *
-     * @param tokenStorage token storage to save token.
+     * @return unique instance.
      */
-    public AuthTokenContext(TokenStorage tokenStorage) {
-        mTokenStorage = tokenStorage;
+    public static synchronized AuthTokenContext getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new AuthTokenContext(context);
+        }
+        return sInstance;
+    }
+
+    /**
+     * A private constructor for the class.
+     *
+     * @param context application context instance.
+     */
+    private AuthTokenContext(Context context) {
+        mTokenStorage = TokenStorageFactory.getTokenStorage(context.getApplicationContext());
         mListeners = new LinkedHashSet<>();
+    }
+
+    /**
+     * Unsets singleton instance.
+     */
+    @VisibleForTesting
+    public static synchronized void unsetInstance() {
+        sInstance = null;
     }
 
     /**
@@ -47,7 +75,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * Get current authorization token.
+     * Gets current authorization token.
      *
      * @return authorization token.
      */
@@ -56,7 +84,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * Set new authorization token.
+     * Sets new authorization token.
      *
      * @param authToken authorization token.
      */

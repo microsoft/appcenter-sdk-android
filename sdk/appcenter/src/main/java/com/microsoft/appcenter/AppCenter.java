@@ -25,15 +25,13 @@ import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.context.PreferenceTokenStorage;
-import com.microsoft.appcenter.utils.context.TokenStorage;
-import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -168,11 +166,6 @@ public class AppCenter {
      * Channel.
      */
     private Channel mChannel;
-
-    /**
-     * Token context.
-     */
-    private AuthTokenContext mAuthTokenContext;
 
     /**
      * Background handler thread.
@@ -749,14 +742,13 @@ public class AppCenter {
         boolean enabled = isInstanceEnabled();
 
         /* Init Auth token context. */
-        TokenStorage tokenStorage = new PreferenceTokenStorage(mApplication);
-        mAuthTokenContext = new AuthTokenContext(tokenStorage);
+        AuthTokenContext tokenContext = AuthTokenContext.getInstance(mApplication);
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, mAuthTokenContext);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler, tokenContext);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -907,10 +899,10 @@ public class AppCenter {
                 service.setInstanceEnabled(false);
             }
             if (startFromApp) {
-                service.onStarted(mApplication, mChannel, mAuthTokenContext, mAppSecret, mTransmissionTargetToken, true);
+                service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, true);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
             } else {
-                service.onStarted(mApplication, mChannel, mAuthTokenContext, null, null, false);
+                service.onStarted(mApplication, mChannel, null, null, false);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
             }
         }

@@ -32,7 +32,6 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -411,7 +410,7 @@ public class Distribute extends AbstractAppCenterService {
     private static final String DISTRIBUTE_GROUP = "group_distribute";
 
     @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
         mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
@@ -425,7 +424,7 @@ public class Distribute extends AbstractAppCenterService {
          * Apply enabled state is called by this method, we need fields to be initialized before.
          * So call super method at the end.
          */
-        super.onStarted(context, channel, authTokenContext, appSecret, transmissionTargetToken, startedFromApp);
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
     /**

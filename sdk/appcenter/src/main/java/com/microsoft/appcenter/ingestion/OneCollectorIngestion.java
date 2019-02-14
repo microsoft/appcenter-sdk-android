@@ -82,20 +82,6 @@ public class OneCollectorIngestion implements Ingestion {
     static final String UPLOAD_TIME_KEY = "Upload-Time";
 
     /**
-     * Auth token format for Authorization header.
-     */
-    @VisibleForTesting
-    @SuppressWarnings("WeakerAccess")
-    static final String AUTH_TOKEN = "Bearer %s";
-
-    /**
-     * Authorization HTTP Header.
-     */
-    @VisibleForTesting
-    @SuppressWarnings("WeakerAccess")
-    static final String AUTHORIZATION = "Authorization";
-
-    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -141,9 +127,6 @@ public class OneCollectorIngestion implements Ingestion {
             apiKey.deleteCharAt(apiKey.length() - 1);
         }
         headers.put(API_KEY, apiKey.toString());
-        if (authToken != null && authToken.length() > 0) {
-            headers.put(AUTHORIZATION, String.format(AUTH_TOKEN, authToken));
-        }
 
         /* Gather tokens from logs. */
         JSONObject tickets = new JSONObject();
@@ -263,10 +246,6 @@ public class OneCollectorIngestion implements Ingestion {
                 String tickets = logHeaders.get(TICKETS);
                 if (tickets != null) {
                     logHeaders.put(TICKETS, HttpUtils.hideTickets(tickets));
-                }
-                String authToken = logHeaders.get(AUTHORIZATION);
-                if (authToken != null) {
-                    logHeaders.put(AUTHORIZATION, HttpUtils.hideSecret(authToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }

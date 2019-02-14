@@ -8,7 +8,6 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.Map;
 
@@ -67,13 +66,12 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
      *
      * @param context                 application context.
      * @param channel                 channel.
-     * @param authTokenContext        token context.
      * @param appSecret               application secret.
      * @param transmissionTargetToken transmission target token.
      * @param startedFromApp          true if started from app, false if started from a library.
      */
     @WorkerThread
-    void onStarted(@NonNull Context context, @NonNull Channel channel, @NonNull AuthTokenContext authTokenContext, String appSecret, String transmissionTargetToken, boolean startedFromApp);
+    void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp);
 
     /**
      * Called when service started from library without any secret and then the app starts the service again

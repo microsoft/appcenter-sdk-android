@@ -55,15 +55,13 @@ public class AppCenterIngestion implements Ingestion {
      * Auth token format for Authorization header.
      */
     @VisibleForTesting
-    @SuppressWarnings("WeakerAccess")
-    static final String AUTH_TOKEN = "Bearer %s";
+    static final String AUTH_TOKEN_FORMAT = "Bearer %s";
 
     /**
      * Authorization HTTP Header.
      */
     @VisibleForTesting
-    @SuppressWarnings("WeakerAccess")
-    static final String AUTHORIZATION = "Authorization";
+    static final String AUTHORIZATION_HEADER = "Authorization";
 
     /**
      * Log serializer.
@@ -109,7 +107,7 @@ public class AppCenterIngestion implements Ingestion {
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
         if (authToken != null && authToken.length() > 0) {
-            headers.put(AUTHORIZATION, String.format(AUTH_TOKEN, authToken));
+            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, authToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
@@ -159,9 +157,9 @@ public class AppCenterIngestion implements Ingestion {
                 if (appSecret != null) {
                     logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
                 }
-                String authToken = logHeaders.get(AUTHORIZATION);
+                String authToken = logHeaders.get(AUTHORIZATION_HEADER);
                 if (authToken != null) {
-                    logHeaders.put(AUTHORIZATION, HttpUtils.hideSecret(authToken));
+                    logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideSecret(authToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
