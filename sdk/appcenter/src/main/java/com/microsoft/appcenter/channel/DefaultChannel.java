@@ -753,7 +753,7 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
     }
 
     @Override
-    public void onNewToken(String authToken) {
+    public void onNewAuthToken(String authToken) {
         if (mIngestion != null) {
             mIngestion.setAuthToken(authToken);
         }

@@ -93,7 +93,7 @@ public class AuthTokenContext {
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
-            listener.onNewToken(authToken);
+            listener.onNewAuthToken(authToken);
         }
     }
 
@@ -105,7 +105,7 @@ public class AuthTokenContext {
         /**
          * Called whenever a new token is set.
          */
-        void onNewToken(String authToken);
+        void onNewAuthToken(String authToken);
     }
 }
 
