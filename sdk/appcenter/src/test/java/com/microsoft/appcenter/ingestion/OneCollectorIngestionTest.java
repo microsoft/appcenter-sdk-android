@@ -229,7 +229,7 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(null,null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         Map<String, String> headers = mHeadersCaptor.getValue();

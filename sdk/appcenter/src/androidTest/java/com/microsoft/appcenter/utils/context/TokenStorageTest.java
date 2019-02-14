@@ -15,17 +15,23 @@ public class TokenStorageTest {
 
     @Test
     public void testPreferenceTokenStorage() {
+
+        /* Mock token. */
         Context context = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(context);
         ITokenStorage tokenStorage = new PreferenceTokenStorage(context);
-
         String mockToken = UUIDUtils.randomUUID().toString();
+
+        /* Save the token into storage. */
         tokenStorage.saveToken(mockToken);
 
+        /* Assert that storage returns the same token.*/
         assertEquals(mockToken, tokenStorage.getToken());
 
+        /* Remove the token from storage. */
         tokenStorage.removeToken();
 
+        /* Assert that there's no token in storage. */
         assertNull(tokenStorage.getToken());
     }
 }

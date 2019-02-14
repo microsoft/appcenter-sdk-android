@@ -25,6 +25,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 public class AuthTokenContextTest {
 
     private AuthTokenContext mAuthTokenContext;
+    
     private final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
 
     @Before
@@ -35,7 +36,6 @@ public class AuthTokenContextTest {
         when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mockTokenStorage);
         mAuthTokenContext = AuthTokenContext.getInstance(mock(Context.class));
     }
-
 
     @Test
     public void setAuthTokenTest() {
