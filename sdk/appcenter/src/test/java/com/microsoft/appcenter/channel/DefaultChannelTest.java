@@ -78,7 +78,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
-        when(mockAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mockAuthTokenContext.getAuthToken()).thenReturn("");
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mockAuthTokenContext);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
