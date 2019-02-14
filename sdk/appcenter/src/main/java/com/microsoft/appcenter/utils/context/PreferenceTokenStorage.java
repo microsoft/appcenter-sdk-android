@@ -6,19 +6,19 @@ import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 /**
- * Storage for tokens that uses Shared Preferences. Handles saving and encryption.
+ * Storage for tokens that uses {@link SharedPreferencesManager}. Handles saving and encryption.
  */
 public class PreferenceTokenStorage implements ITokenStorage {
 
     /**
-     * Context instance.
+     * {@link Context} instance.
      */
     private final Context mContext;
 
     /**
      * Default constructor.
      *
-     * @param context context instance.
+     * @param context {@link Context} instance.
      */
     PreferenceTokenStorage(Context context) {
         mContext = context;

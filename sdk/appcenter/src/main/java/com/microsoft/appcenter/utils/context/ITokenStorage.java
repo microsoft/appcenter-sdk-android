@@ -1,7 +1,7 @@
 package com.microsoft.appcenter.utils.context;
 
 /**
- * Interface for storages that work with token.
+ * Interface for storage that works with token.
  */
 public interface ITokenStorage {
 
