@@ -75,7 +75,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50)).then(getGetLogsAnswer(1)).then(getGetLogsAnswer(2));
 
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
         when(mockAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
@@ -100,7 +100,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have called deleteLogs on the Persistence. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
@@ -121,7 +121,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
         assertEquals(1, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockPersistence, times(51)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(50)).onSuccess(any(Log.class));
 
@@ -131,7 +131,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         runnable.set(null);
 
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(mockIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(51)).onSuccess(any(Log.class));
 
@@ -140,7 +140,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
         assertEquals(2, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockPersistence, times(53)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
-        verify(mockIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(51)).onSuccess(any(Log.class));
 
@@ -149,7 +149,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         runnable.get().run();
 
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, times(3)).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(53)).onSuccess(any(Log.class));
 
@@ -170,7 +170,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any())).then(getGetLogsAnswer(40));
 
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -213,7 +213,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 if (args[4] instanceof ServiceCallback) {
@@ -236,7 +236,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Verify all logs stored, N requests sent, not log deleted yet. */
         verify(mockPersistence, times(200)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
-        verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
@@ -244,7 +244,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
-        verify(mockIngestion, times(4)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(4)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
@@ -264,7 +264,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer());
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
                 if (args[4] instanceof ServiceCallback) {
@@ -285,7 +285,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Verify all logs stored, N requests sent, not log deleted yet. */
         verify(mockPersistence, times(100)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
-        verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
@@ -293,7 +293,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
-        verify(mockIngestion, times(4)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(4)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
@@ -318,7 +318,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(20));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -334,7 +334,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have not called deleteLogs on the Persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
@@ -369,7 +369,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Verify that we have called sendAsync on the ingestion 3 times total. */
-        verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have called deleteLogs on the Persistence (2 successful batches, the first call was a recoverable failure). */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
@@ -396,7 +396,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Second 50 logs will be used for clearing pending states. */
                 .then(getGetLogsAnswer(50))
                 .then(getGetLogsAnswer(20));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403))).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
@@ -412,7 +412,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion. */
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that the Channel is disabled. */
         assertFalse(channel.isEnabled());
@@ -455,7 +455,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Verify that we have called sendAsync on the ingestion 2 times total: 1 earlier failure then 1 success. */
-        verify(mockIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have called deleteLogs on the Persistence for the successful batch after re-enabling. */
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
@@ -474,7 +474,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer());
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -487,7 +487,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(2)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion twice as batch size is 1. */
-        verify(mockIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have called deleteLogs on the Persistence. */
         verify(mockPersistence, times(2)).deleteLogs(any(String.class), any(String.class));
@@ -513,7 +513,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new SocketException())).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -527,7 +527,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(logNumber)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
 
         /* Verify that we have called sendAsync on the ingestion once for the first item, but not more than that. */
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have not called deleteLogs on the Persistence. */
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
@@ -550,7 +550,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.setEnabled(true);
 
         /* Verify that we have called sendAsync on the ingestion n+1 times total: 1 failure before re-enabling, n success after. */
-        verify(mockIngestion, times(logNumber + 1)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, times(logNumber + 1)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we have called deleteLogs on the Persistence n times. */
         verify(mockPersistence, times(logNumber)).deleteLogs(any(String.class), any(String.class));
@@ -578,7 +578,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.countLogs(anyString())).thenReturn(30);
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(10));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
                     @Override
@@ -612,7 +612,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.countLogs(anyString())).thenReturn(3);
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(1));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class)))
                 /* Simulate waiting for response for the first batch. */
                 .then(new Answer<Object>() {
                     @Override
@@ -656,7 +656,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         }
         verify(mockPersistence, times(10)).putLog(any(Log.class), eq(TEST_GROUP), eq(PERSISTENCE_NORMAL));
         verify(mockPersistence, times(10)).putLog(any(Log.class), eq(TEST_GROUP + "2"), eq(PERSISTENCE_NORMAL));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
@@ -685,7 +685,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
         verify(ingestion).close();
         verify(persistence).deleteLogs(TEST_GROUP);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(listener).onGloballyEnabled(false);
 
         /* Enable and send a new log. */
@@ -695,7 +695,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertNotNull(runnable.get());
         runnable.get().run();
         verify(ingestion).reopen();
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(listener).onGloballyEnabled(true);
     }
 
@@ -705,7 +705,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         final DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler, mock(AuthTokenContext.class));
         when(persistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(1));
-        when(ingestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
+        when(ingestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) {
 
@@ -732,11 +732,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(persistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         assertNotNull(runnable.get());
         runnable.get().run();
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
     }
@@ -751,11 +751,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(persistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(50)).thenAnswer(getGetLogsAnswer(3));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
-        verify(ingestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         assertNotNull(runnable.get());
         runnable.get().run();
-        verify(ingestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, times(3)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
     }
@@ -778,7 +778,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(persistence).deleteLogs(TEST_GROUP);
         assertNotNull(runnable.get());
         runnable.get().run();
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -813,11 +813,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(persistence.countLogs(anyString())).thenReturn(2);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(2, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         assertNotNull(runnable.get());
         runnable.get().run();
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
     }
@@ -835,7 +835,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE - 1))
                 /* Logs from here will be used another group to skip callbacks. */
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403)));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(403)));
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -865,7 +865,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(DefaultChannel.CLEAR_BATCH_SIZE));
 
         /* Make first call hang, and the second call return a fatal error. */
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenReturn(null).then(getSendAsyncAnswer(new HttpException(403)));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).thenReturn(null).then(getSendAsyncAnswer(new HttpException(403)));
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 1, 1, MAX_PARALLEL_BATCHES, null, null);
@@ -891,7 +891,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.getLogs(eq(TEST_GROUP), anyListOf(String.class), anyInt(), anyListOf(Log.class)))
                 .then(getGetLogsAnswer(1));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer(new HttpException(503)));
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mock(AuthTokenContext.class));
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);

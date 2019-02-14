@@ -98,9 +98,10 @@ public class AppCenterIngestionTest {
         ingestion.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         String authToken = UUIDUtils.randomUUID().toString();
+        ingestion.setAuthToken(authToken);
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
@@ -150,9 +151,10 @@ public class AppCenterIngestionTest {
         ingestion.setLogUrl("http://mock");
         String appSecret = UUIDUtils.randomUUID().toString();
         String authToken = UUIDUtils.randomUUID().toString();
+        ingestion.setAuthToken(authToken);
         UUID installId = UUIDUtils.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
@@ -247,7 +249,8 @@ public class AppCenterIngestionTest {
         });
         AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
+        ingestion.setAuthToken(authToken);
+        assertEquals(call, ingestion.sendAsync(appSecret, UUIDUtils.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();
     }
 }

@@ -158,7 +158,7 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(null, null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
@@ -229,7 +229,7 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(null, null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         Map<String, String> headers = mHeadersCaptor.getValue();
@@ -272,7 +272,7 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(null, null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client was made without headers as JSON failed. */
         Map<String, String> headers = mHeadersCaptor.getValue();
@@ -305,7 +305,7 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(null, null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         assertNotNull(callTemplate.getValue());
@@ -390,7 +390,7 @@ public class OneCollectorIngestionTest {
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
-        assertEquals(call, ingestion.sendAsync(null, null, null, mock(LogContainer.class), mock(ServiceCallback.class)));
+        assertEquals(call, ingestion.sendAsync(null, null, mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.getValue();
     }
 }
