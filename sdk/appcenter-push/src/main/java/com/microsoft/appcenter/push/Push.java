@@ -19,6 +19,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
@@ -28,7 +29,7 @@ import java.util.Map;
 /**
  * Push notifications interface.
  */
-public class Push extends AbstractAppCenterService {
+public class Push extends AbstractAppCenterService implements AuthTokenContext.Listener {
 
     /**
      * Name of the service.
@@ -98,6 +99,16 @@ public class Push extends AbstractAppCenterService {
      * Indicates whether the push token must be registered in foreground.
      */
     private boolean mTokenNeedsRegistrationInForeground;
+
+    /**
+     * The last value of push token.
+     */
+    private String mLatestPushToken;
+
+    /**
+     * Indicates whether {@link PushInstallationLog} is being sent right now.
+     */
+    private boolean mInstallationLogsBeingProcessed = false;
 
     /**
      * Init.
@@ -238,6 +249,8 @@ public class Push extends AbstractAppCenterService {
     synchronized void onTokenRefresh(final String pushToken) {
         if (pushToken != null) {
             AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+            mLatestPushToken = pushToken;
+            mInstallationLogsBeingProcessed = true;
             post(new Runnable() {
 
                 @Override
@@ -293,6 +306,7 @@ public class Push extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
+        AuthTokenContext.getInstance(mContext).addListener(this);
     }
 
     /**
@@ -477,6 +491,13 @@ public class Push extends AbstractAppCenterService {
     private synchronized void handleOnMessageReceived(PushNotification pushNotification) {
         if (mInstanceListener != null) {
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
+        }
+    }
+
+    @Override
+    public synchronized void onNewAuthToken(String authToken) {
+        if (!mInstallationLogsBeingProcessed) {
+            enqueuePushInstallationLog(mLatestPushToken);
         }
     }
 }
