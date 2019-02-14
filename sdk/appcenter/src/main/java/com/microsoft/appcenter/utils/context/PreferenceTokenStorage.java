@@ -27,6 +27,7 @@ public class PreferenceTokenStorage implements ITokenStorage {
     /**
      * Used for authentication requests, string field for auth token.
      */
+    @SuppressWarnings("WeakerAccess")
     static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
 
     @Override
