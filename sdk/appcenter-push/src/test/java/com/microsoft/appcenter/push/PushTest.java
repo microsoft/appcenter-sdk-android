@@ -19,9 +19,11 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.context.UserIdContext;
+import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
@@ -57,6 +59,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -729,5 +732,16 @@ public class PushTest {
             when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
         }
         return pushIntentMock;
+    }
+
+    @Test
+    public void verifyEnqueueCalledOnNewAuthToken() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        start(push, channel);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
+        verify(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 }
