@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.ingestion;
 
+import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
@@ -15,7 +17,6 @@ public interface Ingestion extends Closeable {
     /**
      * Send logs to the Ingestion service.
      *
-     * @param authToken       auth token value.
      * @param appSecret       a unique and secret key used to identify the application.
      * @param installId       install identifier.
      * @param logContainer    payload.
@@ -23,7 +24,7 @@ public interface Ingestion extends Closeable {
      * @return the {@link ServiceCall} object
      * @throws IllegalArgumentException thrown if callback is null
      */
-    ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
+    ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 
     /**
      * Update log URL.
@@ -36,4 +37,17 @@ public interface Ingestion extends Closeable {
      * Make ingestion active again after closing.
      */
     void reopen();
+    /**
+     * Sets the value of authorization token.
+     *
+     * @param authToken value of authorization token.
+     */
+    public void setAuthToken(@NonNull String authToken);
+
+    /**
+     * Get the value of authorization token.
+     *
+     * @return value of authorization token.
+     */
+    public String getAuthToken();
 }

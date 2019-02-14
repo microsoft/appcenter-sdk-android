@@ -79,6 +79,11 @@ public class AppCenterIngestion implements Ingestion {
     private String mLogUrl;
 
     /**
+     * Authentication token current value.
+     */
+    private String mAuthToken;
+
+    /**
      * Init.
      *
      * @param context       any context.
@@ -102,12 +107,22 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public void setAuthToken(@NonNull String authToken) {
+        mAuthToken = authToken;
+    }
+
+    @Override
+    public String getAuthToken() {
+        return mAuthToken;
+    }
+
+    @Override
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
-        if (authToken != null && authToken.length() > 0) {
-            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, authToken));
+        if (mAuthToken != null && mAuthToken.length() > 0) {
+            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, mAuthToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);

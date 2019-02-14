@@ -109,7 +109,7 @@ public class OneCollectorIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
 
         /* Gather API keys from logs. */
         Map<String, String> headers = new HashMap<>();
@@ -192,6 +192,11 @@ public class OneCollectorIngestion implements Ingestion {
     public void close() throws IOException {
         mHttpClient.close();
     }
+
+    public void setAuthToken(@NonNull String authToken) { }
+
+    @Override
+    public String getAuthToken() { return null; }
 
     /**
      * Call template implementation for One Collector.

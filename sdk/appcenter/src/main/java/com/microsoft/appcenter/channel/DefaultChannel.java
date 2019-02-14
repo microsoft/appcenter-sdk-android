@@ -40,7 +40,7 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-public class DefaultChannel implements Channel {
+public class DefaultChannel implements Channel, AuthTokenContext.Listener {
 
     /**
      * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
@@ -157,6 +157,8 @@ public class DefaultChannel implements Channel {
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
         mAuthTokenContext = authTokenContext;
+        mIngestion.setAuthToken(authTokenContext.getAuthToken());
+        mAuthTokenContext.addListener(this);
     }
 
     /**
@@ -518,7 +520,7 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAuthTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {
@@ -748,6 +750,13 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void shutdown() {
         suspend(false, new CancellationException());
+    }
+
+    @Override
+    public void onNewToken(String authToken) {
+        if (mIngestion != null) {
+            mIngestion.setAuthToken(authToken);
+        }
     }
 
     /**

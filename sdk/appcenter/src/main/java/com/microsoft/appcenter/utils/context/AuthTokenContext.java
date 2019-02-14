@@ -100,7 +100,7 @@ public class AuthTokenContext {
     /**
      * Token context global listener specification.
      */
-    interface Listener {
+    public interface Listener {
 
         /**
          * Called whenever a new token is set.
