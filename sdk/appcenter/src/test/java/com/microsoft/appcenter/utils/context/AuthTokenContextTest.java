@@ -51,7 +51,7 @@ public class AuthTokenContextTest {
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);
 
         /* Verify that listener is called on a new token. */
-        verify(mockListener).onNewToken(MOCK_TOKEN);
+        verify(mockListener).onNewAuthToken(MOCK_TOKEN);
     }
 
     @After
