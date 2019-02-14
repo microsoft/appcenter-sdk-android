@@ -44,7 +44,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler, mockAuthContext());
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
@@ -86,7 +86,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
     @Test
     public void pauseGroupTwice() {
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler, mockAuthContext()));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mock(Channel.GroupListener.class));
         assertFalse(channel.getGroupState(TEST_GROUP).mPaused);
 
@@ -102,7 +102,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
     @Test
     public void resumeGroupWhileNotPaused() {
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler, mockAuthContext()));
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mock(Channel.GroupListener.class));
         DefaultChannel.GroupState groupState = channel.getGroupState(TEST_GROUP);
         verify(channel).checkPendingLogs(groupState);
@@ -125,7 +125,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Create a channel with a log group that send logs 1 by 1. */
         AppCenterIngestion appCenterIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler, mockAuthContext());
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
 
         /* Reset to verify further interactions besides initial check after adding group. */
@@ -189,7 +189,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
 
         /* Create a channel with a log group that send logs 1 by 1. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler, mockAuthContext());
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
 
         /* Pause group first. */
@@ -226,7 +226,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
     public void pauseResumeGroupWhenDisabled() {
 
         /* Create a channel with a log group. */
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler));
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler, mockAuthContext()));
         Channel.Listener listener = mock(Channel.Listener.class);
         channel.addListener(listener);
 

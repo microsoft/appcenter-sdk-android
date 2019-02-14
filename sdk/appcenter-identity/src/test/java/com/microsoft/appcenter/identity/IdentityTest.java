@@ -14,6 +14,8 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -28,6 +30,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +59,7 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -68,6 +74,9 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
+
+    @Mock
+    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @NonNull
     private Channel start(Identity identity) {
@@ -291,6 +300,19 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        final IAuthenticationResult mockResult = mock(IAuthenticationResult.class);
+        when(mockResult.getAccessToken()).thenReturn("token");
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        when(mockResult.getIdToken()).thenReturn(mockIdToken);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
         /* Mock http and start identity service. */
         HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
@@ -315,7 +337,6 @@ public class IdentityTest extends AbstractIdentityTest {
         SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
 
         /* Go foreground. */
-        Activity activity = mock(Activity.class);
         identity.onActivityResumed(activity);
         assertFalse(identity.isLoginDelayed());
 
@@ -324,7 +345,16 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify login still delayed in background. */
         assertFalse(identity.isLoginDelayed());
+
+        /* Disable Identity. */
+        Identity.setEnabled(false).get();
+
+        /* Login with identity disabled. */
+        Identity.login();
+
+        /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mAuthTokenContext, times(1)).setAuthToken(eq(mockIdToken));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
