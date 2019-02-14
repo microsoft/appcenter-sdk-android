@@ -8,7 +8,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 /**
  * Storage for tokens that uses Shared Preferences. Handles saving and encryption.
  */
-public class PreferenceTokenStorage implements TokenStorage {
+public class PreferenceTokenStorage implements ITokenStorage {
 
     /**
      * Context instance.
@@ -20,19 +20,14 @@ public class PreferenceTokenStorage implements TokenStorage {
      *
      * @param context context instance.
      */
-    public PreferenceTokenStorage(Context context) {
+    PreferenceTokenStorage(Context context) {
         mContext = context;
     }
 
     /**
-     * Base key for stored preferences.
-     */
-    static final String PREFERENCE_PREFIX = "AppCenter.";
-
-    /**
      * Used for authentication requests, string field for auth token.
      */
-    static final String PREFERENCE_KEY_AUTH_TOKEN = PREFERENCE_PREFIX + "auth_token";
+    static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
 
     @Override
     public void saveToken(String token) {
@@ -42,9 +37,9 @@ public class PreferenceTokenStorage implements TokenStorage {
 
     @Override
     public String getToken() {
-        String encryptedToken = SharedPreferencesManager.getString(PREFERENCE_KEY_AUTH_TOKEN, "");
-        if (encryptedToken.length() == 0) {
-            return "";
+        String encryptedToken = SharedPreferencesManager.getString(PREFERENCE_KEY_AUTH_TOKEN, null);
+        if (encryptedToken == null || encryptedToken.length() == 0) {
+            return null;
         }
         CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedToken, false);
         return decryptedData.getDecryptedData();

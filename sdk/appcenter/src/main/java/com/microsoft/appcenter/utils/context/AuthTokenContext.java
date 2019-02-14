@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.utils.context;
 
+import android.content.Context;
 import android.support.annotation.VisibleForTesting;
 
 import java.util.Collection;
@@ -23,28 +24,33 @@ public class AuthTokenContext {
     /**
      * Storage that handles saving and encrypting token.
      */
-    private TokenStorage mTokenStorage;
+    private ITokenStorage mTokenStorage;
 
     /**
      * Get unique instance.
      *
      * @return unique instance.
      */
-    public static synchronized AuthTokenContext getInstance() {
+    public static synchronized AuthTokenContext getInstance(Context context) {
         if (sInstance == null) {
-            sInstance = new AuthTokenContext();
+            sInstance = new AuthTokenContext(context);
         }
         return sInstance;
     }
 
-    private AuthTokenContext() {
+    /**
+     * A private constructor for the class.
+     *
+     * @param context application context instance.
+     */
+    private AuthTokenContext(Context context) {
+        mTokenStorage = TokenStorageFactory.getTokenStorage(context.getApplicationContext());
         mListeners = new LinkedHashSet<>();
     }
 
-    public void setTokenStorage(TokenStorage tokenStorage) {
-        mTokenStorage = tokenStorage;
-    }
-
+    /**
+     * Unsets singleton instance.
+     */
     @VisibleForTesting
     public static synchronized void unsetInstance() {
         sInstance = null;
@@ -69,7 +75,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * Get current authorization token.
+     * Gets current authorization token.
      *
      * @return authorization token.
      */
@@ -78,7 +84,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * Set new authorization token.
+     * Sets new authorization token.
      *
      * @param authToken authorization token.
      */
