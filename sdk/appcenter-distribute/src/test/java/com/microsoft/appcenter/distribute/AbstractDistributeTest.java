@@ -121,9 +121,6 @@ public class AbstractDistributeTest {
     Channel mChannel;
 
     @Mock
-    AuthTokenContext mAuthTokenContext;
-
-    @Mock
     SharedPreferences mMobileCenterPreferencesStorage;
 
     @Mock

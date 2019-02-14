@@ -105,7 +105,7 @@ public class AppCenterIngestionTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, authToken));
+        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -157,7 +157,7 @@ public class AppCenterIngestionTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, authToken));
+        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -203,12 +203,13 @@ public class AppCenterIngestionTest {
 
         /* Put app secret to header. */
         headers.put(AppCenterIngestion.APP_SECRET, appSecret);
-        headers.put(AppCenterIngestion.AUTHORIZATION, String.format(AppCenterIngestion.AUTH_TOKEN, authToken));
+        headers.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
         verifyStatic();
         AppCenterLog.verbose(anyString(), contains(obfuscatedSecret));
+        AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test

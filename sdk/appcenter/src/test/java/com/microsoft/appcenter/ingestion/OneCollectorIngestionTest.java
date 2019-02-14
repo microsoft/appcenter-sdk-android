@@ -44,7 +44,6 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.ingestion.OneCollectorIngestion.AUTHORIZATION;
 import static com.microsoft.appcenter.ingestion.OneCollectorIngestion.TICKETS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -230,15 +229,12 @@ public class OneCollectorIngestionTest {
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        String authToken = UUIDUtils.randomUUID().toString();
-        assertEquals(call, ingestion.sendAsync(authToken,null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(null,null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         Map<String, String> headers = mHeadersCaptor.getValue();
         assertTrue(headers.containsKey(TICKETS));
-        assertTrue(headers.containsKey(AUTHORIZATION));
         assertEquals("{\"key2\":\"value2\"}", headers.get(TICKETS));
-        assertEquals(String.format(OneCollectorIngestion.AUTH_TOKEN, authToken), headers.get(AUTHORIZATION));
         return headers;
     }
 
@@ -281,7 +277,6 @@ public class OneCollectorIngestionTest {
         /* Verify call to http client was made without headers as JSON failed. */
         Map<String, String> headers = mHeadersCaptor.getValue();
         assertFalse(headers.containsKey(TICKETS));
-        assertFalse(headers.containsKey(AUTHORIZATION));
     }
 
     @Test
@@ -333,9 +328,7 @@ public class OneCollectorIngestionTest {
         String apiKeys = UUIDUtils.randomUUID().toString();
         String obfuscatedApiKeys = HttpUtils.hideApiKeys(apiKeys);
         String tickets = "{'hash':'secretValue'}";
-        String authToken = UUIDUtils.randomUUID().toString();
         String obfuscatedTickets = HttpUtils.hideTickets(tickets);
-        String obfuscatedToken = HttpUtils.hideSecret(authToken);
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate();
@@ -368,12 +361,6 @@ public class OneCollectorIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
         verifyStatic();
         AppCenterLog.verbose(anyString(), contains(obfuscatedTickets));
-
-        /* Add token to header and check the same way as api key. */
-        headers.put(OneCollectorIngestion.AUTHORIZATION, authToken);
-        callTemplate.onBeforeCalling(url, headers);
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test

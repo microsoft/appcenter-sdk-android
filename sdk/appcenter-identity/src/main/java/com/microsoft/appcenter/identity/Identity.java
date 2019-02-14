@@ -378,11 +378,11 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    getInstance().post(new Runnable() {
+                    post(new Runnable() {
                         @Override
                         public void run() {
                             if (isEnabled().get()) {
-                                AuthTokenContext.getInstance(mContext).setAuthToken(authenticationResult.getIdToken());
+                                AuthTokenContext.getInstance(mActivity).setAuthToken(authenticationResult.getIdToken());
                             }
                         }
                     });

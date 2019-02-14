@@ -9,6 +9,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TokenStorageTest {
 
@@ -16,7 +17,7 @@ public class TokenStorageTest {
     public void testPreferenceTokenStorage() {
         Context context = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(context);
-        TokenStorage tokenStorage = new PreferenceTokenStorage(context);
+        ITokenStorage tokenStorage = new PreferenceTokenStorage(context);
 
         String mockToken = UUIDUtils.randomUUID().toString();
         tokenStorage.saveToken(mockToken);
@@ -25,6 +26,6 @@ public class TokenStorageTest {
 
         tokenStorage.removeToken();
 
-        assertEquals("", tokenStorage.getToken());
+        assertNull(tokenStorage.getToken());
     }
 }

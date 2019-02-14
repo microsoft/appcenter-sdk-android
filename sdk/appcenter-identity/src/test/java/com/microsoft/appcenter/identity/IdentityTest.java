@@ -16,7 +16,6 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -77,16 +76,13 @@ public class IdentityTest extends AbstractIdentityTest {
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
     @Mock
-    private AuthTokenContext mAuthTokenContext;
-
-    @Mock
     private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @NonNull
     private Channel start(Identity identity) {
         Channel channel = mock(Channel.class);
         identity.onStarting(mAppCenterHandler);
-        identity.onStarted(mock(Context.class), channel, mAuthTokenContext, "", null, true);
+        identity.onStarted(mock(Context.class), channel, "", null, true);
         return channel;
     }
 
@@ -354,19 +350,6 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.setEnabled(false).get();
 
         /* Login with identity disabled. */
-        Identity.login();
-
-        /* Mock disabled AppCenter. */
-        when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
-        when(mBooleanAppCenterFuture.get()).thenReturn(true);
-
-        /* Login with Identity and App Center disabled. */
-        Identity.login();
-
-        /* Enable Identity. */
-        Identity.setEnabled(true).get();
-
-        /* Login with Identity enabled and App Center disabled. */
         Identity.login();
 
         /* Verify interactions. */

@@ -1,16 +1,27 @@
 package com.microsoft.appcenter.utils.context;
 
+import android.content.Context;
+
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
+@PrepareForTest({
+        TokenStorageFactory.class
+})
+@RunWith(PowerMockRunner.class)
 public class AuthTokenContextTest {
 
     private AuthTokenContext mAuthTokenContext;
@@ -18,10 +29,11 @@ public class AuthTokenContextTest {
 
     @Before
     public void setUp() {
-        TokenStorage mockTokenStorage = mock(TokenStorage.class);
+        mockStatic(TokenStorageFactory.class);
+        ITokenStorage mockTokenStorage = mock(ITokenStorage.class);
         when(mockTokenStorage.getToken()).thenReturn(MOCK_TOKEN);
-        mAuthTokenContext = AuthTokenContext.getInstance();
-        mAuthTokenContext.setTokenStorage(mockTokenStorage);
+        when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mockTokenStorage);
+        mAuthTokenContext = AuthTokenContext.getInstance(mock(Context.class));
     }
 
 
