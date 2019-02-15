@@ -40,9 +40,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         HandlerUtils.class,
         HttpUtils.class
 })
-abstract public class AbstractIdentityTest {
+abstract public class AbstractStorageTest {
 
-    static final String IDENTITY_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Identity.getInstance().getServiceName();
+    static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -55,7 +55,7 @@ abstract public class AbstractIdentityTest {
 
     @Before
     public void setUp() {
-        Identity.unsetInstance();
+        Storage.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);

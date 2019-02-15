@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.storage;
 
 import org.junit.Test;
 

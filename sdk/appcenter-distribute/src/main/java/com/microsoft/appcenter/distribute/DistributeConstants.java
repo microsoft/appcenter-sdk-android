@@ -56,11 +56,6 @@ final class DistributeConstants {
     static final String DEFAULT_INSTALL_URL = "https://install.appcenter.ms";
 
     /**
-     * Base URL to call server to check latest release.
-     */
-    static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
-
-    /**
      * Update setup URL path. Contains the app secret variable to replace.
      * Trailing slash needed to avoid redirection that can lose the query string on some servers.
      */

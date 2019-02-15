@@ -334,6 +334,16 @@ public class MainActivity extends AppCompatActivity {
             AppCenter.start(identity);
         } catch (ClassNotFoundException ignored) {
         }
+
+        /* TODO once Storage released to jCenter, use Storage.class directly in the start calls. */
+        try {
+            String className = "com.microsoft.appcenter.storage.Storage";
+
+            @SuppressWarnings("unchecked")
+            Class<AppCenterService> storage = (Class<AppCenterService>) Class.forName(className);
+            AppCenter.start(storage);
+        } catch (ClassNotFoundException ignored) {
+        }
     }
 
     public enum StartType {

@@ -48,6 +48,11 @@ public class Constants {
     public static boolean APPLICATION_DEBUGGABLE = false;
 
     /**
+     * Base URL to call server to check latest release.
+     */
+    public static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
+
+    /**
      * Initializes constants from the given context. The context is used to set
      * the package name, version code, and the files path.
      *
