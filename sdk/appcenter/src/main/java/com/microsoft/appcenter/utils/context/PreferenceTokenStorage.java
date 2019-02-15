@@ -8,7 +8,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 /**
  * Storage for tokens that uses {@link SharedPreferencesManager}. Handles saving and encryption.
  */
-public class PreferenceTokenStorage implements ITokenStorage {
+public class PreferenceTokenStorage implements AuthTokenStorage {
 
     /**
      * {@link Context} instance.

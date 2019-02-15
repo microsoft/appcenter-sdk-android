@@ -107,12 +107,12 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public void setAuthToken(@NonNull String authToken) {
+    public synchronized void setAuthToken(@NonNull String authToken) {
         mAuthToken = authToken;
     }
 
     @Override
-    public String getAuthToken() {
+    public synchronized String getAuthToken() {
         return mAuthToken;
     }
 
@@ -121,8 +121,10 @@ public class AppCenterIngestion implements Ingestion {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
-        if (mAuthToken != null && mAuthToken.length() > 0) {
-            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, mAuthToken));
+        synchronized (this) {
+            if (mAuthToken != null && mAuthToken.length() > 0) {
+                headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, mAuthToken));
+            }
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);

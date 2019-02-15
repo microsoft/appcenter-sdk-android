@@ -178,6 +178,7 @@ public class Identity extends AbstractAppCenterService {
             mIdentityScope = null;
             mLoginDelayed = false;
             clearCache();
+            AuthTokenContext.getInstance(mContext).clearData();
         }
     }
 
@@ -378,12 +379,10 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    post(new Runnable() {
+                    getInstance().post(new Runnable() {
                         @Override
                         public void run() {
-                            if (isEnabled().get()) {
-                                AuthTokenContext.getInstance(mActivity).setAuthToken(authenticationResult.getIdToken());
-                            }
+                            AuthTokenContext.getInstance(mContext).setAuthToken(authenticationResult.getIdToken());
                         }
                     });
                 }
