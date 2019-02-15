@@ -205,6 +205,8 @@ public class Crashes extends AbstractAppCenterService {
 
     /**
      * Enable or disable Crashes service.
+     * <p>
+     * The state is stored on disk, so it won't change in following app launches.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
