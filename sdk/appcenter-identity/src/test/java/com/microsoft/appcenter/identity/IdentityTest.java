@@ -16,6 +16,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -33,6 +34,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,10 +68,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@PrepareForTest({ AuthTokenContext.class })
 public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
@@ -103,7 +107,11 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void setEnabled() {
+    public void setEnabled() throws  Exception {
+        mockStatic(AuthTokenContext.class);
+        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(tokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
 
         /* Before start it does not work to change state, it's disabled. */
         Identity identity = Identity.getInstance();
@@ -123,6 +131,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
+        verify(tokenContext).clearData();
     }
 
     @Test

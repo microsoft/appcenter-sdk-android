@@ -10,8 +10,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,15 +25,14 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.ArrayList;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class, AuthTokenContext.class })
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
@@ -41,8 +40,6 @@ public class AbstractDefaultChannelTest {
     static final long BATCH_TIME_INTERVAL = 500;
 
     static final int MAX_PARALLEL_BATCHES = 3;
-
-    static final String MOCK_AUTH_TOKEN = UUIDUtils.randomUUID().toString();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -117,12 +114,11 @@ public class AbstractDefaultChannelTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-    }
-
-    protected AuthTokenContext mockAuthContext() {
-        AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
-        when(mockAuthTokenContext.getAuthToken()).thenReturn(MOCK_AUTH_TOKEN);
-        doNothing().when(mockAuthTokenContext).setAuthToken(anyString());
-        return mockAuthTokenContext;
+        mockStatic(AuthTokenContext.class);
+        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        when(tokenContext.getAuthToken()).thenReturn(mockToken);
+        when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(tokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
     }
 }

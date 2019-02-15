@@ -8,7 +8,6 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, ingestion, mAppCenterHandler, mock(AuthTokenContext.class));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Check log url. */
@@ -74,7 +73,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler, mockAuthContext());
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
         /* Enqueuing 1 event. */
@@ -113,7 +112,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Create channel and groups. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler, mockAuthContext());
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(appCenterGroup, 2, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
@@ -160,7 +159,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
 
         /* Create channel with the two groups. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler, mockAuthContext());
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(appCenterGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Verify that we can now send logs to app center after we have set app secret. */
@@ -187,7 +186,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         when(mockPersistence.countLogs(appCenterGroup)).thenReturn(1);
 
         /* Create channel with the two groups. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler, mockAuthContext());
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(appCenterGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
