@@ -106,11 +106,6 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     private String mLatestPushToken;
 
     /**
-     * Indicates whether {@link PushInstallationLog} is being sent right now.
-     */
-    private boolean mInstallationLogsBeingProcessed = false;
-
-    /**
      * Init.
      */
     private Push() {
@@ -250,7 +245,6 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
         if (pushToken != null) {
             AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
             mLatestPushToken = pushToken;
-            mInstallationLogsBeingProcessed = true;
             post(new Runnable() {
 
                 @Override
@@ -496,7 +490,7 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
 
     @Override
     public synchronized void onNewAuthToken(String authToken) {
-        if (!mInstallationLogsBeingProcessed) {
+        if (mLatestPushToken != null) {
             enqueuePushInstallationLog(mLatestPushToken);
         }
     }
