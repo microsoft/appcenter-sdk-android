@@ -263,7 +263,10 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            AuthTokenContext.getInstance(mContext).addListener(this);
             registerPushToken();
+        } else {
+            AuthTokenContext.getInstance(mContext).removeListener(this);
         }
     }
 
@@ -300,7 +303,6 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
             setFirebaseAnalyticsEnabled(context, false);
         }
-        AuthTokenContext.getInstance(mContext).addListener(this);
     }
 
     /**

@@ -756,4 +756,16 @@ public class PushTest {
         AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
+
+    @Test
+    public void verifyEnqueueNotCalledOnPushDisabled() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        start(push, channel);
+        Push.setEnabled(false);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
+        verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+    }
 }
