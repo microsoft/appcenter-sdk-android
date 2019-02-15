@@ -22,9 +22,9 @@ public class AuthTokenContext {
     private final Collection<Listener> mListeners;
 
     /**
-     * {@link ITokenStorage} instance that handles saving and encrypting token.
+     * {@link AuthTokenStorage} instance that handles saving and encrypting token.
      */
-    private ITokenStorage mTokenStorage;
+    private AuthTokenStorage mTokenStorage;
 
     /**
      * Get unique instance.
@@ -88,13 +88,22 @@ public class AuthTokenContext {
      *
      * @param authToken authorization token.
      */
-    public synchronized void setAuthToken(String authToken) {
-        mTokenStorage.saveToken(authToken);
+    public void setAuthToken(String authToken) {
+        synchronized (this) {
+            mTokenStorage.saveToken(authToken);
+        }
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
         }
+    }
+
+    /**
+     * Clears data about the token.
+     */
+    public synchronized void clearData() {
+        mTokenStorage.removeToken();
     }
 
     /**
@@ -108,4 +117,3 @@ public class AuthTokenContext {
         void onNewAuthToken(String authToken);
     }
 }
-

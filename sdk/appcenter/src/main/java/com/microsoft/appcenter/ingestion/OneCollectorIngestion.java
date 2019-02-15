@@ -193,6 +193,7 @@ public class OneCollectorIngestion implements Ingestion {
         mHttpClient.close();
     }
 
+    @Override
     public void setAuthToken(@NonNull String authToken) { }
 
     @Override
