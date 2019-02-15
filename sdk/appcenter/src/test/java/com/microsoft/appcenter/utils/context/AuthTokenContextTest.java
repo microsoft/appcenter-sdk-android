@@ -31,7 +31,7 @@ public class AuthTokenContextTest {
     @Before
     public void setUp() {
         mockStatic(TokenStorageFactory.class);
-        ITokenStorage mockTokenStorage = mock(ITokenStorage.class);
+        AuthTokenStorage mockTokenStorage = mock(AuthTokenStorage.class);
         when(mockTokenStorage.getToken()).thenReturn(MOCK_TOKEN);
         when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mockTokenStorage);
         mAuthTokenContext = AuthTokenContext.getInstance(mock(Context.class));

@@ -37,17 +37,18 @@ public interface Ingestion extends Closeable {
      * Make ingestion active again after closing.
      */
     void reopen();
+
     /**
      * Sets the value of authorization token.
      *
      * @param authToken value of authorization token.
      */
-    public void setAuthToken(@NonNull String authToken);
+    void setAuthToken(@NonNull String authToken);
 
     /**
      * Get the value of authorization token.
      *
      * @return value of authorization token.
      */
-    public String getAuthToken();
+    String getAuthToken();
 }

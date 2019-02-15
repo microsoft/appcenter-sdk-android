@@ -127,10 +127,9 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
      * @param appSecret        The application secret.
      * @param logSerializer    The log serializer.
      * @param appCenterHandler App Center looper thread handler.
-     * @param authTokenContext Authorization token context.
      */
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler, @NonNull AuthTokenContext authTokenContext) {
-        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler, authTokenContext);
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
+        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler);
     }
 
     /**
@@ -141,10 +140,9 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
      * @param persistence      Persistence object for dependency injection.
      * @param ingestion        Ingestion object for dependency injection.
      * @param appCenterHandler App Center looper thread handler.
-     * @param authTokenContext Authorization token context.
      */
     @VisibleForTesting
-    DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler, AuthTokenContext authTokenContext) {
+    DefaultChannel(@NonNull Context context, String appSecret, @NonNull Persistence persistence, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
@@ -156,8 +154,8 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        mAuthTokenContext = authTokenContext;
-        mIngestion.setAuthToken(authTokenContext.getAuthToken());
+        mAuthTokenContext = AuthTokenContext.getInstance(mContext);
+        mIngestion.setAuthToken(mAuthTokenContext.getAuthToken());
         mAuthTokenContext.addListener(this);
     }
 
@@ -753,7 +751,7 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
     }
 
     @Override
-    public void onNewAuthToken(String authToken) {
+    public synchronized void onNewAuthToken(String authToken) {
         if (mIngestion != null) {
             mIngestion.setAuthToken(authToken);
         }
