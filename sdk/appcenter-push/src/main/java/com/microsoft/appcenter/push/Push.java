@@ -263,10 +263,10 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance(mContext).addListener(this);
+            AuthTokenContext.getInstance().addListener(this);
             registerPushToken();
         } else {
-            AuthTokenContext.getInstance(mContext).removeListener(this);
+            AuthTokenContext.getInstance().removeListener(this);
         }
     }
 

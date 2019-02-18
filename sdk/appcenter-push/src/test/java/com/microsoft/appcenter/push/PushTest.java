@@ -742,7 +742,7 @@ public class PushTest {
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
+        AuthTokenContext.getInstance().setAuthToken(mockToken);
         verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -753,7 +753,7 @@ public class PushTest {
         doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
         start(push, channel);
         String mockToken = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
+        AuthTokenContext.getInstance().setAuthToken(mockToken);
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -765,7 +765,7 @@ public class PushTest {
         start(push, channel);
         Push.setEnabled(false);
         String mockToken = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance(mContext).setAuthToken(mockToken);
+        AuthTokenContext.getInstance().setAuthToken(mockToken);
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 }
