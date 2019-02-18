@@ -41,6 +41,8 @@ public class AbstractDefaultChannelTest {
 
     static final int MAX_PARALLEL_BATCHES = 3;
 
+    static final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
+    
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -116,8 +118,7 @@ public class AbstractDefaultChannelTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
         mockStatic(AuthTokenContext.class);
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        String mockToken = UUIDUtils.randomUUID().toString();
-        when(tokenContext.getAuthToken()).thenReturn(mockToken);
+        when(tokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
         when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
     }

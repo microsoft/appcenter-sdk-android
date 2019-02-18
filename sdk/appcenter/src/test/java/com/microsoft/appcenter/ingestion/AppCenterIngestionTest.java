@@ -112,6 +112,7 @@ public class AppCenterIngestionTest {
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
+        assertEquals(authToken, ingestion.getAuthToken());
         /* Verify close. */
         ingestion.close();
         verify(mHttpClient).close();
