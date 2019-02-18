@@ -369,9 +369,10 @@ public class AppCenter {
     }
 
     /**
-     * Enable or disable the SDK as a whole. In addition to the App Center resources,
-     * it will also enable or disable
-     * all services registered via {@link #start(Application, String, Class[])}.
+     * Enable or disable the SDK as a whole. In addition to the App Center resources, it will also
+     * enable or disable all services registered via {@link #start(Application, String, Class[])}.
+     * <p>
+     * The state is persisted in the device's storage across application launches.
      *
      * @param enabled true to enable, false to disable.
      * @return future with null result to monitor when the operation completes.
