@@ -16,6 +16,8 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
+import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -102,6 +104,11 @@ public class Identity extends AbstractAppCenterService {
     private boolean mLoginDelayed;
 
     /**
+     * Instance of {@link AuthTokenStorage} to store token information.
+     */
+    private AuthTokenStorage mTokenStorage;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -152,6 +159,7 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+        mTokenStorage = TokenStorageFactory.getTokenStorage(context);
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
