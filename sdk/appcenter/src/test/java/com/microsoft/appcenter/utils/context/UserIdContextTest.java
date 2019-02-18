@@ -1,6 +1,4 @@
-package com.microsoft.appcenter.utils;
-
-import com.microsoft.appcenter.utils.context.UserIdContext;
+package com.microsoft.appcenter.utils.context;
 
 import org.junit.Test;
 

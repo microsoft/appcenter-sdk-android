@@ -11,6 +11,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,9 +29,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class})
+@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class, AuthTokenContext.class })
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
@@ -39,6 +41,8 @@ public class AbstractDefaultChannelTest {
 
     static final int MAX_PARALLEL_BATCHES = 3;
 
+    static final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
+    
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -112,5 +116,10 @@ public class AbstractDefaultChannelTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
+        mockStatic(AuthTokenContext.class);
+        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
+        when(tokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
+        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
     }
 }
