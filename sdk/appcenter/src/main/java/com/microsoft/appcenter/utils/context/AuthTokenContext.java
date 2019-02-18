@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.utils.context;
 
-import android.content.Context;
 import android.support.annotation.VisibleForTesting;
 
 import java.util.Collection;
@@ -22,29 +21,31 @@ public class AuthTokenContext {
     private final Collection<Listener> mListeners;
 
     /**
-     * {@link AuthTokenStorage} instance that handles saving and encrypting token.
+     * Current value of auth token.
      */
-    private AuthTokenStorage mTokenStorage;
+    private String mAuthToken;
+
+    /**
+     * Current value of account id.
+     */
+    private String mLastHomeAccountId;
 
     /**
      * Get unique instance.
      *
      * @return unique instance.
      */
-    public static synchronized AuthTokenContext getInstance(Context context) {
+    public static synchronized AuthTokenContext getInstance() {
         if (sInstance == null) {
-            sInstance = new AuthTokenContext(context);
+            sInstance = new AuthTokenContext();
         }
         return sInstance;
     }
 
     /**
      * A private constructor for the class.
-     *
-     * @param context application context instance.
      */
-    private AuthTokenContext(Context context) {
-        mTokenStorage = TokenStorageFactory.getTokenStorage(context);
+    private AuthTokenContext() {
         mListeners = new LinkedHashSet<>();
     }
 
@@ -80,7 +81,7 @@ public class AuthTokenContext {
      * @return authorization token.
      */
     public synchronized String getAuthToken() {
-        return mTokenStorage.getToken();
+        return mAuthToken;
     }
 
     /**
@@ -89,9 +90,8 @@ public class AuthTokenContext {
      * @param authToken authorization token.
      */
     public void setAuthToken(String authToken) {
-        synchronized (this) {
-            mTokenStorage.saveToken(authToken);
-        }
+        mAuthToken = authToken;
+        //mLastHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
@@ -100,10 +100,11 @@ public class AuthTokenContext {
     }
 
     /**
-     * Clears data about the token.
+     * Clears info about the token.
      */
-    public synchronized void clearData() {
-        mTokenStorage.removeToken();
+    public void clearToken() {
+        mAuthToken = null;
+        mLastHomeAccountId = null;
     }
 
     /**

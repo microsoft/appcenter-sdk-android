@@ -118,7 +118,7 @@ public class AbstractDefaultChannelTest {
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
         String mockToken = UUIDUtils.randomUUID().toString();
         when(tokenContext.getAuthToken()).thenReturn(mockToken);
-        when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(tokenContext);
+        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
     }
 }

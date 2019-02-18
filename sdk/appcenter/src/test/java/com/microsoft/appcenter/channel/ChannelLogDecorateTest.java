@@ -47,7 +47,7 @@ public class ChannelLogDecorateTest {
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
         String mockToken = UUIDUtils.randomUUID().toString();
         Mockito.when(tokenContext.getAuthToken()).thenReturn(mockToken);
-        Mockito.when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(tokenContext);
+        Mockito.when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
         Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class));
         channel.addGroup("", 0, 0, 0, null, null);

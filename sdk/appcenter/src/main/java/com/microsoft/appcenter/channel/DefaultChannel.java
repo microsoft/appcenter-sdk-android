@@ -154,7 +154,7 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        mAuthTokenContext = AuthTokenContext.getInstance(mContext);
+        mAuthTokenContext = AuthTokenContext.getInstance();
         mIngestion.setAuthToken(mAuthTokenContext.getAuthToken());
         mAuthTokenContext.addListener(this);
     }

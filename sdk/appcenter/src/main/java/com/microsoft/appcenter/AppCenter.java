@@ -29,7 +29,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -740,9 +739,6 @@ public class AppCenter {
 
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
-
-        /* Init Auth token context. */
-        AuthTokenContext tokenContext = AuthTokenContext.getInstance(mApplication);
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();

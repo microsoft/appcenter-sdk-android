@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.identity;
 
-import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -107,6 +106,6 @@ abstract public class AbstractIdentityTest {
 
         /* Mock token context. */
         mockStatic(AuthTokenContext.class);
-        when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(mAuthTokenContext);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
     }
 }
