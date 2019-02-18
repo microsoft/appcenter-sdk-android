@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
@@ -382,7 +383,8 @@ public class Identity extends AbstractAppCenterService {
                     getInstance().post(new Runnable() {
                         @Override
                         public void run() {
-                            AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken());
+                            IAccount account = authenticationResult.getAccount();
+                            AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
                         }
                     });
                 }

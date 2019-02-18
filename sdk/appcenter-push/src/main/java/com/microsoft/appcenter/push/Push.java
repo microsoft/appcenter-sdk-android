@@ -19,6 +19,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -29,7 +30,7 @@ import java.util.Map;
 /**
  * Push notifications interface.
  */
-public class Push extends AbstractAppCenterService implements AuthTokenContext.Listener {
+public class Push extends AbstractAppCenterService {
 
     /**
      * Name of the service.
@@ -104,6 +105,11 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
      * The last value of push token.
      */
     private String mLatestPushToken;
+
+    /**
+     * Authorization listener for {@link AuthTokenContext}.
+     */
+    private AbstractTokenContextListener mAuthListener;
 
     /**
      * Init.
@@ -181,8 +187,7 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
      * Sender ID of your project before starting the Push service.
      *
      * @param senderId sender ID of your project.
-     *
-     * @deprecated For all the Android developers using App Center, there is a change coming where 
+     * @deprecated For all the Android developers using App Center, there is a change coming where
      * Firebase SDK is required to use Push Notifications. For Android P, its scheduled at
      * the release date for the latest OS version. For all other versions of Android, it will be
      * required after April 2019. Please follow the migration guide at https://aka.ms/acfba.
@@ -263,10 +268,10 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(this);
+            AuthTokenContext.getInstance().addListener(mAuthListener);
             registerPushToken();
         } else {
-            AuthTokenContext.getInstance().removeListener(this);
+            AuthTokenContext.getInstance().removeListener(mAuthListener);
         }
     }
 
@@ -298,6 +303,15 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        mAuthListener = new AbstractTokenContextListener() {
+            @Override
+            public synchronized void onNewUser(String authToken) {
+                if (mLatestPushToken != null) {
+                    enqueuePushInstallationLog(mLatestPushToken);
+                }
+
+            }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
@@ -487,13 +501,6 @@ public class Push extends AbstractAppCenterService implements AuthTokenContext.L
     private synchronized void handleOnMessageReceived(PushNotification pushNotification) {
         if (mInstanceListener != null) {
             mInstanceListener.onPushNotificationReceived(mActivity, pushNotification);
-        }
-    }
-
-    @Override
-    public synchronized void onNewAuthToken(String authToken) {
-        if (mLatestPushToken != null) {
-            enqueuePushInstallationLog(mLatestPushToken);
         }
     }
 }
