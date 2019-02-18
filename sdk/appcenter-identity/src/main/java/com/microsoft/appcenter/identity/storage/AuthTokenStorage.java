@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.utils.context;
+package com.microsoft.appcenter.identity.storage;
 
 /**
  * Interface for storage that works with token.
