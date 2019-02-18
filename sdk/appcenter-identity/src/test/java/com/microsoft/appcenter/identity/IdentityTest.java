@@ -110,7 +110,7 @@ public class IdentityTest extends AbstractIdentityTest {
     public void setEnabled() throws  Exception {
         mockStatic(AuthTokenContext.class);
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        when(AuthTokenContext.getInstance(any(Context.class))).thenReturn(tokenContext);
+        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
 
         /* Before start it does not work to change state, it's disabled. */
