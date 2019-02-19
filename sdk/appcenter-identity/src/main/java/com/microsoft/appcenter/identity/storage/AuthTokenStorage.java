@@ -9,8 +9,9 @@ public interface AuthTokenStorage {
      * Stores token value.
      *
      * @param token auth token.
+     * @param homeAccountId unique identifier of user.
      */
-    void saveToken(String token);
+    void saveToken(String token, String homeAccountId);
 
     /**
      * Retrieves token value.
@@ -23,4 +24,9 @@ public interface AuthTokenStorage {
      * Removes token value.
      */
     void removeToken();
+
+    /**
+     * Gets token from storage and caches it.
+     */
+    void cacheToken();
 }
