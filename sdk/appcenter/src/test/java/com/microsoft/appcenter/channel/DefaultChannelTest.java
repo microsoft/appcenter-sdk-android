@@ -15,8 +15,8 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Test;
 import org.mockito.Matchers;

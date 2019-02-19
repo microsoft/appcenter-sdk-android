@@ -111,7 +111,8 @@ public class AppCenterIngestionTest {
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
-
+        assertEquals(authToken, ingestion.getAuthToken());
+        
         /* Verify close. */
         ingestion.close();
         verify(mHttpClient).close();

@@ -157,6 +157,8 @@ public class OneCollectorIngestionTest {
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
+        ingestion.setAuthToken("fake-token");
+        assertNull(ingestion.getAuthToken());
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         assertEquals(call, ingestion.sendAsync(null, null, container, serviceCallback));
 
