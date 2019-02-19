@@ -309,7 +309,6 @@ public class Push extends AbstractAppCenterService {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }
-
             }
         };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
@@ -330,7 +329,6 @@ public class Push extends AbstractAppCenterService {
      * We can miss onCreate onStarted depending on how developers init the SDK.
      * So look for multiple events.
      */
-
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         checkPushInActivityIntent(activity);

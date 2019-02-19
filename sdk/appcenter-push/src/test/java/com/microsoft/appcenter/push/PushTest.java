@@ -775,7 +775,6 @@ public class PushTest {
         verify(channel, times(3)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
-
     @Test
     public void verifyEnqueueNotCalledOnNewAuthTokenBeforeRegistration() {
         Push push = Push.getInstance();

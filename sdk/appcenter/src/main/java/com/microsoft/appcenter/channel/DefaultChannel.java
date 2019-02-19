@@ -158,6 +158,7 @@ public class DefaultChannel implements Channel {
         mAuthTokenContext = AuthTokenContext.getInstance();
         mIngestion.setAuthToken(mAuthTokenContext.getAuthToken());
         mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+            
             @Override
             public synchronized void onNewAuthToken(String authToken) {
                 mIngestion.setAuthToken(authToken);
