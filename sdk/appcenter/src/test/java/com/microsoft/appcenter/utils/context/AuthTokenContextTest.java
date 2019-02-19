@@ -32,7 +32,7 @@ public class AuthTokenContextTest {
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
-        mAuthTokenContext.setAuthToken(MOCK_TOKEN);
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);

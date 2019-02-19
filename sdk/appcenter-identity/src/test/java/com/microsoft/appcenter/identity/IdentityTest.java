@@ -68,7 +68,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -107,11 +106,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void setEnabled() throws  Exception {
-        mockStatic(AuthTokenContext.class);
-        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
-        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
+    public void setEnabled() {
 
         /* Before start it does not work to change state, it's disabled. */
         Identity identity = Identity.getInstance();
@@ -122,6 +117,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Start. */
         Channel channel = start(identity);
+        verify(mPreferenceTokenStorage).cacheToken();
         verify(channel).removeGroup(eq(identity.getGroupName()));
         verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
@@ -131,7 +127,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
-        verify(tokenContext).clearData();
+        verify(mPreferenceTokenStorage).removeToken();
     }
 
     @Test
@@ -253,6 +249,11 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
 
+        /* Mock authentication result. */
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
@@ -296,7 +297,8 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Just call back and nothing to verify. TODO update tests when callbacks implemented. */
         callback.onCancel();
-        callback.onSuccess(mock(IAuthenticationResult.class));
+        callback.onSuccess(mockResult);
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
         callback.onError(mock(MsalException.class));
     }
 
@@ -310,10 +312,9 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        final IAuthenticationResult mockResult = mock(IAuthenticationResult.class);
-        when(mockResult.getAccessToken()).thenReturn("token");
         String mockIdToken = UUIDUtils.randomUUID().toString();
-        when(mockResult.getIdToken()).thenReturn(mockIdToken);
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -363,7 +364,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext, times(1)).setAuthToken(eq(mockIdToken));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {

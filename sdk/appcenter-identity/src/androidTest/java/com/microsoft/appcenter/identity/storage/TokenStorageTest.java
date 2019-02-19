@@ -19,11 +19,12 @@ public class TokenStorageTest {
         /* Mock token. */
         Context context = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(context);
-        AuthTokenStorage tokenStorage = new PreferenceTokenStorage(context);
+        AuthTokenStorage tokenStorage =  TokenStorageFactory.getTokenStorage(context);
         String mockToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
 
         /* Save the token into storage. */
-        tokenStorage.saveToken(mockToken);
+        tokenStorage.saveToken(mockToken, mockAccountId);
 
         /* Assert that storage returns the same token.*/
         assertEquals(mockToken, tokenStorage.getToken());
