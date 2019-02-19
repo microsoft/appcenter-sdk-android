@@ -58,6 +58,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     /**
      * Retrieves unique user id.
+     *
      * @return unique user id.
      */
     private String getHomeAccountId() {
@@ -72,7 +73,6 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         // We need to update Token context here.
         AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
     }
-
 
     @Override
     public void removeToken() {

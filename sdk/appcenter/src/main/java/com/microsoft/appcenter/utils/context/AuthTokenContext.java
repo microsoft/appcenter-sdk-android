@@ -88,10 +88,11 @@ public class AuthTokenContext {
      * Sets new authorization token.
      *
      * @param authToken authorization token.
+     * @param homeAccountId unique user id.
      */
-    public void setAuthToken(String authToken) {
+    public void setAuthToken(String authToken, String homeAccountId) {
         mAuthToken = authToken;
-        //mLastHomeAccountId = homeAccountId;
+        mLastHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
