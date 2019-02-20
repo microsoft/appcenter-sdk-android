@@ -11,7 +11,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
@@ -39,15 +39,12 @@ public class AuthTokenContextTest {
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);
 
-        /* Verify that listener is called on a new token. */
-        verify(mockListener).onNewAuthToken(MOCK_TOKEN);
-
         /* Remove listener. */
         mAuthTokenContext.removeListener(mockListener);
         mAuthTokenContext.setAuthToken(MOCK_TOKEN);
 
-        /* Verify that listener is not called on a new token. */
-        verify(mockListener, never()).onNewAuthToken(MOCK_TOKEN);
+        /* Verify that listener is called only once on a new token. */
+        verify(mockListener, times(1)).onNewAuthToken(MOCK_TOKEN);
 
         /* Clear token data. */
         mAuthTokenContext.clearToken();
