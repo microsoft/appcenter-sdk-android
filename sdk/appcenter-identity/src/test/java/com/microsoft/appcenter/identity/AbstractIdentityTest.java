@@ -13,10 +13,14 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import com.microsoft.identity.client.IAccount;
+import com.microsoft.identity.client.IAccountIdentifier;
+import com.microsoft.identity.client.IAuthenticationResult;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -107,5 +111,17 @@ abstract public class AbstractIdentityTest {
         /* Mock token context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+    }
+
+    IAuthenticationResult mockAuthResult(String mockIdToken, String mockAccountId) {
+        IAuthenticationResult mockResult = Mockito.mock(IAuthenticationResult.class);
+        when(mockResult.getAccessToken()).thenReturn("token");
+        when(mockResult.getIdToken()).thenReturn(mockIdToken);
+        IAccount mockAccount = Mockito.mock(IAccount.class);
+        IAccountIdentifier mockIdentifier = Mockito.mock(IAccountIdentifier.class);
+        when(mockIdentifier.getIdentifier()).thenReturn(mockAccountId);
+        when(mockAccount.getHomeAccountIdentifier()).thenReturn(mockIdentifier);
+        when(mockResult.getAccount()).thenReturn(mockAccount);
+        return mockResult;
     }
 }

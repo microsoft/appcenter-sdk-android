@@ -295,7 +295,9 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Just call back and nothing to verify. TODO update tests when callbacks implemented. */
         callback.onCancel();
-        callback.onSuccess(mock(IAuthenticationResult.class));
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        callback.onSuccess(mockAuthResult(mockToken, mockAccountId));
         callback.onError(mock(MsalException.class));
     }
 
@@ -309,10 +311,9 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        final IAuthenticationResult mockResult = mock(IAuthenticationResult.class);
-        when(mockResult.getAccessToken()).thenReturn("token");
         String mockIdToken = UUIDUtils.randomUUID().toString();
-        when(mockResult.getIdToken()).thenReturn(mockIdToken);
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
         doAnswer(new Answer<Void>() {
 
             @Override
