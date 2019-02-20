@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.identity.storage;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
