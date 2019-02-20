@@ -752,13 +752,6 @@ public class DefaultChannel implements Channel{
         suspend(false, new CancellationException());
     }
 
-    @Override
-    public synchronized void onNewAuthToken(String authToken) {
-        if (mIngestion != null) {
-            mIngestion.setAuthToken(authToken);
-        }
-    }
-
     /**
      * State for a specific log group.
      */
