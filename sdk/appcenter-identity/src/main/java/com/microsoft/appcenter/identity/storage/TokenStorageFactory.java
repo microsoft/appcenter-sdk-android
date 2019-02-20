@@ -18,7 +18,7 @@ public class TokenStorageFactory {
      * @param context application context.
      * @return instance of {@link AuthTokenStorage}.
      */
-    public AuthTokenStorage getTokenStorage(Context context) {
+    public static AuthTokenStorage getTokenStorage(Context context) {
         if (sTokenStorageInstance == null) {
             sTokenStorageInstance = new PreferenceTokenStorage(context);
         }
