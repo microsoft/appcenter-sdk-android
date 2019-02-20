@@ -175,9 +175,11 @@ public class Identity extends AbstractAppCenterService {
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
 
+            /* Load the last stored token and cache it into token context. */
+            mTokenStorage.cacheToken();
+
             /* Download the latest configuration in background. */
             downloadConfiguration();
-            mTokenStorage.cacheToken();
         } else {
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();

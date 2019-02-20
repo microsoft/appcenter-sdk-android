@@ -22,7 +22,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @param context {@link Context} instance.
      */
-    PreferenceTokenStorage(Context context) {
+    PreferenceTokenStorage(@NonNull Context context) {
         mContext = context;
     }
 
@@ -70,7 +70,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         String tokenFromStorage = getToken();
         String accountId = getHomeAccountId();
 
-        // We need to update Token context here.
+        /* We need to update Token context here. */
         AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
     }
 
