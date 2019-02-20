@@ -87,7 +87,7 @@ public class AuthTokenContext {
     /**
      * Sets new authorization token.
      *
-     * @param authToken authorization token.
+     * @param authToken     authorization token.
      * @param homeAccountId unique user id.
      */
     public void setAuthToken(String authToken, String homeAccountId) {
@@ -96,11 +96,21 @@ public class AuthTokenContext {
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
-            if (mLastHomeAccountId == null || !mLastHomeAccountId.equals(homeAccountId)) {
+            if (isNewUser(homeAccountId)) {
                 listener.onNewUser(authToken);
             }
         }
         mLastHomeAccountId = homeAccountId;
+    }
+
+    /**
+     * Check whether the user is new.
+     *
+     * @param newAccountId account id of the logged in user.
+     * @return true if this user is not the same as previous, false otehrwise.
+     */
+    private synchronized boolean isNewUser(String newAccountId) {
+        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newAccountId);
     }
 
     /**

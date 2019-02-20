@@ -304,6 +304,7 @@ public class Push extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAuthListener = new AbstractTokenContextListener() {
+
             @Override
             public synchronized void onNewUser(String authToken) {
                 if (mLatestPushToken != null) {
