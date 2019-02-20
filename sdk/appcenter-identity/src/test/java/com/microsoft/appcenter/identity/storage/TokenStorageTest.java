@@ -56,7 +56,7 @@ public class TokenStorageTest {
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
 
         /* Mock token. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage = TokenStorageFactory.getTokenStorage(mock(Context.class));
         mDecryptedToken = mock(CryptoUtils.DecryptedData.class);
         when(mDecryptedToken.getDecryptedData()).thenReturn(mMockToken);
     }
