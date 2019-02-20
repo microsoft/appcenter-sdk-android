@@ -721,19 +721,6 @@ public class PushTest {
         FirebaseAnalytics.getInstance(any(Context.class));
     }
 
-    private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
-        mockStatic(PushIntentUtils.class);
-        Intent pushIntentMock = mock(Intent.class);
-        when(PushIntentUtils.getTitle(pushIntentMock)).thenReturn(title);
-        when(PushIntentUtils.getMessage(pushIntentMock)).thenReturn(message);
-        if (customData != null) {
-            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(customData);
-        } else {
-            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
-        }
-        return pushIntentMock;
-    }
-
     @Test
     public void verifyEnqueueCalledOnNewAuthToken() {
         Push push = Push.getInstance();
@@ -798,5 +785,18 @@ public class PushTest {
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+    }
+
+    private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
+        mockStatic(PushIntentUtils.class);
+        Intent pushIntentMock = mock(Intent.class);
+        when(PushIntentUtils.getTitle(pushIntentMock)).thenReturn(title);
+        when(PushIntentUtils.getMessage(pushIntentMock)).thenReturn(message);
+        if (customData != null) {
+            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(customData);
+        } else {
+            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
+        }
+        return pushIntentMock;
     }
 }
