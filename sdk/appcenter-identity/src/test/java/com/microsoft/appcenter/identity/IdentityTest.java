@@ -363,7 +363,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext, times(1)).setAuthToken(eq(mockIdToken));
+        verify(mAuthTokenContext, times(1)).setAuthToken(eq(mockIdToken), anyString());
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
