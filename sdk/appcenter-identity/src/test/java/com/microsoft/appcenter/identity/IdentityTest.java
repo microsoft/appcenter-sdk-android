@@ -131,7 +131,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
-        //verify(tokenContext).clearData();
     }
 
     @Test

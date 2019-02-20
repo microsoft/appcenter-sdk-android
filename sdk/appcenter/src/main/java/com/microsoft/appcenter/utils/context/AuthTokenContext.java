@@ -91,7 +91,6 @@ public class AuthTokenContext {
      */
     public void setAuthToken(String authToken) {
         mAuthToken = authToken;
-        //mLastHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {

@@ -121,13 +121,20 @@ public class AppCenterIngestion implements Ingestion {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
-        synchronized (this) {
-            if (mAuthToken != null && mAuthToken.length() > 0) {
-                headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, mAuthToken));
-            }
+        if (authTokenExists()) {
+            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, mAuthToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
+    }
+
+    /**
+     * Checks that auth token exists and it's not empty.
+     *
+     * @return true if token exists, false otherwise.
+     */
+    private synchronized boolean authTokenExists() {
+        return mAuthToken != null && mAuthToken.length() > 0;
     }
 
     @Override

@@ -116,11 +116,6 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
     private int mCurrentState;
 
     /**
-     * The Auth context object to retrieve auth token value.
-     */
-    private AuthTokenContext mAuthTokenContext;
-
-    /**
      * Creates and initializes a new instance.
      *
      * @param context          The context.
@@ -154,9 +149,9 @@ public class DefaultChannel implements Channel, AuthTokenContext.Listener {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        mAuthTokenContext = AuthTokenContext.getInstance();
-        mIngestion.setAuthToken(mAuthTokenContext.getAuthToken());
-        mAuthTokenContext.addListener(this);
+        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        mIngestion.setAuthToken(authTokenContext.getAuthToken());
+        authTokenContext.addListener(this);
     }
 
     /**
