@@ -39,6 +39,17 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called on a new token. */
         verify(mockListener).onNewAuthToken(MOCK_TOKEN);
+
+        /* Remove listener. */
+        mAuthTokenContext.removeListener(mockListener);
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN);
+
+        /* Verify that listener is not called on a new token. */
+        verify(mockListener, never()).onNewAuthToken(MOCK_TOKEN);
+
+        /* Clear token data. */
+        mAuthTokenContext.clearToken();
+        assertNull(mAuthTokenContext.getAuthToken());
     }
 
     @After
