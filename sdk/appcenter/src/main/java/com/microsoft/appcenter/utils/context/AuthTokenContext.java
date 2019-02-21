@@ -87,7 +87,7 @@ public class AuthTokenContext {
     /**
      * Sets new authorization token.
      *
-     * @param authToken authorization token.
+     * @param authToken     authorization token.
      * @param homeAccountId unique user id.
      */
     public void setAuthToken(String authToken, String homeAccountId) {

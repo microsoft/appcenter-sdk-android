@@ -70,7 +70,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({ AuthTokenContext.class })
+@PrepareForTest(AuthTokenContext.class)
 public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
@@ -290,7 +290,7 @@ public class IdentityTest extends AbstractIdentityTest {
         AuthenticationCallback callback = callbackCaptor.getValue();
         assertNotNull(callback);
 
-        /* Just call back and nothing to verify. TODO update tests when callbacks implemented. */
+        /* Just call back and nothing to verify. */
         callback.onCancel();
         callback.onSuccess(mockResult);
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));

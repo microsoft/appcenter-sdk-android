@@ -24,7 +24,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      * @param context {@link Context} instance.
      */
     PreferenceTokenStorage(@NonNull Context context) {
-        mContext = context;
+        mContext = context.getApplicationContext();
     }
 
     /**

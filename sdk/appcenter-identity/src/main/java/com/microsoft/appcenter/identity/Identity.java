@@ -391,6 +391,7 @@ public class Identity extends AbstractAppCenterService {
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
                     AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
                     getInstance().post(new Runnable() {
+
                         @Override
                         public void run() {
                             IAccount account = authenticationResult.getAccount();

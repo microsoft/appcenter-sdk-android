@@ -19,7 +19,7 @@ public class TokenStorageTest {
         /* Mock token. */
         Context context = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(context);
-        AuthTokenStorage tokenStorage =  TokenStorageFactory.getTokenStorage(context);
+        AuthTokenStorage tokenStorage = TokenStorageFactory.getTokenStorage(context);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
 
