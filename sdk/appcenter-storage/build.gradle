@@ -3,4 +3,8 @@ evaluationDependsOn(':sdk')
 
 dependencies {
     api project(':sdk:appcenter')
+
+    implementation 'com.google.code.gson:gson:2.8.5'
+
 }
+

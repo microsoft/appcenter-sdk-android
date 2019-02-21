@@ -5,12 +5,20 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.google.gson.Gson;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.cosmosdb.*;
+import com.microsoft.appcenter.storage.models.ConflictResolutionPolicy;
+import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.Documents;
+import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -19,12 +27,14 @@ import org.json.JSONException;
 import org.json.JSONStringer;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
@@ -51,14 +61,15 @@ public class Storage extends AbstractAppCenterService {
     private String mAppSecret;
 
     /**
-     * Db Token.
-     */
-    private String mDbToken;
-
-    /**
      * Current API base URL.
      */
     private String mApiUrl = DEFAULT_API_URL;
+
+    private final Gson gson;
+
+    private Storage() {
+        gson = new Gson();
+    }
 
     /**
      * Get shared instance.
@@ -151,16 +162,24 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-    // Read a document
-    // The document type (T) must be JSON deserializable
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType){
-        return getInstance().instanceRead(partition, documentId, documentType);
+    class Test{
+        String test;
+
     }
 
     // Read a document
     // The document type (T) must be JSON deserializable
-    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(String partition, String documentId, Class<T> documentType){
-        return null;
+    public static <T> AppCenterFuture<Document<T>> read(){//String partition, String documentId){
+
+        AppCenterLog.debug(LOG_TAG, "Read started");
+        return getInstance().instanceRead("readonly", "123");//partition, documentId);
+    }
+
+    // Read a document
+    // The document type (T) must be JSON deserializable
+    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(String partition, String documentId){
+        DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        return result;
     }
 
     // List (need optional signature to configure page size)
@@ -195,13 +214,13 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    synchronized void getDbToken(final String partition) {
+    private synchronized <T> void getDbToken(final String partition, final String documentId, final DefaultAppCenterFuture<Document<T>> future) {
         AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
         HttpClient httpClient = createHttpClient(mContext);
         String url = mApiUrl;
         url += String.format(GET_TOKEN_PATH_FORMAT, mAppSecret);
 
-        Object tokenResponse =
+        ServiceCall tokenResponse =
             httpClient.callAsync(
                 url,
                 METHOD_POST,
@@ -210,42 +229,126 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public String buildRequestBody() {
-                        String apiBody;
-                        JSONStringer writer = new JSONStringer();
-                        try {
-                            List<String> partitions = new ArrayList<String>() {{add(partition);}};
-                            writer.object();
-                            writer.key("partitions").array();
-                            for (String p : partitions) {
-                                writer.value(p);
-                            }
-                            writer.endArray();
-                            writer.endObject();
-                        } catch (JSONException e) {
-                            AppCenterLog.error(LOG_TAG, "Failed to build API body", e);
-                        }
-
-                        apiBody = writer.toString();
-                        AppCenterLog.verbose(LOG_TAG, "API body is " + apiBody);
-                        return apiBody;
+                        return buildAppCenterGetDbTokenBodyPayload(partition);
                     }
 
                     @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) {
-                    }
+                    public void onBeforeCalling(URL url, Map<String, String> headers) { }
                 }, new ServiceCallback() {
 
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        AppCenterLog.verbose(LOG_TAG, "Received a call back with payload " + payload);
-                        mDbToken = payload;
+                        TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+
+                        // TODO: provide a delegate to call other methods with `future` as the parameter
+                        readDbDocument(tokensResponse.tokens().get(0), documentId, future);
+
+                        // TODO: do we need to call `complete` here?
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
                         handleApiCallFailure(e);
+
+                        // TODO: construct an error object
+                        future.complete(null);
                     }
                 });
+    }
+
+    private static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
+        String apiBody;
+        JSONStringer writer = new JSONStringer();
+        try {
+            // TODO: use https://github.com/google/gson for serialization
+            List<String> partitions = new ArrayList<String>() {{add(partition);}};
+            writer.object();
+            writer.key("partitions").array();
+            for (String p : partitions) {
+                writer.value(p);
+            }
+            writer.endArray();
+            writer.endObject();
+        } catch (JSONException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to build API body", e);
+        }
+
+        apiBody = writer.toString();
+        return apiBody;
+    }
+
+    private synchronized <T> void readDbDocument(
+            final TokenResult tokenResult,
+            final String documentId,
+            final DefaultAppCenterFuture<Document<T>> future) {
+        AppCenterLog.debug(LOG_TAG, "Read a document from the DB...");
+
+        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+        final String documentResourceId = getDocumentResourceId(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
+        final String documentUrl = getDocumentUrl(tokenResult.dbAccount(), documentResourceId);
+
+        ServiceCall documentResponse =
+            createHttpClient(mContext).callAsync(
+                documentUrl,
+                METHOD_GET,
+                    generateHeaders(documentResourceId, tokenResult.partition(), tokenResult.token()),
+                new HttpClient.CallTemplate() {
+
+                    @Override
+                    public String buildRequestBody() { return ""; }
+
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                }, new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                        AppCenterLog.verbose(LOG_TAG, "Received a call back with payload " + payload);
+
+                        future.complete(new Document<T>(payload, tokenResult.partition(), documentId));
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        handleApiCallFailure(e);
+
+                        // TODO: construct an error object
+                        future.complete(null);
+                    }
+                });
+    }
+
+    private static Map<String, String> generateHeaders(String documentResourceId, final String partition, String dbToken) {
+        Map<String, String> headers = new HashMap<String, String>() {{
+            put("x-ms-documentdb-partitionkey", partition);
+            put("x-ms-version", "2017-02-22");
+            put("x-ms-date", Utils.nowAsRFC1123());
+            put("Content-Type", "application/json");
+        }};
+        final AuthorizationTokenProvider authTokenProvider = new BaseAuthorizationTokenProvider(dbToken);
+        try {
+            headers.put(
+                    "Authorization",
+                    authTokenProvider.generateKeyAuthorizationSignature(
+                            METHOD_GET,
+                            documentResourceId,
+                            ResourceType.Document,
+                            headers));
+        } catch (Exception e) {
+            AppCenterLog.error(LOG_TAG, "Could not sign Cosmos DB payload", e);
+        }
+        return headers;
+    }
+
+    private String getDocumentUrl(String dbAccount, String documentResourseId) {
+        return String.format(Constants.DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
+                documentResourseId;
+    }
+
+    private static String getDocumentResourceId(String databaseName, String collectionName, String documentId) {
+        return String.format(Constants.DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
+        String.format(Constants.DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
+        String.format(Constants.DOCUMENT_DB_DOCUMENT_URL_SUFFIX, documentId);
     }
 
     /**

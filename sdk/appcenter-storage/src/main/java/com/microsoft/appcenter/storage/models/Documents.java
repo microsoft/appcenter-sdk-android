@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.storage;
+package com.microsoft.appcenter.storage.models;
 
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 

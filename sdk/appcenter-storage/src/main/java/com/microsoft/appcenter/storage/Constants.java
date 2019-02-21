@@ -26,7 +26,7 @@ final class Constants {
      * User partition
      * An authenticated user can read/write documents in this partition
      */
-    public static String USER = "user-{userid}";
+    public static String USER = "user-{%s}";
 
     /**
      * Readonly partition
@@ -44,5 +44,31 @@ final class Constants {
      * App Secret Header
      */
     static final String APP_SECRET_HEADER = "App-Secret";
+
+    /**
+     * Document DB base endpoint
+     */
+    static final String DOCUMENT_DB_ENDPOINT = "https://%s.documents.azure.com";
+
+    /**
+     * Document DB database URL suffix
+     */
+    static final String DOCUMENT_DB_DATABASE_URL_SUFFIX = "dbs/%s";
+
+    /**
+     * Document DB collection URL suffix
+     */
+    static final String DOCUMENT_DB_COLLECTION_URL_SUFFIX = "colls/%s";
+
+    /**
+     * Document DB document URL suffix
+     */
+    static final String DOCUMENT_DB_DOCUMENT_URL_SUFFIX = "docs/%s";
+
+    /**
+     * Document DB authorization header format
+     * TODO : Change the "type" to be "resource" instead of "master"
+     */
+    static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
 
 }

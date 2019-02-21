@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.storage;
+package com.microsoft.appcenter.storage.models;
 
 /**
  * Conflict resolution policy
