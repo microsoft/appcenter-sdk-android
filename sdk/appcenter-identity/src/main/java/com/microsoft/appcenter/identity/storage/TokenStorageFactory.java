@@ -8,11 +8,6 @@ import android.content.Context;
 public class TokenStorageFactory {
 
     /**
-     * Private constructor to avoid instantiating this class.
-     */
-    private TokenStorageFactory() {}
-
-    /**
      * Instance of {@link AuthTokenStorage}.
      */
     private static AuthTokenStorage sTokenStorageInstance;

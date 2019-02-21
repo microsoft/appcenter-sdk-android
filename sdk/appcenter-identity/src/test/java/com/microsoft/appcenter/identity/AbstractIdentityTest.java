@@ -119,6 +119,9 @@ abstract public class AbstractIdentityTest {
         /* Mock token context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+
+        /* Workaround for class definition coverage. Note: we can't make it final as it would prevent mocking. */
+        new TokenStorageFactory();
         PowerMockito.mockStatic(TokenStorageFactory.class);
         PowerMockito.when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mPreferenceTokenStorage);
     }
