@@ -89,7 +89,7 @@ public class AuthTokenContext {
      *
      * @param authToken authorization token.
      */
-    public void setAuthToken(String authToken) {
+    public synchronized void setAuthToken(String authToken) {
         mAuthToken = authToken;
 
         /* Call listeners so that they can react on new token. */

@@ -194,10 +194,17 @@ public class OneCollectorIngestion implements Ingestion {
     }
 
     @Override
-    public void setAuthToken(@NonNull String authToken) { }
+    public void setAuthToken(@NonNull String authToken) {
+
+        /* Not supported. */
+    }
 
     @Override
-    public String getAuthToken() { return null; }
+    public String getAuthToken() {
+
+        /* Not supported. */
+        return null;
+    }
 
     /**
      * Call template implementation for One Collector.
