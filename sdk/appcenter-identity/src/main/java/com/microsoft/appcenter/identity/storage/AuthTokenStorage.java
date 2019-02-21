@@ -6,7 +6,7 @@ package com.microsoft.appcenter.identity.storage;
 public interface AuthTokenStorage {
 
     /**
-     * Stores token value.
+     * Stores token value along with the corresponding account id.
      *
      * @param token auth token.
      * @param homeAccountId unique identifier of user.
@@ -26,7 +26,7 @@ public interface AuthTokenStorage {
     void removeToken();
 
     /**
-     * Gets token from storage and caches it.
+     * Gets token and the last account id from storage and caches it.
      */
     void cacheToken();
 }
