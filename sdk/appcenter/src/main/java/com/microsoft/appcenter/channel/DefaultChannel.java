@@ -41,7 +41,7 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-public class DefaultChannel implements Channel{
+public class DefaultChannel implements Channel {
 
     /**
      * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
