@@ -34,14 +34,14 @@ public class AuthTokenContextTest {
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
-        mAuthTokenContext.setAuthToken(MOCK_TOKEN);
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);
 
         /* Remove listener. */
         mAuthTokenContext.removeListener(mockListener);
-        mAuthTokenContext.setAuthToken(MOCK_TOKEN);
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
 
         /* Verify that listener is called only once on a new token. */
         verify(mockListener, times(1)).onNewAuthToken(MOCK_TOKEN);
