@@ -5,7 +5,12 @@ import android.content.Context;
 /**
  * Factory class to produce instance of {@link AuthTokenStorage}.
  */
-public class TokenStorageFactory {
+public final class TokenStorageFactory {
+
+    /**
+     * Private constructor to avoid instantiating this class.
+     */
+    private TokenStorageFactory() {}
 
     /**
      * Instance of {@link AuthTokenStorage}.
