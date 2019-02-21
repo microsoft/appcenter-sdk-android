@@ -10,6 +10,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -38,7 +39,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         AppCenterLog.class,
         AppCenter.class,
         HandlerUtils.class,
-        HttpUtils.class
+        HttpUtils.class,
+        AuthTokenContext.class
 })
 abstract public class AbstractIdentityTest {
 
@@ -52,6 +54,9 @@ abstract public class AbstractIdentityTest {
 
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
+
+    @Mock
+    protected AuthTokenContext mAuthTokenContext;
 
     @Before
     public void setUp() {
@@ -98,5 +103,9 @@ abstract public class AbstractIdentityTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
+
+        /* Mock token context. */
+        mockStatic(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
     }
 }

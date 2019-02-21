@@ -4,17 +4,13 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 
@@ -56,6 +52,18 @@ public class AppCenterIngestion implements Ingestion {
     static final String APP_SECRET = "App-Secret";
 
     /**
+     * Auth token format for Authorization header.
+     */
+    @VisibleForTesting
+    static final String AUTH_TOKEN_FORMAT = "Bearer %s";
+
+    /**
+     * Authorization HTTP Header.
+     */
+    @VisibleForTesting
+    static final String AUTHORIZATION_HEADER = "Authorization";
+
+    /**
      * Log serializer.
      */
     private final LogSerializer mLogSerializer;
@@ -69,6 +77,11 @@ public class AppCenterIngestion implements Ingestion {
      * Log base URL (scheme + authority).
      */
     private String mLogUrl;
+
+    /**
+     * Authentication token current value.
+     */
+    private String mAuthToken;
 
     /**
      * Init.
@@ -94,10 +107,24 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
+    public synchronized void setAuthToken(@NonNull String authToken) {
+        mAuthToken = authToken;
+    }
+
+    @Override
+    public synchronized String getAuthToken() {
+        return mAuthToken;
+    }
+
+    @Override
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
+        String authToken = getAuthToken();
+        if (authToken != null) {
+            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, authToken));
+        }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
@@ -145,6 +172,10 @@ public class AppCenterIngestion implements Ingestion {
                 String appSecret = logHeaders.get(APP_SECRET);
                 if (appSecret != null) {
                     logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
+                }
+                String authToken = logHeaders.get(AUTHORIZATION_HEADER);
+                if (authToken != null) {
+                    logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideSecret(authToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }

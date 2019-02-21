@@ -16,6 +16,7 @@ import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -76,6 +77,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
+        AuthTokenContext mockAuthTokenContext = mock(AuthTokenContext.class);
+        when(mockAuthTokenContext.getAuthToken()).thenReturn("");
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
