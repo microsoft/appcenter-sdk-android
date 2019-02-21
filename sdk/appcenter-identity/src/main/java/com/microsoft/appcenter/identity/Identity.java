@@ -16,12 +16,15 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
+import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
@@ -101,6 +104,11 @@ public class Identity extends AbstractAppCenterService {
     private boolean mLoginDelayed;
 
     /**
+     * Instance of {@link AuthTokenStorage} to store token information.
+     */
+    private AuthTokenStorage mTokenStorage;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -151,6 +159,7 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+        mTokenStorage = TokenStorageFactory.getTokenStorage(context);
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -166,6 +175,9 @@ public class Identity extends AbstractAppCenterService {
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
 
+            /* Load the last stored token and cache it into token context. */
+            mTokenStorage.cacheToken();
+
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
@@ -177,6 +189,7 @@ public class Identity extends AbstractAppCenterService {
             mIdentityScope = null;
             mLoginDelayed = false;
             clearCache();
+            mTokenStorage.removeToken();
         }
     }
 
@@ -375,9 +388,16 @@ public class Identity extends AbstractAppCenterService {
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
-                public void onSuccess(IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User login succeeded. id=" + authenticationResult.getIdToken());
-                    // TODO send id token (not access token) to ingestion, if sdk still enabled.
+                public void onSuccess(final IAuthenticationResult authenticationResult) {
+                    AppCenterLog.info(LOG_TAG, "User login succeeded.");
+                    getInstance().post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            IAccount account = authenticationResult.getAccount();
+                            mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
+                        }
+                    });
                 }
 
                 @Override
