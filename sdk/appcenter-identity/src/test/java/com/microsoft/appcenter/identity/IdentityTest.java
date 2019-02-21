@@ -15,7 +15,6 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -31,7 +30,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -77,9 +75,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
-
-    @Mock
-    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
 
     @NonNull
     private Channel start(Identity identity) {
