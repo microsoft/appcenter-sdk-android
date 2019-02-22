@@ -35,14 +35,6 @@ public final class Constants {
      */
     public static String READONLY = "readonly";
 
-    /**
-     * Check latest public release API URL path. Contains the app secret variable to replace.
-     */
-    static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
 
-    /**
-     * App Secret Header
-     */
-    static final String APP_SECRET_HEADER = "App-Secret";
 
 }

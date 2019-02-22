@@ -25,12 +25,10 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
 
@@ -171,8 +169,30 @@ public class Storage extends AbstractAppCenterService {
 
     // Read a document
     // The document type (T) must be JSON deserializable
-    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(String partition, String documentId){
-        DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId){
+        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+
+        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
+
+            @Override
+            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+
+                // TODO: provide a delegate to call other methods with `future` as the parameter
+                readDbDocument(tokensResponse.tokens().get(0), documentId, result);
+
+                // TODO: do we need to call `complete` here?
+            }
+
+            @Override
+            public void onCallFailed(Exception e) {
+                handleApiCallFailure(e);
+
+                // TODO: construct an error object
+                result.complete(null);
+            }
+        });
+
         return result;
     }
 
@@ -206,48 +226,6 @@ public class Storage extends AbstractAppCenterService {
     // Delete a document
     public AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
         return null;
-    }
-
-    private synchronized <T> void getDbToken(final String partition, final String documentId, final DefaultAppCenterFuture<Document<T>> future) {
-        AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
-        HttpClient httpClient = createHttpClient(mContext);
-        String url = mApiUrl;
-        url += String.format(GET_TOKEN_PATH_FORMAT, mAppSecret);
-
-        ServiceCall tokenResponse =
-            httpClient.callAsync(
-                url,
-                METHOD_POST,
-                new HashMap<String, String>() { { put(APP_SECRET_HEADER, mAppSecret); } },
-                new HttpClient.CallTemplate() {
-
-                    @Override
-                    public String buildRequestBody() {
-                        return TokenExchange.buildAppCenterGetDbTokenBodyPayload(partition);
-                    }
-
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                }, new ServiceCallback() {
-
-                    @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-
-                        // TODO: provide a delegate to call other methods with `future` as the parameter
-                        readDbDocument(tokensResponse.tokens().get(0), documentId, future);
-
-                        // TODO: do we need to call `complete` here?
-                    }
-
-                    @Override
-                    public void onCallFailed(Exception e) {
-                        handleApiCallFailure(e);
-
-                        // TODO: construct an error object
-                        future.complete(null);
-                    }
-                });
     }
 
     private synchronized <T> void readDbDocument(
