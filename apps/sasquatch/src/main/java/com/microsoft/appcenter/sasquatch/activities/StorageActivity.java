@@ -19,7 +19,7 @@ public class StorageActivity extends AppCompatActivity {
         /* TODO remove reflection once Storage published to jCenter. */
         try {
             final Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
-            storage.getMethod("read").invoke(null);
+            storage.getMethod("read", String.class, String.class).invoke(null, "readonly", "123");
         }catch (Exception ignore) {
             Log.e(LOG_TAG, "Storage.Read failed", ignore);
         }
