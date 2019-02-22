@@ -137,16 +137,4 @@ abstract public class AbstractIdentityTest {
         when(mockResult.getAccount()).thenReturn(mockAccount);
         return mockResult;
     }
-
-    IAuthenticationResult mockAuthResult(String mockIdToken, String mockAccountId) {
-        IAuthenticationResult mockResult = Mockito.mock(IAuthenticationResult.class);
-        when(mockResult.getAccessToken()).thenReturn("token");
-        when(mockResult.getIdToken()).thenReturn(mockIdToken);
-        IAccount mockAccount = Mockito.mock(IAccount.class);
-        IAccountIdentifier mockIdentifier = Mockito.mock(IAccountIdentifier.class);
-        when(mockIdentifier.getIdentifier()).thenReturn(mockAccountId);
-        when(mockAccount.getHomeAccountIdentifier()).thenReturn(mockIdentifier);
-        when(mockResult.getAccount()).thenReturn(mockAccount);
-        return mockResult;
-    }
 }

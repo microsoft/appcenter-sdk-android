@@ -292,9 +292,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Just call back and nothing to verify. */
         callback.onCancel();
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        callback.onSuccess(mockAuthResult(mockToken, mockAccountId));
+        callback.onSuccess(mockResult);
         callback.onError(mock(MsalException.class));
     }
 
