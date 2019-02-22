@@ -27,7 +27,6 @@ import org.json.JSONException;
 import org.json.JSONStringer;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -214,46 +213,52 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    private synchronized <T> void getDbToken(final String partition, final String documentId, final DefaultAppCenterFuture<Document<T>> future) {
-        AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
-        HttpClient httpClient = createHttpClient(mContext);
-        String url = mApiUrl;
-        url += String.format(GET_TOKEN_PATH_FORMAT, mAppSecret);
+    private synchronized <T> void getDbToken(final String partition, final DefaultAppCenterFuture<TokenResult> future) {
+        final TokenResult token = TokenManager.getInstance().getToken(mContext, partition);
+        if (token !=null){
+            future.complete(token);
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
+            HttpClient httpClient = createHttpClient(mContext);
+            String url = mApiUrl;
+            url += String.format(GET_TOKEN_PATH_FORMAT, mAppSecret);
 
-        ServiceCall tokenResponse =
-            httpClient.callAsync(
-                url,
-                METHOD_POST,
-                new HashMap<String, String>() { { put(APP_SECRET_HEADER, mAppSecret); } },
-                new HttpClient.CallTemplate() {
+            ServiceCall tokenResponse =
+                    httpClient.callAsync(
+                            url,
+                            METHOD_POST,
+                            new HashMap<String, String>() { { put(APP_SECRET_HEADER, mAppSecret); } },
+                            new HttpClient.CallTemplate() {
 
-                    @Override
-                    public String buildRequestBody() {
-                        return buildAppCenterGetDbTokenBodyPayload(partition);
-                    }
+                                @Override
+                                public String buildRequestBody() {
+                                    return buildAppCenterGetDbTokenBodyPayload(partition);
+                                }
 
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                }, new ServiceCallback() {
+                                @Override
+                                public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                            }, new ServiceCallback() {
 
-                    @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+                                @Override
+                                public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                    TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
 
-                        // TODO: provide a delegate to call other methods with `future` as the parameter
-                        readDbDocument(tokensResponse.tokens().get(0), documentId, future);
+                                    // TODO: provide a delegate to call other methods with `future` as the parameter
+                                    TokenManager.getInstance().setToken(mContext, tokensResponse.tokens().get(0));
+                                    future.complete(token);
 
-                        // TODO: do we need to call `complete` here?
-                    }
+                                    // TODO: do we need to call `complete` here?
+                                }
 
-                    @Override
-                    public void onCallFailed(Exception e) {
-                        handleApiCallFailure(e);
+                                @Override
+                                public void onCallFailed(Exception e) {
+                                    handleApiCallFailure(e);
 
-                        // TODO: construct an error object
-                        future.complete(null);
-                    }
-                });
+                                    // TODO: construct an error object
+                                    future.complete(null);
+                                }
+                            });
+        }
     }
 
     private static String buildAppCenterGetDbTokenBodyPayload(final String partition) {

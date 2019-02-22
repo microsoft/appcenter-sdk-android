@@ -51,6 +51,13 @@ public class TokenResult {
     private String status;
 
     /**
+     * The utc timestamp for a token becoming invalid.
+     */
+    @Expose
+    @SerializedName(value = "ttl")
+    private long ttl;
+
+    /**
      * Get the partition value.
      *
      * @return the partition value
@@ -58,6 +65,12 @@ public class TokenResult {
     public String partition() {
         return this.partition;
     }
+
+    /**
+     * Get the ttl timestamp
+     * @return the ttl value
+     */
+    public long ttl() { return this.ttl; }
 
     /**
      * Set the partition value.

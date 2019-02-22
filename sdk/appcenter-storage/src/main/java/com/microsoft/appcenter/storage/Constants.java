@@ -71,4 +71,11 @@ final class Constants {
      */
     static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
 
+    /**
+     * Cosmosdb token cache file
+     */
+    static final String TOKEN_CACHE_FILE = "token_cache";
+
+    static final String PARTITION_NAMES = "partition_names";
+
 }
