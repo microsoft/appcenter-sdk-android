@@ -1,5 +1,12 @@
 package com.microsoft.appcenter.storage.client;
 
+import android.content.Context;
+
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
 import java.net.URLEncoder;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -7,6 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 public class CosmosDb {
     /**
@@ -23,6 +33,11 @@ public class CosmosDb {
      * Document DB collection URL suffix
      */
     static final String DOCUMENT_DB_COLLECTION_URL_SUFFIX = "colls/%s";
+
+    /**
+     * Document DB document URL suffix
+     */
+    static final String DOCUMENT_DB_DOCUMENT_URL_PREFIX = "docs";
 
     /**
      * Document DB document URL suffix
@@ -51,7 +66,7 @@ public class CosmosDb {
         }
     }
 
-    public static Map<String, String> generateHeaders(String documentResourceId, final String partition, final String dbToken) {
+    public static Map<String, String> generateHeaders(final String partition, final String dbToken) {
         Map<String, String> headers = new HashMap<String, String>() {{
             put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
             put("x-ms-version", "2018-06-18");
@@ -74,14 +89,35 @@ public class CosmosDb {
         return RFC_1123_DATE_TIME.format(now);
     }
 
-    public static String getDocumentUrl(String dbAccount, String documentResourseId) {
+
+    public static String getDocumentDbEndpoint(String dbAccount, String documentResourseId) {
         return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
                 documentResourseId;
     }
 
-    public static String getDocumentResourceId(String databaseName, String collectionName, String documentId) {
+
+    public static String getDocumentBaseUrl(String databaseName, String collectionName) {
         return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
-        String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-        String.format(DOCUMENT_DB_DOCUMENT_URL_SUFFIX, documentId);
+                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
+                DOCUMENT_DB_DOCUMENT_URL_PREFIX;
+    }
+
+    public static synchronized <T> void callCosmosDb(
+            String dbAccount, String databaseName, String collectionName, String documentId,
+            String partition, String token, Context context, String httpVerb, HttpClient.CallTemplate callTemplate,
+            ServiceCallback serviceCallback) {
+        final String documentResourceIdPrefix = getDocumentBaseUrl(databaseName, collectionName);
+        final String url = getDocumentDbEndpoint(dbAccount, documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
+
+        AppCenterLog.debug(LOG_TAG, "Call Cosmos DB to do a " + httpVerb + " on " + url);
+
+        ServiceCall documentResponse =
+            createHttpClient(context).callAsync(
+                url,
+                    httpVerb,
+                    generateHeaders(partition, token),
+                    callTemplate,
+                    serviceCallback
+                );
     }
 }
