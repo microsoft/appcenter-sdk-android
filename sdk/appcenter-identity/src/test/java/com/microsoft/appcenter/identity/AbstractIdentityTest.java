@@ -1,11 +1,14 @@
 package com.microsoft.appcenter.identity;
 
+import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.identity.storage.PreferenceTokenStorage;
+import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
@@ -23,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -44,7 +48,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         AppCenter.class,
         HandlerUtils.class,
         HttpUtils.class,
-        AuthTokenContext.class
+        AuthTokenContext.class,
+        TokenStorageFactory.class
 })
 abstract public class AbstractIdentityTest {
 
@@ -62,8 +67,11 @@ abstract public class AbstractIdentityTest {
     @Mock
     protected AuthTokenContext mAuthTokenContext;
 
+    @Mock
+    protected PreferenceTokenStorage mPreferenceTokenStorage;
+
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         Identity.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
@@ -111,6 +119,23 @@ abstract public class AbstractIdentityTest {
         /* Mock token context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+
+        /* Workaround for class definition coverage. Note: we can't make it final as it would prevent mocking. */
+        new TokenStorageFactory();
+        PowerMockito.mockStatic(TokenStorageFactory.class);
+        PowerMockito.when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mPreferenceTokenStorage);
+    }
+
+    IAuthenticationResult mockAuthResult(String mockIdToken, String mockAccountId) {
+        IAuthenticationResult mockResult = Mockito.mock(IAuthenticationResult.class);
+        when(mockResult.getAccessToken()).thenReturn("token");
+        when(mockResult.getIdToken()).thenReturn(mockIdToken);
+        IAccount mockAccount = Mockito.mock(IAccount.class);
+        IAccountIdentifier mockIdentifier = Mockito.mock(IAccountIdentifier.class);
+        when(mockIdentifier.getIdentifier()).thenReturn(mockAccountId);
+        when(mockAccount.getHomeAccountIdentifier()).thenReturn(mockIdentifier);
+        when(mockResult.getAccount()).thenReturn(mockAccount);
+        return mockResult;
     }
 
     IAuthenticationResult mockAuthResult(String mockIdToken, String mockAccountId) {
