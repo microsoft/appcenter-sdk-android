@@ -735,6 +735,19 @@ public class PushTest {
     }
 
     @Test
+    public void verifyEnqueueCalledAnonimouslyOnClearToken() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().clearToken();
+        verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+    }
+
+    @Test
     public void verifyEnqueueNotCalledOnTheSameUser() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);

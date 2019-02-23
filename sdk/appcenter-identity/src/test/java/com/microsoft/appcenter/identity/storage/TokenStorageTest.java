@@ -22,6 +22,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -119,6 +120,32 @@ public class TokenStorageTest {
         /* Verify the context is updated. */
         mTokenStorage.cacheToken();
         verify(mAuthTokenContext).setAuthToken(mMockToken, mMockAccountId);
+    }
+
+    @Test
+    public void testDoesNotCacheEmptyToken() {
+
+        /* Mock empty token. */
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(null);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
+        when(mCryptoUtils.decrypt(eq(mMockToken), eq(false))).thenReturn(mDecryptedToken);
+
+        /* Try to cache. */
+        mTokenStorage.cacheToken();
+
+        /* Mock empty account id. */
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(mMockToken);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(null);
+
+        /* Try to cache. */
+        mTokenStorage.cacheToken();
+
+        /* Mock empty account id and token. */
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(null);
+
+        /* Try to cache. */
+        mTokenStorage.cacheToken();
+        verify(mAuthTokenContext, never()).setAuthToken(mMockToken, mMockAccountId);
     }
 }
 
