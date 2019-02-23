@@ -4,7 +4,7 @@ import android.content.SharedPreferences;
 import android.content.Context;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -43,7 +43,7 @@ public class TokenManager {
         SharedPreferences handler = context.getSharedPreferences(Constants.TOKEN_CACHE_FILE, context.MODE_PRIVATE);
         TokenResult token = new Gson().fromJson(handler.getString(partitionName, null), TokenResult.class);
         if (token != null){
-            long now = Date.from(Instant.now()).getTime();
+            long now = new Date().getTime();
 
             // the token is considered expired
             if (now > token.ttl()) {
@@ -56,12 +56,12 @@ public class TokenManager {
 
     public void setToken(Context context, TokenResult tokenResult) {
         SharedPreferences.Editor writeHandler = getTokenCacheWriteHandler(context);
-        List<String> partitionNames = Arrays.asList(ListPartitionNames(context));
+        List<String> partitionNames = new ArrayList<String>(Arrays.asList(ListPartitionNames(context)));
         if (!partitionNames.contains(tokenResult.partition())) {
             partitionNames.add(tokenResult.partition());
-            writeHandler.putString(Constants.PARTITION_NAMES, new Gson().toJson(partitionNames));
+            writeHandler.putString(Constants.PARTITION_NAMES, gson.toJson(partitionNames.toArray()));
         }
-        writeHandler.putString(tokenResult.partition(), new Gson().toJson(tokenResult)).commit();
+        writeHandler.putString(tokenResult.partition(), gson.toJson(tokenResult)).commit();
     }
 
     public void removeToken(Context context, String partitionName) {
