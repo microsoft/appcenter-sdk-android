@@ -5,9 +5,16 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.google.gson.annotations.Expose;
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.lang.reflect.ParameterizedType;
+
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+
+class Test{
+    String test = "ABC";
+}
 
 public class StorageActivity extends AppCompatActivity {
 
@@ -19,7 +26,9 @@ public class StorageActivity extends AppCompatActivity {
         /* TODO remove reflection once Storage published to jCenter. */
         try {
             final Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
-            storage.getMethod("read", String.class, String.class).invoke(null, "readonly", "123");
+            storage.getMethod("read", String.class, String.class).invoke(null, "User123", "123");
+
+            storage.getMethod("create", String.class, String.class, Object.class).invoke(null, "User123c456q", "34567006", new Test());
         }catch (Exception ignore) {
             Log.e(LOG_TAG, "Storage.Read failed", ignore);
         }

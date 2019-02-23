@@ -29,6 +29,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
 
@@ -155,10 +156,7 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-    class Test{
-        String test;
 
-    }
 
     // Read a document
     // The document type (T) must be JSON deserializable
@@ -178,6 +176,7 @@ public class Storage extends AbstractAppCenterService {
                 TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
                 final TokenResult tokenResult = tokensResponse.tokens().get(0);
 
+                //TODO Check if the token exchange status has succeded
                 // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
                 CosmosDb.callCosmosDb(tokenResult.dbAccount(),
                         tokenResult.dbName(),
@@ -241,9 +240,72 @@ public class Storage extends AbstractAppCenterService {
      * @return
      */
 
-    public <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
         // https://docs.microsoft.com/en-us/rest/api/cosmos-db/create-a-document
+
+        AppCenterLog.debug(LOG_TAG, "Create started");
+        getInstance().instanceCreate(partition, documentId, document);
         return null;
+    }
+
+    // Read a document
+    // The document type (T) must be JSON deserializable
+    private synchronized  <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
+        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+
+        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
+            @Override
+            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+                final TokenResult tokenResult = tokensResponse.tokens().get(0);
+
+                // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+                CosmosDb.callCosmosDb(tokenResult.dbAccount(),
+                        tokenResult.dbName(),
+                        tokenResult.dbCollectionName(),
+                        null,
+                        tokenResult.partition(),
+                        tokenResult.token(),
+                        mContext,
+                        METHOD_POST ,
+                        new HttpClient.CallTemplate() {
+
+                            @Override
+                            public String buildRequestBody() {
+                                return ((new Document<T>(document, partition, documentId)).toString());
+                            }
+
+                            @Override
+                            public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                        }, new ServiceCallback() {
+
+                            @Override
+                            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
+                            }
+
+                            @Override
+                            public void onCallFailed(Exception e) {
+                                handleApiCallFailure(e);
+
+                                // TODO: construct an error object
+                                result.complete(null);
+                            }
+                        });
+
+                // TODO: do we need to call `complete` here?
+            }
+
+            @Override
+            public void onCallFailed(Exception e) {
+                handleApiCallFailure(e);
+
+                // TODO: construct an error object
+                result.complete(null);
+            }
+        });
+
+        return result;
     }
 
     public <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, ConflictResolutionPolicy resolutionPolicy) {

@@ -1,32 +1,48 @@
 package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.Gson;
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.util.Date;
 
 // A document coming back from CosmosDB
 public class Document<T> {
 
-    private String documentPayload;
+    private transient String documentPayload;
+
+    @SerializedName(value = "PartitionKey")
     private String partition;
+
+    @SerializedName(value = "id")
     private String id;
 
-    @Expose
     @SerializedName(value = "_etag")
     private String eTag;
 
-    @Expose
     @SerializedName(value = "_ts")
     private long   timestamp;
 
-    public Document(String documentPayload, String partition, String id) {
-        this.documentPayload = documentPayload;
+    @SerializedName(value = "document")
+    private T document;
+
+    private transient Gson gson;
+
+    private Document(String partition, String id) {
+        gson = new Gson();
         this.partition = partition;
         this.id = id;
+    }
+
+    public Document(String documentPayload, String partition, String id) {
+        this(partition, id);
+        this.documentPayload = documentPayload;
+    }
+
+    public Document(T document, String partition, String id)
+    {
+        this(partition, id);
+        this.document = document;
     }
 
     // Non-serialized document (or null)
@@ -39,7 +55,6 @@ public class Document<T> {
     public T getDocument()
     {
         Type documentType = new TypeToken<Document<T>>(){}.getType();
-        Gson gson = new Gson();
         return gson.fromJson(documentPayload, documentType);
     }
 
@@ -70,6 +85,11 @@ public class Document<T> {
         return timestamp;
     }
 
+
+    @Override
+    public String toString() {
+        return gson.toJson(this);
+    }
 
     // When caching is supported:
     // Flag indicating if data was retrieved from the local cache (for offline mode)

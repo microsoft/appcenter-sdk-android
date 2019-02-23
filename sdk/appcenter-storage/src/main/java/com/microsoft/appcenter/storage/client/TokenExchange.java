@@ -57,8 +57,7 @@ public class TokenExchange {
     public static synchronized <T> void getDbToken(final String partition, Context context, String apiUrl, final String appSecret, ServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
         HttpClient httpClient = createHttpClient(context);
-        String url = apiUrl;
-        url += String.format(GET_TOKEN_PATH_FORMAT, appSecret);
+        String url = apiUrl + GET_TOKEN_PATH_FORMAT;
 
         ServiceCall tokenResponse =
             httpClient.callAsync(
