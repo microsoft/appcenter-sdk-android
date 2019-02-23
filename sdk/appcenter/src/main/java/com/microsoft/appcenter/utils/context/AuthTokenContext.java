@@ -63,6 +63,9 @@ public class AuthTokenContext {
      * @param listener listener to be notified of changes.
      */
     public synchronized void addListener(Listener listener) {
+        if (listener == null) {
+            return;
+        }
         mListeners.add(listener);
     }
 

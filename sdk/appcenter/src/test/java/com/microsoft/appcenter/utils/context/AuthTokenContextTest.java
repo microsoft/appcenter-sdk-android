@@ -51,6 +51,9 @@ public class AuthTokenContextTest {
 
         /* Remove listener. */
         mAuthTokenContext.removeListener(mockListener);
+
+        /* Verify null listener scenarios. */
+        mAuthTokenContext.addListener(null);
         mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
 
         /* Verify that listener is called only once on a new token. */
