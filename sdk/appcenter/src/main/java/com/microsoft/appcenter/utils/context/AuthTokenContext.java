@@ -119,6 +119,10 @@ public class AuthTokenContext {
     public void clearToken() {
         mAuthToken = null;
         mLastHomeAccountId = null;
+        for (Listener listener : mListeners) {
+            listener.onNewAuthToken(null);
+            listener.onNewUser(null);
+        }
     }
 
     /**
