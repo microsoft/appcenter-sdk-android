@@ -99,9 +99,9 @@ public class Identity extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
-     * True if login was delayed because called in background or configuration not ready.
+     * True if sign in was delayed because called in background or configuration not ready.
      */
-    private boolean mLoginDelayed;
+    private boolean mSignInDelayed;
 
     /**
      * Instance of {@link AuthTokenStorage} to store token information.
@@ -149,10 +149,10 @@ public class Identity extends AbstractAppCenterService {
     }
 
     /**
-     * Login to get user information.
+     * Sign In to get user information.
      */
-    public static void login() {
-        getInstance().instanceLogin();
+    public static void signIn() {
+        getInstance().instanceSignIn();
     }
 
     @Override
@@ -187,7 +187,7 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            mLoginDelayed = false;
+            mSignInDelayed = false;
             clearCache();
             mTokenStorage.removeToken();
         }
@@ -211,8 +211,8 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
-        if (mLoginDelayed) {
-            instanceLogin();
+        if (mSignInDelayed) {
+            instanceSignIn();
         }
     }
 
@@ -282,12 +282,12 @@ public class Identity extends AbstractAppCenterService {
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         boolean configurationValid = initAuthenticationClient(payload);
-        if (configurationValid && mLoginDelayed) {
+        if (configurationValid && mSignInDelayed) {
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    loginFromUI();
+                    signInFromUI();
                 }
             });
         }
@@ -370,26 +370,26 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.debug(LOG_TAG, "Identity configuration cache cleared.");
     }
 
-    private void instanceLogin() {
+    private void instanceSignIn() {
         postOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                loginFromUI();
+                signInFromUI();
             }
         });
     }
 
     @UiThread
-    private synchronized void loginFromUI() {
+    private synchronized void signInFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
-            AppCenterLog.info(LOG_TAG, "Login using browser.");
-            mLoginDelayed = false;
+            AppCenterLog.info(LOG_TAG, "Sign In using browser.");
+            mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User login succeeded.");
+                    AppCenterLog.info(LOG_TAG, "User signIn succeeded.");
                     getInstance().post(new Runnable() {
 
                         @Override
@@ -402,22 +402,22 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onError(MsalException exception) {
-                    AppCenterLog.error(LOG_TAG, "User login failed.", exception);
+                    AppCenterLog.error(LOG_TAG, "User signIn failed.", exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "User canceled login.");
+                    AppCenterLog.warn(LOG_TAG, "User canceled signIn.");
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "Login called while not configured or not in foreground, waiting.");
-            mLoginDelayed = true;
+            AppCenterLog.debug(LOG_TAG, "Sing In called while not configured or not in foreground, waiting.");
+            mSignInDelayed = true;
         }
     }
 
     @VisibleForTesting
-    boolean isLoginDelayed() {
-        return mLoginDelayed;
+    boolean isSignInDelayed() {
+        return mSignInDelayed;
     }
 }
