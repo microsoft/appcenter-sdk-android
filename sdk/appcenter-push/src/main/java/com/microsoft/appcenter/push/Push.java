@@ -19,10 +19,10 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -109,7 +109,7 @@ public class Push extends AbstractAppCenterService {
     /**
      * Authorization listener for {@link AuthTokenContext}.
      */
-    private AbstractTokenContextListener mAuthListener;
+    private AuthTokenContext.Listener mAuthListener;
 
     /**
      * Init.
