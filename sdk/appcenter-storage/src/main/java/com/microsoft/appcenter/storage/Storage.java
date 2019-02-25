@@ -11,11 +11,9 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
-import com.microsoft.appcenter.storage.models.ConflictResolutionPolicy;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Documents;
 import com.microsoft.appcenter.storage.models.TokenResult;
@@ -30,7 +28,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
 
 /**
@@ -308,18 +305,9 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    public <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, ConflictResolutionPolicy resolutionPolicy) {
-        //docDbClient.Create(documentId)
-        return null;
-    }
-
     // Replace a document
     // The document instance (T) must be JSON serializable
     public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document){
-        return null;
-    }
-
-    public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, ConflictResolutionPolicy resolutionPolicy) {
         return null;
     }
 
