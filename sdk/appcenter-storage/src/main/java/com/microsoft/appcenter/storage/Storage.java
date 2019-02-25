@@ -8,9 +8,6 @@ import android.support.annotation.VisibleForTesting;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpUtils;
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
@@ -22,13 +19,13 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
-import java.net.URL;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
 
 /**
@@ -168,54 +165,50 @@ public class Storage extends AbstractAppCenterService {
     private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
 
-        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
-            @Override
-            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-                final TokenResult tokenResult = tokensResponse.tokens().get(0);
+        TokenExchange.getDbToken(
+                partition,
+                createHttpClient(mContext),
+                mApiUrl,
+                mAppSecret,
+                new TokenExchange.TokenExchangeServiceCallback() {
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+                        CosmosDb.callCosmosDb(
+                                tokenResult,
+                                documentId,
+                                createHttpClient(mContext),
+                                METHOD_GET,
+                                "",
+                                new ServiceCallback() {
 
-                //TODO Check if the token exchange status has succeded
-                // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
-                CosmosDb.callCosmosDb(tokenResult.dbAccount(),
-                        tokenResult.dbName(),
-                        tokenResult.dbCollectionName(),
-                        documentId,
-                        tokenResult.partition(),
-                        tokenResult.token(),
-                        mContext,
-                        METHOD_GET ,
-                        new HttpClient.CallTemplate() {
+                                    @Override
+                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                        result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
+                                    }
 
-                            @Override
-                            public String buildRequestBody() { return ""; }
+                                    @Override
+                                    public void onCallFailed(Exception e) {
+                                        handleApiCallFailure(e);
+                                        result.complete(new Document<T>(e));
+                                    }
+                                });
 
-                            @Override
-                            public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                        }, new ServiceCallback() {
+                        // TODO: do we need to call `complete` here?
+                    }
 
-                            @Override
-                            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
-                            }
-
-                            @Override
-                            public void onCallFailed(Exception e) {
-                                handleApiCallFailure(e);
-                                result.complete(new Document<T>(e));
-                            }
-                        });
-
-                // TODO: do we need to call `complete` here?
-            }
-
-            @Override
-            public void onCallFailed(Exception e) {
-                handleApiCallFailure(e);
-                result.complete(new Document<T>(e));
-            }
-        });
+                    @Override
+                    public void completeFuture(Exception e) {
+                        result.complete(new Document<T>(e));
+                    }
+                });
 
         return result;
+    }
+
+    private TokenResult parseTokenResult(String payload) {
+        TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+        return tokensResponse.tokens().get(0);
     }
 
     // List (need optional signature to configure page size)
@@ -242,59 +235,48 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    // Read a document
+    // Create a document
     // The document type (T) must be JSON deserializable
     private synchronized  <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
 
-        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
-            @Override
-            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-                final TokenResult tokenResult = tokensResponse.tokens().get(0);
+        TokenExchange.getDbToken(
+                partition,
+                createHttpClient(mContext),
+                mApiUrl,
+                mAppSecret,
+                new TokenExchange.TokenExchangeServiceCallback() {
 
-                // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
-                CosmosDb.callCosmosDb(tokenResult.dbAccount(),
-                        tokenResult.dbName(),
-                        tokenResult.dbCollectionName(),
-                        null,
-                        tokenResult.partition(),
-                        tokenResult.token(),
-                        mContext,
-                        METHOD_POST ,
-                        new HttpClient.CallTemplate() {
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        CosmosDb.callCosmosDb(
+                                tokenResult,
+                                null,
+                                createHttpClient(mContext),
+                                METHOD_POST,
+                                new Document<T>(document, partition, documentId).toString(),
+                                new ServiceCallback() {
 
-                            @Override
-                            public String buildRequestBody() {
-                                return ((new Document<T>(document, partition, documentId)).toString());
-                            }
+                                    @Override
+                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                        result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
+                                    }
 
-                            @Override
-                            public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                        }, new ServiceCallback() {
+                                    @Override
+                                    public void onCallFailed(Exception e) {
+                                        handleApiCallFailure(e);
+                                        result.complete(new Document<T>(e));
 
-                            @Override
-                            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
-                            }
+                                    }
+                                });
 
-                            @Override
-                            public void onCallFailed(Exception e) {
-                                handleApiCallFailure(e);
-                                result.complete(new Document<T>(e));
+                        // TODO: do we need to call `complete` here?
+                    }
 
-                            }
-                        });
-
-                // TODO: do we need to call `complete` here?
-            }
-
-            @Override
-            public void onCallFailed(Exception e) {
-                handleApiCallFailure(e);
-                result.complete(new Document<T>(e));
-            }
-        });
+                    @Override
+                    public void completeFuture(Exception e) {
+                        result.complete(new Document<T>(e));
+                    }});
 
         return result;
     }
@@ -318,67 +300,45 @@ public class Storage extends AbstractAppCenterService {
     private synchronized  AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
 
-        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
-            @Override
-            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-                final TokenResult tokenResult = tokensResponse.tokens().get(0);
+        TokenExchange.getDbToken(
+                partition,
+                createHttpClient(mContext),
+                mApiUrl,
+                mAppSecret,
+                new TokenExchange.TokenExchangeServiceCallback() {
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+                        CosmosDb.callCosmosDb(
+                                tokenResult,
+                                documentId,
+                                createHttpClient(mContext),
+                                METHOD_DELETE,
+                                "",
+                                new ServiceCallback() {
 
-                //TODO Check if the token exchange status has succeded
-                // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
-                CosmosDb.callCosmosDb(tokenResult.dbAccount(),
-                        tokenResult.dbName(),
-                        tokenResult.dbCollectionName(),
-                        documentId,
-                        tokenResult.partition(),
-                        tokenResult.token(),
-                        mContext,
-                        METHOD_DELETE ,
-                        new HttpClient.CallTemplate() {
+                                    @Override
+                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                        result.complete(new Document<Void>((null)));
+                                    }
 
-                            @Override
-                            public String buildRequestBody() { return ""; }
+                                    @Override
+                                    public void onCallFailed(Exception e) {
+                                        handleApiCallFailure(e);
+                                        result.complete(new Document<Void>(e));
+                                    }
+                                });
 
-                            @Override
-                            public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                        }, new ServiceCallback() {
+                        // TODO: do we need to call `complete` here?
+                    }
 
-                            @Override
-                            public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                result.complete(new Document<Void>((null)));
-                            }
-
-                            @Override
-                            public void onCallFailed(Exception e) {
-                                handleApiCallFailure(e);
-                                result.complete(new Document<Void>(e));
-                            }
-                        });
-
-                // TODO: do we need to call `complete` here?
-            }
-
-            @Override
-            public void onCallFailed(Exception e) {
-                handleApiCallFailure(e);
-                result.complete(new Document<Void>(e));
-            }
-        });
+                    @Override
+                    public void completeFuture(Exception e) {
+                        result.complete(new Document<Void>(e));
+                    }
+                });
 
         return result;
     }
 
-
-    /**
-     * Handle API call failure.
-     */
-    private synchronized void handleApiCallFailure(Exception e) {
-        AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
-        if (!HttpUtils.isRecoverableError(e)) {
-            if (e instanceof HttpException) {
-                HttpException httpException = (HttpException) e;
-                AppCenterLog.error(LOG_TAG, "Exception", httpException);
-            }
-        }
-    }
 }

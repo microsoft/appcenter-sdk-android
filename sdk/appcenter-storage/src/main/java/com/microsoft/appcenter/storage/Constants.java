@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.storage;
 
+import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
@@ -36,5 +38,16 @@ public final class Constants {
     public static String READONLY = "readonly";
 
 
-
+    /**
+     * Handle API call failure.
+     */
+    public static synchronized void handleApiCallFailure(Exception e) {
+        AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
+        if (!HttpUtils.isRecoverableError(e)) {
+            if (e instanceof HttpException) {
+                HttpException httpException = (HttpException) e;
+                AppCenterLog.error(LOG_TAG, "Exception", httpException);
+            }
+        }
+    }
 }

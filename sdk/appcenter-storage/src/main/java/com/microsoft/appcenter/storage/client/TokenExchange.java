@@ -1,10 +1,11 @@
 package com.microsoft.appcenter.storage.client;
 
-import android.content.Context;
-
+import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
@@ -17,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.handleApiCallFailure;
 
 public class TokenExchange {
 
@@ -54,9 +55,13 @@ public class TokenExchange {
         return apiBody;
     }
 
-    public static synchronized <T> void getDbToken(final String partition, Context context, String apiUrl, final String appSecret, ServiceCallback serviceCallback) {
-        AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
-        HttpClient httpClient = createHttpClient(context);
+    public static synchronized void getDbToken(
+            final String partition,
+            HttpClient httpClient,
+            String apiUrl,
+            final String appSecret,
+            TokenExchangeServiceCallback serviceCallback) {
+        AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
 
         ServiceCall tokenResponse =
@@ -75,5 +80,27 @@ public class TokenExchange {
                         public void onBeforeCalling(URL url, Map<String, String> headers) { }
                     },
                     serviceCallback);
+    }
+
+    public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
+        @Override
+        public void onCallSucceeded(String payload, Map<String, String> headers) {
+            final TokenResult tokenResult = parseTokenResult(payload);
+            callCosmosDb(tokenResult);
+        }
+
+        @Override
+        public void onCallFailed(Exception e) {
+            handleApiCallFailure(e);
+            completeFuture(e);
+        }
+
+        private TokenResult parseTokenResult(String payload) {
+            TokensResponse tokensResponse = (new Gson()).fromJson(payload, TokensResponse.class);
+            return tokensResponse.tokens().get(0);
+        }
+
+        public abstract void completeFuture(Exception e);
+        public abstract void callCosmosDb(final TokenResult tokenResult);
     }
 }

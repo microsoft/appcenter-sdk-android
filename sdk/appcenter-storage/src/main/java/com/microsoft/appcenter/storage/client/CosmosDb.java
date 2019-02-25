@@ -5,8 +5,10 @@ import android.content.Context;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.net.URL;
 import java.net.URLEncoder;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -102,22 +104,31 @@ public class CosmosDb {
                 DOCUMENT_DB_DOCUMENT_URL_PREFIX;
     }
 
+    public static String GetDocumentUrl(TokenResult tokenResult, String documentId) {
+        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName());
+        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
+    }
+
     public static synchronized <T> void callCosmosDb(
-            String dbAccount, String databaseName, String collectionName, String documentId,
-            String partition, String token, Context context, String httpVerb, HttpClient.CallTemplate callTemplate,
+            TokenResult tokenResult,
+            String documentId,
+            HttpClient httpClient,
+            String httpVerb,
+            final String body,
             ServiceCallback serviceCallback) {
-        final String documentResourceIdPrefix = getDocumentBaseUrl(databaseName, collectionName);
-        final String url = getDocumentDbEndpoint(dbAccount, documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
-
-        AppCenterLog.debug(LOG_TAG, "Call Cosmos DB to do a " + httpVerb + " on " + url);
-
         ServiceCall documentResponse =
-            createHttpClient(context).callAsync(
-                url,
+            httpClient.callAsync(
+                    GetDocumentUrl(tokenResult, documentId),
                     httpVerb,
-                    generateHeaders(partition, token),
-                    callTemplate,
-                    serviceCallback
-                );
+                    generateHeaders(tokenResult.partition(), tokenResult.token()),
+                    new HttpClient.CallTemplate() {
+
+                        @Override
+                        public String buildRequestBody() { return body; }
+
+                        @Override
+                        public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                    },
+                    serviceCallback);
     }
 }
