@@ -25,12 +25,13 @@ public class TokenManager {
         return tInstance;
     }
 
-    public String[] ListPartitionNames() {
-        return gson.fromJson(SharedPreferencesManager.getString(Constants.PARTITION_NAMES, "[]"), String[].class);
+    public List<String> ListPartitionNames() {
+        String partitionNameStrings = SharedPreferencesManager.getString(Constants.PARTITION_NAMES);
+        return partitionNameStrings == null ? new ArrayList<String>() : new ArrayList<>(Arrays.asList(gson.fromJson(partitionNameStrings, String[].class)));
     }
 
     public TokenResult getToken(String partitionName) {
-        TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName, null), TokenResult.class);
+        TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
         if (token != null){
             long now = new Date().getTime();
 
@@ -44,7 +45,7 @@ public class TokenManager {
     }
 
     public void setToken(TokenResult tokenResult) {
-        List<String> partitionNames = new ArrayList<String>(Arrays.asList(ListPartitionNames()));
+        List<String> partitionNames = ListPartitionNames();
         if (!partitionNames.contains(tokenResult.partition())) {
             partitionNames.add(tokenResult.partition());
             SharedPreferencesManager.putString(Constants.PARTITION_NAMES, gson.toJson(partitionNames.toArray()));

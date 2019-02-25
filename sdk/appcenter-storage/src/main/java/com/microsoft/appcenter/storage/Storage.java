@@ -213,7 +213,7 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    private synchronized <T> void getDbToken(final String partition, final DefaultAppCenterFuture<TokenResult> future) {
+    public synchronized <T> void getDbToken(final String partition, final DefaultAppCenterFuture<TokenResult> future) {
         final TokenResult token = TokenManager.getInstance().getToken(partition);
         if (token != null){
             future.complete(token);
@@ -240,8 +240,6 @@ public class Storage extends AbstractAppCenterService {
                         @Override
                         public void onCallSucceeded(final String payload, Map<String, String> headers) {
                             TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-
-                            // TODO: provide a delegate to call other methods with `future` as the parameter
                             TokenResult token = tokensResponse.tokens().get(0);
                             if (token.status() == Constants.UN_AUTHENTICATED) {
                                 future.complete(null);

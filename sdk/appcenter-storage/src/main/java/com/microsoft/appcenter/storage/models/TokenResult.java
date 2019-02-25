@@ -84,6 +84,16 @@ public class TokenResult {
     }
 
     /**
+     * Set the ttl value.
+     * @param ttl the ttl value to set
+     * @return the TokenResult object itself
+     */
+    public TokenResult withTTL(long ttl){
+        this.ttl = ttl;
+        return this;
+    }
+
+    /**
      * Get cosmos db account name.
      *
      * @return the dbAccount value
