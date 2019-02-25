@@ -214,13 +214,13 @@ public class Storage extends AbstractAppCenterService {
     }
 
     private synchronized <T> void getDbToken(final String partition, final DefaultAppCenterFuture<TokenResult> future) {
-        final TokenResult token = TokenManager.getInstance().getToken(mContext, partition);
+        final TokenResult token = TokenManager.getInstance().getToken(partition);
         if (token != null){
             future.complete(token);
         } else {
             AppCenterLog.debug(LOG_TAG, "Get token from the appcenter service...");
-            HttpClient httpClient = createHttpClient(mContext);
             String url = mApiUrl;
+            HttpClient httpClient = createHttpClient(mContext);
             url += String.format(GET_TOKEN_PATH_FORMAT, mAppSecret);
             httpClient.callAsync(
                     url,
@@ -243,9 +243,8 @@ public class Storage extends AbstractAppCenterService {
 
                             // TODO: provide a delegate to call other methods with `future` as the parameter
                             TokenResult token = tokensResponse.tokens().get(0);
-                            TokenManager.getInstance().setToken(mContext, token);
+                            TokenManager.getInstance().setToken(token);
                             future.complete(token);
-
                             // TODO: do we need to call `complete` here?
                         }
 
