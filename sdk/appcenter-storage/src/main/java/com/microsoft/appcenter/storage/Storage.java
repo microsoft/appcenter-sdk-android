@@ -243,9 +243,12 @@ public class Storage extends AbstractAppCenterService {
 
                             // TODO: provide a delegate to call other methods with `future` as the parameter
                             TokenResult token = tokensResponse.tokens().get(0);
-                            TokenManager.getInstance().setToken(token);
-                            future.complete(token);
-                            // TODO: do we need to call `complete` here?
+                            if (token.status() == Constants.UN_AUTHENTICATED) {
+                                future.complete(null);
+                            } else {
+                                TokenManager.getInstance().setToken(token);
+                                future.complete(token);
+                            }
                         }
 
                         @Override

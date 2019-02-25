@@ -26,11 +26,11 @@ public class TokenManager {
     }
 
     public String[] ListPartitionNames() {
-        return new Gson().fromJson(SharedPreferencesManager.getString(Constants.PARTITION_NAMES, "[]"), String[].class);
+        return gson.fromJson(SharedPreferencesManager.getString(Constants.PARTITION_NAMES, "[]"), String[].class);
     }
 
     public TokenResult getToken(String partitionName) {
-        TokenResult token = new Gson().fromJson(SharedPreferencesManager.getString(partitionName, null), TokenResult.class);
+        TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName, null), TokenResult.class);
         if (token != null){
             long now = new Date().getTime();
 

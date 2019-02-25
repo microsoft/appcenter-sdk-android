@@ -78,4 +78,6 @@ final class Constants {
 
     static final String PARTITION_NAMES = "partition_names";
 
+    static final String UN_AUTHENTICATED = "Unauthenticated";
+
 }
