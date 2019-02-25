@@ -28,6 +28,7 @@ import java.util.Map;
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.storage.Constants.*;
 
 /**
@@ -200,9 +201,7 @@ public class Storage extends AbstractAppCenterService {
                             @Override
                             public void onCallFailed(Exception e) {
                                 handleApiCallFailure(e);
-
-                                // TODO: construct an error object
-                                result.complete(null);
+                                result.complete(new Document<T>(e));
                             }
                         });
 
@@ -212,9 +211,7 @@ public class Storage extends AbstractAppCenterService {
             @Override
             public void onCallFailed(Exception e) {
                 handleApiCallFailure(e);
-
-                // TODO: construct an error object
-                result.complete(null);
+                result.complete(new Document<T>(e));
             }
         });
 
@@ -284,9 +281,8 @@ public class Storage extends AbstractAppCenterService {
                             @Override
                             public void onCallFailed(Exception e) {
                                 handleApiCallFailure(e);
+                                result.complete(new Document<T>(e));
 
-                                // TODO: construct an error object
-                                result.complete(null);
                             }
                         });
 
@@ -296,9 +292,7 @@ public class Storage extends AbstractAppCenterService {
             @Override
             public void onCallFailed(Exception e) {
                 handleApiCallFailure(e);
-
-                // TODO: construct an error object
-                result.complete(null);
+                result.complete(new Document<T>(e));
             }
         });
 
@@ -312,9 +306,68 @@ public class Storage extends AbstractAppCenterService {
     }
 
     // Delete a document
-    public AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+
+        AppCenterLog.debug(LOG_TAG, "Delete started" );
+        getInstance().instanceDelete(partition, documentId);
         return null;
     }
+
+    // Delete a document
+    // The document type (T) must be JSON deserializable
+    private synchronized  AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId){
+        final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
+
+        TokenExchange.getDbToken( partition , mContext, mApiUrl, mAppSecret, new ServiceCallback() {
+            @Override
+            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
+                final TokenResult tokenResult = tokensResponse.tokens().get(0);
+
+                //TODO Check if the token exchange status has succeded
+                // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+                CosmosDb.callCosmosDb(tokenResult.dbAccount(),
+                        tokenResult.dbName(),
+                        tokenResult.dbCollectionName(),
+                        documentId,
+                        tokenResult.partition(),
+                        tokenResult.token(),
+                        mContext,
+                        METHOD_DELETE ,
+                        new HttpClient.CallTemplate() {
+
+                            @Override
+                            public String buildRequestBody() { return ""; }
+
+                            @Override
+                            public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                        }, new ServiceCallback() {
+
+                            @Override
+                            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                                result.complete(new Document<Void>((null)));
+                            }
+
+                            @Override
+                            public void onCallFailed(Exception e) {
+                                handleApiCallFailure(e);
+                                result.complete(new Document<Void>(e));
+                            }
+                        });
+
+                // TODO: do we need to call `complete` here?
+            }
+
+            @Override
+            public void onCallFailed(Exception e) {
+                handleApiCallFailure(e);
+                result.complete(new Document<Void>(e));
+            }
+        });
+
+        return result;
+    }
+
 
     /**
      * Handle API call failure.

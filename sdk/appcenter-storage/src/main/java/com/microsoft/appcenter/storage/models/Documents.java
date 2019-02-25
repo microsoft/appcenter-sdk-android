@@ -14,7 +14,7 @@ public interface Documents<T> extends Iterable<Documents<T>> {
     public List<T> asList();
 
     // Error (or null)
-    public DataStoreError getError();
+    public DocumentError getError();
 
     // Flag indicating if an extra page can be fetched
     public boolean hasNext();

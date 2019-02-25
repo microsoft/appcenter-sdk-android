@@ -26,6 +26,8 @@ public class Document<T> {
     @SerializedName(value = "document")
     private T document;
 
+    private transient DocumentError documentError;
+
     private transient Gson gson;
 
     private Document(String partition, String id) {
@@ -45,6 +47,11 @@ public class Document<T> {
         this.document = document;
     }
 
+    public Document(Exception dError)
+    {
+        this.documentError = new DocumentError(dError);
+    }
+
     // Non-serialized document (or null)
     public String getJsonDocument()
     {
@@ -59,9 +66,9 @@ public class Document<T> {
     }
 
     // Error (or null)
-    public DataStoreError getError()
+    public DocumentError getError()
     {
-        return null;
+        return documentError;
     }
 
     // ID + document metadata

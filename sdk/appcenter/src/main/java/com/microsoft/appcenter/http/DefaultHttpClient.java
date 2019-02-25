@@ -29,6 +29,12 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public static final String METHOD_POST = "POST";
 
     /**
+     * HTTP DELETE method.
+     */
+    public static final String METHOD_DELETE = "DELETE";
+
+
+    /**
      * Content type header key.
      */
     public static final String CONTENT_TYPE_KEY = "Content-Type";
