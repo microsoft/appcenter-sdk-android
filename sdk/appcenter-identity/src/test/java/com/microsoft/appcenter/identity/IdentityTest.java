@@ -293,7 +293,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Just call back and nothing to verify. */
         callback.onCancel();
         callback.onSuccess(mockResult);
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
         callback.onError(mock(MsalException.class));
     }
 
