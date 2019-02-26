@@ -14,6 +14,6 @@ public abstract class AbstractTokenContextListener implements AuthTokenContext.L
     }
 
     @Override
-    public void onSignOut(String authToken) {
+    public void onSignOut() {
     }
 }
