@@ -50,8 +50,6 @@ abstract public class AbstractStorageTest {
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
-    DefaultAppCenterFuture<TokenResult> tokenResultFuture;
-
     @Before
     public void setUp() {
         Storage.unsetInstance();
@@ -97,7 +95,5 @@ abstract public class AbstractStorageTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
-
-        tokenResultFuture = new DefaultAppCenterFuture<>();
     }
 }
