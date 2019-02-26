@@ -13,18 +13,15 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import org.junit.Test;
 import org.junit.Assert;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import static org.mockito.Mockito.when;
 import static org.mockito.Matchers.any;
 
-@RunWith(PowerMockRunner.class)
 public class TokenTest extends AbstractStorageTest {
 
     @Mock
@@ -36,7 +33,7 @@ public class TokenTest extends AbstractStorageTest {
 
     @Test
     public void canGetToken() {
-        TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken))));
+        TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
         TokenExchange.TokenExchangeServiceCallback callBack = new TokenExchangeServiceCallbackMock();
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
@@ -65,7 +62,7 @@ public class TokenTest extends AbstractStorageTest {
         String inValidToken = "invalid";
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(new Date().getTime() - 100000000 ).withToken(inValidToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
-        TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken))));
+        TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
         TokenExchange.TokenExchangeServiceCallback callBack = new TokenExchangeServiceCallbackMock();
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {

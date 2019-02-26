@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.TokenManager;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
@@ -64,7 +65,7 @@ public class TokenExchange {
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
-        TokenResult tokenResult = TokenManager.getInstance().cachedToken(partition);
+        TokenResult tokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (tokenResult != null) {
             serviceCallback.callCosmosDb(tokenResult);
         } else {
@@ -91,7 +92,12 @@ public class TokenExchange {
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
             final TokenResult tokenResult = parseTokenResult(payload);
-            callCosmosDb(tokenResult);
+            if (!tokenResult.status().equals(Constants.SUCCEED)){
+                callCosmosDb(null);  // TODO throws an exception.
+            } else {
+                TokenManager.getInstance().setCachedToken(tokenResult);
+                callCosmosDb(tokenResult);
+            }
         }
 
         @Override

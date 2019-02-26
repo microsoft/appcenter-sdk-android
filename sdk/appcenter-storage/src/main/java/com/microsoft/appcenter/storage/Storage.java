@@ -173,7 +173,8 @@ public class Storage extends AbstractAppCenterService {
                 new TokenExchange.TokenExchangeServiceCallback() {
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+
+                        /** https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document **/
                         CosmosDb.callCosmosDb(
                                 tokenResult,
                                 documentId,

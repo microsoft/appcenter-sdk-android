@@ -14,10 +14,12 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -41,6 +43,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     AppCenterHandler mAppCenterHandler;

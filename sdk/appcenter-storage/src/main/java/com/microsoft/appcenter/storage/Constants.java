@@ -50,13 +50,9 @@ public final class Constants {
             }
         }
     }
-    /**
-     * Cosmosdb token cache file
-     */
-    static final String TOKEN_CACHE_FILE = "token_cache";
 
-    static final String PARTITION_NAMES = "partition_names";
+    public static final String PARTITION_NAMES = "partition_names";
 
-    static final String UN_AUTHENTICATED = "Unauthenticated";
+    public static final String SUCCEED = "Succeed";
 
 }
