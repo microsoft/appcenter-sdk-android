@@ -30,7 +30,7 @@ public class TokenManager {
         return partitionNameStrings == null ? new ArrayList<String>() : new ArrayList<>(Arrays.asList(gson.fromJson(partitionNameStrings, String[].class)));
     }
 
-    public TokenResult getToken(String partitionName) {
+    public TokenResult cachedToken(String partitionName) {
         TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
         if (token != null){
             long now = new Date().getTime();

@@ -64,7 +64,7 @@ public class TokenExchange {
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
-        TokenResult tokenResult = TokenManager.getInstance().getToken(partition);
+        TokenResult tokenResult = TokenManager.getInstance().cachedToken(partition);
         if (tokenResult != null) {
             serviceCallback.callCosmosDb(tokenResult);
         } else {
