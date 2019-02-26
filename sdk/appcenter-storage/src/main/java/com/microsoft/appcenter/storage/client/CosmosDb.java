@@ -6,14 +6,10 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -87,9 +83,9 @@ public class CosmosDb {
         return headers;
     }
 
-    public static String getDocumentDbEndpoint(String dbAccount, String documentResourseId) {
+    public static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
         return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
-                documentResourseId;
+                documentResourceId;
     }
 
 
