@@ -6,16 +6,15 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.URL;
 import java.net.URLEncoder;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
@@ -52,13 +51,17 @@ public class CosmosDb {
      */
     static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
 
-    private static final ZoneId GMT_ZONE_ID = ZoneId.of("GMT");
-    // NOTE DateTimeFormatter.RFC_1123_DATE_TIME cannot be used.
-    // because cosmos db rfc1123 validation requires two digits for day.
-    // so Thu, 04 Jan 2018 00:30:37 GMT is accepted by the cosmos db service,
-    // but Thu, 4 Jan 2018 00:30:37 GMT is not.
-    // Therefore, we need a custom date time formatter.
-    private static final DateTimeFormatter RFC_1123_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+    /**
+     * Returns Current Time in RFC 1123 format, e.g,
+     * Fri, 01 Dec 2017 19:22:30 GMT.
+     *
+     * @return an instance of String
+     */
+    public static String nowAsRFC1123() {
+        SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return formatter.format(new Date()).toLowerCase();
+    }
 
     public static String urlEncode(String url) {
         try {
@@ -80,21 +83,9 @@ public class CosmosDb {
         return headers;
     }
 
-    /**
-     * Returns Current Time in RFC 1123 format, e.g,
-     * Fri, 01 Dec 2017 19:22:30 GMT.
-     *
-     * @return an instance of String
-     */
-    public static String nowAsRFC1123() {
-        ZonedDateTime now = ZonedDateTime.now(GMT_ZONE_ID);
-        return RFC_1123_DATE_TIME.format(now);
-    }
-
-
-    public static String getDocumentDbEndpoint(String dbAccount, String documentResourseId) {
+    public static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
         return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
-                documentResourseId;
+                documentResourceId;
     }
 
 
