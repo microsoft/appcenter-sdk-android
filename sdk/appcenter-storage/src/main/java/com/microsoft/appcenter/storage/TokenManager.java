@@ -9,7 +9,9 @@ import java.util.Set;
 import java.util.TimeZone;
 
 public class TokenManager {
-    private final Gson gson; // TODO use Gson object from shared module.
+
+    // TODO use Gson object from shared module.
+    private final Gson gson;
 
     private static TokenManager tInstance;
 
@@ -34,7 +36,7 @@ public class TokenManager {
         if (token != null){
             Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
-            /** The token is considered expired. **/
+            /* The token is considered expired. */
             if (aGMTCalendar.getTime().getTime() > token.ttl()) {
                 removeCachedToken(partitionName);
                 return null;

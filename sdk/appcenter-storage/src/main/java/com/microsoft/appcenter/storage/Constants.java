@@ -54,8 +54,7 @@ public final class Constants {
      * The local file stored all the partition name cached.
     **/
     public static final String PARTITION_NAMES = "partition_names";
-
-
+    
     /**
      * The success status when get token succeed
      */
