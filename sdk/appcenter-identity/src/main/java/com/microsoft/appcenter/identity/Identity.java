@@ -363,6 +363,10 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
+    public synchronized static void signOut() {
+        getInstance().mTokenStorage.removeToken();
+    }
+
     @WorkerThread
     private void clearCache() {
         SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);

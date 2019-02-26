@@ -125,6 +125,7 @@ public class AuthTokenContext {
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(null);
             listener.onNewUser(null);
+            listener.onSignOut(null);
         }
     }
 
@@ -139,8 +140,13 @@ public class AuthTokenContext {
         void onNewAuthToken(String authToken);
 
         /**
-         * Called whenever a new user logs in.
+         * Called whenever a new user signs in.
          */
         void onNewUser(String authToken);
+
+        /**
+         * Called whenever a new user sign out.
+         */
+        void onSignOut(String authToken);
     }
 }
