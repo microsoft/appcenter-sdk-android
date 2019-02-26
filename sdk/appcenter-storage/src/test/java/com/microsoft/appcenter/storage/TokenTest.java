@@ -24,7 +24,9 @@ import org.mockito.stubbing.Answer;
 import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Calendar;
+import java.util.TimeZone;
+
 import static org.mockito.Mockito.when;
 import static org.mockito.Matchers.any;
 
@@ -54,25 +56,27 @@ public class TokenTest extends AbstractStorageTest {
                 return mock(ServiceCall.class);
             }
         });
-        TokenExchange.getDbToken(fakePartitionName, mHttpClient, "", "", callBack);
+        TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
     public void canReadTokenFromCacheWhenTokenValid() {
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(new Date().getTime() + 100000000 ).withToken(fakeToken));
+        long validTime = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime().getTime() + 1000;
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(validTime).withToken(fakeToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
-        TokenExchange.getDbToken(fakePartitionName, null, "", "", callBack);
+        TokenExchange.getDbToken(fakePartitionName, null, null, null, callBack);
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
     public void canGetTokenWhenCacheInvalid() {
         String inValidToken = "invalid";
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(new Date().getTime() - 100000000 ).withToken(inValidToken));
+        long expiredTime = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime().getTime() - 1000;
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(expiredTime).withToken(inValidToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
         TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
@@ -88,7 +92,7 @@ public class TokenTest extends AbstractStorageTest {
                 return mock(ServiceCall.class);
             }
         });
-        TokenExchange.getDbToken(fakePartitionName, mHttpClient, "", "", callBack);
+        TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 }

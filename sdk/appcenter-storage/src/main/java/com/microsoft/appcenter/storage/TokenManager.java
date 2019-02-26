@@ -3,9 +3,10 @@ package com.microsoft.appcenter.storage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TimeZone;
 
 public class TokenManager {
     private final Gson gson; // TODO use Gson object from shared module.
@@ -16,7 +17,7 @@ public class TokenManager {
         gson = new Gson();
     }
 
-    public static synchronized TokenManager getInstance() {
+    public static TokenManager getInstance() {
         if (tInstance == null) {
             tInstance = new TokenManager();
         }
@@ -31,10 +32,10 @@ public class TokenManager {
     public TokenResult getCachedToken(String partitionName) {
         TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
         if (token != null){
-            long now = new Date().getTime();
+            Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /** The token is considered expired. **/
-            if (now > token.ttl()) {
+            if (aGMTCalendar.getTime().getTime() > token.ttl()) {
                 removeCachedToken(partitionName);
                 return null;
             }
@@ -42,7 +43,7 @@ public class TokenManager {
         return token;
     }
 
-    public void setCachedToken(TokenResult tokenResult) {
+    public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNamesSet();
         if (!partitionNamesSet.contains(tokenResult.partition())) {
             partitionNamesSet.add(tokenResult.partition());
@@ -51,7 +52,7 @@ public class TokenManager {
         SharedPreferencesManager.putString(tokenResult.partition(), gson.toJson(tokenResult));
     }
 
-    public void removeCachedToken(String partitionName) {
+    public synchronized void removeCachedToken(String partitionName) {
         Set<String> partitionNamesSet = getPartitionNamesSet();
         partitionNamesSet.remove(partitionName);
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
