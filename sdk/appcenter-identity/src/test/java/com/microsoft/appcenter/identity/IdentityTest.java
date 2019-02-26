@@ -177,7 +177,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
         FileManager.write(any(File.class), anyString());
 
-        /* Check we didn't try signIn after configuration attempt. */
+        /* Check we didn't try to sign in after configuration attempt. */
         assertTrue(identity.isSignInDelayed());
     }
 
@@ -263,7 +263,7 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(mock(Activity.class));
         identity.onActivityPaused(mock(Activity.class));
 
-        /* Sign In, will be delayed until configuration ready. */
+        /* Sign in, will be delayed until configuration ready. */
         Identity.signIn();
 
         /* Download configuration. */
@@ -345,7 +345,7 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(activity);
         assertFalse(identity.isSignInDelayed());
 
-        /* Sign In, will work now. */
+        /* Sign in, will work now. */
         Identity.signIn();
 
         /* Verify signIn still delayed in background. */
@@ -354,7 +354,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable Identity. */
         Identity.setEnabled(false).get();
 
-        /* Sign In with identity disabled. */
+        /* Sign in with identity disabled. */
         Identity.signIn();
 
         /* Verify interactions. */
@@ -380,7 +380,7 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(serviceCallback);
         serviceCallback.onCallFailed(e);
 
-        /* If we signIn. */
+        /* If we sign in. */
         Identity.signIn();
 
         /* Then nothing happens, we are delayed. */

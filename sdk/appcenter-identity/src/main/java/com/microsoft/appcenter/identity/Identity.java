@@ -149,7 +149,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     /**
-     * Sign In to get user information.
+     * Sign in to get user information.
      */
     public static void signIn() {
         getInstance().instanceSignIn();
@@ -383,13 +383,13 @@ public class Identity extends AbstractAppCenterService {
     @UiThread
     private synchronized void signInFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
-            AppCenterLog.info(LOG_TAG, "Sign In using browser.");
+            AppCenterLog.info(LOG_TAG, "Sign in using browser.");
             mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User signIn succeeded.");
+                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                     getInstance().post(new Runnable() {
 
                         @Override
@@ -402,16 +402,16 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onError(MsalException exception) {
-                    AppCenterLog.error(LOG_TAG, "User signIn failed.", exception);
+                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "User canceled signIn.");
+                    AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "Sing In called while not configured or not in foreground, waiting.");
+            AppCenterLog.debug(LOG_TAG, "singIn is called while it's not configured or not in the foreground, waiting.");
             mSignInDelayed = true;
         }
     }
