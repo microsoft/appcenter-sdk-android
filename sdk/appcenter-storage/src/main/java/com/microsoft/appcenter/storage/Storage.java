@@ -5,20 +5,21 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.gson.Gson;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Documents;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
@@ -54,11 +55,9 @@ public class Storage extends AbstractAppCenterService {
      */
     private String mApiUrl = DEFAULT_API_URL;
 
-    private final Gson gson;
+    private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private Storage() {
-        gson = new Gson();
-    }
+    private HttpClient mHttpClient;
 
     /**
      * Get shared instance.
@@ -120,6 +119,7 @@ public class Storage extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        mHttpClient = createHttpClient(mContext);
         mAppSecret = appSecret;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
@@ -133,6 +133,11 @@ public class Storage extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
         } else {
+            for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call: mPendingCalls.entrySet()) {
+                call.getKey().complete(null);
+                call.getValue().cancel();
+            }
+            mPendingCalls.clear();
         }
     }
 
@@ -151,8 +156,6 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-
-
     // Read a document
     // The document type (T) must be JSON deserializable
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId){
@@ -160,62 +163,62 @@ public class Storage extends AbstractAppCenterService {
         return getInstance().instanceRead(partition, documentId);
     }
 
+    //region Read implementation
+
     // Read a document
     // The document type (T) must be JSON deserializable
     private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-
-        TokenExchange.getDbToken(
+        getTokenAndCallCosmosDbApi(
                 partition,
-                createHttpClient(mContext),
-                mApiUrl,
-                mAppSecret,
+                result,
                 new TokenExchange.TokenExchangeServiceCallback() {
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
-                        CosmosDb.callCosmosDb(
-                                tokenResult,
-                                documentId,
-                                createHttpClient(mContext),
-                                METHOD_GET,
-                                "",
-                                new ServiceCallback() {
-
-                                    @Override
-                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                        result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
-                                    }
-
-                                    @Override
-                                    public void onCallFailed(Exception e) {
-                                        handleApiCallFailure(e);
-                                        result.complete(new Document<T>(e));
-                                    }
-                                });
-
-                        // TODO: do we need to call `complete` here?
+                        callCosmosDbReadApi(tokenResult, documentId, result);
                     }
 
                     @Override
                     public void completeFuture(Exception e) {
-                        result.complete(new Document<T>(e));
-                    }
-                });
-
+                        completeFutureAndRemovePendingCall(e, result);
+                    }});
         return result;
     }
 
-    private TokenResult parseTokenResult(String payload) {
-        TokensResponse tokensResponse = gson.fromJson(payload, TokensResponse.class);
-        return tokensResponse.tokens().get(0);
+    private synchronized <T> void callCosmosDbReadApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<T>> result) {
+        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
+        ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
+                tokenResult,
+                documentId,
+                mHttpClient,
+                METHOD_GET,
+                "",
+                new ServiceCallback() {
+                    @Override
+                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                        completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        completeFutureAndRemovePendingCall(e, result);
+                    }});
+        mPendingCalls.put(result, cosmosDbCall);
     }
+
+    //endregion
+
+    //region List implementation
 
     // List (need optional signature to configure page size)
     // The document type (T) must be JSON deserializable
     public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
         return null;
     }
+
+    //endregion
+
+    //region Create implementation
 
     /**
      * Create a document
@@ -226,10 +229,7 @@ public class Storage extends AbstractAppCenterService {
      * @param <T>
      * @return
      */
-
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
-        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/create-a-document
-
         AppCenterLog.debug(LOG_TAG, "Create started");
         getInstance().instanceCreate(partition, documentId, document);
         return null;
@@ -237,55 +237,63 @@ public class Storage extends AbstractAppCenterService {
 
     // Create a document
     // The document type (T) must be JSON deserializable
-    private synchronized  <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        getTokenAndCallCosmosDbApi(
+            partition,
+            result,
+            new TokenExchange.TokenExchangeServiceCallback() {
+                @Override
+                public void callCosmosDb(final TokenResult tokenResult) {
+                    callCosmosDbCreateApi(tokenResult, document, partition, documentId, result);
+                }
 
-        TokenExchange.getDbToken(
-                partition,
-                createHttpClient(mContext),
-                mApiUrl,
-                mAppSecret,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                @Override
+                public void completeFuture(Exception e) {
+                    completeFutureAndRemovePendingCall(e, result);
+                }});
+        return result;
+    }
+
+    private synchronized <T> void callCosmosDbCreateApi(
+            final TokenResult tokenResult,
+            T document,
+            String partition,
+            final String documentId,
+            final DefaultAppCenterFuture<Document<T>> result) {
+        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/create-a-document
+        CosmosDb.callCosmosDbApi(
+                tokenResult,
+                null,
+                mHttpClient,
+                METHOD_POST,
+                new Document<T>(document, partition, documentId).toString(),
+                new ServiceCallback() {
 
                     @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
-                        CosmosDb.callCosmosDb(
-                                tokenResult,
-                                null,
-                                createHttpClient(mContext),
-                                METHOD_POST,
-                                new Document<T>(document, partition, documentId).toString(),
-                                new ServiceCallback() {
-
-                                    @Override
-                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                        result.complete(new Document<T>(payload, tokenResult.partition(), documentId));
-                                    }
-
-                                    @Override
-                                    public void onCallFailed(Exception e) {
-                                        handleApiCallFailure(e);
-                                        result.complete(new Document<T>(e));
-
-                                    }
-                                });
-
-                        // TODO: do we need to call `complete` here?
+                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                        completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
                     }
 
                     @Override
-                    public void completeFuture(Exception e) {
-                        result.complete(new Document<T>(e));
+                    public void onCallFailed(Exception e) {
+                        completeFutureAndRemovePendingCall(e, result);
                     }});
-
-        return result;
     }
+
+    //endregion
+
+    //region Replace implementation
 
     // Replace a document
     // The document instance (T) must be JSON serializable
     public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document){
         return null;
     }
+
+    //endregion
+
+    //region Delete implementation
 
     // Delete a document
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
@@ -299,46 +307,68 @@ public class Storage extends AbstractAppCenterService {
     // The document type (T) must be JSON deserializable
     private synchronized  AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
+        getTokenAndCallCosmosDbApi(
+            partition,
+            result,
+            new TokenExchange.TokenExchangeServiceCallback() {
+                @Override
+                public void callCosmosDb(final TokenResult tokenResult) {
+                    callCosmosDbDeleteApi(tokenResult, documentId, result);
+                }
 
-        TokenExchange.getDbToken(
-                partition,
-                createHttpClient(mContext),
-                mApiUrl,
-                mAppSecret,
-                new TokenExchange.TokenExchangeServiceCallback() {
-                    @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
-                        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
-                        CosmosDb.callCosmosDb(
-                                tokenResult,
-                                documentId,
-                                createHttpClient(mContext),
-                                METHOD_DELETE,
-                                "",
-                                new ServiceCallback() {
-
-                                    @Override
-                                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                                        result.complete(new Document<Void>((null)));
-                                    }
-
-                                    @Override
-                                    public void onCallFailed(Exception e) {
-                                        handleApiCallFailure(e);
-                                        result.complete(new Document<Void>(e));
-                                    }
-                                });
-
-                        // TODO: do we need to call `complete` here?
-                    }
-
-                    @Override
-                    public void completeFuture(Exception e) {
-                        result.complete(new Document<Void>(e));
-                    }
-                });
-
+                @Override
+                public void completeFuture(Exception e) {
+                    completeFutureAndRemovePendingCall(e, result);
+                }});
         return result;
     }
 
+    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
+        CosmosDb.callCosmosDbApi(
+                tokenResult,
+                documentId,
+                mHttpClient,
+                METHOD_DELETE,
+                "",
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                        completeFutureAndRemovePendingCall(new Document<Void>(null), result);
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        completeFutureAndRemovePendingCall(e, result);
+                    }
+                });
+    }
+
+    //endregion
+
+    //region Private utility methods
+
+    private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture<Document<T>> result, TokenExchange.TokenExchangeServiceCallback callback) {
+        ServiceCall tokenExchangeServiceCall =
+                TokenExchange.getDbToken(
+                        partition,
+                        mHttpClient,
+                        mApiUrl,
+                        mAppSecret,
+                        callback);
+        mPendingCalls.put(result, tokenExchangeServiceCall);
+    }
+
+    private synchronized <T> void completeFutureAndRemovePendingCall(Document<T> value, DefaultAppCenterFuture<Document<T>> result) {
+        result.complete(value);
+        mPendingCalls.remove(result);
+    }
+
+    private synchronized <T> void completeFutureAndRemovePendingCall(Exception e, DefaultAppCenterFuture<Document<T>> future) {
+        Utils.handleApiCallFailure(e);
+        future.complete(new Document<T>(e));
+        mPendingCalls.remove(future);
+    }
+
+    //endregion
 }

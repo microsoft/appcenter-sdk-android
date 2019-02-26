@@ -3,6 +3,7 @@ package com.microsoft.appcenter.storage.models;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.microsoft.appcenter.storage.Utils;
 
 import java.lang.reflect.Type;
 
@@ -28,10 +29,7 @@ public class Document<T> {
 
     private transient DocumentError documentError;
 
-    private transient Gson gson;
-
     private Document(String partition, String id) {
-        gson = new Gson();
         this.partition = partition;
         this.id = id;
     }
@@ -62,7 +60,7 @@ public class Document<T> {
     public T getDocument()
     {
         Type documentType = new TypeToken<Document<T>>(){}.getType();
-        return gson.fromJson(documentPayload, documentType);
+        return Utils.sGson.fromJson(documentPayload, documentType);
     }
 
     // Error (or null)
@@ -95,7 +93,7 @@ public class Document<T> {
 
     @Override
     public String toString() {
-        return gson.toJson(this);
+        return Utils.sGson.toJson(this);
     }
 
     // When caching is supported:

@@ -109,14 +109,14 @@ public class CosmosDb {
         return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
     }
 
-    public static synchronized <T> void callCosmosDb(
+    public static synchronized <T> ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             final String body,
             ServiceCallback serviceCallback) {
-        ServiceCall documentResponse =
+        return
             httpClient.callAsync(
                     GetDocumentUrl(tokenResult, documentId),
                     httpVerb,

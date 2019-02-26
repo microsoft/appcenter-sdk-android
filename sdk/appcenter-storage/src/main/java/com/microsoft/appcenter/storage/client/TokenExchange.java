@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Constants.handleApiCallFailure;
+import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
 
 public class TokenExchange {
 
@@ -55,7 +56,7 @@ public class TokenExchange {
         return apiBody;
     }
 
-    public static synchronized void getDbToken(
+    public static synchronized ServiceCall getDbToken(
             final String partition,
             HttpClient httpClient,
             String apiUrl,
@@ -64,7 +65,7 @@ public class TokenExchange {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
 
-        ServiceCall tokenResponse =
+        return
             httpClient.callAsync(
                 url,
                 METHOD_POST,
@@ -96,7 +97,7 @@ public class TokenExchange {
         }
 
         private TokenResult parseTokenResult(String payload) {
-            TokensResponse tokensResponse = (new Gson()).fromJson(payload, TokensResponse.class);
+            TokensResponse tokensResponse = Utils.sGson.fromJson(payload, TokensResponse.class);
             return tokensResponse.tokens().get(0);
         }
 
