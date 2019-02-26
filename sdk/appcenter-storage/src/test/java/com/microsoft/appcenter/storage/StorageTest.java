@@ -13,7 +13,9 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -119,5 +121,16 @@ public class StorageTest extends AbstractStorageTest {
         Channel channel = start(storage);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
+    }
+
+
+    @Test
+    public void read() {
+        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
+        Storage storage = Storage.getInstance();
+        Channel channel = start(storage);
+
+        AppCenterFuture<Document<Object>> doc =
+                Storage.read("p", "d");
     }
 }

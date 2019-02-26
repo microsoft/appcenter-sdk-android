@@ -156,8 +156,10 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-    // Read a document
-    // The document type (T) must be JSON deserializable
+    /**
+     * Read a document
+     * The document type (T) must be JSON deserializable
+     */
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId){
         AppCenterLog.debug(LOG_TAG, "Read started");
         return getInstance().instanceRead(partition, documentId);
@@ -165,8 +167,6 @@ public class Storage extends AbstractAppCenterService {
 
     //region Read implementation
 
-    // Read a document
-    // The document type (T) must be JSON deserializable
     private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
@@ -186,16 +186,15 @@ public class Storage extends AbstractAppCenterService {
     }
 
     private synchronized <T> void callCosmosDbReadApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<T>> result) {
-        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/get-a-document
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
                 mHttpClient,
                 METHOD_GET,
-                "",
+                null,
                 new ServiceCallback() {
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
                     }
 
@@ -223,11 +222,6 @@ public class Storage extends AbstractAppCenterService {
     /**
      * Create a document
      * The document instance (T) must be JSON serializable
-     * @param partition
-     * @param documentId
-     * @param document
-     * @param <T>
-     * @return
      */
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
         AppCenterLog.debug(LOG_TAG, "Create started");
@@ -235,8 +229,10 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    // Create a document
-    // The document type (T) must be JSON deserializable
+    /**
+     * Create a document
+     * The document type (T) must be JSON deserializable
+     */
     private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
@@ -261,7 +257,6 @@ public class Storage extends AbstractAppCenterService {
             String partition,
             final String documentId,
             final DefaultAppCenterFuture<Document<T>> result) {
-        // https://docs.microsoft.com/en-us/rest/api/cosmos-db/create-a-document
         CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
@@ -271,7 +266,7 @@ public class Storage extends AbstractAppCenterService {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
                     }
 
@@ -285,8 +280,10 @@ public class Storage extends AbstractAppCenterService {
 
     //region Replace implementation
 
-    // Replace a document
-    // The document instance (T) must be JSON serializable
+    /**
+     * Replace a document
+     * The document instance (T) must be JSON serializable
+     */
     public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document){
         return null;
     }
@@ -295,7 +292,9 @@ public class Storage extends AbstractAppCenterService {
 
     //region Delete implementation
 
-    // Delete a document
+    /**
+     * Delete a document
+     */
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
 
         AppCenterLog.debug(LOG_TAG, "Delete started" );
@@ -303,8 +302,6 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-    // Delete a document
-    // The document type (T) must be JSON deserializable
     private synchronized  AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId){
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
@@ -329,11 +326,11 @@ public class Storage extends AbstractAppCenterService {
                 documentId,
                 mHttpClient,
                 METHOD_DELETE,
-                "",
+                null,
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<Void>(null), result);
                     }
 
@@ -349,7 +346,7 @@ public class Storage extends AbstractAppCenterService {
     //region Private utility methods
 
     private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture<Document<T>> result, TokenExchange.TokenExchangeServiceCallback callback) {
-        ServiceCall tokenExchangeServiceCall =
+            ServiceCall tokenExchangeServiceCall =
                 TokenExchange.getDbToken(
                         partition,
                         mHttpClient,
