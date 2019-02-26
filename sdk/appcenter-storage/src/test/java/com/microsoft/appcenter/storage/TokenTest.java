@@ -7,21 +7,28 @@ import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import org.junit.Test;
 import org.junit.Assert;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import static org.mockito.Mockito.when;
 import static org.mockito.Matchers.any;
 
+@RunWith(PowerMockRunner.class)
 public class TokenTest extends AbstractStorageTest {
 
     @Mock
@@ -35,8 +42,11 @@ public class TokenTest extends AbstractStorageTest {
     public void canGetToken() {
         TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
-        TokenExchange.TokenExchangeServiceCallback callBack = new TokenExchangeServiceCallbackMock();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMap());
+        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -45,16 +55,18 @@ public class TokenTest extends AbstractStorageTest {
             }
         });
         TokenExchange.getDbToken(fakePartitionName, mHttpClient, "", "", callBack);
-        Assert.assertEquals(fakeToken, ((TokenExchangeServiceCallbackMock) callBack).getTokenResult().token());
+        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
     public void canReadTokenFromCacheWhenTokenValid() {
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(new Date().getTime() + 100000000 ).withToken(fakeToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
-        TokenExchange.TokenExchangeServiceCallback callBack = new TokenExchangeServiceCallbackMock();
+        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
+        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
         TokenExchange.getDbToken(fakePartitionName, null, "", "", callBack);
-        Assert.assertEquals(fakeToken, ((TokenExchangeServiceCallbackMock) callBack).getTokenResult().token());
+        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
@@ -64,7 +76,10 @@ public class TokenTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
         TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
-        TokenExchange.TokenExchangeServiceCallback callBack = new TokenExchangeServiceCallbackMock();
+        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMap());
+        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -74,6 +89,6 @@ public class TokenTest extends AbstractStorageTest {
             }
         });
         TokenExchange.getDbToken(fakePartitionName, mHttpClient, "", "", callBack);
-        Assert.assertEquals(fakeToken, ((TokenExchangeServiceCallbackMock) callBack).getTokenResult().token());
+        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 }
