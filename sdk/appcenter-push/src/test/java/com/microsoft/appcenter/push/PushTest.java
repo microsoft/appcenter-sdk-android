@@ -735,7 +735,7 @@ public class PushTest {
     }
 
     @Test
-    public void verifyEnqueueCalledAnonimouslyOnClearToken() {
+    public void verifyEnqueueCalledAnonymouslyOnClearToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
