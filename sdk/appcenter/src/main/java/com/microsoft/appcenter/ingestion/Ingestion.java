@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.ingestion;
 
+import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
@@ -35,4 +37,18 @@ public interface Ingestion extends Closeable {
      * Make ingestion active again after closing.
      */
     void reopen();
+
+    /**
+     * Sets the value of authorization token.
+     *
+     * @param authToken value of authorization token.
+     */
+    void setAuthToken(@NonNull String authToken);
+
+    /**
+     * Get the value of authorization token.
+     *
+     * @return value of authorization token.
+     */
+    String getAuthToken();
 }

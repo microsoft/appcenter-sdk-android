@@ -22,6 +22,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-public class DefaultChannel implements Channel {
+public class DefaultChannel implements Channel, AuthTokenContext.Listener {
 
     /**
      * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
@@ -148,6 +149,9 @@ public class DefaultChannel implements Channel {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
+        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        mIngestion.setAuthToken(authTokenContext.getAuthToken());
+        authTokenContext.addListener(this);
     }
 
     /**
@@ -739,6 +743,11 @@ public class DefaultChannel implements Channel {
     @Override
     public synchronized void shutdown() {
         suspend(false, new CancellationException());
+    }
+
+    @Override
+    public synchronized void onNewAuthToken(String authToken) {
+        mIngestion.setAuthToken(authToken);
     }
 
     /**

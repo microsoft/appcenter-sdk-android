@@ -1,6 +1,8 @@
-package com.microsoft.appcenter.utils;
+package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.VisibleForTesting;
+
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
