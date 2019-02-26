@@ -4,11 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
-import com.google.gson.annotations.Expose;
 import com.microsoft.appcenter.sasquatch.R;
-
-import java.lang.reflect.ParameterizedType;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
