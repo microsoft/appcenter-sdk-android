@@ -93,7 +93,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
         @Override
         public void onCallFailed(Exception e) {
             if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
-                long delay = RETRY_INTERVALS[mRetryCount++] / 2;;
+                long delay = RETRY_INTERVALS[mRetryCount++] / 2;
 
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
