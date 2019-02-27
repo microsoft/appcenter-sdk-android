@@ -3,6 +3,7 @@ package com.microsoft.appcenter.storage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.storage.models.TokenResult;
+import org.json.JSONException;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,8 +38,12 @@ public class TokenManager {
             Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /* The token is considered expired. */
-            if (aGMTCalendar.getTime().getTime() > token.ttl()) {
-                removeCachedToken(partitionName);
+            try {
+                if (aGMTCalendar.getTime().compareTo(token.expiresOn()) > 0) {
+                    removeCachedToken(partitionName);
+                    return null;
+                }
+            } catch(JSONException ex) {
                 return null;
             }
         }

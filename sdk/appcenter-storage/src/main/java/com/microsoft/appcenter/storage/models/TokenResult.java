@@ -1,8 +1,10 @@
 package com.microsoft.appcenter.storage.models;
 
-
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
+import org.json.JSONException;
+import java.util.Date;
 
 /**
  * Token fetch result.
@@ -51,11 +53,11 @@ public class TokenResult {
     private String status;
 
     /**
-     * The utc timestamp for a token becoming invalid.
+     * The utc timestamp for a token expiration time.
      */
     @Expose
-    @SerializedName(value = "ttl")
-    private long ttl;
+    @SerializedName(value = "expiresOn")
+    private String expiresOn;
 
     /**
      * Get the partition value.
@@ -67,10 +69,12 @@ public class TokenResult {
     }
 
     /**
-     * Get the ttl timestamp
-     * @return the ttl value
+     * Get the token expiration time
+     * @return the token expiration value
      */
-    public long ttl() { return this.ttl; }
+    public Date expiresOn() throws JSONException {
+        return JSONDateUtils.toDate(this.expiresOn);
+    }
 
     /**
      * Set the partition value.
@@ -84,12 +88,12 @@ public class TokenResult {
     }
 
     /**
-     * Set the ttl value.
-     * @param ttl the ttl value to set
+     * Set the token expiration time value.
+     * @param expiresOn token expiration time value to set
      * @return the TokenResult object itself
      */
-    public TokenResult withTTL(long ttl){
-        this.ttl = ttl;
+    public TokenResult withExpirationTime(Date expiresOn) throws JSONException {
+        this.expiresOn = JSONDateUtils.toString(expiresOn);
         return this;
     }
 

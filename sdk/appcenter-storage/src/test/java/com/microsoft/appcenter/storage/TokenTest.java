@@ -14,6 +14,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import org.json.JSONException;
 import org.junit.Test;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
@@ -61,9 +62,10 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canReadTokenFromCacheWhenTokenValid() {
-        long validTime = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime().getTime() + 1000;
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(validTime).withToken(fakeToken));
+    public void canReadTokenFromCacheWhenTokenValid() throws JSONException {
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withExpirationTime(expirationDate.getTime()).withToken(fakeToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
@@ -73,10 +75,11 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canGetTokenWhenCacheInvalid() {
+    public void canGetTokenWhenCacheInvalid() throws JSONException {
         String inValidToken = "invalid";
-        long expiredTime = Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime().getTime() - 1000;
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withTTL(expiredTime).withToken(inValidToken));
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, -1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withExpirationTime(expirationDate.getTime()).withToken(inValidToken));
         when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
         TokensResponse tokensResponse = new TokensResponse().withTokens(new ArrayList<>(Arrays.asList(new TokenResult().withToken(fakeToken).withStatus(Constants.SUCCEED))));
         final String expectedResponse = new Gson().toJson(tokensResponse);
