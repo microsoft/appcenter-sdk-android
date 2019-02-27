@@ -363,8 +363,15 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
-    public synchronized static void signOut() {
-        getInstance().mTokenStorage.removeToken();
+    /**
+     * Sign out user and invalidate a user's token.
+     */
+    public static void signOut() {
+        getInstance().instanceSignOut();
+    }
+
+    private void instanceSignOut() {
+
     }
 
     @WorkerThread
