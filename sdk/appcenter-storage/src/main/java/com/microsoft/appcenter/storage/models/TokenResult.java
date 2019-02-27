@@ -3,6 +3,8 @@ package com.microsoft.appcenter.storage.models;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import org.json.JSONException;
 import java.util.Date;
 
@@ -72,8 +74,13 @@ public class TokenResult {
      * Get the token expiration time
      * @return the token expiration value
      */
-    public Date expiresOn() throws JSONException {
-        return JSONDateUtils.toDate(this.expiresOn);
+    public Date expiresOn() {
+        try {
+            return JSONDateUtils.toDate(this.expiresOn);
+        } catch(JSONException ex) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" + this.expiresOn + "' to ISO 8601 Date format ");
+            return new Date(0);
+        }
     }
 
     /**
@@ -92,8 +99,13 @@ public class TokenResult {
      * @param expiresOn token expiration time value to set
      * @return the TokenResult object itself
      */
-    public TokenResult withExpirationTime(Date expiresOn) throws JSONException {
-        this.expiresOn = JSONDateUtils.toString(expiresOn);
+    public TokenResult withExpirationTime(Date expiresOn) {
+        try {
+            this.expiresOn = JSONDateUtils.toString(expiresOn);
+        } catch(JSONException ex) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" + expiresOn.toString() + "' Date to ISO 8601 string");
+            this.expiresOn = null;
+        }
         return this;
     }
 

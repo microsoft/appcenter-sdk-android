@@ -38,12 +38,8 @@ public class TokenManager {
             Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /* The token is considered expired. */
-            try {
-                if (aGMTCalendar.getTime().compareTo(token.expiresOn()) > 0) {
-                    removeCachedToken(partitionName);
-                    return null;
-                }
-            } catch(JSONException ex) {
+            if (aGMTCalendar.getTime().compareTo(token.expiresOn()) > 0) {
+                removeCachedToken(partitionName);
                 return null;
             }
         }

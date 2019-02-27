@@ -68,7 +68,7 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canReadTokenFromCacheWhenTokenValid() throws JSONException {
+    public void canReadTokenFromCacheWhenTokenValid() {
 
         /* Setup mock to get expiration token from cache */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -87,7 +87,7 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canGetTokenWhenCacheInvalid() throws JSONException {
+    public void canGetTokenWhenCacheInvalid() {
 
         /* Setup mock to get expiration token from cache with expired value*/
         String inValidToken = "invalid";
