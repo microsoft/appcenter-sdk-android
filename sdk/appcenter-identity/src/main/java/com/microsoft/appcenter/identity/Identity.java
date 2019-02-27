@@ -411,7 +411,7 @@ public class Identity extends AbstractAppCenterService {
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "singIn is called while it's not configured or not in the foreground, waiting.");
+            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
             mSignInDelayed = true;
         }
     }
