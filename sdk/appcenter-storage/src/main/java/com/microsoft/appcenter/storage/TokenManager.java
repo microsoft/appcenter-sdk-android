@@ -16,7 +16,7 @@ public class TokenManager {
     /**
      * Shared token manager instance.
      */
-    private static TokenManager tInstance;
+    private static TokenManager sInstance;
 
     private TokenManager() {
     }
@@ -27,10 +27,10 @@ public class TokenManager {
      * @return shared token manager instance.
      */
     public static TokenManager getInstance() {
-        if (tInstance == null) {
-            tInstance = new TokenManager();
+        if (sInstance == null) {
+            sInstance = new TokenManager();
         }
-        return tInstance;
+        return sInstance;
     }
 
     /**
@@ -46,16 +46,16 @@ public class TokenManager {
     /**
      * Get the cached token access to given partition.
      *
-     * @param partitionName
+     * @param partitionName The partition name for get the token.
      * @return Cached token.
      */
     public TokenResult getCachedToken(String partitionName) {
         TokenResult token = Utils.sGson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
         if (token != null) {
-            Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+            Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /* The token is considered expired. */
-            if (aGMTCalendar.getTime().compareTo(token.expiresOn()) > 0) {
+            if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
                 removeCachedToken(partitionName);
                 return null;
             }
@@ -66,7 +66,7 @@ public class TokenManager {
     /**
      * Set the token to cache.
      *
-     * @param tokenResult
+     * @param tokenResult The token to be cached.
      */
     public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNames();
@@ -80,7 +80,7 @@ public class TokenManager {
     /**
      * Remove the cached token access to specific partition.
      *
-     * @param partitionName
+     * @param partitionName The partition name used to access the token.
      */
     public synchronized void removeCachedToken(String partitionName) {
         Set<String> partitionNamesSet = getPartitionNames();

@@ -7,7 +7,6 @@ import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -56,9 +55,9 @@ public class TokenTest extends AbstractStorageTest {
                 "}", fakePartitionName, fakeToken);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMap());
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -116,7 +115,7 @@ public class TokenTest extends AbstractStorageTest {
                 "}", fakePartitionName, fakeToken);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMap());
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
