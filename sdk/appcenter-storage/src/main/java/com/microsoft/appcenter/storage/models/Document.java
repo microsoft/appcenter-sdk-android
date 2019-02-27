@@ -1,16 +1,10 @@
 package com.microsoft.appcenter.storage.models;
 
-import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
+import com.microsoft.appcenter.storage.Utils;
 
 // A document coming back from CosmosDB
 public class Document<T> {
-
-    private transient String documentPayload;
-
     @SerializedName(value = "PartitionKey")
     private String partition;
 
@@ -21,81 +15,59 @@ public class Document<T> {
     private String eTag;
 
     @SerializedName(value = "_ts")
-    private long   timestamp;
+    private long timestamp;
 
     @SerializedName(value = "document")
     private T document;
 
     private transient DocumentError documentError;
 
-    private transient Gson gson;
+    public Document() {
+    }
 
-    private Document(String partition, String id) {
-        gson = new Gson();
+    public Document(T document, String partition, String id) {
         this.partition = partition;
         this.id = id;
-    }
-
-    public Document(String documentPayload, String partition, String id) {
-        this(partition, id);
-        this.documentPayload = documentPayload;
-    }
-
-    public Document(T document, String partition, String id)
-    {
-        this(partition, id);
         this.document = document;
     }
 
-    public Document(Exception dError)
-    {
+    public Document(Exception dError) {
         this.documentError = new DocumentError(dError);
     }
 
-    // Non-serialized document (or null)
-    public String getJsonDocument()
-    {
-        return documentPayload;
-    }
-
-    // Deserialized document (or null)
-    public T getDocument()
-    {
-        Type documentType = new TypeToken<Document<T>>(){}.getType();
-        return gson.fromJson(documentPayload, documentType);
+    /**
+     * @return Deserialized document (or null)
+     */
+    public T getDocument() {
+        return document;
     }
 
     // Error (or null)
-    public DocumentError getError()
-    {
+    public DocumentError getError() {
         return documentError;
     }
 
     // ID + document metadata
-    public String getPartition()
-    {
+    public String getPartition() {
         return partition;
     }
 
-    public String getId()
-    {
+    public String getId() {
         return id;
     }
 
-    public String getEtag()
-    {
+    public String getEtag() {
         return eTag;
     }
 
-    public long getTimestamp()
-    {
+    public long getTimestamp() {
         return timestamp;
     }
 
 
     @Override
     public String toString() {
-        return gson.toJson(this);
+        return Utils.sGson.toJson(this);
     }
 
     // When caching is supported:

@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.storage.client;
 
-import android.content.Context;
-
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -16,10 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-
-public class CosmosDb {
+public final class CosmosDb {
     /**
      * Document DB base endpoint
      */
@@ -77,7 +72,7 @@ public class CosmosDb {
             put("x-ms-version", "2018-06-18");
             put("x-ms-date", nowAsRFC1123());
             put("Content-Type", "application/json");
-            put("Authorization" , urlEncode(dbToken));
+            put("Authorization", urlEncode(dbToken));
         }};
 
         return headers;
@@ -89,37 +84,40 @@ public class CosmosDb {
     }
 
 
-    public static String getDocumentBaseUrl(String databaseName, String collectionName) {
+    public static String getDocumentBaseUrl(String databaseName, String collectionName, String documentId) {
         return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
                 String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-                DOCUMENT_DB_DOCUMENT_URL_PREFIX;
+                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
     }
 
     public static String GetDocumentUrl(TokenResult tokenResult, String documentId) {
-        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName());
-        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
+        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
+        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
     }
 
-    public static synchronized <T> void callCosmosDb(
+    public static synchronized <T> ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             final String body,
             ServiceCallback serviceCallback) {
-        ServiceCall documentResponse =
-            httpClient.callAsync(
-                    GetDocumentUrl(tokenResult, documentId),
-                    httpVerb,
-                    generateHeaders(tokenResult.partition(), tokenResult.token()),
-                    new HttpClient.CallTemplate() {
+        return
+                httpClient.callAsync(
+                        GetDocumentUrl(tokenResult, documentId),
+                        httpVerb,
+                        generateHeaders(tokenResult.partition(), tokenResult.token()),
+                        new HttpClient.CallTemplate() {
 
-                        @Override
-                        public String buildRequestBody() { return body; }
+                            @Override
+                            public String buildRequestBody() {
+                                return body;
+                            }
 
-                        @Override
-                        public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                    },
-                    serviceCallback);
+                            @Override
+                            public void onBeforeCalling(URL url, Map<String, String> headers) {
+                            }
+                        },
+                        serviceCallback);
     }
 }

@@ -1,23 +1,20 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-import com.google.gson.Gson;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import org.json.JSONException;
+
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 
+/**
+ * Token cache service
+ */
 public class TokenManager {
-
-    // TODO use Gson object from shared module.
-    private final Gson gson;
-
     private static TokenManager tInstance;
 
     private TokenManager() {
-        gson = new Gson();
     }
 
     public static TokenManager getInstance() {
@@ -27,14 +24,25 @@ public class TokenManager {
         return tInstance;
     }
 
+    /**
+     * List all cached tokens' partition names.
+     *
+     * @return set of cached tokens' partition name.
+     */
     public Set<String> getPartitionNames() {
         Set<String> partitionNames = SharedPreferencesManager.getStringSet(Constants.PARTITION_NAMES);
         return partitionNames == null ? new HashSet<String>() : partitionNames;
     }
 
+    /**
+     * Get the cached token access to given partition.
+     *
+     * @param partitionName
+     * @return Cached token.
+     */
     public TokenResult getCachedToken(String partitionName) {
-        TokenResult token = gson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
-        if (token != null){
+        TokenResult token = Utils.sGson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
+        if (token != null) {
             Calendar aGMTCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /* The token is considered expired. */
@@ -46,15 +54,25 @@ public class TokenManager {
         return token;
     }
 
+    /**
+     * Set the token to cache.
+     *
+     * @param tokenResult
+     */
     public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNames();
         if (!partitionNamesSet.contains(tokenResult.partition())) {
             partitionNamesSet.add(tokenResult.partition());
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(tokenResult.partition(), gson.toJson(tokenResult));
+        SharedPreferencesManager.putString(tokenResult.partition(), Utils.sGson.toJson(tokenResult));
     }
 
+    /**
+     * Remove the cached token access to specific partition.
+     *
+     * @param partitionName
+     */
     public synchronized void removeCachedToken(String partitionName) {
         Set<String> partitionNamesSet = getPartitionNames();
         partitionNamesSet.remove(partitionName);

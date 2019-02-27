@@ -23,8 +23,8 @@ public class StorageActivity extends AppCompatActivity {
         try {
             final Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
             storage.getMethod("read", String.class, String.class).invoke(null, "User124", "3456");
-            storage.getMethod("delete", String.class, String.class).invoke(null, "readonly", "789");
-            storage.getMethod("create", String.class, String.class, Object.class).invoke(null, "User123c456q", "34567006", new Test());
+            storage.getMethod("delete", String.class, String.class).invoke(null, "User123c456q", "34567006");
+            storage.getMethod("create", String.class, String.class, Object.class).invoke(null, "User1235", "dfrer", new Test());
         }catch (Exception ignore) {
             Log.e(LOG_TAG, "Storage.Module call failed", ignore);
         }

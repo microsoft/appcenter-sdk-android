@@ -22,15 +22,4 @@ public class TokensResponse {
         return this.tokens;
     }
 
-    /**
-     * Set a list of token result for request partitions.
-     *
-     * @param tokens the tokens value to set
-     * @return the TokensResponse object itself.
-     */
-    public TokensResponse withTokens(List<TokenResult> tokens) {
-        this.tokens = tokens;
-        return this;
-    }
-
 }
