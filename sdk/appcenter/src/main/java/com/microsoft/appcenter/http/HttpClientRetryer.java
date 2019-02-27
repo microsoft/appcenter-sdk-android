@@ -93,13 +93,16 @@ public class HttpClientRetryer extends HttpClientDecorator {
         @Override
         public void onCallFailed(Exception e) {
             if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
-                long delay = RETRY_INTERVALS[mRetryCount++] / 2;
-                delay += mRandom.nextInt((int) delay);
+                long delay = RETRY_INTERVALS[mRetryCount++] / 2;;
 
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
                     if(!httpException.getHeaders().isEmpty() && httpException.getHeaders().containsKey(RETRY_AFTER_MS));
                     delay = Long.parseLong(httpException.getHeaders().get(RETRY_AFTER_MS));
+                }
+                else
+                {
+                    delay += mRandom.nextInt((int) delay);
                 }
 
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
