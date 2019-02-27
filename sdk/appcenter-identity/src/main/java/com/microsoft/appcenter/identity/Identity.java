@@ -155,6 +155,13 @@ public class Identity extends AbstractAppCenterService {
         getInstance().instanceLogin();
     }
 
+    /**
+     * Sign out user and invalidate a user's token.
+     */
+    public static void signOut() {
+        getInstance().instanceSignOut();
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
@@ -363,17 +370,6 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
-    /**
-     * Sign out user and invalidate a user's token.
-     */
-    public static void signOut() {
-        getInstance().instanceSignOut();
-    }
-
-    private void instanceSignOut() {
-
-    }
-
     @WorkerThread
     private void clearCache() {
         SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);
@@ -389,6 +385,10 @@ public class Identity extends AbstractAppCenterService {
                 loginFromUI();
             }
         });
+    }
+
+    private void instanceSignOut() {
+        mTokenStorage.removeToken();
     }
 
     @UiThread
