@@ -99,7 +99,7 @@ public class Identity extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
-     * True if sign in was delayed because called in background or configuration not ready.
+     * True if sign-in was delayed because called in background or configuration not ready.
      */
     private boolean mSignInDelayed;
 
@@ -383,7 +383,7 @@ public class Identity extends AbstractAppCenterService {
     @UiThread
     private synchronized void signInFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
-            AppCenterLog.info(LOG_TAG, "Sign in using browser.");
+            AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 

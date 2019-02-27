@@ -167,7 +167,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Make not configured the only reason signIn is delayed => mock foreground. */
         identity.onActivityResumed(mock(Activity.class));
 
-        /* Sign In, will be delayed until configuration ready. */
+        /* Sign in, will be delayed until configuration ready. */
         Identity.signIn();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
