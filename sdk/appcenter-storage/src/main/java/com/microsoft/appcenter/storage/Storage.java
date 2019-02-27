@@ -195,7 +195,7 @@ public class Storage extends AbstractAppCenterService {
                 new ServiceCallback() {
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
+                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
                     }
 
                     @Override
@@ -267,7 +267,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(new Document<T>(payload, tokenResult.partition(), documentId), result);
+                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
                     }
 
                     @Override
@@ -331,7 +331,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(new Document<Void>(null), result);
+                        completeFutureAndRemovePendingCall(new Document<Void>(), result);
                     }
 
                     @Override

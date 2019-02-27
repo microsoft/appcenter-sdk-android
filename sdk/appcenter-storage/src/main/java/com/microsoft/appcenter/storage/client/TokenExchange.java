@@ -22,17 +22,17 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
 
-public class TokenExchange {
+public final class TokenExchange {
 
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
+    public static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
 
     /**
      * App Secret Header
      */
-    static final String APP_SECRET_HEADER = "App-Secret";
+    public static final String APP_SECRET_HEADER = "App-Secret";
 
 
     public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {

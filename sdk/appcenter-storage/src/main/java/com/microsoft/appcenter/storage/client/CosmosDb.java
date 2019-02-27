@@ -89,15 +89,15 @@ public class CosmosDb {
     }
 
 
-    public static String getDocumentBaseUrl(String databaseName, String collectionName) {
+    public static String getDocumentBaseUrl(String databaseName, String collectionName, String documentId) {
         return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
                 String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-                DOCUMENT_DB_DOCUMENT_URL_PREFIX;
+                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
     }
 
     public static String GetDocumentUrl(TokenResult tokenResult, String documentId) {
-        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName());
-        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix) + (documentId == null ? "" : '/' + documentId);
+        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
+        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
     }
 
     public static synchronized <T> ServiceCall callCosmosDbApi(
