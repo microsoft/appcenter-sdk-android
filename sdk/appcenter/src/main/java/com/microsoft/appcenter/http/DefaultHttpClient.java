@@ -35,6 +35,12 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
 
     /**
+     * retry after milliseconds duration header key.
+     */
+    public static final String RETRY_AFTER_MS = "x-ms-retry-after-ms";
+
+
+    /**
      * Content type header key.
      */
     public static final String CONTENT_TYPE_KEY = "Content-Type";

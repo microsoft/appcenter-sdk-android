@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HTTP exception.
@@ -19,6 +21,11 @@ public class HttpException extends IOException {
      * HTTP payload.
      */
     private final String payload;
+
+    /**
+     * HTTP headers.
+     */
+    private Map<String, String> headers = new HashMap<>() ;
 
     /**
      * Init with empty response body.
@@ -40,6 +47,19 @@ public class HttpException extends IOException {
         super(getDetailMessage(status, payload));
         this.payload = payload;
         this.statusCode = status;
+    }
+
+    /**
+     * Init.
+     *
+     * @param status  HTTP status code.
+     * @param payload HTTP payload.
+     * @param headers HTTP responseHeaders.
+     */
+
+    public HttpException(int status, String payload, Map<String, String> headers) {
+        this(status, payload);
+        this.headers = headers;
     }
 
     @NonNull
@@ -70,6 +90,13 @@ public class HttpException extends IOException {
     public String getPayload() {
         return payload;
     }
+
+    /**
+     * Get the HTTP headers (response body).
+     *
+     * @return HTTP headers.
+     */
+    public Map<String, String> getHeaders() { return headers; }
 
     @Override
     public boolean equals(Object o) {
