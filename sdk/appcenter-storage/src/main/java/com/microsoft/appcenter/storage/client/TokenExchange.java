@@ -1,61 +1,47 @@
 package com.microsoft.appcenter.storage.client;
 
-import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
-import org.json.JSONException;
-import org.json.JSONStringer;
-
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Constants.handleApiCallFailure;
+import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
 
-public class TokenExchange {
-
+public final class TokenExchange {
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
+    public static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
 
     /**
      * App Secret Header
      */
-    static final String APP_SECRET_HEADER = "App-Secret";
+    public static final String APP_SECRET_HEADER = "App-Secret";
 
 
     public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
-        String apiBody;
-        JSONStringer writer = new JSONStringer();
-        try {
-            // TODO: use https://github.com/google/gson for serialization
-            List<String> partitions = new ArrayList<String>() {{add(partition);}};
-            writer.object();
-            writer.key("partitions").array();
-            for (String p : partitions) {
-                writer.value(p);
-            }
-            writer.endArray();
-            writer.endObject();
-        } catch (JSONException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to build API body", e);
-        }
+        JsonArray partitionsArray = new JsonArray();
+        partitionsArray.add(partition);
 
-        apiBody = writer.toString();
-        return apiBody;
+        JsonObject partitionsObject = new JsonObject();
+        partitionsObject.add("partitions", partitionsArray);
+
+        return partitionsObject.toString();
     }
 
-    public static synchronized void getDbToken(
+    public static synchronized ServiceCall getDbToken(
             final String partition,
             HttpClient httpClient,
             String apiUrl,
@@ -64,7 +50,7 @@ public class TokenExchange {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
 
-        ServiceCall tokenResponse =
+        return
             httpClient.callAsync(
                 url,
                 METHOD_POST,
@@ -96,8 +82,16 @@ public class TokenExchange {
         }
 
         private TokenResult parseTokenResult(String payload) {
-            TokensResponse tokensResponse = (new Gson()).fromJson(payload, TokensResponse.class);
-            return tokensResponse.tokens().get(0);
+            TokensResponse tokensResponse = Utils.sGson.fromJson(payload, TokensResponse.class);
+
+            if (tokensResponse != null &&
+                    tokensResponse.tokens() != null &&
+                    tokensResponse.tokens().size() == 1 &&
+                    tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
+                return tokensResponse.tokens().get(0);
+            }
+
+            return null;
         }
 
         public abstract void completeFuture(Exception e);

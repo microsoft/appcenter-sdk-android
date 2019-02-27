@@ -23,6 +23,7 @@ public final class Constants {
      * Constant marking event of the storage group.
      */
     static final String STORAGE_GROUP = "group_storage";
+    public static final String TOKEN_RESULT_SUCCEED = "succeed";
 
     /**
      * User partition
@@ -38,16 +39,4 @@ public final class Constants {
     public static String READONLY = "readonly";
 
 
-    /**
-     * Handle API call failure.
-     */
-    public static synchronized void handleApiCallFailure(Exception e) {
-        AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
-        if (!HttpUtils.isRecoverableError(e)) {
-            if (e instanceof HttpException) {
-                HttpException httpException = (HttpException) e;
-                AppCenterLog.error(LOG_TAG, "Exception", httpException);
-            }
-        }
-    }
 }
