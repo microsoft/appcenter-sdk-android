@@ -74,7 +74,6 @@ public final class TokenExchange {
 
                 @Override
                 public void cancel() {
-
                 }
             };
         } else {

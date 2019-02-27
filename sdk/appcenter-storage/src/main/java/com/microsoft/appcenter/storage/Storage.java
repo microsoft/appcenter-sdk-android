@@ -303,7 +303,7 @@ public class Storage extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
 
-        AppCenterLog.debug(LOG_TAG, "Delete started");
+        AppCenterLog.debug(LOG_TAG, String.format("Delete started for document with id: %s", documentId));
         getInstance().instanceDelete(partition, documentId);
         return null;
     }
