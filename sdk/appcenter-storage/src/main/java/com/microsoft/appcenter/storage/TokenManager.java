@@ -27,9 +27,9 @@ public class TokenManager {
         return tInstance;
     }
 
-    public Set<String> getPartitionNamesSet() {
-        Set<String> partitionNamesSet = SharedPreferencesManager.getStringSet(Constants.PARTITION_NAMES);
-        return partitionNamesSet == null ? new HashSet<String>() : partitionNamesSet;
+    public Set<String> getPartitionNames() {
+        Set<String> partitionNames = SharedPreferencesManager.getStringSet(Constants.PARTITION_NAMES);
+        return partitionNames == null ? new HashSet<String>() : partitionNames;
     }
 
     public TokenResult getCachedToken(String partitionName) {
@@ -51,7 +51,7 @@ public class TokenManager {
     }
 
     public synchronized void setCachedToken(TokenResult tokenResult) {
-        Set<String> partitionNamesSet = getPartitionNamesSet();
+        Set<String> partitionNamesSet = getPartitionNames();
         if (!partitionNamesSet.contains(tokenResult.partition())) {
             partitionNamesSet.add(tokenResult.partition());
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
@@ -60,7 +60,7 @@ public class TokenManager {
     }
 
     public synchronized void removeCachedToken(String partitionName) {
-        Set<String> partitionNamesSet = getPartitionNamesSet();
+        Set<String> partitionNamesSet = getPartitionNames();
         partitionNamesSet.remove(partitionName);
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         SharedPreferencesManager.remove(partitionName);

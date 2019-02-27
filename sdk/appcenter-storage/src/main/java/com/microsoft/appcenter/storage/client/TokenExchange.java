@@ -92,8 +92,10 @@ public class TokenExchange {
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
             final TokenResult tokenResult = parseTokenResult(payload);
-            if (!tokenResult.status().equals(Constants.SUCCEED)){
-                callCosmosDb(null);  // TODO throws an exception.
+            if (!tokenResult.status().equalsIgnoreCase(Constants.SUCCEED)){
+
+                // TODO throws an exception.
+                callCosmosDb(null);
             } else {
                 TokenManager.getInstance().setCachedToken(tokenResult);
                 callCosmosDb(tokenResult);
