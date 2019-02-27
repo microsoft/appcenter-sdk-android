@@ -12,11 +12,20 @@ import java.util.TimeZone;
  * Token cache service
  */
 public class TokenManager {
+
+    /**
+     * Shared token manager instance.
+     */
     private static TokenManager tInstance;
 
     private TokenManager() {
     }
 
+    /**
+     * Get token manager instance.
+     *
+     * @return shared token manager instance.
+     */
     public static TokenManager getInstance() {
         if (tInstance == null) {
             tInstance = new TokenManager();
