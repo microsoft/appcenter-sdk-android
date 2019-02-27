@@ -64,15 +64,15 @@ public class TokenResult {
     /**
      * Get the partition value.
      *
-     * @return the partition value
+     * @return the partition value.
      */
     public String partition() {
         return this.partition;
     }
 
     /**
-     * Get the token expiration time
-     * @return the token expiration value
+     * Get the token expiration time.
+     * @return the token expiration value.
      */
     public Date expiresOn() {
         try {
@@ -86,7 +86,7 @@ public class TokenResult {
     /**
      * Set the partition value.
      *
-     * @param partition the partition value to set
+     * @param partition the partition value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withPartition(String partition) {
@@ -96,8 +96,8 @@ public class TokenResult {
 
     /**
      * Set the token expiration time value.
-     * @param expiresOn token expiration time value to set
-     * @return the TokenResult object itself
+     * @param expiresOn token expiration time value to set.
+     * @return the TokenResult object itself.
      */
     public TokenResult withExpirationTime(Date expiresOn) {
         try {
@@ -112,7 +112,7 @@ public class TokenResult {
     /**
      * Get cosmos db account name.
      *
-     * @return the dbAccount value
+     * @return the dbAccount value.
      */
     public String dbAccount() {
         return this.dbAccount;
@@ -121,7 +121,7 @@ public class TokenResult {
     /**
      * Set cosmos db account name.
      *
-     * @param dbAccount the dbAccount value to set
+     * @param dbAccount the dbAccount value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withDbAccount(String dbAccount) {
@@ -132,7 +132,7 @@ public class TokenResult {
     /**
      * Get cosmos db database name within the specified account.
      *
-     * @return the dbName value
+     * @return the dbName value.
      */
     public String dbName() {
         return this.dbName;
@@ -141,7 +141,7 @@ public class TokenResult {
     /**
      * Set cosmos db database name within the specified account.
      *
-     * @param dbName the dbName value to set
+     * @param dbName the dbName value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withDbName(String dbName) {
@@ -152,7 +152,7 @@ public class TokenResult {
     /**
      * Get cosmos db collection name within the specified database.
      *
-     * @return the dbCollectionName value
+     * @return the dbCollectionName value.
      */
     public String dbCollectionName() {
         return this.dbCollectionName;
@@ -161,7 +161,7 @@ public class TokenResult {
     /**
      * Set cosmos db collection name within the specified database.
      *
-     * @param dbCollectionName the dbCollectionName value to set
+     * @param dbCollectionName the dbCollectionName value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withDbCollectionName(String dbCollectionName) {
@@ -172,7 +172,7 @@ public class TokenResult {
     /**
      * Get the token to be used to talk to cosmos db.
      *
-     * @return the token value
+     * @return the token value.
      */
     public String token() {
         return this.token;
@@ -181,7 +181,7 @@ public class TokenResult {
     /**
      * Set the token to be used to talk to cosmos db.
      *
-     * @param token the token value to set
+     * @param token the token value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withToken(String token) {
@@ -192,7 +192,7 @@ public class TokenResult {
     /**
      * Get possible values include: 'failed', 'unauthenticated', 'succeed'.
      *
-     * @return the status value
+     * @return the status value.
      */
     public String status() {
         return this.status;
@@ -201,12 +201,11 @@ public class TokenResult {
     /**
      * Set possible values include: 'failed', 'unauthenticated', 'succeed'.
      *
-     * @param status the status value to set
+     * @param status the status value to set.
      * @return the TokenResult object itself.
      */
     public TokenResult withStatus(String status) {
         this.status = status;
         return this;
     }
-
 }
