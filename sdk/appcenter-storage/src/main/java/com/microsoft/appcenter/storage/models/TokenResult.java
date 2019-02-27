@@ -55,7 +55,7 @@ public class TokenResult {
     private String status;
 
     /**
-     * The utc timestamp for a token expiration time.
+     * The UTC timestamp for a token expiration time.
      */
     @Expose
     @SerializedName(value = "expiresOn")

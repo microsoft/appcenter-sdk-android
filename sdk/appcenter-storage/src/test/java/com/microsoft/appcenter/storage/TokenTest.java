@@ -33,6 +33,7 @@ import static org.mockito.Matchers.any;
 public class TokenTest extends AbstractStorageTest {
 
     static final String fakePartitionName = "read-only";
+
     static final String fakeToken = "mock";
     @Mock
     HttpClient mHttpClient;

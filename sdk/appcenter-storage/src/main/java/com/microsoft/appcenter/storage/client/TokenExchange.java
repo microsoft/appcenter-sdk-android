@@ -35,7 +35,7 @@ public final class TokenExchange {
 
     /**
      * Build the request body to get the token through http client.
-     * @param partition
+     * @param partition The partition names.
      * @return request body to get the token.
      */
     public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
@@ -50,11 +50,11 @@ public final class TokenExchange {
 
     /**
      * Get the token access to specific partition.
-     * @param partition
-     * @param httpClient
-     * @param apiUrl
-     * @param appSecret
-     * @param serviceCallback
+     * @param partition  The partition names.
+     * @param httpClient Httpclient used to make the call.
+     * @param apiUrl api endpoint.
+     * @param appSecret App secret
+     * @param serviceCallback The callback to execute when get the token successfully.
      * @return the service call to get the token.
      */
     public static synchronized ServiceCall getDbToken(

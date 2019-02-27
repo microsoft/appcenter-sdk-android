@@ -302,12 +302,11 @@ public class Storage extends AbstractAppCenterService {
      * Delete a document
      */
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
-
-        AppCenterLog.debug(LOG_TAG, String.format("Delete started for document with id: %s", documentId));
         return getInstance().instanceDelete(partition, documentId);
     }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
+        AppCenterLog.debug(LOG_TAG, String.format("Delete started for document with id: %s", documentId));
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
