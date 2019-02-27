@@ -103,7 +103,7 @@ public final class TokenExchange {
     }
 
     /***
-     * The service call back used to get the token
+     * The service callback for get the token.
      */
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
         @Override
