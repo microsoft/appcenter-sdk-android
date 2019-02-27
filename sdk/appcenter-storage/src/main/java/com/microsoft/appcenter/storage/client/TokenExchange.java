@@ -33,6 +33,11 @@ public final class TokenExchange {
     public static final String APP_SECRET_HEADER = "App-Secret";
 
 
+    /**
+     * Build the request body to get the token through http client.
+     * @param partition
+     * @return request body to get the token.
+     */
     public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
         JsonArray partitionsArray = new JsonArray();
         partitionsArray.add(partition);
@@ -43,6 +48,15 @@ public final class TokenExchange {
         return partitionsObject.toString();
     }
 
+    /**
+     * Get the token access to specific partition.
+     * @param partition
+     * @param httpClient
+     * @param apiUrl
+     * @param appSecret
+     * @param serviceCallback
+     * @return the service call to get the token.
+     */
     public static synchronized ServiceCall getDbToken(
             final String partition,
             HttpClient httpClient,
@@ -88,6 +102,9 @@ public final class TokenExchange {
         }
     }
 
+    /***
+     * The service call back used to get the token
+     */
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
