@@ -18,7 +18,6 @@ public class Document<T> {
     @SerializedName(value = "_ts")
     private long   timestamp;
 
-    @Expose
     @SerializedName(value = "document")
     private T document;
 

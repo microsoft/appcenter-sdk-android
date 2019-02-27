@@ -23,6 +23,7 @@ public final class Constants {
      * Constant marking event of the storage group.
      */
     static final String STORAGE_GROUP = "group_storage";
+    public static final String TOKEN_RESULT_SUCCEED = "succeed";
 
     /**
      * User partition

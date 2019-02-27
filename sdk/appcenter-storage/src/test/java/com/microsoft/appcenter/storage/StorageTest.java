@@ -23,6 +23,7 @@ import org.mockito.Captor;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
@@ -59,8 +60,8 @@ public class StorageTest extends AbstractStorageTest {
 
     private static final String DATABASE_NAME = "mbaas";
     private static final String COLLECTION_NAME = "appcenter";
-    private static final String PARTITION = "PARTITION";
-    private static final String DOCUMENT_ID = "DOCUMENT_ID";
+    private static final String PARTITION = "custom-partition";
+    private static final String DOCUMENT_ID = "document-id";
     private static final String TEST_FIELD_VALUE = "Test Value";
 
     private static String tokenExchangeResponsePayload = String.format("{\n" +
@@ -76,7 +77,7 @@ public class StorageTest extends AbstractStorageTest {
             "    ]\n" +
             "}", DATABASE_NAME, COLLECTION_NAME);
 
-    private static String cosmosDbResponsePayload = String.format("{\n" +
+    private static String cosmosDbDocumentResponsePayload = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
             "    },\n" +
@@ -150,7 +151,6 @@ public class StorageTest extends AbstractStorageTest {
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
 
-
     @Test
     public void readEndToEnd() throws Exception {
         HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
@@ -183,7 +183,7 @@ public class StorageTest extends AbstractStorageTest {
                 cosmosDbServiceCallbackArgumentCaptor.capture());
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         assertNotNull(cosmosDbServiceCallback);
-        cosmosDbServiceCallback.onCallSucceeded(cosmosDbResponsePayload, new HashMap<String, String>());
+        cosmosDbServiceCallback.onCallSucceeded(cosmosDbDocumentResponsePayload, new HashMap<String, String>());
 
         assertNotNull(doc);
 
@@ -194,5 +194,93 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(testCosmosDocument.getError());
         assertNotNull(testCosmosDocument.getEtag());
         assertNotNull(testCosmosDocument.getTimestamp());
+
+        // TODO: configure ProGuard to avoid deserialization errors and verify the content of the parsed document
+    }
+
+    @Test
+    public void createEndToEnd() throws Exception {
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
+        Storage storage = Storage.getInstance();
+        Channel channel = start(storage);
+
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));
+
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(httpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(httpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, null)),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallSucceeded(cosmosDbDocumentResponsePayload, new HashMap<String, String>());
+
+        // TODO: assert doc result
+    }
+
+    @Test
+    public void deleteEndToEnd() throws Exception {
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
+        Storage storage = Storage.getInstance();
+        Channel channel = start(storage);
+
+        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
+
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(httpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(httpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
+                eq(METHOD_DELETE),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
+
+        // TODO: assert error is null and document is null
+    }
+
+    @Test
+    public void buildAppCenterGetDbTokenBodyPayload() {
+        final String expectedPayload = "{\"partitions\":[\"test\"]}";
+        String payload = TokenExchange.buildAppCenterGetDbTokenBodyPayload("test");
+        assertEquals(expectedPayload, payload);
+
+        // This is for code coverage.
+        // These constructors must be called even though these classes are not going to be instantiated.
+        TokenExchange te = new TokenExchange();
+        CosmosDb cdb = new CosmosDb();
     }
 }

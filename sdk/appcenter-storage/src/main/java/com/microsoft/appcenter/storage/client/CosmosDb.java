@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.storage.client;
 
-import android.content.Context;
-
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -16,10 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-
-public class CosmosDb {
+public final class CosmosDb {
     /**
      * Document DB base endpoint
      */

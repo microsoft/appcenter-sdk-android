@@ -209,8 +209,10 @@ public class Storage extends AbstractAppCenterService {
 
     //region List implementation
 
-    // List (need optional signature to configure page size)
-    // The document type (T) must be JSON deserializable
+    /**
+     * List (need optional signature to configure page size)
+     * The document type (T) must be JSON deserializable
+     */
     public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
         return null;
     }
