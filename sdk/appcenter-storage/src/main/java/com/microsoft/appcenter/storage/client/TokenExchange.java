@@ -41,7 +41,9 @@ public class TokenExchange {
         JSONStringer writer = new JSONStringer();
         try {
             // TODO: use https://github.com/google/gson for serialization
-            List<String> partitions = new ArrayList<String>() {{add(partition);}};
+            List<String> partitions = new ArrayList<String>() {{
+                add(partition);
+            }};
             writer.object();
             writer.key("partitions").array();
             for (String p : partitions) {
@@ -73,7 +75,11 @@ public class TokenExchange {
                     httpClient.callAsync(
                             url,
                             METHOD_POST,
-                            new HashMap<String, String>() { { put(APP_SECRET_HEADER, appSecret); } },
+                            new HashMap<String, String>() {
+                                {
+                                    put(APP_SECRET_HEADER, appSecret);
+                                }
+                            },
                             new HttpClient.CallTemplate() {
 
                                 @Override
@@ -82,7 +88,8 @@ public class TokenExchange {
                                 }
 
                                 @Override
-                                public void onBeforeCalling(URL url, Map<String, String> headers) { }
+                                public void onBeforeCalling(URL url, Map<String, String> headers) {
+                                }
                             },
                             serviceCallback);
         }
@@ -92,7 +99,7 @@ public class TokenExchange {
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
             final TokenResult tokenResult = parseTokenResult(payload);
-            if (!tokenResult.status().equalsIgnoreCase(Constants.SUCCEED)){
+            if (!tokenResult.status().equalsIgnoreCase(Constants.SUCCEED)) {
 
                 // TODO throws an exception.
                 callCosmosDb(null);
