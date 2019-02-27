@@ -388,7 +388,13 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void instanceSignOut() {
-        mTokenStorage.removeToken();
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                mTokenStorage.removeToken();
+            }
+        });
     }
 
     @UiThread

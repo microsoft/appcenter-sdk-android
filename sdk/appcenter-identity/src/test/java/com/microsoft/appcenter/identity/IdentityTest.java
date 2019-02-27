@@ -461,6 +461,16 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyNew(PublicClientApplication.class, times(1));
     }
 
+    @Test
+    public void testSignOut() {
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Sign out should clear token. */
+        Identity.signOut();
+        verify(mPreferenceTokenStorage).removeToken();
+    }
+
     private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
 
         /* Intercept parameters. */
