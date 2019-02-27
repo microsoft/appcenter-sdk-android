@@ -3,7 +3,7 @@ package com.microsoft.appcenter.storage.models;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Utils;
 
-/* A document coming back from CosmosDB */
+/** A document coming back from CosmosDB. */
 public class Document<T> {
     @SerializedName(value = "PartitionKey")
     private String partition;
@@ -33,7 +33,7 @@ public class Document<T> {
 
     /**
      * Create document from error.
-     * @param dError General exception.
+     * @param dError Error when retrieving the document.
      */
     public Document(Exception dError) {
         this.documentError = new DocumentError(dError);
@@ -41,7 +41,7 @@ public class Document<T> {
 
     /**
      * Get document.
-     * @return Deserialized document (or null).
+     * @return Deserialized document.
      */
     public T getDocument() {
         return document;
@@ -80,8 +80,8 @@ public class Document<T> {
     }
 
     /**
-     * Get document generated timestamp.
-     * @return Timestamp.
+     * Get document generated in UTC unix epoch.
+     * @return UTC unix timestamp.
      */
     public long getTimestamp() {
         return timestamp;
