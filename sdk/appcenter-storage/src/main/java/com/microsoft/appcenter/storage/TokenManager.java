@@ -24,7 +24,7 @@ public class TokenManager {
     /**
      * Get token manager instance.
      *
-     * @return shared token manager instance.
+     * @return Shared token manager instance.
      */
     public static TokenManager getInstance() {
         if (sInstance == null) {
@@ -36,7 +36,7 @@ public class TokenManager {
     /**
      * List all cached tokens' partition names.
      *
-     * @return set of cached tokens' partition name.
+     * @return Set of cached tokens' partition name.
      */
     public Set<String> getPartitionNames() {
         Set<String> partitionNames = SharedPreferencesManager.getStringSet(Constants.PARTITION_NAMES);
