@@ -171,6 +171,7 @@ public class HttpClientRetryerTest {
 
     @Test
     public void delayUsingRetryHeader() {
+        /* Mock httpException onCallFailed with the HTTP Code 429 (Too many Requests) and the x-ms-retry-after-ms header set. */
         long retryAfterMS = 1234;
         Map<String, String> responseHeader = new HashMap<>();
         responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
@@ -197,7 +198,11 @@ public class HttpClientRetryerTest {
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
+
+        /* Make the call. */
         retryer.callAsync(null, null, null, null, callback);
+
+        /* verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
         verifyDelayFromHeader(handler, retryAfterMS);
         verifyNoMoreInteractions(handler);
         verify(callback).onCallSucceeded("mockSuccessPayload", null);
