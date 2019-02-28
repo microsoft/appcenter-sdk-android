@@ -1,7 +1,7 @@
 package com.microsoft.appcenter.storage.models;
 
-public class DocumentError {
-    public DocumentError(Exception exception) {
+public class DocumentException {
+    public DocumentException(Exception exception) {
         this.exception = exception;
     }
 

@@ -187,7 +187,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(testCosmosDocument);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
-        assertNull(testCosmosDocument.getError());
+        assertNull(testCosmosDocument.getException());
         assertNotNull(testCosmosDocument.getEtag());
         assertNotNull(testCosmosDocument.getTimestamp());
 

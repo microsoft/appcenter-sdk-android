@@ -4,22 +4,37 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.List;
 
-// A (paginated) list of documents from CosmosDB
+/* A (paginated) list of documents from CosmosDB. */
 public interface Documents<T> extends Iterable<Documents<T>> {
 
-    // List of documents in the current page (or null)
+    /**
+     * List of documents in the current page.
+     * @return List of documents.
+     */
     public List<Document<T>> getDocuments();
 
-    // List of documents (deserialized) in the current page (or null)
+    /**
+     * List of documents (deserialized) in the current page.
+     * @return List of documents.
+     */
     public List<T> asList();
 
-    // Error (or null)
-    public DocumentError getError();
+    /**
+     * Get document exception.
+     * @return Document exception.
+     */
+    public DocumentException getException();
 
-    // Flag indicating if an extra page can be fetched
+    /**
+     * Flag indicating if an extra page can be fetched.
+     * @return True if an extra page can be fetched.
+     */
     public boolean hasNext();
 
-    // Fetch more documents
+    /**
+     * Fetch more documents
+     * @return Next document.
+     */
     public AppCenterFuture<Documents<T>> next();
 
 }

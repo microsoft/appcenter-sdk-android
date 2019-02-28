@@ -101,7 +101,7 @@ public final class TokenExchange {
         }
     }
 
-    /***
+    /**
      * The service callback for get the token.
      */
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
