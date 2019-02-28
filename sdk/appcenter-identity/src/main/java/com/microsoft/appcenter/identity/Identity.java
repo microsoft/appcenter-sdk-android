@@ -434,7 +434,7 @@ public class Identity extends AbstractAppCenterService {
             // TODO persist accountId
         } else {
             AppCenterLog.debug(LOG_TAG, "Login called while not configured, waiting.");
-            mLoginDelayed = true;
+            mSignInDelayed = true;
         }
     }
 
