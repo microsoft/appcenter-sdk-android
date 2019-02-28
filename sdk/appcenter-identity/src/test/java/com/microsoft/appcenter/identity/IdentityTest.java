@@ -19,6 +19,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
@@ -41,6 +42,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.identity.Constants.ACCOUNT_ID_KEY;
 import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
 import static org.junit.Assert.assertEquals;
@@ -359,7 +361,8 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
+        verifyStatic();
+        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
     }
 
     @Test
@@ -415,7 +418,8 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
+        verifyStatic();
+        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -424,7 +428,8 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
+        verifyStatic();
+        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
