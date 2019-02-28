@@ -396,7 +396,7 @@ public class Identity extends AbstractAppCenterService {
 
     private synchronized void instanceSignOut() {
         if (mTokenStorage.getToken() == null) {
-            AppCenterLog.info(LOG_TAG, "Couldn't sign-out: authToken doesn't exist.");
+            AppCenterLog.warn( LOG_TAG, "Couldn't sign-out: authToken doesn't exist.");
             return;
         }
         mSignInDelayed = false;
@@ -413,8 +413,8 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void onAccountsLoaded(List<IAccount> accounts) {
-                for (IAccount account : accounts){
-                    if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)){
+                for (IAccount account : accounts) {
+                    if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
                         mAuthenticationClient.removeAccount(account);
                     }
                 }

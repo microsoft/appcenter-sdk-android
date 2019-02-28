@@ -64,6 +64,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
@@ -465,10 +466,21 @@ public class IdentityTest extends AbstractIdentityTest {
     public void signOutRemovesToken() {
         Identity identity = Identity.getInstance();
         start(identity);
+        when(mPreferenceTokenStorage.getToken()).thenReturn("42");
 
         /* Sign out should clear token. */
         Identity.signOut();
         verify(mPreferenceTokenStorage).removeToken();
+    }
+
+    @Test
+    public void verifyTokenStorageIsEmpty() {
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        Identity.signOut();
+        when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
+        verify(mPreferenceTokenStorage, never()).removeToken();
     }
 
     private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
