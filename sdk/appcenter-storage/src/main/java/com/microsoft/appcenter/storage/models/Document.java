@@ -20,7 +20,7 @@ public class Document<T> {
     @SerializedName(value = "document")
     private T document;
 
-    private transient DocumentException documentException;
+    private transient DocumentError documentError;
 
     public Document() {
     }
@@ -32,11 +32,11 @@ public class Document<T> {
     }
 
     /**
-     * Create document from exception.
-     * @param exception Exception when retrieving the document.
+     * Create document from error.
+     * @param exception Error when retrieving the document.
      */
     public Document(Exception exception) {
-        this.documentException = new DocumentException(exception);
+        this.documentError = new DocumentError(exception);
     }
 
     /**
@@ -48,11 +48,11 @@ public class Document<T> {
     }
 
     /**
-     * Get document exception.
-     * @return Document exception.
+     * Get document error.
+     * @return Document error.
      */
-    public DocumentException getException() {
-        return documentException;
+    public DocumentError getError() {
+        return documentError;
     }
 
     /**

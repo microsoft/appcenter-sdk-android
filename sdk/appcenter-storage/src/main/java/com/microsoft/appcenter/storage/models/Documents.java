@@ -20,10 +20,10 @@ public interface Documents<T> extends Iterable<Documents<T>> {
     public List<T> asList();
 
     /**
-     * Get document exception.
-     * @return Document exception.
+     * Get document error.
+     * @return Document error.
      */
-    public DocumentException getException();
+    public DocumentError getError();
 
     /**
      * Flag indicating if an extra page can be fetched.
