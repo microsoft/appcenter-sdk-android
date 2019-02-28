@@ -23,11 +23,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.storage.Constants.*;
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 
 /**
  * Storage service.
@@ -88,13 +90,6 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setApiUrl(String)}}.
-     */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
-    }
-
-    /**
      * Check whether Storage service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
@@ -114,6 +109,39 @@ public class Storage extends AbstractAppCenterService {
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * Read a document
+     * The document type (T) must be JSON deserializable
+     */
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
+        AppCenterLog.debug(LOG_TAG, "Read started");
+        return getInstance().instanceRead(partition, documentId);
+    }
+
+    /**
+     * Create a document
+     * The document instance (T) must be JSON serializable
+     */
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
+        AppCenterLog.debug(LOG_TAG, "Create started");
+        getInstance().instanceCreate(partition, documentId, document);
+        return null;
+    }
+
+    /**
+     * Delete a document
+     */
+    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+        return getInstance().instanceDelete(partition, documentId);
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
     }
 
     @Override
@@ -146,6 +174,8 @@ public class Storage extends AbstractAppCenterService {
         return STORAGE_GROUP;
     }
 
+    //region Read implementation
+
     @Override
     public String getServiceName() {
         return SERVICE_NAME;
@@ -156,16 +186,9 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-    /**
-     * Read a document
-     * The document type (T) must be JSON deserializable
-     */
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
-        AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId);
-    }
+    //endregion
 
-    //region Read implementation
+    //region List implementation
 
     private synchronized <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
@@ -185,6 +208,10 @@ public class Storage extends AbstractAppCenterService {
                 });
         return result;
     }
+
+    //endregion
+
+    //region Create implementation
 
     private synchronized <T> void callCosmosDbReadApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
@@ -207,29 +234,11 @@ public class Storage extends AbstractAppCenterService {
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    //endregion
-
-    //region List implementation
-
     /**
      * List (need optional signature to configure page size)
      * The document type (T) must be JSON deserializable
      */
     public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
-        return null;
-    }
-
-    //endregion
-
-    //region Create implementation
-
-    /**
-     * Create a document
-     * The document instance (T) must be JSON serializable
-     */
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
-        AppCenterLog.debug(LOG_TAG, "Create started");
-        getInstance().instanceCreate(partition, documentId, document);
         return null;
     }
 
@@ -255,6 +264,10 @@ public class Storage extends AbstractAppCenterService {
                 });
         return result;
     }
+
+    //endregion
+
+    //region Replace implementation
 
     private synchronized <T> void callCosmosDbCreateApi(
             final TokenResult tokenResult,
@@ -284,7 +297,7 @@ public class Storage extends AbstractAppCenterService {
 
     //endregion
 
-    //region Replace implementation
+    //region Delete implementation
 
     /**
      * Replace a document
@@ -292,17 +305,6 @@ public class Storage extends AbstractAppCenterService {
      */
     public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
         return null;
-    }
-
-    //endregion
-
-    //region Delete implementation
-
-    /**
-     * Delete a document
-     */
-    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
-        return getInstance().instanceDelete(partition, documentId);
     }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {

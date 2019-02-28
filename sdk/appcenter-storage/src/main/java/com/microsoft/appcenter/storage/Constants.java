@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.storage;
 
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
@@ -9,28 +7,23 @@ import com.microsoft.appcenter.utils.AppCenterLog;
  */
 public final class Constants {
 
-    /**
-     * Name of the service.
-     */
-    static final String SERVICE_NAME = "Storage";
-
-    /**
-     * TAG used in logging for Storage.
-     */
-    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Constant marking event of the storage group.
-     */
-    static final String STORAGE_GROUP = "group_storage";
-
     public static final String TOKEN_RESULT_SUCCEED = "Succeed";
-
     /**
      * Cached partition names list file name.
      */
     public static final String PARTITION_NAMES = "partitions";
-
+    /**
+     * Name of the service.
+     */
+    static final String SERVICE_NAME = "Storage";
+    /**
+     * TAG used in logging for Storage.
+     */
+    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
+    /**
+     * Constant marking event of the storage group.
+     */
+    static final String STORAGE_GROUP = "group_storage";
     /**
      * User partition.
      * An authenticated user can read/write documents in this partition.
