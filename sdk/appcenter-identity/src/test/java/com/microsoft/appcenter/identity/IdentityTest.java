@@ -359,6 +359,63 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
+    }
+
+    @Test
+    public void downloadConfigurationThenForegroundThenSignIn() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+
+        /* Sign in, will work now. */
+        Identity.signIn();
+
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
+
+        /* Call signIn again to trigger silent sign-in. */
+        Identity.signIn();
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), account, null, true, new AuthenticationCallback()
+                same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {

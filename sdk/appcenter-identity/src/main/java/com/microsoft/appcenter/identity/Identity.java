@@ -114,6 +114,11 @@ public class Identity extends AbstractAppCenterService {
     private AuthTokenStorage mTokenStorage;
 
     /**
+     * True if silent sign-in failed.
+     */
+    private boolean mSilentSignInFailed = false;
+
+    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -296,7 +301,7 @@ public class Identity extends AbstractAppCenterService {
                     if (account != null) {
                         silentSignIn(account);
                     }
-                    else {
+                    else if (account == null || mSilentSignInFailed) {
                         signInFromUI();
                     }
                 }
@@ -390,7 +395,7 @@ public class Identity extends AbstractAppCenterService {
                 if (account != null) {
                     silentSignIn(account);
                 }
-                else {
+                else if (account == null || mSilentSignInFailed) {
                     signInFromUI();
                 }
             }
@@ -423,6 +428,7 @@ public class Identity extends AbstractAppCenterService {
                     } else {
                         AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                     }
+                    mSilentSignInFailed = true;
                 }
 
                 @Override
@@ -473,6 +479,7 @@ public class Identity extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
             mSignInDelayed = true;
         }
+        mSilentSignInFailed = false;
     }
 
     private IAccount retrieveAccount(String id) {
