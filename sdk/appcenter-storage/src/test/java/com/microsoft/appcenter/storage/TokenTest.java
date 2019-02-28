@@ -41,7 +41,7 @@ public class TokenTest extends AbstractStorageTest {
     @Test
     public void canGetToken() {
 
-        /* Mock http call to get token */
+        /* Mock http call to get token. */
         final String expectedResponse = String.format("{\n" +
                 "    \"tokens\": [\n" +
                 "        {\n" +
@@ -67,17 +67,17 @@ public class TokenTest extends AbstractStorageTest {
             }
         });
 
-        /* Make the call */
+        /* Make the call. */
         TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
 
-        /* Get and verify token */
+        /* Get and verify token. */
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
     public void canReadTokenFromCacheWhenTokenValid() {
 
-        /* Setup mock to get expiration token from cache */
+        /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withExpirationTime(expirationDate.getTime()).withToken(fakeToken));
@@ -86,17 +86,17 @@ public class TokenTest extends AbstractStorageTest {
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
-        /* Make the call */
+        /* Make the call. */
         TokenExchange.getDbToken(fakePartitionName, null, null, null, callBack);
 
-        /* Verify the token values */
+        /* Verify the token values. */
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 
     @Test
     public void canGetTokenWhenCacheInvalid() {
 
-        /* Setup mock to get expiration token from cache with expired value*/
+        /* Setup mock to get expiration token from cache with expired value. */
         String inValidToken = "invalid";
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, -1000);
@@ -127,10 +127,10 @@ public class TokenTest extends AbstractStorageTest {
             }
         });
 
-        /* Make the call */
+        /* Make the call. */
         TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
 
-        /* Verify the token values */
+        /* Verify the token values. */
         Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
     }
 }

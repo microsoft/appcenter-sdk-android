@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 /**
- * Token cache service
+ * Token cache service.
  */
 public class TokenManager {
 

@@ -36,7 +36,7 @@ public final class TokenExchange {
     /**
      * Build the request body to get the token through http client.
      * @param partition The partition names.
-     * @return request body to get the token.
+     * @return request Body to get the token.
      */
     public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
         JsonArray partitionsArray = new JsonArray();

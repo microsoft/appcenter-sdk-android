@@ -33,7 +33,7 @@ public class Document<T> {
 
     /**
      * Create document from exception.
-     * @param exception Error when retrieving the document.
+     * @param exception Exception when retrieving the document.
      */
     public Document(Exception exception) {
         this.documentException = new DocumentException(exception);
