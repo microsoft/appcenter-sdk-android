@@ -23,11 +23,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.storage.Constants.*;
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 
 /**
  * Storage service.

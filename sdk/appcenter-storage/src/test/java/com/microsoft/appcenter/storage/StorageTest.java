@@ -46,20 +46,11 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class StorageTest extends AbstractStorageTest {
 
-    class TestDocument {
-        public TestDocument(String test) {
-            this.test = test;
-        }
-
-        String test;
-    }
-
     private static final String DATABASE_NAME = "mbaas";
     private static final String COLLECTION_NAME = "appcenter";
     private static final String PARTITION = "custom-partition";
     private static final String DOCUMENT_ID = "document-id";
     private static final String TEST_FIELD_VALUE = "Test Value";
-
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
@@ -72,7 +63,6 @@ public class StorageTest extends AbstractStorageTest {
             "        }\n" +
             "    ]\n" +
             "}", DATABASE_NAME, COLLECTION_NAME);
-
     private static String cosmosDbDocumentResponsePayload = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
@@ -85,7 +75,6 @@ public class StorageTest extends AbstractStorageTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
-
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
@@ -278,5 +267,13 @@ public class StorageTest extends AbstractStorageTest {
         // These constructors must be called even though these classes are not going to be instantiated.
         TokenExchange te = new TokenExchange();
         CosmosDb cdb = new CosmosDb();
+    }
+
+    class TestDocument {
+        String test;
+
+        public TestDocument(String test) {
+            this.test = test;
+        }
     }
 }

@@ -1,7 +1,7 @@
 package com.microsoft.appcenter.storage;
 
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Calendar;
 import java.util.HashSet;

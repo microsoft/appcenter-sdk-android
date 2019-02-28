@@ -35,6 +35,7 @@ public final class TokenExchange {
 
     /**
      * Build the request body to get the token through http client.
+     *
      * @param partition The partition names.
      * @return Request body to get the token.
      */
@@ -50,10 +51,11 @@ public final class TokenExchange {
 
     /**
      * Get the token access to specific partition.
-     * @param partition  The partition names.
-     * @param httpClient Httpclient used to make the call.
-     * @param apiUrl Api endpoint.
-     * @param appSecret App secret.
+     *
+     * @param partition       The partition names.
+     * @param httpClient      Httpclient used to make the call.
+     * @param apiUrl          Api endpoint.
+     * @param appSecret       App secret.
      * @param serviceCallback The callback to execute when get the token successfully.
      * @return The service call to get the token.
      */

@@ -1,13 +1,18 @@
 package com.microsoft.appcenter.storage;
 
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
  * Constants for Storage module.
  */
 public final class Constants {
+
+    public static final String TOKEN_RESULT_SUCCEED = "Succeed";
+
+    /**
+     * Cached partition names list file name.
+     */
+    public static final String PARTITION_NAMES = "partitions";
 
     /**
      * Name of the service.
@@ -23,13 +28,6 @@ public final class Constants {
      * Constant marking event of the storage group.
      */
     static final String STORAGE_GROUP = "group_storage";
-
-    public static final String TOKEN_RESULT_SUCCEED = "Succeed";
-
-    /**
-     * Cached partition names list file name.
-     */
-    public static final String PARTITION_NAMES = "partitions";
 
     /**
      * User partition.
