@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.internal.matchers.Null;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
@@ -20,7 +19,7 @@ import static org.mockito.Mockito.verify;
 public class AuthTokenContextTest {
 
     private AuthTokenContext mAuthTokenContext;
-    
+
     private final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
 
     @Before
@@ -52,11 +51,10 @@ public class AuthTokenContextTest {
         /* Remove listener. */
         mAuthTokenContext.removeListener(mockListener);
 
-        /* Verify null listener scenarios. */
-        mAuthTokenContext.addListener(null);
+        /* Update token without listener attached. */
         mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
 
-        /* Verify that listener is called only once on a new token. */
+        /* Verify that listener is called only once on a new token (i.e. before we removed listener). */
         verify(mockListener, times(1)).onNewAuthToken(MOCK_TOKEN);
     }
 

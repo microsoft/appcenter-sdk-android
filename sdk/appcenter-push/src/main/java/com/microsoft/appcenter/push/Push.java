@@ -19,10 +19,10 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -109,7 +109,7 @@ public class Push extends AbstractAppCenterService {
     /**
      * Authorization listener for {@link AuthTokenContext}.
      */
-    private AbstractTokenContextListener mAuthListener;
+    private AuthTokenContext.Listener mAuthListener;
 
     /**
      * Init.
@@ -150,6 +150,8 @@ public class Push extends AbstractAppCenterService {
 
     /**
      * Enable or disable Push service.
+     * <p>
+     * The state is persisted in the device's storage across application launches.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
