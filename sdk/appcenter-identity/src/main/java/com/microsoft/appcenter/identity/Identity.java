@@ -392,6 +392,7 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void run() {
+                mLoginDelayed = false;
                 mTokenStorage.removeToken();
             }
         });

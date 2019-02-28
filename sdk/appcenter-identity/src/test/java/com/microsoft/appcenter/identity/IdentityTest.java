@@ -462,7 +462,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void testSignOut() {
+    public void signOutRemovesToken() {
         Identity identity = Identity.getInstance();
         start(identity);
 
