@@ -175,6 +175,7 @@ public class Storage extends AbstractAppCenterService {
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
+
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
                         callCosmosDbReadApi(tokenResult, documentId, result);
@@ -196,6 +197,7 @@ public class Storage extends AbstractAppCenterService {
                 METHOD_GET,
                 null,
                 new ServiceCallback() {
+
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
@@ -245,6 +247,7 @@ public class Storage extends AbstractAppCenterService {
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
+
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
                         callCosmosDbCreateApi(tokenResult, document, partition, documentId, result);
@@ -314,6 +317,7 @@ public class Storage extends AbstractAppCenterService {
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
+
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
                         callCosmosDbDeleteApi(tokenResult, documentId, result);

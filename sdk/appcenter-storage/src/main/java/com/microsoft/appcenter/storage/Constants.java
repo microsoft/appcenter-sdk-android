@@ -38,7 +38,7 @@ public final class Constants {
     /**
      * Readonly partition.
      * Everyone can read documents in this partition.
-     * Writes is not allowed via the SDK.
+     * Writes are not allowed via the SDK.
      */
     public static String READONLY = "readonly";
 }
