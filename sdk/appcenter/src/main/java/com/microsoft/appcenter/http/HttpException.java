@@ -96,7 +96,9 @@ public class HttpException extends IOException {
      *
      * @return HTTP headers.
      */
-    public Map<String, String> getHeaders() { return headers; }
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
 
     @Override
     public boolean equals(Object o) {

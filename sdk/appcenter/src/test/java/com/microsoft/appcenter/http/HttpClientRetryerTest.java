@@ -170,7 +170,7 @@ public class HttpClientRetryerTest {
     }
 
     @Test
-    public void delayUsingRetryHeader(){
+    public void delayUsingRetryHeader() {
         long retryAfterMS = 1234;
         Map<String, String> responseHeader = new HashMap<>();
         responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
