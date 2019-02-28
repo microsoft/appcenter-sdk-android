@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static android.util.Log.VERBOSE;
@@ -159,7 +160,13 @@ public class Identity extends AbstractAppCenterService {
      * Sign out user and invalidate a user's token.
      */
     public static void signOut() {
-        getInstance().instanceSignOut();
+        getInstance().post(new Runnable() {
+
+            @Override
+            public void run() {
+                getInstance().instanceSignOut();
+            }
+        });
     }
 
     @Override
@@ -387,13 +394,30 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    private void instanceSignOut() {
-        post(new Runnable() {
+    private synchronized void instanceSignOut() {
+        if (mTokenStorage.getToken() == null) {
+            AppCenterLog.info(LOG_TAG, "Couldn't sign-out: authToken doesn't exist.");
+            return;
+        }
+        mSignInDelayed = false;
+        removeAccount(mTokenStorage.getHomeAccountId());
+        mTokenStorage.removeToken();
+        AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
+    }
+
+    private void removeAccount(final String homeAccountIdentifier) {
+        if (mAuthenticationClient == null || homeAccountIdentifier == null) {
+            return;
+        }
+        mAuthenticationClient.getAccounts(new PublicClientApplication.AccountsLoadedListener() {
 
             @Override
-            public void run() {
-                mLoginDelayed = false;
-                mTokenStorage.removeToken();
+            public void onAccountsLoaded(List<IAccount> accounts) {
+                for (IAccount account : accounts){
+                    if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)){
+                        mAuthenticationClient.removeAccount(account);
+                    }
+                }
             }
         });
     }
