@@ -64,7 +64,7 @@ public class TokenResult {
     /**
      * Get the partition value.
      *
-     * @return the partition value.
+     * @return The partition value.
      */
     public String partition() {
         return this.partition;
@@ -72,7 +72,7 @@ public class TokenResult {
 
     /**
      * Get the token expiration time.
-     * @return the token expiration value.
+     * @return The token expiration value.
      */
     public Date expiresOn() {
         try {
@@ -86,8 +86,8 @@ public class TokenResult {
     /**
      * Set the partition value.
      *
-     * @param partition the partition value to set.
-     * @return the TokenResult object itself.
+     * @param partition The partition value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withPartition(String partition) {
         this.partition = partition;
@@ -96,8 +96,8 @@ public class TokenResult {
 
     /**
      * Set the token expiration time value.
-     * @param expiresOn token expiration time value to set.
-     * @return the TokenResult object itself.
+     * @param expiresOn Token expiration time value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withExpirationTime(Date expiresOn) {
         try {
@@ -112,7 +112,7 @@ public class TokenResult {
     /**
      * Get cosmos db account name.
      *
-     * @return the dbAccount value.
+     * @return The dbAccount value.
      */
     public String dbAccount() {
         return this.dbAccount;
@@ -121,8 +121,8 @@ public class TokenResult {
     /**
      * Set cosmos db account name.
      *
-     * @param dbAccount the dbAccount value to set.
-     * @return the TokenResult object itself.
+     * @param dbAccount The dbAccount value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withDbAccount(String dbAccount) {
         this.dbAccount = dbAccount;
@@ -132,7 +132,7 @@ public class TokenResult {
     /**
      * Get cosmos db database name within the specified account.
      *
-     * @return the dbName value.
+     * @return The dbName value.
      */
     public String dbName() {
         return this.dbName;
@@ -141,8 +141,8 @@ public class TokenResult {
     /**
      * Set cosmos db database name within the specified account.
      *
-     * @param dbName the dbName value to set.
-     * @return the TokenResult object itself.
+     * @param dbName The dbName value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withDbName(String dbName) {
         this.dbName = dbName;
@@ -152,7 +152,7 @@ public class TokenResult {
     /**
      * Get cosmos db collection name within the specified database.
      *
-     * @return the dbCollectionName value.
+     * @return The dbCollectionName value.
      */
     public String dbCollectionName() {
         return this.dbCollectionName;
@@ -161,8 +161,8 @@ public class TokenResult {
     /**
      * Set cosmos db collection name within the specified database.
      *
-     * @param dbCollectionName the dbCollectionName value to set.
-     * @return the TokenResult object itself.
+     * @param dbCollectionName The dbCollectionName value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withDbCollectionName(String dbCollectionName) {
         this.dbCollectionName = dbCollectionName;
@@ -172,7 +172,7 @@ public class TokenResult {
     /**
      * Get the token to be used to talk to cosmos db.
      *
-     * @return the token value.
+     * @return The token value.
      */
     public String token() {
         return this.token;
@@ -181,8 +181,8 @@ public class TokenResult {
     /**
      * Set the token to be used to talk to cosmos db.
      *
-     * @param token the token value to set.
-     * @return the TokenResult object itself.
+     * @param token The token value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withToken(String token) {
         this.token = token;
@@ -192,7 +192,7 @@ public class TokenResult {
     /**
      * Get possible values include: 'failed', 'unauthenticated', 'succeed'.
      *
-     * @return the status value.
+     * @return The status value.
      */
     public String status() {
         return this.status;
@@ -201,8 +201,8 @@ public class TokenResult {
     /**
      * Set possible values include: 'failed', 'unauthenticated', 'succeed'.
      *
-     * @param status the status value to set.
-     * @return the TokenResult object itself.
+     * @param status The status value to set.
+     * @return The TokenResult object itself.
      */
     public TokenResult withStatus(String status) {
         this.status = status;
