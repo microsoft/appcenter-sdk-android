@@ -3,7 +3,6 @@ package com.microsoft.appcenter.http;
 import android.os.Handler;
 
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -204,7 +203,6 @@ public class HttpClientRetryerTest {
         verify(callback).onCallSucceeded("mockSuccessPayload", null);
         verifyNoMoreInteractions(callback);
     }
-
 
     @Test
     public void cancel() throws InterruptedException {

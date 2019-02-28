@@ -97,8 +97,9 @@ public class HttpClientRetryer extends HttpClientDecorator {
 
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
-                    if(!httpException.getHeaders().isEmpty() && httpException.getHeaders().containsKey(RETRY_AFTER_MS));
-                    delay = Long.parseLong(httpException.getHeaders().get(RETRY_AFTER_MS));
+                    if(!httpException.getHeaders().isEmpty() && httpException.getHeaders().containsKey(RETRY_AFTER_MS)) {
+                        delay = Long.parseLong(httpException.getHeaders().get(RETRY_AFTER_MS));
+                    }
                 }
                 else
                 {

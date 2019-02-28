@@ -25,7 +25,7 @@ public class HttpException extends IOException {
     /**
      * HTTP headers.
      */
-    private Map<String, String> headers = new HashMap<>() ;
+    private Map<String, String> headers = new HashMap<>();
 
     /**
      * Init with empty response body.
@@ -92,7 +92,7 @@ public class HttpException extends IOException {
     }
 
     /**
-     * Get the HTTP headers (response body).
+     * Get the HTTP headers (response headers).
      *
      * @return HTTP headers.
      */
