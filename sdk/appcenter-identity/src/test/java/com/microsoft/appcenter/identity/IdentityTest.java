@@ -359,11 +359,11 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
     }
 
     @Test
-    public void downloadConfigurationThenForegroundThenSignIn() throws Exception {
+    public void downloadConfigurationThenForegroundThenSignInThenSilentSignIn() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -383,6 +383,15 @@ public class IdentityTest extends AbstractIdentityTest {
                 return null;
             }
         }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
         /* Mock http and start identity service. */
         HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
@@ -406,16 +415,16 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
 
         /* Verify interactions. */
-        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), account, null, true, new AuthenticationCallback()
-                same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verify(SharedPreferencesManager).putString(ACCOUNT_ID_KEY, eq(mockAccountId));
+        verify(SharedPreferencesManager).putString(eq(ACCOUNT_ID_KEY), eq(mockAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
