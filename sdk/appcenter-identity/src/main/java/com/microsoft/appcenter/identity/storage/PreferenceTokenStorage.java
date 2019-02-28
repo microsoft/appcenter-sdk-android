@@ -71,8 +71,10 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         String tokenFromStorage = getToken();
         String accountId = getHomeAccountId();
 
-        /* We need to update Token context here. */
-        AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
+        /* We need to update Token context here if the values are not null. */
+        if (tokenFromStorage != null && accountId != null) {
+            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
+        }
     }
 
     @Override

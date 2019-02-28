@@ -53,9 +53,9 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     try {
-                        identity.getMethod("login").invoke(null);
+                        identity.getMethod("signIn").invoke(null);
                     } catch (Exception e) {
-                        Log.e(LOG_TAG, "Identity.login failed", e);
+                        Log.e(LOG_TAG, "Identity.signIn failed", e);
                     }
                 }
             }));

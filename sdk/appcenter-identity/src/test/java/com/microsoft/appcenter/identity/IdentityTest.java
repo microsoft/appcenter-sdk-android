@@ -164,11 +164,11 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
-        /* Make not configured the only reason login is delayed => mock foreground. */
+        /* Make not configured the only reason signIn is delayed => mock foreground. */
         identity.onActivityResumed(mock(Activity.class));
 
-        /* Login, will be delayed until configuration ready. */
-        Identity.login();
+        /* Sign in, will be delayed until configuration ready. */
+        Identity.signIn();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
@@ -177,8 +177,8 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
         FileManager.write(any(File.class), anyString());
 
-        /* Check we didn't try login after configuration attempt. */
-        assertTrue(identity.isLoginDelayed());
+        /* Check we didn't try to sign in after configuration attempt. */
+        assertTrue(identity.isSignInDelayed());
     }
 
     @Test
@@ -239,7 +239,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void loginThenDownloadValidConfigurationThenForeground() throws Exception {
+    public void signInThenDownloadValidConfigurationThenForeground() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -263,8 +263,8 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(mock(Activity.class));
         identity.onActivityPaused(mock(Activity.class));
 
-        /* Login, will be delayed until configuration ready. */
-        Identity.login();
+        /* Sign in, will be delayed until configuration ready. */
+        Identity.signIn();
 
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
@@ -276,13 +276,13 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
 
-        /* Verify login still delayed in background. */
-        assertTrue(identity.isLoginDelayed());
+        /* Verify signIn still delayed in background. */
+        assertTrue(identity.isSignInDelayed());
 
         /* Go foreground. */
         Activity activity = mock(Activity.class);
         identity.onActivityResumed(activity);
-        assertFalse(identity.isLoginDelayed());
+        assertFalse(identity.isSignInDelayed());
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), callbackCaptor.capture());
 
@@ -293,12 +293,11 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Just call back and nothing to verify. */
         callback.onCancel();
         callback.onSuccess(mockResult);
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
         callback.onError(mock(MsalException.class));
     }
 
     @Test
-    public void downloadConfigurationThenForegroundThenLogin() throws Exception {
+    public void downloadConfigurationThenForegroundThenSignIn() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -325,7 +324,7 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
-        /* Mock storage to fail caching configuration, this does not prevent login. */
+        /* Mock storage to fail caching configuration, this does not prevent signIn. */
         doThrow(new IOException()).when(FileManager.class);
         FileManager.write(any(File.class), anyString());
 
@@ -343,19 +342,19 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Go foreground. */
         identity.onActivityResumed(activity);
-        assertFalse(identity.isLoginDelayed());
+        assertFalse(identity.isSignInDelayed());
 
-        /* Login, will work now. */
-        Identity.login();
+        /* Sign in, will work now. */
+        Identity.signIn();
 
-        /* Verify login still delayed in background. */
-        assertFalse(identity.isLoginDelayed());
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
 
         /* Disable Identity. */
         Identity.setEnabled(false).get();
 
-        /* Login with identity disabled. */
-        Identity.login();
+        /* Sign in with identity disabled. */
+        Identity.signIn();
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
@@ -380,11 +379,11 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(serviceCallback);
         serviceCallback.onCallFailed(e);
 
-        /* If we login. */
-        Identity.login();
+        /* If we sign in. */
+        Identity.signIn();
 
         /* Then nothing happens, we are delayed. */
-        assertTrue(identity.isLoginDelayed());
+        assertTrue(identity.isSignInDelayed());
     }
 
     @Test
@@ -433,9 +432,9 @@ public class IdentityTest extends AbstractIdentityTest {
         Activity activity = mock(Activity.class);
         identity.onActivityResumed(activity);
 
-        /* We can login right away even when http call has not yet finished. */
-        Identity.login();
-        assertFalse(identity.isLoginDelayed());
+        /* We can signIn right away even when http call has not yet finished. */
+        Identity.signIn();
+        assertFalse(identity.isSignInDelayed());
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
         /* Check http call. */
