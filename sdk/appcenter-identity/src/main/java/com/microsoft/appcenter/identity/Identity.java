@@ -1,9 +1,11 @@
 package com.microsoft.appcenter.identity;
 
+import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
@@ -25,9 +27,11 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
+import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
+import com.microsoft.identity.client.exception.MsalUiRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -56,6 +60,7 @@ import static com.microsoft.appcenter.identity.Constants.IDENTITY_SCOPE;
 import static com.microsoft.appcenter.identity.Constants.LOG_TAG;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
 import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.identity.Constants.ACCOUNT_ID_KEY;
 
 /**
  * Identity service.
@@ -287,7 +292,13 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void run() {
-                    loginFromUI();
+                    IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
+                    if (account != null) {
+                        silentSignIn(account);
+                    }
+                    else {
+                        signInFromUI();
+                    }
                 }
             });
         }
@@ -375,45 +386,104 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                loginFromUI();
+                IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
+                if (account != null) {
+                    silentSignIn(account);
+                }
+                else {
+                    signInFromUI();
+                }
             }
         });
     }
 
-    @UiThread
-    private synchronized void loginFromUI() {
-        if (mAuthenticationClient != null && mActivity != null) {
-            AppCenterLog.info(LOG_TAG, "Login using browser.");
-            mLoginDelayed = false;
-            mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
+    private void silentSignIn(@Nullable IAccount account) {
+        if (mAuthenticationClient != null) {
+            AppCenterLog.info(LOG_TAG, "Login silently in the background.");
+            mAuthenticationClient.acquireTokenSilentAsync(new String[] { mIdentityScope }, account, null, true, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User login succeeded.");
+                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                     getInstance().post(new Runnable() {
 
                         @Override
                         public void run() {
                             IAccount account = authenticationResult.getAccount();
                             mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
+                            SharedPreferencesManager.putString(ACCOUNT_ID_KEY, account.getHomeAccountIdentifier().getIdentifier());
                         }
                     });
                 }
 
                 @Override
                 public void onError(MsalException exception) {
-                    AppCenterLog.error(LOG_TAG, "User login failed.", exception);
+                    if (exception instanceof MsalUiRequiredException) {
+                        AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
+                    } else {
+                        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                    }
                 }
 
                 @Override
                 public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "User canceled login.");
+                    AppCenterLog.warn(LOG_TAG, "Silent sign-in canceled.");
+                }
+            });
+
+            // TODO persist accountId
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Login called while not configured, waiting.");
+            mLoginDelayed = true;
+        }
+    }
+
+    @UiThread
+    private synchronized void signInFromUI() {
+        if (mAuthenticationClient != null && mActivity != null) {
+            AppCenterLog.info(LOG_TAG, "Login using browser.");
+            mLoginDelayed = false;
+            mAuthenticationClient.acquireToken(mActivity, new String[] { mIdentityScope }, new AuthenticationCallback() {
+
+                @Override
+                public void onSuccess(final IAuthenticationResult authenticationResult) {
+                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
+                    getInstance().post(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            IAccount account = authenticationResult.getAccount();
+                            mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
+                            SharedPreferencesManager.putString(ACCOUNT_ID_KEY, account.getHomeAccountIdentifier().getIdentifier());
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(MsalException exception) {
+                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                }
+
+                @Override
+                public void onCancel() {
+                    AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 }
             });
         } else {
             AppCenterLog.debug(LOG_TAG, "Login called while not configured or not in foreground, waiting.");
             mLoginDelayed = true;
         }
+    }
+
+    private IAccount retrieveAccount(String id) {
+        if (id == null) {
+            return null;
+        }
+        IAccount account = mAuthenticationClient.getAccount(id, null);
+        if (account == null) {
+            AppCenterLog.warn(LOG_TAG, String.format("\"Could not get MSALAccount for homeAccountId: %s", id));
+        }
+        return account;
     }
 
     @VisibleForTesting

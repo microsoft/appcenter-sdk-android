@@ -76,4 +76,9 @@ final class Constants {
      * JSON configuration key for identity scope.
      */
     static final String IDENTITY_SCOPE = "identity_scope";
+
+    /**
+     * Key for saving account ID in memory.
+     */
+    static final String ACCOUNT_ID_KEY = "accountId";
 }
