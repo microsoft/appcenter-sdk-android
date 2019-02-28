@@ -1,8 +1,7 @@
 package com.microsoft.appcenter.storage.models;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Tokens response.

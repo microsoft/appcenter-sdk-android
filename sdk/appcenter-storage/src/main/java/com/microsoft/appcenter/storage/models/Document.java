@@ -3,9 +3,7 @@ package com.microsoft.appcenter.storage.models;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Utils;
 
-/**
- * A document coming back from CosmosDB.
- */
+/** A document coming back from CosmosDB. */
 public class Document<T> {
     @SerializedName(value = "PartitionKey")
     private String partition;
@@ -35,7 +33,6 @@ public class Document<T> {
 
     /**
      * Create document from error.
-     *
      * @param exception Error when retrieving the document.
      */
     public Document(Exception exception) {
@@ -44,7 +41,6 @@ public class Document<T> {
 
     /**
      * Get document.
-     *
      * @return Deserialized document.
      */
     public T getDocument() {
@@ -53,7 +49,6 @@ public class Document<T> {
 
     /**
      * Get document error.
-     *
      * @return Document error.
      */
     public DocumentError getError() {
@@ -62,7 +57,6 @@ public class Document<T> {
 
     /**
      * Get document partition.
-     *
      * @return Document partition.
      */
     public String getPartition() {
@@ -71,7 +65,6 @@ public class Document<T> {
 
     /**
      * Get document id.
-     *
      * @return Document id.
      */
     public String getId() {
@@ -80,7 +73,6 @@ public class Document<T> {
 
     /**
      * Get Etag.
-     *
      * @return Etag.
      */
     public String getEtag() {
@@ -89,7 +81,6 @@ public class Document<T> {
 
     /**
      * Get document generated in UTC unix epoch.
-     *
      * @return UTC unix timestamp.
      */
     public long getTimestamp() {
@@ -99,7 +90,6 @@ public class Document<T> {
 
     /**
      * Get the document in string.
-     *
      * @return Serialized document.
      */
     @Override

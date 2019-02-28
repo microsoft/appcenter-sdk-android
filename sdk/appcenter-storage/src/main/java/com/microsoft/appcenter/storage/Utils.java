@@ -11,14 +11,13 @@ public final class Utils {
 
     public static final Gson sGson = new Gson();
 
-    public static synchronized <T> Document<T> parseDocument(String documentPayload) {
-        return Utils.sGson.fromJson(documentPayload, new TypeToken<Document<T>>() {
-        }.getType());
+    public static synchronized <T> Document<T> parseDocument(String documentPayload)
+    {
+        return Utils.sGson.fromJson(documentPayload, new TypeToken<Document<T>>(){}.getType());
     }
 
     /**
      * Handle API call failure.
-     *
      * @param e Exception to display in the log
      */
     public static synchronized void handleApiCallFailure(Exception e) {
