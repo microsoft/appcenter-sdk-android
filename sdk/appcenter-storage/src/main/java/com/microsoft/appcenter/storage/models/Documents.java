@@ -32,7 +32,7 @@ public interface Documents<T> extends Iterable<Documents<T>> {
     public boolean hasNext();
 
     /**
-     * Fetch more documents
+     * Fetch more documents.
      * @return Next document.
      */
     public AppCenterFuture<Documents<T>> next();
