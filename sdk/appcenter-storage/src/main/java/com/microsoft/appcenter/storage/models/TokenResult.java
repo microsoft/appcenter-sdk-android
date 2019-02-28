@@ -1,8 +1,14 @@
 package com.microsoft.appcenter.storage.models;
 
-
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import org.json.JSONException;
+
+import java.util.Date;
 
 /**
  * Token fetch result.
@@ -51,56 +57,159 @@ public class TokenResult {
     private String status;
 
     /**
+     * The UTC timestamp for a token expiration time.
+     */
+    @Expose
+    @SerializedName(value = "expiresOn")
+    private String expiresOn;
+
+    /**
      * Get the partition value.
      *
-     * @return the partition value
+     * @return The partition value.
      */
     public String partition() {
         return this.partition;
     }
 
     /**
+     * Get the token expiration time.
+     *
+     * @return The token expiration value.
+     */
+    public Date expiresOn() {
+        try {
+            return JSONDateUtils.toDate(this.expiresOn);
+        } catch (JSONException ex) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" + this.expiresOn + "' to ISO 8601 Date format ");
+            return new Date(0);
+        }
+    }
+
+    /**
+     * Set the partition value.
+     *
+     * @param partition The partition value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withPartition(String partition) {
+        this.partition = partition;
+        return this;
+    }
+
+    /**
+     * Set the token expiration time value.
+     *
+     * @param expiresOn Token expiration time value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withExpirationTime(Date expiresOn) {
+        try {
+            this.expiresOn = JSONDateUtils.toString(expiresOn);
+        } catch (JSONException ex) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" + expiresOn.toString() + "' Date to ISO 8601 string");
+            this.expiresOn = null;
+        }
+        return this;
+    }
+
+    /**
      * Get cosmos db account name.
      *
-     * @return the dbAccount value
+     * @return The dbAccount value.
      */
     public String dbAccount() {
         return this.dbAccount;
     }
 
     /**
+     * Set cosmos db account name.
+     *
+     * @param dbAccount The dbAccount value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withDbAccount(String dbAccount) {
+        this.dbAccount = dbAccount;
+        return this;
+    }
+
+    /**
      * Get cosmos db database name within the specified account.
      *
-     * @return the dbName value
+     * @return The dbName value.
      */
     public String dbName() {
         return this.dbName;
     }
 
     /**
+     * Set cosmos db database name within the specified account.
+     *
+     * @param dbName The dbName value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withDbName(String dbName) {
+        this.dbName = dbName;
+        return this;
+    }
+
+    /**
      * Get cosmos db collection name within the specified database.
      *
-     * @return the dbCollectionName value
+     * @return The dbCollectionName value.
      */
     public String dbCollectionName() {
         return this.dbCollectionName;
     }
 
     /**
+     * Set cosmos db collection name within the specified database.
+     *
+     * @param dbCollectionName The dbCollectionName value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withDbCollectionName(String dbCollectionName) {
+        this.dbCollectionName = dbCollectionName;
+        return this;
+    }
+
+    /**
      * Get the token to be used to talk to cosmos db.
      *
-     * @return the token value
+     * @return The token value.
      */
     public String token() {
         return this.token;
     }
 
     /**
+     * Set the token to be used to talk to cosmos db.
+     *
+     * @param token The token value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withToken(String token) {
+        this.token = token;
+        return this;
+    }
+
+    /**
      * Get possible values include: 'failed', 'unauthenticated', 'succeed'.
      *
-     * @return the status value
+     * @return The status value.
      */
     public String status() {
         return this.status;
+    }
+
+    /**
+     * Set possible values include: 'failed', 'unauthenticated', 'succeed'.
+     *
+     * @param status The status value to set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withStatus(String status) {
+        this.status = status;
+        return this;
     }
 }

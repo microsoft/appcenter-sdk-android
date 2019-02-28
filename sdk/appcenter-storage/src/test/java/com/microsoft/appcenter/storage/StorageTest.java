@@ -31,7 +31,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -39,31 +38,19 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.verifyNew;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class StorageTest extends AbstractStorageTest {
-
-    class TestDocument {
-        public TestDocument(String test) {
-            this.test = test;
-        }
-
-        String test;
-    }
 
     private static final String DATABASE_NAME = "mbaas";
     private static final String COLLECTION_NAME = "appcenter";
     private static final String PARTITION = "custom-partition";
     private static final String DOCUMENT_ID = "document-id";
     private static final String TEST_FIELD_VALUE = "Test Value";
-
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
@@ -76,7 +63,6 @@ public class StorageTest extends AbstractStorageTest {
             "        }\n" +
             "    ]\n" +
             "}", DATABASE_NAME, COLLECTION_NAME);
-
     private static String cosmosDbDocumentResponsePayload = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
@@ -89,7 +75,6 @@ public class StorageTest extends AbstractStorageTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
-
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
@@ -282,5 +267,13 @@ public class StorageTest extends AbstractStorageTest {
         // These constructors must be called even though these classes are not going to be instantiated.
         TokenExchange te = new TokenExchange();
         CosmosDb cdb = new CosmosDb();
+    }
+
+    class TestDocument {
+        String test;
+
+        public TestDocument(String test) {
+            this.test = test;
+        }
     }
 }
