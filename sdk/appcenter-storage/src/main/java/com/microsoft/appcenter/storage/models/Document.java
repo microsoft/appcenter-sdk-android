@@ -7,6 +7,7 @@ import com.microsoft.appcenter.storage.Utils;
  * A document coming back from CosmosDB.
  */
 public class Document<T> {
+
     @SerializedName(value = "PartitionKey")
     private String partition;
 

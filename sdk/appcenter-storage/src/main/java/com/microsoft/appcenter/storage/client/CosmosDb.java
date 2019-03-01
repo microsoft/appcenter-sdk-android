@@ -14,6 +14,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+
 public final class CosmosDb {
     /**
      * Document DB base endpoint
@@ -66,7 +68,7 @@ public final class CosmosDb {
         }
     }
 
-    public static Map<String, String> generateHeaders(final String partition, final String dbToken) {
+    public static Map<String, String> generateDefaultHeaders(final String partition, final String dbToken) {
         Map<String, String> headers = new HashMap<String, String>() {{
             put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
             put("x-ms-version", "2018-06-18");
@@ -90,9 +92,29 @@ public final class CosmosDb {
                 DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
     }
 
-    public static String GetDocumentUrl(TokenResult tokenResult, String documentId) {
+    public static String getDocumentUrl(TokenResult tokenResult, String documentId) {
         final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
         return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
+    }
+
+    public static synchronized <T> ServiceCall callCosmosDbListApi(
+            TokenResult tokenResult,
+            String continuationToken,
+            HttpClient httpClient,
+            ServiceCallback serviceCallback) {
+
+        Map<String, String> headers = generateDefaultHeaders(tokenResult.partition(), tokenResult.token());
+        if (continuationToken != null){
+            headers.put("x-ms-continuation", continuationToken);
+        }
+        return callApi(
+                METHOD_GET,
+                getDocumentUrl(tokenResult, null),
+                headers,
+                null,
+                httpClient,
+                serviceCallback
+        );
     }
 
     public static synchronized <T> ServiceCall callCosmosDbApi(
@@ -102,11 +124,28 @@ public final class CosmosDb {
             String httpVerb,
             final String body,
             ServiceCallback serviceCallback) {
+        return callApi(
+                httpVerb,
+                getDocumentUrl(tokenResult, documentId),
+                generateDefaultHeaders(tokenResult.partition(), tokenResult.token()),
+                body,
+                httpClient,
+                serviceCallback
+        );
+    }
+
+    private static synchronized <T> ServiceCall callApi(
+            String httpVerb,
+            String url,
+            Map<String, String> headers,
+            final String body,
+            HttpClient httpClient,
+            ServiceCallback serviceCallback) {
         return
                 httpClient.callAsync(
-                        GetDocumentUrl(tokenResult, documentId),
+                        url,
                         httpVerb,
-                        generateHeaders(tokenResult.partition(), tokenResult.token()),
+                        headers,
                         new HttpClient.CallTemplate() {
 
                             @Override
@@ -118,6 +157,7 @@ public final class CosmosDb {
                             public void onBeforeCalling(URL url, Map<String, String> headers) {
                             }
                         },
-                        serviceCallback);
+                        serviceCallback
+                );
     }
 }

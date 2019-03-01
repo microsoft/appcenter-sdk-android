@@ -13,7 +13,8 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.Documents;
+import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -90,13 +91,6 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setApiUrl(String)}}.
-     */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
-    }
-
-    /**
      * Check whether Storage service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
@@ -116,6 +110,38 @@ public class Storage extends AbstractAppCenterService {
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * Read a document.
+     * The document type (T) must be JSON deserializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
+        AppCenterLog.debug(LOG_TAG, "Read started");
+        return getInstance().instanceRead(partition, documentId);
+    }
+
+    /**
+     * Create a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
+        AppCenterLog.debug(LOG_TAG, "Create started");
+        return getInstance().instanceCreate(partition, documentId, document);
+    }
+
+    /**
+     * Delete a document.
+     */
+    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+        return getInstance().instanceDelete(partition, documentId);
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
     }
 
     @Override
@@ -148,6 +174,8 @@ public class Storage extends AbstractAppCenterService {
         return STORAGE_GROUP;
     }
 
+    //region Read implementation
+
     @Override
     public String getServiceName() {
         return SERVICE_NAME;
@@ -158,16 +186,7 @@ public class Storage extends AbstractAppCenterService {
         return LOG_TAG;
     }
 
-    /**
-     * Read a document
-     * The document type (T) must be JSON deserializable
-     */
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
-        AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId);
-    }
-
-    //region Read implementation
+    //endregion
 
     private synchronized <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
@@ -211,35 +230,67 @@ public class Storage extends AbstractAppCenterService {
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    //endregion
-
-    //region List implementation
-
     /**
-     * List (need optional signature to configure page size)
-     * The document type (T) must be JSON deserializable
+     * List (need optional signature to configure page size).
+     * The document type (T) must be JSON deserializable.
      */
-    public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
-        return null;
-    }
-
-    //endregion
-
-    //region Create implementation
-
-    /**
-     * Create a document
-     * The document instance (T) must be JSON serializable
-     */
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
-        AppCenterLog.debug(LOG_TAG, "Create started");
-        getInstance().instanceCreate(partition, documentId, document);
-        return null;
+    public <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition) {
+        return getInstance().list(partition);
     }
 
     /**
      * Create a document
      * The document type (T) must be JSON deserializable
+     */
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition) {
+        final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
+        getTokenAndCallCosmosDbApi(
+                partition,
+                result,
+                new TokenExchange.TokenExchangeServiceCallback() {
+
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        callCosmosDbListApi(tokenResult, result);
+                    }
+
+                    @Override
+                    public void completeFuture(Exception e) {
+                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                    }
+                });
+        return result;
+    }
+
+    private synchronized <T> void callCosmosDbListApi(
+            final TokenResult tokenResult,
+            final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+        CosmosDb.callCosmosDbListApi(
+                tokenResult,
+                null,
+                mHttpClient,
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                        Page<T> page = Utils.<T>parseDocuments(payload);
+                        PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
+                                .withCurrentPage(page).withTokenResult(tokenResult)
+                                .withHttpClient(mHttpClient)
+                                .withContinuationToken(headers.get("x-ms-continuation"));
+                        completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                    }
+                });
+    }
+
+    /**
+     * Create a document.
+     * The document type (T) must be JSON deserializable.
      */
     private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
@@ -292,22 +343,11 @@ public class Storage extends AbstractAppCenterService {
     //region Replace implementation
 
     /**
-     * Replace a document
-     * The document instance (T) must be JSON serializable
+     * Replace a document.
+     * The document instance (T) must be JSON serializable.
      */
     public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
         return null;
-    }
-
-    //endregion
-
-    //region Delete implementation
-
-    /**
-     * Delete a document
-     */
-    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
-        return getInstance().instanceDelete(partition, documentId);
     }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
@@ -356,7 +396,7 @@ public class Storage extends AbstractAppCenterService {
 
     //region Private utility methods
 
-    private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture<Document<T>> result, TokenExchange.TokenExchangeServiceCallback callback) {
+    private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture result, TokenExchange.TokenExchangeServiceCallback callback) {
         TokenResult tokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (tokenResult != null) {
             callback.callCosmosDb(tokenResult);
@@ -380,6 +420,17 @@ public class Storage extends AbstractAppCenterService {
     private synchronized <T> void completeFutureAndRemovePendingCall(Exception e, DefaultAppCenterFuture<Document<T>> future) {
         Utils.handleApiCallFailure(e);
         future.complete(new Document<T>(e));
+        mPendingCalls.remove(future);
+    }
+
+    private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(PaginatedDocuments<T> value, DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+        result.complete(value);
+        mPendingCalls.remove(result);
+    }
+
+    private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
+        Utils.handleApiCallFailure(e);
+        future.complete(new PaginatedDocuments<T>());
         mPendingCalls.remove(future);
     }
 

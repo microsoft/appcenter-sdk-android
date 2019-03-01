@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 public final class Utils {
@@ -13,6 +14,11 @@ public final class Utils {
 
     public static synchronized <T> Document<T> parseDocument(String documentPayload) {
         return Utils.sGson.fromJson(documentPayload, new TypeToken<Document<T>>() {
+        }.getType());
+    }
+
+    public static synchronized <T> Page<T> parseDocuments(String documentPayload) {
+        return Utils.sGson.fromJson(documentPayload, new TypeToken<Page<T>>(){
         }.getType());
     }
 
