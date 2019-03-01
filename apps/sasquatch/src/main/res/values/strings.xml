@@ -11,6 +11,7 @@
     <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
     <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
     <string name="title_storage" tools:ignore="MissingTranslation">Storage</string>
+    <string name="storage_activity_default_text" tools:ignore="MissingTranslation">Nothing here but a lot happening in Logcat</string>
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
