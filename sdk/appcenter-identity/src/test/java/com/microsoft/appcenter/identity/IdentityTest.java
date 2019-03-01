@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -44,7 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.CancellationException;
 
 import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
@@ -52,6 +53,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -65,13 +67,12 @@ import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -251,9 +252,10 @@ public class IdentityTest extends AbstractIdentityTest {
         JSONObject jsonConfig = mockValidForAppCenterConfig();
 
         /* Mock authentication result. */
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        String idToken = UUIDUtils.randomUUID().toString();
+        String accountId = UUIDUtils.randomUUID().toString();
+        String homeAccountId = UUIDUtils.randomUUID().toString();
+        IAuthenticationResult mockResult = mockAuthResult(idToken, accountId, homeAccountId);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -270,7 +272,7 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityPaused(mock(Activity.class));
 
         /* Sign in, will be delayed until configuration ready. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
@@ -292,14 +294,25 @@ public class IdentityTest extends AbstractIdentityTest {
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), callbackCaptor.capture());
 
-        /* For now our callback does not do much except logging. */
+        /* Mock success callback. */
         AuthenticationCallback callback = callbackCaptor.getValue();
         assertNotNull(callback);
+        callback.onSuccess(mockResult);
 
-        /* Just call back and nothing to verify. */
+        /* Check result. */
+        SignInResult signInResult = future.get();
+        assertNotNull(signInResult);
+        assertNotNull(signInResult.getUserInformation());
+        assertEquals(accountId, signInResult.getUserInformation().getAccountId());
+        assertNull(signInResult.getException());
+
+        /* SDK does not crash if somehow MSAL calls us again. */
         callback.onCancel();
         callback.onSuccess(mockResult);
         callback.onError(mock(MsalException.class));
+
+        /* The original result does not change. */
+        assertSame(signInResult, future.get());
     }
 
     @Test
@@ -312,9 +325,10 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        String idToken = UUIDUtils.randomUUID().toString();
+        String accountId = UUIDUtils.randomUUID().toString();
+        String homeAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(idToken, accountId, homeAccountId);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -351,20 +365,36 @@ public class IdentityTest extends AbstractIdentityTest {
         assertFalse(identity.isSignInDelayed());
 
         /* Sign in, will work now. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
-        /* Verify signIn still delayed in background. */
+        /* Check result. */
+        SignInResult signInResult = future.get();
+        assertNotNull(signInResult);
+        assertNotNull(signInResult.getUserInformation());
+        assertEquals(accountId, signInResult.getUserInformation().getAccountId());
+        assertNull(signInResult.getException());
+
+        /* Verify signIn not delayed anymore. */
         assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
 
         /* Disable Identity. */
         Identity.setEnabled(false).get();
 
         /* Sign in with identity disabled. */
-        Identity.signIn();
+        future = Identity.signIn();
 
-        /* Verify interactions. */
+        /* Verify operation failed after disabling. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof IllegalStateException);
+        assertNull(future.get().getUserInformation());
+
+        /* Verify no more interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
@@ -465,6 +495,104 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Configuration not refreshed. */
         verifyNew(PublicClientApplication.class, times(1));
+    }
+
+    @Test
+    public void cancelSignIn() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Simulate cancel. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
+        callbackCaptor.getValue().onCancel();
+
+        /* Verify error. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof CancellationException);
+        assertNull(future.get().getUserInformation());
+    }
+
+    @Test
+    public void signInFails() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Simulate failure. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
+        callbackCaptor.getValue().onError(mock(MsalException.class));
+
+        /* Verify error. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof MsalException);
+        assertNull(future.get().getUserInformation());
+    }
+
+    @Test
+    public void signInTwiceFails() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future1 = Identity.signIn();
+        AppCenterFuture<SignInResult> future2 = Identity.signIn();
+
+        /* Simulate success. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
+        callbackCaptor.getValue().onSuccess(mockAuthResult("idToken", "accountId", "homeAccountId"));
+
+        /* Verify success on first call. */
+        assertNotNull(future1.get());
+        assertNull(future1.get().getException());
+        assertNotNull(future1.get().getUserInformation());
+        assertEquals("accountId", future1.get().getUserInformation().getAccountId());
+
+        /* Verify error on second one. */
+        assertNotNull(future2.get());
+        assertTrue(future2.get().getException() instanceof IllegalStateException);
+        assertNull(future2.get().getUserInformation());
+    }
+
+    @Test
+    public void signInSucceedsInMSALButDisableSdkBeforeProcessingResult() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Disable SDK before it succeeds. */
+        Identity.setEnabled(false).get();
+
+        /* Simulate success. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
+        callbackCaptor.getValue().onSuccess(mockAuthResult("idToken", "accountId", "homeAccountId"));
+
+        /* Verify disabled error. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof IllegalStateException);
+        assertNull(future.get().getUserInformation());
     }
 
     @Test
@@ -622,7 +750,22 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication, never()).removeAccount(eq(account));
     }
 
-    private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+    private void mockReadyToSignIn() throws Exception {
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(mockValidForAppCenterConfig(), httpClient);
+
+        /* Mock foreground. */
+        identity.onActivityResumed(mock(Activity.class));
+    }
+
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
 
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);

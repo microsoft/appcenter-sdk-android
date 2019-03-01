@@ -21,6 +21,7 @@ import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -39,6 +40,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
@@ -105,6 +107,11 @@ public class Identity extends AbstractAppCenterService {
     private boolean mSignInDelayed;
 
     /**
+     * Not null if sign-in is pending.
+     */
+    private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
+
+    /**
      * Instance of {@link AuthTokenStorage} to store token information.
      */
     private AuthTokenStorage mTokenStorage;
@@ -151,14 +158,18 @@ public class Identity extends AbstractAppCenterService {
 
     /**
      * Sign in to get user information.
+     *
+     * @return future with the result of the asynchronous sign-in operation.
      */
-    public static void signIn() {
-        getInstance().instanceSignIn();
+    public static AppCenterFuture<SignInResult> signIn() {
+        return getInstance().instanceSignIn();
     }
 
     /**
      * Sign out user and invalidate a user's token.
      */
+    @SuppressWarnings("WeakerAccess")
+    // TODO remove warning once jCenter published and reflection removed in test app
     public static void signOut() {
         getInstance().post(new Runnable() {
 
@@ -201,6 +212,7 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
+            completeSignIn(null, new IllegalStateException("Identity is disabled."));
             clearCache();
             removeTokenAndAccount();
         }
@@ -225,7 +237,7 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
         if (mSignInDelayed) {
-            instanceSignIn();
+            signInFromUI();
         }
     }
 
@@ -389,14 +401,34 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.debug(LOG_TAG, "Identity configuration cache cleared.");
     }
 
-    private void instanceSignIn() {
-        postOnUiThread(new Runnable() {
+    private synchronized AppCenterFuture<SignInResult> instanceSignIn() {
+        final DefaultAppCenterFuture<SignInResult> future = new DefaultAppCenterFuture<>();
+        if (mPendingSignInFuture != null) {
+            future.complete(new SignInResult(null, new IllegalStateException("signIn already in progress.")));
+            return future;
+        }
+        mPendingSignInFuture = future;
+        Runnable disabledRunnable = new Runnable() {
 
             @Override
             public void run() {
-                signInFromUI();
+                completeSignIn(null, new IllegalStateException("Identity is disabled."));
             }
-        });
+        };
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        signInFromUI();
+                    }
+                });
+            }
+        }, disabledRunnable, disabledRunnable);
+        return future;
     }
 
     private synchronized void instanceSignOut() {
@@ -440,13 +472,16 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                     getInstance().post(new Runnable() {
 
                         @Override
                         public void run() {
                             IAccount account = authenticationResult.getAccount();
-                            mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
+                            String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
+                            mTokenStorage.saveToken(authenticationResult.getIdToken(), homeAccountId);
+                            String accountId = account.getAccountIdentifier().getIdentifier();
+                            AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
+                            completeSignIn(new UserInformation(accountId), null);
                         }
                     });
                 }
@@ -454,16 +489,25 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onError(MsalException exception) {
                     AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                    completeSignIn(null, exception);
                 }
 
                 @Override
                 public void onCancel() {
                     AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+                    completeSignIn(null, new CancellationException("User cancelled sign-in."));
                 }
             });
         } else {
             AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
             mSignInDelayed = true;
+        }
+    }
+
+    private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
+        if (mPendingSignInFuture != null) {
+            mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
+            mPendingSignInFuture = null;
         }
     }
 
