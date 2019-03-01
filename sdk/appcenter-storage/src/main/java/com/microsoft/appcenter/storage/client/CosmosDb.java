@@ -59,8 +59,12 @@ public final class CosmosDb {
     }
 
     public static String urlEncode(String url) {
+        return urlEncode(url, "UTF-8");
+    }
+
+    public static String urlEncode(String url, String enc) {
         try {
-            return URLEncoder.encode(url, "UTF-8");
+            return URLEncoder.encode(url, enc);
         } catch (Exception e) {
             throw new IllegalArgumentException("failed to encode url " + url, e);
         }

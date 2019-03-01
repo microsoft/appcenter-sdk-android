@@ -160,14 +160,17 @@ public class Storage extends AbstractAppCenterService {
      * Read a document
      * The document type (T) must be JSON deserializable
      */
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId){
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType){
         AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId);
+        return getInstance().instanceRead(partition, documentId, documentType);
     }
 
     //region Read implementation
 
-    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId){
+    private synchronized  <T> AppCenterFuture<Document<T>> instanceRead(
+            final String partition,
+            final String documentId,
+            final Class<T> documentType){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
@@ -175,7 +178,7 @@ public class Storage extends AbstractAppCenterService {
                 new TokenExchange.TokenExchangeServiceCallback() {
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbReadApi(tokenResult, documentId, result);
+                        callCosmosDbReadApi(tokenResult, documentId, documentType, result);
                     }
 
                     @Override
@@ -185,7 +188,11 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    private synchronized <T> void callCosmosDbReadApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<T>> result) {
+    private synchronized <T> void callCosmosDbReadApi(
+            final TokenResult tokenResult,
+            final String documentId,
+            final Class<T> documentType,
+            final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -195,7 +202,7 @@ public class Storage extends AbstractAppCenterService {
                 new ServiceCallback() {
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
+                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -213,7 +220,7 @@ public class Storage extends AbstractAppCenterService {
      * List (need optional signature to configure page size)
      * The document type (T) must be JSON deserializable
      */
-    public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
+    public static  <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
         return null;
     }
 
@@ -225,9 +232,9 @@ public class Storage extends AbstractAppCenterService {
      * Create a document
      * The document instance (T) must be JSON serializable
      */
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
         AppCenterLog.debug(LOG_TAG, "Create started");
-        getInstance().instanceCreate(partition, documentId, document);
+        getInstance().instanceCreate(partition, documentId, document, documentType);
         return null;
     }
 
@@ -235,7 +242,7 @@ public class Storage extends AbstractAppCenterService {
      * Create a document
      * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document){
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document, final Class<T> documentType){
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
             partition,
@@ -243,7 +250,7 @@ public class Storage extends AbstractAppCenterService {
             new TokenExchange.TokenExchangeServiceCallback() {
                 @Override
                 public void callCosmosDb(final TokenResult tokenResult) {
-                    callCosmosDbCreateApi(tokenResult, document, partition, documentId, result);
+                    callCosmosDbCreateApi(tokenResult, document, documentType, partition, documentId, result);
                 }
 
                 @Override
@@ -256,6 +263,7 @@ public class Storage extends AbstractAppCenterService {
     private synchronized <T> void callCosmosDbCreateApi(
             final TokenResult tokenResult,
             T document,
+            final Class<T> documentType,
             String partition,
             final String documentId,
             final DefaultAppCenterFuture<Document<T>> result) {
@@ -264,12 +272,12 @@ public class Storage extends AbstractAppCenterService {
                 null,
                 mHttpClient,
                 METHOD_POST,
-                new Document<T>(document, partition, documentId).toString(),
+                new Document<>(document, partition, documentId).toString(),
                 new ServiceCallback() {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
+                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -286,7 +294,7 @@ public class Storage extends AbstractAppCenterService {
      * Replace a document
      * The document instance (T) must be JSON serializable
      */
-    public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document){
+    public static  <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document){
         return null;
     }
 

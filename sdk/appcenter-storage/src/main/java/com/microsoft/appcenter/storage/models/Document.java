@@ -1,10 +1,12 @@
 package com.microsoft.appcenter.storage.models;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Utils;
 
-// A document coming back from CosmosDB
+/**
+ * A document coming back from CosmosDB
+ * @param <T>
+ */
 public class Document<T> {
     @SerializedName(value = "PartitionKey")
     private String partition;
@@ -30,6 +32,13 @@ public class Document<T> {
     {
         this.partition = partition;
         this.id = id;
+        this.document = document;
+    }
+
+    public Document(T document, String partition, String id, String eTag, long timestamp) {
+        this(document, partition, id);
+        this.eTag = eTag;
+        this.timestamp = timestamp;
         this.document = document;
     }
 
@@ -73,7 +82,6 @@ public class Document<T> {
         return timestamp;
     }
 
-
     @Override
     public String toString() {
         return Utils.sGson.toJson(this);
@@ -82,5 +90,4 @@ public class Document<T> {
     // When caching is supported:
     // Flag indicating if data was retrieved from the local cache (for offline mode)
     // public boolean isFromCache();
-
 }
