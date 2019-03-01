@@ -526,17 +526,6 @@ public class IdentityTest extends AbstractIdentityTest {
         SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
     }
 
-    @Test
-    public void testasd() {
-        Assert.assertEquals(null, SharedPreferencesManager.getString("asd"));
-        verifyStatic();
-        SharedPreferencesManager.putString("asd", "qwe");
-        Assert.assertEquals("qwe", SharedPreferencesManager.getString("asd"));
-        verifyStatic();
-        SharedPreferencesManager.putString("asd", "zxc");
-        Assert.assertEquals("zxc", SharedPreferencesManager.getString("asd"));
-    }
-
     private void testDownloadFailed(Exception e) throws Exception {
 
         /* Mock http and start identity service. */
