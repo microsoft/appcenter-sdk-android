@@ -116,18 +116,26 @@ public class Storage extends AbstractAppCenterService {
      * Read a document.
      * The document type (T) must be JSON deserializable.
      */
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType) {
         AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId);
+        return getInstance().instanceRead(partition, documentId, documentType);
+    }
+
+    /**
+     * List (need optional signature to configure page size).
+     * The document type (T) must be JSON deserializable.
+     */
+    public static  <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
+        return getInstance().list(partition, documentType);
     }
 
     /**
      * Create a document.
      * The document instance (T) must be JSON serializable.
      */
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
         AppCenterLog.debug(LOG_TAG, "Create started");
-        return getInstance().instanceCreate(partition, documentId, document);
+        return getInstance().instanceCreate(partition, documentId, document, documentType);
     }
 
     /**
@@ -136,6 +144,15 @@ public class Storage extends AbstractAppCenterService {
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
         return getInstance().instanceDelete(partition, documentId);
     }
+
+    /**
+     * Replace a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
+        return null;
+    }
+
 
     /**
      * Implements {@link #setApiUrl(String)}}.
@@ -241,18 +258,10 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
-     * List (need optional signature to configure page size).
-     * The document type (T) must be JSON deserializable.
-     */
-    public <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition) {
-        return getInstance().list(partition);
-    }
-
-    /**
      * Create a document
      * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition) {
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition, final Class<T> documentType) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
@@ -261,7 +270,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbListApi(tokenResult, result);
+                        callCosmosDbListApi(tokenResult, result, documentType);
                     }
 
                     @Override
@@ -274,7 +283,8 @@ public class Storage extends AbstractAppCenterService {
 
     private synchronized <T> void callCosmosDbListApi(
             final TokenResult tokenResult,
-            final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+            final DefaultAppCenterFuture<PaginatedDocuments<T>> result,
+            final Class<T> documentType) {
         CosmosDb.callCosmosDbListApi(
                 tokenResult,
                 null,
@@ -283,12 +293,12 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        Page<T> page = Utils.<T>parseDocuments(payload);
+                        Page<T> page = Utils.parseDocuments(payload, documentType);
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .withCurrentPage(page).withTokenResult(tokenResult)
                                 .withHttpClient(mHttpClient)
                                 .withContinuationToken(headers.get("x-ms-continuation"));
-                        completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
+                         completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
                     }
 
                     @Override
@@ -356,14 +366,6 @@ public class Storage extends AbstractAppCenterService {
     //endregion
 
     //region Replace implementation
-
-    /**
-     * Replace a document.
-     * The document instance (T) must be JSON serializable.
-     */
-    public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
-        return null;
-    }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();

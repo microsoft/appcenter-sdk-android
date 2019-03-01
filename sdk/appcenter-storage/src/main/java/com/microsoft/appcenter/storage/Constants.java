@@ -9,6 +9,7 @@ public final class Constants {
 
     public static final String TOKEN_RESULT_SUCCEED = "Succeed";
     public static final String DOCUMENT_FIELD_NAME = "document";
+    public static final String DOCUMENTS_FILED_NAME = "Documents";
     public static final String PARTITION_KEY_FIELD_NAME = "PartitionKey";
     public static final String ID_FIELD_NAME = "id";
     public static final String ETAG_FIELD_NAME = "_etag";

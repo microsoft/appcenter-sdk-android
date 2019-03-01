@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.storage;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.microsoft.appcenter.http.HttpException;
@@ -9,13 +11,20 @@ import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class Utils {
 
     public static final Gson sGson = new Gson();
 
+    public static final JsonParser parser = new JsonParser();
+
     static synchronized <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
-        JsonParser parser = new JsonParser();
-        JsonObject obj = parser.parse(cosmosDbPayload).getAsJsonObject();
+        return parseDocument(parser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
+    }
+
+    static synchronized <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
         T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
         return new Document<T>(
                 document,
@@ -29,9 +38,14 @@ public final class Utils {
         return sGson.fromJson(doc, type);
     }
 
-    public static synchronized <T> Page<T> parseDocuments(String documentPayload) {
-        return Utils.sGson.fromJson(documentPayload, new TypeToken<Page<T>>(){
-        }.getType());
+    public static synchronized <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
+        JsonObject objects = parser.parse(cosmosDbPayload).getAsJsonObject();
+        JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
+        List<Document<T>> documents = new ArrayList<>();
+        for (JsonElement object: array) {
+            documents.add(parseDocument(object.getAsJsonObject(), documentType));
+        }
+        return new Page<T>().withDocuments(documents);
     }
 
     /**

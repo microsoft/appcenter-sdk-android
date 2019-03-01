@@ -9,7 +9,8 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.Documents;
+import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -131,7 +132,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void listEndToEnd() {
-        AppCenterFuture<Documents<TestDocument>> docs = Storage.list(PARTITION, TestDocument.class);
+        AppCenterFuture<PaginatedDocuments<TestDocument>> docs = Storage.list(PARTITION, TestDocument.class);
     }
 
     @Test
@@ -343,7 +344,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void generateHeaders() {
-        Map<String, String> headers = CosmosDb.generateHeaders(PARTITION, "token");
+        Map<String, String> headers = CosmosDb.generateDefaultHeaders(PARTITION, "token");
         assertEquals(5, headers.size());
     }
 

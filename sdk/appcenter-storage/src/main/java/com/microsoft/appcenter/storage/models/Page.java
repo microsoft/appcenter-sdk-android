@@ -27,6 +27,11 @@ public class Page<T> {
         return documents;
     }
 
+    public Page<T> withDocuments(List<Document<T>> documents) {
+        this.documents =documents;
+        return this;
+    }
+
     /**
      * Get the error if failed to retrieve the page from document db.
      * @return DocumentError.

@@ -19,6 +19,8 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     private HttpClient httpClient;
 
+    private Class<T> documentType;
+
     /**
      * Continuation token for retrieving the next page.
      */
@@ -73,10 +75,20 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
     /**
      * Set the continuation token.
      * @param continuationToken The continuation token to retrieve the next page.
-     * @return Page.
+     * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> withContinuationToken(String continuationToken) {
         this.continuationToken = continuationToken;
+        return this;
+    }
+
+    /**
+     * Set the document type.
+     * @param documentType The document type.
+     * @return PaginatedDocuments.
+     */
+    public PaginatedDocuments<T> withDocumentType(Class<T> documentType) {
+        this.documentType = documentType;
         return this;
     }
 
@@ -95,7 +107,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
                         @Override
                         public void onCallSucceeded(String payload, Map<String, String> headers) {
-                            Page<T> page = Utils.parseDocuments(payload);
+                            Page<T> page = Utils.parseDocuments(payload, documentType);
                             currentPage = page;
                             continuationToken = headers.get("x-ms-continuation");
                             result.complete(page);
