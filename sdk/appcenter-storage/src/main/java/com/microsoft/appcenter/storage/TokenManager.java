@@ -89,6 +89,10 @@ public class TokenManager {
         SharedPreferencesManager.remove(partitionName);
     }
 
+    /**
+     * Remove all the cached access tokens for all partition names.
+     */
+    @SuppressWarnings("WeakerAccess")
     public synchronized void removeAllCachedTokens() {
         Set<String> partitionNamesSet = getPartitionNames();
         for (String partitionName : partitionNamesSet) {
