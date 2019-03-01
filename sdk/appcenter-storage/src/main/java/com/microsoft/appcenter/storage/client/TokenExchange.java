@@ -110,7 +110,7 @@ public final class TokenExchange {
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
-            final TokenResult tokenResult = parseTokenResult(payload);
+            TokenResult tokenResult = parseTokenResult(payload);
 
             if (tokenResult == null) {
                 onCallFailed(

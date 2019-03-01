@@ -8,6 +8,7 @@ import com.microsoft.appcenter.storage.Utils;
  * A document coming back from CosmosDB.
  */
 public class Document<T> {
+
     @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
     private String partition;
 
@@ -110,7 +111,9 @@ public class Document<T> {
         return Utils.sGson.toJson(this);
     }
 
-    // When caching is supported:
-    // Flag indicating if data was retrieved from the local cache (for offline mode)
-    // public boolean isFromCache();
+    /*
+        When caching is supported:
+        Flag indicating if data was retrieved from the local cache (for offline mode)
+        public boolean isFromCache();
+     */
 }

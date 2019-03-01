@@ -43,7 +43,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
-
 public class StorageTest extends AbstractStorageTest {
 
     private static final String DATABASE_NAME = "mbaas";
@@ -207,7 +206,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(tokenExchangeServiceCallback);
         tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeFailedResponsePayload, new HashMap<String, String>());
 
-        /**
+        /*
          *  No retries and Cosmos DB does not get called
          */
         verifyNoMoreInteractions(httpClient);
@@ -234,10 +233,10 @@ public class StorageTest extends AbstractStorageTest {
                 tokenExchangeServiceCallbackArgumentCaptor.capture());
         TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
         assertNotNull(tokenExchangeServiceCallback);
-        String ExceptionMessage = "Call to token exchange failed for whatever reason";
-        tokenExchangeServiceCallback.onCallFailed(new Exception(ExceptionMessage));
+        String exceptionMessage = "Call to token exchange failed for whatever reason";
+        tokenExchangeServiceCallback.onCallFailed(new Exception(exceptionMessage));
 
-        /**
+        /*
          *  No retries and Cosmos DB does not get called
          */
         verifyNoMoreInteractions(httpClient);
@@ -247,7 +246,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc.get().getError());
         assertThat(
                 doc.get().getError().getError().getMessage(),
-                CoreMatchers.containsString(ExceptionMessage));
+                CoreMatchers.containsString(exceptionMessage));
     }
 
     @Test
@@ -337,11 +336,9 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void documentSerialization() {
-        assertEquals(
-                TEST_FIELD_VALUE,
-                Utils.fromJson(
-                        String.format("{\"test\": \"%s\"\n" + "}", TEST_FIELD_VALUE),
-                        TestDocument.class).test);
+        String jsonDocument = String.format("{\"test\": \"%s\"\n" + "}", TEST_FIELD_VALUE);
+        TestDocument deserializedDocument = Utils.fromJson(jsonDocument, TestDocument.class);
+        assertEquals(TEST_FIELD_VALUE, deserializedDocument.test);
     }
 
     @Test
@@ -353,13 +350,5 @@ public class StorageTest extends AbstractStorageTest {
     @Test(expected = IllegalArgumentException.class)
     public void urlEncogingThrowsNonExistingEncoding() {
         CosmosDb.urlEncode("a string to encode", "An encoding that doesn't exist");
-    }
-
-    class TestDocument {
-        String test;
-
-        public TestDocument(String test) {
-            this.test = test;
-        }
     }
 }
