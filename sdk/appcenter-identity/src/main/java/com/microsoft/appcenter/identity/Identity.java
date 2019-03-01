@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static android.util.Log.VERBOSE;
@@ -164,6 +165,19 @@ public class Identity extends AbstractAppCenterService {
         getInstance().instanceSignIn();
     }
 
+    /**
+     * Sign out user and invalidate a user's token.
+     */
+    public static void signOut() {
+        getInstance().post(new Runnable() {
+
+            @Override
+            public void run() {
+                getInstance().instanceSignOut();
+            }
+        });
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
@@ -196,9 +210,8 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            mSignInDelayed = false;
             clearCache();
-            mTokenStorage.removeToken();
+            removeTokenAndAccount();
         }
     }
 
@@ -228,6 +241,12 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
+    }
+
+    private void removeTokenAndAccount() {
+        mSignInDelayed = false;
+        removeAccount(mTokenStorage.getHomeAccountId());
+        mTokenStorage.removeToken();
     }
 
     private synchronized void downloadConfiguration() {
