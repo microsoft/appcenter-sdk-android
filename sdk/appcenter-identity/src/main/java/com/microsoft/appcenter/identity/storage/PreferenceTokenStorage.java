@@ -37,14 +37,14 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      * Used for distinguishing users, string field for home account id.
      */
     @VisibleForTesting
-    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.account_id";
+    static final String PREFERENCE_KEY_ACCOUNT_ID = "AppCenter.account_id";
 
     @Override
-    public void saveToken(String token, String homeAccountId) {
-        AuthTokenContext.getInstance().setAuthToken(token, homeAccountId);
+    public void saveToken(String token, String accountId) {
+        AuthTokenContext.getInstance().setAuthToken(token, accountId);
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
         SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_ACCOUNT_ID, accountId);
     }
 
     @Override
@@ -62,14 +62,14 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @return unique user id.
      */
-    private String getHomeAccountId() {
-        return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
+    private String getAccountId() {
+        return SharedPreferencesManager.getString(PREFERENCE_KEY_ACCOUNT_ID, null);
     }
 
     @Override
     public void cacheToken() {
         String tokenFromStorage = getToken();
-        String accountId = getHomeAccountId();
+        String accountId = getAccountId();
 
         /* We need to update Token context here if the values are not null. */
         if (tokenFromStorage != null && accountId != null) {
@@ -80,7 +80,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @Override
     public void removeToken() {
         SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_ACCOUNT_ID);
         AuthTokenContext.getInstance().clearToken();
     }
 }

@@ -9,9 +9,9 @@ public interface AuthTokenStorage {
      * Stores token value along with the corresponding account id.
      *
      * @param token auth token.
-     * @param homeAccountId unique identifier of user.
+     * @param accountId unique identifier of user.
      */
-    void saveToken(String token, String homeAccountId);
+    void saveToken(String token, String accountId);
 
     /**
      * Retrieves token value.

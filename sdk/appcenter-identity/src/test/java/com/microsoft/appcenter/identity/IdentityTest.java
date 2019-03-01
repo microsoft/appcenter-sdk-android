@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -264,7 +265,7 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityPaused(mock(Activity.class));
 
         /* Sign in, will be delayed until configuration ready. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
@@ -286,14 +287,18 @@ public class IdentityTest extends AbstractIdentityTest {
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), callbackCaptor.capture());
 
-        /* For now our callback does not do much except logging. */
+        /* Check */
         AuthenticationCallback callback = callbackCaptor.getValue();
         assertNotNull(callback);
 
-        /* Just call back and nothing to verify. */
-        callback.onCancel();
+        /* Mock success. */
         callback.onSuccess(mockResult);
-        callback.onError(mock(MsalException.class));
+
+        /* Check result. */
+        assertNotNull(future.get());
+        assertNotNull(future.get().getUserInformation());
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        assertNull(future.get().getException());
     }
 
     @Test
