@@ -34,7 +34,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
 
     /**
-     * Used for distinguishing users, string field for home account id.
+     * Used for distinguishing users, string field for account id.
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_ACCOUNT_ID = "AppCenter.account_id";

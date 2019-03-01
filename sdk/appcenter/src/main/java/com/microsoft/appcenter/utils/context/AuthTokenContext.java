@@ -29,7 +29,7 @@ public class AuthTokenContext {
     /**
      * Current value of account id.
      */
-    private String mLastHomeAccountId;
+    private String mLastAccountId;
 
     /**
      * Get unique instance.
@@ -81,20 +81,20 @@ public class AuthTokenContext {
     /**
      * Sets new authorization token.
      *
-     * @param authToken     authorization token.
-     * @param homeAccountId unique user id.
+     * @param authToken authorization token.
+     * @param accountId unique user id.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId) {
+    public synchronized void setAuthToken(String authToken, String accountId) {
         mAuthToken = authToken;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
-            if (isNewUser(homeAccountId)) {
+            if (isNewUser(accountId)) {
                 listener.onNewUser(authToken);
             }
         }
-        mLastHomeAccountId = homeAccountId;
+        mLastAccountId = accountId;
     }
 
     /**
@@ -104,7 +104,7 @@ public class AuthTokenContext {
      * @return true if this user is not the same as previous, false otehrwise.
      */
     private synchronized boolean isNewUser(String newAccountId) {
-        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newAccountId);
+        return mLastAccountId == null || !mLastAccountId.equals(newAccountId);
     }
 
     /**
@@ -112,7 +112,7 @@ public class AuthTokenContext {
      */
     public synchronized void clearToken() {
         mAuthToken = null;
-        mLastHomeAccountId = null;
+        mLastAccountId = null;
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(null);
             listener.onNewUser(null);

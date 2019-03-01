@@ -22,7 +22,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
-import com.microsoft.identity.client.exception.MsalException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -287,11 +286,9 @@ public class IdentityTest extends AbstractIdentityTest {
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), callbackCaptor.capture());
 
-        /* Check */
+        /* Mock success callback. */
         AuthenticationCallback callback = callbackCaptor.getValue();
         assertNotNull(callback);
-
-        /* Mock success. */
         callback.onSuccess(mockResult);
 
         /* Check result. */
