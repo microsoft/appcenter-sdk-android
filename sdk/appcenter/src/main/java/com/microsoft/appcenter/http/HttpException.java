@@ -113,16 +113,14 @@ public class HttpException extends IOException {
         }
         HttpException that = (HttpException) o;
 
-        if (statusCode != that.statusCode) return false;
-        if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
-        return headers != null ? headers.equals(that.headers) : that.headers == null;
+        return (statusCode == that.statusCode && payload.equals(that.payload) && headers.equals(that.headers));
     }
 
     @Override
     public int hashCode() {
         int result = statusCode;
-        result = 31 * result + (payload != null ? payload.hashCode() : 0);
-        result = 31 * result + (headers != null ? headers.hashCode() : 0);
+        result = 31 * result + payload.hashCode();
+        result = 31 * result + headers.hashCode();
         return result;
     }
 }
