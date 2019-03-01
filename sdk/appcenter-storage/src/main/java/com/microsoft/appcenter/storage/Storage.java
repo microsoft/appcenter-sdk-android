@@ -173,6 +173,7 @@ public class Storage extends AbstractAppCenterService {
         mHttpClient = createHttpClient(mContext);
         mAppSecret = appSecret;
         mAuthListener = new AbstractTokenContextListener() {
+            
             @Override
             public void onNewUser(String authToken) {
                 if (authToken == null) {
