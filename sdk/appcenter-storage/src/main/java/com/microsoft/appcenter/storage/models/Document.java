@@ -1,25 +1,27 @@
 package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
 
 /**
  * A document coming back from CosmosDB.
  */
 public class Document<T> {
-    @SerializedName(value = "PartitionKey")
+
+    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
     private String partition;
 
-    @SerializedName(value = "id")
+    @SerializedName(value = Constants.ID_FIELD_NAME)
     private String id;
 
-    @SerializedName(value = "_etag")
+    @SerializedName(value = Constants.ETAG_FIELD_NAME)
     private String eTag;
 
-    @SerializedName(value = "_ts")
+    @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long timestamp;
 
-    @SerializedName(value = "document")
+    @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T document;
 
     private transient DocumentError documentError;
@@ -33,11 +35,13 @@ public class Document<T> {
         this.document = document;
     }
 
-    /**
-     * Create document from error.
-     *
-     * @param exception Error when retrieving the document.
-     */
+    public Document(T document, String partition, String id, String eTag, long timestamp) {
+        this(document, partition, id);
+        this.eTag = eTag;
+        this.timestamp = timestamp;
+        this.document = document;
+    }
+
     public Document(Exception exception) {
         this.documentError = new DocumentError(exception);
     }
@@ -107,8 +111,9 @@ public class Document<T> {
         return Utils.sGson.toJson(this);
     }
 
-    // When caching is supported:
-    // Flag indicating if data was retrieved from the local cache (for offline mode)
-    // public boolean isFromCache();
-
+    /*
+        When caching is supported:
+        Flag indicating if data was retrieved from the local cache (for offline mode)
+        public boolean isFromCache();
+     */
 }
