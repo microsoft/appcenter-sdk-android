@@ -509,7 +509,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
         callbackCaptor.getValue().onCancel();
 
-        /* Verify error */
+        /* Verify error. */
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof CancellationException);
         assertNull(future.get().getUserInformation());
@@ -531,7 +531,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
         callbackCaptor.getValue().onError(mock(MsalException.class));
 
-        /* Verify error */
+        /* Verify error. */
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof MsalException);
         assertNull(future.get().getUserInformation());
