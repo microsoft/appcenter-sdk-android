@@ -201,9 +201,8 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            mSignInDelayed = false;
             clearCache();
-            mTokenStorage.removeToken();
+            removeTokenAndAccount();
         }
     }
 
@@ -233,6 +232,12 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
+    }
+
+    private void removeTokenAndAccount(){
+        mSignInDelayed = false;
+        removeAccount(mTokenStorage.getHomeAccountId());
+        mTokenStorage.removeToken();
     }
 
     private synchronized void downloadConfiguration() {
@@ -396,12 +401,10 @@ public class Identity extends AbstractAppCenterService {
 
     private synchronized void instanceSignOut() {
         if (mTokenStorage.getToken() == null) {
-            AppCenterLog.warn( LOG_TAG, "Couldn't sign-out: authToken doesn't exist.");
+            AppCenterLog.warn(LOG_TAG, "Couldn't sign out: authToken doesn't exist.");
             return;
         }
-        mSignInDelayed = false;
-        removeAccount(mTokenStorage.getHomeAccountId());
-        mTokenStorage.removeToken();
+        removeTokenAndAccount();
         AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
     }
 
@@ -412,12 +415,18 @@ public class Identity extends AbstractAppCenterService {
         mAuthenticationClient.getAccounts(new PublicClientApplication.AccountsLoadedListener() {
 
             @Override
-            public void onAccountsLoaded(List<IAccount> accounts) {
-                for (IAccount account : accounts) {
-                    if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
-                        mAuthenticationClient.removeAccount(account);
+            public void onAccountsLoaded(final List<IAccount> accounts) {
+                post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        for (IAccount account : accounts) {
+                            if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
+                                mAuthenticationClient.removeAccount(account);
+                            }
+                        }
                     }
-                }
+                });
             }
         });
     }
