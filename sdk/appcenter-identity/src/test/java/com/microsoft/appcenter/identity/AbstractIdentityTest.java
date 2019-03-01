@@ -30,7 +30,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static com.microsoft.appcenter.identity.Constants.ACCOUNT_ID_KEY;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -113,19 +112,6 @@ abstract public class AbstractIdentityTest {
             }
         }).when(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(anyString(), anyBoolean());
-        doAnswer(new Answer<Object>() {
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-
-                /* Whenever the new state is persisted, make further calls return the new state. */
-                String key = (String) invocation.getArguments()[0];
-                String accountId = (String) invocation.getArguments()[1];
-                when(SharedPreferencesManager.getString(eq(key))).thenReturn(accountId);
-                return null;
-            }
-        }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.putString(anyString(), anyString());
 
         /* Mock file storage. */
         mockStatic(FileManager.class);

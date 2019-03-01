@@ -21,6 +21,7 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
+import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalClientException;
@@ -368,8 +369,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verifyStatic();
-        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
     }
 
     @Test
@@ -385,6 +384,9 @@ public class IdentityTest extends AbstractIdentityTest {
         IAccount mockAccount = mock(IAccount.class);
         String mockIdToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
+
+        /* First time do interactive by returning empty cache then return saved token. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
         when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
         doAnswer(new Answer<Void>() {
@@ -436,8 +438,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verifyStatic();
-        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -446,8 +446,6 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verifyStatic(times(2));
-        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
     }
 
     @Test
@@ -463,6 +461,9 @@ public class IdentityTest extends AbstractIdentityTest {
         IAccount mockAccount = mock(IAccount.class);
         String mockIdToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
+
+        /* First time do interactive by returning empty cache then return saved token. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
         when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
         doAnswer(new Answer<Void>() {
@@ -514,8 +515,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-        verifyStatic();
-        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -524,9 +523,22 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(anyString(), anyString());
-        verifyStatic(times(2));
-        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+    }
+
+    @Test
+    public void testasd() {
+        IAccount mockAccount = mock(IAccount.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+
+
+        Assert.assertEquals(null, mPreferenceTokenStorage.getHomeAccountId());
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
+        mPreferenceTokenStorage.saveToken("asd", mockAccountId);
+        Assert.assertEquals(mockAccountId, mPreferenceTokenStorage.getHomeAccountId());
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
@@ -672,6 +684,19 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
         when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
+        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+    }
+
+    @Test
+    public void testAuthenticationClientNullForSilentSignIn()
+    {
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(null);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        Identity.signIn();
+
         verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
     }
 

@@ -320,8 +320,7 @@ public class Identity extends AbstractAppCenterService {
                         if (silentSignInFailed) {
                             signInFromUI();
                         }
-                    }
-                    else {
+                    } else {
                         signInFromUI();
                     }
                 }
@@ -419,10 +418,41 @@ public class Identity extends AbstractAppCenterService {
                     if (silentSignInFailed) {
                         signInFromUI();
                     }
-                }
-                else {
+                } else {
                     signInFromUI();
                 }
+            }
+        });
+    }
+
+    private synchronized void instanceSignOut() {
+        if (mTokenStorage.getToken() == null) {
+            AppCenterLog.warn(LOG_TAG, "Couldn't sign out: authToken doesn't exist.");
+            return;
+        }
+        removeTokenAndAccount();
+        AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
+    }
+
+    private void removeAccount(final String homeAccountIdentifier) {
+        if (mAuthenticationClient == null || homeAccountIdentifier == null) {
+            return;
+        }
+        mAuthenticationClient.getAccounts(new PublicClientApplication.AccountsLoadedListener() {
+
+            @Override
+            public void onAccountsLoaded(final List<IAccount> accounts) {
+                post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        for (IAccount account : accounts) {
+                            if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
+                                mAuthenticationClient.removeAccount(account);
+                            }
+                        }
+                    }
+                });
             }
         });
     }
@@ -430,7 +460,7 @@ public class Identity extends AbstractAppCenterService {
     private boolean silentSignIn(@Nullable IAccount account) {
         if (mAuthenticationClient != null) {
             AppCenterLog.info(LOG_TAG, "Login silently in the background.");
-            mAuthenticationClient.acquireTokenSilentAsync(new String[] { mIdentityScope }, account, null, true, new AuthenticationCallback() {
+            mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
@@ -475,7 +505,7 @@ public class Identity extends AbstractAppCenterService {
         if (mAuthenticationClient != null && mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mSignInDelayed = false;
-            mAuthenticationClient.acquireToken(mActivity, new String[] { mIdentityScope }, new AuthenticationCallback() {
+            mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
