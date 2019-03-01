@@ -419,13 +419,6 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    Runnable disabledRunnable = new Runnable() {
-
-                        @Override
-                        public void run() {
-                            completeSignIn(null, new IllegalStateException("Identity is disabled."));
-                        }
-                    };
                     getInstance().post(new Runnable() {
 
                         @Override
@@ -437,7 +430,7 @@ public class Identity extends AbstractAppCenterService {
                             AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                             completeSignIn(new UserInformation(accountId), null);
                         }
-                    }, disabledRunnable, disabledRunnable);
+                    });
                 }
 
                 @Override
