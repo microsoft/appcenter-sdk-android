@@ -458,45 +458,39 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private boolean silentSignIn(@Nullable IAccount account) {
-        if (mAuthenticationClient != null) {
-            AppCenterLog.info(LOG_TAG, "Login silently in the background.");
-            mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
+        AppCenterLog.info(LOG_TAG, "Login silently in the background.");
+        mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
 
-                @Override
-                public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                    getInstance().post(new Runnable() {
+            @Override
+            public void onSuccess(final IAuthenticationResult authenticationResult) {
+                AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
+                getInstance().post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            IAccount account = authenticationResult.getAccount();
-                            mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
-                            mSilentSignInFailed = false;
-                        }
-                    });
-                }
-
-                @Override
-                public void onError(MsalException exception) {
-                    if (exception instanceof MsalUiRequiredException) {
-                        AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
-                    } else {
-                        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                    @Override
+                    public void run() {
+                        IAccount account = authenticationResult.getAccount();
+                        mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
+                        mSilentSignInFailed = false;
                     }
-                    mSilentSignInFailed = true;
-                }
+                });
+            }
 
-                @Override
-                public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "Silent sign-in canceled.");
-                    mSilentSignInFailed = false;
+            @Override
+            public void onError(MsalException exception) {
+                if (exception instanceof MsalUiRequiredException) {
+                    AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
+                } else {
+                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 }
-            });
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Login called while not configured, waiting.");
-            mSilentSignInFailed = false;
-            mSignInDelayed = true;
-        }
+                mSilentSignInFailed = true;
+            }
+
+            @Override
+            public void onCancel() {
+                AppCenterLog.warn(LOG_TAG, "Silent sign-in canceled.");
+                mSilentSignInFailed = false;
+            }
+        });
         return mSilentSignInFailed;
     }
 

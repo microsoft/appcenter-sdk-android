@@ -27,6 +27,7 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalServiceException;
+import com.microsoft.identity.client.exception.MsalUiRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -307,6 +308,48 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void signInThenDownloadValidConfigurationThenForegroundThenSilentSignIn() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication result. */
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Sign in, will be delayed until configuration ready. */
+        Identity.signIn();
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify signIn still delayed in background. */
+        assertTrue(identity.isSignInDelayed());
+
+        /* Go foreground. */
+        Activity activity = mock(Activity.class);
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
+                any(String.class), eq(true), callbackCaptor.capture());
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+    }
+
+    @Test
     public void downloadConfigurationThenForegroundThenSignIn() throws Exception {
 
         /* Mock JSON. */
@@ -421,10 +464,6 @@ public class IdentityTest extends AbstractIdentityTest {
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
 
-        /* ETag not saved as file write failed. */
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
-
         /* Go foreground. */
         identity.onActivityResumed(activity);
         assertFalse(identity.isSignInDelayed());
@@ -446,6 +485,134 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+    }
+
+    @Test
+    public void downloadConfigurationThenForegroundThenSignInButFailToRetrieveAccount() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+
+        /* First time do interactive by returning empty cache then return saved token. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(null);
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+
+        /* Sign in, will work now. */
+        Identity.signIn();
+
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+    }
+
+    @Test
+    public void downloadConfigurationThenForegroundThenSignInThenCancelSilentSignIn() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        IAccount mockAccount = mock(IAccount.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+
+        /* First time do interactive by returning empty cache then return saved token. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onCancel();
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+
+        /* Sign in, will work now. */
+        Identity.signIn();
+
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+
+        /* Call signIn again to trigger silent sign-in. */
+        Identity.signIn();
+
+        /* Verify interactions - should succeed silent sign-in. */
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class), any(String.class),
+                eq(true), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
     }
 
     @Test
@@ -498,10 +665,6 @@ public class IdentityTest extends AbstractIdentityTest {
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
 
-        /* ETag not saved as file write failed. */
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
-
         /* Go foreground. */
         identity.onActivityResumed(activity);
         assertFalse(identity.isSignInDelayed());
@@ -527,18 +690,77 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void testasd() {
+    public void downloadConfigurationThenForegroundThenSignInThenFailSilentSignInWithMissingToken() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
         IAccount mockAccount = mock(IAccount.class);
         String mockIdToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
-        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+
+        /* Always return empty cache. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
         when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        doAnswer(new Answer<Void>() {
 
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        doAnswer(new Answer<Void>() {
 
-        Assert.assertEquals(null, mPreferenceTokenStorage.getHomeAccountId());
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
-        mPreferenceTokenStorage.saveToken("asd", mockAccountId);
-        Assert.assertEquals(mockAccountId, mPreferenceTokenStorage.getHomeAccountId());
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onError(new MsalUiRequiredException("error"));
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+
+        /* Sign in, will work now. */
+        Identity.signIn();
+
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+
+        /* Call signIn again to trigger silent sign-in. */
+        Identity.signIn();
+
+        /* Verify interactions - should fail silent and fallback to interactive sign-in. */
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
+                any(String.class), eq(true), notNull(AuthenticationCallback.class));
+        verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
@@ -684,19 +906,6 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
         when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
-        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
-    }
-
-    @Test
-    public void testAuthenticationClientNullForSilentSignIn()
-    {
-        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
-        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(null);
-        Identity identity = Identity.getInstance();
-        start(identity);
-
-        Identity.signIn();
-
         verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
     }
 
