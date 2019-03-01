@@ -62,18 +62,18 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @return unique user id.
      */
-    private String getAccountId() {
+    private String getHomeAccountId() {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
     @Override
     public void cacheToken() {
         String tokenFromStorage = getToken();
-        String accountId = getAccountId();
+        String homeAccountId = getHomeAccountId();
 
         /* We need to update Token context here if the values are not null. */
-        if (tokenFromStorage != null && accountId != null) {
-            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
+        if (tokenFromStorage != null && homeAccountId != null) {
+            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, homeAccountId);
         }
     }
 
