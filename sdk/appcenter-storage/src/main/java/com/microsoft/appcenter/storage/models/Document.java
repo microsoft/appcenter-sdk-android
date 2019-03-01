@@ -41,8 +41,8 @@ public class Document<T> {
         this.document = document;
     }
 
-    public Document(Exception dError) {
-        this.documentError = new DocumentError(dError);
+    public Document(Exception exception) {
+        this.documentError = new DocumentError(exception);
     }
 
     /**

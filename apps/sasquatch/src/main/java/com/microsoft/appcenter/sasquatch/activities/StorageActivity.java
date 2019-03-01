@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.lang.reflect.InvocationTargetException;
+
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 class TestDocument{
@@ -23,9 +25,9 @@ public class StorageActivity extends AppCompatActivity {
         /* TODO remove reflection once Storage published to jCenter. */
         try {
             final Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
-            //createDocument(storage);
-            //readDocument(storage);
-            //deleteDocument(storage);
+            createDocument(storage);
+            readDocument(storage);
+            deleteDocument(storage);
         }catch (Exception ignore) {
             Log.e(LOG_TAG, "Storage.Module call failed", ignore);
         }
