@@ -27,9 +27,9 @@ public class SignInResult {
     }
 
     /**
-     * Get error if any occurred.
+     * Get the exception that caused sign-in to fail.
      *
-     * @return Error that occurred during sign-in or null if user information is available.
+     * @return Exception for sign-in failure or null if sign-in was successful.
      */
     public Exception getException() {
         return mException;
@@ -40,6 +40,8 @@ public class SignInResult {
      *
      * @return User information or null if an error occurred.
      */
+    @SuppressWarnings("WeakerAccess")
+    // TODO remove warning once published to jCenter and used in test app
     public UserInformation getUserInformation() {
         return mUserInformation;
     }
