@@ -62,7 +62,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @return unique user id.
      */
-    private String getHomeAccountId() {
+    @Override
+    public String getHomeAccountId() {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
