@@ -3,12 +3,13 @@ package com.microsoft.appcenter.storage.models;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
-import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
 
 import java.util.Date;
+
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 /**
  * Token fetch result.
@@ -81,7 +82,10 @@ public class TokenResult {
         try {
             return JSONDateUtils.toDate(this.expiresOn);
         } catch (JSONException ex) {
-            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" + this.expiresOn + "' to ISO 8601 Date format ");
+            AppCenterLog.error(
+                    LOG_TAG, String.format(
+                            "Unable to convert '%s' to ISO 8601 Date format ",
+                            this.expiresOn));
             return new Date(0);
         }
     }
@@ -107,9 +111,11 @@ public class TokenResult {
         try {
             this.expiresOn = JSONDateUtils.toString(expiresOn);
         } catch (JSONException ex) {
-            AppCenterLog.error(Constants.LOG_TAG, "Unable to convert '" +
-                    ((expiresOn == null) ? "(null)": expiresOn.toString()) +
-                    "' Date to ISO 8601 string");
+            AppCenterLog.error(
+                    LOG_TAG,
+                    String.format(
+                            "Unable to convert '%s' Date to ISO 8601 string",
+                            (expiresOn == null ? "(null)" : expiresOn)));
             this.expiresOn = null;
         }
         return this;

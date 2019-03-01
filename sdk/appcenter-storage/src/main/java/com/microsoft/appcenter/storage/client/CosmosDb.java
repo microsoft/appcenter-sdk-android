@@ -70,7 +70,10 @@ public final class CosmosDb {
         }
     }
 
-    public static Map<String, String> addRequiredHeaders(final Map<String, String> headers, final String partition, final String dbToken) {
+    public static Map<String, String> addRequiredHeaders(
+            Map<String, String> headers,
+            String partition,
+            String dbToken) {
         headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
         headers.put("x-ms-version", "2018-06-18");
         headers.put("x-ms-date", nowAsRFC1123());
