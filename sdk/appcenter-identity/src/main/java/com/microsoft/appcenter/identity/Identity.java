@@ -115,7 +115,7 @@ public class Identity extends AbstractAppCenterService {
     /**
      * True if silent sign-in failed.
      */
-    private boolean mSilentSignInFailed = false;
+    private boolean mSilentSignInFailed;
 
     /**
      * Get shared instance.
@@ -298,9 +298,12 @@ public class Identity extends AbstractAppCenterService {
                 public void run() {
                     IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
                     if (account != null) {
-                        silentSignIn(account);
+                        boolean silentSignInFailed = silentSignIn(account);
+                        if (silentSignInFailed) {
+                            signInFromUI();
+                        }
                     }
-                    else if (account == null || mSilentSignInFailed) {
+                    else {
                         signInFromUI();
                     }
                 }
@@ -392,16 +395,19 @@ public class Identity extends AbstractAppCenterService {
             public void run() {
                 IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
                 if (account != null) {
-                    silentSignIn(account);
+                    boolean silentSignInFailed = silentSignIn(account);
+                    if (silentSignInFailed) {
+                        signInFromUI();
+                    }
                 }
-                else if (account == null || mSilentSignInFailed) {
+                else {
                     signInFromUI();
                 }
             }
         });
     }
 
-    private void silentSignIn(@Nullable IAccount account) {
+    private boolean silentSignIn(@Nullable IAccount account) {
         if (mAuthenticationClient != null) {
             AppCenterLog.info(LOG_TAG, "Login silently in the background.");
             mAuthenticationClient.acquireTokenSilentAsync(new String[] { mIdentityScope }, account, null, true, new AuthenticationCallback() {
@@ -416,6 +422,7 @@ public class Identity extends AbstractAppCenterService {
                             IAccount account = authenticationResult.getAccount();
                             mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
                             SharedPreferencesManager.putString(ACCOUNT_ID_KEY, account.getHomeAccountIdentifier().getIdentifier());
+                            mSilentSignInFailed = false;
                         }
                     });
                 }
@@ -433,14 +440,15 @@ public class Identity extends AbstractAppCenterService {
                 @Override
                 public void onCancel() {
                     AppCenterLog.warn(LOG_TAG, "Silent sign-in canceled.");
+                    mSilentSignInFailed = false;
                 }
             });
-
-            // TODO persist accountId
         } else {
             AppCenterLog.debug(LOG_TAG, "Login called while not configured, waiting.");
+            mSilentSignInFailed = false;
             mSignInDelayed = true;
         }
+        return mSilentSignInFailed;
     }
 
     @UiThread
@@ -478,7 +486,6 @@ public class Identity extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
             mSignInDelayed = true;
         }
-        mSilentSignInFailed = false;
     }
 
     private IAccount retrieveAccount(String id) {

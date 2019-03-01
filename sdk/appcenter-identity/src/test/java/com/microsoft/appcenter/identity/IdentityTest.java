@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.identity;
 
+import android.accounts.Account;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -375,8 +376,10 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
+        IAccount mockAccount = mock(IAccount.class);
         String mockIdToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
         doAnswer(new Answer<Void>() {
 
@@ -405,6 +408,15 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
 
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* ETag not saved as file write failed. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
+
         /* Go foreground. */
         identity.onActivityResumed(activity);
         assertFalse(identity.isSignInDelayed());
@@ -425,8 +437,8 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signIn();
 
         /* Verify interactions. */
-        verify(publicClientApplication).acquireTokenSilentAsync(
-                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
+                any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
         verifyStatic();
         SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
