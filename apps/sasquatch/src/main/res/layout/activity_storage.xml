@@ -8,5 +8,5 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World"/>
+        android:text="@string/storage_activity_default_text" />
     </LinearLayout>

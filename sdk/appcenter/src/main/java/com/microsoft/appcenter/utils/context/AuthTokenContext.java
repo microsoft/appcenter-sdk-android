@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.utils.context;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import java.util.Collection;
@@ -18,7 +19,7 @@ public class AuthTokenContext {
     /**
      * Global listeners collection.
      */
-    private final Collection<Listener> mListeners;
+    private final Collection<Listener> mListeners = new LinkedHashSet<>();
 
     /**
      * Current value of auth token.
@@ -43,14 +44,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * A private constructor for the class.
-     */
-    private AuthTokenContext() {
-        mListeners = new LinkedHashSet<>();
-    }
-
-    /**
-     * Unsets singleton instance.
+     * Unset singleton instance.
      */
     @VisibleForTesting
     public static synchronized void unsetInstance() {
@@ -62,7 +56,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be notified of changes.
      */
-    public synchronized void addListener(Listener listener) {
+    public synchronized void addListener(@NonNull Listener listener) {
         mListeners.add(listener);
     }
 
@@ -71,7 +65,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be removed.
      */
-    public synchronized void removeListener(Listener listener) {
+    public synchronized void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
     }
 
@@ -90,22 +84,39 @@ public class AuthTokenContext {
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
      */
-    public void setAuthToken(String authToken, String homeAccountId) {
+    public synchronized void setAuthToken(String authToken, String homeAccountId) {
         mAuthToken = authToken;
-        mLastHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
+            if (isNewUser(homeAccountId)) {
+                listener.onNewUser(authToken);
+            }
         }
+        mLastHomeAccountId = homeAccountId;
+    }
+
+    /**
+     * Check whether the user is new.
+     *
+     * @param newAccountId account id of the logged in user.
+     * @return true if this user is not the same as previous, false otehrwise.
+     */
+    private synchronized boolean isNewUser(String newAccountId) {
+        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newAccountId);
     }
 
     /**
      * Clears info about the token.
      */
-    public void clearToken() {
+    public synchronized void clearToken() {
         mAuthToken = null;
         mLastHomeAccountId = null;
+        for (Listener listener : mListeners) {
+            listener.onNewAuthToken(null);
+            listener.onNewUser(null);
+        }
     }
 
     /**
@@ -117,5 +128,10 @@ public class AuthTokenContext {
          * Called whenever a new token is set.
          */
         void onNewAuthToken(String authToken);
+
+        /**
+         * Called whenever a new user logs in.
+         */
+        void onNewUser(String authToken);
     }
 }

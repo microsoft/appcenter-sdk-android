@@ -1,6 +1,14 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.3 (Under active development)
+## Version 1.11.4 (Not yet released)
+
+### AppCenter
+
+* **[Fix]** Fix network connection state tracking issue, which prevented sending data in some restricted networks.
+
+___
+
+## Version 1.11.3
 
 ### AppCenter
 
@@ -9,6 +17,7 @@
 ### AppCenterDistribute
 
 * **[Fix]** Fix exception if we receive deep link intent with setup failure before `onStart`.
+* **[Fix]** Fix checking updates for applications installed on corporate-owned single-use devices.
 
 ___
 
