@@ -23,7 +23,9 @@ import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
+import com.microsoft.identity.client.exception.MsalServiceException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -393,7 +396,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
             @Override
             public Void answer(InvocationOnMock invocationOnMock) {
-                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onSuccess(mockResult);
                 return null;
             }
         }).when(publicClientApplication).acquireTokenSilentAsync(
@@ -436,12 +439,102 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
 
-        /* Verify interactions. */
+        /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verifyStatic(times(2));
+        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
+    }
+
+    @Test
+    public void downloadConfigurationThenForegroundThenSignInThenFailSilentSignIn() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        IAccount mockAccount = mock(IAccount.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onError(new MsalClientException("error"));
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Verify configuration caching attempted. */
+        verifyStatic();
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
+
+        /* ETag not saved as file write failed. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+        assertFalse(identity.isSignInDelayed());
+
+        /* Sign in, will work now. */
+        Identity.signIn();
+
+        /* Verify signIn still delayed in background. */
+        assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
         verifyStatic();
         SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
+
+        /* Call signIn again to trigger silent sign-in. */
+        Identity.signIn();
+
+        /* Verify interactions - should fail silent and fallback to interactive sign-in. */
+        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
+                any(String.class), eq(true), notNull(AuthenticationCallback.class));
+        verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(anyString(), anyString());
+        verifyStatic(times(2));
+        SharedPreferencesManager.putString(ACCOUNT_ID_KEY, mockAccountId);
+    }
+
+    @Test
+    public void testasd() {
+        Assert.assertEquals(null, SharedPreferencesManager.getString("asd"));
+        verifyStatic();
+        SharedPreferencesManager.putString("asd", "qwe");
+        Assert.assertEquals("qwe", SharedPreferencesManager.getString("asd"));
+        verifyStatic();
+        SharedPreferencesManager.putString("asd", "zxc");
+        Assert.assertEquals("zxc", SharedPreferencesManager.getString("asd"));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {

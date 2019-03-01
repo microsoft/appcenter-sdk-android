@@ -389,6 +389,8 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void instanceSignIn() {
+
+        //TODO we don't want to do silent on UI thread, how do we separate them?
         postOnUiThread(new Runnable() {
 
             @Override
