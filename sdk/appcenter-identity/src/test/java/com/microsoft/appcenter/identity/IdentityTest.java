@@ -247,9 +247,10 @@ public class IdentityTest extends AbstractIdentityTest {
         JSONObject jsonConfig = mockValidForAppCenterConfig();
 
         /* Mock authentication result. */
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        String idToken = UUIDUtils.randomUUID().toString();
+        String accountId = UUIDUtils.randomUUID().toString();
+        String homeAccountId = UUIDUtils.randomUUID().toString();
+        IAuthenticationResult mockResult = mockAuthResult(idToken, accountId, homeAccountId);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -297,7 +298,7 @@ public class IdentityTest extends AbstractIdentityTest {
         SignInResult signInResult = future.get();
         assertNotNull(signInResult);
         assertNotNull(signInResult.getUserInformation());
-        assertEquals(mockAccountId, signInResult.getUserInformation().getAccountId());
+        assertEquals(accountId, signInResult.getUserInformation().getAccountId());
         assertNull(signInResult.getException());
 
         /* SDK does not crash if somehow MSAL calls us again. */
@@ -319,9 +320,10 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        String idToken = UUIDUtils.randomUUID().toString();
+        String accountId = UUIDUtils.randomUUID().toString();
+        String homeAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult(idToken, accountId, homeAccountId);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -358,20 +360,36 @@ public class IdentityTest extends AbstractIdentityTest {
         assertFalse(identity.isSignInDelayed());
 
         /* Sign in, will work now. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
-        /* Verify signIn still delayed in background. */
+        /* Check result. */
+        SignInResult signInResult = future.get();
+        assertNotNull(signInResult);
+        assertNotNull(signInResult.getUserInformation());
+        assertEquals(accountId, signInResult.getUserInformation().getAccountId());
+        assertNull(signInResult.getException());
+
+        /* Verify signIn not delayed anymore. */
         assertFalse(identity.isSignInDelayed());
+
+        /* Verify interactions. */
+        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
 
         /* Disable Identity. */
         Identity.setEnabled(false).get();
 
         /* Sign in with identity disabled. */
-        Identity.signIn();
+        future = Identity.signIn();
 
-        /* Verify interactions. */
+        /* Verify operation failed after disabling. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof IllegalStateException);
+        assertNull(future.get().getUserInformation());
+
+        /* Verify no more interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {

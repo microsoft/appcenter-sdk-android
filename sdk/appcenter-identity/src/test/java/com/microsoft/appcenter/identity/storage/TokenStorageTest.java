@@ -15,7 +15,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_AUTH_TOKEN;
-import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_ACCOUNT_ID;
+import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_HOME_ACCOUNT_ID;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 import static org.mockito.Matchers.any;
@@ -72,7 +72,7 @@ public class TokenStorageTest {
         /* Verify save called on context and preferences. */
         verifyStatic();
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_AUTH_TOKEN), eq(mMockEncryptedToken));
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_ACCOUNT_ID), eq(mMockAccountId));
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), eq(mMockAccountId));
         verify(mAuthTokenContext).setAuthToken(mMockToken, mMockAccountId);
     }
 
@@ -86,7 +86,7 @@ public class TokenStorageTest {
         verify(mAuthTokenContext).clearToken();
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_AUTH_TOKEN));
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_ACCOUNT_ID));
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID));
     }
 
     @Test
@@ -94,7 +94,7 @@ public class TokenStorageTest {
 
         /* Mock preferences and crypto calls. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(mMockToken);
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
         when(mCryptoUtils.decrypt(eq(mMockToken), eq(false))).thenReturn(mDecryptedToken);
 
         /* Verify the right token is returned. */
@@ -114,7 +114,7 @@ public class TokenStorageTest {
 
         /* Mock token. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(mMockToken);
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
         when(mCryptoUtils.decrypt(eq(mMockToken), eq(false))).thenReturn(mDecryptedToken);
 
         /* Verify the context is updated. */
@@ -127,7 +127,7 @@ public class TokenStorageTest {
 
         /* Mock empty token. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(null);
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
         when(mCryptoUtils.decrypt(eq(mMockToken), eq(false))).thenReturn(mDecryptedToken);
 
         /* Try to cache. */
@@ -135,7 +135,7 @@ public class TokenStorageTest {
 
         /* Mock empty account id. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(mMockToken);
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_ACCOUNT_ID), isNull(String.class))).thenReturn(null);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(null);
 
         /* Try to cache. */
         mTokenStorage.cacheToken();

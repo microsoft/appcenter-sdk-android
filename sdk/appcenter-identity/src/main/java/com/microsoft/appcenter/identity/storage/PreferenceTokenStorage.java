@@ -34,17 +34,17 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
 
     /**
-     * Used for distinguishing users, string field for account id.
+     * Used for distinguishing users, string field for home account id.
      */
     @VisibleForTesting
-    static final String PREFERENCE_KEY_ACCOUNT_ID = "AppCenter.account_id";
+    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
 
     @Override
-    public void saveToken(String token, String accountId) {
-        AuthTokenContext.getInstance().setAuthToken(token, accountId);
+    public void saveToken(String token, String homeAccountId) {
+        AuthTokenContext.getInstance().setAuthToken(token, homeAccountId);
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
         SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_ACCOUNT_ID, accountId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      * @return unique user id.
      */
     private String getAccountId() {
-        return SharedPreferencesManager.getString(PREFERENCE_KEY_ACCOUNT_ID, null);
+        return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @Override
     public void removeToken() {
         SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_ACCOUNT_ID);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
         AuthTokenContext.getInstance().clearToken();
     }
 }

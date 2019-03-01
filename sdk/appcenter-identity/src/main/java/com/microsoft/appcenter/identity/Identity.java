@@ -431,8 +431,9 @@ public class Identity extends AbstractAppCenterService {
                         @Override
                         public void run() {
                             IAccount account = authenticationResult.getAccount();
+                            String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
+                            mTokenStorage.saveToken(authenticationResult.getIdToken(), homeAccountId);
                             String accountId = account.getAccountIdentifier().getIdentifier();
-                            mTokenStorage.saveToken(authenticationResult.getIdToken(), accountId);
                             AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                             completeSignIn(new UserInformation(accountId), null);
                         }
