@@ -88,4 +88,13 @@ public class TokenManager {
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         SharedPreferencesManager.remove(partitionName);
     }
+
+    public synchronized void removeAllCachedTokens() {
+        Set<String> partitionNamesSet = getPartitionNames();
+        for (String partitionName : partitionNamesSet) {
+            SharedPreferencesManager.remove(partitionName);
+        }
+        partitionNamesSet.clear();
+        SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
+    }
 }

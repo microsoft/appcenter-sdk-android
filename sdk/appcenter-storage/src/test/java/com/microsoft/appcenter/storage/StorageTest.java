@@ -11,6 +11,7 @@ import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Documents;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
@@ -20,11 +21,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -38,10 +42,13 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class StorageTest extends AbstractStorageTest {
 
@@ -309,6 +316,28 @@ public class StorageTest extends AbstractStorageTest {
         cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
 
         // TODO: assert error is null and document is null
+    }
+
+    @Test
+    public void tokenClearedOnSignOut() {
+        Set<String> partitionNames = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            partitionNames.add("partitionName " + i);
+        }
+        when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
+        Storage.setEnabled(true);
+        AuthTokenContext.getInstance().clearToken();
+        verifyStatic(times((10)));
+        SharedPreferencesManager.remove(matches("partitionName [0-9]"));
+
+    }
+
+    @Test
+    public void authTokenListenerNotCalledWhenDisabled() {
+        Storage.setEnabled(false);
+        AuthTokenContext.getInstance().clearToken();
+        verifyStatic(never());
+        SharedPreferencesManager.remove(matches("partitionName[0-9]"));
     }
 
     @Test
