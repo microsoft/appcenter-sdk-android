@@ -329,7 +329,6 @@ public class StorageTest extends AbstractStorageTest {
         AuthTokenContext.getInstance().clearToken();
         verifyStatic(times((10)));
         SharedPreferencesManager.remove(matches("partitionName [0-9]"));
-
     }
 
     @Test
