@@ -1,25 +1,26 @@
 package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
 
 /**
  * A document coming back from CosmosDB.
  */
 public class Document<T> {
-    @SerializedName(value = "PartitionKey")
+    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
     private String partition;
 
-    @SerializedName(value = "id")
+    @SerializedName(value = Constants.ID_FIELD_NAME)
     private String id;
 
-    @SerializedName(value = "_etag")
+    @SerializedName(value = Constants.ETAG_FIELD_NAME)
     private String eTag;
 
-    @SerializedName(value = "_ts")
+    @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long timestamp;
 
-    @SerializedName(value = "document")
+    @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T document;
 
     private transient DocumentError documentError;
@@ -40,8 +41,7 @@ public class Document<T> {
         this.document = document;
     }
 
-    public Document(Exception dError)
-    {
+    public Document(Exception dError) {
         this.documentError = new DocumentError(dError);
     }
 

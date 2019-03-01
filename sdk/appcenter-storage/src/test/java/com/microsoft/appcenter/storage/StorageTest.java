@@ -70,7 +70,7 @@ public class StorageTest extends AbstractStorageTest {
             "    ]\n" +
             "}", DATABASE_NAME, COLLECTION_NAME);
 
-    private static String tokenExchangeFailedResponsePayload = String.format("{\n" +
+    private static String tokenExchangeFailedResponsePayload = "{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
             "            \"partition\": \"\",\n" +
@@ -81,7 +81,7 @@ public class StorageTest extends AbstractStorageTest {
             "            \"status\": \"Failed\"\n" +
             "        }\n" +
             "    ]\n" +
-            "}");
+            "}";
 
     private static String cosmosDbDocumentResponsePayload = String.format("{\n" +
             "    \"document\": {\n" +
@@ -163,7 +163,6 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
         Storage storage = Storage.getInstance();
         Channel channel = start(storage);
-
         AppCenterFuture<Documents<TestDocument>> docs = Storage.list(PARTITION, TestDocument.class);
     }
 
@@ -174,7 +173,6 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
         Storage storage = Storage.getInstance();
         Channel channel = start(storage);
-
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));
     }
 
@@ -426,7 +424,7 @@ public class StorageTest extends AbstractStorageTest {
     class TestDocument {
         String test;
 
-        public TestDocument(String test) {
+        TestDocument(String test) {
             this.test = test;
         }
     }
