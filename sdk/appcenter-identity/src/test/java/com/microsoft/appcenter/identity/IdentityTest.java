@@ -20,6 +20,8 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
+import com.microsoft.identity.client.IAccount;
+import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
@@ -39,7 +41,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -591,6 +595,161 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNull(future.get().getUserInformation());
     }
 
+    @Test
+    public void signOutRemovesToken() {
+        Identity identity = Identity.getInstance();
+        start(identity);
+        when(mPreferenceTokenStorage.getToken()).thenReturn("42");
+
+        /* Sign out should clear token. */
+        Identity.signOut();
+        verify(mPreferenceTokenStorage).removeToken();
+    }
+
+    @Test
+    public void verifyTokenStorageIsEmpty() {
+        Identity identity = Identity.getInstance();
+        start(identity);
+        Identity.signOut();
+        when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
+        verify(mPreferenceTokenStorage, never()).removeToken();
+    }
+
+    @Test
+    public void testRemoveAccountWhenClientAppIsNull() throws Exception {
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(null);
+        Identity identity = Identity.getInstance();
+        start(identity);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        Identity.signOut();
+        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+    }
+
+    @Test
+    public void testRemoveAccountWhenAccountIdentifierIsNull() throws Exception {
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Identity identity = Identity.getInstance();
+        start(identity);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null);
+        when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        Identity.signOut();
+        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+    }
+
+    @Test
+    public void removeAccount() throws Exception {
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+
+        /* Check removing account */
+        Identity identity = Identity.getInstance();
+        start(identity);
+        String identifier = UUIDUtils.randomUUID().toString();
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(identifier);
+        when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        final List<IAccount> accountsList = new ArrayList<>();
+        IAccount account = mock(IAccount.class);
+        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
+        when(accountIdentifier.getIdentifier()).thenReturn(identifier);
+        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
+        accountsList.add(account);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
+                return null;
+            }
+        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        Identity.signOut();
+        verify(publicClientApplication).removeAccount(eq(account));
+    }
+
+    @Test
+    public void removeAccountWithWrongIdentifier() throws Exception {
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        /* Check removing account with different identifiers */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Identity identity = Identity.getInstance();
+        start(identity);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn("5");
+        when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        final List<IAccount> accountsList = new ArrayList<>();
+        IAccount account = mock(IAccount.class);
+        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
+        when(accountIdentifier.getIdentifier()).thenReturn("10");
+        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
+        accountsList.add(account);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
+                return null;
+            }
+        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        Identity.signOut();
+        verify(publicClientApplication, never()).removeAccount(eq(account));
+    }
+
     private void mockReadyToSignIn() throws Exception {
 
         /* Mock http and start identity service. */
@@ -606,7 +765,7 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(mock(Activity.class));
     }
 
-    private void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
 
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);

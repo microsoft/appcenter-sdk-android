@@ -130,7 +130,7 @@ public class AuthTokenContext {
         void onNewAuthToken(String authToken);
 
         /**
-         * Called whenever a new user logs in.
+         * Called whenever a new user signs in.
          */
         void onNewUser(String authToken);
     }

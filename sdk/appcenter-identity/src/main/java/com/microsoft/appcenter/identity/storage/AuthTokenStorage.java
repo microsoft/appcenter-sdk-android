@@ -21,6 +21,13 @@ public interface AuthTokenStorage {
     String getToken();
 
     /**
+     * Retrieves homeAccountId value.
+     *
+     * @return unique identifier of user.
+     */
+    String getHomeAccountId();
+
+    /**
      * Removes token value.
      */
     void removeToken();

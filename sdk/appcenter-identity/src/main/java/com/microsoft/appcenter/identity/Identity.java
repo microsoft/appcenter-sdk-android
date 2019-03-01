@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -164,6 +165,21 @@ public class Identity extends AbstractAppCenterService {
         return getInstance().instanceSignIn();
     }
 
+    /**
+     * Sign out user and invalidate a user's token.
+     */
+    @SuppressWarnings("WeakerAccess")
+    // TODO remove warning once jCenter published and reflection removed in test app
+    public static void signOut() {
+        getInstance().post(new Runnable() {
+
+            @Override
+            public void run() {
+                getInstance().instanceSignOut();
+            }
+        });
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
@@ -196,10 +212,9 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            mSignInDelayed = false;
             completeSignIn(null, new IllegalStateException("Identity is disabled."));
             clearCache();
-            mTokenStorage.removeToken();
+            removeTokenAndAccount();
         }
     }
 
@@ -229,6 +244,12 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
+    }
+
+    private void removeTokenAndAccount() {
+        mSignInDelayed = false;
+        removeAccount(mTokenStorage.getHomeAccountId());
+        mTokenStorage.removeToken();
     }
 
     private synchronized void downloadConfiguration() {
@@ -408,6 +429,38 @@ public class Identity extends AbstractAppCenterService {
             }
         }, disabledRunnable, disabledRunnable);
         return future;
+    }
+
+    private synchronized void instanceSignOut() {
+        if (mTokenStorage.getToken() == null) {
+            AppCenterLog.warn(LOG_TAG, "Couldn't sign out: authToken doesn't exist.");
+            return;
+        }
+        removeTokenAndAccount();
+        AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
+    }
+
+    private void removeAccount(final String homeAccountIdentifier) {
+        if (mAuthenticationClient == null || homeAccountIdentifier == null) {
+            return;
+        }
+        mAuthenticationClient.getAccounts(new PublicClientApplication.AccountsLoadedListener() {
+
+            @Override
+            public void onAccountsLoaded(final List<IAccount> accounts) {
+                post(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        for (IAccount account : accounts) {
+                            if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
+                                mAuthenticationClient.removeAccount(account);
+                            }
+                        }
+                    }
+                });
+            }
+        });
     }
 
     @UiThread
