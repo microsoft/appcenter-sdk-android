@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.appcenter.identity.Constants.ACCOUNT_ID_KEY;
 import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
 import static org.junit.Assert.assertEquals;

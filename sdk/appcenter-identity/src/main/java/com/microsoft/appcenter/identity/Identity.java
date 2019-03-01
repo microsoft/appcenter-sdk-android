@@ -60,7 +60,6 @@ import static com.microsoft.appcenter.identity.Constants.IDENTITY_SCOPE;
 import static com.microsoft.appcenter.identity.Constants.LOG_TAG;
 import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
 import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
-import static com.microsoft.appcenter.identity.Constants.ACCOUNT_ID_KEY;
 
 /**
  * Identity service.
@@ -315,7 +314,7 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void run() {
-                    IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
+                    IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
                     if (account != null) {
                         boolean silentSignInFailed = silentSignIn(account);
                         if (silentSignInFailed) {
@@ -414,7 +413,7 @@ public class Identity extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                IAccount account = retrieveAccount(SharedPreferencesManager.getString(ACCOUNT_ID_KEY));
+                IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
                 if (account != null) {
                     boolean silentSignInFailed = silentSignIn(account);
                     if (silentSignInFailed) {
@@ -442,7 +441,6 @@ public class Identity extends AbstractAppCenterService {
                         public void run() {
                             IAccount account = authenticationResult.getAccount();
                             mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
-                            SharedPreferencesManager.putString(ACCOUNT_ID_KEY, account.getHomeAccountIdentifier().getIdentifier());
                             mSilentSignInFailed = false;
                         }
                     });
@@ -488,7 +486,6 @@ public class Identity extends AbstractAppCenterService {
                         public void run() {
                             IAccount account = authenticationResult.getAccount();
                             mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
-                            SharedPreferencesManager.putString(ACCOUNT_ID_KEY, account.getHomeAccountIdentifier().getIdentifier());
                         }
                     });
                 }
