@@ -90,13 +90,6 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setApiUrl(String)}}.
-     */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
-    }
-
-    /**
      * Check whether Storage service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
@@ -118,6 +111,55 @@ public class Storage extends AbstractAppCenterService {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
+    /**
+     * Read a document.
+     * The document type (T) must be JSON deserializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType) {
+        AppCenterLog.debug(LOG_TAG, "Read started");
+        return getInstance().instanceRead(partition, documentId, documentType);
+    }
+
+    /**
+     * List (need optional signature to configure page size).
+     * The document type (T) must be JSON deserializable.
+     */
+    public static <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
+        return null;
+    }
+
+    /**
+     * Create a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
+        AppCenterLog.debug(LOG_TAG, "Create started");
+        getInstance().instanceCreate(partition, documentId, document, documentType);
+        return null;
+    }
+
+    /**
+     * Replace a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
+        return null;
+    }
+
+    /**
+     * Delete a document.
+     */
+    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+        return getInstance().instanceDelete(partition, documentId);
+    }
+
+    /**
+     * Implements {@link #setApiUrl(String)}}.
+     */
+    private synchronized void setInstanceApiUrl(String apiUrl) {
+        mApiUrl = apiUrl;
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
@@ -125,6 +167,8 @@ public class Storage extends AbstractAppCenterService {
         mAppSecret = appSecret;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
+
+    //region Read implementation
 
     /**
      * React to enable state change.
@@ -148,37 +192,36 @@ public class Storage extends AbstractAppCenterService {
         return STORAGE_GROUP;
     }
 
+    //endregion
+
+    //region List implementation
+
     @Override
     public String getServiceName() {
         return SERVICE_NAME;
     }
+
+    //endregion
+
+    //region Create implementation
 
     @Override
     protected String getLoggerTag() {
         return LOG_TAG;
     }
 
-    /**
-     * Read a document
-     * The document type (T) must be JSON deserializable
-     */
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId) {
-        AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId);
-    }
-
-    //region Read implementation
-
-    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(final String partition, final String documentId) {
+    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
+            final String partition,
+            final String documentId,
+            final Class<T> documentType) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
-
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbReadApi(tokenResult, documentId, result);
+                        callCosmosDbReadApi(tokenResult, documentId, documentType, result);
                     }
 
                     @Override
@@ -189,7 +232,11 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    private synchronized <T> void callCosmosDbReadApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<T>> result) {
+    private synchronized <T> void callCosmosDbReadApi(
+            final TokenResult tokenResult,
+            final String documentId,
+            final Class<T> documentType,
+            final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -200,7 +247,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
+                        completeFutureAndRemovePendingCall(Utils.parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -213,35 +260,13 @@ public class Storage extends AbstractAppCenterService {
 
     //endregion
 
-    //region List implementation
+    //region Replace implementation
 
     /**
-     * List (need optional signature to configure page size)
-     * The document type (T) must be JSON deserializable
+     * Create a document.
+     * The document type (T) must be JSON deserializable.
      */
-    public <T> AppCenterFuture<Documents<T>> list(String partition, Class<T> documentType) {
-        return null;
-    }
-
-    //endregion
-
-    //region Create implementation
-
-    /**
-     * Create a document
-     * The document instance (T) must be JSON serializable
-     */
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document) {
-        AppCenterLog.debug(LOG_TAG, "Create started");
-        getInstance().instanceCreate(partition, documentId, document);
-        return null;
-    }
-
-    /**
-     * Create a document
-     * The document type (T) must be JSON deserializable
-     */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document) {
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document, final Class<T> documentType) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
@@ -250,7 +275,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbCreateApi(tokenResult, document, partition, documentId, result);
+                        callCosmosDbCreateApi(tokenResult, document, documentType, partition, documentId, result);
                     }
 
                     @Override
@@ -261,9 +286,14 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
+    //endregion
+
+    //region Delete implementation
+
     private synchronized <T> void callCosmosDbCreateApi(
             final TokenResult tokenResult,
             T document,
+            final Class<T> documentType,
             String partition,
             final String documentId,
             final DefaultAppCenterFuture<Document<T>> result) {
@@ -277,7 +307,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.<T>parseDocument(payload), result);
+                        completeFutureAndRemovePendingCall(Utils.parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -287,37 +317,12 @@ public class Storage extends AbstractAppCenterService {
                 });
     }
 
-    //endregion
-
-    //region Replace implementation
-
-    /**
-     * Replace a document
-     * The document instance (T) must be JSON serializable
-     */
-    public <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
-        return null;
-    }
-
-    //endregion
-
-    //region Delete implementation
-
-    /**
-     * Delete a document
-     */
-    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
-        return getInstance().instanceDelete(partition, documentId);
-    }
-
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
-        AppCenterLog.debug(LOG_TAG, String.format("Delete started for document with id: %s", documentId));
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
-
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
                         callCosmosDbDeleteApi(tokenResult, documentId, result);

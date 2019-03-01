@@ -4,13 +4,14 @@
     <string name="sdk_source_format" tools:ignore="MissingTranslation">SDK source: %s</string>
     <string name="settings" tools:ignore="MissingTranslation">Settings</string>
     <string name="add" tools:ignore="MissingTranslation">Add</string>
-    <string name="description_storage" tools:ignore="MissingTranslation">Get Storage token</string>
+    <string name="description_storage" tools:ignore="MissingTranslation">Data Synchronization</string>
     <string name="title_crashes" tools:ignore="MissingTranslation">Crashes</string>
     <string name="description_crashes" tools:ignore="MissingTranslation">Test crashes</string>
     <string name="title_custom_properties" tools:ignore="MissingTranslation">Custom properties</string>
     <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
     <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
     <string name="title_storage" tools:ignore="MissingTranslation">Storage</string>
+    <string name="storage_activity_default_text" tools:ignore="MissingTranslation">Nothing here but a lot happening in Logcat</string>
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
