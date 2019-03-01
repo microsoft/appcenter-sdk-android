@@ -136,7 +136,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void replaceEndToEnd() {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));
+        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
     }
 
     @Test
@@ -277,7 +277,19 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(cosmosDbDocumentResponsePayload, new HashMap<String, String>());
 
-        // TODO: assert doc result
+        assertNotNull(doc);
+
+        Document<TestDocument> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertEquals(PARTITION, testCosmosDocument.getPartition());
+        assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
+        assertNull(testCosmosDocument.getError());
+        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getTimestamp());
+
+        TestDocument testDocument = testCosmosDocument.getDocument();
+        assertNotNull(testDocument);
+        assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
 
     @Test
@@ -343,7 +355,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void generateHeaders() {
-        Map<String, String> headers = CosmosDb.generateHeaders(PARTITION, "token");
+        Map<String, String> headers = CosmosDb.addRequiredHeaders(new HashMap<String, String>(), PARTITION, "token");
         assertEquals(5, headers.size());
     }
 

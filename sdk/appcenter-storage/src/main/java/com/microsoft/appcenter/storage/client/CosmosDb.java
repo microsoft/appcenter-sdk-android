@@ -70,14 +70,12 @@ public final class CosmosDb {
         }
     }
 
-    public static Map<String, String> generateHeaders(final String partition, final String dbToken) {
-        Map<String, String> headers = new HashMap<String, String>() {{
-            put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
-            put("x-ms-version", "2018-06-18");
-            put("x-ms-date", nowAsRFC1123());
-            put("Content-Type", "application/json");
-            put("Authorization", urlEncode(dbToken));
-        }};
+    public static Map<String, String> addRequiredHeaders(final Map<String, String> headers, final String partition, final String dbToken) {
+        headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
+        headers.put("x-ms-version", "2018-06-18");
+        headers.put("x-ms-date", nowAsRFC1123());
+        headers.put("Content-Type", "application/json");
+        headers.put("Authorization", urlEncode(dbToken));
 
         return headers;
     }
@@ -100,17 +98,28 @@ public final class CosmosDb {
     }
 
     public static synchronized <T> ServiceCall callCosmosDbApi(
+        TokenResult tokenResult,
+        String documentId,
+        HttpClient httpClient,
+        String httpVerb,
+        final String body,
+        ServiceCallback serviceCallback) {
+        return callCosmosDbApi(tokenResult, documentId, httpClient, httpVerb, body, new HashMap<String, String>(), serviceCallback);
+    }
+
+    public static synchronized <T> ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             final String body,
+            Map<String,String> additionalHeaders,
             ServiceCallback serviceCallback) {
         return
                 httpClient.callAsync(
                         GetDocumentUrl(tokenResult, documentId),
                         httpVerb,
-                        generateHeaders(tokenResult.partition(), tokenResult.token()),
+                        addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
                         new HttpClient.CallTemplate() {
 
                             @Override
