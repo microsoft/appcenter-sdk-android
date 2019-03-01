@@ -197,9 +197,7 @@ public class Identity extends AbstractAppCenterService {
             mAuthenticationClient = null;
             mIdentityScope = null;
             mSignInDelayed = false;
-            if (mPendingSignInFuture != null) {
-                completeSignIn(null, new IllegalStateException("Identity is disabled."));
-            }
+            completeSignIn(null, new IllegalStateException("Identity is disabled."));
             clearCache();
             mTokenStorage.removeToken();
         }
@@ -460,8 +458,10 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
-        mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
-        mPendingSignInFuture = null;
+        if (mPendingSignInFuture != null) {
+            mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
+            mPendingSignInFuture = null;
+        }
     }
 
     @VisibleForTesting

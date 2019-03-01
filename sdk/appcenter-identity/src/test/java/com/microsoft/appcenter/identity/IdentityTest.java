@@ -22,6 +22,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.exception.MsalException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,6 +48,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -247,7 +249,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock authentication result. */
         String mockIdToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
-        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
+        IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -292,10 +294,19 @@ public class IdentityTest extends AbstractIdentityTest {
         callback.onSuccess(mockResult);
 
         /* Check result. */
-        assertNotNull(future.get());
-        assertNotNull(future.get().getUserInformation());
-        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
-        assertNull(future.get().getException());
+        SignInResult signInResult = future.get();
+        assertNotNull(signInResult);
+        assertNotNull(signInResult.getUserInformation());
+        assertEquals(mockAccountId, signInResult.getUserInformation().getAccountId());
+        assertNull(signInResult.getException());
+
+        /* SDK does not crash if somehow MSAL calls us again. */
+        callback.onCancel();
+        callback.onSuccess(mockResult);
+        callback.onError(mock(MsalException.class));
+
+        /* The original result does not change. */
+        assertSame(signInResult, future.get());
     }
 
     @Test
