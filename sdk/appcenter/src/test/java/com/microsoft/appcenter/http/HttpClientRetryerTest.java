@@ -204,7 +204,7 @@ public class HttpClientRetryerTest {
         /* Make the call. */
         retryer.callAsync(null, null, null, null, callback);
 
-        /* verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
+        /* Verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
         verifyDelayFromHeader(handler, retryAfterMS);
         verifyNoMoreInteractions(handler);
         verify(callback).onCallSucceeded("mockSuccessPayload", null);

@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * HTTP exception.
@@ -111,13 +112,17 @@ public class HttpException extends IOException {
             return false;
         }
         HttpException that = (HttpException) o;
-        return statusCode == that.statusCode && payload.equals(that.payload);
+
+        if (statusCode != that.statusCode) return false;
+        if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
+        return headers != null ? headers.equals(that.headers) : that.headers == null;
     }
 
     @Override
     public int hashCode() {
         int result = statusCode;
-        result = 31 * result + payload.hashCode();
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
+        result = 31 * result + (headers != null ? headers.hashCode() : 0);
         return result;
     }
 }
