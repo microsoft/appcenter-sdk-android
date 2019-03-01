@@ -25,7 +25,7 @@ public class HttpException extends IOException {
     /**
      * HTTP headers.
      */
-    private Map<String, String> headers = new HashMap<>();
+    private final Map<String, String> headers;
 
     /**
      * Init with empty response body.
@@ -44,9 +44,7 @@ public class HttpException extends IOException {
      */
     @SuppressWarnings("WeakerAccess")
     public HttpException(int status, @NonNull String payload) {
-        super(getDetailMessage(status, payload));
-        this.payload = payload;
-        this.statusCode = status;
+        this(status, payload, new HashMap<String, String>());
     }
 
     /**
@@ -56,9 +54,11 @@ public class HttpException extends IOException {
      * @param payload HTTP payload.
      * @param headers HTTP responseHeaders.
      */
-
-    public HttpException(int status, String payload, Map<String, String> headers) {
-        this(status, payload);
+    @SuppressWarnings("WeakerAccess")
+    public HttpException(int status, @NonNull String payload, @NonNull Map<String, String> headers) {
+        super(getDetailMessage(status, payload));
+        this.payload = payload;
+        this.statusCode = status;
         this.headers = headers;
     }
 
@@ -96,6 +96,8 @@ public class HttpException extends IOException {
      *
      * @return HTTP headers.
      */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
     public Map<String, String> getHeaders() {
         return headers;
     }

@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS;
+import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -172,11 +172,12 @@ public class HttpClientRetryerTest {
 
     @Test
     public void delayUsingRetryHeader() {
+
         /* Mock httpException onCallFailed with the HTTP Code 429 (Too many Requests) and the x-ms-retry-after-ms header set. */
         long retryAfterMS = 1234;
         Map<String, String> responseHeader = new HashMap<>();
         responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
-        responseHeader.put(RETRY_AFTER_MS, Long.toString(retryAfterMS));
+        responseHeader.put(RETRY_AFTER_MS_KEY, Long.toString(retryAfterMS));
         final HttpException expectedException = new HttpException(429, "call hit the retry limit", responseHeader);
 
         final ServiceCallback callback = mock(ServiceCallback.class);

@@ -283,7 +283,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 }
                 AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
             }
-
             Map<String, String> responseHeaders = new HashMap<>();
             for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
                 responseHeaders.put(header.getKey(), header.getValue().iterator().next());
