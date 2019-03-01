@@ -554,9 +554,10 @@ public class IdentityTest extends AbstractIdentityTest {
         when(file.exists()).thenReturn(true);
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
-
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+
+        /* Check removing account */
         Identity identity = Identity.getInstance();
         start(identity);
         String identifier = UUIDUtils.randomUUID().toString();
@@ -596,6 +597,7 @@ public class IdentityTest extends AbstractIdentityTest {
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
 
+        /* Check removing account with different identifiers */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Identity identity = Identity.getInstance();
