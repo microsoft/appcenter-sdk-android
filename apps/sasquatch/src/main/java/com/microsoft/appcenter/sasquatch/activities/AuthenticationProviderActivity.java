@@ -53,6 +53,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
             featureList.add(new TestFeatures.TestFeature(R.string.b2c_login_title, R.string.b2c_login_description, new View.OnClickListener() {
 
+                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
                 @SuppressWarnings("unchecked")
                 @Override
                 public void onClick(View v) {
