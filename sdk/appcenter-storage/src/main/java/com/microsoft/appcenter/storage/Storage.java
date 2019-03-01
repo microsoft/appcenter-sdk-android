@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.*;
 
@@ -133,7 +133,7 @@ public class Storage extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
         } else {
-            for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call: mPendingCalls.entrySet()) {
+            for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call : mPendingCalls.entrySet()) {
                 call.getKey().complete(null);
                 call.getValue().cancel();
             }
@@ -272,7 +272,7 @@ public class Storage extends AbstractAppCenterService {
                 null,
                 mHttpClient,
                 METHOD_POST,
-                new Document<>(document, partition, documentId).toString(),
+                new Document<T>(document, partition, documentId).toString(),
                 new ServiceCallback() {
 
                     @Override
@@ -306,10 +306,7 @@ public class Storage extends AbstractAppCenterService {
      * Delete a document
      */
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
-
-        AppCenterLog.debug(LOG_TAG, "Delete started" );
-        getInstance().instanceDelete(partition, documentId);
-        return null;
+        return getInstance().instanceDelete(partition, documentId);
     }
 
     private synchronized  AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId){
@@ -356,6 +353,10 @@ public class Storage extends AbstractAppCenterService {
     //region Private utility methods
 
     private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture<Document<T>> result, TokenExchange.TokenExchangeServiceCallback callback) {
+        TokenResult tokenResult = TokenManager.getInstance().getCachedToken(partition);
+        if (tokenResult != null) {
+            callback.callCosmosDb(tokenResult);
+        } else {
             ServiceCall tokenExchangeServiceCall =
                 TokenExchange.getDbToken(
                         partition,

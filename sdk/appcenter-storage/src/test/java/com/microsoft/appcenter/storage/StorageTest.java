@@ -57,7 +57,6 @@ public class StorageTest extends AbstractStorageTest {
     private static final String PARTITION = "custom-partition";
     private static final String DOCUMENT_ID = "document-id";
     private static final String TEST_FIELD_VALUE = "Test Value";
-
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
@@ -96,7 +95,6 @@ public class StorageTest extends AbstractStorageTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
-
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
@@ -268,7 +266,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getError());
         assertThat(
-                doc.get().getError().getException().getMessage(),
+                doc.get().getError().getError().getMessage(),
                 CoreMatchers.containsString(tokenExchangeFailedResponsePayload));
     }
 
@@ -304,7 +302,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getError());
         assertThat(
-                doc.get().getError().getException().getMessage(),
+                doc.get().getError().getError().getMessage(),
                 CoreMatchers.containsString(ExceptionMessage));
     }
 
@@ -423,5 +421,13 @@ public class StorageTest extends AbstractStorageTest {
     @Test(expected = IllegalArgumentException.class)
     public void urlEncogingThrowsNonExistingEncoding() {
         CosmosDb.urlEncode("a string to encode", "An encoding that doesn't exist");
+    }
+
+    class TestDocument {
+        String test;
+
+        public TestDocument(String test) {
+            this.test = test;
+        }
     }
 }

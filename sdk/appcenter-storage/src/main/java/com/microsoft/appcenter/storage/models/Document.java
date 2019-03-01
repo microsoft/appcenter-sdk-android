@@ -4,8 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Utils;
 
 /**
- * A document coming back from CosmosDB
- * @param <T>
+ * A document coming back from CosmosDB.
  */
 public class Document<T> {
     @SerializedName(value = "PartitionKey")
@@ -18,7 +17,7 @@ public class Document<T> {
     private String eTag;
 
     @SerializedName(value = "_ts")
-    private long   timestamp;
+    private long timestamp;
 
     @SerializedName(value = "document")
     private T document;
@@ -28,8 +27,7 @@ public class Document<T> {
     public Document() {
     }
 
-    public Document(T document, String partition, String id)
-    {
+    public Document(T document, String partition, String id) {
         this.partition = partition;
         this.id = id;
         this.document = document;
@@ -48,40 +46,65 @@ public class Document<T> {
     }
 
     /**
-     * @return Deserialized document (or null)
+     * Get document.
+     *
+     * @return Deserialized document.
      */
-    public T getDocument()
-    {
+    public T getDocument() {
         return document;
     }
 
-    // Error (or null)
-    public DocumentError getError()
-    {
+    /**
+     * Get document error.
+     *
+     * @return Document error.
+     */
+    public DocumentError getError() {
         return documentError;
     }
 
-    // ID + document metadata
-    public String getPartition()
-    {
+    /**
+     * Get document partition.
+     *
+     * @return Document partition.
+     */
+    public String getPartition() {
         return partition;
     }
 
-    public String getId()
-    {
+    /**
+     * Get document id.
+     *
+     * @return Document id.
+     */
+    public String getId() {
         return id;
     }
 
-    public String getEtag()
-    {
+    /**
+     * Get Etag.
+     *
+     * @return Etag.
+     */
+    public String getEtag() {
         return eTag;
     }
 
-    public long getTimestamp()
-    {
+    /**
+     * Get document generated in UTC unix epoch.
+     *
+     * @return UTC unix timestamp.
+     */
+    public long getTimestamp() {
         return timestamp;
     }
 
+
+    /**
+     * Get the document in string.
+     *
+     * @return Serialized document.
+     */
     @Override
     public String toString() {
         return Utils.sGson.toJson(this);

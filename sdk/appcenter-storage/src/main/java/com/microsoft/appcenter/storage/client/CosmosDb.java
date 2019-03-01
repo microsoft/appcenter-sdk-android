@@ -76,7 +76,7 @@ public final class CosmosDb {
             put("x-ms-version", "2018-06-18");
             put("x-ms-date", nowAsRFC1123());
             put("Content-Type", "application/json");
-            put("Authorization" , urlEncode(dbToken));
+            put("Authorization", urlEncode(dbToken));
         }};
 
         return headers;
@@ -107,18 +107,21 @@ public final class CosmosDb {
             final String body,
             ServiceCallback serviceCallback) {
         return
-            httpClient.callAsync(
-                    GetDocumentUrl(tokenResult, documentId),
-                    httpVerb,
-                    generateHeaders(tokenResult.partition(), tokenResult.token()),
-                    new HttpClient.CallTemplate() {
+                httpClient.callAsync(
+                        GetDocumentUrl(tokenResult, documentId),
+                        httpVerb,
+                        generateHeaders(tokenResult.partition(), tokenResult.token()),
+                        new HttpClient.CallTemplate() {
 
-                        @Override
-                        public String buildRequestBody() { return body; }
+                            @Override
+                            public String buildRequestBody() {
+                                return body;
+                            }
 
-                        @Override
-                        public void onBeforeCalling(URL url, Map<String, String> headers) { }
-                    },
-                    serviceCallback);
+                            @Override
+                            public void onBeforeCalling(URL url, Map<String, String> headers) {
+                            }
+                        },
+                        serviceCallback);
     }
 }
