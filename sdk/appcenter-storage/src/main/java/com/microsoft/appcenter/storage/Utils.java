@@ -42,7 +42,7 @@ public final class Utils {
         JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
         JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
         List<Document<T>> documents = new ArrayList<>();
-        for (JsonElement object: array) {
+        for (JsonElement object : array) {
             documents.add(parseDocument(object.getAsJsonObject(), documentType));
         }
         return new Page<T>().withDocuments(documents);

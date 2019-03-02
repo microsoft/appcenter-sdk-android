@@ -292,7 +292,7 @@ public class Storage extends AbstractAppCenterService {
                                 .withHttpClient(mHttpClient)
                                 .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .withDocumentType(documentType);
-                         completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
+                        completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
                     }
 
                     @Override

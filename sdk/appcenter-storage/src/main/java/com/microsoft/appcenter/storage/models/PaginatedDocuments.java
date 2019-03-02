@@ -14,21 +14,22 @@ import java.util.NoSuchElementException;
 
 public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
-    private Page<T> currentPage;
+    private transient Page<T> currentPage;
 
-    private TokenResult tokenResult;
+    private transient TokenResult tokenResult;
 
-    private HttpClient httpClient;
+    private transient HttpClient httpClient;
 
-    private Class<T> documentType;
+    private transient Class<T> documentType;
 
     /**
      * Continuation token for retrieving the next page.
      */
-    private String continuationToken;
+    private transient String continuationToken;
 
     /**
      * Set the token result.
+     *
      * @param tokenResult The token result.
      * @return TokenResult.
      */
@@ -39,14 +40,16 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Return true if has next page.
+     *
      * @return True if has next page.
      */
-    public boolean hasNextPage(){
+    public boolean hasNextPage() {
         return continuationToken != null;
     }
 
     /**
      * Set current page.
+     *
      * @param currentPage The page to be set to current page.
      * @return PaginatedDocuments.
      */
@@ -57,6 +60,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Get current page.
+     *
      * @return Current page.
      */
     public Page<T> getCurrentPage() {
@@ -65,6 +69,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Set the httpclient.
+     *
      * @param httpClient The httpclient to be set.
      * @return PaginatedDocuments.
      */
@@ -75,6 +80,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Set the continuation token.
+     *
      * @param continuationToken The continuation token to retrieve the next page.
      * @return PaginatedDocuments.
      */
@@ -85,6 +91,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Set the document type.
+     *
      * @param documentType The document type.
      * @return PaginatedDocuments.
      */
@@ -95,6 +102,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     /**
      * Asynchronously fetch the next page.
+     *
      * @return Next page.
      */
     public AppCenterFuture<Page<T>> getNextPage() {
@@ -120,7 +128,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
                         }
                     });
         } else {
-           result.complete(new Page<T>(new NoSuchElementException()));
+            result.complete(new Page<T>(new NoSuchElementException()));
         }
         return result;
     }
