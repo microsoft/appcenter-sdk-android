@@ -29,10 +29,9 @@ public final class TokenExchange {
     public static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
 
     /**
-     * App Secret Header
+     * App Secret Header.
      */
-    public static final String APP_SECRET_HEADER = "App-Secret";
-
+    private static final String APP_SECRET_HEADER = "App-Secret";
 
     /**
      * Build the request body to get the token through http client.
@@ -40,13 +39,11 @@ public final class TokenExchange {
      * @param partition The partition names.
      * @return Request body to get the token.
      */
-    public static String buildAppCenterGetDbTokenBodyPayload(final String partition) {
+    public static String buildAppCenterGetDbTokenBodyPayload(String partition) {
         JsonArray partitionsArray = new JsonArray();
         partitionsArray.add(partition);
-
         JsonObject partitionsObject = new JsonObject();
         partitionsObject.add("partitions", partitionsArray);
-
         return partitionsObject.toString();
     }
 
@@ -80,27 +77,26 @@ public final class TokenExchange {
                 }
             };
         } else {
-            return
-                    httpClient.callAsync(
-                            url,
-                            METHOD_POST,
-                            new HashMap<String, String>() {
-                                {
-                                    put(APP_SECRET_HEADER, appSecret);
-                                }
-                            },
-                            new HttpClient.CallTemplate() {
+            return httpClient.callAsync(
+                    url,
+                    METHOD_POST,
+                    new HashMap<String, String>() {
+                        {
+                            put(APP_SECRET_HEADER, appSecret);
+                        }
+                    },
+                    new HttpClient.CallTemplate() {
 
-                                @Override
-                                public String buildRequestBody() {
-                                    return buildAppCenterGetDbTokenBodyPayload(partition);
-                                }
+                        @Override
+                        public String buildRequestBody() {
+                            return buildAppCenterGetDbTokenBodyPayload(partition);
+                        }
 
-                                @Override
-                                public void onBeforeCalling(URL url, Map<String, String> headers) {
-                                }
-                            },
-                            serviceCallback);
+                        @Override
+                        public void onBeforeCalling(URL url, Map<String, String> headers) {
+                        }
+                    },
+                    serviceCallback);
         }
     }
 
@@ -108,14 +104,13 @@ public final class TokenExchange {
      * The service callback for get the token.
      */
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
+
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
             TokenResult tokenResult = parseTokenResult(payload);
-
             if (tokenResult == null) {
-                onCallFailed(
-                        new TokenExchangeException(
-                                "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload));
+                String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
+                onCallFailed(new TokenExchangeException(message));
             } else {
                 callCosmosDb(tokenResult);
             }
@@ -129,7 +124,6 @@ public final class TokenExchange {
 
         private TokenResult parseTokenResult(String payload) {
             TokensResponse tokensResponse = Utils.getGson().fromJson(payload, TokensResponse.class);
-
             if (tokensResponse != null &&
                     tokensResponse.tokens() != null &&
                     tokensResponse.tokens().size() == 1 &&
@@ -138,12 +132,11 @@ public final class TokenExchange {
                 TokenManager.getInstance().setCachedToken(tokenResult);
                 return tokenResult;
             }
-
             return null;
         }
 
         public abstract void completeFuture(Exception e);
 
-        public abstract void callCosmosDb(final TokenResult tokenResult);
+        public abstract void callCosmosDb(TokenResult tokenResult);
     }
 }

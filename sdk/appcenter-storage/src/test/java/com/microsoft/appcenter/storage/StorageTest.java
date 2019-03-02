@@ -3,7 +3,6 @@ package com.microsoft.appcenter.storage;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
@@ -28,6 +27,7 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +39,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -126,8 +127,8 @@ public class StorageTest extends AbstractStorageTest {
     public void setEnabled() {
         Storage.setEnabled(true);
 
-        verify(channel).removeGroup(eq(storage.getGroupName()));
-        verify(channel).addGroup(eq(storage.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(mChannel).removeGroup(eq(mStorage.getGroupName()));
+        verify(mChannel).addGroup(eq(mStorage.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Storage.isEnabled().get());
@@ -140,8 +141,8 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void disablePersisted() {
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
-        verify(channel, never()).removeListener(any(Channel.Listener.class));
-        verify(channel, never()).addListener(any(Channel.Listener.class));
+        verify(mChannel, never()).removeListener(any(Channel.Listener.class));
+        verify(mChannel, never()).addListener(any(Channel.Listener.class));
     }
 
     @Test
@@ -164,7 +165,7 @@ public class StorageTest extends AbstractStorageTest {
         final String expectedResponse = new Gson().toJson(
                 new Page<TestDocument>().withDocuments(documents)
         );
-        when(httpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -177,9 +178,9 @@ public class StorageTest extends AbstractStorageTest {
         PaginatedDocuments<TestDocument> docs = Storage.list(PARTITION, TestDocument.class).get();
 
         /* Verify the result correct. */
-        Assert.assertEquals(false, docs.hasNextPage());
-        Assert.assertEquals(1, docs.getCurrentPage().getItems().size());
-        Assert.assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
+        assertFalse(docs.hasNextPage());
+        assertEquals(1, docs.getCurrentPage().getItems().size());
+        assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
     }
 
     @Test
@@ -192,7 +193,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> firstPartDocuments = Arrays.asList(new Document<>(
+        List<Document<TestDocument>> firstPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test"),
                 PARTITION,
                 "document id",
@@ -202,7 +203,7 @@ public class StorageTest extends AbstractStorageTest {
         final String expectedFirstResponse = new Gson().toJson(
                 new Page<TestDocument>().withDocuments(firstPartDocuments)
         );
-        final List<Document<TestDocument>> secondPartDocuments = Arrays.asList(new Document<>(
+        final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test2"),
                 PARTITION,
                 "document id 2",
@@ -215,12 +216,12 @@ public class StorageTest extends AbstractStorageTest {
 
         final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
 
-        when(httpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>(){
+                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -232,11 +233,11 @@ public class StorageTest extends AbstractStorageTest {
 
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Storage.list(PARTITION, TestDocument.class).get();
-        Assert.assertEquals(true, docs.hasNextPage());
-        Assert.assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+        assertTrue(docs.hasNextPage());
+        assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
         Page<TestDocument> secondPage = docs.getNextPage().get();
-        Assert.assertEquals(false, docs.hasNextPage());
-        Assert.assertEquals(secondPage.getItems().get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+        assertFalse(docs.hasNextPage());
+        assertEquals(secondPage.getItems().get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
     }
 
     @Test
@@ -249,7 +250,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> firstPartDocuments = Arrays.asList(new Document<>(
+        List<Document<TestDocument>> firstPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test"),
                 PARTITION,
                 "document id",
@@ -259,7 +260,7 @@ public class StorageTest extends AbstractStorageTest {
         final String expectedFirstResponse = new Gson().toJson(
                 new Page<TestDocument>().withDocuments(firstPartDocuments)
         );
-        final List<Document<TestDocument>> secondPartDocuments = Arrays.asList(new Document<>(
+        final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test2"),
                 PARTITION,
                 "document id 2",
@@ -272,12 +273,12 @@ public class StorageTest extends AbstractStorageTest {
 
         final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
 
-        when(httpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>(){
+                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -293,9 +294,9 @@ public class StorageTest extends AbstractStorageTest {
         while (iterator.hasNext()) {
             documents.add(iterator.next());
         }
-        Assert.assertEquals(2, documents.size());
-        Assert.assertEquals(firstPartDocuments.get(0).getId(), documents.get(0).getId());
-        Assert.assertEquals(secondPartDocuments.get(0).getId(), documents.get(1).getId());
+        assertEquals(2, documents.size());
+        assertEquals(firstPartDocuments.get(0).getId(), documents.get(0).getId());
+        assertEquals(secondPartDocuments.get(0).getId(), documents.get(1).getId());
     }
 
     @Test
@@ -311,7 +312,7 @@ public class StorageTest extends AbstractStorageTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -327,7 +328,7 @@ public class StorageTest extends AbstractStorageTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
                 eq(METHOD_GET),
                 anyMapOf(String.class, String.class),
@@ -347,7 +348,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
         assertNotNull(testCosmosDocument.getEtag());
-        assertNotNull(testCosmosDocument.getTimestamp());
+        assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
@@ -360,7 +361,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -373,7 +374,7 @@ public class StorageTest extends AbstractStorageTest {
         /*
          *  No retries and Cosmos DB does not get called
          */
-        verifyNoMoreInteractions(httpClient);
+        verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
@@ -389,7 +390,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -403,7 +404,7 @@ public class StorageTest extends AbstractStorageTest {
         /*
          *  No retries and Cosmos DB does not get called
          */
-        verifyNoMoreInteractions(httpClient);
+        verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
@@ -419,7 +420,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -431,7 +432,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, null)),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -450,7 +451,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -462,7 +463,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(
+        verify(mHttpClient).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
                 eq(METHOD_DELETE),
                 anyMapOf(String.class, String.class),
@@ -477,16 +478,9 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void buildAppCenterGetDbTokenBodyPayload() {
-        final String expectedPayload = "{\"partitions\":[\"test\"]}";
+        String expectedPayload = "{\"partitions\":[\"test\"]}";
         String payload = TokenExchange.buildAppCenterGetDbTokenBodyPayload("test");
         assertEquals(expectedPayload, payload);
-
-        // This is for code coverage.
-        // These constructors must be called even though these classes are not going to be instantiated.
-        TokenExchange te = new TokenExchange();
-        CosmosDb cdb = new CosmosDb();
-        Utils utils = new Utils();
-        Utils.handleApiCallFailure(new HttpException(200, "b"));
     }
 
     @Test
@@ -512,7 +506,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void urlEncogingThrowsNonExistingEncoding() {
+    public void urlEncodingThrowsNonExistingEncoding() {
         CosmosDb.urlEncode("a string to encode", "An encoding that doesn't exist");
     }
 }

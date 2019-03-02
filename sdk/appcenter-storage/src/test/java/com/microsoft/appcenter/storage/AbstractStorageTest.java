@@ -59,11 +59,11 @@ abstract public class AbstractStorageTest {
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Mock
-    protected HttpClientRetryer httpClient;
+    protected HttpClientRetryer mHttpClient;
 
-    protected Channel channel;
+    Channel mChannel;
 
-    protected Storage storage;
+    Storage mStorage;
 
     @Before
     public void setUp() throws Exception {
@@ -111,11 +111,12 @@ abstract public class AbstractStorageTest {
         /* Mock file storage. */
         mockStatic(FileManager.class);
 
-        httpClient = Mockito.mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        mHttpClient = Mockito.mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
 
-        storage = Storage.getInstance();
+        mStorage = Storage.getInstance();
+
         /* Before start it does not work to change state, it's disabled. */
         Storage storage = Storage.getInstance();
         Storage.setEnabled(true);
@@ -123,15 +124,14 @@ abstract public class AbstractStorageTest {
         Storage.setEnabled(false);
         assertFalse(Storage.isEnabled().get());
 
-        channel = start(storage);
+        mChannel = start(storage);
     }
 
     @NonNull
-    protected Channel start(Storage storage) {
+    private Channel start(Storage storage) {
         Channel channel = Mockito.mock(Channel.class);
         storage.onStarting(mAppCenterHandler);
         storage.onStarted(Mockito.mock(Context.class), channel, "", null, true);
         return channel;
     }
-
 }

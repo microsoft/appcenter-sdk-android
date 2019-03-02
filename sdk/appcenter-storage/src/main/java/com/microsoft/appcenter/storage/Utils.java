@@ -16,15 +16,15 @@ import java.util.List;
 
 public final class Utils {
 
-    static final Gson sGson = new Gson();
+    private static final Gson sGson = new Gson();
 
-    static final JsonParser sParser = new JsonParser();
+    private static final JsonParser sParser = new JsonParser();
 
-    static synchronized <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
+    static <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
         return parseDocument(sParser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
     }
 
-    static synchronized <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
+    private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
         T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
         return new Document<T>(
                 document,
@@ -34,11 +34,12 @@ public final class Utils {
                 obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
     }
 
-    static synchronized <T> T fromJson(String doc, Class<T> type) {
+    @SuppressWarnings("SameParameterValue")
+    static <T> T fromJson(String doc, Class<T> type) {
         return sGson.fromJson(doc, type);
     }
 
-    public static synchronized <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
+    public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
         JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
         JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
         List<Document<T>> documents = new ArrayList<>();
@@ -51,7 +52,7 @@ public final class Utils {
     /**
      * Handle API call failure.
      *
-     * @param e Exception to display in the log
+     * @param e Exception to display in the log.
      */
     public static synchronized void handleApiCallFailure(Exception e) {
         AppCenterLog.error(Constants.LOG_TAG, "Failed to call App Center APIs", e);

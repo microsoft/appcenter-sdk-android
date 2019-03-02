@@ -31,9 +31,10 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 public class TokenTest extends AbstractStorageTest {
 
-    static final String fakePartitionName = "read-only";
+    private static final String FAKE_PARTITION_NAME = "read-only";
 
-    static final String fakeToken = "mock";
+    private static final String FAKE_TOKEN = "mock";
+
     @Mock
     HttpClient mHttpClient;
 
@@ -52,7 +53,7 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"status\": \"Succeed\"\n" +
                 "        }\n" +
                 "    ]\n" +
-                "}", fakePartitionName, fakeToken);
+                "}", FAKE_PARTITION_NAME, FAKE_TOKEN);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
@@ -67,10 +68,10 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Get and verify token. */
-        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
+        Assert.assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
     }
 
     @Test
@@ -79,17 +80,17 @@ public class TokenTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withExpirationTime(expirationDate.getTime()).withToken(fakeToken));
-        when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(FAKE_PARTITION_NAME).withExpirationTime(expirationDate.getTime()).withToken(FAKE_TOKEN));
+        when(SharedPreferencesManager.getString(FAKE_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
         /* Make the call. */
-        TokenExchange.getDbToken(fakePartitionName, null, null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, null, null, null, callBack);
 
         /* Verify the token values. */
-        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
+        Assert.assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
     }
 
     @Test
@@ -99,8 +100,8 @@ public class TokenTest extends AbstractStorageTest {
         String inValidToken = "invalid";
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, -1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(fakePartitionName).withExpirationTime(expirationDate.getTime()).withToken(inValidToken));
-        when(SharedPreferencesManager.getString(fakePartitionName)).thenReturn(tokenResult);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(FAKE_PARTITION_NAME).withExpirationTime(expirationDate.getTime()).withToken(inValidToken));
+        when(SharedPreferencesManager.getString(FAKE_PARTITION_NAME)).thenReturn(tokenResult);
         final String expectedResponse = String.format("{\n" +
                 "    \"tokens\": [\n" +
                 "        {\n" +
@@ -112,7 +113,7 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"status\": \"Succeed\"\n" +
                 "        }\n" +
                 "    ]\n" +
-                "}", fakePartitionName, fakeToken);
+                "}", FAKE_PARTITION_NAME, FAKE_TOKEN);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
@@ -127,9 +128,9 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(fakePartitionName, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Verify the token values. */
-        Assert.assertEquals(fakeToken, tokenResultCapture.getValue().token());
+        Assert.assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
     }
 }

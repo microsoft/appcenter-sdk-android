@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.storage.models;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
@@ -106,14 +108,15 @@ public class Document<T> {
      *
      * @return Serialized document.
      */
+    @NonNull
     @Override
     public String toString() {
         return Utils.getGson().toJson(this);
     }
 
     /*
-        When caching is supported:
-        Flag indicating if data was retrieved from the local cache (for offline mode)
-        public boolean isFromCache();
+     * When caching is supported:
+     * Flag indicating if data was retrieved from the local cache (for offline mode)
+     * public boolean isFromCache();
      */
 }

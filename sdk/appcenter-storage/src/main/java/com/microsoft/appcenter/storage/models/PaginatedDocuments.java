@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.storage.models;
 
+import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;
@@ -133,9 +135,10 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
         return result;
     }
 
+    @NonNull
     @Override
     public Iterator<Document<T>> iterator() {
-        Iterator<Document<T>> it = new Iterator<Document<T>>() {
+        return new Iterator<Document<T>>() {
 
             private int currentIndex = 0;
 
@@ -160,6 +163,5 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
                 throw new UnsupportedOperationException();
             }
         };
-        return it;
     }
 }

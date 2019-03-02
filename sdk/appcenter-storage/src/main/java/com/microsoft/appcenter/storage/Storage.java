@@ -44,11 +44,6 @@ public class Storage extends AbstractAppCenterService {
     private static Storage sInstance;
 
     /**
-     * Application context.
-     */
-    private Context mContext;
-
-    /**
      * Application secret.
      */
     private String mAppSecret;
@@ -85,7 +80,8 @@ public class Storage extends AbstractAppCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess", "unused"})
+    // TODO Remove suppress warnings after reflection removed in test app
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -153,7 +149,6 @@ public class Storage extends AbstractAppCenterService {
         return null;
     }
 
-
     /**
      * Implements {@link #setApiUrl(String)}}.
      */
@@ -163,8 +158,7 @@ public class Storage extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
-        mContext = context;
-        mHttpClient = createHttpClient(mContext);
+        mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
@@ -338,7 +332,7 @@ public class Storage extends AbstractAppCenterService {
                 null,
                 mHttpClient,
                 METHOD_POST,
-                new Document<T>(document, partition, documentId).toString(),
+                new Document<>(document, partition, documentId).toString(),
                 new ServiceCallback() {
 
                     @Override
