@@ -14,6 +14,7 @@ import java.util.Date;
  * Token fetch result.
  */
 public class TokenResult {
+
     /**
      * The partition property.
      */
