@@ -169,8 +169,6 @@ public class Storage extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
-    //region Read implementation
-
     /**
      * React to enable state change.
      *
@@ -193,16 +191,10 @@ public class Storage extends AbstractAppCenterService {
         return STORAGE_GROUP;
     }
 
-    //region Read implementation
-
     @Override
     public String getServiceName() {
         return SERVICE_NAME;
     }
-
-    //endregion
-
-    //region Create implementation
 
     @Override
     protected String getLoggerTag() {
@@ -270,7 +262,7 @@ public class Storage extends AbstractAppCenterService {
                 new TokenExchange.TokenExchangeServiceCallback() {
 
                     @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
+                    public void callCosmosDb(TokenResult tokenResult) {
                         callCosmosDbListApi(tokenResult, result, documentType);
                     }
 
@@ -334,10 +326,6 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    //endregion
-
-    //region Delete implementation
-
     private synchronized <T> void callCosmosDbCreateApi(
             final TokenResult tokenResult,
             T document,
@@ -364,10 +352,6 @@ public class Storage extends AbstractAppCenterService {
                     }
                 });
     }
-
-    //endregion
-
-    //region Replace implementation
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
@@ -409,10 +393,6 @@ public class Storage extends AbstractAppCenterService {
                 });
     }
 
-    //endregion
-
-    //region Private utility methods
-
     private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture result, TokenExchange.TokenExchangeServiceCallback callback) {
         TokenResult tokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (tokenResult != null) {
@@ -450,6 +430,4 @@ public class Storage extends AbstractAppCenterService {
         future.complete(new PaginatedDocuments<T>());
         mPendingCalls.remove(future);
     }
-
-    //endregion
 }
