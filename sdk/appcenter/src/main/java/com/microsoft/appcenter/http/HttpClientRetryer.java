@@ -102,7 +102,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
                     }
                 }
 
-                if(delay == 0){
+                if (delay == 0) {
                     delay = RETRY_INTERVALS[mRetryCount++] / 2;
                     delay += mRandom.nextInt((int) delay);
                 }
