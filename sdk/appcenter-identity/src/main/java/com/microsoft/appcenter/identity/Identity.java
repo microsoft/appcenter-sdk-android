@@ -310,7 +310,7 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         boolean configurationValid = initAuthenticationClient(payload);
         if (configurationValid && mSignInDelayed) {
-            HandlerUtils.runOnUiThread(new Runnable() {
+            postOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
