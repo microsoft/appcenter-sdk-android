@@ -13,14 +13,13 @@ public class Page<T> {
     @SerializedName(value = Constants.DOCUMENTS_FILED_NAME)
     private List<Document<T>> documents;
 
-    private DocumentError documentError;
+    private DocumentError error;
 
     public Page() {
-
     }
 
     public Page(Exception exception) {
-        this.documentError = new DocumentError(exception);
+        this.error = new DocumentError(exception);
     }
 
     /**
@@ -41,6 +40,6 @@ public class Page<T> {
      * @return DocumentError.
      */
     public DocumentError getError() {
-        return documentError;
+        return error;
     }
 }

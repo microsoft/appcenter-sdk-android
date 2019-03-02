@@ -107,9 +107,8 @@ public final class CosmosDb {
             String continuationToken,
             HttpClient httpClient,
             ServiceCallback serviceCallback) {
-
         Map<String, String> headers = generateDefaultHeaders(tokenResult.partition(), tokenResult.token());
-        if (continuationToken != null){
+        if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
         return callApi(
@@ -127,7 +126,7 @@ public final class CosmosDb {
             String documentId,
             HttpClient httpClient,
             String httpVerb,
-            final String body,
+            String body,
             ServiceCallback serviceCallback) {
         return callApi(
                 httpVerb,

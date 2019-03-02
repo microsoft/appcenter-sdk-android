@@ -125,7 +125,7 @@ public class Storage extends AbstractAppCenterService {
      * List (need optional signature to configure page size).
      * The document type (T) must be JSON deserializable.
      */
-    public static  <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
+    public static <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
         return getInstance().instanceList(partition, documentType);
     }
 
@@ -218,8 +218,9 @@ public class Storage extends AbstractAppCenterService {
                 partition,
                 result,
                 new TokenExchange.TokenExchangeServiceCallback() {
+
                     @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
+                    public void callCosmosDb(TokenResult tokenResult) {
                         callCosmosDbReadApi(tokenResult, documentId, documentType, result);
                     }
 

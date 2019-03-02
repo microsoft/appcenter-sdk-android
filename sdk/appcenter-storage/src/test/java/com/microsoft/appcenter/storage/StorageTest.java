@@ -297,7 +297,7 @@ public class StorageTest extends AbstractStorageTest {
         Assert.assertEquals(firstPartDocuments.get(0).getId(), documents.get(0).getId());
         Assert.assertEquals(secondPartDocuments.get(0).getId(), documents.get(1).getId());
     }
-    
+
     @Test
     public void replaceEndToEnd() {
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));

@@ -128,6 +128,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
     @Override
     public Iterator<Document<T>> iterator() {
         Iterator<Document<T>> it = new Iterator<Document<T>>() {
+
             private int currentIndex = 0;
 
             @Override

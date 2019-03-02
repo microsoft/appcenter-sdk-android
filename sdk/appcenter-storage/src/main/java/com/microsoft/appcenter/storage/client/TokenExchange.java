@@ -128,7 +128,7 @@ public final class TokenExchange {
         }
 
         private TokenResult parseTokenResult(String payload) {
-            TokensResponse tokensResponse = Utils.sGson.fromJson(payload, TokensResponse.class);
+            TokensResponse tokensResponse = Utils.getGson().fromJson(payload, TokensResponse.class);
 
             if (tokensResponse != null &&
                     tokensResponse.tokens() != null &&

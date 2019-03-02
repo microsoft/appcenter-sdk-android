@@ -16,12 +16,12 @@ import java.util.List;
 
 public final class Utils {
 
-    public static final Gson sGson = new Gson();
+    static final Gson sGson = new Gson();
 
-    public static final JsonParser parser = new JsonParser();
+    static final JsonParser sParser = new JsonParser();
 
     static synchronized <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
-        return parseDocument(parser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
+        return parseDocument(sParser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
     }
 
     static synchronized <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
@@ -39,7 +39,7 @@ public final class Utils {
     }
 
     public static synchronized <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
-        JsonObject objects = parser.parse(cosmosDbPayload).getAsJsonObject();
+        JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
         JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
         List<Document<T>> documents = new ArrayList<>();
         for (JsonElement object: array) {
@@ -61,5 +61,9 @@ public final class Utils {
                 AppCenterLog.error(Constants.LOG_TAG, "Exception", httpException);
             }
         }
+    }
+
+    public static Gson getGson() {
+        return sGson;
     }
 }
