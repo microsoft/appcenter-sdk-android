@@ -42,4 +42,9 @@ public final class Constants {
      * Writes are not allowed via the SDK.
      */
     public static String READONLY = "readonly";
+
+    /**
+     * The continuation token header used to set continuation token.
+     */
+    public static String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";
 }

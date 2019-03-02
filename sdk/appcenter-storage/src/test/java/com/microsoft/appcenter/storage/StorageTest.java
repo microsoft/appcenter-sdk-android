@@ -1,8 +1,10 @@
 package com.microsoft.appcenter.storage;
 
+import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -11,6 +13,7 @@ import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -19,9 +22,17 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
@@ -36,9 +47,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,6 +102,7 @@ public class StorageTest extends AbstractStorageTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
+
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
@@ -131,10 +145,159 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void listEndToEnd() {
-        AppCenterFuture<PaginatedDocuments<TestDocument>> docs = Storage.list(PARTITION, TestDocument.class);
+    public void listEndToEndWhenSinglePage() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<Document<TestDocument>> documents = Arrays.asList(new Document<>(
+                new TestDocument("Test"),
+                PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(documents)
+        );
+        when(httpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> docs = Storage.list(PARTITION, TestDocument.class).get();
+
+        /* Verify the result correct. */
+        Assert.assertEquals(false, docs.hasNextPage());
+        Assert.assertEquals(1, docs.getCurrentPage().getItems().size());
+        Assert.assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
     }
 
+    @Test
+    public void listEndToEndWhenMultiplePages() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<Document<TestDocument>> firstPartDocuments = Arrays.asList(new Document<>(
+                new TestDocument("Test"),
+                PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedFirstResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(firstPartDocuments)
+        );
+        final List<Document<TestDocument>> secondPartDocuments = Arrays.asList(new Document<>(
+                new TestDocument("Test2"),
+                PARTITION,
+                "document id 2",
+                "e tag 2",
+                1
+        ));
+        final String expectedSecondResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(secondPartDocuments)
+        );
+
+        final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+
+        when(httpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>(){
+                    {
+                        put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
+                    }
+                };
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> docs = Storage.list(PARTITION, TestDocument.class).get();
+        Assert.assertEquals(true, docs.hasNextPage());
+        Assert.assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+        Page<TestDocument> secondPage = docs.getNextPage().get();
+        Assert.assertEquals(false, docs.hasNextPage());
+        Assert.assertEquals(secondPage.getItems().get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+    }
+
+    @Test
+    public void listEndToEndWhenUseIterators() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<Document<TestDocument>> firstPartDocuments = Arrays.asList(new Document<>(
+                new TestDocument("Test"),
+                PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedFirstResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(firstPartDocuments)
+        );
+        final List<Document<TestDocument>> secondPartDocuments = Arrays.asList(new Document<>(
+                new TestDocument("Test2"),
+                PARTITION,
+                "document id 2",
+                "e tag 2",
+                1
+        ));
+        final String expectedSecondResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(secondPartDocuments)
+        );
+
+        final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+
+        when(httpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>(){
+                    {
+                        put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
+                    }
+                };
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        Iterator<Document<TestDocument>> iterator = Storage.list(PARTITION, TestDocument.class).get().iterator();
+        List<Document<TestDocument>> documents = new ArrayList<>();
+        while (iterator.hasNext()) {
+            documents.add(iterator.next());
+        }
+        Assert.assertEquals(2, documents.size());
+        Assert.assertEquals(firstPartDocuments.get(0).getId(), documents.get(0).getId());
+        Assert.assertEquals(secondPartDocuments.get(0).getId(), documents.get(1).getId());
+    }
+    
     @Test
     public void replaceEndToEnd() {
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));

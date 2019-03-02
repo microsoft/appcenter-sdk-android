@@ -126,7 +126,7 @@ public class Storage extends AbstractAppCenterService {
      * The document type (T) must be JSON deserializable.
      */
     public static  <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
-        return getInstance().list(partition, documentType);
+        return getInstance().instanceList(partition, documentType);
     }
 
     /**
@@ -297,7 +297,8 @@ public class Storage extends AbstractAppCenterService {
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .withCurrentPage(page).withTokenResult(tokenResult)
                                 .withHttpClient(mHttpClient)
-                                .withContinuationToken(headers.get("x-ms-continuation"));
+                                .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
+                                .withDocumentType(documentType);
                          completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
                     }
 

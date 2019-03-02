@@ -3,6 +3,7 @@ package com.microsoft.appcenter.storage.client;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.models.TokenResult;
 
 import java.net.URL;
@@ -109,7 +110,7 @@ public final class CosmosDb {
 
         Map<String, String> headers = generateDefaultHeaders(tokenResult.partition(), tokenResult.token());
         if (continuationToken != null){
-            headers.put("x-ms-continuation", continuationToken);
+            headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
         return callApi(
                 METHOD_GET,

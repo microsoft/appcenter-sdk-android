@@ -2,6 +2,7 @@ package com.microsoft.appcenter.storage.models;
 
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -109,7 +110,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
                         public void onCallSucceeded(String payload, Map<String, String> headers) {
                             Page<T> page = Utils.parseDocuments(payload, documentType);
                             currentPage = page;
-                            continuationToken = headers.get("x-ms-continuation");
+                            continuationToken = headers.get(Constants.CONTINUATION_TOKEN_HEADER);
                             result.complete(page);
                         }
 
