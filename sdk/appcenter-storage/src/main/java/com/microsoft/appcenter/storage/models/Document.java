@@ -108,7 +108,7 @@ public class Document<T> {
      */
     @Override
     public String toString() {
-        return Utils.sGson.toJson(this);
+        return Utils.getGson().toJson(this);
     }
 
     /*
