@@ -38,7 +38,7 @@ public class TokenManager {
      *
      * @return Set of cached tokens' partition name.
      */
-    public Set<String> getPartitionNames() {
+    private Set<String> getPartitionNames() {
         Set<String> partitionNames = SharedPreferencesManager.getStringSet(Constants.PARTITION_NAMES);
         return partitionNames == null ? new HashSet<String>() : partitionNames;
     }
@@ -50,7 +50,7 @@ public class TokenManager {
      * @return Cached token.
      */
     public TokenResult getCachedToken(String partitionName) {
-        TokenResult token = Utils.sGson.fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
+        TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
         if (token != null) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
@@ -74,7 +74,7 @@ public class TokenManager {
             partitionNamesSet.add(tokenResult.partition());
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(tokenResult.partition(), Utils.sGson.toJson(tokenResult));
+        SharedPreferencesManager.putString(tokenResult.partition(), Utils.getGson().toJson(tokenResult));
     }
 
     /**
@@ -82,7 +82,7 @@ public class TokenManager {
      *
      * @param partitionName The partition name used to access the token.
      */
-    public synchronized void removeCachedToken(String partitionName) {
+    private synchronized void removeCachedToken(String partitionName) {
         Set<String> partitionNamesSet = getPartitionNames();
         partitionNamesSet.remove(partitionName);
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);

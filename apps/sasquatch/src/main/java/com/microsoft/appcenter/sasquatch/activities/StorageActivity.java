@@ -11,7 +11,9 @@ import java.lang.reflect.InvocationTargetException;
 
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
-class TestDocument{
+class TestDocument {
+
+    @SuppressWarnings("unused")
     String test = "ABC";
 }
 
@@ -24,30 +26,30 @@ public class StorageActivity extends AppCompatActivity {
 
         /* TODO remove reflection once Storage published to jCenter. */
         try {
-            final Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
+            Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
             createDocument(storage);
             readDocument(storage);
             deleteDocument(storage);
-        }catch (Exception ignore) {
-            Log.e(LOG_TAG, "Storage.Module call failed", ignore);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Storage.Module call failed", e);
         }
     }
 
     private void deleteDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         storage
-            .getMethod("delete", String.class, String.class)
-            .invoke(null, "test-partition", "document-id-123");
+                .getMethod("delete", String.class, String.class)
+                .invoke(null, "test-partition", "document-id-123");
     }
 
     private void readDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         storage
-            .getMethod("read", String.class, String.class, Class.class)
-            .invoke(null, "test-partition-other", "document-id-123", TestDocument.class);
+                .getMethod("read", String.class, String.class, Class.class)
+                .invoke(null, "test-partition-other", "document-id-123", TestDocument.class);
     }
 
     private void createDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         storage
-            .getMethod("create", String.class, String.class, Object.class, Class.class)
-            .invoke(null, "test-partition", "document-id-123", new TestDocument(), TestDocument.class);
+                .getMethod("create", String.class, String.class, Object.class, Class.class)
+                .invoke(null, "test-partition", "document-id-123", new TestDocument(), TestDocument.class);
     }
 }
