@@ -13,6 +13,9 @@ public class Page<T> {
     @SerializedName(value = Constants.DOCUMENTS_FILED_NAME)
     private List<Document<T>> documents;
 
+    /**
+     * Document error.
+     */
     private DocumentError error;
 
     public Page() {
@@ -24,6 +27,7 @@ public class Page<T> {
 
     /**
      * Return the documents in the page.
+     *
      * @return Documents in current page.
      */
     public List<Document<T>> getItems() {
@@ -31,12 +35,13 @@ public class Page<T> {
     }
 
     public Page<T> withDocuments(List<Document<T>> documents) {
-        this.documents =documents;
+        this.documents = documents;
         return this;
     }
 
     /**
      * Get the error if failed to retrieve the page from document db.
+     *
      * @return DocumentError.
      */
     public DocumentError getError() {
