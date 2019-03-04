@@ -51,7 +51,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         /* TODO remove reflection once Identity published to jCenter. */
         try {
             final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
-            featureList.add(new TestFeatures.TestFeature(R.string.b2c_login_title, R.string.b2c_login_description, new View.OnClickListener() {
+            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
 
                 /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
                 @SuppressWarnings("unchecked")
@@ -86,6 +86,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }));
             featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
 
+                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
                 @SuppressWarnings("unchecked")
                 @Override
                 public void onClick(View v) {

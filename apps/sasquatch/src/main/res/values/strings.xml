@@ -74,10 +74,10 @@
     <string name="msa_compact_description" tools:ignore="MissingTranslation">One collector userId from MSA whitelisted.</string>
     <string name="msa_delegate_title" tools:ignore="MissingTranslation">MSA delegate ticket</string>
     <string name="msa_delegate_description" tools:ignore="MissingTranslation">One collector userId from MSA third-party.</string>
-    <string name="b2c_login_title" tools:ignore="MissingTranslation">Azure B2C ticket</string>
-    <string name="b2c_login_description" tools:ignore="MissingTranslation">For Identity module in App Center.</string>
+    <string name="b2c_sign_in_title" tools:ignore="MissingTranslation">Azure B2C ticket</string>
+    <string name="b2c_sign_in_description" tools:ignore="MissingTranslation">For Identity module in App Center.</string>
     <string name="b2c_sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
-    <string name="b2c_sign_out_description" tools:ignore="MissionTranslation">For Identity module in App Center.</string>
+    <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Identity module in App Center.</string>
     <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
     <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>
     <string name="size_in_bytes" tools:ignore="MissingTranslation">Size in bytes</string>
