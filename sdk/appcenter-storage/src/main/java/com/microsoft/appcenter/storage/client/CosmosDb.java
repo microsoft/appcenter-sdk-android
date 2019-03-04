@@ -80,7 +80,6 @@ public final class CosmosDb {
         headers.put("x-ms-date", nowAsRFC1123());
         headers.put("Content-Type", "application/json");
         headers.put("Authorization", urlEncode(dbToken));
-
         return headers;
     }
 
