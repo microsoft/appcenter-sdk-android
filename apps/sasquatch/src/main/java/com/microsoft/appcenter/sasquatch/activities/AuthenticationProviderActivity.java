@@ -84,6 +84,18 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                     }
                 }
             }));
+            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
+
+                @SuppressWarnings("unchecked")
+                @Override
+                public void onClick(View v) {
+                    try {
+                        identity.getMethod("signOut").invoke(null);
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "Identity.signOut failed", e);
+                    }
+                }
+            }));
         } catch (ClassNotFoundException ignore) {
         }
         ListView listView = findViewById(R.id.list);
