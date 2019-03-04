@@ -472,7 +472,7 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    getInstance().post(new Runnable() {
+                    post(new Runnable() {
 
                         @Override
                         public void run() {
