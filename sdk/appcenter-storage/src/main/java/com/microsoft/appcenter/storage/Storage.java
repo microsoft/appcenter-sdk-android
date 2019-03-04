@@ -131,7 +131,7 @@ public class Storage extends AbstractAppCenterService {
      */
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
         AppCenterLog.debug(LOG_TAG, "Create started");
-        return getInstance().instanceCreate(partition, documentId, document, documentType);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType);
     }
 
     /**
@@ -145,8 +145,13 @@ public class Storage extends AbstractAppCenterService {
      * Replace a document.
      * The document instance (T) must be JSON serializable.
      */
-    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document) {
-        return null;
+    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
+        
+         /* 
+          * In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT).
+         */
+        AppCenterLog.debug(LOG_TAG, "Replace started");
+        return Storage.create(partition, documentId, document, documentType);
     }
 
     /**
@@ -300,7 +305,7 @@ public class Storage extends AbstractAppCenterService {
      * Create a document.
      * The document type (T) must be JSON deserializable.
      */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreate(final String partition, final String documentId, final T document, final Class<T> documentType) {
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(final String partition, final String documentId, final T document, final Class<T> documentType) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
@@ -309,7 +314,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbCreateApi(tokenResult, document, documentType, partition, documentId, result);
+                        callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, result);
                     }
 
                     @Override
@@ -320,7 +325,7 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    private synchronized <T> void callCosmosDbCreateApi(
+    private synchronized <T> void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             T document,
             final Class<T> documentType,
@@ -333,6 +338,7 @@ public class Storage extends AbstractAppCenterService {
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
+                new HashMap<String, String>(){{put("x-ms-documentdb-is-upsert","true");}},
                 new ServiceCallback() {
 
                     @Override
