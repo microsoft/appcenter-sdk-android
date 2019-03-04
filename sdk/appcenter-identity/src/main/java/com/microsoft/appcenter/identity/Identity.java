@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.identity;
 
-import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -21,7 +20,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -322,28 +320,7 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         boolean configurationValid = initAuthenticationClient(payload);
         if (configurationValid && mSignInDelayed) {
-
-            IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
-            if (account != null) {
-                boolean silentSignInFailed = silentSignIn(account);
-                if (silentSignInFailed) {
-                    postOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            signInFromUI();
-                        }
-                    });
-                }
-            } else {
-                postOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        signInFromUI();
-                    }
-                });
-            }
+            selectSignInTypeAndSignIn();
         }
     }
 
@@ -441,30 +418,10 @@ public class Identity extends AbstractAppCenterService {
         };
         post(new Runnable() {
 
-			@Override
-			public void run() {
-                IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
-        		if (account != null) {
-            		boolean silentSignInFailed = silentSignIn(account);
-            		if (silentSignInFailed) {
-             		    postOnUiThread(new Runnable() {
-
-               		   		@Override
-               		    	public void run() {
-                        		signInFromUI();
-                    		}
-                		});
-					}
-				}
+            @Override
+            public void run() {
+                selectSignInTypeAndSignIn();
             }
-        } else {
-            postOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    signInFromUI();
-                }
-            });
         }, disabledRunnable, disabledRunnable);
         return future;
     }
@@ -580,12 +537,17 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private IAccount retrieveAccount(String id) {
-        if (id == null || mAuthenticationClient == null) {
+        if (id == null) {
+            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: user id null.");
+            return null;
+        }
+        if (mAuthenticationClient == null) {
+            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: authentication client not initialized.");
             return null;
         }
         IAccount account = mAuthenticationClient.getAccount(id, null);
         if (account == null) {
-            AppCenterLog.warn(LOG_TAG, String.format("\"Could not get MSALAccount for homeAccountId: %s", id));
+            AppCenterLog.warn(LOG_TAG, String.format("Cannot retrieve account: account id is null or missing: %s.", id));
         }
         return account;
     }
@@ -594,6 +556,30 @@ public class Identity extends AbstractAppCenterService {
         if (mPendingSignInFuture != null) {
             mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
             mPendingSignInFuture = null;
+        }
+    }
+
+    private void selectSignInTypeAndSignIn() {
+        IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
+        if (account != null) {
+            boolean silentSignInFailed = silentSignIn(account);
+            if (silentSignInFailed) {
+                postOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        signInFromUI();
+                    }
+                });
+            }
+        } else {
+            postOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    signInFromUI();
+                }
+            });
         }
     }
 
