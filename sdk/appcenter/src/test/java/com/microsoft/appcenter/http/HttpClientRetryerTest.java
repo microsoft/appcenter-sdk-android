@@ -9,6 +9,12 @@ import org.mockito.stubbing.Answer;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -43,6 +49,17 @@ public class HttpClientRetryerTest {
                 long interval = (Long) argument;
                 long retryInterval = HttpClientRetryer.RETRY_INTERVALS[retryIndex];
                 return interval >= retryInterval / 2 && interval <= retryInterval;
+            }
+        }));
+    }
+
+    private static void verifyDelayFromHeader(Handler handler, final long retryAfter) {
+        verify(handler).postDelayed(any(Runnable.class), longThat(new ArgumentMatcher<Long>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                long interval = (Long) argument;
+                return interval == retryAfter;
             }
         }));
     }
@@ -151,6 +168,47 @@ public class HttpClientRetryerTest {
         verify(callback).onCallFailed(new HttpException(408));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
+    }
+
+    @Test
+    public void delayUsingRetryHeader() {
+
+        /* Mock httpException onCallFailed with the HTTP Code 429 (Too many Requests) and the x-ms-retry-after-ms header set. */
+        long retryAfterMS = 1234;
+        Map<String, String> responseHeader = new HashMap<>();
+        responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
+        responseHeader.put(RETRY_AFTER_MS_KEY, Long.toString(retryAfterMS));
+        final HttpException expectedException = new HttpException(429, "call hit the retry limit", responseHeader);
+
+        final ServiceCallback callback = mock(ServiceCallback.class);
+        HttpClient httpClient = mock(HttpClient.class);
+        doAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(expectedException);
+                return mock(ServiceCall.class);
+            }
+        }).doAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocationOnMock) {
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("mockSuccessPayload", null);
+                return mock(ServiceCall.class);
+            }
+        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        Handler handler = mock(Handler.class);
+        HttpClient retryer = new HttpClientRetryer(httpClient, handler);
+        simulateRetryAfterDelay(handler);
+
+        /* Make the call. */
+        retryer.callAsync(null, null, null, null, callback);
+
+        /* Verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
+        verifyDelayFromHeader(handler, retryAfterMS);
+        verifyNoMoreInteractions(handler);
+        verify(callback).onCallSucceeded("mockSuccessPayload", null);
+        verifyNoMoreInteractions(callback);
     }
 
     @Test

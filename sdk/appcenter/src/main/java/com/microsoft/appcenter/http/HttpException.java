@@ -4,6 +4,9 @@ import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * HTTP exception.
@@ -19,6 +22,11 @@ public class HttpException extends IOException {
      * HTTP payload.
      */
     private final String payload;
+
+    /**
+     * HTTP headers.
+     */
+    private final Map<String, String> headers;
 
     /**
      * Init with empty response body.
@@ -37,9 +45,22 @@ public class HttpException extends IOException {
      */
     @SuppressWarnings("WeakerAccess")
     public HttpException(int status, @NonNull String payload) {
+        this(status, payload, new HashMap<String, String>());
+    }
+
+    /**
+     * Init.
+     *
+     * @param status  HTTP status code.
+     * @param payload HTTP payload.
+     * @param headers HTTP responseHeaders.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public HttpException(int status, @NonNull String payload, @NonNull Map<String, String> headers) {
         super(getDetailMessage(status, payload));
         this.payload = payload;
         this.statusCode = status;
+        this.headers = headers;
     }
 
     @NonNull
@@ -71,6 +92,17 @@ public class HttpException extends IOException {
         return payload;
     }
 
+    /**
+     * Get the HTTP headers (response headers).
+     *
+     * @return HTTP headers.
+     */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -80,13 +112,15 @@ public class HttpException extends IOException {
             return false;
         }
         HttpException that = (HttpException) o;
-        return statusCode == that.statusCode && payload.equals(that.payload);
+
+        return (statusCode == that.statusCode && payload.equals(that.payload) && headers.equals(that.headers));
     }
 
     @Override
     public int hashCode() {
         int result = statusCode;
         result = 31 * result + payload.hashCode();
+        result = 31 * result + headers.hashCode();
         return result;
     }
 }

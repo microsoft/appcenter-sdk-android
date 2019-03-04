@@ -15,6 +15,7 @@ import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
  * Token fetch result.
  */
 public class TokenResult {
+
     /**
      * The partition property.
      */

@@ -3,6 +3,7 @@ package com.microsoft.appcenter.storage.client;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.models.TokenResult;
 
 import java.net.URL;
@@ -14,31 +15,31 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+
 public final class CosmosDb {
+
+    /**
+     * Document DB document URL suffix.
+     * TODO use it or remove.
+     */
+    static final String DOCUMENT_DB_DOCUMENT_URL_SUFFIX = "docs/%s";
     /**
      * Document DB base endpoint
      */
-    static final String DOCUMENT_DB_ENDPOINT = "https://%s.documents.azure.com";
-
+    private static final String DOCUMENT_DB_ENDPOINT = "https://%s.documents.azure.com";
     /**
      * Document DB database URL suffix
      */
-    static final String DOCUMENT_DB_DATABASE_URL_SUFFIX = "dbs/%s";
-
+    private static final String DOCUMENT_DB_DATABASE_URL_SUFFIX = "dbs/%s";
     /**
      * Document DB collection URL suffix
      */
-    static final String DOCUMENT_DB_COLLECTION_URL_SUFFIX = "colls/%s";
-
+    private static final String DOCUMENT_DB_COLLECTION_URL_SUFFIX = "colls/%s";
     /**
      * Document DB document URL suffix
      */
-    static final String DOCUMENT_DB_DOCUMENT_URL_PREFIX = "docs";
-
-    /**
-     * Document DB document URL suffix
-     */
-    static final String DOCUMENT_DB_DOCUMENT_URL_SUFFIX = "docs/%s";
+    private static final String DOCUMENT_DB_DOCUMENT_URL_PREFIX = "docs";
 
     /**
      * Document DB authorization header format
@@ -52,13 +53,13 @@ public final class CosmosDb {
      *
      * @return an instance of String
      */
-    public static String nowAsRFC1123() {
+    private static String nowAsRFC1123() {
         SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
         formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
         return formatter.format(new Date()).toLowerCase();
     }
 
-    public static String urlEncode(String url) {
+    private static String urlEncode(String url) {
         return urlEncode(url, "UTF-8");
     }
 
@@ -83,7 +84,7 @@ public final class CosmosDb {
         return headers;
     }
 
-    public static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
+    private static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
         return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
                 documentResourceId;
     }
@@ -95,11 +96,30 @@ public final class CosmosDb {
                 DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
     }
 
-    public static String GetDocumentUrl(TokenResult tokenResult, String documentId) {
-        final String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
+    private static String getDocumentUrl(TokenResult tokenResult, String documentId) {
+        String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
         return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
     }
 
+    public static synchronized void callCosmosDbListApi(
+            TokenResult tokenResult,
+            String continuationToken,
+            HttpClient httpClient,
+            ServiceCallback serviceCallback) {
+        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.partition(), tokenResult.token());
+        if (continuationToken != null) {
+            headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
+        }
+        callApi(
+                METHOD_GET,
+                getDocumentUrl(tokenResult, null),
+                headers,
+                null,
+                httpClient,
+                serviceCallback
+        );
+    }
+	
     public static synchronized <T> ServiceCall callCosmosDbApi(
         TokenResult tokenResult,
         String documentId,
@@ -109,31 +129,46 @@ public final class CosmosDb {
         ServiceCallback serviceCallback) {
         return callCosmosDbApi(tokenResult, documentId, httpClient, httpVerb, body, new HashMap<String, String>(), serviceCallback);
     }
-
-    public static synchronized <T> ServiceCall callCosmosDbApi(
+	
+    public static ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
-            final String body,
+            String body,
             Map<String,String> additionalHeaders,
             ServiceCallback serviceCallback) {
-        return
-                httpClient.callAsync(
-                        GetDocumentUrl(tokenResult, documentId),
-                        httpVerb,
-                        addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
-                        new HttpClient.CallTemplate() {
+        return callApi(
+                httpVerb,
+                getDocumentUrl(tokenResult, documentId),
+                addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
+                body,
+                httpClient,
+                serviceCallback);
+    }
 
-                            @Override
-                            public String buildRequestBody() {
-                                return body;
-                            }
+    private static ServiceCall callApi(
+            String httpVerb,
+            String url,
+            Map<String, String> headers,
+            final String body,
+            HttpClient httpClient,
+            ServiceCallback serviceCallback) {
+        return httpClient.callAsync(
+                url,
+                httpVerb,
+                headers,
+                new HttpClient.CallTemplate() {
 
-                            @Override
-                            public void onBeforeCalling(URL url, Map<String, String> headers) {
-                            }
-                        },
-                        serviceCallback);
+                    @Override
+                    public String buildRequestBody() {
+                        return body;
+                    }
+
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) {
+                    }
+                },
+                serviceCallback);
     }
 }
