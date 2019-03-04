@@ -310,23 +310,31 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
         boolean configurationValid = initAuthenticationClient(payload);
         if (configurationValid && mSignInDelayed) {
-            postOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
-                    IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
-                    if (account != null) {
-                        boolean silentSignInFailed = silentSignIn(account);
-                        if (silentSignInFailed) {
+            IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
+            if (account != null) {
+                boolean silentSignInFailed = silentSignIn(account);
+                if (silentSignInFailed) {
+                    postOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
                             signInFromUI();
                         }
-                    } else {
+                    });
+                }
+            } else {
+                postOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
                         signInFromUI();
                     }
-                }
-            });
+                });
+            }
         }
     }
+
 
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
@@ -407,22 +415,27 @@ public class Identity extends AbstractAppCenterService {
 
     private void instanceSignIn() {
 
-        //TODO we don't want to do silent on UI thread, how do we separate them?
-        postOnUiThread(new Runnable() {
+        IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
+        if (account != null) {
+            boolean silentSignInFailed = silentSignIn(account);
+            if (silentSignInFailed) {
+                postOnUiThread(new Runnable() {
 
-            @Override
-            public void run() {
-                IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
-                if (account != null) {
-                    boolean silentSignInFailed = silentSignIn(account);
-                    if (silentSignInFailed) {
+                    @Override
+                    public void run() {
                         signInFromUI();
                     }
-                } else {
+                });
+            }
+        } else {
+            postOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
                     signInFromUI();
                 }
-            }
-        });
+            });
+        }
     }
 
     private synchronized void instanceSignOut() {
@@ -531,7 +544,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private IAccount retrieveAccount(String id) {
-        if (id == null) {
+        if (id == null || mAuthenticationClient == null) {
             return null;
         }
         IAccount account = mAuthenticationClient.getAccount(id, null);
