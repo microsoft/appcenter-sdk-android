@@ -148,8 +148,7 @@ public class Storage extends AbstractAppCenterService {
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
         
          /* 
-            In the current version we do not support E-tag optimistic concurrency logic and `replace` will call
-            Create (POST) operation instead of Replace (PUT)
+          * In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT).
          */
         AppCenterLog.debug(LOG_TAG, "Replace started");
         return Storage.create(partition, documentId, document, documentType);

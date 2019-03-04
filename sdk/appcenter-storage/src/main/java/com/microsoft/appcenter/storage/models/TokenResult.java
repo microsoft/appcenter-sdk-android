@@ -86,7 +86,7 @@ public class TokenResult {
             AppCenterLog.error(
                     LOG_TAG, String.format(
                             "Unable to convert '%s' to ISO 8601 Date format ",
-                            this.expiresOn));
+                            expiresOn));
             return new Date(0);
         }
     }
