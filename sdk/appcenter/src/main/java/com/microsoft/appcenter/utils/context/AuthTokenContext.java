@@ -27,7 +27,7 @@ public class AuthTokenContext {
     private String mAuthToken;
 
     /**
-     * Current value of account id.
+     * Current value of home account id.
      */
     private String mLastHomeAccountId;
 
@@ -100,11 +100,11 @@ public class AuthTokenContext {
     /**
      * Check whether the user is new.
      *
-     * @param newAccountId account id of the logged in user.
-     * @return true if this user is not the same as previous, false otehrwise.
+     * @param newHomeAccountId account id of the logged in user.
+     * @return true if this user is not the same as previous, false otherwise.
      */
-    private synchronized boolean isNewUser(String newAccountId) {
-        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newAccountId);
+    private synchronized boolean isNewUser(String newHomeAccountId) {
+        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newHomeAccountId);
     }
 
     /**

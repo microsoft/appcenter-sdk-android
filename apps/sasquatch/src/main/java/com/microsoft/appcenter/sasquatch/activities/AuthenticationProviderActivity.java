@@ -12,7 +12,10 @@ import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,14 +51,49 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         /* TODO remove reflection once Identity published to jCenter. */
         try {
             final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
-            featureList.add(new TestFeatures.TestFeature(R.string.b2c_login_title, R.string.b2c_login_description, new View.OnClickListener() {
+            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
 
+                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
+                @SuppressWarnings("unchecked")
                 @Override
                 public void onClick(View v) {
                     try {
-                        identity.getMethod("signIn").invoke(null);
+                        AppCenterFuture<Object> future = (AppCenterFuture<Object>) identity.getMethod("signIn").invoke(null);
+                        future.thenAccept(new AppCenterConsumer<Object>() {
+
+                            @Override
+                            public void accept(Object signInResult) {
+                                try {
+                                    Class<?> signInResultClass = signInResult.getClass();
+                                    Method getException = signInResultClass.getMethod("getException");
+                                    Exception exception = (Exception) getException.invoke(signInResult);
+                                    if (exception != null) {
+                                        throw exception;
+                                    }
+                                    Method getUserInformation = signInResultClass.getMethod("getUserInformation");
+                                    Object userInformation = getUserInformation.invoke(signInResult);
+                                    String accountId = (String) userInformation.getClass().getMethod("getAccountId").invoke(userInformation);
+                                    Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
+                                } catch (Exception e) {
+                                    Log.e(LOG_TAG, "Identity.signIn failed", e);
+                                }
+                            }
+                        });
                     } catch (Exception e) {
                         Log.e(LOG_TAG, "Identity.signIn failed", e);
+                    }
+                }
+            }));
+            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
+
+                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
+                @SuppressWarnings("unchecked")
+                @Override
+                public void onClick(View v) {
+                    try {
+                        identity.getMethod("signOut").invoke(null);
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, "Identity.signOut failed", e);
                     }
                 }
             }));

@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -127,15 +126,17 @@ abstract public class AbstractIdentityTest {
         PowerMockito.when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mPreferenceTokenStorage);
     }
 
-    IAuthenticationResult mockAuthResult(String mockIdToken, String mockAccountId) {
-        IAuthenticationResult mockResult = Mockito.mock(IAuthenticationResult.class);
-        when(mockResult.getAccessToken()).thenReturn("token");
-        when(mockResult.getIdToken()).thenReturn(mockIdToken);
-        IAccount mockAccount = Mockito.mock(IAccount.class);
-        IAccountIdentifier mockIdentifier = Mockito.mock(IAccountIdentifier.class);
-        when(mockIdentifier.getIdentifier()).thenReturn(mockAccountId);
-        when(mockAccount.getHomeAccountIdentifier()).thenReturn(mockIdentifier);
-        when(mockResult.getAccount()).thenReturn(mockAccount);
+    IAuthenticationResult mockAuthResult(String idToken, String accountId, String homeAccountId) {
+        IAuthenticationResult mockResult = mock(IAuthenticationResult.class);
+        when(mockResult.getIdToken()).thenReturn(idToken);
+        IAccount account = mock(IAccount.class);
+        IAccountIdentifier homeAccountIdentifier = mock(IAccountIdentifier.class);
+        when(homeAccountIdentifier.getIdentifier()).thenReturn(homeAccountId);
+        when(account.getHomeAccountIdentifier()).thenReturn(homeAccountIdentifier);
+        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
+        when(accountIdentifier.getIdentifier()).thenReturn(accountId);
+        when(account.getAccountIdentifier()).thenReturn(accountIdentifier);
+        when(mockResult.getAccount()).thenReturn(account);
         return mockResult;
     }
 }
