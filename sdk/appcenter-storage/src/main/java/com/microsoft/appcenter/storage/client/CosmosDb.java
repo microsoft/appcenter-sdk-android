@@ -71,14 +71,16 @@ public final class CosmosDb {
         }
     }
 
-    public static Map<String, String> generateDefaultHeaders(final String partition, final String dbToken) {
-        return new HashMap<String, String>() {{
-            put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
-            put("x-ms-version", "2018-06-18");
-            put("x-ms-date", nowAsRFC1123());
-            put("Content-Type", "application/json");
-            put("Authorization", urlEncode(dbToken));
-        }};
+    public static Map<String, String> addRequiredHeaders(
+            Map<String, String> headers,
+            String partition,
+            String dbToken) {
+        headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
+        headers.put("x-ms-version", "2018-06-18");
+        headers.put("x-ms-date", nowAsRFC1123());
+        headers.put("Content-Type", "application/json");
+        headers.put("Authorization", urlEncode(dbToken));
+        return headers;
     }
 
     private static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
@@ -103,7 +105,7 @@ public final class CosmosDb {
             String continuationToken,
             HttpClient httpClient,
             ServiceCallback serviceCallback) {
-        Map<String, String> headers = generateDefaultHeaders(tokenResult.partition(), tokenResult.token());
+        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.partition(), tokenResult.token());
         if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
@@ -116,18 +118,29 @@ public final class CosmosDb {
                 serviceCallback
         );
     }
-
+	
+    public static synchronized <T> ServiceCall callCosmosDbApi(
+        TokenResult tokenResult,
+        String documentId,
+        HttpClient httpClient,
+        String httpVerb,
+        final String body,
+        ServiceCallback serviceCallback) {
+        return callCosmosDbApi(tokenResult, documentId, httpClient, httpVerb, body, new HashMap<String, String>(), serviceCallback);
+    }
+	
     public static ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             String body,
+            Map<String,String> additionalHeaders,
             ServiceCallback serviceCallback) {
         return callApi(
                 httpVerb,
                 getDocumentUrl(tokenResult, documentId),
-                generateDefaultHeaders(tokenResult.partition(), tokenResult.token()),
+                addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
                 body,
                 httpClient,
                 serviceCallback);

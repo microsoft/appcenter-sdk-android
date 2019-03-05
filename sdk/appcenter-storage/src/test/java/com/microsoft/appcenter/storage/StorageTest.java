@@ -301,7 +301,51 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void replaceEndToEnd() {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE));
+
+        /* Mock http call to get token. */
+        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+
+        /* Make the call. */
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, null)),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallSucceeded(cosmosDbDocumentResponsePayload, new HashMap<String, String>());
+
+        /* Get and verify token. */
+        assertNotNull(doc);
+
+        Document<TestDocument> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertEquals(PARTITION, testCosmosDocument.getPartition());
+        assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
+        assertNull(testCosmosDocument.getError());
+        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getTimestamp());
+
+        TestDocument testDocument = testCosmosDocument.getDocument();
+        assertNotNull(testDocument);
+        assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
 
     @Test
@@ -442,7 +486,19 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(cosmosDbDocumentResponsePayload, new HashMap<String, String>());
 
-        // TODO: assert doc result
+        assertNotNull(doc);
+
+        Document<TestDocument> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertEquals(PARTITION, testCosmosDocument.getPartition());
+        assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
+        assertNull(testCosmosDocument.getError());
+        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getTimestamp());
+
+        TestDocument testDocument = testCosmosDocument.getDocument();
+        assertNotNull(testDocument);
+        assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
 
     @Test
@@ -501,8 +557,19 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void generateHeaders() {
-        Map<String, String> headers = CosmosDb.generateDefaultHeaders(PARTITION, "token");
+        Map<String, String> headers = CosmosDb.addRequiredHeaders(new HashMap<String, String>(), PARTITION, "token");
         assertEquals(5, headers.size());
+    }
+
+    @Test
+    public void generateAdditionalHeaders() {
+        Map<String, String> headers =
+                CosmosDb.addRequiredHeaders(
+                        new HashMap<String, String>() {{ put("extra", "header"); }},
+                        PARTITION,
+                        "token");
+        assertEquals(6, headers.size());
+        assertTrue(headers.containsKey("extra") && headers.get("extra").equals("header"));
     }
 
     @Test(expected = IllegalArgumentException.class)
