@@ -14,6 +14,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -33,6 +34,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -73,11 +76,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest(AuthTokenContext.class)
+@PrepareForTest({AuthTokenContext.class, NetworkStateHelper.class})
 public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
@@ -420,6 +424,29 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Then nothing happens, we are delayed. */
         assertTrue(identity.isSignInDelayed());
+    }
+
+    @Test
+    public void testDoNotDelaySignInWhenNoInternet() throws Exception {
+
+        /* Mock no network and identity. */
+        mockStatic(NetworkStateHelper.class);
+        NetworkStateHelper networkStateHelper = Mockito.mock(NetworkStateHelper.class, new Returns(true));
+        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(networkStateHelper);
+        when(networkStateHelper.isNetworkConnected()).thenReturn(false);
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Mock background. */
+        identity.onActivityPaused(mock(Activity.class));
+
+        /* If we sign in. */
+        Identity.signIn();
+
+        /* Then nothing happens, we are not delayed. */
+        assertFalse(identity.isSignInDelayed());
     }
 
     @Test

@@ -20,6 +20,7 @@ import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -500,7 +501,9 @@ public class Identity extends AbstractAppCenterService {
             });
         } else {
             AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
-            mSignInDelayed = true;
+            if (NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+                mSignInDelayed = true;
+            }
         }
     }
 
