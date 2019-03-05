@@ -431,7 +431,7 @@ public class Identity extends AbstractAppCenterService {
             @Override
             public void run() {
                 if (mTokenStorage.getToken() == null) {
-                    AppCenterLog.error(LOG_TAG, "Cannot sign out because not signed in.");
+                    AppCenterLog.warn(LOG_TAG, "Cannot sign out because a user has not signed in.");
                     return;
                 }
                 removeTokenAndAccount();
