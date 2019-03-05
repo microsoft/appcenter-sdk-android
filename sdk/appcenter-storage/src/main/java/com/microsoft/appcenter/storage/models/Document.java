@@ -28,6 +28,8 @@ public class Document<T> {
 
     private transient DocumentError documentError;
 
+    private transient boolean mIsFromCache;
+
     public Document() {
     }
 
@@ -114,9 +116,14 @@ public class Document<T> {
         return Utils.getGson().toJson(this);
     }
 
-    /*
-     * When caching is supported:
+    /**
      * Flag indicating if data was retrieved from the local cache (for offline mode)
-     * public boolean isFromCache();
      */
+    public boolean isFromCache() {
+        return mIsFromCache;
+    }
+
+    public void setIsFromCache(boolean isFromCache) {
+        this.mIsFromCache = isFromCache;
+    }
 }

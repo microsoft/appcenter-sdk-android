@@ -12,10 +12,13 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -113,8 +116,21 @@ public class Storage extends AbstractAppCenterService {
      * The document type (T) must be JSON deserializable.
      */
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType) {
-        AppCenterLog.debug(LOG_TAG, "Read started");
-        return getInstance().instanceRead(partition, documentId, documentType);
+        return read(partition, documentId, documentType, new ReadOptions());
+    }
+
+    /**
+     * Read a document.
+     * The document type (T) must be JSON deserializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+        Document<T> cachedDocument = DocumentCache.read(partition, documentId, documentType, readOptions);
+        if (cachedDocument != null) {
+            DefaultAppCenterFuture<Document<T>> cachedDocumentFuture = new DefaultAppCenterFuture<>();
+            cachedDocumentFuture.complete(cachedDocument);
+            return cachedDocumentFuture;
+        }
+        return getInstance().instanceRead(partition, documentId, documentType, readOptions);
     }
 
     /**
@@ -130,7 +146,6 @@ public class Storage extends AbstractAppCenterService {
      * The document instance (T) must be JSON serializable.
      */
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
-        AppCenterLog.debug(LOG_TAG, "Create started");
         return getInstance().instanceCreate(partition, documentId, document, documentType);
     }
 
@@ -198,12 +213,13 @@ public class Storage extends AbstractAppCenterService {
     private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
             final String partition,
             final String documentId,
-            final Class<T> documentType) {
+            final Class<T> documentType,
+            final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback() {
 
                     @Override
                     public void callCosmosDb(TokenResult tokenResult) {
@@ -253,7 +269,7 @@ public class Storage extends AbstractAppCenterService {
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback() {
 
                     @Override
                     public void callCosmosDb(TokenResult tokenResult) {
@@ -286,7 +302,7 @@ public class Storage extends AbstractAppCenterService {
                                 .withHttpClient(mHttpClient)
                                 .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .withDocumentType(documentType);
-                        completeFutureAndRemovePendingCallWhenDocuments(paginatedDocuments, result);
+                        completeFutureAndRemovePendingCall(paginatedDocuments, result);
                     }
 
                     @Override
@@ -305,7 +321,7 @@ public class Storage extends AbstractAppCenterService {
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback() {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
@@ -337,7 +353,10 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.parseDocument(payload, documentType), result);
+                        Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
+                        completeFutureAndRemovePendingCall(cosmosDbDocument, result);
+                        // TODO: discuss how to decide between read and write expiration options
+                        DocumentCache.write(cosmosDbDocument, null);
                     }
 
                     @Override
@@ -352,7 +371,7 @@ public class Storage extends AbstractAppCenterService {
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback() {
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
                         callCosmosDbDeleteApi(tokenResult, documentId, result);
@@ -366,7 +385,7 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
-    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
+    private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
         CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -378,6 +397,7 @@ public class Storage extends AbstractAppCenterService {
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<Void>(), result);
+                        DocumentCache.delete(tokenResult.partition(), documentId);
                     }
 
                     @Override
@@ -387,10 +407,13 @@ public class Storage extends AbstractAppCenterService {
                 });
     }
 
-    private synchronized <T> void getTokenAndCallCosmosDbApi(String partition, DefaultAppCenterFuture result, TokenExchange.TokenExchangeServiceCallback callback) {
-        TokenResult tokenResult = TokenManager.getInstance().getCachedToken(partition);
-        if (tokenResult != null) {
-            callback.callCosmosDb(tokenResult);
+    private synchronized <T> void getTokenAndCallCosmosDbApi(
+            String partition,
+            DefaultAppCenterFuture result,
+            TokenExchangeServiceCallback callback) {
+        TokenResult cachedTokenResult = TokenManager.getInstance().getCachedToken(partition);
+        if (cachedTokenResult != null) {
+            callback.callCosmosDb(cachedTokenResult);
         } else {
             ServiceCall tokenExchangeServiceCall =
                     TokenExchange.getDbToken(
@@ -403,7 +426,7 @@ public class Storage extends AbstractAppCenterService {
         }
     }
 
-    private synchronized <T> void completeFutureAndRemovePendingCall(Document<T> value, DefaultAppCenterFuture<Document<T>> result) {
+    private synchronized <FT> void completeFutureAndRemovePendingCall(FT value, DefaultAppCenterFuture<FT> result) {
         result.complete(value);
         mPendingCalls.remove(result);
     }
@@ -414,10 +437,6 @@ public class Storage extends AbstractAppCenterService {
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(PaginatedDocuments<T> value, DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
-        result.complete(value);
-        mPendingCalls.remove(result);
-    }
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.handleApiCallFailure(e);
