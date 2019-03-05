@@ -489,6 +489,7 @@ public class StorageTest extends AbstractStorageTest {
         for (int i = 0; i < 10; i++) {
             partitionNames.add("partitionName " + i);
         }
+        partitionNames.add(Constants.READONLY);
         when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
         AuthTokenContext.getInstance().clearToken();

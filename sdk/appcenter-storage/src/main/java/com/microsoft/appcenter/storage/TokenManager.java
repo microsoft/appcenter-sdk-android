@@ -96,6 +96,9 @@ public class TokenManager {
     public synchronized void removeAllCachedTokens() {
         Set<String> partitionNamesSet = getPartitionNames();
         for (String partitionName : partitionNamesSet) {
+            if (partitionName.equals(Constants.READONLY)) {
+                continue;
+            }
             SharedPreferencesManager.remove(partitionName);
         }
         partitionNamesSet.clear();
