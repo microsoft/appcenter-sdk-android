@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
@@ -62,7 +63,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Current network state.
      */
-    private boolean mConnected;
+    private final AtomicBoolean mConnected = new AtomicBoolean();
 
     /**
      * Init.
@@ -70,7 +71,7 @@ public class NetworkStateHelper implements Closeable {
      * @param context any Android context.
      */
     @VisibleForTesting
-    NetworkStateHelper(Context context) {
+    public NetworkStateHelper(Context context) {
         mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         reopen();
@@ -134,7 +135,7 @@ public class NetworkStateHelper implements Closeable {
             AppCenterLog.error(LOG_TAG, "Cannot access network state information.", e);
 
             /* We should try to send the data, even if we can't get the current network state. */
-            mConnected = true;
+            mConnected.set(true);
         }
     }
 
@@ -149,8 +150,8 @@ public class NetworkStateHelper implements Closeable {
      *
      * @return true for connected, false for disconnected.
      */
-    public synchronized boolean isNetworkConnected() {
-        return mConnected || isAnyNetworkConnected();
+    public boolean isNetworkConnected() {
+        return mConnected.get() || isAnyNetworkConnected();
     }
 
     /**
@@ -190,8 +191,7 @@ public class NetworkStateHelper implements Closeable {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private synchronized void onNetworkAvailable(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network "+ network + " is available.");
-        if (!mConnected) {
-            mConnected = true;
+        if (mConnected.compareAndSet(false, true)) {
             notifyNetworkStateUpdated(true);
         }
     }
@@ -205,8 +205,7 @@ public class NetworkStateHelper implements Closeable {
         Network[] networks = mConnectivityManager.getAllNetworks();
         boolean noNetwork = networks == null || networks.length == 0 ||
                 Arrays.equals(networks, new Network[] { network });
-        if (mConnected && noNetwork) {
-            mConnected = false;
+        if (noNetwork && mConnected.compareAndSet(true, false)) {
             notifyNetworkStateUpdated(false);
         }
     }
@@ -216,8 +215,7 @@ public class NetworkStateHelper implements Closeable {
      */
     private synchronized void handleNetworkStateUpdate() {
         boolean connected = isAnyNetworkConnected();
-        if (connected != mConnected) {
-            mConnected = connected;
+        if (mConnected.compareAndSet(!connected, connected)) {
             notifyNetworkStateUpdated(connected);
         }
     }
@@ -236,7 +234,7 @@ public class NetworkStateHelper implements Closeable {
 
     @Override
     public synchronized void close() {
-        mConnected = false;
+        mConnected.set(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         } else {
