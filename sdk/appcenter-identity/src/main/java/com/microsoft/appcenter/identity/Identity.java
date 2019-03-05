@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
@@ -20,6 +19,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -88,6 +87,11 @@ public class Identity extends AbstractAppCenterService {
     private PublicClientApplication mAuthenticationClient;
 
     /**
+     * Authority url for the authentication client.
+     */
+    private String mAuthorityUrl;
+
+    /**
      * Scope we need to use when acquiring user ID tokens.
      */
     private String mIdentityScope;
@@ -116,11 +120,6 @@ public class Identity extends AbstractAppCenterService {
      * Instance of {@link AuthTokenStorage} to store token information.
      */
     private AuthTokenStorage mTokenStorage;
-
-    /**
-     * True if silent sign-in failed.
-     */
-    private boolean mSilentSignInFailed;
 
     /**
      * Get shared instance.
@@ -243,7 +242,7 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
         if (mSignInDelayed) {
-            signInFromUI();
+            signInInteractively();
         }
     }
 
@@ -364,6 +363,7 @@ public class Identity extends AbstractAppCenterService {
 
                 /* The remaining validation is done by the library. */
                 mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
+                mAuthorityUrl = authorityUrl;
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
                 return true;
@@ -435,99 +435,71 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
     }
 
-    private void removeAccount(final String homeAccountIdentifier) {
-        if (mAuthenticationClient == null || homeAccountIdentifier == null) {
+    private void removeAccount(String homeAccountIdentifier) {
+        if (mAuthenticationClient == null) {
             return;
         }
-        mAuthenticationClient.getAccounts(new PublicClientApplication.AccountsLoadedListener() {
-
-            @Override
-            public void onAccountsLoaded(final List<IAccount> accounts) {
-                post(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        for (IAccount account : accounts) {
-                            if (account.getHomeAccountIdentifier().getIdentifier().equals(homeAccountIdentifier)) {
-                                mAuthenticationClient.removeAccount(account);
-                            }
-                        }
-                    }
-                });
-            }
-        });
+        IAccount account = retrieveAccount(homeAccountIdentifier);
+        if (account != null) {
+            boolean result = mAuthenticationClient.removeAccount(account);
+            AppCenterLog.debug(LOG_TAG, String.format("Remove account success=%s", result));
+        }
     }
 
-    private boolean silentSignIn(@Nullable IAccount account) {
-        AppCenterLog.info(LOG_TAG, "Login silently in the background.");
-        mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
+    @WorkerThread
+    private IAccount retrieveAccount(String id) {
+        if (id == null) {
+            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: user id null.");
+            return null;
+        }
+        IAccount account = mAuthenticationClient.getAccount(id, mAuthorityUrl);
+        if (account == null) {
+            AppCenterLog.warn(LOG_TAG, String.format("Cannot retrieve account: account id is null or missing: %s.", id));
+        }
+        return account;
+    }
 
-            @Override
-            public void onSuccess(final IAuthenticationResult authenticationResult) {
-                AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                getInstance().post(new Runnable() {
+    @WorkerThread
+    private synchronized void selectSignInTypeAndSignIn() {
+        if (mAuthenticationClient == null) {
+            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured, waiting.");
+            mSignInDelayed = true;
+            return;
+        }
+        IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
+        if (account != null) {
+            silentSignIn(account);
+        } else {
+            HandlerUtils.runOnUiThread(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        IAccount account = authenticationResult.getAccount();
-                        mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
-                        mSilentSignInFailed = false;
-                    }
-                });
-            }
-
-            @Override
-            public void onError(MsalException exception) {
-                if (exception instanceof MsalUiRequiredException) {
-                    AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
-                } else {
-                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                @Override
+                public void run() {
+                    signInInteractively();
                 }
-                mSilentSignInFailed = true;
-            }
-
-            @Override
-            public void onCancel() {
-                AppCenterLog.warn(LOG_TAG, "Silent sign-in canceled.");
-                mSilentSignInFailed = false;
-            }
-        });
-        return mSilentSignInFailed;
+            });
+        }
     }
 
     @UiThread
-    private synchronized void signInFromUI() {
-        if (mAuthenticationClient != null && mActivity != null) {
+    private synchronized void signInInteractively() {
+        if (mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
-                public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    getInstance().post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            IAccount account = authenticationResult.getAccount();
-                            String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
-                            mTokenStorage.saveToken(authenticationResult.getIdToken(), homeAccountId);
-                            String accountId = account.getAccountIdentifier().getIdentifier();
-                            AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                            completeSignIn(new UserInformation(accountId), null);
-                        }
-                    });
+                public void onSuccess(IAuthenticationResult authenticationResult) {
+                    handleSignInSuccess(authenticationResult);
                 }
 
                 @Override
                 public void onError(MsalException exception) {
-                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
-                    completeSignIn(null, exception);
+                    handleSignInError(exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
-                    completeSignIn(null, new CancellationException("User cancelled sign-in."));
+                    handleSignInCancellation();
                 }
             });
         } else {
@@ -536,50 +508,67 @@ public class Identity extends AbstractAppCenterService {
         }
     }
 
-    private IAccount retrieveAccount(String id) {
-        if (id == null) {
-            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: user id null.");
-            return null;
-        }
-        if (mAuthenticationClient == null) {
-            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: authentication client not initialized.");
-            return null;
-        }
-        IAccount account = mAuthenticationClient.getAccount(id, null);
-        if (account == null) {
-            AppCenterLog.warn(LOG_TAG, String.format("Cannot retrieve account: account id is null or missing: %s.", id));
-        }
-        return account;
+    private synchronized void silentSignIn(@NonNull IAccount account) {
+        AppCenterLog.info(LOG_TAG, "Login silently in the background.");
+        mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
+
+            @Override
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                handleSignInSuccess(authenticationResult);
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                if (exception instanceof MsalUiRequiredException) {
+                    AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
+                    postOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            signInInteractively();
+                        }
+                    });
+                } else {
+                    handleSignInError(exception);
+                }
+            }
+
+            @Override
+            public void onCancel() {
+                handleSignInCancellation();
+            }
+        });
+    }
+
+    private void handleSignInSuccess(final IAuthenticationResult authenticationResult) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                IAccount account = authenticationResult.getAccount();
+                String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
+                mTokenStorage.saveToken(authenticationResult.getIdToken(), homeAccountId);
+                String accountId = account.getAccountIdentifier().getIdentifier();
+                AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
+                completeSignIn(new UserInformation(accountId), null);
+            }
+        });
+    }
+
+    private void handleSignInError(MsalException exception) {
+        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+        completeSignIn(null, exception);
+    }
+
+    private void handleSignInCancellation() {
+        AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+        completeSignIn(null, new CancellationException("User cancelled sign-in."));
     }
 
     private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
         if (mPendingSignInFuture != null) {
             mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
             mPendingSignInFuture = null;
-        }
-    }
-
-    private void selectSignInTypeAndSignIn() {
-        IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
-        if (account != null) {
-            boolean silentSignInFailed = silentSignIn(account);
-            if (silentSignInFailed) {
-                postOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        signInFromUI();
-                    }
-                });
-            }
-        } else {
-            postOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    signInFromUI();
-                }
-            });
         }
     }
 
