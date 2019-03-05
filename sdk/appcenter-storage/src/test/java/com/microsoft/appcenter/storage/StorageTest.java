@@ -635,7 +635,6 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteTokenExchangeCallFails() {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
-
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
         verify(mHttpClient).callAsync(
