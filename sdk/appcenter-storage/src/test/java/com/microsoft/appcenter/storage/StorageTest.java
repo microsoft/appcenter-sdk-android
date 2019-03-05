@@ -358,7 +358,7 @@ public class StorageTest extends AbstractStorageTest {
         tokenExchangeServiceCallback.onCallFailed(new Exception(exceptionMessage));
 
         /*
-         *  No retries and Cosmos DB does not get called
+         *  No retries and Cosmos DB does not get called.
          */
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(documents);
@@ -486,7 +486,7 @@ public class StorageTest extends AbstractStorageTest {
         tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeFailedResponsePayload, new HashMap<String, String>());
 
         /*
-         *  No retries and Cosmos DB does not get called
+         *  No retries and Cosmos DB does not get called.
          */
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
@@ -516,7 +516,7 @@ public class StorageTest extends AbstractStorageTest {
         tokenExchangeServiceCallback.onCallFailed(new Exception(exceptionMessage));
 
         /*
-         *  No retries and Cosmos DB does not get called
+         *  No retries and Cosmos DB does not get called.
          */
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
@@ -589,7 +589,7 @@ public class StorageTest extends AbstractStorageTest {
         tokenExchangeServiceCallback.onCallFailed(new Exception(exceptionMessage));
 
         /*
-         *  No retries and Cosmos DB does not get called
+         *  No retries and Cosmos DB does not get called.
          */
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
@@ -628,8 +628,9 @@ public class StorageTest extends AbstractStorageTest {
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
-
-        // TODO: assert error is null and document is null
+        assertNotNull(doc.get());
+        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getError());
     }
 
     @Test
@@ -649,7 +650,7 @@ public class StorageTest extends AbstractStorageTest {
         tokenExchangeServiceCallback.onCallFailed(new Exception(exceptionMessage));
 
         /*
-         *  No retries and Cosmos DB does not get called
+         *  No retries and Cosmos DB does not get called.
          */
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
