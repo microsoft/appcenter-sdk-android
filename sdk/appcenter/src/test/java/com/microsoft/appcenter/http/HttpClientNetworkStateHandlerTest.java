@@ -1,22 +1,30 @@
 package com.microsoft.appcenter.http;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkRequest;
+import android.os.Build;
+
+import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -219,5 +227,62 @@ public class HttpClientNetworkStateHandlerTest {
         /* Close. */
         decorator.close();
         verify(httpClient).close();
+    }
+
+    @Test(timeout=3000)
+    public void changeNetworkConnectionDuringCallWithoutDeadlock() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
+
+        /* Create mocks. */
+        Context context = mock(Context.class);
+        ConnectivityManager connectivityManager = mock(ConnectivityManager.class);
+        when(context.getApplicationContext()).thenReturn(context);
+        when(context.getSystemService(Context.CONNECTIVITY_SERVICE)).thenReturn(connectivityManager);
+        HttpClient httpClient = mock(HttpClient.class);
+
+        /* Create test objects. */
+        final CountDownLatch latch = new CountDownLatch(1);
+        final NetworkStateHelper networkStateHelper = spy(new NetworkStateHelper(context));
+        when(networkStateHelper.isNetworkConnected()).thenAnswer(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
+                latch.await();
+                return (Boolean)invocation.callRealMethod();
+            }
+        });
+        networkStateHelper.addListener(new NetworkStateHelper.Listener() {
+
+            @Override
+            public void onNetworkStateUpdated(boolean connected) {
+                latch.countDown();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+        final HttpClientNetworkStateHandler decorator = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
+
+        /* Run some operation with another thread. */
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                String url = "http://mock/call";
+                decorator.callAsync(url, METHOD_GET, null, null, null);
+            }
+        });
+        thread.start();
+        Thread.sleep(100);
+
+        /* Simulate network lost event. */
+        ArgumentCaptor<ConnectivityManager.NetworkCallback> callback = ArgumentCaptor.forClass(ConnectivityManager.NetworkCallback.class);
+        verify(connectivityManager).registerNetworkCallback(any(NetworkRequest.class), callback.capture());
+        callback.getValue().onAvailable(mock(Network.class));
+
+        /* Clear the state. */
+        thread.interrupt();
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }
