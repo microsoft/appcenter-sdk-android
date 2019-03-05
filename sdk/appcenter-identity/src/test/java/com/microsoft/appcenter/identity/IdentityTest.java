@@ -338,13 +338,12 @@ public class IdentityTest extends AbstractIdentityTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
-//        when(mockAccount.getHomeAccountIdentifier().getIdentifier()).thenReturn(mockHomeAccountId);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
 
         /* Mock http and start identity service. */
         HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
@@ -489,8 +488,8 @@ public class IdentityTest extends AbstractIdentityTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
         doAnswer(new Answer<Void>() {
 
@@ -536,7 +535,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -544,7 +543,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
     }
 
     @Test
@@ -562,8 +561,8 @@ public class IdentityTest extends AbstractIdentityTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(null);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(null);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
         doAnswer(new Answer<Void>() {
 
@@ -600,7 +599,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
     }
 
     @Test
@@ -619,8 +618,8 @@ public class IdentityTest extends AbstractIdentityTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
         doAnswer(new Answer<Void>() {
 
@@ -666,7 +665,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -674,82 +673,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class), any(String.class),
                 eq(true), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-    }
-
-    @Test
-    public void downloadConfigurationThenForegroundThenSignInThenFailSilentSignIn() throws Exception {
-
-        /* Mock JSON. */
-        JSONObject jsonConfig = mockValidForAppCenterConfig();
-
-        /* Mock authentication lib. */
-        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
-        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        Activity activity = mock(Activity.class);
-        IAccount mockAccount = mock(IAccount.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
-
-        /* First time do interactive by returning empty cache then return saved token. */
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
-        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
-                return null;
-            }
-        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onError(new MsalClientException("error"));
-                return null;
-            }
-        }).when(publicClientApplication).acquireTokenSilentAsync(
-                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
-
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
-        Identity identity = Identity.getInstance();
-        start(identity);
-
-        /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
-
-        /* Verify configuration caching attempted. */
-        verifyStatic();
-        String configPayload = jsonConfig.toString();
-        FileManager.write(notNull(File.class), eq(configPayload));
-
-        /* Go foreground. */
-        identity.onActivityResumed(activity);
-        assertFalse(identity.isSignInDelayed());
-
-        /* Sign in, will work now. */
-        Identity.signIn();
-
-        /* Verify signIn still delayed in background. */
-        assertFalse(identity.isSignInDelayed());
-
-        /* Verify interactions. */
-        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
-
-        /* Call signIn again to trigger silent sign-in. */
-        Identity.signIn();
-
-        /* Verify interactions - should fail silent and fallback to interactive sign-in. */
-        verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
-                any(String.class), eq(true), notNull(AuthenticationCallback.class));
-        verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
     }
 
     @Test
@@ -768,8 +692,8 @@ public class IdentityTest extends AbstractIdentityTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
 
         /* Always return empty cache. */
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockAccountId);
-        when(publicClientApplication.getAccount(mockAccountId, null)).thenReturn(mockAccount);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
         doAnswer(new Answer<Void>() {
 
@@ -815,7 +739,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -824,7 +748,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockAccountId));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
@@ -1112,20 +1036,23 @@ public class IdentityTest extends AbstractIdentityTest {
         when(file.exists()).thenReturn(true);
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
+
+        /* Mock MSAL client. */
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
         /* Check removing account */
         Identity identity = Identity.getInstance();
         start(identity);
-        String identifier = UUIDUtils.randomUUID().toString();
-        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(identifier);
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
         final List<IAccount> accountsList = new ArrayList<>();
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
-        when(accountIdentifier.getIdentifier()).thenReturn(identifier);
+        when(accountIdentifier.getIdentifier()).thenReturn(mockHomeAccountId);
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(account);
         accountsList.add(account);
         doAnswer(new Answer<Void>() {
 
