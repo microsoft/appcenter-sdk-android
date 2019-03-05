@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.identity;
 
+import android.accounts.NetworkErrorException;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -443,9 +444,12 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityPaused(mock(Activity.class));
 
         /* If we sign in. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
-        /* Then nothing happens, we are not delayed. */
+        /* Check result. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof NetworkErrorException);
+        assertNull(future.get().getUserInformation());
         assertFalse(identity.isSignInDelayed());
     }
 

@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.identity;
 
+import android.accounts.NetworkErrorException;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -503,6 +504,8 @@ public class Identity extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
             if (NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
                 mSignInDelayed = true;
+            } else {
+                completeSignIn(null, new NetworkErrorException("Sign in failed. No internet connection."));
             }
         }
     }
