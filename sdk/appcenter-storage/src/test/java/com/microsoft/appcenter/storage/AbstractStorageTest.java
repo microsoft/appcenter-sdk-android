@@ -18,6 +18,7 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -25,6 +26,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
@@ -37,7 +42,6 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({
         Storage.class,
         SystemClock.class,
@@ -51,6 +55,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     AppCenterHandler mAppCenterHandler;
@@ -123,8 +130,8 @@ abstract public class AbstractStorageTest {
         assertFalse(Storage.isEnabled().get());
         Storage.setEnabled(false);
         assertFalse(Storage.isEnabled().get());
-
         mChannel = start(storage);
+        Storage.setApiUrl("default");
     }
 
     @NonNull

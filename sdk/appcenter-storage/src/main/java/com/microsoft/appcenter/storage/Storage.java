@@ -421,7 +421,7 @@ public class Storage extends AbstractAppCenterService {
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.handleApiCallFailure(e);
-        future.complete(new PaginatedDocuments<T>());
+        future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
         mPendingCalls.remove(future);
     }
 }
