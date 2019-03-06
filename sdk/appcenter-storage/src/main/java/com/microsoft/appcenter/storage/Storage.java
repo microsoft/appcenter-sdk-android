@@ -22,6 +22,8 @@ import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,6 +63,11 @@ public class Storage extends AbstractAppCenterService {
     private HttpClient mHttpClient;
 
     private DocumentCache mDocumentCache;
+
+    /**
+     * Authorization listener for {@link AuthTokenContext}.
+     */
+    private AuthTokenContext.Listener mAuthListener;
 
     /**
      * Get shared instance.
@@ -177,6 +184,15 @@ public class Storage extends AbstractAppCenterService {
         mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
         mDocumentCache = new DocumentCache(context);
+        mAuthListener = new AbstractTokenContextListener() {
+            
+            @Override
+            public void onNewUser(String authToken) {
+                if (authToken == null) {
+                    TokenManager.getInstance().removeAllCachedTokens();
+                }
+            }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -188,11 +204,13 @@ public class Storage extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            AuthTokenContext.getInstance().addListener(mAuthListener);
         } else {
             for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call : mPendingCalls.entrySet()) {
                 call.getKey().complete(null);
                 call.getValue().cancel();
             }
+            AuthTokenContext.getInstance().removeListener(mAuthListener);
             mPendingCalls.clear();
         }
     }
