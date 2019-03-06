@@ -714,8 +714,8 @@ public class StorageTest extends AbstractStorageTest {
         AuthTokenContext.getInstance().addListener(mockListener);
         AuthTokenContext.getInstance().setAuthToken("mock-token", "mock-user");
 
+        /* Verify. */
         verify(mTokenManager, times(0)).removeAllCachedTokens();
-
     }
 
     @Test
