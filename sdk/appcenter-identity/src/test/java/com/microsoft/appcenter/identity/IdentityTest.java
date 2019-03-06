@@ -57,7 +57,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -188,9 +187,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* We didn't attempt to even save. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
-
-        /* Check we didn't try to sign in after configuration attempt. */
-        assertTrue(identity.isSignInDelayed());
     }
 
     @Test
@@ -251,7 +247,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void signInThenDownloadValidConfigurationThenForeground() throws Exception {
+    public void signInThenDownloadValidConfiguration() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -287,37 +283,6 @@ public class IdentityTest extends AbstractIdentityTest {
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
         verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, "mockETag");
-
-        /* Verify signIn still delayed in background. */
-        assertTrue(identity.isSignInDelayed());
-
-        /* Go foreground. */
-        Activity activity = mock(Activity.class);
-        identity.onActivityResumed(activity);
-        assertFalse(identity.isSignInDelayed());
-        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
-        verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), callbackCaptor.capture());
-
-        /* Mock success callback. */
-        AuthenticationCallback callback = callbackCaptor.getValue();
-        assertNotNull(callback);
-        callback.onSuccess(mockResult);
-
-        /* Check result. */
-        SignInResult signInResult = future.get();
-        assertNotNull(signInResult);
-        assertNotNull(signInResult.getUserInformation());
-        assertEquals(accountId, signInResult.getUserInformation().getAccountId());
-        assertNull(signInResult.getException());
-
-        /* SDK does not crash if somehow MSAL calls us again. */
-        callback.onCancel();
-        callback.onSuccess(mockResult);
-        callback.onError(mock(MsalException.class));
-
-        /* The original result does not change. */
-        assertSame(signInResult, future.get());
     }
 
     @Test
@@ -367,7 +332,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Go foreground. */
         identity.onActivityResumed(activity);
-        assertFalse(identity.isSignInDelayed());
 
         /* Sign in, will work now. */
         AppCenterFuture<SignInResult> future = Identity.signIn();
@@ -378,9 +342,6 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(signInResult.getUserInformation());
         assertEquals(accountId, signInResult.getUserInformation().getAccountId());
         assertNull(signInResult.getException());
-
-        /* Verify signIn not delayed anymore. */
-        assertFalse(identity.isSignInDelayed());
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
@@ -424,33 +385,8 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signIn();
 
         /* Then nothing happens, we are delayed. */
-        assertTrue(identity.isSignInDelayed());
-    }
-
-    @Test
-    public void testDoNotDelaySignInWhenNoInternet() throws Exception {
-
-        /* Mock no network and identity. */
-        mockStatic(NetworkStateHelper.class);
-        NetworkStateHelper networkStateHelper = Mockito.mock(NetworkStateHelper.class, new Returns(true));
-        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(networkStateHelper);
-        when(networkStateHelper.isNetworkConnected()).thenReturn(false);
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
-        Identity identity = Identity.getInstance();
-        start(identity);
-
-        /* Mock background. */
-        identity.onActivityPaused(mock(Activity.class));
-
-        /* If we sign in. */
-        AppCenterFuture<SignInResult> future = Identity.signIn();
-
-        /* Check result. */
-        assertNotNull(future.get());
-        assertTrue(future.get().getException() instanceof NetworkErrorException);
-        assertNull(future.get().getUserInformation());
-        assertFalse(identity.isSignInDelayed());
+        AppCenterLog.error(anyString(), anyString());
+        verifyStatic();
     }
 
     @Test
@@ -461,6 +397,46 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void downloadConfigurationFailedNetwork() throws Exception {
         testDownloadFailed(new IOException());
+    }
+
+    @Test
+    public void testDoNotSignInWhenNoInternet() throws Exception {
+
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        /* Mock no network and identity. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockStatic(NetworkStateHelper.class);
+        NetworkStateHelper networkStateHelper = Mockito.mock(NetworkStateHelper.class, new Returns(true));
+        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(networkStateHelper);
+        when(networkStateHelper.isNetworkConnected()).thenReturn(false);
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Mock foreground. */
+        identity.onActivityResumed(mock(Activity.class));
+
+        /* If we sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Check result. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof NetworkErrorException);
+        assertNull(future.get().getUserInformation());
     }
 
     @Test
@@ -501,7 +477,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* We can signIn right away even when http call has not yet finished. */
         Identity.signIn();
-        assertFalse(identity.isSignInDelayed());
+      //  assertFalse(identity.isSignInDelayed());
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
         /* Check http call. */

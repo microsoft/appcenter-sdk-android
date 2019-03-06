@@ -104,11 +104,6 @@ public class Identity extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
-     * True if sign-in was delayed because called in background or configuration not ready.
-     */
-    private boolean mSignInDelayed;
-
-    /**
      * Not null if sign-in is pending.
      */
     private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
@@ -232,9 +227,6 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
-        if (mSignInDelayed) {
-            signInFromUI();
-        }
     }
 
     @Override
@@ -243,7 +235,6 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private void removeTokenAndAccount() {
-        mSignInDelayed = false;
         removeAccount(mTokenStorage.getHomeAccountId());
         mTokenStorage.removeToken();
     }
@@ -308,16 +299,7 @@ public class Identity extends AbstractAppCenterService {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
-        boolean configurationValid = initAuthenticationClient(payload);
-        if (configurationValid && mSignInDelayed) {
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    signInFromUI();
-                }
-            });
-        }
+        initAuthenticationClient(payload);
     }
 
     private synchronized void processDownloadNotModified() {
@@ -468,8 +450,10 @@ public class Identity extends AbstractAppCenterService {
     @UiThread
     private synchronized void signInFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
+            if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+                completeSignIn(null, new NetworkErrorException("Sign in failed. No internet connection."));
+            }
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
-            mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
@@ -501,12 +485,7 @@ public class Identity extends AbstractAppCenterService {
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
-            if (NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
-                mSignInDelayed = true;
-            } else {
-                completeSignIn(null, new NetworkErrorException("Sign in failed. No internet connection."));
-            }
+            completeSignIn(null, new IllegalThreadStateException("signIn is called while it's not configured or not in the foreground."));
         }
     }
 
@@ -515,10 +494,5 @@ public class Identity extends AbstractAppCenterService {
             mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
             mPendingSignInFuture = null;
         }
-    }
-
-    @VisibleForTesting
-    boolean isSignInDelayed() {
-        return mSignInDelayed;
     }
 }
