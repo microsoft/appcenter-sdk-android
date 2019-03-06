@@ -5,6 +5,7 @@
 ### AppCenter
 
 * **[Fix]** Fix network connection state tracking issue, which prevented sending data in some restricted networks.
+* **[Fix]** Fix possible deadlock on changing network connection state.
 
 ___
 
