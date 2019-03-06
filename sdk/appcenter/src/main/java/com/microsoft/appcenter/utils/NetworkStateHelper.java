@@ -17,8 +17,8 @@ import android.support.annotation.VisibleForTesting;
 
 import java.io.Closeable;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
@@ -48,7 +48,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Network state listeners that will subscribe to us.
      */
-    private final Set<Listener> mListeners = new HashSet<>();
+    private final Set<Listener> mListeners = new CopyOnWriteArraySet<>();
 
     /**
      * Network callback, null on API level < 21.
@@ -93,7 +93,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Make this helper active again after closing.
      */
-    public synchronized void reopen() {
+    public void reopen() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
@@ -189,7 +189,7 @@ public class NetworkStateHelper implements Closeable {
      * Handle network available update on API level >= 21.
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private synchronized void onNetworkAvailable(Network network) {
+    private void onNetworkAvailable(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network "+ network + " is available.");
         if (mConnected.compareAndSet(false, true)) {
             notifyNetworkStateUpdated(true);
@@ -200,7 +200,7 @@ public class NetworkStateHelper implements Closeable {
      * Handle network lost update on API level >= 21.
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private synchronized void onNetworkLost(Network network) {
+    private void onNetworkLost(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network "+ network + " is lost.");
         Network[] networks = mConnectivityManager.getAllNetworks();
         boolean noNetwork = networks == null || networks.length == 0 ||
@@ -213,7 +213,7 @@ public class NetworkStateHelper implements Closeable {
     /**
      * Handle network state update on API level < 21.
      */
-    private synchronized void handleNetworkStateUpdate() {
+    private void handleNetworkStateUpdate() {
         boolean connected = isAnyNetworkConnected();
         if (mConnected.compareAndSet(!connected, connected)) {
             notifyNetworkStateUpdated(connected);
@@ -233,7 +233,7 @@ public class NetworkStateHelper implements Closeable {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         mConnected.set(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
@@ -247,7 +247,7 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param listener listener to add.
      */
-    public synchronized void addListener(Listener listener) {
+    public void addListener(Listener listener) {
         mListeners.add(listener);
     }
 
@@ -256,7 +256,7 @@ public class NetworkStateHelper implements Closeable {
      *
      * @param listener listener to remove.
      */
-    public synchronized void removeListener(Listener listener) {
+    public void removeListener(Listener listener) {
         mListeners.remove(listener);
     }
 
