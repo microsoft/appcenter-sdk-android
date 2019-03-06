@@ -50,7 +50,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         AuthTokenContext.class,
         TokenStorageFactory.class
 })
-
 abstract public class AbstractIdentityTest {
 
     static final String IDENTITY_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Identity.getInstance().getServiceName();
