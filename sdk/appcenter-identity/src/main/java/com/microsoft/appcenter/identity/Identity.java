@@ -176,13 +176,7 @@ public class Identity extends AbstractAppCenterService {
     @SuppressWarnings("WeakerAccess")
     // TODO remove warning once jCenter published and reflection removed in test app
     public static void signOut() {
-        getInstance().post(new Runnable() {
-
-            @Override
-            public void run() {
-                getInstance().instanceSignOut();
-            }
-        });
+        getInstance().instanceSignOut();
     }
 
     @Override
@@ -251,7 +245,7 @@ public class Identity extends AbstractAppCenterService {
         mActivity = null;
     }
 
-    private void removeTokenAndAccount() {
+    private synchronized void removeTokenAndAccount() {
         mSignInDelayed = false;
         removeAccount(mTokenStorage.getHomeAccountId());
         mTokenStorage.removeToken();
@@ -426,13 +420,19 @@ public class Identity extends AbstractAppCenterService {
         return future;
     }
 
-    private synchronized void instanceSignOut() {
-        if (mTokenStorage.getToken() == null) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't sign out: authToken doesn't exist.");
-            return;
-        }
-        removeTokenAndAccount();
-        AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
+    private void instanceSignOut() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mTokenStorage.getToken() == null) {
+                    AppCenterLog.warn(LOG_TAG, "Cannot sign out because a user has not signed in.");
+                    return;
+                }
+                removeTokenAndAccount();
+                AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
+            }
+        });
     }
 
     private void removeAccount(String homeAccountIdentifier) {
