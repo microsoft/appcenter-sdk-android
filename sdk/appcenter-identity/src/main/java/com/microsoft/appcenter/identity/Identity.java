@@ -240,7 +240,7 @@ public class Identity extends AbstractAppCenterService {
         mActivity = null;
     }
 
-    private void removeTokenAndAccount() {
+    private synchronized void removeTokenAndAccount() {
         mSignInDelayed = false;
         removeAccount(mTokenStorage.getHomeAccountId());
         mTokenStorage.removeToken();
