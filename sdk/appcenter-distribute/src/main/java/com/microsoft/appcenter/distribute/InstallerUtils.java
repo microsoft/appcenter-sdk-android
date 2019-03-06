@@ -38,6 +38,7 @@ class InstallerUtils {
         LOCAL_STORES.add("com.android.packageinstaller");
         LOCAL_STORES.add("com.google.android.packageinstaller");
         LOCAL_STORES.add("com.android.managedprovisioning");
+        LOCAL_STORES.add("com.miui.packageinstaller");
     }
 
     @VisibleForTesting
