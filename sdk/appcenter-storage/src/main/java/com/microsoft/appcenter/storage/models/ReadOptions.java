@@ -1,7 +1,9 @@
 package com.microsoft.appcenter.storage.models;
 
 public class ReadOptions extends BaseOptions {
+
     public ReadOptions() { super(); }
+
     public ReadOptions(int ttl) {
         super(ttl);
     }

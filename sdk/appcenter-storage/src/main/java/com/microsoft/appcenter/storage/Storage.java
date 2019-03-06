@@ -18,7 +18,6 @@ import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
-import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -453,7 +452,7 @@ public class Storage extends AbstractAppCenterService {
         }
     }
 
-    private synchronized <FT> void completeFutureAndRemovePendingCall(FT value, DefaultAppCenterFuture<FT> result) {
+    private synchronized <T> void completeFutureAndRemovePendingCall(T value, DefaultAppCenterFuture<T> result) {
         result.complete(value);
         mPendingCalls.remove(result);
     }
@@ -463,7 +462,6 @@ public class Storage extends AbstractAppCenterService {
         future.complete(new Document<T>(e));
         mPendingCalls.remove(future);
     }
-
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.handleApiCallFailure(e);

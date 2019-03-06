@@ -200,15 +200,12 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values) {
-        Long id = null;
         try {
-            /* Insert data. */
-            id = getDatabase().insertOrThrow(mTable, null, values);
+            return getDatabase().insertOrThrow(mTable, null, values);
         } catch (RuntimeException e) {
-            id = -1L;
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }
-        return id;
+        return -1L;
     }
 
     /**

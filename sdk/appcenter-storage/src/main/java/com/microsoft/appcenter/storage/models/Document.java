@@ -28,7 +28,7 @@ public class Document<T> {
 
     private transient DocumentError documentError;
 
-    private transient boolean mIsFromCache;
+    private transient boolean mFromCache;
 
     public Document() {
     }
@@ -117,13 +117,16 @@ public class Document<T> {
     }
 
     /**
-     * Flag indicating if data was retrieved from the local cache (for offline mode)
+     * Get the flag indicating if data was retrieved from the local cache (for offline mode)
      */
     public boolean isFromCache() {
-        return mIsFromCache;
+        return mFromCache;
     }
 
-    public void setIsFromCache(boolean isFromCache) {
-        this.mIsFromCache = isFromCache;
+    /**
+     * Set the flag indicating if data was retrieved from the local cache (for offline mode)
+     */
+    public void setIsFromCache(boolean fromCache) {
+        this.mFromCache = fromCache;
     }
 }

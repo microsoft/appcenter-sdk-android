@@ -1,7 +1,9 @@
 package com.microsoft.appcenter.storage.models;
 
 public class WriteOptions extends BaseOptions {
+
     public WriteOptions() { super(); }
+
     public WriteOptions(int ttl) {
         super(ttl);
     }

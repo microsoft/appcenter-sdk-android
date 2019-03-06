@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.storage;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -65,25 +64,23 @@ public class DocumentCache {
     /**
      * Current schema
      */
-    private static final ContentValues SCHEMA =
-            getContentValues("", "", new Document<>(), 0);
+    private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), 0);
 
     final DatabaseManager mDatabaseManager;
 
     public DocumentCache(Context context) {
         mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.Listener() {
+
             @Override
             public void onCreate(SQLiteDatabase db) {
-                /*
-                    No need to do anything on create because `DatabaseManager` creates the table
-                 */
+                /* No need to do anything on create because `DatabaseManager` creates the table. */
             }
 
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 /*
-                    No need to do anything on upgrade because this is the first version of the schema
-                    and the rest is handled by `DatabaseManager`
+                 * No need to do anything on upgrade because this is the first version of the schema
+                 * and the rest is handled by `DatabaseManager`.
                  */
                 return false;
             }
@@ -104,8 +101,6 @@ public class DocumentCache {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
-
-        /* Query database. */
 
         /* Read from the DB */
         Cursor cursor = null;
@@ -134,10 +129,7 @@ public class DocumentCache {
     }
 
     public <T> void delete(String partition, String documentId) {
-
-        /* Log. */
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
-
         try {
             mDatabaseManager.delete(
                     String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME),
