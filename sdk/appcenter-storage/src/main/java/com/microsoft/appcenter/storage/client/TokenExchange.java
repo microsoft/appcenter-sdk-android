@@ -21,7 +21,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
 
-public final class TokenExchange {
+public class TokenExchange {
 
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
@@ -65,39 +65,26 @@ public final class TokenExchange {
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
-        TokenResult cachedToken = TokenManager.getInstance().getCachedToken(partition);
-        if (cachedToken != null) {
-            serviceCallback.callCosmosDb(cachedToken);
+        return httpClient.callAsync(
+                url,
+                METHOD_POST,
+                new HashMap<String, String>() {
+                    {
+                        put(APP_SECRET_HEADER, appSecret);
+                    }
+                },
+                new HttpClient.CallTemplate() {
 
-            /* Get the token from local cache directly, not need to make http call, build the object and return. */
-            return new ServiceCall() {
+                    @Override
+                    public String buildRequestBody() {
+                        return buildAppCenterGetDbTokenBodyPayload(partition);
+                    }
 
-                @Override
-                public void cancel() {
-                }
-            };
-        } else {
-            return httpClient.callAsync(
-                    url,
-                    METHOD_POST,
-                    new HashMap<String, String>() {
-                        {
-                            put(APP_SECRET_HEADER, appSecret);
-                        }
-                    },
-                    new HttpClient.CallTemplate() {
-
-                        @Override
-                        public String buildRequestBody() {
-                            return buildAppCenterGetDbTokenBodyPayload(partition);
-                        }
-
-                        @Override
-                        public void onBeforeCalling(URL url, Map<String, String> headers) {
-                        }
-                    },
-                    serviceCallback);
-        }
+                    @Override
+                    public void onBeforeCalling(URL url, Map<String, String> headers) {
+                    }
+                },
+                serviceCallback);
     }
 
     /**

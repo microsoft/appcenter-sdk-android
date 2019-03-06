@@ -112,11 +112,7 @@ public class TokenResult {
         try {
             this.expiresOn = JSONDateUtils.toString(expiresOn);
         } catch (JSONException ex) {
-            AppCenterLog.error(
-                    LOG_TAG,
-                    String.format(
-                            "Unable to convert '%s' Date to ISO 8601 string",
-                            (expiresOn == null ? "(null)" : expiresOn)));
+            AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string");
             this.expiresOn = null;
         }
         return this;

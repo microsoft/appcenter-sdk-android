@@ -2,17 +2,21 @@ package com.microsoft.appcenter.storage.models;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.client.CosmosDb;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
@@ -144,7 +148,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
             @Override
             public boolean hasNext() {
-                return hasNextPage() || currentIndex < getCurrentPage().getItems().size();
+                return currentIndex < getCurrentPage().getItems().size() || hasNextPage();
             }
 
             @Override
@@ -160,7 +164,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
             @Override
             public void remove() {
-                throw new UnsupportedOperationException();
+                AppCenterLog.error(LOG_TAG, "Remove operation is not supported in the iterator.", new UnsupportedOperationException());
             }
         };
     }
