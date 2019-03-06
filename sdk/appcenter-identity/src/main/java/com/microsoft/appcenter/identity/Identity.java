@@ -509,7 +509,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private synchronized void silentSignIn(@NonNull IAccount account) {
-        AppCenterLog.info(LOG_TAG, "Login silently in the background.");
+        AppCenterLog.info(LOG_TAG, "Sign in silently in the background.");
         mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
 
             @Override
