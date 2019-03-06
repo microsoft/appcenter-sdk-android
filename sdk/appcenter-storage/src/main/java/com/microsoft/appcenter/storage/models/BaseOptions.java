@@ -41,7 +41,7 @@ public abstract class BaseOptions {
     }
 
     /**
-     * @param lastModified timestamp of when a document was last modified
+     * @param lastModified timestamp of when the document to be verified was last modified
      * @return whether a document with the specified TTL has expired since it was last modified
      */
     public boolean isExpired(long lastModified) {
