@@ -184,7 +184,7 @@ public class AppCenterIngestionTest {
         String appSecret = UUIDUtils.randomUUID().toString();
         String authToken = UUIDUtils.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
-        String obfuscatedToken = "***";
+        String obfuscatedToken = "Bearer ***";
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, authToken);
