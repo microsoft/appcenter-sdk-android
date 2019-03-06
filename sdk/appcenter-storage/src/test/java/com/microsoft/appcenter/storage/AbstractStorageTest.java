@@ -47,19 +47,23 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HttpUtils.class
 })
 
-//@RunWith(PowerMockRunner.class)
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
     @Mock
     protected HttpClientRetryer mHttpClient;
+
     @Mock
     AppCenterHandler mAppCenterHandler;
+
     Channel mChannel;
+
     Storage mStorage;
+
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
