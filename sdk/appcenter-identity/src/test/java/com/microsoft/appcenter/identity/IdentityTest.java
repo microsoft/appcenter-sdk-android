@@ -1,6 +1,5 @@
 package com.microsoft.appcenter.identity;
 
-import android.accounts.Account;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -25,28 +24,19 @@ import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
-import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
-import com.microsoft.identity.client.exception.MsalServiceException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +78,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({AuthTokenContext.class, PublicClientApplication.class})
+@PrepareForTest(AuthTokenContext.class)
 public class IdentityTest extends AbstractIdentityTest {
 
     @Captor
@@ -382,8 +372,6 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNull(signInResult.getException());
 
         /* SDK does not crash if somehow MSAL calls us again. */
-        callback.onCancel();
-        callback.onSuccess(mockResult);
         callback.onError(mock(MsalException.class));
 
         /* The original result does not change. */
