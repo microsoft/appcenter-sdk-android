@@ -137,6 +137,42 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
+    public void getTokenExceptionWhenResponseInvalid() {
+
+        /* Setup the call. */
+        final String nullResponseAppUrl = "nullAppUrl";
+        final String emptyTokensAppUrl = "emptyTokensAppUrl";
+        final String multipleTokensAppUrl = "multipleTokensUrl";
+        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        final ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Exception> exception = ArgumentCaptor.forClass(Exception.class);
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
+        doNothing().when(callBack).onCallFailed(exception.capture());
+        when(mHttpClient.callAsync(url.capture(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                if (url.getValue().contains(nullResponseAppUrl)) {
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(null, null);
+                } else if (url.getValue().contains(emptyTokensAppUrl)) {
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}", null);
+                } else if (url.getValue().contains(multipleTokensAppUrl)){
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}", null);
+                }
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, nullResponseAppUrl, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, emptyTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, multipleTokensAppUrl, null, callBack);
+
+        /* Get and verify token. */
+        assertEquals(3, exception.getAllValues().size());
+    }
+
+    @Test
     public void canHandleWhenExpiresOnInvalidFormat() {
         TokenResult result = new TokenResult();
         assertEquals(new Date(0), result.expiresOn());
