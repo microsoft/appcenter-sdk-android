@@ -451,7 +451,7 @@ public class Identity extends AbstractAppCenterService {
     private synchronized void signInFromUI() {
         if (mAuthenticationClient != null && mActivity != null) {
             if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
-                completeSignIn(null, new NetworkErrorException("Sign in failed. No internet connection."));
+                completeSignIn(null, new NetworkErrorException("Sign-in failed: No internet connection."));
             }
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
