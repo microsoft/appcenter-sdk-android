@@ -17,7 +17,7 @@ import java.util.TimeZone;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 
-public final class CosmosDb {
+public class CosmosDb {
 
     /**
      * Document DB document URL suffix.
@@ -100,7 +100,7 @@ public final class CosmosDb {
         return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
     }
 
-    public static synchronized void callCosmosDbListApi(
+    public static synchronized ServiceCall callCosmosDbListApi(
             TokenResult tokenResult,
             String continuationToken,
             HttpClient httpClient,
@@ -109,7 +109,7 @@ public final class CosmosDb {
         if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
-        callApi(
+        return callApi(
                 METHOD_GET,
                 getDocumentUrl(tokenResult, null),
                 headers,
