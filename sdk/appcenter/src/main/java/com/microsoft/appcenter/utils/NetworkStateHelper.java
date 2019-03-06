@@ -172,6 +172,7 @@ public class NetworkStateHelper implements Closeable {
                 }
             }
         } else {
+            @SuppressWarnings("deprecation")
             NetworkInfo[] networks = mConnectivityManager.getAllNetworkInfo();
             if (networks == null) {
                 return false;
