@@ -175,7 +175,7 @@ public class AppCenterIngestion implements Ingestion {
                 }
                 String authToken = logHeaders.get(AUTHORIZATION_HEADER);
                 if (authToken != null) {
-                    logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideSecret(authToken));
+                    logHeaders.put(AUTHORIZATION_HEADER, "***");
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }
