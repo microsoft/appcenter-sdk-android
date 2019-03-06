@@ -13,7 +13,7 @@ public abstract class BaseOptions {
     }
 
     protected BaseOptions(int ttl) {
-        if (ttl < -1) throw new IllegalArgumentException("Time-to-live should be greater or equal to zero or -1 for infinite.");
+        if (ttl < -1) throw new IllegalArgumentException("Time-to-live should be greater than or equal to zero, or -1 for infinite.");
         this.mTtl = ttl;
     }
 
