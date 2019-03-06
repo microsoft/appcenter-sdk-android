@@ -60,6 +60,8 @@ public class Storage extends AbstractAppCenterService {
 
     private HttpClient mHttpClient;
 
+    private DocumentCache mDocumentCache;
+
     /**
      * Get shared instance.
      *
@@ -124,12 +126,6 @@ public class Storage extends AbstractAppCenterService {
      * The document type (T) must be JSON deserializable.
      */
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
-        Document<T> cachedDocument = DocumentCache.read(partition, documentId, documentType, readOptions);
-        if (cachedDocument != null) {
-            DefaultAppCenterFuture<Document<T>> cachedDocumentFuture = new DefaultAppCenterFuture<>();
-            cachedDocumentFuture.complete(cachedDocument);
-            return cachedDocumentFuture;
-        }
         return getInstance().instanceRead(partition, documentId, documentType, readOptions);
     }
 
@@ -146,7 +142,7 @@ public class Storage extends AbstractAppCenterService {
      * The document instance (T) must be JSON serializable.
      */
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
-        return getInstance().instanceCreate(partition, documentId, document, documentType);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType);
     }
 
     /**
@@ -180,6 +176,7 @@ public class Storage extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
+        mDocumentCache = new DocumentCache(context);
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -221,21 +218,27 @@ public class Storage extends AbstractAppCenterService {
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchangeServiceCallback() {
+        Document<T> cachedDocument = mDocumentCache.read(partition, documentId, documentType, readOptions);
+        if (cachedDocument == null) {
+            getTokenAndCallCosmosDbApi(
+                    partition,
+                    result,
+                    new TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void callCosmosDb(TokenResult tokenResult) {
-                        callCosmosDbReadApi(tokenResult, documentId, documentType, result);
-                    }
+                        @Override
+                        public void callCosmosDb(TokenResult tokenResult) {
+                            callCosmosDbReadApi(tokenResult, documentId, documentType, result);
+                        }
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
-                    }
-                });
+                        @Override
+                        public void completeFuture(Exception e) {
+                            completeFutureAndRemovePendingCall(e, result);
+                        }
+                    });
+        }
+        else {
+            result.complete(cachedDocument);
+        }
         return result;
     }
 
@@ -362,7 +365,7 @@ public class Storage extends AbstractAppCenterService {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFutureAndRemovePendingCall(cosmosDbDocument, result);
                         // TODO: discuss how to decide between read and write expiration options
-                        DocumentCache.write(cosmosDbDocument, null);
+                        mDocumentCache.write(cosmosDbDocument, null);
                     }
 
                     @Override
@@ -403,7 +406,7 @@ public class Storage extends AbstractAppCenterService {
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<Void>(), result);
-                        DocumentCache.delete(tokenResult.partition(), documentId);
+                        mDocumentCache.delete(tokenResult.partition(), documentId);
                     }
 
                     @Override

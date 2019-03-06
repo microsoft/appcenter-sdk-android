@@ -193,6 +193,25 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Stores the entry to the table.
+     *
+     * @param values         The entry to be stored.
+     * @return If a log was inserted, the database identifier. Otherwise -1.
+     */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    public long put(@NonNull ContentValues values) {
+        Long id = null;
+        try {
+            /* Insert data. */
+            id = getDatabase().insertOrThrow(mTable, null, values);
+        } catch (RuntimeException e) {
+            id = -1L;
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
+        }
+        return id;
+    }
+
+    /**
      * Stores the entry to the table. If the table is full, the oldest logs are discarded until the
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
@@ -232,7 +251,7 @@ public class DatabaseManager implements Closeable {
             }
         } catch (RuntimeException e) {
             id = -1L;
-            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }
         if (cursor != null) {
             try {
@@ -264,7 +283,24 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
         } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database.", Arrays.toString(idList.toArray())), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database %s.", Arrays.toString(idList.toArray()), mDatabase), e);
+        }
+    }
+
+    /**
+     * Deletes the entries that matches key == value.
+     *
+     * @param whereClause the optional WHERE clause to apply when deleting.
+     *            Passing null will delete all rows.
+     * @param whereArgs You may include ?s in the where clause, which
+     *            will be replaced by the values from whereArgs. The values
+     *            will be bound as Strings.
+     */
+    public void delete(String whereClause, String[] whereArgs) {
+        try {
+            getDatabase().delete(mTable, whereClause, whereArgs);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, whereArgs, mDatabase), e);
         }
     }
 
@@ -275,11 +311,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      */
     public void delete(@Nullable String key, @Nullable Object value) {
-        try {
-            getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
-        }
+        delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
     /**
