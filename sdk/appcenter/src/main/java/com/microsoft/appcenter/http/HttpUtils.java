@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
@@ -162,8 +161,8 @@ public class HttpUtils {
      * @return obfuscated token string header value.
      */
     public static String hideAuthToken(@NonNull String token) {
-        int location = AUTH_TOKEN_FORMAT.indexOf("%s");
-        return token.substring(0, location) + "***";
+        String prefix = token.split("\\s+")[0];
+        return prefix + " ***";
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {
