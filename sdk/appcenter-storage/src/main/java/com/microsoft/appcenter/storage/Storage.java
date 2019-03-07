@@ -429,7 +429,7 @@ public class Storage extends AbstractAppCenterService {
                 });
         return result;
     }
-    
+
     private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,

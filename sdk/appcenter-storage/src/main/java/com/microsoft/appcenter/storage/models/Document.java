@@ -138,5 +138,7 @@ public class Document<T> {
     /**
      * @return whether the document has an error associated with it
      */
-    public boolean failed() { return this.getError() == null; }
+    public boolean failed() {
+        return this.getError() != null;
+    }
 }

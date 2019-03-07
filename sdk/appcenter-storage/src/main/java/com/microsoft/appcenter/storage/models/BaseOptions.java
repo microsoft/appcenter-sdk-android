@@ -32,14 +32,6 @@ public abstract class BaseOptions {
      */
     public int getDeviceTimeToLive() { return mTtl; }
 
-
-    /**
-     * Set document time-to-live in seconds
-     */
-    public void setDeviceTimeToLive(int ttl) {
-        this.mTtl = ttl;
-    }
-
     /**
      * @param lastModified timestamp of when the document was last modified
      * @return whether a document with the specified TTL has expired since it was last modified
