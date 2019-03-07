@@ -18,15 +18,14 @@ import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.Rule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -37,7 +36,6 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({
         Storage.class,
         SystemClock.class,
@@ -48,22 +46,26 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HandlerUtils.class,
         HttpUtils.class
 })
+
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
-    @Mock
-    AppCenterHandler mAppCenterHandler;
-
-    @Mock
-    private AppCenterFuture<Boolean> mCoreEnabledFuture;
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     protected HttpClientRetryer mHttpClient;
 
+    @Mock
+    AppCenterHandler mAppCenterHandler;
+
     Channel mChannel;
 
     Storage mStorage;
+
+    @Mock
+    private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Before
     public void setUp() throws Exception {
@@ -110,21 +112,13 @@ abstract public class AbstractStorageTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
-
         mHttpClient = Mockito.mock(HttpClientRetryer.class);
         whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
-        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
-
+        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(true);
         mStorage = Storage.getInstance();
-
-        /* Before start it does not work to change state, it's disabled. */
         Storage storage = Storage.getInstance();
-        Storage.setEnabled(true);
-        assertFalse(Storage.isEnabled().get());
-        Storage.setEnabled(false);
-        assertFalse(Storage.isEnabled().get());
-
         mChannel = start(storage);
+        Storage.setApiUrl("default");
     }
 
     @NonNull

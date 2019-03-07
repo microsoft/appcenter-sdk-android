@@ -26,13 +26,16 @@ public final class Utils {
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
         T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
-
-        return new Document<T>(
-                document,
-                obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
-                obj.get(Constants.ID_FIELD_NAME).getAsString(),
-                obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
-                obj.has(Constants.TIMESTAMP_FIELD_NAME) ? obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong() : 0);
+        try {
+            return new Document<T>(
+                    document,
+                    obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
+                    obj.get(Constants.ID_FIELD_NAME).getAsString(),
+                    obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
+                    obj.has(Constants.TIMESTAMP_FIELD_NAME) ? obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong() : 0);
+        } catch (Exception exception) {
+            return new Document<T>(exception);
+        }
     }
 
     @SuppressWarnings("SameParameterValue")
