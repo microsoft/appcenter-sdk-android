@@ -109,7 +109,7 @@ public class StorageTest extends AbstractStorageTest {
             "    \"PartitionKey\": \"%s\",\n" +
             "    \"_rid\": \"mFBtAPPa528HAAAAAAAAAA==\",\n" +
             "    \"_self\": \"dbs/mFBtAA==/colls/mFBtAPPa528=/docs/mFBtAPPa528HAAAAAAAAAA==/\",\n" +
-            "    \"_etag\": \"\\\"06000da6-0000-0000-0000-5c7093c30000\\\"\",\n" +
+            "    \"_etag\": \"06000da6-0000-0000-0000-5c7093c30000\",\n" +
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
@@ -729,6 +729,8 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, d.getId());
         assertEquals(PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDocument().test);
+        assertEquals("06000da6-0000-0000-0000-5c7093c30000", d.getEtag());
+        assertEquals(1550881731, d.getTimestamp());
     }
 
     @Test

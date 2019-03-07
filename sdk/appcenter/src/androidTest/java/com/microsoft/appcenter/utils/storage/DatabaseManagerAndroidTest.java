@@ -257,7 +257,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -278,7 +278,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DefaultListener());
+        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -304,7 +304,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
 
         /* Put data. */
         long id;
@@ -367,7 +367,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -391,18 +391,6 @@ public class DatabaseManagerAndroidTest {
             /* Close. */
             //noinspection ThrowFromFinallyBlock
             databaseManager.close();
-        }
-    }
-
-    private static class DefaultListener implements DatabaseManager.Listener {
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-        }
-
-        @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            return false;
         }
     }
 }

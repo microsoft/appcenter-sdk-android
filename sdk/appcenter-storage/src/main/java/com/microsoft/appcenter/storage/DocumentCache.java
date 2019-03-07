@@ -3,7 +3,6 @@ package com.microsoft.appcenter.storage;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.VisibleForTesting;
 
@@ -70,23 +69,12 @@ class DocumentCache {
 
     final DatabaseManager mDatabaseManager;
 
+    DocumentCache(DatabaseManager mDatabaseManager) {
+        this.mDatabaseManager = mDatabaseManager;
+    }
+
     public DocumentCache(Context context) {
-        mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.Listener() {
-
-            @Override
-            public void onCreate(SQLiteDatabase db) {
-                /* No need to do anything on create because `DatabaseManager` creates the table. */
-            }
-
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                /*
-                 * No need to do anything on upgrade because this is the first version of the schema
-                 * and the rest is handled by `DatabaseManager`.
-                 */
-                return false;
-            }
-        });
+        this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
     public <T> void write(Document<T> document, WriteOptions writeOptions) {
@@ -102,11 +90,7 @@ class DocumentCache {
     }
 
     public <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
-
-        /* Log. */
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
-
-        /* Read from the DB */
         Cursor cursor = null;
         ContentValues values;
         try {
@@ -125,6 +109,7 @@ class DocumentCache {
         if (cursor != null && values != null) {
             if (readOptions.isExpired(values.getAsLong(EXPIRES_AT_COLUMN_NAME))) {
                 mDatabaseManager.delete(cursor.getLong(0));
+                AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(CONTENT_COLUMN_NAME), documentType);
@@ -132,6 +117,7 @@ class DocumentCache {
             document.setIsFromCache(true);
             return document;
         }
+        AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
         return new Document<>(new StorageException("Document was not found in the cache."));
     }
 

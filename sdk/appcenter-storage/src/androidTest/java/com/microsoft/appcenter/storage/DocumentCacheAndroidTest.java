@@ -25,6 +25,7 @@ public class DocumentCacheAndroidTest {
     public static final String TEST_VALUE = "Test value";
     public static final String PARTITION = "partition";
     public static final String ID = "id";
+
     /**
      * Context instance.
      */
@@ -45,8 +46,6 @@ public class DocumentCacheAndroidTest {
 
     @AfterClass
     public static void tearDownClass() {
-
-        /* Delete database. */
         sContext.deleteDatabase(DocumentCache.DATABASE);
     }
 

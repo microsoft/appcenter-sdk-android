@@ -483,4 +483,25 @@ public class DatabaseManager implements Closeable {
         @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
     }
+
+    /**
+     * A default implementation of `Listener` that relies on `DatabaseManager` to do
+     * the set up and upgrades.
+     */
+    public static class DefaultListener implements DatabaseManager.Listener {
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            /* No need to do anything on create because `DatabaseManager` creates a table. */
+        }
+
+        @Override
+        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            /*
+             * No need to do anything on upgrade because this is the first version of the schema
+             * and the rest is handled by `DatabaseManager`.
+             */
+            return false;
+        }
+    }
 }
