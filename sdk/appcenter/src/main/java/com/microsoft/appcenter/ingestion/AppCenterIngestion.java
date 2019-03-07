@@ -54,7 +54,8 @@ public class AppCenterIngestion implements Ingestion {
     /**
      * Auth token format for Authorization header.
      */
-    public static final String AUTH_TOKEN_FORMAT = "Bearer %s";
+    @VisibleForTesting
+    static final String AUTH_TOKEN_FORMAT = "Bearer %s";
 
     /**
      * Authorization HTTP Header.
