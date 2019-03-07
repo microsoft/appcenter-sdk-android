@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("unused")
 public class DocumentCacheAndroidTest {
@@ -48,11 +49,16 @@ public class DocumentCacheAndroidTest {
     }
 
     @Test
-    public void writeAndReadADocument() {
+    public void writeReadDelete() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
         mDocumentCache.write(document, new WriteOptions());
         Document<String> cachedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertEquals(document.getDocument(), cachedDocument.getDocument());
+        mDocumentCache.delete(PARTITION, ID);
+        Document<String> deletedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions());
+        assertNotNull(deletedDocument);
+        assertNull(deletedDocument.getDocument());
+        assertNotNull(deletedDocument.getError());
     }
 }

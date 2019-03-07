@@ -135,7 +135,7 @@ class DocumentCache {
         return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
-    public <T> void delete(String partition, String documentId) {
+    public void delete(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(

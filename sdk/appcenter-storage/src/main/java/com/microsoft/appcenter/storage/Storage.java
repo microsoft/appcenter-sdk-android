@@ -252,27 +252,21 @@ public class Storage extends AbstractAppCenterService {
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        Document<T> cachedDocument = mDocumentCache.read(partition, documentId, documentType, readOptions);
-        if (cachedDocument.failed()) {
-            getTokenAndCallCosmosDbApi(
-                    partition,
-                    result,
-                    new TokenExchangeServiceCallback() {
+        getTokenAndCallCosmosDbApi(
+                partition,
+                result,
+                new TokenExchangeServiceCallback() {
 
-                        @Override
-                        public void callCosmosDb(TokenResult tokenResult) {
-                            callCosmosDbReadApi(tokenResult, documentId, documentType, result);
-                        }
+                    @Override
+                    public void callCosmosDb(TokenResult tokenResult) {
+                        callCosmosDbReadApi(tokenResult, documentId, documentType, result);
+                    }
 
-                        @Override
-                        public void completeFuture(Exception e) {
-                            completeFutureAndRemovePendingCall(e, result);
-                        }
-                    });
-        }
-        else {
-            result.complete(cachedDocument);
-        }
+                    @Override
+                    public void completeFuture(Exception e) {
+                        completeFutureAndRemovePendingCall(e, result);
+                    }
+                });
         return result;
     }
 
