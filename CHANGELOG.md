@@ -9,7 +9,7 @@
 
 ### AppCenterDistribute
 
-* **[Fix]** Fix in-app updates on devices using Xiaomi MIUI from versions 10 and above.
+* **[Fix]** Fix in-app updates not working on devices using Xiaomi MIUI from versions 10 and above.
 
 ___
 
