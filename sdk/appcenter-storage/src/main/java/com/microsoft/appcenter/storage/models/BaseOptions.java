@@ -38,6 +38,6 @@ public abstract class BaseOptions {
      */
     public boolean isExpired(long lastModified) {
         long documentAge = Calendar.getInstance().getTimeInMillis() - lastModified;
-        return documentAge > mTtl *1000;
+        return documentAge > mTtl * 1000;
     }
 }
