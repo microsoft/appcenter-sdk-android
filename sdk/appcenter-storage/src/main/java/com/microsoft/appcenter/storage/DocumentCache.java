@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
@@ -18,7 +19,8 @@ import java.util.Calendar;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-public class DocumentCache {
+@VisibleForTesting
+class DocumentCache {
 
     /**
      * Database name.
@@ -51,10 +53,10 @@ public class DocumentCache {
     static final String CONTENT_COLUMN_NAME = "content";
 
     /**
-     * Last modified column.
+     * Expires at column.
      */
     @VisibleForTesting
-    static final String LAST_MODIFIED_COLUMN_NAME = "lastModified";
+    static final String EXPIRES_AT_COLUMN_NAME = "expiresAt";
 
     /**
      * Current version of the schema.
@@ -64,7 +66,7 @@ public class DocumentCache {
     /**
      * Current schema
      */
-    private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), 0);
+    private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), Calendar.getInstance().getTimeInMillis());
 
     final DatabaseManager mDatabaseManager;
 
@@ -88,13 +90,15 @@ public class DocumentCache {
     }
 
     public <T> void write(Document<T> document, WriteOptions writeOptions) {
-
-        /* Log. */
-        AppCenterLog.debug(LOG_TAG, String.format("Trying to write %s:%s document from cache", document.getPartition(), document.getId()));
-
-        /* TODO: check if there's a record already and update. See if there are existing methods for it. */
-        ContentValues values = getContentValues(document.getId(), document.getPartition(), document, Calendar.getInstance().getTimeInMillis());
-        mDatabaseManager.put(values);
+        AppCenterLog.debug(LOG_TAG, String.format("Trying to upsert %s:%s document to cache", document.getPartition(), document.getId()));
+        Calendar expiresAt = Calendar.getInstance();
+        expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
+        ContentValues values = getContentValues(
+                document.getId(),
+                document.getPartition(),
+                document,
+                expiresAt.getTimeInMillis());
+        mDatabaseManager.upsert(values);
     }
 
     public <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
@@ -110,22 +114,25 @@ public class DocumentCache {
                         getPartitionAndDocumentIdQueryBuilder(),
                         null,
                         new String[]{ partition, documentId },
-                        LAST_MODIFIED_COLUMN_NAME + " DESC");
+                        EXPIRES_AT_COLUMN_NAME + " DESC");
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
+            return new Document<>("Failed to read from cache.", e);
         }
 
-        /* We only expect one value */
+        /* We only expect one value as we do upserts in the `write` method */
         values = mDatabaseManager.nextValues(cursor);
         if (cursor != null && values != null) {
-            if (readOptions.isExpired(values.getAsLong(LAST_MODIFIED_COLUMN_NAME))) {
+            if (readOptions.isExpired(values.getAsLong(EXPIRES_AT_COLUMN_NAME))) {
                 mDatabaseManager.delete(cursor.getLong(0));
-                return null;
+                return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
-
-            return Utils.parseDocument(values.getAsString(CONTENT_COLUMN_NAME), documentType);
+            Document<T> document = Utils.parseDocument(values.getAsString(CONTENT_COLUMN_NAME), documentType);
+            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()));
+            document.setIsFromCache(true);
+            return document;
         }
-        return null;
+        return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
     public <T> void delete(String partition, String documentId) {
@@ -147,12 +154,12 @@ public class DocumentCache {
         return builder;
     }
 
-    private static <T> ContentValues getContentValues(String documentId, String partition, Document<T> document, long lastModified) {
+    private static <T> ContentValues getContentValues(String documentId, String partition, Document<T> document, long expiresAt) {
         ContentValues values = new ContentValues();
         values.put(DOCUMENT_ID_COLUMN_NAME, documentId);
         values.put(PARTITION_COLUMN_NAME, partition);
         values.put(CONTENT_COLUMN_NAME, Utils.getGson().toJson(document));
-        values.put(LAST_MODIFIED_COLUMN_NAME, lastModified);
+        values.put(EXPIRES_AT_COLUMN_NAME, expiresAt);
         return values;
     }
 }

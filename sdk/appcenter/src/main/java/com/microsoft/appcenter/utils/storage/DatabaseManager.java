@@ -193,15 +193,16 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Stores the entry to the table.
+     * Replaces a row in the database.
+     * Inserts a new row if a row does not already exist.
      *
      * @param values         The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long put(@NonNull ContentValues values) {
+    public long upsert(@NonNull ContentValues values) {
         try {
-            return getDatabase().insertOrThrow(mTable, null, values);
+            return getDatabase().replace(mTable, null, values);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }

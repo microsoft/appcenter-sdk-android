@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
+import com.microsoft.appcenter.storage.exception.StorageException;
 
 /**
  * A document coming back from CosmosDB.
@@ -46,8 +47,12 @@ public class Document<T> {
         this.document = document;
     }
 
-    public Document(Exception exception) {
+    public Document(Throwable exception) {
         this.documentError = new DocumentError(exception);
+    }
+
+    public Document(String message, Throwable exception) {
+        this.documentError = new DocumentError(new StorageException(message, exception));
     }
 
     /**
@@ -129,4 +134,9 @@ public class Document<T> {
     public void setIsFromCache(boolean fromCache) {
         this.mFromCache = fromCache;
     }
+
+    /**
+     * @return whether the document has an error associated with it
+     */
+    public boolean failed() { return this.getError() == null; }
 }

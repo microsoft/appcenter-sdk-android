@@ -18,6 +18,7 @@ import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -148,7 +149,15 @@ public class Storage extends AbstractAppCenterService {
      * The document instance (T) must be JSON serializable.
      */
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
-        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType);
+        return create(partition, documentId, document, documentType, new WriteOptions());
+    }
+
+    /**
+     * Create a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, writeOptions);
     }
 
     /**
@@ -163,12 +172,20 @@ public class Storage extends AbstractAppCenterService {
      * The document instance (T) must be JSON serializable.
      */
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
+        return replace(partition, documentId, document, documentType, new WriteOptions());
+    }
+
+    /**
+     * Replace a document.
+     * The document instance (T) must be JSON serializable.
+     */
+    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         
          /* 
           * In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT).
          */
         AppCenterLog.debug(LOG_TAG, "Replace started");
-        return Storage.create(partition, documentId, document, documentType);
+        return Storage.create(partition, documentId, document, documentType, writeOptions);
     }
 
     /**
@@ -236,7 +253,7 @@ public class Storage extends AbstractAppCenterService {
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         Document<T> cachedDocument = mDocumentCache.read(partition, documentId, documentType, readOptions);
-        if (cachedDocument == null) {
+        if (cachedDocument.failed()) {
             getTokenAndCallCosmosDbApi(
                     partition,
                     result,
@@ -341,7 +358,12 @@ public class Storage extends AbstractAppCenterService {
      * Create a document.
      * The document type (T) must be JSON deserializable.
      */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(final String partition, final String documentId, final T document, final Class<T> documentType) {
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(
+            final String partition, 
+            final String documentId, 
+            final T document, 
+            final Class<T> documentType, 
+            final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
                 partition,
@@ -350,7 +372,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, result);
+                        callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
                     }
 
                     @Override
@@ -367,6 +389,7 @@ public class Storage extends AbstractAppCenterService {
             final Class<T> documentType,
             String partition,
             final String documentId,
+            final WriteOptions writeOptions, 
             final DefaultAppCenterFuture<Document<T>> result) {
         CosmosDb.callCosmosDbApi(
                 tokenResult,
@@ -381,8 +404,7 @@ public class Storage extends AbstractAppCenterService {
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFutureAndRemovePendingCall(cosmosDbDocument, result);
-                        // TODO: discuss how to decide between read and write expiration options
-                        mDocumentCache.write(cosmosDbDocument, null);
+                        mDocumentCache.write(cosmosDbDocument, writeOptions);
                     }
 
                     @Override
