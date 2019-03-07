@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.NetworkStateHelper;
+import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
@@ -152,6 +153,17 @@ public class HttpUtils {
      */
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
+    }
+
+    /**
+     * Hide JWT token value in Authorization header string.
+     *
+     * @param token string header value.
+     * @return obfuscated token string header value.
+     */
+    public static String hideAuthToken(@NonNull String token) {
+        int location = AUTH_TOKEN_FORMAT.indexOf("%s");
+        return token.substring(0, location) + "***";
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {
