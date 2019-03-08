@@ -30,32 +30,27 @@ class DocumentCache {
     /**
      * Table name.
      */
-    @VisibleForTesting
-    static final String TABLE = "cache";
+    private static final String TABLE = "cache";
 
     /**
      * Document Id column.
      */
-    @VisibleForTesting
-    static final String DOCUMENT_ID_COLUMN_NAME = "documentId";
+    private static final String DOCUMENT_ID_COLUMN_NAME = "documentId";
 
     /**
      * Partition column.
      */
-    @VisibleForTesting
-    static final String PARTITION_COLUMN_NAME = "partition";
+    private static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Content column.
      */
-    @VisibleForTesting
-    static final String CONTENT_COLUMN_NAME = "content";
+    private static final String CONTENT_COLUMN_NAME = "content";
 
     /**
      * Expires at column.
      */
-    @VisibleForTesting
-    static final String EXPIRES_AT_COLUMN_NAME = "expiresAt";
+    private static final String EXPIRES_AT_COLUMN_NAME = "expiresAt";
 
     /**
      * Current version of the schema.
@@ -67,13 +62,13 @@ class DocumentCache {
      */
     private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), Calendar.getInstance().getTimeInMillis());
 
-    final DatabaseManager mDatabaseManager;
+    private final DatabaseManager mDatabaseManager;
 
-    DocumentCache(DatabaseManager mDatabaseManager) {
-        this.mDatabaseManager = mDatabaseManager;
+    private DocumentCache(DatabaseManager databaseManager) {
+        mDatabaseManager = databaseManager;
     }
 
-    public DocumentCache(Context context) {
+    DocumentCache(Context context) {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
@@ -91,7 +86,7 @@ class DocumentCache {
 
     public <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
-        Cursor cursor = null;
+        Cursor cursor;
         ContentValues values;
         try {
             cursor = mDatabaseManager.getCursor(
