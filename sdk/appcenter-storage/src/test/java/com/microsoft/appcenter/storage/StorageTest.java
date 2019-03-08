@@ -460,15 +460,13 @@ public class StorageTest extends AbstractStorageTest {
 
         /* The test passes individually, but not in a suit. Need to figure out which mocks do not get reset. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mDocumentCache).read(
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument.getClass()),
                 any(ReadOptions.class));
-
-        // TODO add asserts for doc
     }
 
     @Test
