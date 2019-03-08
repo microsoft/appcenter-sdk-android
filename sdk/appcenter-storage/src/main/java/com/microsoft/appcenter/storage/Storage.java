@@ -203,7 +203,7 @@ public class Storage extends AbstractAppCenterService {
         mAppSecret = appSecret;
         mDocumentCache = new DocumentCache(context);
         mAuthListener = new AbstractTokenContextListener() {
-            
+
             @Override
             public void onNewUser(String authToken) {
                 if (authToken == null) {
@@ -363,10 +363,10 @@ public class Storage extends AbstractAppCenterService {
      * The document type (T) must be JSON deserializable.
      */
     private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(
-            final String partition, 
-            final String documentId, 
-            final T document, 
-            final Class<T> documentType, 
+            final String partition,
+            final String documentId,
+            final T document,
+            final Class<T> documentType,
             final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         getTokenAndCallCosmosDbApi(
@@ -393,7 +393,7 @@ public class Storage extends AbstractAppCenterService {
             final Class<T> documentType,
             String partition,
             final String documentId,
-            final WriteOptions writeOptions, 
+            final WriteOptions writeOptions,
             final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
@@ -401,7 +401,9 @@ public class Storage extends AbstractAppCenterService {
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                new HashMap<String, String>(){{put("x-ms-documentdb-is-upsert","true");}},
+                new HashMap<String, String>() {{
+                    put("x-ms-documentdb-is-upsert", "true");
+                }},
                 new ServiceCallback() {
 
                     @Override
@@ -462,7 +464,7 @@ public class Storage extends AbstractAppCenterService {
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    protected synchronized <T> void getTokenAndCallCosmosDbApi(
+    synchronized void getTokenAndCallCosmosDbApi(
             String partition,
             DefaultAppCenterFuture result,
             TokenExchangeServiceCallback callback) {

@@ -18,7 +18,6 @@ import java.util.Calendar;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-@VisibleForTesting
 class DocumentCache {
 
     /**
