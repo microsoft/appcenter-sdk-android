@@ -20,6 +20,7 @@ import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
@@ -68,6 +69,8 @@ public class Storage extends AbstractAppCenterService {
      * Authorization listener for {@link AuthTokenContext}.
      */
     private AuthTokenContext.Listener mAuthListener;
+
+    private NetworkStateHelper mNetworkStateHelper;
 
     /**
      * Get shared instance.
@@ -195,6 +198,7 @@ public class Storage extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+        mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
         mDocumentCache = new DocumentCache(context);
@@ -250,21 +254,28 @@ public class Storage extends AbstractAppCenterService {
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void callCosmosDb(TokenResult tokenResult) {
-                        callCosmosDbReadApi(tokenResult, documentId, documentType, result);
-                    }
+        /* Temporary: read from Cosmos DB when connected and from cache otherwise */
+        if (mNetworkStateHelper.isNetworkConnected()) {
+            getTokenAndCallCosmosDbApi(
+                    partition,
+                    result,
+                    new TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
-                    }
-                });
+                        @Override
+                        public void callCosmosDb(TokenResult tokenResult) {
+                            callCosmosDbReadApi(tokenResult, documentId, documentType, result);
+                        }
+
+                        @Override
+                        public void completeFuture(Exception e) {
+                            completeFutureAndRemovePendingCall(e, result);
+                        }
+                    });
+        } else {
+            Document<T> cachedDocument = mDocumentCache.read(partition, documentId, documentType, readOptions);
+            result.complete(cachedDocument);
+        }
         return result;
     }
 

@@ -34,7 +34,11 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SQLiteUtils.class, AppCenterLog.class, DatabaseManager.class, DocumentCache.class})
+@PrepareForTest({
+        SQLiteUtils.class,
+        AppCenterLog.class,
+        DatabaseManager.class,
+        DocumentCache.class})
 public class DocumentCacheTest {
 
     static final String PARTITION = "partition";

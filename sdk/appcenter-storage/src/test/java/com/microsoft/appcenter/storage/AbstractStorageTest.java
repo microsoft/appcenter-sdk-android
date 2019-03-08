@@ -12,6 +12,7 @@ import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -44,7 +45,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppCenterLog.class,
         AppCenter.class,
         HandlerUtils.class,
-        HttpUtils.class
+        HttpUtils.class,
+        NetworkStateHelper.class,
+        DocumentCache.class
 })
 
 abstract public class AbstractStorageTest {
@@ -66,6 +69,12 @@ abstract public class AbstractStorageTest {
 
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
+
+    @Mock
+    NetworkStateHelper mNetworkStateHelper;
+
+    @Mock
+    DocumentCache mDocumentCache;
 
     @Before
     public void setUp() throws Exception {
@@ -115,6 +124,11 @@ abstract public class AbstractStorageTest {
         mHttpClient = Mockito.mock(HttpClientRetryer.class);
         whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(true);
+        mNetworkStateHelper = mock(NetworkStateHelper.class);
+        whenNew(NetworkStateHelper.class).withAnyArguments().thenReturn(mNetworkStateHelper);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        mDocumentCache = mock(DocumentCache.class);
+        whenNew(DocumentCache.class).withAnyArguments().thenReturn(mDocumentCache);
         mStorage = Storage.getInstance();
         Storage storage = Storage.getInstance();
         mChannel = start(storage);

@@ -432,7 +432,8 @@ public class StorageTest extends AbstractStorageTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        verifyNoMoreInteractions(mDocumentCache);
+        verify(mHttpClient, times(1)).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -448,7 +449,7 @@ public class StorageTest extends AbstractStorageTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        verify(mHttpClient, times(1)).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
                 eq(METHOD_GET),
                 anyMapOf(String.class, String.class),
@@ -473,6 +474,17 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
+
+        /* The test passes individually, but not in a suit. Need to figure out which mocks do not get reset.
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        verifyNoMoreInteractions(mHttpClient);
+        verify(mDocumentCache).read(
+                eq(PARTITION),
+                eq(DOCUMENT_ID),
+                eq(testDocument.getClass()),
+                any(ReadOptions.class));
+        */
     }
 
     @Test
@@ -481,6 +493,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verifyNoMoreInteractions(mDocumentCache);
         verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
@@ -510,6 +523,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verifyNoMoreInteractions(mDocumentCache);
         verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
