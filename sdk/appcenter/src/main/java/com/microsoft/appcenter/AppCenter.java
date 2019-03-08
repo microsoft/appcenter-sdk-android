@@ -14,6 +14,8 @@ import android.util.Log;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -179,6 +181,11 @@ public class AppCenter {
      * Background thread handler abstraction to shared with services.
      */
     private AppCenterHandler mAppCenterHandler;
+
+    /**
+     * The ingestion object used to send batches to the server.
+     */
+    private Ingestion mIngestion;
 
     /**
      * Max storage size in bytes.
@@ -494,7 +501,16 @@ public class AppCenter {
 
                 @Override
                 public void run() {
-                    mChannel.setLogUrl(logUrl);
+                    if (mChannel != null) {
+                        if (mAppSecret != null) {
+                            Log.i(LOG_TAG, "The log url of App Center endpoint was changed to " + logUrl);
+                        } else {
+                            Log.i(LOG_TAG, "The log url of One Collector endpoint was changed to " + logUrl);
+                            mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
+                            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
+                        }
+                        mChannel.setLogUrl(logUrl);
+                    }
                 }
             });
         }
