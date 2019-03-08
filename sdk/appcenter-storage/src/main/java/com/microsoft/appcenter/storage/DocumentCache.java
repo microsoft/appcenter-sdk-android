@@ -57,7 +57,7 @@ class DocumentCache {
     private static final int VERSION = 1;
 
     /**
-     * Current schema
+     * Current schema.
      */
     private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), Calendar.getInstance().getTimeInMillis());
 
@@ -89,10 +89,10 @@ class DocumentCache {
         ContentValues values;
         try {
             cursor = mDatabaseManager.getCursor(
-                        getPartitionAndDocumentIdQueryBuilder(),
-                        null,
-                        new String[]{ partition, documentId },
-                        EXPIRES_AT_COLUMN_NAME + " DESC");
+                    getPartitionAndDocumentIdQueryBuilder(),
+                    null,
+                    new String[]{partition, documentId},
+                    EXPIRES_AT_COLUMN_NAME + " DESC");
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
             return new Document<>("Failed to read from cache.", e);
@@ -120,7 +120,7 @@ class DocumentCache {
         try {
             mDatabaseManager.delete(
                     String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME),
-                    new String[] { partition, documentId });
+                    new String[]{partition, documentId});
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to delete from cache: ", e);
         }

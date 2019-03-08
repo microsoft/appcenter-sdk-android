@@ -196,7 +196,7 @@ public class DatabaseManager implements Closeable {
      * Replaces a row in the database.
      * Inserts a new row if a row does not already exist.
      *
-     * @param values         The entry to be stored.
+     * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -289,16 +289,16 @@ public class DatabaseManager implements Closeable {
      * Deletes the entries that matches key == value.
      *
      * @param whereClause the optional WHERE clause to apply when deleting.
-     *            Passing null will delete all rows.
-     * @param whereArgs You may include ?s in the where clause, which
-     *            will be replaced by the values from whereArgs. The values
-     *            will be bound as Strings.
+     *                    Passing null will delete all rows.
+     * @param whereArgs   You may include ?s in the where clause, which
+     *                    will be replaced by the values from whereArgs. The values
+     *                    will be bound as Strings.
      */
     public void delete(String whereClause, String[] whereArgs) {
         try {
             getDatabase().delete(mTable, whereClause, whereArgs);
         } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, whereArgs, mDatabase), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
         }
     }
 
@@ -492,11 +492,13 @@ public class DatabaseManager implements Closeable {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+
             /* No need to do anything on create because `DatabaseManager` creates a table. */
         }
 
         @Override
         public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
             /*
              * No need to do anything on upgrade because this is the first version of the schema
              * and the rest is handled by `DatabaseManager`.

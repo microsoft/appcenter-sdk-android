@@ -102,12 +102,12 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseManager.put(value1, "COL_INTEGER");
-        assertNotNull(value1Id);
+        long value1Id = databaseManager.put(value1, "COL_INTEGER");
+        assertTrue(value1Id >= 0);
 
         /* Put another. */
-        Long value2Id = databaseManager.put(value2, "COL_INTEGER");
-        assertNotNull(value2Id);
+        long value2Id = databaseManager.put(value2, "COL_INTEGER");
+        assertTrue(value2Id >= 0);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
 

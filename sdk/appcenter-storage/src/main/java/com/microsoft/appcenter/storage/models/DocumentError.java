@@ -12,5 +12,4 @@ public class DocumentError {
     public Throwable getError() {
         return exception;
     }
-
 }

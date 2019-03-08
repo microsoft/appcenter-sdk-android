@@ -109,7 +109,6 @@ public class Document<T> {
         return timestamp;
     }
 
-
     /**
      * Get the document in string.
      *

@@ -41,13 +41,15 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DocumentCache.class})
 public class DocumentCacheTest {
 
-    static final String PARTITION = "partition";
-    static final String DOCUMENT_ID = "id";
+    private static final String PARTITION = "partition";
+
+    private static final String DOCUMENT_ID = "id";
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     private DatabaseManager mDatabaseManager;
+
     private DocumentCache mDocumentCache;
 
     @Before
