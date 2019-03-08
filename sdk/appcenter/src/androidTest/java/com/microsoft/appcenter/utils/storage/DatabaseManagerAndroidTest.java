@@ -76,6 +76,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-databaseManagerScannerRemove");
         sContext.deleteDatabase("test-databaseManagerScannerNext");
         sContext.deleteDatabase("test-setMaximumSize");
+        sContext.deleteDatabase("test-upsert");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -399,7 +400,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManager", "databaseManager", 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-upsert", "databaseManager", 1, mSchema, listener);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
