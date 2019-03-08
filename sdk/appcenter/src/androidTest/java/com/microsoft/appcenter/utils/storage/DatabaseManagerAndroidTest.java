@@ -393,4 +393,26 @@ public class DatabaseManagerAndroidTest {
             databaseManager.close();
         }
     }
+
+    @Test
+    public void upsert() {
+
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManager", "databaseManager", 1, mSchema, listener);
+
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            assertEquals(0L, databaseManager.getRowCount());
+            ContentValues contentValues = generateContentValues();
+            databaseManager.upsert(contentValues);
+            assertEquals(1L, databaseManager.getRowCount());
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseManager.close();
+        }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
+    }
 }
