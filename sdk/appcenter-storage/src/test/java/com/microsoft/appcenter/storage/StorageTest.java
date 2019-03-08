@@ -15,6 +15,7 @@ import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -58,6 +59,7 @@ import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.matches;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -77,7 +79,7 @@ public class StorageTest extends AbstractStorageTest {
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
-            "            \"partition\": \"readonly\",\n" +
+            "            \"partition\": \"%s\",\n" +
             "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
             "            \"dbName\": \"%s\",\n" +
             "            \"dbCollectionName\": \"%s\",\n" +
@@ -85,7 +87,7 @@ public class StorageTest extends AbstractStorageTest {
             "            \"status\": \"Succeed\"\n" +
             "        }\n" +
             "    ]\n" +
-            "}", DATABASE_NAME, COLLECTION_NAME);
+            "}", PARTITION, DATABASE_NAME, COLLECTION_NAME);
 
     private static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
@@ -544,7 +546,8 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void createEndToEnd() {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        WriteOptions writeOptions = new WriteOptions(12476);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
@@ -574,6 +577,8 @@ public class StorageTest extends AbstractStorageTest {
 
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
+        verify(mDocumentCache, times(1)).write(refEq(testCosmosDocument), refEq(writeOptions));
+        verifyNoMoreInteractions(mDocumentCache);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
@@ -639,6 +644,8 @@ public class StorageTest extends AbstractStorageTest {
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
+        verify(mDocumentCache, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mDocumentCache);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
         assertNull(doc.get().getError());
