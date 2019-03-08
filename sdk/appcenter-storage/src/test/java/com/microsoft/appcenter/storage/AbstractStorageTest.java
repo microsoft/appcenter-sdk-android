@@ -124,10 +124,9 @@ abstract public class AbstractStorageTest {
         mHttpClient = Mockito.mock(HttpClientRetryer.class);
         whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(true);
-        mNetworkStateHelper = mock(NetworkStateHelper.class);
-        whenNew(NetworkStateHelper.class).withAnyArguments().thenReturn(mNetworkStateHelper);
+        mockStatic(NetworkStateHelper.class);
+        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        mDocumentCache = mock(DocumentCache.class);
         whenNew(DocumentCache.class).withAnyArguments().thenReturn(mDocumentCache);
         mStorage = Storage.getInstance();
         Storage storage = Storage.getInstance();

@@ -22,9 +22,11 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("unused")
 public class DocumentCacheAndroidTest {
 
-    public static final String TEST_VALUE = "Test value";
-    public static final String PARTITION = "partition";
-    public static final String ID = "id";
+    private static final String TEST_VALUE = "Test value";
+
+    private static final String PARTITION = "partition";
+
+    private static final String ID = "id";
 
     /**
      * Context instance.
