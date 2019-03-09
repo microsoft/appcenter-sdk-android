@@ -28,6 +28,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -62,6 +64,32 @@ public class DatabaseManagerTest {
         databaseManagerMock.put(new ContentValues(), "priority");
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+    }
+
+    @Test
+    public void upsertFailed() {
+        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
+        long result = databaseManagerMock.upsert(new ContentValues());
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
+        assertEquals(-1L, result);
+    }
+
+    @Test
+    public void upsertCallsReplaceInternally() {
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase database = mock(SQLiteDatabase.class);
+        long replaceResultId = 768L;
+        when(database.replace(anyString(), anyString(), any(ContentValues.class))).thenReturn(replaceResultId);
+        when(helperMock.getWritableDatabase()).thenReturn(database);
+        String tableName = "table";
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", tableName, 1, null, null));
+        databaseManager.setSQLiteOpenHelper(helperMock);
+        ContentValues contentValues = new ContentValues();
+        long result = databaseManager.upsert(contentValues);
+        verify(database).replace(eq(tableName), isNull(String.class), refEq(contentValues));
+        assertEquals(replaceResultId, result);
     }
 
     @Test

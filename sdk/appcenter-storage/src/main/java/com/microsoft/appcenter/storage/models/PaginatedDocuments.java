@@ -2,7 +2,6 @@ package com.microsoft.appcenter.storage.models;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;

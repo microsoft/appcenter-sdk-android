@@ -193,6 +193,23 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Replaces a row in the database.
+     * Inserts a new row if a row does not already exist.
+     *
+     * @param values The entry to be stored.
+     * @return If a log was inserted, the database identifier. Otherwise -1.
+     */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    public long upsert(@NonNull ContentValues values) {
+        try {
+            return getDatabase().replace(mTable, null, values);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
+        }
+        return -1L;
+    }
+
+    /**
      * Stores the entry to the table. If the table is full, the oldest logs are discarded until the
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
@@ -232,7 +249,7 @@ public class DatabaseManager implements Closeable {
             }
         } catch (RuntimeException e) {
             id = -1L;
-            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database.", values.toString()), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }
         if (cursor != null) {
             try {
@@ -264,7 +281,24 @@ public class DatabaseManager implements Closeable {
         try {
             getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
         } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database.", Arrays.toString(idList.toArray())), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database %s.", Arrays.toString(idList.toArray()), mDatabase), e);
+        }
+    }
+
+    /**
+     * Deletes the entries that matches key == value.
+     *
+     * @param whereClause the optional WHERE clause to apply when deleting.
+     *                    Passing null will delete all rows.
+     * @param whereArgs   You may include ?s in the where clause, which
+     *                    will be replaced by the values from whereArgs. The values
+     *                    will be bound as Strings.
+     */
+    public void delete(String whereClause, String[] whereArgs) {
+        try {
+            getDatabase().delete(mTable, whereClause, whereArgs);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
         }
     }
 
@@ -275,11 +309,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      */
     public void delete(@Nullable String key, @Nullable Object value) {
-        try {
-            getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
-        }
+        delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
     /**
@@ -452,5 +482,28 @@ public class DatabaseManager implements Closeable {
          */
         @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
+    }
+
+    /**
+     * A default implementation of `Listener` that relies on `DatabaseManager` to do
+     * the set up and upgrades.
+     */
+    public static class DefaultListener implements DatabaseManager.Listener {
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+
+            /* No need to do anything on create because `DatabaseManager` creates a table. */
+        }
+
+        @Override
+        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+            /*
+             * No need to do anything on upgrade because this is the first version of the schema
+             * and the rest is handled by `DatabaseManager`.
+             */
+            return false;
+        }
     }
 }

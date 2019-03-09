@@ -31,7 +31,7 @@ public final class Utils {
                     document,
                     obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
                     obj.get(Constants.ID_FIELD_NAME).getAsString(),
-                    obj.get(Constants.ETAG_FIELD_NAME).getAsString(),
+                    obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
                     obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
         } catch (Exception exception) {
             return new Document<T>(exception);

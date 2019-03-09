@@ -76,6 +76,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-databaseManagerScannerRemove");
         sContext.deleteDatabase("test-databaseManagerScannerNext");
         sContext.deleteDatabase("test-setMaximumSize");
+        sContext.deleteDatabase("test-upsert");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -102,12 +103,12 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseManager.put(value1, "COL_INTEGER");
-        assertNotNull(value1Id);
+        long value1Id = databaseManager.put(value1, "COL_INTEGER");
+        assertTrue(value1Id >= 0);
 
         /* Put another. */
-        Long value2Id = databaseManager.put(value2, "COL_INTEGER");
-        assertNotNull(value2Id);
+        long value2Id = databaseManager.put(value2, "COL_INTEGER");
+        assertTrue(value2Id >= 0);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
 
@@ -257,7 +258,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -278,7 +279,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DefaultListener());
+        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -304,7 +305,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
 
         /* Put data. */
         long id;
@@ -367,7 +368,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -394,15 +395,25 @@ public class DatabaseManagerAndroidTest {
         }
     }
 
-    private static class DefaultListener implements DatabaseManager.Listener {
+    @Test
+    public void upsert() {
 
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-        }
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-upsert", "databaseManager", 1, mSchema, listener);
 
-        @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            return false;
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            assertEquals(0L, databaseManager.getRowCount());
+            ContentValues contentValues = generateContentValues();
+            databaseManager.upsert(contentValues);
+            assertEquals(1L, databaseManager.getRowCount());
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseManager.close();
         }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
     }
 }

@@ -2,15 +2,14 @@ package com.microsoft.appcenter.storage.models;
 
 public class DocumentError {
 
-    private Exception exception;
+    private Throwable exception;
 
     @SuppressWarnings("WeakerAccess")
-    public DocumentError(Exception exception) {
+    public DocumentError(Throwable exception) {
         this.exception = exception;
     }
 
-    public Exception getError() {
+    public Throwable getError() {
         return exception;
     }
-
 }

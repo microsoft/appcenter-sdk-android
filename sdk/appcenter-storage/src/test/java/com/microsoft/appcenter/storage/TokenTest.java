@@ -156,7 +156,7 @@ public class TokenTest extends AbstractStorageTest {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(null, null);
                 } else if (url.getValue().contains(emptyTokensAppUrl)) {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}", null);
-                } else if (url.getValue().contains(multipleTokensAppUrl)){
+                } else if (url.getValue().contains(multipleTokensAppUrl)) {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}", null);
                 }
                 return mock(ServiceCall.class);
