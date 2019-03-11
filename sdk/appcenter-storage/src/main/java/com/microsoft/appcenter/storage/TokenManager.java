@@ -14,7 +14,7 @@ import java.util.TimeZone;
 /**
  * Token cache service.
  */
-public final class TokenManager {
+public class TokenManager {
 
     /**
      * Shared token manager instance.
