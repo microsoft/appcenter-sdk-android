@@ -26,6 +26,7 @@ import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
 
@@ -669,6 +670,68 @@ public class IdentityTest extends AbstractIdentityTest {
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
         verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+    }
+
+    @Test
+    public void silentSignFailsWithException() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        Activity activity = mock(Activity.class);
+        IAccount mockAccount = mock(IAccount.class);
+        String mockIdToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+
+        /* Always return empty cache. */
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+        final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[2]).onSuccess(mockResult);
+                return null;
+            }
+        }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onError(new MsalClientException("error"));
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Go foreground. */
+        identity.onActivityResumed(activity);
+
+        /* Sign in. */
+        Identity.signIn();
+
+        /* Call signIn again to trigger silent sign-in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        SignInResult signInResult = future.get();
+        assertNotNull(signInResult);
+        assertNull(signInResult.getUserInformation());
+        assertNotNull(signInResult.getException());
+        assertTrue(signInResult.getException() instanceof MsalClientException);
     }
 
     private void testDownloadFailed(Exception e) throws Exception {
