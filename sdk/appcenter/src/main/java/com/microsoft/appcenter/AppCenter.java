@@ -502,9 +502,9 @@ public class AppCenter {
                 @Override
                 public void run() {
                         if (mAppSecret != null) {
-                            AppCenterLog.info(LOG_TAG,"The log url of App Center endpoint was changed to " + logUrl);
+                            AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint was changed to " + logUrl);
                         } else {
-                            AppCenterLog.info(LOG_TAG,"The log url of One Collector endpoint was changed to " + logUrl);
+                            AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint was changed to " + logUrl);
                             mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
                             mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
                         }
@@ -758,9 +758,9 @@ public class AppCenter {
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        if(mAppSecret != null){
+        if (mAppSecret != null) {
             mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
-        }else{
+        } else {
             mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
             mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
         }
