@@ -159,6 +159,8 @@ public class RealUserMeasurements extends AbstractAppCenterService {
 
     /**
      * Enable or disable RealUserMeasurements service.
+     * <p>
+     * The state is persisted in the device's storage across application launches.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
