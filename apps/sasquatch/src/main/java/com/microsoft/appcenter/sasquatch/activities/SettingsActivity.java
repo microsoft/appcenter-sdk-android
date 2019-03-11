@@ -500,6 +500,9 @@ public class SettingsActivity extends AppCompatActivity {
                                     if (Patterns.WEB_URL.matcher(input.getText().toString()).matches()) {
                                         String url = input.getText().toString();
                                         setKeyValue(LOG_URL_KEY, url);
+                                        if (!TextUtils.isEmpty(url)) {
+                                            AppCenter.setLogUrl(url);
+                                        }
                                         toastUrlChange(url);
                                     } else if (input.getText().toString().isEmpty()) {
                                         setDefaultUrl();
@@ -514,6 +517,9 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     setDefaultUrl();
+                                    if (!TextUtils.isEmpty(getString(R.string.log_url))) {
+                                        AppCenter.setLogUrl(getString(R.string.log_url));
+                                    }
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })

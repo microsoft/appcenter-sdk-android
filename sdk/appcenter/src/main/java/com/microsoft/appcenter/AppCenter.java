@@ -503,9 +503,9 @@ public class AppCenter {
                 public void run() {
                     if (mChannel != null) {
                         if (mAppSecret != null) {
-                            Log.i(LOG_TAG, "The log url of App Center endpoint was changed to " + logUrl);
+                            AppCenterLog.info(LOG_TAG,"The log url of App Center endpoint was changed to " + logUrl);
                         } else {
-                            Log.i(LOG_TAG, "The log url of One Collector endpoint was changed to " + logUrl);
+                            AppCenterLog.info(LOG_TAG,"The log url of One Collector endpoint was changed to " + logUrl);
                             mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
                             mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
                         }
