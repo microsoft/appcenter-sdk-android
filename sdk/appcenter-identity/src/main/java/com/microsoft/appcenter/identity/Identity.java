@@ -471,7 +471,7 @@ public class Identity extends AbstractAppCenterService {
     @UiThread
     private synchronized void signInInteractively() {
         if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
-            completeSignIn(null, new NetworkErrorException("Sign in failed. No internet connection."));
+            completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
         }
         if (mAuthenticationClient != null && mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
