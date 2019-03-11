@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
@@ -111,10 +114,10 @@ public class TokenExchange {
 
         private TokenResult parseTokenResult(String payload) {
             TokensResponse tokensResponse = Utils.getGson().fromJson(payload, TokensResponse.class);
-            if (tokensResponse != null &&
-                    tokensResponse.tokens() != null &&
-                    tokensResponse.tokens().size() == 1 &&
-                    tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
+            if (tokensResponse != null
+                    && tokensResponse.tokens() != null
+                    && tokensResponse.tokens().size() == 1
+                    && tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
                 TokenResult tokenResult = tokensResponse.tokens().get(0);
                 TokenManager.getInstance().setCachedToken(tokenResult);
                 return tokenResult;

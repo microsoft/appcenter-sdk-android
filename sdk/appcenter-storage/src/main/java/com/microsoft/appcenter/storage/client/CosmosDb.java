@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.appcenter.storage.client;
 
 import com.microsoft.appcenter.http.HttpClient;
@@ -21,7 +24,7 @@ public class CosmosDb {
 
     /**
      * Document DB document URL suffix.
-     * TODO use it or remove.
+     * TODO (guperrot): use it or remove.
      */
     static final String DOCUMENT_DB_DOCUMENT_URL_SUFFIX = "docs/%s";
     /**
@@ -43,7 +46,7 @@ public class CosmosDb {
 
     /**
      * Document DB authorization header format
-     * TODO : Change the "type" to be "resource" instead of "master"
+     * TODO (nikitag): Change the "type" to be "resource" instead of "master".
      */
     static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
 
@@ -84,15 +87,15 @@ public class CosmosDb {
     }
 
     private static String getDocumentDbEndpoint(String dbAccount, String documentResourceId) {
-        return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/" +
-                documentResourceId;
+        return String.format(DOCUMENT_DB_ENDPOINT, dbAccount) + "/"
+                + documentResourceId;
     }
 
 
     public static String getDocumentBaseUrl(String databaseName, String collectionName, String documentId) {
-        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
-                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
+        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/"
+                + String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/"
+                + DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
     }
 
     private static String getDocumentUrl(TokenResult tokenResult, String documentId) {
@@ -118,7 +121,7 @@ public class CosmosDb {
                 serviceCallback
         );
     }
-	
+
     public static synchronized <T> ServiceCall callCosmosDbApi(
         TokenResult tokenResult,
         String documentId,
@@ -128,14 +131,14 @@ public class CosmosDb {
         ServiceCallback serviceCallback) {
         return callCosmosDbApi(tokenResult, documentId, httpClient, httpVerb, body, new HashMap<String, String>(), serviceCallback);
     }
-	
+
     public static ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             String body,
-            Map<String,String> additionalHeaders,
+            Map<String, String> additionalHeaders,
             ServiceCallback serviceCallback) {
         return callApi(
                 httpVerb,

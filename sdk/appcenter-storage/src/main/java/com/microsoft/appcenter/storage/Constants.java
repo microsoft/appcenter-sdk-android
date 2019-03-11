@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -45,17 +48,17 @@ public final class Constants {
      * User partition.
      * An authenticated user can read/write documents in this partition.
      */
-    public static String USER = "user-{%s}";
+    public static final String USER = "user-{%s}";
 
     /**
      * Readonly partition.
      * Everyone can read documents in this partition.
      * Writes are not allowed via the SDK.
      */
-    public static String READONLY = "readonly";
+    public static final String READONLY = "readonly";
 
     /**
      * The continuation token header used to set continuation token.
      */
-    public static String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";
+    public static final String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";
 }

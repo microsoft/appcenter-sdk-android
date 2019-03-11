@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.appcenter.storage;
 
 import com.google.gson.Gson;
@@ -16,16 +19,16 @@ import java.util.List;
 
 public final class Utils {
 
-    private static final Gson sGson = new Gson();
+    private static final Gson S_GSON = new Gson();
 
-    private static final JsonParser sParser = new JsonParser();
+    private static final JsonParser S_PARSER = new JsonParser();
 
     static <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
-        return parseDocument(sParser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
+        return parseDocument(S_PARSER.parse(cosmosDbPayload).getAsJsonObject(), documentType);
     }
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
-        T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
+        T document = S_GSON.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
         try {
             return new Document<T>(
                     document,
@@ -40,11 +43,11 @@ public final class Utils {
 
     @SuppressWarnings("SameParameterValue")
     static <T> T fromJson(String doc, Class<T> type) {
-        return sGson.fromJson(doc, type);
+        return S_GSON.fromJson(doc, type);
     }
 
     public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
-        JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
+        JsonObject objects = S_PARSER.parse(cosmosDbPayload).getAsJsonObject();
         JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
         List<Document<T>> documents = new ArrayList<>();
         for (JsonElement object : array) {
@@ -69,6 +72,6 @@ public final class Utils {
     }
 
     public static Gson getGson() {
-        return sGson;
+        return S_GSON;
     }
 }

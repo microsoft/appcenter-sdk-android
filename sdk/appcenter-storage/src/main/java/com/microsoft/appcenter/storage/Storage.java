@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.appcenter.storage;
 
 import android.annotation.SuppressLint;
@@ -96,7 +99,7 @@ public class Storage extends AbstractAppCenterService {
      * @param apiUrl API base URL.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess", "unused"})
-    // TODO Remove suppress warnings after reflection removed in test app
+    // TODO (guperrot): Remove suppress warnings after reflection removed in test app.
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -107,7 +110,7 @@ public class Storage extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO (nikitag): Remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -118,7 +121,7 @@ public class Storage extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO (nikitag): Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }

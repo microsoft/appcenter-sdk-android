@@ -70,7 +70,7 @@ public class DocumentCacheTest {
     @Test
     public void readReturnsErrorObjectOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
-        Document<String> doc = mDocumentCache.read(PARTITION, DOCUMENT_ID, String.class, ReadOptions.CreateNoCacheOption());
+        Document<String> doc = mDocumentCache.read(PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOption());
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
@@ -86,10 +86,10 @@ public class DocumentCacheTest {
 
     @Test
     public void verifyOptionsContstructors() {
-        assertEquals(BaseOptions.INFINITE, ReadOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, ReadOptions.CreateNoCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.INFINITE, WriteOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, WriteOptions.CreateNoCacheOption().getDeviceTimeToLive());
+        assertEquals(BaseOptions.INFINITE, ReadOptions.createInfiniteCacheOption().getDeviceTimeToLive());
+        assertEquals(BaseOptions.NO_CACHE, ReadOptions.createNoCacheOption().getDeviceTimeToLive());
+        assertEquals(BaseOptions.INFINITE, WriteOptions.createInfiniteCacheOption().getDeviceTimeToLive());
+        assertEquals(BaseOptions.NO_CACHE, WriteOptions.createNoCacheOption().getDeviceTimeToLive());
     }
 
     @Test(expected = IllegalArgumentException.class)
