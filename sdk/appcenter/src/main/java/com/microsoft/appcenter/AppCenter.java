@@ -501,7 +501,6 @@ public class AppCenter {
 
                 @Override
                 public void run() {
-                    if (mChannel != null) {
                         if (mAppSecret != null) {
                             AppCenterLog.info(LOG_TAG,"The log url of App Center endpoint was changed to " + logUrl);
                         } else {
@@ -510,7 +509,6 @@ public class AppCenter {
                             mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
                         }
                         mChannel.setLogUrl(logUrl);
-                    }
                 }
             });
         }
