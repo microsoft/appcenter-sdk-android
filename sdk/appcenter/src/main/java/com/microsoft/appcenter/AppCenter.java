@@ -758,7 +758,12 @@ public class AppCenter {
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        if(mAppSecret != null){
+            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        }else{
+            mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
+            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
+        }
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {

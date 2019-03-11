@@ -851,6 +851,26 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setLogUrlWithNoAppSecret() {
+
+        /* Change log URL before start. */
+        String logUrl = "http://mock";
+        AppCenter.setLogUrl(logUrl);
+
+        /* No effect for now. */
+        verify(mChannel, never()).setLogUrl(logUrl);
+
+        /* Start should propagate the log URL without App Secret. */
+        AppCenter.start(mApplication, DUMMY_TRANSMISSION_TARGET_TOKEN, DummyService.class);
+        verify(mChannel).setLogUrl(logUrl);
+
+        /* Change it after, should work immediately. */
+        logUrl = "http://mock2";
+        AppCenter.setLogUrl(logUrl);
+        verify(mChannel).setLogUrl(logUrl);
+    }
+
+    @Test
     public void getSdkVersionTest() {
         assertEquals(BuildConfig.VERSION_NAME, AppCenter.getSdkVersion());
     }
