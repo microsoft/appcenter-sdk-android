@@ -320,9 +320,6 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
-        /* Sign in, will be delayed until configuration ready. */
-       // AppCenterFuture<SignInResult> future = Identity.signIn();
-
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, httpClient);
 
