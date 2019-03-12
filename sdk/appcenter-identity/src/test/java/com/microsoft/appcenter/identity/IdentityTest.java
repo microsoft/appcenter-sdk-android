@@ -844,7 +844,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Check result. */
         assertNotNull(future.get());
-        assertTrue(future.get().getException() instanceof IllegalThreadStateException);
+        assertTrue(future.get().getException() instanceof IllegalStateException);
         assertNull(future.get().getUserInformation());
     }
 
