@@ -90,6 +90,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     }
 
     @Override
+    public void setLogUrl(@NonNull String logUrl){
+        mChannel.setLogUrl(logUrl);
+    }
+
+    @Override
     public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener) {
         if (isOneCollectorGroup(groupName)) {
             return;

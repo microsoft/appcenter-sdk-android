@@ -11,6 +11,10 @@ import com.microsoft.appcenter.ingestion.models.Log;
 public class AbstractChannelListener implements Channel.Listener {
 
     @Override
+    public void setLogUrl(@NonNull String logUrl){
+    }
+
+    @Override
     public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener) {
     }
 

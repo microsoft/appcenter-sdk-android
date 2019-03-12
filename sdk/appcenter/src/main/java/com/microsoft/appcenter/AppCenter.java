@@ -197,6 +197,8 @@ public class AppCenter {
      */
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
+    private OneCollectorChannelListener mOneCollectorChannelListener;
+
     /**
      * Get unique instance.
      *
@@ -503,12 +505,12 @@ public class AppCenter {
                 public void run() {
                         if (mAppSecret != null) {
                             AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint was changed to " + logUrl);
+                            mChannel.setLogUrl(logUrl);
                         } else {
                             AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint was changed to " + logUrl);
-                            mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
-                            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
+                            mOneCollectorChannelListener.setLogUrl(logUrl);
                         }
-                        mChannel.setLogUrl(logUrl);
+
                 }
             });
         }
@@ -758,12 +760,7 @@ public class AppCenter {
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        if (mAppSecret != null) {
-            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
-        } else {
-            mIngestion = new OneCollectorIngestion(mApplication, mLogSerializer);
-            mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mIngestion, mHandler);
-        }
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -775,10 +772,14 @@ public class AppCenter {
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
-        if (mLogUrl != null) {
+        if (mLogUrl != null && mAppSecret != null) {
             mChannel.setLogUrl(mLogUrl);
         }
-        mChannel.addListener(new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId()));
+        mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
+        if(mLogUrl != null && mAppSecret == null){
+            mOneCollectorChannelListener.setLogUrl(mLogUrl);
+        }
+        mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */
         if (!enabled) {
