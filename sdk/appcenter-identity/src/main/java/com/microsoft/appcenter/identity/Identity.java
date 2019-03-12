@@ -451,8 +451,8 @@ public class Identity extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void selectSignInTypeAndSignIn() {
-        if (mAuthenticationClient == null) {
-            completeSignIn(null, new IOException("signIn is called while it's not configured, waiting."));
+        if (mAuthenticationClient == null || !NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+            completeSignIn(null, new IOException("signIn is called while it's not configured, waiting or no internet connection"));
         }
         IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
         if (account != null) {
@@ -470,11 +470,8 @@ public class Identity extends AbstractAppCenterService {
 
     @UiThread
     private synchronized void signInInteractively() {
-        if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
-            completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
-        }
-        if (mAuthenticationClient != null && mActivity != null) {
-            AppCenterLog.info(LOG_TAG, "Signing in using browser.");
+    	if (mAuthenticationClient != null && mActivity != null) {
+    		AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
