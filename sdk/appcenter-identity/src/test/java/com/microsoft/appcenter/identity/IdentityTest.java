@@ -1130,7 +1130,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @NonNull
-    private JSONObject mockValidForAppCenterConfig() throws Exception {
+    private static JSONObject mockValidForAppCenterConfig() throws Exception {
         JSONObject jsonConfig = mock(JSONObject.class);
         when(jsonConfig.toString()).thenReturn("mockConfig");
         whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
