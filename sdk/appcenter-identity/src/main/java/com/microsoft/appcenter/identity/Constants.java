@@ -23,9 +23,14 @@ final class Constants {
     static final String IDENTITY_GROUP = "group_identity";
 
     /**
-     * URL pattern to get configuration file. Variable is appSecret.
+     * Base URL for remote configuration.
      */
-    static final String CONFIG_URL = "https://mobilecentersdkdev.blob.core.windows.net/identity/%s.json";
+    static final String DEFAULT_CONFIG_URL = "https://config.appcenter.ms";
+
+    /**
+     * Config url format. Variables are base url then appSecret.
+     */
+    static final String CONFIG_URL_FORMAT = "%s/identity/%s.json";
 
     /**
      * File path to store cached configuration in application files.

@@ -136,6 +136,21 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
+        /* Set identity config url. */
+        String configUrl = getString(R.string.identity_config_url);
+        if (!TextUtils.isEmpty(configUrl)) {
+
+            /* TODO once Identity released to jCenter, use Identity.setConfigUrl directly. */
+            try {
+                Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
+                identity.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         /* Set push sender ID the old way for testing without firebase lib. */
         setSenderId();
 

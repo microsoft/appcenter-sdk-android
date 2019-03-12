@@ -81,15 +81,37 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest(AuthTokenContext.class)
 public class IdentityTest extends AbstractIdentityTest {
 
+    private static final String APP_SECRET = "5c9edcf2-d8d8-426d-8c20-817eb9378b08";
+
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
-    @NonNull
-    private Channel start(Identity identity) {
-        Channel channel = mock(Channel.class);
-        identity.onStarting(mAppCenterHandler);
-        identity.onStarted(mock(Context.class), channel, "", null, true);
-        return channel;
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+
+        /* Intercept parameters. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+
+        /* Verify call template. */
+        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+
+        /* Verify no logging if verbose log not enabled (default). */
+        try {
+            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
+        } catch (MalformedURLException e) {
+            fail("test url should always be valid " + e.getMessage());
+        }
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
+
+        /* Simulate response. */
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
     }
 
     @Test
@@ -142,6 +164,14 @@ public class IdentityTest extends AbstractIdentityTest {
         Channel channel = start(identity);
         verify(channel, never()).removeListener(any(Channel.Listener.class));
         verify(channel, never()).addListener(any(Channel.Listener.class));
+    }
+
+    @NonNull
+    private Channel start(Identity identity) {
+        Channel channel = mock(Channel.class);
+        identity.onStarting(mAppCenterHandler);
+        identity.onStarted(mock(Context.class), channel, APP_SECRET, null, true);
+        return channel;
     }
 
     @Test
@@ -1110,31 +1140,21 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(mock(Activity.class));
     }
 
-    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+    @Test
+    public void setConfigUrl() throws Exception {
 
-        /* Intercept parameters. */
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
-        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
-        assertNotNull(serviceCallback);
+        /* Set url before start. */
+        String configUrl = "https://config.contoso.com";
+        Identity.setConfigUrl(configUrl);
 
-        /* Verify call template. */
-        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        start(Identity.getInstance());
 
-        /* Verify no logging if verbose log not enabled (default). */
-        try {
-            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
-        } catch (MalformedURLException e) {
-            fail("test url should always be valid " + e.getMessage());
-        }
-        verifyStatic(never());
-        AppCenterLog.verbose(anyString(), anyString());
-
-        /* Simulate response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+        /* Check call. */
+        String expectedUrl = configUrl + "/identity/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @NonNull

@@ -50,7 +50,8 @@ import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
-import static com.microsoft.appcenter.identity.Constants.CONFIG_URL;
+import static com.microsoft.appcenter.identity.Constants.CONFIG_URL_FORMAT;
+import static com.microsoft.appcenter.identity.Constants.DEFAULT_CONFIG_URL;
 import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
 import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
 import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
@@ -70,6 +71,11 @@ public class Identity extends AbstractAppCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Identity sInstance;
+
+    /**
+     * Current config base URL.
+     */
+    private String mConfigUrl = DEFAULT_CONFIG_URL;
 
     /**
      * Application context.
@@ -140,12 +146,23 @@ public class Identity extends AbstractAppCenterService {
     }
 
     /**
+     * Change the remote configuration base URL.
+     *
+     * @param configUrl configuration base URL.
+     */
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    // TODO Remove warning suppress after release.
+    public static void setConfigUrl(String configUrl) {
+        getInstance().setInstanceConfigUrl(configUrl);
+    }
+
+    /**
      * Check whether Identity service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -156,7 +173,7 @@ public class Identity extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -245,6 +262,13 @@ public class Identity extends AbstractAppCenterService {
         mActivity = null;
     }
 
+    /**
+     * Implements {@link #setConfigUrl(String)} at instance level.
+     */
+    private synchronized void setInstanceConfigUrl(String configUrl) {
+        mConfigUrl = configUrl;
+    }
+
     private synchronized void removeTokenAndAccount() {
         mSignInDelayed = false;
         removeAccount(mTokenStorage.getHomeAccountId());
@@ -260,7 +284,7 @@ public class Identity extends AbstractAppCenterService {
         if (eTag != null) {
             headers.put(HEADER_IF_NONE_MATCH, eTag);
         }
-        String url = String.format(CONFIG_URL, mAppSecret);
+        String url = String.format(CONFIG_URL_FORMAT, mConfigUrl, mAppSecret);
         mGetConfigCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
