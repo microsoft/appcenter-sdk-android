@@ -89,9 +89,8 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mIngestion = new OneCollectorIngestion(context, mLogSerializer);
     }
 
-    @Override
-    public void setLogUrl(@NonNull String logUrl){
-        mChannel.setLogUrl(logUrl);
+    public void setLogUrl(@NonNull String logUrl) {
+        mIngestion.setLogUrl(logUrl);
     }
 
     @Override

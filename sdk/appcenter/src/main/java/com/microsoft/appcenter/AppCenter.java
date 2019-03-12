@@ -190,6 +190,9 @@ public class AppCenter {
      */
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
+    /**
+     *
+     */
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
@@ -496,12 +499,11 @@ public class AppCenter {
 
                 @Override
                 public void run() {
-
                     if (mAppSecret != null) {
-                        AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint was changed to " + logUrl);
+                        AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + logUrl);
                         mChannel.setLogUrl(logUrl);
                     } else {
-                        AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint was changed to " + logUrl);
+                        AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint has been changed to " + logUrl);
                         mOneCollectorChannelListener.setLogUrl(logUrl);
                     }
                 }
@@ -769,7 +771,7 @@ public class AppCenter {
             mChannel.setLogUrl(mLogUrl);
         }
         mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
-        if(mLogUrl != null && mAppSecret == null){
+        if (mLogUrl != null && mAppSecret == null) {
             mOneCollectorChannelListener.setLogUrl(mLogUrl);
         }
         mChannel.addListener(mOneCollectorChannelListener);

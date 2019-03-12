@@ -135,13 +135,6 @@ public interface Channel {
     interface Listener {
 
         /**
-         * Update log URL.
-         *
-         * @param logUrl log URL.
-         */
-        void setLogUrl(String logUrl);
-
-        /**
          * Called whenever a new group is added.
          *
          * @param groupName     group name.
