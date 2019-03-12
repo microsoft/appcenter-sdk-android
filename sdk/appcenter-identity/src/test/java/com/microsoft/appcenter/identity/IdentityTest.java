@@ -86,34 +86,6 @@ public class IdentityTest extends AbstractIdentityTest {
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
-    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
-
-        /* Intercept parameters. */
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
-        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
-        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
-        assertNotNull(serviceCallback);
-
-        /* Verify call template. */
-        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
-
-        /* Verify no logging if verbose log not enabled (default). */
-        try {
-            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
-        } catch (MalformedURLException e) {
-            fail("test url should always be valid " + e.getMessage());
-        }
-        verifyStatic(never());
-        AppCenterLog.verbose(anyString(), anyString());
-
-        /* Simulate response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
-    }
-
     @Test
     public void singleton() {
         Assert.assertSame(Identity.getInstance(), Identity.getInstance());
@@ -1171,5 +1143,33 @@ public class IdentityTest extends AbstractIdentityTest {
         when(authority.getString("type")).thenReturn("B2C");
         when(authority.getString("authority_url")).thenReturn("https://mock");
         return jsonConfig;
+    }
+
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+
+        /* Intercept parameters. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+
+        /* Verify call template. */
+        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+
+        /* Verify no logging if verbose log not enabled (default). */
+        try {
+            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
+        } catch (MalformedURLException e) {
+            fail("test url should always be valid " + e.getMessage());
+        }
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
+
+        /* Simulate response. */
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
     }
 }
