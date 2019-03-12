@@ -231,7 +231,7 @@ public class DatabaseManager implements Closeable {
             try {
                 ContentValues value = nextValues(cursor);
 
-                // if only contains one result, replace the value, otherwise insert directly.
+                /* If only contains one result, replace the value, otherwise insert directly. */
                 if (value != null && !cursor.moveToNext()) {
                     values.put(PRIMARY_KEY, value.getAsInteger(PRIMARY_KEY));
                 }
