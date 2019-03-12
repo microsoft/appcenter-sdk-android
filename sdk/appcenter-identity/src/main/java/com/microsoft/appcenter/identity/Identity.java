@@ -453,9 +453,11 @@ public class Identity extends AbstractAppCenterService {
     private synchronized void selectSignInTypeAndSignIn() {
         if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
             completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
+            return;
         }
         if (mAuthenticationClient == null) {
             completeSignIn(null, new IOException("signIn is called while it's not configured."));
+            return;
         }
         IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
         if (account != null) {
