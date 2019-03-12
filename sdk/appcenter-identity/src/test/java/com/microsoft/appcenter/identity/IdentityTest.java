@@ -166,14 +166,6 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(channel, never()).addListener(any(Channel.Listener.class));
     }
 
-    @NonNull
-    private Channel start(Identity identity) {
-        Channel channel = mock(Channel.class);
-        identity.onStarting(mAppCenterHandler);
-        identity.onStarted(mock(Context.class), channel, APP_SECRET, null, true);
-        return channel;
-    }
-
     @Test
     public void downloadFullInvalidConfiguration() throws Exception {
 
@@ -1155,6 +1147,14 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Check call. */
         String expectedUrl = configUrl + "/identity/" + APP_SECRET + ".json";
         verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @NonNull
+    private Channel start(Identity identity) {
+        Channel channel = mock(Channel.class);
+        identity.onStarting(mAppCenterHandler);
+        identity.onStarted(mock(Context.class), channel, APP_SECRET, null, true);
+        return channel;
     }
 
     @NonNull
