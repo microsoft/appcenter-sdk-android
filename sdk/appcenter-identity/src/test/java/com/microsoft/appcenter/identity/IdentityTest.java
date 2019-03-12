@@ -304,7 +304,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockHomeAccountId);
-        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount)
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
         doAnswer(new Answer<Void>() {
 
             @Override
