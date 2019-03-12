@@ -401,15 +401,16 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         DatabaseManager databaseManager = new DatabaseManager(sContext, "test-upsert", "databaseManager", 1, mSchema, listener);
+        String documentIdProperty = "COL_STRING";
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             assertEquals(0L, databaseManager.getRowCount());
             ContentValues contentValues = generateContentValues();
-            databaseManager.upsert(contentValues);
+            contentValues.put(documentIdProperty, "some id");
+            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
-            ContentValues actual = get(databaseManager, 1);
-            databaseManager.upsert(actual);
+            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
         } finally {
 

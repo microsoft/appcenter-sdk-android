@@ -17,6 +17,7 @@ import android.text.TextUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -203,6 +204,41 @@ public class DatabaseManager implements Closeable {
     public long upsert(@NonNull ContentValues values) {
         try {
             return getDatabase().replace(mTable, null, values);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
+        }
+        return -1L;
+    }
+
+    /**
+     * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
+     *
+     * @param values The entry to be stored.
+     * @param properties The property to be used for filter the rows.
+     * @return If a log was inserted, the database identifier. Otherwise -1.
+     */
+    public long replaceWhenStringValuesMatch(@NonNull ContentValues values, String ... properties) {
+        try {
+            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+            List<String> selectionArgs = new ArrayList<>();
+            for (String property : properties) {
+                if (values.containsKey(property)) {
+                    builder.appendWhere(property+ " = ?");
+                    selectionArgs.add(values.getAsString(property));
+                }
+            }
+            Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
+            try {
+                ContentValues value = nextValues(cursor);
+
+                // if only contains one result, replace the value, otherwise insert directly.
+                if (value != null && !cursor.moveToNext()) {
+                    values.put(PRIMARY_KEY, value.getAsInteger(PRIMARY_KEY));
+                }
+                return upsert(values);
+            } finally {
+                cursor.close();
+            }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }

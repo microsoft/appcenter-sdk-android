@@ -62,7 +62,7 @@ public class DocumentCacheTest {
 
     @Test
     public void upsertGetsCalledInWrite() {
-        mDocumentCache.write(new Document<>("Test value", "partition", DOCUMENT_ID), new WriteOptions());
+        mDocumentCache.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> values = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).upsert(values.capture());
     }
