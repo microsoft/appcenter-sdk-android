@@ -126,10 +126,6 @@ public class DefaultChannel implements Channel {
         this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler);
     }
 
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Ingestion ingestion, @NonNull Handler appCenterHandler) {
-        this(context, appSecret, buildDefaultPersistence(context, logSerializer), ingestion, appCenterHandler);
-    }
-
     /**
      * Overloaded constructor with limited visibility that allows for dependency injection.
      *
