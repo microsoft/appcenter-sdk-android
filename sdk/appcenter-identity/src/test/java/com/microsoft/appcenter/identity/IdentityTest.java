@@ -81,16 +81,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest(AuthTokenContext.class)
 public class IdentityTest extends AbstractIdentityTest {
 
+    private static final String APP_SECRET = "5c9edcf2-d8d8-426d-8c20-817eb9378b08";
+
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
-
-    @NonNull
-    private Channel start(Identity identity) {
-        Channel channel = mock(Channel.class);
-        identity.onStarting(mAppCenterHandler);
-        identity.onStarted(mock(Context.class), channel, "", null, true);
-        return channel;
-    }
 
     @Test
     public void singleton() {
@@ -1110,12 +1104,54 @@ public class IdentityTest extends AbstractIdentityTest {
         identity.onActivityResumed(mock(Activity.class));
     }
 
+    @Test
+    public void setConfigUrl() throws Exception {
+
+        /* Set url before start. */
+        String configUrl = "https://config.contoso.com";
+        Identity.setConfigUrl(configUrl);
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        start(Identity.getInstance());
+
+        /* Check call. */
+        String expectedUrl = configUrl + "/identity/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @NonNull
+    private Channel start(Identity identity) {
+        Channel channel = mock(Channel.class);
+        identity.onStarting(mAppCenterHandler);
+        identity.onStarted(mock(Context.class), channel, APP_SECRET, null, true);
+        return channel;
+    }
+
+    @NonNull
+    private static JSONObject mockValidForAppCenterConfig() throws Exception {
+        JSONObject jsonConfig = mock(JSONObject.class);
+        when(jsonConfig.toString()).thenReturn("mockConfig");
+        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
+        JSONArray authorities = mock(JSONArray.class);
+        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
+        when(authorities.length()).thenReturn(1);
+        JSONObject authority = mock(JSONObject.class);
+        when(authorities.getJSONObject(0)).thenReturn(authority);
+        when(authority.optBoolean("default")).thenReturn(true);
+        when(authority.getString("type")).thenReturn("B2C");
+        when(authority.getString("authority_url")).thenReturn("https://mock");
+        return jsonConfig;
+    }
+
     private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
 
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
 
@@ -1135,21 +1171,5 @@ public class IdentityTest extends AbstractIdentityTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
         serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
-    }
-
-    @NonNull
-    private JSONObject mockValidForAppCenterConfig() throws Exception {
-        JSONObject jsonConfig = mock(JSONObject.class);
-        when(jsonConfig.toString()).thenReturn("mockConfig");
-        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
-        JSONArray authorities = mock(JSONArray.class);
-        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
-        when(authorities.length()).thenReturn(1);
-        JSONObject authority = mock(JSONObject.class);
-        when(authorities.getJSONObject(0)).thenReturn(authority);
-        when(authority.optBoolean("default")).thenReturn(true);
-        when(authority.getString("type")).thenReturn("B2C");
-        when(authority.getString("authority_url")).thenReturn("https://mock");
-        return jsonConfig;
     }
 }
