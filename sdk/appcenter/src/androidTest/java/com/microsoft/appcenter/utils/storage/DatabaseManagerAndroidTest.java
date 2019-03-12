@@ -408,6 +408,9 @@ public class DatabaseManagerAndroidTest {
             ContentValues contentValues = generateContentValues();
             databaseManager.upsert(contentValues);
             assertEquals(1L, databaseManager.getRowCount());
+            ContentValues actual = get(databaseManager, 1);
+            databaseManager.upsert(actual);
+            assertEquals(1L, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
