@@ -15,6 +15,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -75,7 +76,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -253,12 +256,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
-
-        /* Mock authentication result. */
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
-        IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -841,6 +838,35 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* If we sign in. */
         AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Check result. */
+        assertNotNull(future.get());
+        assertTrue(future.get().getException() instanceof IllegalStateException);
+        assertNull(future.get().getUserInformation());
+    }
+
+    @Test
+    public void doNotSignInInteractivelyWhenDisablingBeforeRunningInUiThread() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Hold UI thread callback. */
+        doNothing().when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+        Identity.setEnabled(false).get();
+
+        /* Verify UI code that ran too late is canceled. */
+        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
+        verifyStatic();
+        HandlerUtils.runOnUiThread(runnable.capture());
+        runnable.getValue().run();
+        verifyZeroInteractions(publicClientApplication);
 
         /* Check result. */
         assertNotNull(future.get());
