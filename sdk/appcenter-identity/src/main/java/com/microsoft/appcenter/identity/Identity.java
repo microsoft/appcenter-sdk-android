@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.identity;
 
+import android.accounts.NetworkErrorException;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -20,6 +21,7 @@ import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -111,11 +113,6 @@ public class Identity extends AbstractAppCenterService {
      * Current activity.
      */
     private Activity mActivity;
-
-    /**
-     * True if sign-in was delayed because called in background or configuration not ready.
-     */
-    private boolean mSignInDelayed;
 
     /**
      * Not null if sign-in is pending.
@@ -252,9 +249,6 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
-        if (mSignInDelayed) {
-            signInInteractively();
-        }
     }
 
     @Override
@@ -270,7 +264,6 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private synchronized void removeTokenAndAccount() {
-        mSignInDelayed = false;
         removeAccount(mTokenStorage.getHomeAccountId());
         mTokenStorage.removeToken();
     }
@@ -335,10 +328,7 @@ public class Identity extends AbstractAppCenterService {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
-        boolean configurationValid = initAuthenticationClient(payload);
-        if (configurationValid && mSignInDelayed) {
-            selectSignInTypeAndSignIn();
-        }
+        initAuthenticationClient(payload);
     }
 
 
@@ -362,7 +352,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private synchronized boolean initAuthenticationClient(String configurationPayload) {
+    private synchronized void initAuthenticationClient(String configurationPayload) {
 
         /* Parse configuration. */
         try {
@@ -384,14 +374,12 @@ public class Identity extends AbstractAppCenterService {
                 mAuthorityUrl = authorityUrl;
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
-                return true;
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
-            return false;
         }
     }
 
@@ -485,9 +473,12 @@ public class Identity extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void selectSignInTypeAndSignIn() {
+        if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+            completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
+            return;
+        }
         if (mAuthenticationClient == null) {
-            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured, waiting.");
-            mSignInDelayed = true;
+            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured."));
             return;
         }
         IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
@@ -506,9 +497,8 @@ public class Identity extends AbstractAppCenterService {
 
     @UiThread
     private synchronized void signInInteractively() {
-        if (mActivity != null) {
+        if (mAuthenticationClient != null && mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
-            mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
@@ -527,8 +517,7 @@ public class Identity extends AbstractAppCenterService {
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
-            mSignInDelayed = true;
+            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured or not in the foreground."));
         }
     }
 
@@ -594,10 +583,5 @@ public class Identity extends AbstractAppCenterService {
             mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
             mPendingSignInFuture = null;
         }
-    }
-
-    @VisibleForTesting
-    boolean isSignInDelayed() {
-        return mSignInDelayed;
     }
 }
