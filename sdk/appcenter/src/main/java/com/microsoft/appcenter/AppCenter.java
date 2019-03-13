@@ -191,7 +191,7 @@ public class AppCenter {
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
     /**
-     *
+     * Redirect selected traffic to One Collector
      */
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
@@ -767,12 +767,14 @@ public class AppCenter {
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
-        if (mLogUrl != null && mAppSecret != null) {
-            mChannel.setLogUrl(mLogUrl);
-        }
         mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
-        if (mLogUrl != null && mAppSecret == null) {
-            mOneCollectorChannelListener.setLogUrl(mLogUrl);
+        if (mLogUrl != null) {
+            if (mAppSecret != null) {
+                mChannel.setLogUrl(mLogUrl);
+            }
+            else {
+                mOneCollectorChannelListener.setLogUrl(mLogUrl);
+            }
         }
         mChannel.addListener(mOneCollectorChannelListener);
 

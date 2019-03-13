@@ -89,6 +89,11 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mIngestion = new OneCollectorIngestion(context, mLogSerializer);
     }
 
+    /**
+     * Update log URL.
+     *
+     * @param logUrl log URL.
+     */
     public void setLogUrl(@NonNull String logUrl) {
         mIngestion.setLogUrl(logUrl);
     }
