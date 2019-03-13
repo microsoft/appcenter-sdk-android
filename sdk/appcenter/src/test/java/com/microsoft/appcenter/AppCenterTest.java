@@ -205,7 +205,6 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verify(mStartServiceLog).setServices(eq(services));
     }
 
-
     @Test
     public void configureTwiceTest() {
         AppCenter.configure(mApplication, DUMMY_APP_SECRET);
@@ -851,23 +850,25 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
-    public void setLogUrlWithNoAppSecret() {
+    public void setLogUrlWithNoAppSecret() throws Exception {
+        OneCollectorChannelListener listener = mock(OneCollectorChannelListener.class);
+        whenNew(OneCollectorChannelListener.class).withAnyArguments().thenReturn(listener);
 
         /* Change log URL before start. */
         String logUrl = "http://mock";
         AppCenter.setLogUrl(logUrl);
 
         /* No effect for now. */
-        verify(mChannel, never()).setLogUrl(logUrl);
+        verify(listener, never()).setLogUrl(logUrl);
 
         /* Start should propagate the log URL without App Secret. */
-        AppCenter.start(mApplication, DUMMY_TRANSMISSION_TARGET_TOKEN, DummyService.class);
-        verify(mChannel).setLogUrl(logUrl);
+        AppCenter.start(mApplication, DUMMY_TARGET_TOKEN_STRING, DummyService.class);
+        verify(listener).setLogUrl(logUrl);
 
         /* Change it after, should work immediately. */
         logUrl = "http://mock2";
         AppCenter.setLogUrl(logUrl);
-        verify(mChannel).setLogUrl(logUrl);
+        verify(listener).setLogUrl(logUrl);
     }
 
     @Test

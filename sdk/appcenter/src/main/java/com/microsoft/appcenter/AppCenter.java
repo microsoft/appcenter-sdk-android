@@ -771,8 +771,7 @@ public class AppCenter {
         if (mLogUrl != null) {
             if (mAppSecret != null) {
                 mChannel.setLogUrl(mLogUrl);
-            }
-            else {
+            } else {
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
