@@ -426,7 +426,6 @@ public class DatabaseManagerAndroidTest {
             databaseManager.upsert(contentValues);
             databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
             assertEquals(4L, databaseManager.getRowCount());
-
         } finally {
 
             /* Close. */
