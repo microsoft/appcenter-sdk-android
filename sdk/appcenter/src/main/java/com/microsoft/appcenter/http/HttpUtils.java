@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.http;
 
 import android.content.Context;
@@ -152,6 +157,17 @@ public class HttpUtils {
      */
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
+    }
+
+    /**
+     * Hide JWT token value in Authorization header string.
+     *
+     * @param token string header value.
+     * @return obfuscated token string header value.
+     */
+    public static String hideAuthToken(@NonNull String token) {
+        String prefix = token.split("\\s+")[0];
+        return prefix + " ***";
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {

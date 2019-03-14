@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
@@ -184,7 +189,7 @@ public class AppCenterIngestionTest {
         String appSecret = UUIDUtils.randomUUID().toString();
         String authToken = UUIDUtils.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
-        String obfuscatedToken = HttpUtils.hideSecret(authToken);
+        String obfuscatedToken = "Bearer ***";
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, authToken);

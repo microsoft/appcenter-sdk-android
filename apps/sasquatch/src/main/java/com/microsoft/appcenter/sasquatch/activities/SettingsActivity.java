@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -521,6 +527,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
+                @SuppressLint("VisibleForTests")
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     SharedPreferences appCenterPreferences = getActivity().getSharedPreferences("AppCenter", Context.MODE_PRIVATE);

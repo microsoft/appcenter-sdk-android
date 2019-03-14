@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.ingestion.models.json;
 
 import com.microsoft.appcenter.ingestion.models.Log;

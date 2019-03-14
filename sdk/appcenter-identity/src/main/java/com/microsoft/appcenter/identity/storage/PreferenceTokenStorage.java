@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.identity.storage;
 
 import android.content.Context;
@@ -37,7 +42,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      * Used for distinguishing users, string field for home account id.
      */
     @VisibleForTesting
-    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.account_id";
+    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
 
     @Override
     public void saveToken(String token, String homeAccountId) {
@@ -62,18 +67,19 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @return unique user id.
      */
-    private String getHomeAccountId() {
+    @Override
+    public String getHomeAccountId() {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
     @Override
     public void cacheToken() {
         String tokenFromStorage = getToken();
-        String accountId = getHomeAccountId();
+        String homeAccountId = getHomeAccountId();
 
         /* We need to update Token context here if the values are not null. */
-        if (tokenFromStorage != null && accountId != null) {
-            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, accountId);
+        if (tokenFromStorage != null && homeAccountId != null) {
+            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, homeAccountId);
         }
     }
 

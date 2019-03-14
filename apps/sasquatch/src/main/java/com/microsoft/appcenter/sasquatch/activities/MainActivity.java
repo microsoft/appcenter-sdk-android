@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
@@ -134,6 +139,21 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
+        }
+
+        /* Set identity config url. */
+        String configUrl = getString(R.string.identity_config_url);
+        if (!TextUtils.isEmpty(configUrl)) {
+
+            /* TODO once Identity released to jCenter, use Identity.setConfigUrl directly. */
+            try {
+                Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
+                identity.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */
