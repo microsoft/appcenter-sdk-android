@@ -1106,9 +1106,6 @@ public class AppCenter {
      * Set the user identifier for logs sent for the default target token when the secret
      * passed in {@link AppCenter#start(Application, String, Class[])} contains "target={targetToken}".
      * <p>
-     * The App Center servers currently do not yet use the user identifier so this API has not yet a use case
-     * when the secret passed to AppCenter.start contains a App Center application secret.
-     * <p>
      * For App Center servers the user identifier maximum length is 256 characters.
      * <p>
      * AppCenter must be configured or started before this API can be used.
