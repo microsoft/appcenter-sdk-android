@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="appcenter_state_key" tools:ignore="MissingTranslation">appcenter_state_key</string>
     <string name="appcenter_state_title" tools:ignore="MissingTranslation">App Center state</string>

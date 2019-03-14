@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.identity;
 
+import android.accounts.NetworkErrorException;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -20,7 +26,9 @@ import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -28,6 +36,7 @@ import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
+import com.microsoft.identity.client.exception.MsalUiRequiredException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +47,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
@@ -47,7 +57,8 @@ import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
-import static com.microsoft.appcenter.identity.Constants.CONFIG_URL;
+import static com.microsoft.appcenter.identity.Constants.CONFIG_URL_FORMAT;
+import static com.microsoft.appcenter.identity.Constants.DEFAULT_CONFIG_URL;
 import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
 import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
 import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
@@ -69,6 +80,11 @@ public class Identity extends AbstractAppCenterService {
     private static Identity sInstance;
 
     /**
+     * Current config base URL.
+     */
+    private String mConfigUrl = DEFAULT_CONFIG_URL;
+
+    /**
      * Application context.
      */
     private Context mContext;
@@ -82,6 +98,11 @@ public class Identity extends AbstractAppCenterService {
      * Authentication client.
      */
     private PublicClientApplication mAuthenticationClient;
+
+    /**
+     * Authority url for the authentication client.
+     */
+    private String mAuthorityUrl;
 
     /**
      * Scope we need to use when acquiring user ID tokens.
@@ -99,9 +120,9 @@ public class Identity extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
-     * True if sign-in was delayed because called in background or configuration not ready.
+     * Not null if sign-in is pending.
      */
-    private boolean mSignInDelayed;
+    private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
 
     /**
      * Instance of {@link AuthTokenStorage} to store token information.
@@ -127,12 +148,23 @@ public class Identity extends AbstractAppCenterService {
     }
 
     /**
+     * Change the remote configuration base URL.
+     *
+     * @param configUrl configuration base URL.
+     */
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    // TODO Remove warning suppress after release.
+    public static void setConfigUrl(String configUrl) {
+        getInstance().setInstanceConfigUrl(configUrl);
+    }
+
+    /**
      * Check whether Identity service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -143,16 +175,28 @@ public class Identity extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
      * Sign in to get user information.
+     *
+     * @return future with the result of the asynchronous sign-in operation.
      */
-    public static void signIn() {
-        getInstance().instanceSignIn();
+    @SuppressWarnings("WeakerAccess") // TODO remove warning when JCenter published and demo updated
+    public static AppCenterFuture<SignInResult> signIn() {
+        return getInstance().instanceSignIn();
+    }
+
+    /**
+     * Sign out user and invalidate a user's token.
+     */
+    @SuppressWarnings("WeakerAccess")
+    // TODO remove warning once jCenter published and reflection removed in test app
+    public static void signOut() {
+        getInstance().instanceSignOut();
     }
 
     @Override
@@ -187,9 +231,9 @@ public class Identity extends AbstractAppCenterService {
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            mSignInDelayed = false;
+            completeSignIn(null, new IllegalStateException("Identity is disabled."));
             clearCache();
-            mTokenStorage.removeToken();
+            removeTokenAndAccount();
         }
     }
 
@@ -211,14 +255,23 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityResumed(Activity activity) {
         mActivity = activity;
-        if (mSignInDelayed) {
-            instanceSignIn();
-        }
     }
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
+    }
+
+    /**
+     * Implements {@link #setConfigUrl(String)} at instance level.
+     */
+    private synchronized void setInstanceConfigUrl(String configUrl) {
+        mConfigUrl = configUrl;
+    }
+
+    private synchronized void removeTokenAndAccount() {
+        removeAccount(mTokenStorage.getHomeAccountId());
+        mTokenStorage.removeToken();
     }
 
     private synchronized void downloadConfiguration() {
@@ -230,7 +283,7 @@ public class Identity extends AbstractAppCenterService {
         if (eTag != null) {
             headers.put(HEADER_IF_NONE_MATCH, eTag);
         }
-        String url = String.format(CONFIG_URL, mAppSecret);
+        String url = String.format(CONFIG_URL_FORMAT, mConfigUrl, mAppSecret);
         mGetConfigCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
@@ -281,17 +334,9 @@ public class Identity extends AbstractAppCenterService {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
-        boolean configurationValid = initAuthenticationClient(payload);
-        if (configurationValid && mSignInDelayed) {
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    signInFromUI();
-                }
-            });
-        }
+        initAuthenticationClient(payload);
     }
+
 
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
@@ -313,7 +358,7 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private synchronized boolean initAuthenticationClient(String configurationPayload) {
+    private synchronized void initAuthenticationClient(String configurationPayload) {
 
         /* Parse configuration. */
         try {
@@ -332,16 +377,15 @@ public class Identity extends AbstractAppCenterService {
 
                 /* The remaining validation is done by the library. */
                 mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
+                mAuthorityUrl = authorityUrl;
                 mIdentityScope = identityScope;
                 AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
-                return true;
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
-            return false;
         }
     }
 
@@ -370,54 +414,180 @@ public class Identity extends AbstractAppCenterService {
         AppCenterLog.debug(LOG_TAG, "Identity configuration cache cleared.");
     }
 
-    private void instanceSignIn() {
-        postOnUiThread(new Runnable() {
+    private synchronized AppCenterFuture<SignInResult> instanceSignIn() {
+        final DefaultAppCenterFuture<SignInResult> future = new DefaultAppCenterFuture<>();
+        if (mPendingSignInFuture != null) {
+            future.complete(new SignInResult(null, new IllegalStateException("signIn already in progress.")));
+            return future;
+        }
+        mPendingSignInFuture = future;
+        Runnable disabledRunnable = new Runnable() {
 
             @Override
             public void run() {
-                signInFromUI();
+                completeSignIn(null, new IllegalStateException("Identity is disabled."));
+            }
+        };
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                selectSignInTypeAndSignIn();
+            }
+        }, disabledRunnable, disabledRunnable);
+        return future;
+    }
+
+    private void instanceSignOut() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mTokenStorage.getToken() == null) {
+                    AppCenterLog.warn(LOG_TAG, "Cannot sign out because a user has not signed in.");
+                    return;
+                }
+                removeTokenAndAccount();
+                AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
             }
         });
     }
 
+    private void removeAccount(String homeAccountIdentifier) {
+        if (mAuthenticationClient == null) {
+            return;
+        }
+        IAccount account = retrieveAccount(homeAccountIdentifier);
+        if (account != null) {
+            boolean result = mAuthenticationClient.removeAccount(account);
+            AppCenterLog.debug(LOG_TAG, String.format("Remove account success=%s", result));
+        }
+    }
+
+    @WorkerThread
+    private IAccount retrieveAccount(String id) {
+        if (id == null) {
+            AppCenterLog.debug(LOG_TAG, "Cannot retrieve account: user id null.");
+            return null;
+        }
+        IAccount account = mAuthenticationClient.getAccount(id, mAuthorityUrl);
+        if (account == null) {
+            AppCenterLog.warn(LOG_TAG, String.format("Cannot retrieve account: account id is null or missing: %s.", id));
+        }
+        return account;
+    }
+
+    @WorkerThread
+    private synchronized void selectSignInTypeAndSignIn() {
+        if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+            completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
+            return;
+        }
+        if (mAuthenticationClient == null) {
+            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured."));
+            return;
+        }
+        IAccount account = retrieveAccount(mTokenStorage.getHomeAccountId());
+        if (account != null) {
+            silentSignIn(account);
+        } else {
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    signInInteractively();
+                }
+            });
+        }
+    }
+
     @UiThread
-    private synchronized void signInFromUI() {
+    private synchronized void signInInteractively() {
         if (mAuthenticationClient != null && mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
-            mSignInDelayed = false;
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
-                public void onSuccess(final IAuthenticationResult authenticationResult) {
-                    AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                    getInstance().post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            IAccount account = authenticationResult.getAccount();
-                            mTokenStorage.saveToken(authenticationResult.getIdToken(), account.getHomeAccountIdentifier().getIdentifier());
-                        }
-                    });
+                public void onSuccess(IAuthenticationResult authenticationResult) {
+                    handleSignInSuccess(authenticationResult);
                 }
 
                 @Override
                 public void onError(MsalException exception) {
-                    AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                    handleSignInError(exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+                    handleSignInCancellation();
                 }
             });
         } else {
-            AppCenterLog.debug(LOG_TAG, "signIn is called while it's not configured or not in the foreground, waiting.");
-            mSignInDelayed = true;
+            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured or not in the foreground."));
         }
     }
 
-    @VisibleForTesting
-    boolean isSignInDelayed() {
-        return mSignInDelayed;
+    private synchronized void silentSignIn(@NonNull IAccount account) {
+        AppCenterLog.info(LOG_TAG, "Sign in silently in the background.");
+        mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
+
+            @Override
+            public void onSuccess(IAuthenticationResult authenticationResult) {
+                handleSignInSuccess(authenticationResult);
+            }
+
+            @Override
+            public void onError(MsalException exception) {
+                if (exception instanceof MsalUiRequiredException) {
+                    AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
+                    postOnUiThread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            signInInteractively();
+                        }
+                    });
+                } else {
+                    handleSignInError(exception);
+                }
+            }
+
+            @Override
+            public void onCancel() {
+                handleSignInCancellation();
+            }
+        });
+    }
+
+    private void handleSignInSuccess(final IAuthenticationResult authenticationResult) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                IAccount account = authenticationResult.getAccount();
+                String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
+                mTokenStorage.saveToken(authenticationResult.getIdToken(), homeAccountId);
+                String accountId = account.getAccountIdentifier().getIdentifier();
+                AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
+                completeSignIn(new UserInformation(accountId), null);
+            }
+        });
+    }
+
+    private void handleSignInError(MsalException exception) {
+        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+        completeSignIn(null, exception);
+    }
+
+    private void handleSignInCancellation() {
+        AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+        completeSignIn(null, new CancellationException("User cancelled sign-in."));
+    }
+
+    private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
+        if (mPendingSignInFuture != null) {
+            mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
+            mPendingSignInFuture = null;
+        }
     }
 }

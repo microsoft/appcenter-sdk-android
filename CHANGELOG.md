@@ -1,10 +1,15 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.4 (Not yet released)
+## Version 1.11.4
 
 ### AppCenter
 
 * **[Fix]** Fix network connection state tracking issue, which prevented sending data in some restricted networks.
+* **[Fix]** Fix possible deadlock on changing network connection state.
+
+### AppCenterDistribute
+
+* **[Fix]** Fix in-app updates not working on devices using Xiaomi MIUI from versions 10 and above.
 
 ___
 
