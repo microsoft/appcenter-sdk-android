@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
 <resources>
   <string name="appcenter_distribute_update_dialog_title">Aggiornamento app disponibile</string>
   <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) è disponibile per il download e l\'installazione.</string>
