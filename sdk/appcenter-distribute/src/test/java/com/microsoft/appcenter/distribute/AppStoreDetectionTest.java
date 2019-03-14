@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
@@ -97,6 +102,16 @@ public class AppStoreDetectionTest {
     @Test
     public void managedProvisioningIsNotStore() {
         when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.android.managedprovisioning");
+        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+
+        /* Check cache. */
+        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        verify(mPackageManager).getInstallerPackageName(anyString());
+    }
+
+    @Test
+    public void miUiLocalInstallerIsNotStore() {
+        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.miui.packageinstaller");
         assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
 
         /* Check cache. */

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.identity;
 
 import android.accounts.NetworkErrorException;
@@ -180,6 +185,7 @@ public class Identity extends AbstractAppCenterService {
      *
      * @return future with the result of the asynchronous sign-in operation.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning when JCenter published and demo updated
     public static AppCenterFuture<SignInResult> signIn() {
         return getInstance().instanceSignIn();
     }

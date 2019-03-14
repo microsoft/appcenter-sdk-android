@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
@@ -38,6 +43,7 @@ class InstallerUtils {
         LOCAL_STORES.add("com.android.packageinstaller");
         LOCAL_STORES.add("com.google.android.packageinstaller");
         LOCAL_STORES.add("com.android.managedprovisioning");
+        LOCAL_STORES.add("com.miui.packageinstaller");
     }
 
     @VisibleForTesting

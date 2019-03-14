@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Version constants
 
 ext {
-    versionCode = 44
-    versionName = '1.11.4'
+    versionCode = 45
+    versionName = '1.11.5'
     minSdkVersion = 16
     targetSdkVersion = 28
     compileSdkVersion = 28

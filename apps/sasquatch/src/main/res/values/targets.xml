@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">
     <string name="target_id" tools:ignore="MissingTranslation">89e889ccbe864ad6b924246d7045d55f-2d2d17d9-184c-4749-84a2-3fd0b3856ee1-7620</string>
     <string-array name="target_id_values" tools:ignore="InconsistentArrays,MissingTranslation">
