@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
@@ -191,7 +196,7 @@ public class AppCenter {
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
 
     /**
-     * Redirect selected traffic to One Collector
+     * Redirect selected traffic to One Collector.
      */
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
