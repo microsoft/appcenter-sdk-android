@@ -194,30 +194,14 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Replaces a row in the database.
-     * Inserts a new row if a row does not already exist.
-     *
-     * @param values The entry to be stored.
-     * @return If a log was inserted, the database identifier. Otherwise -1.
-     */
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long upsert(@NonNull ContentValues values) {
-        try {
-            return getDatabase().replace(mTable, null, values);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
-        }
-        return -1L;
-    }
-
-    /**
      * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
      *
      * @param values     The entry to be stored.
      * @param properties The property to be used for filter the rows.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
-    public long replaceWhenStringValuesMatch(@NonNull ContentValues values, String... properties) {
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    public long upsert(@NonNull ContentValues values, String... properties) {
         try {
             SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
             List<String> selectionArgs = new ArrayList<>();
@@ -227,20 +211,20 @@ public class DatabaseManager implements Closeable {
                     selectionArgs.add(values.getAsString(property));
                 }
             }
-            Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
+            if (selectionArgs.size() > 0){
+                Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
+                try {
+                    ContentValues value = nextValues(cursor);
 
-            //noinspection TryFinallyCanBeTryWithResources
-            try {
-                ContentValues value = nextValues(cursor);
-
-                /* If only contains one result, replace the value, otherwise insert directly. */
-                if (value != null && !cursor.moveToNext()) {
-                    values.put(PRIMARY_KEY, value.getAsInteger(PRIMARY_KEY));
+                    /* If only contains one result, replace the value, otherwise insert directly. */
+                    if (value != null && !cursor.moveToNext()) {
+                        values.put(PRIMARY_KEY, value.getAsInteger(PRIMARY_KEY));
+                    }
+                } finally {
+                    cursor.close();
                 }
-                return upsert(values);
-            } finally {
-                cursor.close();
             }
+            return getDatabase().replace(mTable, null, values);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }

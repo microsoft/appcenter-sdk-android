@@ -408,23 +408,23 @@ public class DatabaseManagerAndroidTest {
             assertEquals(0L, databaseManager.getRowCount());
             ContentValues contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "some id");
-            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
+            databaseManager.upsert(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
-            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
+            databaseManager.upsert(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
 
             /* Set the documentIdProperty to another value, new row should be created. */
             contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "new id");
-            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
+            databaseManager.upsert(contentValues, documentIdProperty);
             System.out.println(contentValues.get(documentIdProperty));
             assertEquals(2L, databaseManager.getRowCount());
 
-            /* Upsert a value with the same document id, replace will continue to insert. */
+            /* Upsert a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
             contentValues = generateContentValues();
-            contentValues.put(documentIdProperty, "some id");
+            contentValues.put(documentIdProperty, "new id");
             databaseManager.upsert(contentValues);
-            databaseManager.replaceWhenStringValuesMatch(contentValues, documentIdProperty);
+            databaseManager.upsert(contentValues, documentIdProperty);
             assertEquals(4L, databaseManager.getRowCount());
 
         } finally {
