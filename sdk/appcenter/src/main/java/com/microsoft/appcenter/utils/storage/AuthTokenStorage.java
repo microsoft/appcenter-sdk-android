@@ -31,4 +31,18 @@ public interface AuthTokenStorage {
      * @return unique identifier of user.
      */
     String getHomeAccountId();
+
+    /**
+     *
+     *
+     * @return
+     */
+    AuthTokenInfo getOldestToken();
+
+    /**
+     *
+     *
+     * @param token
+     */
+    void removeToken(String token);
 }

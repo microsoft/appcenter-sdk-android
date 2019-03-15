@@ -140,15 +140,7 @@ public class AuthTokenContext {
      * Clears info about the token.
      */
     public synchronized void clearToken() {
-        mAuthToken = null;
-        mHomeAccountId = null;
-        if (mStorage != null) {
-            mStorage.saveToken(null, null);
-        }
-        for (Listener listener : mListeners) {
-            listener.onNewAuthToken(null);
-            listener.onNewUser(null);
-        }
+        setAuthToken(null, null);
     }
 
     public synchronized void cacheToken() {
