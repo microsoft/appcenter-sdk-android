@@ -40,8 +40,6 @@ public class DefaultChannelCallbacksTest {
         String mockToken = UUIDUtils.randomUUID().toString();
         new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mock(Handler.class));
         AuthTokenContext.getInstance().setAuthToken(mockToken, "mock-id");
-        verify(ingestion, times(1)).setAuthToken(isNull(String.class));
-        verify(ingestion, times(1)).setAuthToken(eq(mockToken));
     }
 
 }

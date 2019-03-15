@@ -16,7 +16,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -36,7 +36,7 @@ public class AuthTokenContextTest {
     public void setAuthTokenTest() {
 
         /* Mock context listener. */
-        AuthTokenContext.Listener mockListener = mock(AuthTokenContext.Listener.class);
+        AuthTokenContext.Listener mockListener = spy(AbstractTokenContextListener.class);
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
