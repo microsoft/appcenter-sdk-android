@@ -33,6 +33,14 @@ public class AuthTokenContextTest {
     }
 
     @Test
+    public void saveAuthTokenAndTimeToStorage(){
+    	for (int i = 0; i<10;i++){
+			mAuthTokenContext.addTokenToList(MOCK_TOKEN,UUIDUtils.randomUUID().toString());
+		}
+        assertEquals(mAuthTokenContext.getTokenAndTimePairList().size(),5);
+    }
+
+    @Test
     public void setAuthTokenTest() {
 
         /* Mock context listener. */

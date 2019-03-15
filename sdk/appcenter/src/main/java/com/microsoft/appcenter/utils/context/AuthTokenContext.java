@@ -7,14 +7,22 @@ package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.util.Pair;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Utility to store and retrieve the latest authorization token.
  */
 public class AuthTokenContext {
+
+    /**
+       Tokens storage max size
+     */
+    private  final static  int TOKENS_STORAGE_LIMIT = 5;
 
     /**
      * Unique instance.
@@ -30,6 +38,13 @@ public class AuthTokenContext {
      * Current value of auth token.
      */
     private String mAuthToken;
+
+
+
+    /**
+     * Token and time when it was valid storage
+    */
+    private final List<Pair<String,String>> tokenAndTimePairList = new ArrayList<>();
 
     /**
      * Current value of home account id.
@@ -121,6 +136,26 @@ public class AuthTokenContext {
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(null);
             listener.onNewUser(null);
+        }
+    }
+
+
+    public List<Pair<String, String>> getTokenAndTimePairList() {
+        return tokenAndTimePairList;
+    }
+
+
+    /**
+     *
+     * @param token
+     * @param time
+     * Saves each token and time when it was valid into list
+     */
+
+    public void addTokenToList(String token,String time){
+        tokenAndTimePairList.add(new Pair<>(token, time));
+        if (tokenAndTimePairList.size()>TOKENS_STORAGE_LIMIT){
+            tokenAndTimePairList.remove(0);
         }
     }
 
