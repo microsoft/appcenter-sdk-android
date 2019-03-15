@@ -106,12 +106,16 @@ public class AuthTokenContext {
      * @param homeAccountId unique user id.
      */
     public synchronized void setAuthToken(String authToken, String homeAccountId) {
-        final boolean isNewUser = isNewUser(homeAccountId);
-        mAuthToken = authToken;
-        mHomeAccountId = homeAccountId;
         if (mStorage != null) {
             mStorage.saveToken(authToken, homeAccountId);
         }
+        updateAuthToken(authToken, homeAccountId);
+    }
+
+    private void updateAuthToken(String authToken, String homeAccountId) {
+        final boolean isNewUser = isNewUser(homeAccountId);
+        mAuthToken = authToken;
+        mHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
@@ -149,7 +153,7 @@ public class AuthTokenContext {
 
     public synchronized void cacheToken() {
         if (mStorage != null) {
-            setAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
+            updateAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
         }
     }
 
