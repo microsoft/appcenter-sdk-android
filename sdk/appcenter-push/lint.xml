@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
 <lint>
     <issue id="IconColors">
         <ignore path="src/main/res/drawable/ic_stat_notify_dot.png" />
