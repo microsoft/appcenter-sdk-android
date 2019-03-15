@@ -417,7 +417,6 @@ public class DatabaseManagerAndroidTest {
             contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "new id");
             databaseManager.upsert(contentValues, documentIdProperty);
-            System.out.println(contentValues.get(documentIdProperty));
             assertEquals(2L, databaseManager.getRowCount());
 
             /* Upsert a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
