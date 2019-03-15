@@ -35,7 +35,7 @@ public class AuthTokenContextTest {
     @Test
     public void saveAuthTokenAndTimeToStorage(){
     	for (int i = 0; i<10;i++){
-			mAuthTokenContext.addTokenToList(MOCK_TOKEN,UUIDUtils.randomUUID().toString());
+		//	mAuthTokenContext.addTokenToList(MOCK_TOKEN,12);
 		}
         assertEquals(mAuthTokenContext.getTokenAndTimePairList().size(),5);
     }

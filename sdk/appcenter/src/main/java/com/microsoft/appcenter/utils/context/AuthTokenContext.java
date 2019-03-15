@@ -11,6 +11,7 @@ import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class AuthTokenContext {
     /**
      * Token and time when it was valid storage
     */
-    private final List<Pair<String,String>> tokenAndTimePairList = new ArrayList<>();
+    private final List<Pair<String,Long>> tokenAndTimePairList = new ArrayList<>();
 
     /**
      * Current value of home account id.
@@ -106,6 +107,7 @@ public class AuthTokenContext {
      */
     public synchronized void setAuthToken(String authToken, String homeAccountId) {
         mAuthToken = authToken;
+        addTokenToList(authToken);
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
@@ -140,7 +142,7 @@ public class AuthTokenContext {
     }
 
 
-    public List<Pair<String, String>> getTokenAndTimePairList() {
+    public List<Pair<String, Long>> getTokenAndTimePairList() {
         return tokenAndTimePairList;
     }
 
@@ -148,12 +150,11 @@ public class AuthTokenContext {
     /**
      *
      * @param token
-     * @param time
      * Saves each token and time when it was valid into list
      */
-
-    public void addTokenToList(String token,String time){
-        tokenAndTimePairList.add(new Pair<>(token, time));
+	@VisibleForTesting
+    private void addTokenToList(String token){
+        tokenAndTimePairList.add(new Pair<>(token,new Date().getTime()));
         if (tokenAndTimePairList.size()>TOKENS_STORAGE_LIMIT){
             tokenAndTimePairList.remove(0);
         }
