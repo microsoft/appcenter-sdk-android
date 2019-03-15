@@ -10,8 +10,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
+import com.microsoft.appcenter.utils.storage.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import java.util.List;
 
 /**
  * Storage for tokens that uses {@link SharedPreferencesManager}. Handles saving and encryption.
@@ -47,8 +50,28 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @Override
     public void saveToken(String token, String homeAccountId) {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
+
+        /*
+        String historyData = SharedPreferencesManager.getString("TODO history", null);
+        List<?> history = null;// TODO deserialize
+        if (history == null) {
+            history.add(?);// token = null, starttime = null
+        }
+        history.add(?); // token = encryptedToken, starttime = now
+        if (history.size() > MAX) {
+            history.remove(0);
+        }
+        // serialize
+        SharedPreferencesManager.putString();
+        */
+
+        if (token != null) {
+            SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
+        }
     }
 
     @Override
@@ -71,8 +94,24 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
-    public void removeToken() {
-        SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
+    @Override
+    public AuthTokenInfo getOldestToken() {
+        /*
+        String historyData = SharedPreferencesManager.getString("TODO history", null);
+        if (historyData == null) {
+            return null;
+        }
+        List<?> history = null;// TODO deserialize
+
+        return new AuthTokenInfo(decrypt(history[0].token), history[0].time, history[1].time);
+
+        */
+        return null;
+    }
+
+    @Override
+    public void removeToken(String token) {
+
+
     }
 }
