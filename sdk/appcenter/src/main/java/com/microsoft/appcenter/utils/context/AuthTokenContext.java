@@ -7,23 +7,16 @@ package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-import android.util.Pair;
 
-import java.util.ArrayList;
+import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
+
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * Utility to store and retrieve the latest authorization token.
  */
 public class AuthTokenContext {
-
-    /**
-       Tokens storage max size
-     */
-    private  final static  int TOKENS_STORAGE_LIMIT = 5;
 
     /**
      * Unique instance.
@@ -40,17 +33,15 @@ public class AuthTokenContext {
      */
     private String mAuthToken;
 
-
-
-    /**
-     * Token and time when it was valid storage
-    */
-    private final List<Pair<String,Long>> tokenAndTimePairList = new ArrayList<>();
-
     /**
      * Current value of home account id.
      */
-    private String mLastHomeAccountId;
+    private String mHomeAccountId;
+
+    /**
+     * Instance of {@link AuthTokenStorage} to store token information.
+     */
+    private AuthTokenStorage mStorage;
 
     /**
      * Get unique instance.
@@ -100,23 +91,35 @@ public class AuthTokenContext {
     }
 
     /**
+     * Gets current homeAccountId value.
+     *
+     * @return unique identifier of user.
+     */
+    public synchronized String getHomeAccountId() {
+        return mHomeAccountId;
+    }
+
+    /**
      * Sets new authorization token.
      *
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
      */
     public synchronized void setAuthToken(String authToken, String homeAccountId) {
+        final boolean isNewUser = isNewUser(homeAccountId);
         mAuthToken = authToken;
-        addTokenToList(authToken);
+        mHomeAccountId = homeAccountId;
+        if (mStorage != null) {
+            mStorage.saveToken(authToken, homeAccountId);
+        }
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
-            if (isNewUser(homeAccountId)) {
+            if (isNewUser) {
                 listener.onNewUser(authToken);
             }
         }
-        mLastHomeAccountId = homeAccountId;
     }
 
     /**
@@ -126,7 +129,7 @@ public class AuthTokenContext {
      * @return true if this user is not the same as previous, false otherwise.
      */
     private synchronized boolean isNewUser(String newHomeAccountId) {
-        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newHomeAccountId);
+        return mHomeAccountId == null || !mHomeAccountId.equals(newHomeAccountId);
     }
 
     /**
@@ -134,30 +137,38 @@ public class AuthTokenContext {
      */
     public synchronized void clearToken() {
         mAuthToken = null;
-        mLastHomeAccountId = null;
+        mHomeAccountId = null;
+        if (mStorage != null) {
+            mStorage.saveToken(null, null);
+        }
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(null);
             listener.onNewUser(null);
         }
     }
 
-
-    public List<Pair<String, Long>> getTokenAndTimePairList() {
-        return tokenAndTimePairList;
+    public synchronized void cacheToken() {
+        if (mStorage != null) {
+            setAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
+        }
     }
-
 
     /**
      *
-     * @param token
-     * Saves each token and time when it was valid into list
+     *
+     * @return
      */
-	@VisibleForTesting
-    private void addTokenToList(String token){
-        tokenAndTimePairList.add(new Pair<>(token,new Date().getTime()));
-        if (tokenAndTimePairList.size()>TOKENS_STORAGE_LIMIT){
-            tokenAndTimePairList.remove(0);
-        }
+    public AuthTokenStorage getStorage() {
+        return mStorage;
+    }
+
+    /**
+     *
+     *
+     * @param storage
+     */
+    public void setStorage(AuthTokenStorage storage) {
+        mStorage = storage;
     }
 
     /**

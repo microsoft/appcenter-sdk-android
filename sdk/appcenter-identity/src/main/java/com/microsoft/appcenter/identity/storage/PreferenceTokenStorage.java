@@ -9,8 +9,8 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
+import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 /**
@@ -46,7 +46,6 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public void saveToken(String token, String homeAccountId) {
-        AuthTokenContext.getInstance().setAuthToken(token, homeAccountId);
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
         SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
         SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
@@ -72,21 +71,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
-    @Override
-    public void cacheToken() {
-        String tokenFromStorage = getToken();
-        String homeAccountId = getHomeAccountId();
-
-        /* We need to update Token context here if the values are not null. */
-        if (tokenFromStorage != null && homeAccountId != null) {
-            AuthTokenContext.getInstance().setAuthToken(tokenFromStorage, homeAccountId);
-        }
-    }
-
-    @Override
     public void removeToken() {
         SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
         SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
-        AuthTokenContext.getInstance().clearToken();
     }
 }

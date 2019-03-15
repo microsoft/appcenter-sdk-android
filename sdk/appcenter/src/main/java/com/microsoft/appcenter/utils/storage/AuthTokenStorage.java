@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity.storage;
+package com.microsoft.appcenter.utils.storage;
 
 /**
  * Interface for storage that works with token.
@@ -31,14 +31,4 @@ public interface AuthTokenStorage {
      * @return unique identifier of user.
      */
     String getHomeAccountId();
-
-    /**
-     * Removes token value.
-     */
-    void removeToken();
-
-    /**
-     * Gets token and the last account id from storage and caches it.
-     */
-    void cacheToken();
 }
