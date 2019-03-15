@@ -164,7 +164,7 @@ public class OneCollectorIngestionTest {
         ingestion.setLogUrl("http://mock");
         String authToken = "fake-token";
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(authToken,null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(authToken, null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
@@ -186,19 +186,19 @@ public class OneCollectorIngestionTest {
     }
 
     @Test
-    public void passTicketsDebug() throws Exception {
+    public void passTicketsDebug() {
         Constants.APPLICATION_DEBUGGABLE = true;
         Map<String, String> headers = passTickets();
         assertEquals("true", headers.get(OneCollectorIngestion.STRICT));
     }
 
     @Test
-    public void passTicketsRelease() throws Exception {
+    public void passTicketsRelease() {
         Map<String, String> headers = passTickets();
         assertNull(headers.get(OneCollectorIngestion.STRICT));
     }
 
-    private Map<String, String> passTickets() throws Exception {
+    private Map<String, String> passTickets() {
 
         /* Build some payload. */
         final CommonSchemaLog log1 = mock(CommonSchemaLog.class);
@@ -236,7 +236,7 @@ public class OneCollectorIngestionTest {
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         String authToken = "fake-token";
-        assertEquals(call, ingestion.sendAsync(authToken,null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(authToken, null, null, container, serviceCallback));
 
         /* Verify call to http client. */
         Map<String, String> headers = mHeadersCaptor.getValue();
@@ -280,7 +280,7 @@ public class OneCollectorIngestionTest {
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         String authToken = "fake-token";
-        assertEquals(call, ingestion.sendAsync(authToken,null, null, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(authToken, null, null, container, serviceCallback));
 
         /* Verify call to http client was made without headers as JSON failed. */
         Map<String, String> headers = mHeadersCaptor.getValue();
@@ -374,7 +374,7 @@ public class OneCollectorIngestionTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void onBeforeCallingWithAnotherLogLevel() throws Exception {
+    public void onBeforeCallingWithAnotherLogLevel() {
 
         /* Mock instances. */
         String apiKey = UUIDUtils.randomUUID().toString();
@@ -391,7 +391,7 @@ public class OneCollectorIngestionTest {
         AppCenterLog.verbose(anyString(), anyString());
     }
 
-    private HttpClient.CallTemplate getCallTemplate() throws Exception {
+    private HttpClient.CallTemplate getCallTemplate() {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         ServiceCall call = mock(ServiceCall.class);
