@@ -406,13 +406,30 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         DatabaseManager databaseManager = new DatabaseManager(sContext, "test-upsert", "databaseManager", 1, mSchema, listener);
+        String documentIdProperty = "COL_STRING";
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
             assertEquals(0L, databaseManager.getRowCount());
             ContentValues contentValues = generateContentValues();
-            databaseManager.upsert(contentValues);
+            contentValues.put(documentIdProperty, "some id");
+            databaseManager.upsert(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
+            databaseManager.upsert(contentValues, documentIdProperty);
+            assertEquals(1L, databaseManager.getRowCount());
+
+            /* Set the documentIdProperty to another value, new row should be created. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperty, "new id");
+            databaseManager.upsert(contentValues, documentIdProperty);
+            assertEquals(2L, databaseManager.getRowCount());
+
+            /* Upsert a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperty, "new id");
+            databaseManager.upsert(contentValues);
+            databaseManager.upsert(contentValues, documentIdProperty);
+            assertEquals(4L, databaseManager.getRowCount());
         } finally {
 
             /* Close. */
