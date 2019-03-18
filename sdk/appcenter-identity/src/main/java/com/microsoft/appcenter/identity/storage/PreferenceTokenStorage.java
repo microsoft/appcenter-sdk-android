@@ -74,21 +74,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
 
         // TODO: lazy cache?
-        String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-        List<TokenStoreEntity> history = null;
-        if (tokenHistoryJson == null) {
+        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
+        if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
                 add(new TokenStoreEntity(null, null));
             }};
-        } else {
-            try {
-                history = Arrays.asList(new Gson().fromJson(tokenHistoryJson, TokenStoreEntity[].class));
-            } catch (JsonParseException e) {
-                AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
-            }
-            if (history == null) {
-                history = new ArrayList<>();
-            }
         }
         history.add(new TokenStoreEntity(encryptedToken, new Date()));
 
@@ -98,7 +88,6 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
 
         /* Update history and current token. */
-        // TODO: reuse Gson obj
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
         if (token != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
@@ -131,16 +120,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public AuthTokenInfo getOldestToken() {
-        String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-        if (tokenHistoryJson == null) {
-            return new AuthTokenInfo(getToken(), null, null);
-        }
-        List<TokenStoreEntity> history = null;
-        try {
-            history = Arrays.asList(new Gson().fromJson(tokenHistoryJson, TokenStoreEntity[].class));
-        } catch (JsonParseException e) {
-            AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
-        }
+        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
         if (history == null || history.size() == 0) {
             return new AuthTokenInfo(getToken(), null, null);
         }
@@ -156,7 +136,23 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public void removeToken(String token) {
-        // TODO
+        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
+        if (history!=null){
+            TokenStoreEntity tokenToRemove=null;
+
+            /* Find token in token history */
+            for (TokenStoreEntity tokenStoreEntity: history){
+                if (tokenStoreEntity.getToken()==token){
+                    tokenToRemove = tokenStoreEntity;
+                    break;
+                }
+            }
+            /* if token was exist in history*/
+            if (tokenToRemove!=null) {
+                history.remove(tokenToRemove);
+                SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
+            }
+        }
     }
 
     private static class TokenStoreEntity {
@@ -179,5 +175,22 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         Date getTime() {
             return mTime;
         }
+    }
+
+    private List<TokenStoreEntity> getTokenHistoryFromStorage(){
+        String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        if (tokenHistoryJson == null){
+            return null;
+        }
+        List<TokenStoreEntity> history = null;
+        try {
+            history = Arrays.asList(new Gson().fromJson(tokenHistoryJson, TokenStoreEntity[].class));
+        } catch (JsonParseException e) {
+            AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
+        }
+        if (history == null) {
+            history = new ArrayList<>();
+        }
+        return history;
     }
 }
