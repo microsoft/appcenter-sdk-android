@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
@@ -105,7 +106,7 @@ public class DatabaseManager implements Closeable {
                     if (val instanceof Double || val instanceof Float) {
                         sql.append("REAL");
                     } else if (val instanceof Number || val instanceof Boolean) {
-                        sql.append("INTEGER");
+                        sql.append("INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                     } else if (val instanceof byte[]) {
                         sql.append("BLOB");
                     } else {
