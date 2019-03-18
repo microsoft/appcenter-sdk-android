@@ -15,6 +15,8 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.identity.storage.AuthTokenStorage;
+import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -52,7 +54,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HandlerUtils.class,
         HttpUtils.class,
         NetworkStateHelper.class,
-        DocumentCache.class
+        DocumentCache.class,
+        TokenStorageFactory.class
 })
 
 abstract public class AbstractStorageTest {
@@ -87,11 +90,13 @@ abstract public class AbstractStorageTest {
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
+        mockStatic(TokenStorageFactory.class);
         when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
         when(AppCenter.isConfigured()).thenReturn(true);
         when(AppCenter.getInstance()).thenReturn(mock(AppCenter.class));
         when(AppCenter.isEnabled()).thenReturn(mCoreEnabledFuture);
         when(mCoreEnabledFuture.get()).thenReturn(true);
+        when(TokenStorageFactory.getTokenStorage(any(Context.class))).thenReturn(mock(AuthTokenStorage.class));
         Answer<Void> runNow = new Answer<Void>() {
 
             @Override

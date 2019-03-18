@@ -68,6 +68,8 @@ public class Storage extends AbstractAppCenterService {
 
     private HttpClient mHttpClient;
 
+    private Context mConntext;
+
     private DocumentCache mDocumentCache;
 
     /**
@@ -203,6 +205,7 @@ public class Storage extends AbstractAppCenterService {
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+        mConntext = context;
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
@@ -481,6 +484,7 @@ public class Storage extends AbstractAppCenterService {
                     TokenExchange.getDbToken(
                             partition,
                             mHttpClient,
+                            mConntext,
                             mApiUrl,
                             mAppSecret,
                             callback);

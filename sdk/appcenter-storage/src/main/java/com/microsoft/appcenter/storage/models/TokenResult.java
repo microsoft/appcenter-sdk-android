@@ -71,6 +71,13 @@ public class TokenResult {
     private String expiresOn;
 
     /**
+     * The account id.
+     */
+    @Expose
+    @SerializedName(value = "accountId")
+    private String accountId;
+
+    /**
      * Get the partition value.
      *
      * @return The partition value.
@@ -120,6 +127,17 @@ public class TokenResult {
             AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string");
             this.expiresOn = null;
         }
+        return this;
+    }
+
+    /**
+     * Set the account id.
+     *
+     * @param accountId Account id value to be set.
+     * @return The TokenResult object itself.
+     */
+    public TokenResult withAccountId(String accountId) {
+        this.accountId = accountId;
         return this;
     }
 
@@ -210,6 +228,14 @@ public class TokenResult {
      */
     public String status() {
         return this.status;
+    }
+
+    /**
+     * Get account id.
+     * @return The account id value.
+     */
+    public String accountId() {
+        return this.accountId;
     }
 
     /**
