@@ -27,7 +27,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.io.IOException;
@@ -155,15 +154,6 @@ public class DefaultChannel implements Channel {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        mIngestion.setAuthToken(authTokenContext.getAuthToken());
-        authTokenContext.addListener(new AbstractTokenContextListener() {
-
-            @Override
-            public void onNewAuthToken(String authToken) {
-                mIngestion.setAuthToken(authToken);
-            }
-        });
     }
 
     /**
@@ -525,7 +515,8 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+            groupState.mIngestion.sendAsync(authTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {
