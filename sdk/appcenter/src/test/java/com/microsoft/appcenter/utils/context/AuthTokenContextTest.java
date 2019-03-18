@@ -54,7 +54,7 @@ public class AuthTokenContextTest {
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);
 
         /* Clear token data. */
-        mAuthTokenContext.clearToken();
+        mAuthTokenContext.clearAuthToken();
 
         /* Verify that listener is called on empty token. */
         verify(mockListener, times(1)).onNewAuthToken(isNull(String.class));

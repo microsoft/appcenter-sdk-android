@@ -139,11 +139,11 @@ public class AuthTokenContext {
     /**
      * Clears info about the token.
      */
-    public synchronized void clearToken() {
+    public synchronized void clearAuthToken() {
         setAuthToken(null, null);
     }
 
-    public synchronized void cacheToken() {
+    public synchronized void cacheAuthToken() {
         if (mStorage != null) {
             updateAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
         }

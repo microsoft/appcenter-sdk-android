@@ -748,7 +748,7 @@ public class PushTest {
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().clearToken();
+        AuthTokenContext.getInstance().clearAuthToken();
         verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 

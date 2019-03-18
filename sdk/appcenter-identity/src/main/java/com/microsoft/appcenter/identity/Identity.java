@@ -23,7 +23,6 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -217,7 +216,7 @@ public class Identity extends AbstractAppCenterService {
             loadConfigurationFromCache();
 
             /* Load the last stored token and cache it into token context. */
-            AuthTokenContext.getInstance().cacheToken();
+            AuthTokenContext.getInstance().cacheAuthToken();
 
             /* Download the latest configuration in background. */
             downloadConfiguration();
@@ -269,7 +268,7 @@ public class Identity extends AbstractAppCenterService {
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
-        authTokenContext.clearToken();
+        authTokenContext.clearAuthToken();
     }
 
     private synchronized void downloadConfiguration() {

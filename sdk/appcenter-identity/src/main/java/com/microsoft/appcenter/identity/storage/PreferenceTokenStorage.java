@@ -12,10 +12,9 @@ import android.support.annotation.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
-import com.microsoft.appcenter.utils.storage.AuthTokenInfo;
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -73,6 +72,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @Override
     public void saveToken(String token, String homeAccountId) {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
+
+        // TODO: lazy cache?
         String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
         List<TokenStoreEntity> history = null;
         if (tokenHistoryJson == null) {

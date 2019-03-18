@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+
 /**
  * Interface for storage that works with token.
  */

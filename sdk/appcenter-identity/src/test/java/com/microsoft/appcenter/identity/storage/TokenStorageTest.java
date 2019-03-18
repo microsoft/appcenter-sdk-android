@@ -88,7 +88,7 @@ public class TokenStorageTest {
         mTokenStorage.removeToken();
 
         /* Verify remove called on context and preferences. */
-        verify(mAuthTokenContext).clearToken();
+        verify(mAuthTokenContext).clearAuthToken();
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_AUTH_TOKEN));
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID));
