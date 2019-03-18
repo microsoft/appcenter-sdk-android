@@ -62,7 +62,7 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
-     * Version of the schema that introduced timestamp write token.
+     * Version of the schema that introduced priority write token.
      */
     @VisibleForTesting
     static final int VERSION_PRIORITY_KEY = 4;
@@ -229,7 +229,7 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
                 if (oldVersion < VERSION_PRIORITY_KEY) {
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER");
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER");
                 createPriorityIndex(db);
