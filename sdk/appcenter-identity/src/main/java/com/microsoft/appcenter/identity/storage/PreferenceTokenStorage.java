@@ -11,7 +11,9 @@ import android.support.annotation.VisibleForTesting;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
@@ -21,148 +23,161 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 /**
  * Storage for tokens that uses {@link SharedPreferencesManager}. Handles saving and encryption.
  */
 public class PreferenceTokenStorage implements AuthTokenStorage {
 
-	/**
-	 * {@link Context} instance.
-	 */
-	private final Context mContext;
+    /**
+     * {@link Context} instance.
+     */
+    private final Context mContext;
 
-	/**
-	 * Default constructor.
-	 *
-	 * @param context {@link Context} instance.
-	 */
-	PreferenceTokenStorage(@NonNull Context context) {
-		mContext = context.getApplicationContext();
-	}
+    /**
+     * Default constructor.
+     *
+     * @param context {@link Context} instance.
+     */
+    PreferenceTokenStorage(@NonNull Context context) {
+        mContext = context.getApplicationContext();
+    }
 
-	/**
-	 * Used for authentication requests, string field for auth token.
-	 */
-	@VisibleForTesting
-	static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
+    /**
+     * Used for authentication requests, string field for auth token.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
 
-	/**
-	 * Used for distinguishing users, string field for home account id.
-	 */
-	@VisibleForTesting
-	static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
+    /**
+     * Used for distinguishing users, string field for home account id.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
 
-	/**
-	 * Used for saving tokens history
-	 */
-	@VisibleForTesting
-	static final String PREFERENCE_KEY_TOKEN_HISTORY = "TOKEN_HISTORY";
+    /**
+     * Used for saving tokens history
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_TOKEN_HISTORY = "AppCenter.auth_token_history";
 
-	static final int TOKEN_HISTORY_LIMIT = 5;
+    static final int TOKEN_HISTORY_LIMIT = 5;
 
-	/**
-	 * @param token         auth token.
-	 * @param homeAccountId unique identifier of user.
-	 *                      Saving all tokens into history with time when it was valid
-	 */
-	@Override
-	public void saveToken(String token, String homeAccountId) {
-		String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
-		String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-		List<TokenStoreEntity> history;
-		if (tokenHistoryJson == null) {
-			history = new ArrayList<>();
-			TokenStoreEntity initialTokenStore = new TokenStoreEntity(null, null);
-			history.add(initialTokenStore);
-		} else {
-			try {
-				history = new Gson().fromJson(tokenHistoryJson, new TypeToken<TokenStoreEntity>() {
-				}.getType());
-			} catch (JsonParseException e) {
-				history = new ArrayList<>();
-				e.printStackTrace();
-			}
-		}
-		Date currentTime = new Date();
-		history.add(new TokenStoreEntity(encryptedToken, currentTime)); // token = encryptedToken, starttime = now
-		if (history.size() > TOKEN_HISTORY_LIMIT) {
-			history.remove(0);
-		}
-		SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
-		if (token != null) {
-			SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
-			SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
-		} else {
-			SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
-			SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
-		}
-	}
+    /**
+     * @param token         auth token.
+     * @param homeAccountId unique identifier of user.
+     *                      Saving all tokens into history with time when it was valid
+     */
+    @Override
+    public void saveToken(String token, String homeAccountId) {
+        String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
+        String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        List<TokenStoreEntity> history = null;
+        if (tokenHistoryJson == null) {
+            history = new ArrayList<TokenStoreEntity>() {{
+                add(new TokenStoreEntity(null, null));
+            }};
+        } else {
+            try {
+                history = new Gson().fromJson(tokenHistoryJson, new TypeToken<TokenStoreEntity>() {
+                }.getType());
+            } catch (JsonParseException e) {
+                AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
+            }
+            if (history == null) {
+                history = new ArrayList<>();
+            }
+        }
+        history.add(new TokenStoreEntity(encryptedToken, new Date()));
 
-	@Override
-	public String getToken() {
-		String encryptedToken = SharedPreferencesManager.getString(PREFERENCE_KEY_AUTH_TOKEN, null);
-		if (encryptedToken == null || encryptedToken.length() == 0) {
-			return null;
-		}
-		CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedToken, false);
-		return decryptedData.getDecryptedData();
-	}
+        /* Limit history size. */
+        if (history.size() > TOKEN_HISTORY_LIMIT) {
+            history.remove(0);
+        }
 
-	/**
-	 * Retrieves unique user id.
-	 *
-	 * @return unique user id.
-	 */
-	@Override
-	public String getHomeAccountId() {
-		return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
-	}
+        /* Update history and current token. */
+        // TODO: reuse Gson obj
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
+        if (token != null) {
+            SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
+        }
+    }
 
-	@Override
-	public AuthTokenInfo getOldestToken() {
-		String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-		if (tokenHistoryJson == null) {
-			return null;
-		}
-		ArrayList<TokenStoreEntity> history;
-		try {
-			history = new Gson().fromJson(tokenHistoryJson, new TypeToken<AuthTokenInfo>() {
-			}.getType());
-		} catch (JsonParseException e) {
-			history = new ArrayList<>();
-		}
-		if (history.size() < 2) {
-			return null;
-		}
-		TokenStoreEntity firstToken = history.get(0);
-		TokenStoreEntity secondToken = history.get(1);
+    @Override
+    public String getToken() {
+        String encryptedToken = SharedPreferencesManager.getString(PREFERENCE_KEY_AUTH_TOKEN, null);
+        if (encryptedToken == null || encryptedToken.length() == 0) {
+            return null;
+        }
+        CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedToken, false);
+        return decryptedData.getDecryptedData();
+    }
 
-		if (firstToken.getTime() == null && firstToken.getToken() == null)
-			return new AuthTokenInfo(secondToken.getToken(), null, secondToken.getTime());
-		return new AuthTokenInfo(firstToken.mToken, firstToken.getTime(), secondToken.getTime());
-	}
+    /**
+     * Retrieves unique user id.
+     *
+     * @return unique user id.
+     */
+    @Override
+    public String getHomeAccountId() {
+        return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
+    }
 
-	@Override
-	public void removeToken(String token) {
+    @Override
+    public AuthTokenInfo getOldestToken() {
+        String tokenHistoryJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        if (tokenHistoryJson == null) {
+            return new AuthTokenInfo(getToken(), null, null);
+        }
+        List<TokenStoreEntity> history = null;
+        try {
+            history = new Gson().fromJson(tokenHistoryJson, new TypeToken<AuthTokenInfo>() {
+            }.getType());
+        } catch (JsonParseException e) {
+            AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
+        }
+        if (history == null || history.size() == 0) {
+            return new AuthTokenInfo(getToken(), null, null);
+        }
+        TokenStoreEntity storeEntity = history.get(0);
+        String token = storeEntity.getToken();
+        if (token != null && token.length() > 0) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(token, false);
+            token = decryptedData.getDecryptedData();
+        }
+        Date endTime = history.size() > 1 ? history.get(1).getTime() : null;
+        return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
+    }
 
-	}
+    @Override
+    public void removeToken(String token) {
+        // TODO
+    }
 
-	private class TokenStoreEntity {
-		private String mToken;
+    private static class TokenStoreEntity {
 
-		private Date mTime;
+        @SerializedName("token")
+        private String mToken;
 
-		TokenStoreEntity(String token, Date time) {
-			this.mToken = token;
-			this.mTime = time;
-		}
+        @SerializedName("time")
+        private Date mTime;
 
-		String getToken() {
-			return mToken;
-		}
+        TokenStoreEntity(String token, Date time) {
+            mToken = token;
+            mTime = time;
+        }
 
-		Date getTime() {
-			return mTime;
-		}
-	}
+        String getToken() {
+            return mToken;
+        }
+
+        Date getTime() {
+            return mTime;
+        }
+    }
 }
