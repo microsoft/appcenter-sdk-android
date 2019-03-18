@@ -5,14 +5,11 @@
 
 package com.microsoft.appcenter.storage.client;
 
-import android.content.Context;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.TokenManager;
 import com.microsoft.appcenter.storage.Utils;
@@ -20,11 +17,14 @@ import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
+import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
@@ -70,13 +70,12 @@ public class TokenExchange {
     public static synchronized ServiceCall getDbToken(
             final String partition,
             HttpClient httpClient,
-            Context context,
             String apiUrl,
             final String appSecret,
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
-        final String userToken = TokenStorageFactory.getTokenStorage(context).getToken();
+        final String userToken = AuthTokenContext.getInstance().getAuthToken();
         return httpClient.callAsync(
                 url,
                 METHOD_POST,
@@ -84,7 +83,7 @@ public class TokenExchange {
                     {
                         put(APP_SECRET_HEADER, appSecret);
                         if (userToken != null) {
-                            put(USER_TOKEN_HEADER, userToken);
+                            put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, userToken));
                         }
                     }
                 },

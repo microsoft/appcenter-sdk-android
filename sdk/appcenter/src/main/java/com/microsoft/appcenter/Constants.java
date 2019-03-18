@@ -18,9 +18,9 @@ import java.io.File;
 public class Constants {
 
     /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     * Application secret HTTP Header.
      */
-    public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    public static final String APP_SECRET = "App-Secret";
 
     /**
      * Number of metrics queue items which will trigger synchronization.
@@ -36,6 +36,18 @@ public class Constants {
      * Common schema prefix separator used in various field values.
      */
     public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
+    /**
+     * Authorization HTTP Header.
+     */
+    public static final String AUTHORIZATION_HEADER = "Authorization";
+    /**
+     * Auth token format for Authorization header.
+     */
+    public static final String AUTH_TOKEN_FORMAT = "Bearer %s";
+    /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
 
     /**
      * Path where crash logs and temporary files are stored.

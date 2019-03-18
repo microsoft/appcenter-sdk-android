@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import android.content.Context;
-
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -79,7 +77,7 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class), null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Get and verify token. */
         assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
@@ -89,11 +87,11 @@ public class TokenTest extends AbstractStorageTest {
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(FAKE_PARTITION_NAME)));
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class),null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class), null, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
     }
 
     @Test
@@ -175,9 +173,9 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class), nullResponseAppUrl, null, callBack);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class), emptyTokensAppUrl, null, callBack);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, mock(Context.class), multipleTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, nullResponseAppUrl, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, emptyTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, multipleTokensAppUrl, null, callBack);
 
         /* Get and verify token. */
         assertEquals(3, exception.getAllValues().size());

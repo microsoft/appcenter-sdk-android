@@ -9,6 +9,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -49,24 +50,6 @@ public class AppCenterIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
-
-    /**
-     * Application secret HTTP Header.
-     */
-    @VisibleForTesting
-    static final String APP_SECRET = "App-Secret";
-
-    /**
-     * Auth token format for Authorization header.
-     */
-    @VisibleForTesting
-    static final String AUTH_TOKEN_FORMAT = "Bearer %s";
-
-    /**
-     * Authorization HTTP Header.
-     */
-    @VisibleForTesting
-    static final String AUTHORIZATION_HEADER = "Authorization";
 
     /**
      * Log serializer.
@@ -125,10 +108,10 @@ public class AppCenterIngestion implements Ingestion {
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
-        headers.put(APP_SECRET, appSecret);
+        headers.put(Constants.APP_SECRET, appSecret);
         String authToken = getAuthToken();
         if (authToken != null) {
-            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, authToken));
+            headers.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
@@ -174,13 +157,13 @@ public class AppCenterIngestion implements Ingestion {
 
                 /* Log headers. */
                 Map<String, String> logHeaders = new HashMap<>(headers);
-                String appSecret = logHeaders.get(APP_SECRET);
+                String appSecret = logHeaders.get(Constants.APP_SECRET);
                 if (appSecret != null) {
-                    logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
+                    logHeaders.put(Constants.APP_SECRET, HttpUtils.hideSecret(appSecret));
                 }
-                String authToken = logHeaders.get(AUTHORIZATION_HEADER);
+                String authToken = logHeaders.get(Constants.AUTHORIZATION_HEADER);
                 if (authToken != null) {
-                    logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideAuthToken(authToken));
+                    logHeaders.put(Constants.AUTHORIZATION_HEADER, HttpUtils.hideAuthToken(authToken));
                 }
                 AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
             }

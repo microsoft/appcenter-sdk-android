@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import android.content.Context;
-
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -821,7 +819,7 @@ public class StorageTest extends AbstractStorageTest {
         mockStatic(CosmosDb.class);
         mockStatic(TokenExchange.class);
         ServiceCall mockServiceCall = mock(ServiceCall.class);
-        when(TokenExchange.getDbToken(anyString(), any(HttpClient.class), any(Context.class), anyString(), anyString(), any(TokenExchange.TokenExchangeServiceCallback.class))).thenReturn(mockServiceCall);
+        when(TokenExchange.getDbToken(anyString(), any(HttpClient.class), anyString(), anyString(), any(TokenExchange.TokenExchangeServiceCallback.class))).thenReturn(mockServiceCall);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
         Storage.setEnabled(false).get();
         assertNull(doc.get());
