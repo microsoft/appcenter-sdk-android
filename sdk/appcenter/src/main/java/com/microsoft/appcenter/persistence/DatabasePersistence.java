@@ -130,7 +130,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Current version of the schema.
      */
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
 
     /**
      * Priority index.
@@ -231,7 +231,7 @@ public class DatabasePersistence extends Persistence {
                 if (oldVersion < VERSION_PRIORITY_KEY) {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER");
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 createPriorityIndex(db);
                 return true;
             }

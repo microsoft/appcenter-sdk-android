@@ -1069,7 +1069,7 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void upgradeFromVersion1to4() throws PersistenceException, JSONException {
+    public void upgradeFromVersion1to5() throws PersistenceException, JSONException {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(SCHEMA);
@@ -1077,6 +1077,7 @@ public class DatabasePersistenceAndroidTest {
         oldSchema.remove(DatabasePersistence.COLUMN_DATA_TYPE);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_TIMESTAMP);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, 1, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
@@ -1120,6 +1121,7 @@ public class DatabasePersistenceAndroidTest {
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
             assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+//            assertEquals((Long) 0l, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
 
             /* Put new data with token. */
             persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
@@ -1158,12 +1160,13 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void upgradeFromVersion2to4() throws PersistenceException, JSONException {
+    public void upgradeFromVersion2to5() throws PersistenceException, JSONException {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_TARGET_KEY);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_TIMESTAMP);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TYPE_API_KEY, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
@@ -1246,12 +1249,100 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
-    public void upgradeFromVersion3to4() throws PersistenceException, JSONException {
+    public void upgradeFromVersion3to5() throws PersistenceException, JSONException {
 
         /* Initialize database persistence with old schema. */
         ContentValues oldSchema = new ContentValues(SCHEMA);
         oldSchema.remove(DatabasePersistence.COLUMN_PRIORITY);
+        oldSchema.remove(DatabasePersistence.COLUMN_TIMESTAMP);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TARGET_KEY, oldSchema, mock(DatabaseManager.Listener.class));
+
+        /* Init log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        logSerializer.addLogFactory(MockCommonSchemaLog.TYPE, new MockCommonSchemaLogFactory());
+
+        /* Insert old data before upgrade. */
+        Log oldLog = AndroidTestUtils.generateMockLog();
+        try {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
+            contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
+            contentValues.put(DatabasePersistence.COLUMN_DATA_TYPE, MOCK_LOG_TYPE);
+            databaseManager.put(contentValues, DatabasePersistence.COLUMN_PRIORITY);
+        } finally {
+            databaseManager.close();
+        }
+
+        /* Upgrade. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+        persistence.setLogSerializer(logSerializer);
+
+        /* Prepare a common schema log. */
+        MockCommonSchemaLog commonSchemaLog = new MockCommonSchemaLog();
+        commonSchemaLog.setName("test");
+        commonSchemaLog.setIKey("o:test");
+        commonSchemaLog.setTimestamp(new Date());
+        commonSchemaLog.setVer("3.0");
+        commonSchemaLog.addTransmissionTarget("test-guid");
+
+        /* Check upgrade. */
+        try {
+
+            /* Get old data. */
+            assertEquals(1, persistence.countLogs("test"));
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test", Collections.<String>emptyList(), 1, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(oldLog, outputLogs.get(0));
+
+            /* Check priority migration. */
+            ContentValues values = getContentValues(persistence, "test");
+            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+
+            /* Put new data with token. */
+            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_CRITICAL);
+        } finally {
+            persistence.close();
+        }
+
+        /* Get new data after restart. */
+        persistence = new DatabasePersistence(sContext);
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Get new data. */
+            assertEquals(1, persistence.countLogs("test/one"));
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test/one", Collections.<String>emptyList(), 1, outputLogs);
+            assertEquals(1, outputLogs.size());
+            assertEquals(commonSchemaLog, outputLogs.get(0));
+
+            /* Verify target token is encrypted. */
+            ContentValues values = getContentValues(persistence, "test/one");
+            String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
+            assertNotNull(token);
+            assertNotEquals("test-guid", token);
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+
+            /* Verify target key stored as well. */
+            String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
+            assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
+
+            /* Verify priority stored too. */
+            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+        } finally {
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void upgradeFromVersion4to5() throws PersistenceException, JSONException {
+
+        /* Initialize database persistence with old schema. */
+        ContentValues oldSchema = new ContentValues(SCHEMA);
+        oldSchema.remove(DatabasePersistence.COLUMN_TIMESTAMP);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_PRIORITY_KEY, oldSchema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
