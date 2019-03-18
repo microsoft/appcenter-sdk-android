@@ -20,6 +20,7 @@ import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -80,8 +81,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             }};
         } else {
             try {
-                history = new Gson().fromJson(tokenHistoryJson, new TypeToken<TokenStoreEntity>() {
-                }.getType());
+                history = Arrays.asList(new Gson().fromJson(tokenHistoryJson, TokenStoreEntity[].class));
             } catch (JsonParseException e) {
                 AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
             }
@@ -136,8 +136,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
         List<TokenStoreEntity> history = null;
         try {
-            history = new Gson().fromJson(tokenHistoryJson, new TypeToken<AuthTokenInfo>() {
-            }.getType());
+            history = Arrays.asList(new Gson().fromJson(tokenHistoryJson, TokenStoreEntity[].class));
         } catch (JsonParseException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
         }
