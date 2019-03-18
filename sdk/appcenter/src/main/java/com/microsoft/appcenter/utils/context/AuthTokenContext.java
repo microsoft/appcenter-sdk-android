@@ -150,18 +150,18 @@ public class AuthTokenContext {
     }
 
     /**
+     * Gets token storage.
      *
-     *
-     * @return
+     * @return token storage.
      */
     public AuthTokenStorage getStorage() {
         return mStorage;
     }
 
     /**
+     * Sets current authorization token.
      *
-     *
-     * @param storage
+     * @param storage token storage.
      */
     public void setStorage(AuthTokenStorage storage) {
         mStorage = storage;
@@ -174,11 +174,15 @@ public class AuthTokenContext {
 
         /**
          * Called whenever a new token is set.
+         *
+         * @param authToken authorization token.
          */
         void onNewAuthToken(String authToken);
 
         /**
          * Called whenever a new user signs in.
+         *
+         * @param authToken authorization token.
          */
         void onNewUser(String authToken);
     }
