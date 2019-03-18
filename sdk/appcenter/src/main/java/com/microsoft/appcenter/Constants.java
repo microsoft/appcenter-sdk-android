@@ -36,10 +36,6 @@ public class Constants {
      * Common schema prefix separator used in various field values.
      */
     public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
-    /**
-     * Base URL to call server to check latest release.
-     */
-    public static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.
 
     /**
      * Authorization HTTP Header.
