@@ -62,6 +62,12 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
+     * Version of the schema that introduced timestamp write token.
+     */
+    @VisibleForTesting
+    static final int VERSION_PRIORITY_KEY = 4;
+
+    /**
      * Table name.
      */
     @VisibleForTesting
@@ -78,6 +84,12 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String COLUMN_LOG = "log";
+
+    /**
+     * Name fo date column in the table.
+     */
+    @VisibleForTesting
+    static final String COLUMN_TIMESTAMP = "timestamp";
 
     /**
      * Name of target token column in the table.
@@ -103,12 +115,11 @@ public class DatabasePersistence extends Persistence {
     @VisibleForTesting
     static final String COLUMN_PRIORITY = "priority";
 
-
     /**
      * Table schema for Persistence.
      */
     @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0, 0l);
 
     /**
      * Database name.
@@ -217,7 +228,10 @@ public class DatabasePersistence extends Persistence {
                 if (oldVersion < VERSION_TARGET_KEY) {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                if (oldVersion < VERSION_PRIORITY_KEY) {
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER");
+                }
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER");
                 createPriorityIndex(db);
                 return true;
             }
@@ -238,7 +252,7 @@ public class DatabasePersistence extends Persistence {
      * @param priority    The persistence priority.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority, Long timestamp) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
@@ -246,6 +260,7 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
         values.put(COLUMN_PRIORITY, priority);
+        values.put(COLUMN_TIMESTAMP, timestamp);
         return values;
     }
 
@@ -266,6 +281,7 @@ public class DatabasePersistence extends Persistence {
             boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
             String targetToken;
+            Long targetTimestamp;
             if (log instanceof CommonSchemaLog) {
                 if (isLargePayload) {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
@@ -273,9 +289,11 @@ public class DatabasePersistence extends Persistence {
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
                 targetKey = PartAUtils.getTargetKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
+                targetTimestamp = log.getTimestamp().getTime();
             } else {
                 targetKey = null;
                 targetToken = null;
+                targetTimestamp = 0l;
             }
             long maxSize = mDatabaseManager.getMaxSize();
             if (maxSize == -1) {
@@ -285,7 +303,7 @@ public class DatabasePersistence extends Persistence {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false), targetTimestamp);
             long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
