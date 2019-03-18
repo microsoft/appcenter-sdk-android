@@ -37,17 +37,19 @@ public class Constants {
      */
     public static final String COMMON_SCHEMA_PREFIX_SEPARATOR = ":";
     /**
+     * Base URL to call server to check latest release.
+     */
+    public static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.
+
+    /**
      * Authorization HTTP Header.
      */
     public static final String AUTHORIZATION_HEADER = "Authorization";
+
     /**
      * Auth token format for Authorization header.
      */
     public static final String AUTH_TOKEN_FORMAT = "Bearer %s";
-    /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
 
     /**
      * Path where crash logs and temporary files are stored.
@@ -63,11 +65,10 @@ public class Constants {
      * Flag indicates whether the host application is debuggable or not.
      */
     public static boolean APPLICATION_DEBUGGABLE = false;
-
     /**
-     * Base URL to call server to check latest release.
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
-    public static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
+    static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
 
     /**
      * Initializes constants from the given context. The context is used to set

@@ -7,7 +7,9 @@ package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;
@@ -23,6 +25,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
@@ -35,13 +39,6 @@ public class TokenExchange {
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
     public static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
-
-    /**
-     * App Secret Header.
-     */
-    private static final String APP_SECRET_HEADER = "App-Secret";
-
-    private static final String USER_TOKEN_HEADER = "Authorization";
 
     /**
      * Build the request body to get the token through http client.
@@ -81,7 +78,7 @@ public class TokenExchange {
                 METHOD_POST,
                 new HashMap<String, String>() {
                     {
-                        put(APP_SECRET_HEADER, appSecret);
+                        put(APP_SECRET, appSecret);
                         if (userToken != null) {
                             put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, userToken));
                         }
@@ -96,6 +93,23 @@ public class TokenExchange {
 
                     @Override
                     public void onBeforeCalling(URL url, Map<String, String> headers) {
+                        if (AppCenterLog.getLogLevel() <= VERBOSE) {
+
+                            /* Log url. */
+                            AppCenterLog.verbose(AppCenter.LOG_TAG, "Calling " + url + "...");
+
+                            /* Log headers. */
+                            Map<String, String> logHeaders = new HashMap<>(headers);
+                            String appSecret = logHeaders.get(APP_SECRET);
+                            if (appSecret != null) {
+                                logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
+                            }
+                            String authToken = logHeaders.get(AUTHORIZATION_HEADER);
+                            if (authToken != null) {
+                                logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideAuthToken(authToken));
+                            }
+                            AppCenterLog.verbose(AppCenter.LOG_TAG, "Headers: " + logHeaders);
+                        }
                     }
                 },
                 serviceCallback);
