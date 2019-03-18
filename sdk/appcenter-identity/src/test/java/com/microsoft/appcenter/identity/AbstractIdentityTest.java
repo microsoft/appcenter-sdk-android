@@ -28,6 +28,7 @@ import com.microsoft.identity.client.IAuthenticationResult;
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -38,6 +39,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -69,10 +71,9 @@ abstract public class AbstractIdentityTest {
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
 
     @Mock
-    protected AuthTokenContext mAuthTokenContext;
-
-    @Mock
     protected PreferenceTokenStorage mPreferenceTokenStorage;
+
+    AuthTokenContext mAuthTokenContext;
 
     @Before
     public void setUp() {
@@ -121,6 +122,7 @@ abstract public class AbstractIdentityTest {
         mockStatic(FileManager.class);
 
         /* Mock token context. */
+        mAuthTokenContext = spy(AuthTokenContext.getInstance());
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
 

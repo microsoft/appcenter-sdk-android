@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -127,7 +128,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Start. */
         Channel channel = start(identity);
-    //    verify(mPreferenceTokenStorage).cacheToken();
+        verify(mAuthTokenContext).cacheAuthToken();
         verify(channel).removeGroup(eq(identity.getGroupName()));
         verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 
@@ -137,7 +138,8 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
-       // verify(mPreferenceTokenStorage).removeToken();
+        verify(mAuthTokenContext).clearAuthToken();
+        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class));
     }
 
     @Test
@@ -1038,12 +1040,13 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void signOutRemovesToken() {
         Identity identity = Identity.getInstance();
-        start(identity);
         when(mPreferenceTokenStorage.getToken()).thenReturn("42");
+        start(identity);
 
         /* Sign out should clear token. */
         Identity.signOut();
-    //    verify(mPreferenceTokenStorage).removeToken();
+        verify(mAuthTokenContext).clearAuthToken();
+        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class));
     }
 
     @Test
@@ -1052,7 +1055,8 @@ public class IdentityTest extends AbstractIdentityTest {
         start(identity);
         Identity.signOut();
         when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
-  //      verify(mPreferenceTokenStorage, never()).removeToken();
+        verify(mAuthTokenContext, never()).clearAuthToken();
+        verify(mPreferenceTokenStorage, never()).saveToken(isNull(String.class), isNull(String.class));
     }
 
     @Test
@@ -1130,9 +1134,9 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Check removing account */
         Identity identity = Identity.getInstance();
-        start(identity);
         when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        start(identity);
         final List<IAccount> accountsList = new ArrayList<>();
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
