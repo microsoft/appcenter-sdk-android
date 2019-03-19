@@ -216,7 +216,7 @@ public class DatabaseManagerTest {
         when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it will fail to purge. */
@@ -245,7 +245,7 @@ public class DatabaseManagerTest {
         when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it succeeds even if a problem occurred while closing purge cursor. */
@@ -271,7 +271,7 @@ public class DatabaseManagerTest {
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put an entry, it will fail to query and thus not replacing. */
