@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -72,10 +73,10 @@ public abstract class Persistence implements Closeable {
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
     @Nullable
-    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
+    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, Date timestamp);
 
     /**
-     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List)}}.
+     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List, Date)}}.
      */
     public abstract void clearPendingLogState();
 

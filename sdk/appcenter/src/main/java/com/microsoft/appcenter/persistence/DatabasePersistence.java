@@ -19,6 +19,7 @@ import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.ingestion.models.one.Data;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -424,7 +426,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, Date timestamp) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -432,8 +434,8 @@ public class DatabasePersistence extends Persistence {
         /* Query database. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
-        String[] selectionArgs = new String[pausedTargetKeys.size() + 1];
-        selectionArgs[0] = group;
+        List<String> selectionArgs = new ArrayList<>();
+        selectionArgs.add(group);
         if (!pausedTargetKeys.isEmpty()) {
             StringBuilder filter = new StringBuilder();
             for (int i = 0; i < pausedTargetKeys.size(); i++) {
@@ -442,7 +444,14 @@ public class DatabasePersistence extends Persistence {
             filter.deleteCharAt(filter.length() - 1);
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
-            System.arraycopy(pausedTargetKeys.toArray(new String[0]), 0, selectionArgs, 1, pausedTargetKeys.size());
+            selectionArgs.addAll(pausedTargetKeys);
+        }
+
+        /*  */
+        if(timestamp != null) {
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TIMESTAMP + " <= ?");
+            selectionArgs.add(String.valueOf(timestamp.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
@@ -450,10 +459,11 @@ public class DatabasePersistence extends Persistence {
         Map<Long, Log> candidates = new LinkedHashMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
+        String[] selectionArgsArray = selectionArgs.toArray(new String[0]);
         Cursor cursor = null;
         ContentValues values;
         try {
-            cursor = mDatabaseManager.getCursor(builder, null, selectionArgs, GET_SORT_ORDER);
+            cursor = mDatabaseManager.getCursor(builder, null, selectionArgsArray, GET_SORT_ORDER);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
@@ -470,7 +480,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgs);
+                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgsArray);
                 for (Long corruptedId : corruptedIds) {
                     if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
