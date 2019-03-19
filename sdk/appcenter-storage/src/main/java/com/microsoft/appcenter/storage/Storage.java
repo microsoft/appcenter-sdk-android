@@ -415,7 +415,7 @@ public class Storage extends AbstractAppCenterService {
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
                 new HashMap<String, String>() {{
-                    put("x-ms-documentdb-is-replace", "true");
+                    put("x-ms-documentdb-is-upsert", "true");
                 }},
                 new ServiceCallback() {
 
