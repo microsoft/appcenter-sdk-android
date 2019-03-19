@@ -262,7 +262,7 @@ public class DatabaseManagerTest {
         SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
         when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
 
-        /* Mock the select cursor we are using to find logs to evict to fail. */
+        /* Mock the select cursor we are using to find multiple instances to replace to fail. */
         mockStatic(SQLiteUtils.class);
         Cursor cursor = mock(Cursor.class);
         SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
