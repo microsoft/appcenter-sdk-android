@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1064,6 +1065,101 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(numberOfLogs / 2, outputLogs.size());
             assertEquals(2, persistence.mDatabaseManager.getRowCount());
         } finally {
+            persistence.close();
+        }
+    }
+
+    @Test
+    public void getLogsWithNullDate() throws PersistenceException {
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        buildLogs(persistence);
+
+        /* Get logs and check order. */
+        List<Log> outputLogs = new ArrayList<>();
+        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, null);
+        assertEquals(4, outputLogs.size());
+    }
+
+    @Test
+    public void getLogsWithYesterdayDate() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        buildLogs(persistence);
+
+        /* Get logs without disabled keys. */
+        List<Log> outputLogs = new ArrayList<>();
+
+        /* Create yesterday date. */
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        persistence.getLogs("test",  Collections.<String>emptyList(), 4, outputLogs, cal.getTime());
+        assertEquals(3, outputLogs.size());
+    }
+
+    @Test
+    public void getLogsWithTomorrowDate() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        buildLogs(persistence);
+
+        /* Get logs and check order. */
+        List<Log> outputLogs = new ArrayList<>();
+
+        /*Create tomorrow date*/
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, +1);
+        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, cal.getTime());
+        assertEquals(4, outputLogs.size());
+    }
+
+    private void buildLogs(DatabasePersistence persistence) throws PersistenceException {
+        try {
+            final Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+
+            /* Put a today log. */
+            Log log1 = AndroidTestUtils.generateMockLog();
+            log1.setTimestamp(calendar.getTime());
+            persistence.putLog(log1, "test", PERSISTENCE_NORMAL);
+
+            /* Put a yesterday log. */
+            calendar.add(Calendar.DATE, -1);
+            Log log2 = AndroidTestUtils.generateMockLog();
+            log2.setTimestamp(calendar.getTime());
+            persistence.putLog(log2, "test", PERSISTENCE_NORMAL);
+
+            /* Put a last yesterday log again. */
+            calendar.add(Calendar.DATE, -1);
+            Log log3 = AndroidTestUtils.generateMockLog();
+            log3.setTimestamp(calendar.getTime());
+            persistence.putLog(log3, "test", PERSISTENCE_NORMAL);
+
+            /* Put a after last yesterday log again. */
+            calendar.add(Calendar.DATE, -1);
+            Log log4 = AndroidTestUtils.generateMockLog();
+            log4.setTimestamp(calendar.getTime());
+            persistence.putLog(log4, "test", PERSISTENCE_NORMAL);
+        } finally {
+
+            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
