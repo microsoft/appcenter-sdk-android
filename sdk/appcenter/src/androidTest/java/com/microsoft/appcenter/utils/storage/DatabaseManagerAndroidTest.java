@@ -81,7 +81,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-databaseManagerScannerRemove");
         sContext.deleteDatabase("test-databaseManagerScannerNext");
         sContext.deleteDatabase("test-setMaximumSize");
-        sContext.deleteDatabase("test-upsert");
+        sContext.deleteDatabase("test-replace");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -401,11 +401,11 @@ public class DatabaseManagerAndroidTest {
     }
 
     @Test
-    public void upsert() {
+    public void replace() {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-upsert", "databaseManager", 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-replace", "databaseManager", 1, mSchema, listener);
         String documentIdProperty = "COL_STRING";
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -413,22 +413,26 @@ public class DatabaseManagerAndroidTest {
             assertEquals(0L, databaseManager.getRowCount());
             ContentValues contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "some id");
-            databaseManager.upsert(contentValues, documentIdProperty);
+            databaseManager.replace(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
-            databaseManager.upsert(contentValues, documentIdProperty);
+            databaseManager.replace(contentValues, documentIdProperty);
             assertEquals(1L, databaseManager.getRowCount());
 
             /* Set the documentIdProperty to another value, new row should be created. */
             contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "new id");
-            databaseManager.upsert(contentValues, documentIdProperty);
+            databaseManager.replace(contentValues, documentIdProperty);
             assertEquals(2L, databaseManager.getRowCount());
 
-            /* Upsert a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
+            /* Replace a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
             contentValues = generateContentValues();
             contentValues.put(documentIdProperty, "new id");
-            databaseManager.upsert(contentValues);
-            databaseManager.upsert(contentValues, documentIdProperty);
+            databaseManager.replace(contentValues);
+            databaseManager.replace(contentValues, documentIdProperty);
+            assertEquals(4L, databaseManager.getRowCount());
+
+            /* Replace by matching an unknown property fails. */
+            assertEquals(-1, databaseManager.replace(contentValues, "COLUMN_NOT_FOUND"));
             assertEquals(4L, databaseManager.getRowCount());
         } finally {
 

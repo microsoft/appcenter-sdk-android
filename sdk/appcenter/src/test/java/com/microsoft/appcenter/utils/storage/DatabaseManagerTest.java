@@ -74,7 +74,7 @@ public class DatabaseManagerTest {
     @Test
     public void upsertFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        long result = databaseManagerMock.upsert(new ContentValues());
+        long result = databaseManagerMock.replace(new ContentValues());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
         assertEquals(-1L, result);
@@ -92,7 +92,7 @@ public class DatabaseManagerTest {
         DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", tableName, 1, null, null));
         databaseManager.setSQLiteOpenHelper(helperMock);
         ContentValues contentValues = new ContentValues();
-        long result = databaseManager.upsert(contentValues);
+        long result = databaseManager.replace(contentValues);
         verify(database).replace(eq(tableName), isNull(String.class), refEq(contentValues));
         assertEquals(replaceResultId, result);
     }
@@ -251,5 +251,30 @@ public class DatabaseManagerTest {
         /* When we put a log, it succeeds even if a problem occurred while closing purge cursor. */
         long id = databaseManager.put(mock(ContentValues.class), "priority");
         assertEquals(1, id);
+    }
+
+    @Test
+    public void replaceFailsWhileQuerying() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
+        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
+
+        /* Mock the select cursor we are using to find logs to evict to fail. */
+        mockStatic(SQLiteUtils.class);
+        Cursor cursor = mock(Cursor.class);
+        SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
+        when(cursor.moveToNext()).thenReturn(true).thenThrow(fatalException);
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", "table", 1, null, null));
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* When we put an entry, it will fail to query and thus not replacing. */
+        assertEquals(-1, databaseManager.replace(mock(ContentValues.class), "someId"));
     }
 }

@@ -77,7 +77,7 @@ class DocumentCache {
     }
 
     public <T> void write(Document<T> document, WriteOptions writeOptions) {
-        AppCenterLog.debug(LOG_TAG, String.format("Trying to upsert %s:%s document to cache", document.getPartition(), document.getId()));
+        AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
         Calendar expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
         ContentValues values = getContentValues(
@@ -85,7 +85,7 @@ class DocumentCache {
                 document.getPartition(),
                 document,
                 expiresAt.getTimeInMillis());
-        mDatabaseManager.upsert(values);
+        mDatabaseManager.replace(values);
     }
 
     public <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {

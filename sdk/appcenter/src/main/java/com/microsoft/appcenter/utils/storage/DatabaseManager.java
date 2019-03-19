@@ -203,20 +203,18 @@ public class DatabaseManager implements Closeable {
      *
      * @param values     The entry to be stored.
      * @param properties The property to be used for filter the rows.
-     * @return If a log was inserted, the database identifier. Otherwise -1.
+     * @return If an entry was inserted or updated, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long upsert(@NonNull ContentValues values, String... properties) {
+    public long replace(@NonNull ContentValues values, String... properties) {
         try {
             SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
             List<String> selectionArgs = new ArrayList<>();
             for (String property : properties) {
-                if (values.containsKey(property)) {
-                    builder.appendWhere(property + " = ?");
-                    selectionArgs.add(values.getAsString(property));
-                }
+                builder.appendWhere(property + " = ?");
+                selectionArgs.add(values.getAsString(property));
             }
-            if (selectionArgs.size() > 0){
+            if (selectionArgs.size() > 0) {
                 Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
                 try {
                     ContentValues value = nextValues(cursor);
@@ -231,7 +229,7 @@ public class DatabaseManager implements Closeable {
             }
             return getDatabase().replace(mTable, null, values);
         } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to replace values (%s) from database %s.", values.toString(), mDatabase), e);
         }
         return -1L;
     }
