@@ -94,7 +94,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
 
         /* Update history and current token. */
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
+        String saveJson = new Gson().toJson(history);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, saveJson);
         if (token != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
             SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
@@ -166,7 +167,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         AppCenterLog.warn(LOG_TAG, "Couldn't find token in the token history.");
     }
 
-    private List<TokenStoreEntity> getTokenHistoryFromStorage() {
+    @VisibleForTesting
+    List<TokenStoreEntity> getTokenHistoryFromStorage() {
         String historyJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
         if (historyJson == null) {
             return null;
