@@ -23,6 +23,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
@@ -48,8 +49,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         doAnswer(new Answer<Void>() {
 
@@ -94,8 +95,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
@@ -147,8 +148,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         final Exception mockException = new IOException();
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
