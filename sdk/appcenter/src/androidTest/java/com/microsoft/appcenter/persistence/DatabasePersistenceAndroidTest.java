@@ -1356,6 +1356,7 @@ public class DatabasePersistenceAndroidTest {
             contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
             contentValues.put(DatabasePersistence.COLUMN_DATA_TYPE, MOCK_LOG_TYPE);
+            contentValues.put(DatabasePersistence.COLUMN_PRIORITY, PERSISTENCE_NORMAL);
             databaseManager.put(contentValues, DatabasePersistence.COLUMN_PRIORITY);
         } finally {
             databaseManager.close();

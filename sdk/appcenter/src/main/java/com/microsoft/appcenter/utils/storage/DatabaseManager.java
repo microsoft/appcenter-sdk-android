@@ -106,7 +106,7 @@ public class DatabaseManager implements Closeable {
                     if (val instanceof Double || val instanceof Float) {
                         sql.append("REAL");
                     } else if (val instanceof Number || val instanceof Boolean) {
-                        sql.append("INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                        sql.append("INTEGER");
                     } else if (val instanceof byte[]) {
                         sql.append("BLOB");
                     } else {

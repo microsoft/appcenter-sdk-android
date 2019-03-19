@@ -20,6 +20,11 @@ public final class Flags {
     public static final int PERSISTENCE_NORMAL = 0x01;
 
     /**
+     * Default timestamp value.
+     */
+    public static final int PERSISTENCE_TIMESTAMP = 0;
+
+    /**
      * Used for events that should be prioritized over non-critical events.
      */
     public static final int PERSISTENCE_CRITICAL = 0x02;

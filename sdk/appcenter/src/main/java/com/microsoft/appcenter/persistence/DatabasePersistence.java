@@ -43,6 +43,7 @@ import java.util.Set;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.PERSISTENCE_TIMESTAMP;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
@@ -231,7 +232,7 @@ public class DatabasePersistence extends Persistence {
                 if (oldVersion < VERSION_PRIORITY_KEY) {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT " + PERSISTENCE_TIMESTAMP);
                 createPriorityIndex(db);
                 return true;
             }
@@ -281,7 +282,6 @@ public class DatabasePersistence extends Persistence {
             boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
             String targetToken;
-            Long targetTimestamp;
             if (log instanceof CommonSchemaLog) {
                 if (isLargePayload) {
                     throw new PersistenceException("Log is larger than " + PAYLOAD_MAX_SIZE + " bytes, cannot send to OneCollector.");
@@ -289,11 +289,9 @@ public class DatabasePersistence extends Persistence {
                 targetToken = log.getTransmissionTargetTokens().iterator().next();
                 targetKey = PartAUtils.getTargetKey(targetToken);
                 targetToken = CryptoUtils.getInstance(mContext).encrypt(targetToken);
-                targetTimestamp = log.getTimestamp().getTime();
             } else {
                 targetKey = null;
                 targetToken = null;
-                targetTimestamp = 0l;
             }
             long maxSize = mDatabaseManager.getMaxSize();
             if (maxSize == -1) {
@@ -303,7 +301,7 @@ public class DatabasePersistence extends Persistence {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false), targetTimestamp);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false), log.getTimestamp().getTime());
             long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
