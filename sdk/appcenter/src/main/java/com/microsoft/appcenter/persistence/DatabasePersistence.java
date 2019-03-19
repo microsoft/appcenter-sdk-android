@@ -19,7 +19,6 @@ import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
-import com.microsoft.appcenter.ingestion.models.one.Data;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
@@ -45,7 +44,6 @@ import java.util.Set;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_TIMESTAMP;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
@@ -89,7 +87,7 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_LOG = "log";
 
     /**
-     * Name fo date column in the table.
+     * Name of date column in the table.
      */
     @VisibleForTesting
     static final String COLUMN_TIMESTAMP = "timestamp";
@@ -122,7 +120,7 @@ public class DatabasePersistence extends Persistence {
      * Table schema for Persistence.
      */
     @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0, 0l);
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0, 0L);
 
     /**
      * Database name.
@@ -234,7 +232,7 @@ public class DatabasePersistence extends Persistence {
                 if (oldVersion < VERSION_PRIORITY_KEY) {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT " + PERSISTENCE_TIMESTAMP);
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT 0");
                 createPriorityIndex(db);
                 return true;
             }
@@ -426,7 +424,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, Date timestamp) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date timestamp) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -447,8 +445,8 @@ public class DatabasePersistence extends Persistence {
             selectionArgs.addAll(pausedTargetKeys);
         }
 
-        /*  */
-        if(timestamp != null) {
+        /* Filter by time. */
+        if (timestamp != null) {
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TIMESTAMP + " <= ?");
             selectionArgs.add(String.valueOf(timestamp.getTime()));

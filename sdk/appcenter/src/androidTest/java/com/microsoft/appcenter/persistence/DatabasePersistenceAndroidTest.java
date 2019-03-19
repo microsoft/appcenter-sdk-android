@@ -1071,6 +1071,7 @@ public class DatabasePersistenceAndroidTest {
 
     @Test
     public void getLogsWithNullDate() throws PersistenceException {
+
         /* Initialize database persistence. */
         DatabasePersistence persistence = new DatabasePersistence(sContext);
 
@@ -1080,7 +1081,7 @@ public class DatabasePersistenceAndroidTest {
         persistence.setLogSerializer(logSerializer);
         buildLogs(persistence);
 
-        /* Get logs and check order. */
+        /* Get logs. */
         List<Log> outputLogs = new ArrayList<>();
         persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, null);
         assertEquals(4, outputLogs.size());
@@ -1104,7 +1105,7 @@ public class DatabasePersistenceAndroidTest {
         /* Create yesterday date. */
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
-        persistence.getLogs("test",  Collections.<String>emptyList(), 4, outputLogs, cal.getTime());
+        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, cal.getTime());
         assertEquals(3, outputLogs.size());
     }
 
@@ -1122,8 +1123,6 @@ public class DatabasePersistenceAndroidTest {
 
         /* Get logs and check order. */
         List<Log> outputLogs = new ArrayList<>();
-
-        /*Create tomorrow date*/
         final Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, +1);
         persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, cal.getTime());
@@ -1135,24 +1134,24 @@ public class DatabasePersistenceAndroidTest {
             final Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Date());
 
-            /* Put a today log. */
+            /* Put a log with current date. */
             Log log1 = AndroidTestUtils.generateMockLog();
             log1.setTimestamp(calendar.getTime());
             persistence.putLog(log1, "test", PERSISTENCE_NORMAL);
 
-            /* Put a yesterday log. */
+            /* Put a log with yesterday date. */
             calendar.add(Calendar.DATE, -1);
             Log log2 = AndroidTestUtils.generateMockLog();
             log2.setTimestamp(calendar.getTime());
             persistence.putLog(log2, "test", PERSISTENCE_NORMAL);
 
-            /* Put a last yesterday log again. */
+            /* Put a log with 2 days ago date. */
             calendar.add(Calendar.DATE, -1);
             Log log3 = AndroidTestUtils.generateMockLog();
             log3.setTimestamp(calendar.getTime());
             persistence.putLog(log3, "test", PERSISTENCE_NORMAL);
 
-            /* Put a after last yesterday log again. */
+            /* Put a log with 3 days ago date. */
             calendar.add(Calendar.DATE, -1);
             Log log4 = AndroidTestUtils.generateMockLog();
             log4.setTimestamp(calendar.getTime());
@@ -1217,7 +1216,6 @@ public class DatabasePersistenceAndroidTest {
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
             assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
-//            assertEquals((Long) 0l, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
 
             /* Put new data with token. */
             persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);

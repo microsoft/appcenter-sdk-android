@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
 /**
