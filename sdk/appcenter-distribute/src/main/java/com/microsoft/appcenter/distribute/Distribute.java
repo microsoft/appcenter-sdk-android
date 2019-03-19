@@ -664,7 +664,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Don't go any further it this is a debug app. */
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
-                AppCenterLog.info(LOG_TAG, "Not checking for in app updates in debuggable build.");
+                AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
                 return;
             }
