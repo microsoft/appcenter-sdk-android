@@ -63,7 +63,7 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
-     * Version of the schema that introduced priority write token.
+     * Version of the schema that introduced persistence priority for logs.
      */
     @VisibleForTesting
     static final int VERSION_PRIORITY_KEY = 4;

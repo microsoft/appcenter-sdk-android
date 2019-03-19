@@ -1131,7 +1131,7 @@ public class DatabasePersistenceAndroidTest {
 
     private void buildLogs(DatabasePersistence persistence) throws PersistenceException {
         try {
-            final Calendar calendar = Calendar.getInstance();
+            Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Date());
 
             /* Put a log with current date. */
