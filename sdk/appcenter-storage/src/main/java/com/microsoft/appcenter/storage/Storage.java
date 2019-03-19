@@ -34,11 +34,11 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.storage.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
@@ -132,6 +132,7 @@ public class Storage extends AbstractAppCenterService {
      * Read a document.
      * The document type (T) must be JSON deserializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType) {
         return read(partition, documentId, documentType, new ReadOptions());
     }
@@ -140,6 +141,7 @@ public class Storage extends AbstractAppCenterService {
      * Read a document.
      * The document type (T) must be JSON deserializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         return getInstance().instanceRead(partition, documentId, documentType, readOptions);
     }
@@ -148,6 +150,7 @@ public class Storage extends AbstractAppCenterService {
      * List (need optional signature to configure page size).
      * The document type (T) must be JSON deserializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
         return getInstance().instanceList(partition, documentType);
     }
@@ -156,6 +159,7 @@ public class Storage extends AbstractAppCenterService {
      * Create a document.
      * The document instance (T) must be JSON serializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
         return create(partition, documentId, document, documentType, new WriteOptions());
     }
@@ -164,6 +168,7 @@ public class Storage extends AbstractAppCenterService {
      * Create a document.
      * The document instance (T) must be JSON serializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, writeOptions);
     }
@@ -171,6 +176,7 @@ public class Storage extends AbstractAppCenterService {
     /**
      * Delete a document.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
         return getInstance().instanceDelete(partition, documentId);
     }
@@ -179,6 +185,7 @@ public class Storage extends AbstractAppCenterService {
      * Replace a document.
      * The document instance (T) must be JSON serializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
         return replace(partition, documentId, document, documentType, new WriteOptions());
     }
@@ -187,6 +194,7 @@ public class Storage extends AbstractAppCenterService {
      * Replace a document.
      * The document instance (T) must be JSON serializable.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
 
         /* In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT). */

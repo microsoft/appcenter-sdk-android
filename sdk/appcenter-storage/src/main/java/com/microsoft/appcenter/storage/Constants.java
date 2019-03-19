@@ -27,6 +27,11 @@ public final class Constants {
     public static final String TIMESTAMP_FIELD_NAME = "_ts";
 
     /**
+     * Base URL to call token exchange service.
+     */
+    static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.
+
+    /**
      * Cached partition names list file name.
      */
     static final String PARTITION_NAMES = "partitions";
@@ -57,6 +62,7 @@ public final class Constants {
      * Everyone can read documents in this partition.
      * Writes are not allowed via the SDK.
      */
+    @SuppressWarnings("WeakerAccess") //TODO Suppress warning once released to jcenter.
     public static String READONLY = "readonly";
 
     /**

@@ -9,24 +9,23 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Constants.APP_SECRET;
+import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
@@ -49,24 +48,6 @@ public class AppCenterIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
-
-    /**
-     * Application secret HTTP Header.
-     */
-    @VisibleForTesting
-    static final String APP_SECRET = "App-Secret";
-
-    /**
-     * Auth token format for Authorization header.
-     */
-    @VisibleForTesting
-    static final String AUTH_TOKEN_FORMAT = "Bearer %s";
-
-    /**
-     * Authorization HTTP Header.
-     */
-    @VisibleForTesting
-    static final String AUTHORIZATION_HEADER = "Authorization";
 
     /**
      * Log serializer.
@@ -128,7 +109,7 @@ public class AppCenterIngestion implements Ingestion {
         headers.put(APP_SECRET, appSecret);
         String authToken = getAuthToken();
         if (authToken != null) {
-            headers.put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, authToken));
+            headers.put(AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
@@ -147,7 +128,7 @@ public class AppCenterIngestion implements Ingestion {
     /**
      * Inner class is used to be able to mock System.currentTimeMillis, does not work if using anonymous inner class...
      */
-    private static class IngestionCallTemplate implements HttpClient.CallTemplate {
+    private static class IngestionCallTemplate extends AbstractAppCallTemplate {
 
         private final LogSerializer mLogSerializer;
 
@@ -163,27 +144,6 @@ public class AppCenterIngestion implements Ingestion {
 
             /* Serialize payload. */
             return mLogSerializer.serializeContainer(mLogContainer);
-        }
-
-        @Override
-        public void onBeforeCalling(URL url, Map<String, String> headers) {
-            if (AppCenterLog.getLogLevel() <= VERBOSE) {
-
-                /* Log url. */
-                AppCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
-
-                /* Log headers. */
-                Map<String, String> logHeaders = new HashMap<>(headers);
-                String appSecret = logHeaders.get(APP_SECRET);
-                if (appSecret != null) {
-                    logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
-                }
-                String authToken = logHeaders.get(AUTHORIZATION_HEADER);
-                if (authToken != null) {
-                    logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideAuthToken(authToken));
-                }
-                AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
-            }
         }
     }
 }

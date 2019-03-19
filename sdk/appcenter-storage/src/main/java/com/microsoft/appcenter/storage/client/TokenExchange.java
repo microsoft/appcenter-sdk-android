@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -17,11 +18,14 @@ import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.microsoft.appcenter.Constants.APP_SECRET;
+import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
+import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Utils.handleApiCallFailure;
@@ -32,11 +36,6 @@ public class TokenExchange {
      * Check latest public release API URL path. Contains the app secret variable to replace.
      */
     public static final String GET_TOKEN_PATH_FORMAT = "/data/tokens";
-
-    /**
-     * App Secret Header.
-     */
-    private static final String APP_SECRET_HEADER = "App-Secret";
 
     /**
      * Build the request body to get the token through http client.
@@ -70,23 +69,23 @@ public class TokenExchange {
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
         String url = apiUrl + GET_TOKEN_PATH_FORMAT;
+        final String userToken = AuthTokenContext.getInstance().getAuthToken();
         return httpClient.callAsync(
                 url,
                 METHOD_POST,
                 new HashMap<String, String>() {
                     {
-                        put(APP_SECRET_HEADER, appSecret);
+                        put(APP_SECRET, appSecret);
+                        if (userToken != null) {
+                            put(AUTHORIZATION_HEADER, String.format(AUTH_TOKEN_FORMAT, userToken));
+                        }
                     }
                 },
-                new HttpClient.CallTemplate() {
+                new AbstractAppCallTemplate() {
 
                     @Override
                     public String buildRequestBody() {
                         return buildAppCenterGetDbTokenBodyPayload(partition);
-                    }
-
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) {
                     }
                 },
                 serviceCallback);

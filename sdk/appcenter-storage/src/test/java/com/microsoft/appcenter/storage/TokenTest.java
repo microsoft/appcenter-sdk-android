@@ -8,13 +8,17 @@ package com.microsoft.appcenter.storage;
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -23,9 +27,12 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -39,15 +46,25 @@ import static org.mockito.Mockito.when;
 
 public class TokenTest extends AbstractStorageTest {
 
-    private static final String FAKE_PARTITION_NAME = "read-only";
+    private static final String READONLY_PARTITION_NAME = "read-only";
+
+    private static final String PARTITION_NAME = "non-readonly";
 
     private static final String FAKE_TOKEN = "mock";
+
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
     @Mock
     HttpClient mHttpClient;
 
+    @After
+    public void tearDown() {
+        AuthTokenContext.unsetInstance();
+    }
+
     @Test
-    public void canGetAndSetToken() {
+    public void canGetAndSetTokenReadonly() {
 
         /* Mock http call to get token. */
         final String expectedResponse = String.format("{\n" +
@@ -58,10 +75,11 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"dbName\": \"db\",\n" +
                 "            \"dbCollectionName\": \"collection\",\n" +
                 "            \"token\": \"%s\",\n" +
-                "            \"status\": \"Succeed\"\n" +
+                "            \"status\": \"Succeed\",\n" +
+                "            \"accountId\": \"accountId\"\n" +
                 "        }\n" +
                 "    ]\n" +
-                "}", FAKE_PARTITION_NAME, FAKE_TOKEN);
+                "}", READONLY_PARTITION_NAME, FAKE_TOKEN);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
@@ -76,18 +94,81 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Get and verify token. */
         assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
 
+        /* Get and verify the account id. */
+        assertEquals("accountId", tokenResultCapture.getValue().accountId());
+
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(FAKE_PARTITION_NAME)));
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(READONLY_PARTITION_NAME)));
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
+        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
+            assertNotNull(headers);
+            assertNull(headers.get(com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER));
+        }
+    }
+
+    @Test
+    public void canGetAndSetTokenPartition() {
+
+        /* Mock http call to get token. */
+        final String expectedResponse = String.format("{\n" +
+                "    \"tokens\": [\n" +
+                "        {\n" +
+                "            \"partition\": \"%s\",\n" +
+                "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+                "            \"dbName\": \"db\",\n" +
+                "            \"dbCollectionName\": \"collection\",\n" +
+                "            \"token\": \"%s\",\n" +
+                "            \"status\": \"Succeed\",\n" +
+                "            \"accountId\": \"accountId\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}", PARTITION_NAME, FAKE_TOKEN);
+        String authToken = "auth-token";
+        AuthTokenContext.getInstance().setAuthToken(authToken, "account id");
+        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
+        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, null);
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+
+        /* Get and verify token. */
+        assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
+
+        /* Get and verify the account id. */
+        assertEquals("accountId", tokenResultCapture.getValue().accountId());
+
+        /* Verify, if the partition name already exists, it did not throw when set token. */
+        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(PARTITION_NAME)));
+        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+
+        /* Verify, if read the partition name list file returns null, it did not throw when set token. */
+        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
+        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
+            assertNotNull(headers);
+            assertEquals(String.format(com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT, authToken), headers.get(com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER));
+        }
     }
 
     @Test
@@ -97,19 +178,19 @@ public class TokenTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(FAKE_PARTITION_NAME)
+                .withPartition(READONLY_PARTITION_NAME)
                 .withExpirationTime(expirationDate.getTime())
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
                 .withToken(FAKE_TOKEN));
-        when(SharedPreferencesManager.getString(FAKE_PARTITION_NAME)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
         /* Make the call. */
-        Storage.getInstance().getTokenAndCallCosmosDbApi(FAKE_PARTITION_NAME, new DefaultAppCenterFuture(), callBack);
+        Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
         assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
@@ -126,16 +207,16 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbAccount("lemmings-01-8f37d78902")
                 .withDbCollectionName("collection")
                 .withStatus("Succeed")
-                .withPartition(FAKE_PARTITION_NAME)
+                .withPartition(READONLY_PARTITION_NAME)
                 .withExpirationTime(expirationDate.getTime())
                 .withToken(inValidToken));
-        when(SharedPreferencesManager.getString(FAKE_PARTITION_NAME)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
 
         /* Make the call. */
         Storage.getInstance()
-                .getTokenAndCallCosmosDbApi(FAKE_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+                .getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */
         verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
@@ -169,9 +250,9 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, nullResponseAppUrl, null, callBack);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, emptyTokensAppUrl, null, callBack);
-        TokenExchange.getDbToken(FAKE_PARTITION_NAME, mHttpClient, multipleTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, nullResponseAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, emptyTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, multipleTokensAppUrl, null, callBack);
 
         /* Get and verify token. */
         assertEquals(3, exception.getAllValues().size());
