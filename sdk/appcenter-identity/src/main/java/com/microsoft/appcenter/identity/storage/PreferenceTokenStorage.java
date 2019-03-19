@@ -79,7 +79,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @Override
     public void saveToken(String token, String homeAccountId) {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
-        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
+        List<TokenStoreEntity> history = loadTokenHistory();
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
                 add(new TokenStoreEntity(null, null));
@@ -94,8 +94,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
 
         /* Update history and current token. */
-        String saveJson = new Gson().toJson(history);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, saveJson);
+        saveTokenHistory(history);
         if (token != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
             SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
@@ -127,7 +126,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public AuthTokenInfo getOldestToken() {
-        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
+        List<TokenStoreEntity> history = loadTokenHistory();
         if (history == null || history.size() == 0) {
             return new AuthTokenInfo(getToken(), null, null);
         }
@@ -143,7 +142,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public void removeToken(String token) {
-        List<TokenStoreEntity> history = getTokenHistoryFromStorage();
+        List<TokenStoreEntity> history = loadTokenHistory();
         if (history == null) {
             AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: the token history is empty.");
             return;
@@ -159,7 +158,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             TokenStoreEntity entity = iterator.next();
             if (TextUtils.equals(entity.getToken(), encryptedToken)) {
                 iterator.remove();
-                SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, new Gson().toJson(history));
+                saveTokenHistory(history);
                 AppCenterLog.debug(LOG_TAG, "The token has been removed from the token history.");
                 return;
             }
@@ -168,7 +167,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     @VisibleForTesting
-    List<TokenStoreEntity> getTokenHistoryFromStorage() {
+    List<TokenStoreEntity> loadTokenHistory() {
         String historyJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
         if (historyJson == null) {
             return null;
@@ -183,6 +182,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             return new ArrayList<>(Arrays.asList(entities));
         }
         return new ArrayList<>();
+    }
+
+    void saveTokenHistory(List<TokenStoreEntity> history) {
+        String json = new Gson().toJson(history.toArray());
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
     }
 
     private static class TokenStoreEntity {

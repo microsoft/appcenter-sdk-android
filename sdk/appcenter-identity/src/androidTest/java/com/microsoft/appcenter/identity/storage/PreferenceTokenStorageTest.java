@@ -16,24 +16,23 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_TOKEN_HISTORY;
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.TOKEN_HISTORY_LIMIT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class TokenStorageTest {
+public class PreferenceTokenStorageTest {
 
 
     private Context mContext;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(mContext);
     }
 
     @After
-    public void tearDown(){
+    public void tearDown() {
         SharedPreferencesManager.clear();
     }
 
@@ -59,29 +58,30 @@ public class TokenStorageTest {
         assertNull(tokenStorage.getToken());
         assertNull(tokenStorage.getHomeAccountId());
     }
+
     @Test
-    public void tokenHistoryLimit(){
+    public void tokenHistoryLimit() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
 
-        for (int i = 0; i< TOKEN_HISTORY_LIMIT + 3; i++){
+        for (int i = 0; i < TOKEN_HISTORY_LIMIT + 3; i++) {
             String mockToken = UUIDUtils.randomUUID().toString();
             String mockAccountId = UUIDUtils.randomUUID().toString();
-            tokenStorage.saveToken(mockToken,mockAccountId);
+            tokenStorage.saveToken(mockToken, mockAccountId);
         }
 
-        assertEquals(TOKEN_HISTORY_LIMIT, tokenStorage.getTokenHistoryFromStorage().size());
+        assertEquals(TOKEN_HISTORY_LIMIT, tokenStorage.loadTokenHistory().size());
     }
 
     @Test
-    public void removeTokenFromHistory(){
+    public void removeTokenFromHistory() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
-
 
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
-        String tokenToDelete = mockToken;
-        tokenStorage.saveToken(mockToken,mockAccountId);
+        tokenStorage.saveToken(mockToken, mockAccountId);
+        assertEquals(2, tokenStorage.loadTokenHistory().size());
+
         tokenStorage.removeToken(null);
-        assertEquals(1,tokenStorage.getTokenHistoryFromStorage().size());
+        assertEquals(1, tokenStorage.loadTokenHistory().size());
     }
 }
