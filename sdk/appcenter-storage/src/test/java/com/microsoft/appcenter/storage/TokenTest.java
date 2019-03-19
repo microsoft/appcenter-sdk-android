@@ -76,7 +76,7 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"dbCollectionName\": \"collection\",\n" +
                 "            \"token\": \"%s\",\n" +
                 "            \"status\": \"Succeed\",\n" +
-                "            \"accountId\": \"accountId\"\n"+
+                "            \"accountId\": \"accountId\"\n" +
                 "        }\n" +
                 "    ]\n" +
                 "}", READONLY_PARTITION_NAME, FAKE_TOKEN);
@@ -109,11 +109,8 @@ public class TokenTest extends AbstractStorageTest {
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
         TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
-
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), templateArgumentCaptor.capture(), any(ServiceCallback.class));
-        for (Map<String, String> headers : mHeadersCaptor.getAllValues()
-        ) {
+        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
             assertNotNull(headers);
             assertNull(headers.get(com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER));
         }
@@ -167,11 +164,8 @@ public class TokenTest extends AbstractStorageTest {
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
         TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
-
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), templateArgumentCaptor.capture(), any(ServiceCallback.class));
-        for (Map<String, String> headers : mHeadersCaptor.getAllValues()
-        ) {
+        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
             assertNotNull(headers);
             assertEquals(String.format(com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT, authToken), headers.get(com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER));
         }
