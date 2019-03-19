@@ -1289,6 +1289,7 @@ public class DatabasePersistenceAndroidTest {
         commonSchemaLog.setName("test");
         commonSchemaLog.setIKey("o:test");
         commonSchemaLog.setTimestamp(new Date());
+        Long timestamp = commonSchemaLog.getTimestamp().getTime();
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
 
@@ -1337,6 +1338,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Verify priority stored too. */
             assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+
+            /* Verify timestamp. */
+            assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
         } finally {
             persistence.close();
         }
@@ -1377,6 +1381,7 @@ public class DatabasePersistenceAndroidTest {
         commonSchemaLog.setName("test");
         commonSchemaLog.setIKey("o:test");
         commonSchemaLog.setTimestamp(new Date());
+        Long timestamp = commonSchemaLog.getTimestamp().getTime();
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
 
@@ -1425,6 +1430,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Verify priority stored too. */
             assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+
+            /* Verify timestamp. */
+            assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
         } finally {
             persistence.close();
         }
@@ -1465,6 +1473,7 @@ public class DatabasePersistenceAndroidTest {
         commonSchemaLog.setName("test");
         commonSchemaLog.setIKey("o:test");
         commonSchemaLog.setTimestamp(new Date());
+        Long timestamp = commonSchemaLog.getTimestamp().getTime();
         commonSchemaLog.setVer("3.0");
         commonSchemaLog.addTransmissionTarget("test-guid");
 
@@ -1513,6 +1522,9 @@ public class DatabasePersistenceAndroidTest {
 
             /* Verify priority stored too. */
             assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+
+            /* Verify timestamp. */
+            assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
         } finally {
             persistence.close();
         }
