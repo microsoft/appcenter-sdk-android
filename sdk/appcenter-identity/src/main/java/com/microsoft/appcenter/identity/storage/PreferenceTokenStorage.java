@@ -189,7 +189,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
     }
 
-    private static class TokenStoreEntity {
+    static class TokenStoreEntity {
 
         @SerializedName("token")
         private String mToken;
