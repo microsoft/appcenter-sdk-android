@@ -37,21 +37,25 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
+
     /**
      * Used for distinguishing users, string field for home account id.
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
+
     /**
      * Used for saving tokens history.
      */
     @VisibleForTesting
     static final String PREFERENCE_KEY_TOKEN_HISTORY = "AppCenter.auth_token_history";
+
     /**
      * The maximum number of tokens stored in the history.
      */
     @VisibleForTesting
     static final int TOKEN_HISTORY_LIMIT = 5;
+
     /**
      * {@link Context} instance.
      */

@@ -22,7 +22,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Date;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -38,7 +37,7 @@ public class DefaultChannelCallbacksTest {
         when(IdHelper.getInstallId()).thenReturn(UUIDUtils.randomUUID());
         String mockToken = UUIDUtils.randomUUID().toString();
         new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mock(Handler.class));
-        AuthTokenContext.getInstance().setAuthToken(mockToken, "mock-id", spy(Date.class));
+        AuthTokenContext.getInstance().setAuthToken(mockToken, "mock-id", mock(Date.class));
     }
 
 }

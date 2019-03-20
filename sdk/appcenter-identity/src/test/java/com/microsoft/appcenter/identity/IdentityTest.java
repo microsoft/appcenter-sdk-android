@@ -1158,6 +1158,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Test
     public void removeAccountTestAccountNull() throws Exception {
+
         /* Mock valid config. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
 

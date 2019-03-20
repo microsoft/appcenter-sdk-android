@@ -31,7 +31,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -46,8 +45,6 @@ public class TokenStorageTest {
     private static final String ENCRYPTED_AUTH_TOKEN = UUIDUtils.randomUUID().toString();
 
     private static final String ACCOUNT_ID = UUIDUtils.randomUUID().toString();
-
-    private Date mMockDate = spy(Date.class);
 
     @Mock
     private CryptoUtils mCryptoUtils;
@@ -69,7 +66,7 @@ public class TokenStorageTest {
 
         /* Save the token into storage. */
         when(mCryptoUtils.encrypt(eq(AUTH_TOKEN))).thenReturn(ENCRYPTED_AUTH_TOKEN);
-        mTokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, mMockDate);
+        mTokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, mock(Date.class));
         verify(mCryptoUtils).encrypt(AUTH_TOKEN);
         mCryptoUtils.encrypt(AUTH_TOKEN);
 
