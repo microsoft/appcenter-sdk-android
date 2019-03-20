@@ -24,6 +24,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -1152,6 +1153,35 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
         Identity.signOut();
         verify(publicClientApplication).removeAccount(eq(account));
+    }
+
+    @Test
+    public void removeAccountTestAccountNull() throws Exception {
+        /* Mock valid config. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock cached config file. */
+        File file = mock(File.class);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), eq(Constants.FILE_PATH))
+                .thenReturn(file);
+        when(file.exists()).thenReturn(true);
+        String config = jsonConfig.toString();
+        when(FileManager.read(file)).thenReturn(config);
+
+        /* Mock MSAL client. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(null);
+
+        IAccount account = mock(IAccount.class);
+        Identity identity = Identity.getInstance();
+        when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mPreferenceTokenStorage.getToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        start(identity);
+        Identity.signOut();
+        verify(publicClientApplication, never()).removeAccount(eq(account));
     }
 
     @Test
