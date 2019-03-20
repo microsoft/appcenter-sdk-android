@@ -42,4 +42,16 @@ public class AuthTokenTest {
         assertEquals(tokenContext.getStorage(), authTokenStorage);
 
     }
+
+    @Test
+    public void cacheAuthTokenTestWithStorageNull(){
+        AuthTokenContext tokenContext = new AuthTokenContext();
+        String token = tokenContext.getAuthToken();
+        String homeId = tokenContext.getHomeAccountId();
+
+        tokenContext.setStorage(null);
+        tokenContext.cacheAuthToken();
+        assertEquals(tokenContext.getAuthToken(), token);
+        assertEquals(tokenContext.getHomeAccountId(), homeId);
+    }
 }
