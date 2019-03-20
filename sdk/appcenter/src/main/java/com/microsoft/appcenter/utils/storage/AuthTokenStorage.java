@@ -35,16 +35,16 @@ public interface AuthTokenStorage {
     String getHomeAccountId();
 
     /**
+     * Gets the oldest token info from history.
      *
-     *
-     * @return
+     * @return auth token info.
      */
     AuthTokenInfo getOldestToken();
 
     /**
+     * Removes the token from history.
      *
-     *
-     * @param token
+     * @param token auth token to remove.
      */
     void removeToken(String token);
 }
