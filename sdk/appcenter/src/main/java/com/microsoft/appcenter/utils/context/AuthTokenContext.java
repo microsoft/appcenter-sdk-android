@@ -105,11 +105,11 @@ public class AuthTokenContext {
      *
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
-     * @param expiresTimestamp time when token create.
+     * @param expiresOn     time when token expires.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresTimestamp) {
+    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
         if (mStorage != null) {
-            mStorage.saveToken(authToken, homeAccountId, expiresTimestamp);
+            mStorage.saveToken(authToken, homeAccountId, expiresOn);
         }
         updateAuthToken(authToken, homeAccountId);
     }

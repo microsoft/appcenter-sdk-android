@@ -19,9 +19,9 @@ public interface AuthTokenStorage {
      *
      * @param token         auth token.
      * @param homeAccountId unique identifier of user.
-     * @param expiresTimestamp time when token create.
+     * @param expiresOn     time when token expires.
      */
-    void saveToken(String token, String homeAccountId, Date expiresTimestamp);
+    void saveToken(String token, String homeAccountId, Date expiresOn);
 
     /**
      * Retrieves token value.

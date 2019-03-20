@@ -70,15 +70,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         mContext = context.getApplicationContext();
     }
 
-    /**
-     * Saving all tokens into history with time when it was valid.
-     *
-     * @param token            auth token.
-     * @param homeAccountId    unique identifier of user.
-     * @param expiresTimestamp time when token create.
-     */
     @Override
-    public void saveToken(String token, String homeAccountId, Date expiresTimestamp) {
+    public void saveToken(String token, String homeAccountId, Date expiresOn) {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
         List<TokenStoreEntity> history = loadTokenHistory();
         if (history == null) {
@@ -86,7 +79,16 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
                 add(new TokenStoreEntity(null, null, null));
             }};
         }
-        history.add(new TokenStoreEntity(encryptedToken, new Date(), expiresTimestamp));
+
+        /* Do not add the same token twice in a row. */
+        String lastToken = history.size() > 0 ? history.get(history.size() - 1).getToken() : null;
+        if (lastToken != null && lastToken.length() > 0) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(lastToken, false);
+            lastToken = decryptedData.getDecryptedData();
+        }
+        if (!TextUtils.equals(lastToken, token)) {
+            history.add(new TokenStoreEntity(encryptedToken, new Date(), expiresOn));
+        }
 
         /* Limit history size. */
         if (history.size() > TOKEN_HISTORY_LIMIT) {
@@ -115,11 +117,6 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         return decryptedData.getDecryptedData();
     }
 
-    /**
-     * Retrieves unique user id.
-     *
-     * @return unique user id.
-     */
     @Override
     public String getHomeAccountId() {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
@@ -137,13 +134,14 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(token, false);
             token = decryptedData.getDecryptedData();
         }
+        Date endTime = storeEntity.getExpiresOn();
         Date nextChangeTime = history.size() > 1 ? history.get(1).getTime() : null;
-        if (storeEntity.getExpiresTimestamp() != null
-                && nextChangeTime != null
-                && storeEntity.getExpiresTimestamp().getTime() > nextChangeTime.getTime()) {
-            return new AuthTokenInfo(token, storeEntity.getTime(), nextChangeTime);
+        if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
+            endTime = nextChangeTime;
+        } else if (endTime == null && nextChangeTime != null) {
+            endTime = nextChangeTime;
         }
-        return new AuthTokenInfo(token, storeEntity.getTime(), storeEntity.getExpiresTimestamp());
+        return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
     }
 
     @Override
@@ -153,16 +151,17 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: the token history is empty.");
             return;
         }
-        String encryptedToken = null;
-        if (token != null && token.length() > 0) {
-            encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
-        }
 
         /* Find token in token history. */
         Iterator<TokenStoreEntity> iterator = history.listIterator();
         while (iterator.hasNext()) {
             TokenStoreEntity entity = iterator.next();
-            if (TextUtils.equals(entity.getToken(), encryptedToken)) {
+            String entityToken = entity.getToken();
+            if (entityToken != null && entityToken.length() > 0) {
+                CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(entityToken, false);
+                entityToken = decryptedData.getDecryptedData();
+            }
+            if (TextUtils.equals(entityToken, token)) {
                 iterator.remove();
                 saveTokenHistory(history);
                 AppCenterLog.debug(LOG_TAG, "The token has been removed from the token history.");
@@ -190,6 +189,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         return new ArrayList<>();
     }
 
+    @VisibleForTesting
     void saveTokenHistory(List<TokenStoreEntity> history) {
         String json = new Gson().toJson(history.toArray());
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
@@ -204,13 +204,13 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         @SerializedName("time")
         private Date mTime;
 
-        @SerializedName("expiresTimestamp")
-        private Date mExpiresTimestamp;
+        @SerializedName("expiresOn")
+        private Date mExpiresOn;
 
-        TokenStoreEntity(String token, Date time, Date expiresTimestamp) {
+        TokenStoreEntity(String token, Date time, Date expiresOn) {
             mToken = token;
             mTime = time;
-            mExpiresTimestamp = expiresTimestamp;
+            mExpiresOn = expiresOn;
         }
 
         String getToken() {
@@ -221,8 +221,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             return mTime;
         }
 
-        Date getExpiresTimestamp() {
-            return mExpiresTimestamp;
+        Date getExpiresOn() {
+            return mExpiresOn;
         }
     }
 }
