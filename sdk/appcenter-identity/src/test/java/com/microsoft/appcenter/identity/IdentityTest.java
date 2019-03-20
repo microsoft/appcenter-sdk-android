@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +139,7 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
         verify(mAuthTokenContext).clearAuthToken();
-        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class));
+        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -386,7 +387,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId), any(Date.class));
 
         /* Disable Identity. */
         Identity.setEnabled(false).get();
@@ -401,7 +402,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify no more interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(idToken), eq(homeAccountId), any(Date.class));
     }
 
     @Test
@@ -463,7 +464,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -471,7 +472,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -523,7 +524,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -585,7 +586,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -593,7 +594,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class), any(String.class),
                 eq(true), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -655,7 +656,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Identity.signIn();
@@ -664,7 +665,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId));
+        verify(mPreferenceTokenStorage, times(2)).saveToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class) );
     }
 
     @Test
@@ -1045,7 +1046,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Sign out should clear token. */
         Identity.signOut();
         verify(mAuthTokenContext).clearAuthToken();
-        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class));
+        verify(mPreferenceTokenStorage).saveToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1055,7 +1056,7 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signOut();
         when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
         verify(mAuthTokenContext, never()).clearAuthToken();
-        verify(mPreferenceTokenStorage, never()).saveToken(isNull(String.class), isNull(String.class));
+        verify(mPreferenceTokenStorage, never()).saveToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test

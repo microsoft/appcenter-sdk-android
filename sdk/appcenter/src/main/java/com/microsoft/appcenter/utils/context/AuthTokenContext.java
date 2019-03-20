@@ -11,6 +11,7 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashSet;
 
 /**
@@ -104,10 +105,11 @@ public class AuthTokenContext {
      *
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
+     * @param expiresTimestamp time when token create.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId) {
+    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresTimestamp) {
         if (mStorage != null) {
-            mStorage.saveToken(authToken, homeAccountId);
+            mStorage.saveToken(authToken, homeAccountId, expiresTimestamp);
         }
         updateAuthToken(authToken, homeAccountId);
     }
@@ -140,7 +142,7 @@ public class AuthTokenContext {
      * Clears info about the token.
      */
     public synchronized void clearAuthToken() {
-        setAuthToken(null, null);
+        setAuthToken(null, null, null);
     }
 
     public synchronized void cacheAuthToken() {

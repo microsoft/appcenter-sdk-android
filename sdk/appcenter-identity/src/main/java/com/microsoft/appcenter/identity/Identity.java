@@ -45,6 +45,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -566,7 +567,7 @@ public class Identity extends AbstractAppCenterService {
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-                authTokenContext.setAuthToken(authenticationResult.getIdToken(), homeAccountId);
+                authTokenContext.setAuthToken(authenticationResult.getIdToken(), homeAccountId, authenticationResult.getExpiresOn());
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                 completeSignIn(new UserInformation(accountId), null);

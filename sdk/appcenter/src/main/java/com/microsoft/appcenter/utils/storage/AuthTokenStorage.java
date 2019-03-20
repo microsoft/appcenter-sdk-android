@@ -7,6 +7,8 @@ package com.microsoft.appcenter.utils.storage;
 
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
+import java.util.Date;
+
 /**
  * Interface for storage that works with token.
  */
@@ -17,8 +19,9 @@ public interface AuthTokenStorage {
      *
      * @param token         auth token.
      * @param homeAccountId unique identifier of user.
+     * @param expiresTimestamp time when token create.
      */
-    void saveToken(String token, String homeAccountId);
+    void saveToken(String token, String homeAccountId, Date expiresTimestamp);
 
     /**
      * Retrieves token value.

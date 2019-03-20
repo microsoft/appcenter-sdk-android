@@ -5,19 +5,27 @@
 
 package com.microsoft.appcenter.identity.storage;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
+import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.util.Date;
 
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_AUTH_TOKEN;
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_HOME_ACCOUNT_ID;
@@ -29,6 +37,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -49,6 +58,8 @@ public class TokenStorageTest {
 
 	private String mMockAccountId = UUIDUtils.randomUUID().toString();
 
+	private Date mMockDate = spy(Date.class);
+
 	private CryptoUtils.DecryptedData mDecryptedToken;
 
 	@Before
@@ -68,7 +79,7 @@ public class TokenStorageTest {
 
 		/* Save the token into storage. */
 		when(mCryptoUtils.encrypt(eq(mMockToken))).thenReturn(mMockEncryptedToken);
-		mTokenStorage.saveToken(mMockToken, mMockAccountId);
+		mTokenStorage.saveToken(mMockToken, mMockAccountId, mMockDate);
 		verify(mCryptoUtils).encrypt(mMockToken);
 		mCryptoUtils.encrypt(mMockToken);
 

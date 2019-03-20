@@ -19,9 +19,12 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Date;
+
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,7 +42,7 @@ public class DefaultChannelCallbacksTest {
         when(IdHelper.getInstallId()).thenReturn(UUIDUtils.randomUUID());
         String mockToken = UUIDUtils.randomUUID().toString();
         new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mock(Handler.class));
-        AuthTokenContext.getInstance().setAuthToken(mockToken, "mock-id");
+        AuthTokenContext.getInstance().setAuthToken(mockToken, "mock-id", spy(Date.class));
     }
 
 }

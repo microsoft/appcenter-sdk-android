@@ -13,8 +13,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Date;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -26,6 +29,7 @@ public class AuthTokenContextTest {
     private AuthTokenContext mAuthTokenContext;
 
     private final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
+    private final Date MOCK_DATE = spy(Date.class);
 
     @Before
     public void setUp() {
@@ -40,7 +44,7 @@ public class AuthTokenContextTest {
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
-        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user", MOCK_DATE);
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), MOCK_TOKEN);
@@ -57,7 +61,7 @@ public class AuthTokenContextTest {
         mAuthTokenContext.removeListener(mockListener);
 
         /* Update token without listener attached. */
-        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user");
+        mAuthTokenContext.setAuthToken(MOCK_TOKEN, "mock-user", MOCK_DATE);
 
         /* Verify that listener is called only once on a new token (i.e. before we removed listener). */
         verify(mockListener, times(1)).onNewAuthToken(MOCK_TOKEN);

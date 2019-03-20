@@ -75,17 +75,18 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
      *
      * @param token         auth token.
      * @param homeAccountId unique identifier of user.
+     * @param expiresTimestamp time when token create.
      */
     @Override
-    public void saveToken(String token, String homeAccountId) {
+    public void saveToken(String token, String homeAccountId, Date expiresTimestamp) {
         String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
         List<TokenStoreEntity> history = loadTokenHistory();
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
-                add(new TokenStoreEntity(null, null));
+                add(new TokenStoreEntity(null, null, null));
             }};
         }
-        history.add(new TokenStoreEntity(encryptedToken, new Date()));
+        history.add(new TokenStoreEntity(encryptedToken, new Date(), expiresTimestamp));
 
         /* Limit history size. */
         if (history.size() > TOKEN_HISTORY_LIMIT) {
@@ -189,7 +190,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
     }
 
-    static class TokenStoreEntity {
+    private static class TokenStoreEntity {
 
         @SerializedName("token")
         private String mToken;
@@ -197,9 +198,13 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         @SerializedName("time")
         private Date mTime;
 
-        TokenStoreEntity(String token, Date time) {
+        @SerializedName("expiresTimestamp")
+        private Date mExpiresTimestamp;
+
+        TokenStoreEntity(String token, Date time, Date expiresTimestamp) {
             mToken = token;
             mTime = time;
+            mExpiresTimestamp = expiresTimestamp;
         }
 
         String getToken() {
