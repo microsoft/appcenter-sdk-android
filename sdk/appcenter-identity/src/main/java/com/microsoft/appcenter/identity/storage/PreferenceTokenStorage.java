@@ -137,6 +137,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(token, false);
             token = decryptedData.getDecryptedData();
         }
+
         Date endTime = history.size() > 1 ? history.get(1).getTime() : null;
         return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
     }
@@ -214,5 +215,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         Date getTime() {
             return mTime;
         }
+
+        Date getExpiresTimestamp() { return mExpiresTimestamp; }
     }
 }
