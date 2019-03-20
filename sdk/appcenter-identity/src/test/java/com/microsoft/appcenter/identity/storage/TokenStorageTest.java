@@ -38,18 +38,16 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @RunWith(PowerMockRunner.class)
 public class TokenStorageTest {
 
+    private static final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
+
+    private static final String ENCRYPTED_AUTH_TOKEN = UUIDUtils.randomUUID().toString();
+
+    private static final String ACCOUNT_ID = UUIDUtils.randomUUID().toString();
+
     @Mock
     private CryptoUtils mCryptoUtils;
 
     private AuthTokenStorage mTokenStorage;
-
-    private String mMockToken = UUIDUtils.randomUUID().toString();
-
-    private String mMockEncryptedToken = UUIDUtils.randomUUID().toString();
-
-    private String mMockAccountId = UUIDUtils.randomUUID().toString();
-
-    private CryptoUtils.DecryptedData mDecryptedToken;
 
     @Before
     public void setUp() {
@@ -59,41 +57,35 @@ public class TokenStorageTest {
 
         /* Mock token. */
         mTokenStorage = TokenStorageFactory.getTokenStorage(mock(Context.class));
-        mDecryptedToken = mock(CryptoUtils.DecryptedData.class);
-        when(mDecryptedToken.getDecryptedData()).thenReturn(mMockToken);
     }
 
     @Test
     public void testSave() {
 
         /* Save the token into storage. */
-        when(mCryptoUtils.encrypt(eq(mMockToken))).thenReturn(mMockEncryptedToken);
-        mTokenStorage.saveToken(mMockToken, mMockAccountId);
-        verify(mCryptoUtils).encrypt(mMockToken);
-        mCryptoUtils.encrypt(mMockToken);
+        when(mCryptoUtils.encrypt(eq(AUTH_TOKEN))).thenReturn(ENCRYPTED_AUTH_TOKEN);
+        mTokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID);
+        verify(mCryptoUtils).encrypt(AUTH_TOKEN);
+        mCryptoUtils.encrypt(AUTH_TOKEN);
 
         /* Verify save called on context and preferences. */
         verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_AUTH_TOKEN), eq(mMockEncryptedToken));
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_AUTH_TOKEN), eq(ENCRYPTED_AUTH_TOKEN));
         verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), eq(mMockAccountId));
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), eq(ACCOUNT_ID));
         verifyStatic();
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_TOKEN_HISTORY), anyString());
-
-
     }
 
     @Test
     public void testRemove() {
+        when(mCryptoUtils.encrypt(eq(AUTH_TOKEN))).thenReturn(ENCRYPTED_AUTH_TOKEN);
 
         /* Remove the token from storage. */
-        //mTokenStorage.removeToken(TODO);
+        mTokenStorage.removeToken(AUTH_TOKEN);
 
         /* Verify remove called on context and preferences. */
-        when(mCryptoUtils.encrypt(eq(mMockToken))).thenReturn(mMockEncryptedToken);
-        mTokenStorage.removeToken(mMockToken);
-        verify(mCryptoUtils).encrypt(mMockToken);
-
+        verify(mCryptoUtils).encrypt(AUTH_TOKEN);
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_AUTH_TOKEN));
         verifyStatic();
@@ -105,12 +97,14 @@ public class TokenStorageTest {
     public void testGet() {
 
         /* Mock preferences and crypto calls. */
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(mMockToken);
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(mMockAccountId);
-        when(mCryptoUtils.decrypt(eq(mMockToken), eq(false))).thenReturn(mDecryptedToken);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_AUTH_TOKEN), isNull(String.class))).thenReturn(AUTH_TOKEN);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_HOME_ACCOUNT_ID), isNull(String.class))).thenReturn(ACCOUNT_ID);
+        CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
+        when(decryptedData.getDecryptedData()).thenReturn(AUTH_TOKEN);
+        when(mCryptoUtils.decrypt(eq(AUTH_TOKEN), eq(false))).thenReturn(decryptedData);
 
         /* Verify the right token is returned. */
-        assertEquals(mMockToken, mTokenStorage.getToken());
+        assertEquals(AUTH_TOKEN, mTokenStorage.getToken());
     }
 
     @Test

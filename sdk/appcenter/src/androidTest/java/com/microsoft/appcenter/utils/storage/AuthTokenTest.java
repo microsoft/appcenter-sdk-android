@@ -36,7 +36,6 @@ public class AuthTokenTest {
         AuthTokenStorage authTokenStorage = mock(AuthTokenStorage.class);
         tokenContext.setStorage(authTokenStorage);
         assertEquals(tokenContext.getStorage(), authTokenStorage);
-
     }
 
     @Test
@@ -44,7 +43,6 @@ public class AuthTokenTest {
         AuthTokenContext tokenContext = new AuthTokenContext();
         String token = tokenContext.getAuthToken();
         String homeId = tokenContext.getHomeAccountId();
-
         tokenContext.setStorage(null);
         tokenContext.cacheAuthToken();
         assertEquals(tokenContext.getAuthToken(), token);

@@ -26,7 +26,6 @@ import static org.junit.Assert.assertNull;
 
 public class PreferenceTokenStorageTest {
 
-
     private Context mContext;
 
     @Before
@@ -51,7 +50,7 @@ public class PreferenceTokenStorageTest {
         /* Save the token into storage. */
         tokenStorage.saveToken(mockToken, mockAccountId);
 
-        /* Assert that storage returns the same token.*/
+        /* Assert that storage returns the same token. */
         assertEquals(mockToken, tokenStorage.getToken());
         assertEquals(mockAccountId, tokenStorage.getHomeAccountId());
 
@@ -66,45 +65,33 @@ public class PreferenceTokenStorageTest {
     @Test
     public void saveToken() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
-
         tokenStorage.saveToken(null, null);
-
         assertEquals(2, tokenStorage.loadTokenHistory().size());
-
-
     }
 
     @Test
     public void tokenHistoryLimit() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
-
         for (int i = 0; i < TOKEN_HISTORY_LIMIT + 3; i++) {
             String mockToken = UUIDUtils.randomUUID().toString();
             String mockAccountId = UUIDUtils.randomUUID().toString();
             tokenStorage.saveToken(mockToken, mockAccountId);
         }
-
         assertEquals(TOKEN_HISTORY_LIMIT, tokenStorage.loadTokenHistory().size());
     }
 
     @Test
     public void removeTokenFromHistory() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
-
-
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockAccountId = UUIDUtils.randomUUID().toString();
         tokenStorage.saveToken(mockToken, mockAccountId);
         assertEquals(2, tokenStorage.loadTokenHistory().size());
-
         tokenStorage.removeToken(null);
         assertEquals(1, tokenStorage.loadTokenHistory().size());
-
         SharedPreferencesManager.clear();
-
         tokenStorage.removeToken(null);
         assertNull(tokenStorage.loadTokenHistory());
-
         tokenStorage.saveToken(mockToken, mockAccountId);
     }
 
@@ -116,11 +103,8 @@ public class PreferenceTokenStorageTest {
         String mockAccountId = UUIDUtils.randomUUID().toString();
         tokenStorage.saveToken(mockToken, mockAccountId);
         assertEquals(2, tokenStorage.loadTokenHistory().size());
-
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "some bad json");
         assertEquals(0, tokenStorage.loadTokenHistory().size());
-
-
     }
 
     @Test
@@ -137,6 +121,5 @@ public class PreferenceTokenStorageTest {
         tokenStorage.saveTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
         assertNotNull(tokenStorage.getOldestToken());
         assertNull(tokenStorage.getOldestToken().getEndTime());
-
     }
 }
