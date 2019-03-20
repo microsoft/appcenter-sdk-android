@@ -139,6 +139,9 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
 
         Date endTime = history.size() > 1 ? history.get(1).getTime() : null;
+        if(history.get(1).getExpiresTimestamp().getTime() < history.get(1).getTime().getTime()){
+            return new AuthTokenInfo(getToken(), storeEntity.getTime(), endTime);
+        }
         return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
     }
 
