@@ -33,6 +33,26 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class PreferenceTokenStorage implements AuthTokenStorage {
 
     /**
+     * Used for authentication requests, string field for auth token.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
+    /**
+     * Used for distinguishing users, string field for home account id.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
+    /**
+     * Used for saving tokens history.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_TOKEN_HISTORY = "AppCenter.auth_token_history";
+    /**
+     * The maximum number of tokens stored in the history.
+     */
+    @VisibleForTesting
+    static final int TOKEN_HISTORY_LIMIT = 5;
+    /**
      * {@link Context} instance.
      */
     private final Context mContext;
@@ -47,34 +67,10 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     /**
-     * Used for authentication requests, string field for auth token.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
-
-    /**
-     * Used for distinguishing users, string field for home account id.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
-
-    /**
-     * Used for saving tokens history.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_TOKEN_HISTORY = "AppCenter.auth_token_history";
-
-    /**
-     * The maximum number of tokens stored in the history.
-     */
-    @VisibleForTesting
-    static final int TOKEN_HISTORY_LIMIT = 5;
-
-    /**
      * Saving all tokens into history with time when it was valid.
      *
-     * @param token         auth token.
-     * @param homeAccountId unique identifier of user.
+     * @param token            auth token.
+     * @param homeAccountId    unique identifier of user.
      * @param expiresTimestamp time when token create.
      */
     @Override
@@ -137,12 +133,13 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(token, false);
             token = decryptedData.getDecryptedData();
         }
-
-        Date endTime = history.size() > 1 ? history.get(1).getTime() : null;
-        if(history.get(1).getExpiresTimestamp().getTime() < history.get(1).getTime().getTime()){
-            return new AuthTokenInfo(getToken(), storeEntity.getTime(), endTime);
+        Date nextChangeTime = history.size() > 1 ? history.get(1).getTime() : null;
+        if (storeEntity.getExpiresTimestamp() != null
+                && nextChangeTime != null
+                && storeEntity.getExpiresTimestamp().getTime() > nextChangeTime.getTime()) {
+            return new AuthTokenInfo(token, storeEntity.getTime(), nextChangeTime);
         }
-        return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
+        return new AuthTokenInfo(token, storeEntity.getTime(), storeEntity.getExpiresTimestamp());
     }
 
     @Override
@@ -194,7 +191,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
     }
 
-    private static class TokenStoreEntity {
+    @VisibleForTesting
+    static class TokenStoreEntity {
 
         @SerializedName("token")
         private String mToken;
@@ -219,6 +217,8 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             return mTime;
         }
 
-        Date getExpiresTimestamp() { return mExpiresTimestamp; }
+        Date getExpiresTimestamp() {
+            return mExpiresTimestamp;
+        }
     }
 }
