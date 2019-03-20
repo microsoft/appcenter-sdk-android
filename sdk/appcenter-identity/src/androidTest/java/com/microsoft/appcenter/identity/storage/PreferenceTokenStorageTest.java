@@ -8,6 +8,8 @@ package com.microsoft.appcenter.identity.storage;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -16,9 +18,13 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mock;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_AUTH_TOKEN;
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.PREFERENCE_KEY_TOKEN_HISTORY;
@@ -27,10 +33,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PreferenceTokenStorageTest {
@@ -136,13 +145,40 @@ public class PreferenceTokenStorageTest {
 		for (int i = 0; i < 10; i++) {
 			String mockToken = UUIDUtils.randomUUID().toString();
 			String mockAccountId = UUIDUtils.randomUUID().toString();
-			tokenStorage.saveToken(mockToken, mockAccountId);
+			tokenStorage.saveToken(mockToken, mockAccountId, any(Date.class));
 		}
 		assertNotNull(tokenStorage.getOldestToken());
 		assertNotNull(tokenStorage.getOldestToken().getEndTime());
 		tokenStorage.saveTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
 		assertNotNull(tokenStorage.getOldestToken());
 		assertNull(tokenStorage.getOldestToken().getEndTime());
+	}
 
+	@Test
+	public void removeTokenWithTokenNotNull(){
+		CryptoUtils cryptoUtils = CryptoUtils.getInstance(mContext);
+		when(CryptoUtils.getInstance(mContext)).thenReturn(cryptoUtils);
+		when(cryptoUtils.encrypt(anyString())).thenReturn("token-cript");
+
+		PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
+		assertNull(tokenStorage.loadTokenHistory());
+		String mockToken = UUIDUtils.randomUUID().toString();
+		String mockAccountId = UUIDUtils.randomUUID().toString();
+		tokenStorage.saveToken(mockToken, mockAccountId, any(Date.class));
+		assertEquals(2, tokenStorage.loadTokenHistory().size());
+	}
+
+    @Test
+	public void loadTokenHistoryTestJsonParseException() throws JsonParseException {
+        PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
+        assertNull(tokenStorage.loadTokenHistory());
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        tokenStorage.saveToken(mockToken, mockAccountId, new Date());
+        assertEquals(2, tokenStorage.loadTokenHistory().size());
+
+		SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "some bad json");
+        List<PreferenceTokenStorage.TokenStoreEntity> list = tokenStorage.loadTokenHistory();
+		assertEquals(0, ((List) list).size());
 	}
 }
