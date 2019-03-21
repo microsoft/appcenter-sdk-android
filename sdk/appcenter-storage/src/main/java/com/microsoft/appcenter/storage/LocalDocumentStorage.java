@@ -87,7 +87,7 @@ class LocalDocumentStorage {
     private static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
 
     /**
-     * Pending operation  value.
+     * Pending operation DELETE value.
      */
     private static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
 
