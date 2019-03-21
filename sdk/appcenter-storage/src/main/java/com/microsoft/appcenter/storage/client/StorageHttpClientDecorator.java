@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.storage.client;
 
+import android.accounts.NetworkErrorException;
+
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientDecorator;
 import com.microsoft.appcenter.http.HttpException;
@@ -29,7 +31,7 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
     @Override
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
         if (mOfflineMode) {
-            serviceCallback.onCallFailed(new HttpException(-1, "Storage offline simulation mode is enabled"));
+            serviceCallback.onCallFailed(new NetworkErrorException("Storage offline simulation mode is enabled"));
         } else {
             mDecoratedApi.callAsync(url, method, headers, callTemplate, serviceCallback);
         }

@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.accounts.NetworkErrorException;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
@@ -65,6 +67,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.refEq;
@@ -848,7 +851,7 @@ public class StorageTest extends AbstractStorageTest {
         httpClientDecorator.setOfflineMode(true);
         ServiceCallback serviceCallback = Mockito.mock(ServiceCallback.class);
         httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
-        verify(serviceCallback).onCallFailed(any(HttpException.class));
+        verify(serviceCallback).onCallFailed(isA(NetworkErrorException.class));
         verifyNoMoreInteractions(mHttpClient);
     }
 
