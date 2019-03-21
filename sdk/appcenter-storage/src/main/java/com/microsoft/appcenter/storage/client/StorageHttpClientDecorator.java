@@ -10,15 +10,25 @@ import java.util.Map;
 
 public class StorageHttpClientDecorator extends HttpClientDecorator {
 
-    private boolean mSimulateOffline;
+    private boolean mOfflineMode;
 
     public StorageHttpClientDecorator(HttpClient decoratedApi) {
         super(decoratedApi);
     }
 
+    /**
+     * Make an HTTP call.
+     *
+     * @param url             URL.
+     * @param method          GET or POST.
+     * @param headers         headers, can be empty.
+     * @param callTemplate    callbacks to provide request body or get notification before calling.
+     * @param serviceCallback callbacks to monitor the completion of the HTTP call.
+     * @return a call handle to later cancel the call.
+     */
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
-        if (mSimulateOffline) {
+        if (mOfflineMode) {
             serviceCallback.onCallFailed(new HttpException(-1, "Storage offline simulation mode is enabled"));
         } else {
             mDecoratedApi.callAsync(url, method, headers, callTemplate, serviceCallback);
@@ -27,11 +37,17 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
         return null;
     }
 
-    public boolean isSimulateOffline() {
-        return mSimulateOffline;
+    /**
+     * @return offline mode state
+     */
+    public boolean isOfflineMode() {
+        return mOfflineMode;
     }
 
-    public void setSimulateOffline(boolean simulateOffline) {
-        this.mSimulateOffline = simulateOffline;
+    /**
+     * @param offlineMode sets offline mode state
+     */
+    public void setOfflineMode(boolean offlineMode) {
+        this.mOfflineMode = offlineMode;
     }
 }

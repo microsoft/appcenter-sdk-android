@@ -129,50 +129,50 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
-     * Check whether offline simulation is enabled or not.
+     * Check whether offline mode is enabled or not.
      *
      * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static boolean isSimulateOffline() {
-        return getInstance().isSimulateOfflineInstance();
+    public static boolean isOfflineMode() {
+        return getInstance().isOfflineModeInstance();
     }
 
     /**
-     * Enable or disable offline simulation.
+     * Enable or disable offline mode.
      *
-     * @param offline <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static void setSimulateOffline(boolean offline) {
-        getInstance().setSimulateOfflineInstance(offline);
+    public static void setOfflineMode(boolean offlineMode) {
+        getInstance().setOfflineModeInstance(offlineMode);
     }
 
     /**
-     * Check whether offline simulation is enabled or not.
+     * Check whether offline mode is enabled or not.
      *
      * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public boolean isSimulateOfflineInstance() {
+    public boolean isOfflineModeInstance() {
         if (mHttpClient != null) {
-            return mHttpClient.isSimulateOffline();
+            return mHttpClient.isOfflineMode();
         }
 
         return false;
     }
 
     /**
-     * Enable or disable offline simulation.
+     * Enable or disable offline mode.
      *
-     * @param offline <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public void setSimulateOfflineInstance(boolean offline) {
+    public void setOfflineModeInstance(boolean offlineMode) {
         if (mHttpClient != null) {
-            mHttpClient.setSimulateOffline(offline);
+            mHttpClient.setOfflineMode(offlineMode);
         }
     }
 

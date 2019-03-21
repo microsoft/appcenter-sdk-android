@@ -829,22 +829,22 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void setSimulateOfflineFlag() {
-        assertFalse(Storage.isSimulateOffline());
-        Storage.setSimulateOffline(true);
+    public void setStorageModuleOfflineMode() {
+        assertFalse(Storage.isOfflineMode());
+        Storage.setOfflineMode(true);
 
         /* offline mode is enabled. */
-        assertTrue(Storage.isSimulateOffline());
+        assertTrue(Storage.isOfflineMode());
 
         /* offline mode is reset.  */
-        Storage.setSimulateOffline(false);
-        assertFalse(Storage.isSimulateOffline());
+        Storage.setOfflineMode(false);
+        assertFalse(Storage.isOfflineMode());
     }
 
     @Test
-    public void simulateOfflineEnabled() {
+    public void offlineModeEnabledOnDecorator() {
         StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setSimulateOffline(true);
+        httpClientDecorator.setOfflineMode(true);
         ServiceCallback serviceCallback = Mockito.mock(ServiceCallback.class);
         httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
         verify(serviceCallback).onCallFailed(any(HttpException.class));
@@ -852,10 +852,13 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void simulateOfflineDisabled() {
+    public void offlineModeDisabledOnDecorator() {
         StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setSimulateOffline(false);
-        httpClientDecorator.callAsync(null, null, null, null, null);
-        verify(mHttpClient).callAsync(isNull(String.class), isNull(String.class), anyMapOf(String.class, String.class), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
+        httpClientDecorator.setOfflineMode(false);
+        String url = "url";
+        String method = "method";
+        Map<String, String> headers = new HashMap<>();
+        httpClientDecorator.callAsync(url, method, headers, null, null);
+        verify(mHttpClient).callAsync(eq(url), eq(method), eq(headers), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
     }
 }
