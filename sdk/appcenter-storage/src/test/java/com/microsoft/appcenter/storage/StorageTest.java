@@ -427,7 +427,7 @@ public class StorageTest extends AbstractStorageTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verifyNoMoreInteractions(mDocumentCache);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mHttpClient, times(1)).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
@@ -474,7 +474,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
-        verify(mDocumentCache).read(
+        verify(mLocalDocumentStorage).read(
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument.getClass()),
@@ -487,7 +487,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verifyNoMoreInteractions(mDocumentCache);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
@@ -529,7 +529,7 @@ public class StorageTest extends AbstractStorageTest {
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verifyNoMoreInteractions(mDocumentCache);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
@@ -587,8 +587,8 @@ public class StorageTest extends AbstractStorageTest {
 
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        verify(mDocumentCache, times(1)).write(refEq(testCosmosDocument), refEq(writeOptions));
-        verifyNoMoreInteractions(mDocumentCache);
+        verify(mLocalDocumentStorage, times(1)).write(refEq(testCosmosDocument), refEq(writeOptions));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
@@ -654,8 +654,8 @@ public class StorageTest extends AbstractStorageTest {
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
-        verify(mDocumentCache, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mDocumentCache);
+        verify(mLocalDocumentStorage, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
         assertNull(doc.get().getError());

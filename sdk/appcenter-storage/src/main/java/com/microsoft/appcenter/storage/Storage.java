@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -69,7 +68,7 @@ public class Storage extends AbstractAppCenterService {
 
     private StorageHttpClientDecorator mHttpClient;
 
-    private DocumentCache mDocumentCache;
+    private LocalDocumentStorage mLocalDocumentStorage;
 
     /**
      * Authorization listener for {@link AuthTokenContext}.
@@ -263,7 +262,7 @@ public class Storage extends AbstractAppCenterService {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
         mAppSecret = appSecret;
-        mDocumentCache = new DocumentCache(context);
+        mLocalDocumentStorage = new LocalDocumentStorage(context);
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
@@ -335,7 +334,7 @@ public class Storage extends AbstractAppCenterService {
                         }
                     });
         } else {
-            Document<T> cachedDocument = mDocumentCache.read(partition, documentId, documentType, readOptions);
+            Document<T> cachedDocument = mLocalDocumentStorage.read(partition, documentId, documentType, readOptions);
             result.complete(cachedDocument);
         }
         return result;
@@ -472,7 +471,7 @@ public class Storage extends AbstractAppCenterService {
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFutureAndRemovePendingCall(cosmosDbDocument, result);
-                        mDocumentCache.write(cosmosDbDocument, writeOptions);
+                        mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
                     }
 
                     @Override
@@ -515,7 +514,7 @@ public class Storage extends AbstractAppCenterService {
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFutureAndRemovePendingCall(new Document<Void>(), result);
-                        mDocumentCache.delete(tokenResult.partition(), documentId);
+                        mLocalDocumentStorage.delete(tokenResult.partition(), documentId);
                     }
 
                     @Override

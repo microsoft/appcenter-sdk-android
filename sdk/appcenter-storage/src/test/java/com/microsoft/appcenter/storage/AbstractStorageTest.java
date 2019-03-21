@@ -52,7 +52,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HandlerUtils.class,
         HttpUtils.class,
         NetworkStateHelper.class,
-        DocumentCache.class
+        LocalDocumentStorage.class
 })
 
 abstract public class AbstractStorageTest {
@@ -79,7 +79,7 @@ abstract public class AbstractStorageTest {
     NetworkStateHelper mNetworkStateHelper;
 
     @Mock
-    DocumentCache mDocumentCache;
+    LocalDocumentStorage mLocalDocumentStorage;
 
     @Before
     public void setUp() throws Exception {
@@ -132,7 +132,7 @@ abstract public class AbstractStorageTest {
         mockStatic(NetworkStateHelper.class);
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        whenNew(DocumentCache.class).withAnyArguments().thenReturn(mDocumentCache);
+        whenNew(LocalDocumentStorage.class).withAnyArguments().thenReturn(mLocalDocumentStorage);
         mStorage = Storage.getInstance();
         Storage storage = Storage.getInstance();
         mChannel = start(storage);

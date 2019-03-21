@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
-public class DocumentCacheAndroidTest {
+public class LocalDocumentStorageAndroidTest {
 
     private static final String TEST_VALUE = "Test value";
 
@@ -39,7 +39,7 @@ public class DocumentCacheAndroidTest {
     @SuppressLint("StaticFieldLeak")
     private static Context sContext;
 
-    private DocumentCache mDocumentCache;
+    private LocalDocumentStorage mLocalDocumentStorage;
 
     @BeforeClass
     public static void setUpClass() {
@@ -48,26 +48,26 @@ public class DocumentCacheAndroidTest {
 
     @Before
     public void setUp() {
-        mDocumentCache = new DocumentCache(sContext);
+        mLocalDocumentStorage = new LocalDocumentStorage(sContext);
     }
 
     @AfterClass
     public static void tearDownClass() {
-        sContext.deleteDatabase(DocumentCache.DATABASE);
+        sContext.deleteDatabase(LocalDocumentStorage.DATABASE);
     }
 
     @Test
     public void writeReadDelete() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mDocumentCache.write(document, new WriteOptions());
-        Document<String> cachedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions());
+        mLocalDocumentStorage.write(document, new WriteOptions());
+        Document<String> cachedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertEquals(document.getDocument(), cachedDocument.getDocument());
         assertFalse(document.failed());
         assertFalse(document.isFromCache());
         assertTrue(cachedDocument.isFromCache());
-        mDocumentCache.delete(PARTITION, ID);
-        Document<String> deletedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions());
+        mLocalDocumentStorage.delete(PARTITION, ID);
+        Document<String> deletedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getError());
@@ -78,7 +78,7 @@ public class DocumentCacheAndroidTest {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mDocumentCache.write(document, new WriteOptions() {
+        mLocalDocumentStorage.write(document, new WriteOptions() {
 
             @Override
             public int getDeviceTimeToLive() {
@@ -87,7 +87,7 @@ public class DocumentCacheAndroidTest {
         });
 
         /* Read with a TTL of 1 second: already expired. */
-        Document<String> deletedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions(1));
+        Document<String> deletedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions(1));
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getError());
