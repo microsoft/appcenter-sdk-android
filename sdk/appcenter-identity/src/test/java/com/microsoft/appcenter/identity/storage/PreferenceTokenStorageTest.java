@@ -41,8 +41,6 @@ public class PreferenceTokenStorageTest {
 
     private static final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
 
-    private static final String ENCRYPTED_AUTH_TOKEN = UUIDUtils.randomUUID().toString();
-
     @Mock
     private CryptoUtils mCryptoUtils;
 
@@ -94,6 +92,15 @@ public class PreferenceTokenStorageTest {
 
     @Test
     public void getOldestToken() {
+        when(mCryptoUtils.decrypt(anyString(), eq(false))).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+
+            @Override
+            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
+                CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
+                when(decryptedData.getDecryptedData()).thenReturn((String) invocation.getArguments()[0]);
+                return decryptedData;
+            }
+        });
 
         /* History is null. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn(null);
@@ -103,6 +110,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History is invalid. */
+        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         authTokenInfo = mTokenStorage.getOldestToken();
         assertNull(authTokenInfo.getAuthToken());
@@ -110,6 +118,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History has one null token. */
+        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
                 .thenReturn("[{\"token\":null,\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();
@@ -117,20 +126,10 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getStartTime());
         assertNull(authTokenInfo.getEndTime());
 
-        /* History has one empty token. */
-        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
-                .thenReturn("[{\"token\":\"\",\"time\":null,\"expiresOn\":null}]");
-        authTokenInfo = mTokenStorage.getOldestToken();
-        assertEquals("", authTokenInfo.getAuthToken());
-        assertNull(authTokenInfo.getStartTime());
-        assertNull(authTokenInfo.getEndTime());
-
         /* History has one token. */
+        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
-                .thenReturn("[{\"token\":\"" + ENCRYPTED_AUTH_TOKEN + "\",\"time\":null,\"expiresOn\":null}]");
-        CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
-        when(decryptedData.getDecryptedData()).thenReturn(AUTH_TOKEN);
-        when(mCryptoUtils.decrypt(eq(ENCRYPTED_AUTH_TOKEN), eq(false))).thenReturn(decryptedData);
+                .thenReturn("[{\"token\":\"" + AUTH_TOKEN + "\",\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();
         assertEquals(AUTH_TOKEN, authTokenInfo.getAuthToken());
         assertNull(authTokenInfo.getStartTime());

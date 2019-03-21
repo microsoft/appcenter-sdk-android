@@ -1176,7 +1176,6 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(null);
-
         IAccount account = mock(IAccount.class);
         Identity identity = Identity.getInstance();
         when(mPreferenceTokenStorage.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
