@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.storage;
 
 import com.google.gson.Gson;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -860,5 +861,12 @@ public class StorageTest extends AbstractStorageTest {
         Map<String, String> headers = new HashMap<>();
         httpClientDecorator.callAsync(url, method, headers, null, null);
         verify(mHttpClient).callAsync(eq(url), eq(method), eq(headers), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
+    }
+
+    @Test
+    public void setOfflineModeBeforeStartDoesNotWork() {
+        Storage.unsetInstance();
+        Storage.setOfflineMode(true);
+        assertFalse(Storage.isOfflineMode());
     }
 }
