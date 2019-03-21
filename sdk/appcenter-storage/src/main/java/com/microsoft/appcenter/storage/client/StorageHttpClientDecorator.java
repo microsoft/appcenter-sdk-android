@@ -27,27 +27,30 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
      * @return a call handle to later cancel the call.
      */
     @Override
-    public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
+    public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
         if (mOfflineMode) {
             serviceCallback.onCallFailed(new HttpException(-1, "Storage offline simulation mode is enabled"));
         } else {
             mDecoratedApi.callAsync(url, method, headers, callTemplate, serviceCallback);
         }
-
         return null;
     }
 
     /**
-     * @return offline mode state
+     * Check whether offline mode is enabled or not.
+     *
+     * @return true if offline mode is enabled, false otherwise.
      */
-    public boolean isOfflineMode() {
+    public synchronized boolean isOfflineMode() {
         return mOfflineMode;
     }
 
     /**
-     * @param offlineMode sets offline mode state
+     * Set offline mode enabled or disabled.
+     *
+     * @param offlineMode true to enable offline, mode false to disable.
      */
-    public void setOfflineMode(boolean offlineMode) {
-        this.mOfflineMode = offlineMode;
+    public synchronized void setOfflineMode(boolean offlineMode) {
+        mOfflineMode = offlineMode;
     }
 }

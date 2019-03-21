@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -155,12 +156,11 @@ public class Storage extends AbstractAppCenterService {
      * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public boolean isOfflineModeInstance() {
+    private synchronized boolean isOfflineModeInstance() {
         if (mHttpClient != null) {
             return mHttpClient.isOfflineMode();
         }
-
+        AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
         return false;
     }
 
@@ -169,10 +169,11 @@ public class Storage extends AbstractAppCenterService {
      *
      * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public void setOfflineModeInstance(boolean offlineMode) {
+    private synchronized void setOfflineModeInstance(boolean offlineMode) {
         if (mHttpClient != null) {
             mHttpClient.setOfflineMode(offlineMode);
+        } else {
+            AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
         }
     }
 
