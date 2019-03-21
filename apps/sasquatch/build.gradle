@@ -71,7 +71,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-identity')
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
-    projectDependencyImplementation project(':sdk:appcenter-identity')
+    projectDependencyImplementation project(':sdk:appcenter-storage')
 
     def appCenterSdkVersion = "1.11.4"
     //noinspection GradleDependency
