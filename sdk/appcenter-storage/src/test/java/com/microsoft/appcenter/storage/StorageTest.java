@@ -8,7 +8,6 @@ package com.microsoft.appcenter.storage;
 import android.accounts.NetworkErrorException;
 
 import com.google.gson.Gson;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
