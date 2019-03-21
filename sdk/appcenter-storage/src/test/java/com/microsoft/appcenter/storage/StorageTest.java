@@ -14,6 +14,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
+import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
@@ -29,6 +30,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -824,5 +826,36 @@ public class StorageTest extends AbstractStorageTest {
         Storage.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
+    }
+
+    @Test
+    public void setSimulateOfflineFlag() {
+        assertFalse(Storage.isSimulateOffline());
+        Storage.setSimulateOffline(true);
+
+        /* offline mode is enabled. */
+        assertTrue(Storage.isSimulateOffline());
+
+        /* offline mode is reset.  */
+        Storage.setSimulateOffline(false);
+        assertFalse(Storage.isSimulateOffline());
+    }
+
+    @Test
+    public void simulateOfflineEnabled() {
+        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
+        httpClientDecorator.setSimulateOffline(true);
+        ServiceCallback serviceCallback = Mockito.mock(ServiceCallback.class);
+        httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
+        verify(serviceCallback).onCallFailed(any(HttpException.class));
+        verifyNoMoreInteractions(mHttpClient);
+    }
+
+    @Test
+    public void simulateOfflineDisabled() {
+        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
+        httpClientDecorator.setSimulateOffline(false);
+        httpClientDecorator.callAsync(null, null, null, null, null);
+        verify(mHttpClient).callAsync(isNull(String.class), isNull(String.class), anyMapOf(String.class, String.class), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
     }
 }
