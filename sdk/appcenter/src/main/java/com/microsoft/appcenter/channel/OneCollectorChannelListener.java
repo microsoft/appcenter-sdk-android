@@ -88,10 +88,24 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * @param installId     installId.
      */
     public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
+        this(new OneCollectorIngestion(context, logSerializer), channel, logSerializer, installId);
+    }
+
+    @VisibleForTesting
+    OneCollectorChannelListener(@NonNull OneCollectorIngestion ingestion, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
         mChannel = channel;
         mLogSerializer = logSerializer;
         mInstallId = installId;
-        mIngestion = new OneCollectorIngestion(context, mLogSerializer);
+        mIngestion = ingestion;
+    }
+
+    /**
+     * Update log URL.
+     *
+     * @param logUrl log URL.
+     */
+    public void setLogUrl(@NonNull String logUrl) {
+        mIngestion.setLogUrl(logUrl);
     }
 
     @Override

@@ -288,18 +288,18 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 }
                 AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
             }
+            Map<String, String> responseHeaders = new HashMap<>();
+            for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
+                responseHeaders.put(header.getKey(), header.getValue().iterator().next());
+            }
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {
-                Map<String, String> responseHeaders = new HashMap<>();
-                for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
-                    responseHeaders.put(header.getKey(), header.getValue().iterator().next());
-                }
                 return new Pair<>(response, responseHeaders);
             }
 
             /* Generate exception on failure. */
-            throw new HttpException(status, response);
+            throw new HttpException(status, response, responseHeaders);
         } finally {
 
             /* Release connection. */

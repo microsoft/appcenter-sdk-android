@@ -7,6 +7,7 @@ package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -109,8 +110,8 @@ public class AppCenterIngestionTest {
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
+        expectedHeaders.put(Constants.APP_SECRET, appSecret);
+        expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -162,8 +163,8 @@ public class AppCenterIngestionTest {
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
-        expectedHeaders.put(AppCenterIngestion.APP_SECRET, appSecret);
-        expectedHeaders.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
+        expectedHeaders.put(Constants.APP_SECRET, appSecret);
+        expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -208,8 +209,8 @@ public class AppCenterIngestionTest {
         }
 
         /* Put app secret to header. */
-        headers.put(AppCenterIngestion.APP_SECRET, appSecret);
-        headers.put(AppCenterIngestion.AUTHORIZATION_HEADER, String.format(AppCenterIngestion.AUTH_TOKEN_FORMAT, authToken));
+        headers.put(Constants.APP_SECRET, appSecret);
+        headers.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
@@ -220,7 +221,7 @@ public class AppCenterIngestionTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void onBeforeCallingWithAnotherLogLevel() throws Exception {
+    public void onBeforeCallingWithAnotherLogLevel() {
 
         /* Mock instances. */
         String appSecret = UUIDUtils.randomUUID().toString();
@@ -238,7 +239,7 @@ public class AppCenterIngestionTest {
         AppCenterLog.verbose(anyString(), anyString());
     }
 
-    private HttpClient.CallTemplate getCallTemplate(String appSecret, String authToken) throws Exception {
+    private HttpClient.CallTemplate getCallTemplate(String appSecret, String authToken) {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         final ServiceCall call = mock(ServiceCall.class);

@@ -7,3 +7,7 @@
 -keep public class com.microsoft.appcenter.identity.Identity {
    *;
 }
+
+-keep public class com.microsoft.appcenter.storage.Storage {
+   *;
+}

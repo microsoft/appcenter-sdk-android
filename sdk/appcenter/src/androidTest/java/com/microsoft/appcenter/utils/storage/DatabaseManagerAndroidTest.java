@@ -81,6 +81,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-databaseManagerScannerRemove");
         sContext.deleteDatabase("test-databaseManagerScannerNext");
         sContext.deleteDatabase("test-setMaximumSize");
+        sContext.deleteDatabase("test-replace");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -107,12 +108,12 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        Long value1Id = databaseManager.put(value1, "COL_INTEGER");
-        assertNotNull(value1Id);
+        long value1Id = databaseManager.put(value1, "COL_INTEGER");
+        assertTrue(value1Id >= 0);
 
         /* Put another. */
-        Long value2Id = databaseManager.put(value2, "COL_INTEGER");
-        assertNotNull(value2Id);
+        long value2Id = databaseManager.put(value2, "COL_INTEGER");
+        assertTrue(value2Id >= 0);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
 
@@ -262,7 +263,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -283,7 +284,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DefaultListener());
+        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -309,7 +310,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
 
         /* Put data. */
         long id;
@@ -372,7 +373,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -399,15 +400,46 @@ public class DatabaseManagerAndroidTest {
         }
     }
 
-    private static class DefaultListener implements DatabaseManager.Listener {
+    @Test
+    public void replace() {
 
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-        }
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-replace", "databaseManager", 1, mSchema, listener);
+        String documentIdProperty = "COL_STRING";
 
-        @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            return false;
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            assertEquals(0L, databaseManager.getRowCount());
+            ContentValues contentValues = generateContentValues();
+            contentValues.put(documentIdProperty, "some id");
+            databaseManager.replace(contentValues, documentIdProperty);
+            assertEquals(1L, databaseManager.getRowCount());
+            databaseManager.replace(contentValues, documentIdProperty);
+            assertEquals(1L, databaseManager.getRowCount());
+
+            /* Set the documentIdProperty to another value, new row should be created. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperty, "new id");
+            databaseManager.replace(contentValues, documentIdProperty);
+            assertEquals(2L, databaseManager.getRowCount());
+
+            /* Replace a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperty, "new id");
+            databaseManager.replace(contentValues);
+            databaseManager.replace(contentValues, documentIdProperty);
+            assertEquals(4L, databaseManager.getRowCount());
+
+            /* Replace by matching an unknown property fails. */
+            assertEquals(-1, databaseManager.replace(contentValues, "COLUMN_NOT_FOUND"));
+            assertEquals(4L, databaseManager.getRowCount());
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseManager.close();
         }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
     }
 }
