@@ -75,7 +75,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
 
-                /* TODO add comment */
+                /*
+                 * Adding a null entry is required during the first initialization to differentiate
+                 * anonymous usage before the moment and situation when we don't have a token
+                 * in history because of the size limit for example.
+                 */
                 add(new TokenStoreEntity(null, null, null));
             }};
         }
