@@ -72,4 +72,11 @@ public class HttpUtilsTest {
     public void hideInvalidTicket() {
         assertEquals("asIs", HttpUtils.hideTickets("asIs"));
     }
+
+    @Test
+    public void hideAuthToken() {
+        String token = "Bearer jwt-token-string";
+        String hiddenToken = HttpUtils.hideAuthToken(token);
+        assertEquals(hiddenToken, "Bearer ***");
+    }
 }

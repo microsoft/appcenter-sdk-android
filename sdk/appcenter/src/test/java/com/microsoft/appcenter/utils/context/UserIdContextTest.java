@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.utils;
+package com.microsoft.appcenter.utils.context;
 
 import org.junit.Test;
 

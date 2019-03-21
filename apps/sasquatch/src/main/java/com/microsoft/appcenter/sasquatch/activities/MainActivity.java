@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -138,6 +139,21 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
+        }
+
+        /* Set identity config url. */
+        String configUrl = getString(R.string.identity_config_url);
+        if (!TextUtils.isEmpty(configUrl)) {
+
+            /* TODO once Identity released to jCenter, use Identity.setConfigUrl directly. */
+            try {
+                Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
+                identity.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */
@@ -328,6 +344,16 @@ public class MainActivity extends AppCompatActivity {
                 return;
         }
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+
+        /* TODO once Identity released to jCenter, use Identity.class directly in the start calls. */
+        try {
+            String className = "com.microsoft.appcenter.identity.Identity";
+
+            @SuppressWarnings("unchecked")
+            Class<AppCenterService> identity = (Class<AppCenterService>) Class.forName(className);
+            AppCenter.start(identity);
+        } catch (ClassNotFoundException ignored) {
+        }
     }
 
     public enum StartType {

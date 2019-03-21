@@ -72,6 +72,15 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:key="@string/identity_key"
+        android:title="@string/identity_title">
+        <CheckBoxPreference
+            android:dependency="@string/appcenter_state_key"
+            android:key="@string/appcenter_identity_state_key"
+            android:title="@string/appcenter_identity_state_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="@string/real_user_measurements_key"
         android:title="@string/real_user_measurements_title">
         <CheckBoxPreference

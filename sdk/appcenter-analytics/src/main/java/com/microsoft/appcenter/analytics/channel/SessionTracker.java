@@ -9,7 +9,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.SessionContext;
+import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.AbstractChannelListener;

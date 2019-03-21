@@ -261,7 +261,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
         httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(String payload) {
+            public void onCallSucceeded(String payload, Map<String, String> headers) {
 
                 /* Read JSON configuration and start testing. */
                 handleRemoteConfiguration(httpClient, rumKey, payload);
@@ -393,7 +393,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
             mHttpClient.callAsync(testUrl.url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload) {
+                public void onCallSucceeded(String payload, Map<String, String> headers) {
                     testUrl.result = System.currentTimeMillis() - startTime;
                     testUrl(httpClient, rumKey, iterator);
                 }
@@ -461,7 +461,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
                 mHttpClient.callAsync(finalReportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload) {
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
                         AppCenterLog.info(LOG_TAG, "Measurements reported successfully.");
                     }
 

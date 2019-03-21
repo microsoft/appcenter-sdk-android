@@ -159,6 +159,17 @@ public class HttpUtils {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 
+    /**
+     * Hide JWT token value in Authorization header string.
+     *
+     * @param token string header value.
+     * @return obfuscated token string header value.
+     */
+    public static String hideAuthToken(@NonNull String token) {
+        String prefix = token.split("\\s+")[0];
+        return prefix + " ***";
+    }
+
     public static HttpClient createHttpClient(@NonNull Context context) {
         HttpClient httpClient = new DefaultHttpClient();
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);

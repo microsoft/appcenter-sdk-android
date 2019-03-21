@@ -18,7 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.SessionContext;
+import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
@@ -1197,7 +1197,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -1286,7 +1286,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                     @Override
                     public void run() {
                         beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                         afterSemaphore.release();
                     }
                 }.start();

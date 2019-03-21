@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.http;
 
+import java.util.Map;
+
 /**
  * The callback used for client side asynchronous operations.
  */
@@ -14,8 +16,9 @@ public interface ServiceCallback {
      * Implement this method to handle successful REST call results.
      *
      * @param payload HTTP payload.
+     * @param headers response headers.
      */
-    void onCallSucceeded(String payload);
+    void onCallSucceeded(String payload, Map<String, String> headers);
 
     /**
      * Implement this method to handle REST call failures.
