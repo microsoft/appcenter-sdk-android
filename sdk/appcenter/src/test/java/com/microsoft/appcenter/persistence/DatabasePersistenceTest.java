@@ -124,7 +124,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>(), null);
         }
 
         /* Verify there are 4 pending groups. */
@@ -150,7 +150,7 @@ public class DatabasePersistenceTest {
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -173,7 +173,7 @@ public class DatabasePersistenceTest {
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -212,7 +212,7 @@ public class DatabasePersistenceTest {
         /* Get logs and verify we get only non corrupted logs. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -286,7 +286,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs and verify we get only non corrupted logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(logCount - 1, outLogs.size());
         assertEquals("first", outLogs.get(0).getType());
         assertEquals("last", outLogs.get(1).getType());
@@ -296,7 +296,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is empty logs as they are pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(0, outLogs.size());
 
         /*
@@ -367,7 +367,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null);
         assertEquals(1, outLogs.size());
         assertEquals("true last", outLogs.get(0).getType());
 
