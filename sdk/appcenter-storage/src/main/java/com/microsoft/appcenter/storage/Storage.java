@@ -11,11 +11,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
+import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.models.Document;
@@ -66,7 +67,7 @@ public class Storage extends AbstractAppCenterService {
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private HttpClient mHttpClient;
+    private StorageHttpClientDecorator mHttpClient;
 
     private DocumentCache mDocumentCache;
 
@@ -126,6 +127,54 @@ public class Storage extends AbstractAppCenterService {
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * Check whether offline mode is enabled or not.
+     *
+     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    public static boolean isOfflineMode() {
+        return getInstance().isOfflineModeInstance();
+    }
+
+    /**
+     * Enable or disable offline mode.
+     *
+     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     */
+    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    public static void setOfflineMode(boolean offlineMode) {
+        getInstance().setOfflineModeInstance(offlineMode);
+    }
+
+    /**
+     * Check whether offline mode is enabled or not.
+     *
+     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    private synchronized boolean isOfflineModeInstance() {
+        if (mHttpClient != null) {
+            return mHttpClient.isOfflineMode();
+        }
+        AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
+        return false;
+    }
+
+    /**
+     * Enable or disable offline mode.
+     *
+     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     */
+    private synchronized void setOfflineModeInstance(boolean offlineMode) {
+        if (mHttpClient != null) {
+            mHttpClient.setOfflineMode(offlineMode);
+        } else {
+            AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
+        }
     }
 
     /**
@@ -212,7 +261,7 @@ public class Storage extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = createHttpClient(context);
+        mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
         mAppSecret = appSecret;
         mDocumentCache = new DocumentCache(context);
         mAuthListener = new AbstractTokenContextListener() {

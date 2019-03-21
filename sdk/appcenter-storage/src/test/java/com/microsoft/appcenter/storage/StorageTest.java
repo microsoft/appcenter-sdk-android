@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.accounts.NetworkErrorException;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -14,6 +16,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
+import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
@@ -29,6 +32,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -62,6 +66,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.refEq;
@@ -824,5 +829,46 @@ public class StorageTest extends AbstractStorageTest {
         Storage.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
+    }
+
+    @Test
+    public void setStorageModuleOfflineMode() {
+        assertFalse(Storage.isOfflineMode());
+        Storage.setOfflineMode(true);
+
+        /* offline mode is enabled. */
+        assertTrue(Storage.isOfflineMode());
+
+        /* offline mode is reset.  */
+        Storage.setOfflineMode(false);
+        assertFalse(Storage.isOfflineMode());
+    }
+
+    @Test
+    public void offlineModeEnabledOnDecorator() {
+        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
+        httpClientDecorator.setOfflineMode(true);
+        ServiceCallback serviceCallback = Mockito.mock(ServiceCallback.class);
+        httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
+        verify(serviceCallback).onCallFailed(isA(NetworkErrorException.class));
+        verifyNoMoreInteractions(mHttpClient);
+    }
+
+    @Test
+    public void offlineModeDisabledOnDecorator() {
+        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
+        httpClientDecorator.setOfflineMode(false);
+        String url = "url";
+        String method = "method";
+        Map<String, String> headers = new HashMap<>();
+        httpClientDecorator.callAsync(url, method, headers, null, null);
+        verify(mHttpClient).callAsync(eq(url), eq(method), eq(headers), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
+    }
+
+    @Test
+    public void setOfflineModeBeforeStartDoesNotWork() {
+        Storage.unsetInstance();
+        Storage.setOfflineMode(true);
+        assertFalse(Storage.isOfflineMode());
     }
 }
