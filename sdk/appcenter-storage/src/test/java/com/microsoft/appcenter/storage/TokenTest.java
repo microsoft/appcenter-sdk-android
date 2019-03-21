@@ -134,7 +134,7 @@ public class TokenTest extends AbstractStorageTest {
                 "    ]\n" +
                 "}", PARTITION_NAME, FAKE_TOKEN);
         String authToken = "auth-token";
-        AuthTokenContext.getInstance().setAuthToken(authToken, "account id");
+        AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
