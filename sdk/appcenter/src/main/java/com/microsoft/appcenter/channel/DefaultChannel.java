@@ -28,7 +28,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,6 +119,11 @@ public class DefaultChannel implements Channel {
      * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
      */
     private int mCurrentState;
+
+    /****
+     *
+     */
+    private AuthTokenContext mAuthTokenContext = AuthTokenContext.getInstance();
 
     /**
      * Creates and initializes a new instance.
@@ -454,10 +459,13 @@ public class DefaultChannel implements Channel {
             return;
         }
 
+        /* Get oldest token to getting batch by endTime of this token*      */
+        AuthTokenInfo authTokenInfo = mAuthTokenContext.getStorage().getOldestToken();
+
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, null);
+        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, authTokenInfo.getEndTime());
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;
@@ -515,8 +523,7 @@ public class DefaultChannel implements Channel {
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-            groupState.mIngestion.sendAsync(authTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAuthTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {
@@ -574,6 +581,9 @@ public class DefaultChannel implements Channel {
                     groupListener.onSuccess(log);
                 }
             }
+            /* Removing token after successful sent logs related to this token */
+            String token = mAuthTokenContext.getStorage().getOldestToken().getAuthToken();
+            mAuthTokenContext.getInstance().getStorage().removeToken(token);
             checkPendingLogs(groupState);
         }
     }
