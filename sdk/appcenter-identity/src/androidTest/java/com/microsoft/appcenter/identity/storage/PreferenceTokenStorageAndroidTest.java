@@ -49,6 +49,15 @@ public class PreferenceTokenStorageAndroidTest {
     public void saveToken() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
 
+        /* Initial values are null. */
+        assertNull(AUTH_TOKEN, tokenStorage.getToken());
+        assertNull(ACCOUNT_ID, tokenStorage.getHomeAccountId());
+
+        /* Account id is still null we can't pass valid token. */
+        tokenStorage.saveToken(null, ACCOUNT_ID, new Date());
+        assertNull(AUTH_TOKEN, tokenStorage.getToken());
+        assertNull(ACCOUNT_ID, tokenStorage.getHomeAccountId());
+
         /* Save the token into storage. */
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
 
@@ -64,8 +73,10 @@ public class PreferenceTokenStorageAndroidTest {
         assertNull(tokenStorage.getHomeAccountId());
 
         /* The same token should't be in history twice in a row. */
-        tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
+        Calendar calendar = Calendar.getInstance();
+        tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, calendar.getTime());
+        calendar.add(Calendar.HOUR, 1);
+        tokenStorage.saveToken(AUTH_TOKEN, null, calendar.getTime());
 
         /* Check history. */
         assertEquals(4, tokenStorage.getTokenHistory().size());
@@ -76,6 +87,7 @@ public class PreferenceTokenStorageAndroidTest {
 
         /* History has empty array. */
         tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        assertNull(AUTH_TOKEN, tokenStorage.getToken());
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, tokenStorage.getTokenHistory().size());
 
@@ -91,11 +103,10 @@ public class PreferenceTokenStorageAndroidTest {
     public void removeToken() {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
 
-        /* History is empty. */
+        /* History is empty (removing does nothing). */
         assertNull(tokenStorage.getTokenHistory());
-
-        /* Removing does nothing. */
         tokenStorage.removeToken(null);
+        assertNull(tokenStorage.getTokenHistory());
 
         /* Save the token into storage adds 2 entries (null and AUTH_TOKEN to history. */
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
@@ -112,6 +123,11 @@ public class PreferenceTokenStorageAndroidTest {
         /* Remove second one (not allowed). */
         tokenStorage.removeToken(AUTH_TOKEN);
         assertEquals(1, tokenStorage.getTokenHistory().size());
+
+        /* History has empty array (removing does nothing). */
+        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        tokenStorage.removeToken(null);
+        assertEquals(0, tokenStorage.getTokenHistory().size());
     }
 
     @Test
@@ -161,6 +177,14 @@ public class PreferenceTokenStorageAndroidTest {
         assertEquals("3", authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getStartTime());
         assertEquals(afterHour, authTokenInfo.getEndTime());
+
+        /* History has empty array. */
+        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        authTokenInfo = tokenStorage.getOldestToken();
+        assertNotNull(authTokenInfo);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
     }
 
     @Test

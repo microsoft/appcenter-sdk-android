@@ -80,14 +80,23 @@ public class PreferenceTokenStorageTest {
         assertNull(mTokenStorage.getTokenHistory());
 
         /* History is invalid. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage.setTokenHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("some bad json");
         assertEquals(0, mTokenStorage.getTokenHistory().size());
 
         /* History has one token. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage.setTokenHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("[{\"token\":null,\"time\":null,\"expiresOn\":null}]");
         assertEquals(1, mTokenStorage.getTokenHistory().size());
+    }
+
+    @Test
+    public void getTokenHistoryEmptyJson() {
+        CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
+        when(decryptedData.getDecryptedData()).thenReturn("");
+        when(mCryptoUtils.decrypt(eq("empty"), eq(false))).thenReturn(decryptedData);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("empty");
+        assertNull(mTokenStorage.getTokenHistory());
     }
 
     @Test
@@ -110,7 +119,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History is invalid. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage.setTokenHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         authTokenInfo = mTokenStorage.getOldestToken();
         assertNull(authTokenInfo.getAuthToken());
@@ -118,7 +127,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History has one null token. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage.setTokenHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
                 .thenReturn("[{\"token\":null,\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();
@@ -127,7 +136,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History has one token. */
-        mTokenStorage = new PreferenceTokenStorage(mock(Context.class));
+        mTokenStorage.setTokenHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
                 .thenReturn("[{\"token\":\"" + AUTH_TOKEN + "\",\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();
