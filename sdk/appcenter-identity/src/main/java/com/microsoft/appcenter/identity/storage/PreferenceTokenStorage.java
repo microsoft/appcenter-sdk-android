@@ -33,12 +33,6 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class PreferenceTokenStorage implements AuthTokenStorage {
 
     /**
-     * Used for authentication requests, string field for auth token.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_AUTH_TOKEN = "AppCenter.auth_token";
-
-    /**
      * Used for distinguishing users, string field for home account id.
      */
     @VisibleForTesting
@@ -62,6 +56,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     private final Context mContext;
 
     /**
+     * Token history.
+     */
+    private List<TokenStoreEntity> mHistory;
+
+    /**
      * Default constructor.
      *
      * @param context {@link Context} instance.
@@ -71,69 +70,59 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     @Override
-    public void saveToken(String token, String homeAccountId, Date expiresOn) {
-        String encryptedToken = CryptoUtils.getInstance(mContext).encrypt(token);
-        List<TokenStoreEntity> history = loadTokenHistory();
+    public synchronized void saveToken(String token, String homeAccountId, Date expiresOn) {
+        List<TokenStoreEntity> history = getTokenHistory();
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
+
+                /* TODO add comment */
                 add(new TokenStoreEntity(null, null, null));
             }};
         }
 
         /* Do not add the same token twice in a row. */
         String lastToken = history.size() > 0 ? history.get(history.size() - 1).getToken() : null;
-        if (lastToken != null && lastToken.length() > 0) {
-            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(lastToken, false);
-            lastToken = decryptedData.getDecryptedData();
-        }
         if (!TextUtils.equals(lastToken, token)) {
-            history.add(new TokenStoreEntity(encryptedToken, new Date(), expiresOn));
+            history.add(new TokenStoreEntity(token, new Date(), expiresOn));
         }
 
         /* Limit history size. */
         if (history.size() > TOKEN_HISTORY_LIMIT) {
-            AppCenterLog.debug(LOG_TAG, "Size of the token history is exceeded. The oldest token has been removed.");
             history.remove(0);
+            AppCenterLog.debug(LOG_TAG, "Size of the token history is exceeded. The oldest token has been removed.");
         }
 
         /* Update history and current token. */
-        saveTokenHistory(history);
-        if (token != null) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_AUTH_TOKEN, encryptedToken);
+        setTokenHistory(history);
+        if (token != null && homeAccountId != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
         } else {
-            SharedPreferencesManager.remove(PREFERENCE_KEY_AUTH_TOKEN);
             SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
         }
     }
 
     @Override
-    public String getToken() {
-        String encryptedToken = SharedPreferencesManager.getString(PREFERENCE_KEY_AUTH_TOKEN, null);
-        if (encryptedToken == null || encryptedToken.length() == 0) {
-            return null;
+    public synchronized String getToken() {
+        List<TokenStoreEntity> history = getTokenHistory();
+        if (history != null && history.size() > 0) {
+            return history.get(history.size() - 1).getToken();
         }
-        CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedToken, false);
-        return decryptedData.getDecryptedData();
+        return null;
     }
 
     @Override
-    public String getHomeAccountId() {
+    public synchronized String getHomeAccountId() {
         return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
     }
 
     @Override
-    public AuthTokenInfo getOldestToken() {
-        List<TokenStoreEntity> history = loadTokenHistory();
+    public synchronized AuthTokenInfo getOldestToken() {
+        List<TokenStoreEntity> history = getTokenHistory();
         if (history == null || history.size() == 0) {
-            return new AuthTokenInfo(getToken(), null, null);
+            return new AuthTokenInfo(null, null, null);
         }
         TokenStoreEntity storeEntity = history.get(0);
         String token = storeEntity.getToken();
-        if (token != null && token.length() > 0) {
-            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(token, false);
-            token = decryptedData.getDecryptedData();
-        }
         Date endTime = storeEntity.getExpiresOn();
         Date nextChangeTime = history.size() > 1 ? history.get(1).getTime() : null;
         if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
@@ -145,54 +134,58 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     @Override
-    public void removeToken(String token) {
-        List<TokenStoreEntity> history = loadTokenHistory();
-        if (history == null) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: the token history is empty.");
+    public synchronized void removeToken(String token) {
+        List<TokenStoreEntity> history = getTokenHistory();
+        if (history == null || history.size() == 0) {
+            AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: token history is empty.");
+            return;
+        }
+        if (history.size() == 1) {
+            AppCenterLog.debug(LOG_TAG, "Couldn't remove token from history: token history contains only current one.");
+            return;
+        }
+        TokenStoreEntity storeEntity = history.get(0);
+        if (!TextUtils.equals(storeEntity.getToken(), token)) {
+            AppCenterLog.debug(LOG_TAG, "Couldn't remove token from history: the token isn't oldest or is already removed.");
             return;
         }
 
-        /* Find token in token history. */
-        Iterator<TokenStoreEntity> iterator = history.listIterator();
-        while (iterator.hasNext()) {
-            TokenStoreEntity entity = iterator.next();
-            String entityToken = entity.getToken();
-            if (entityToken != null && entityToken.length() > 0) {
-                CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(entityToken, false);
-                entityToken = decryptedData.getDecryptedData();
-            }
-            if (TextUtils.equals(entityToken, token)) {
-                iterator.remove();
-                saveTokenHistory(history);
-                AppCenterLog.debug(LOG_TAG, "The token has been removed from the token history.");
-                return;
-            }
-        }
-        AppCenterLog.warn(LOG_TAG, "Couldn't find token in the token history.");
+        /* Remove the token from history. */
+        history.remove(0);
+        setTokenHistory(history);
+        AppCenterLog.debug(LOG_TAG, "The token has been removed from token history.");
     }
 
     @VisibleForTesting
-    List<TokenStoreEntity> loadTokenHistory() {
-        String historyJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-        if (historyJson == null) {
+    List<TokenStoreEntity> getTokenHistory() {
+        if (mHistory != null) {
+            return mHistory;
+        }
+        String encryptedJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        String json = null;
+        if (encryptedJson != null && !encryptedJson.isEmpty()) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedJson, false);
+            json = decryptedData.getDecryptedData();
+        }
+        if (json == null || json.isEmpty()) {
             return null;
         }
         TokenStoreEntity[] entities = null;
         try {
-            entities = new Gson().fromJson(historyJson, TokenStoreEntity[].class);
+            entities = new Gson().fromJson(json, TokenStoreEntity[].class);
         } catch (JsonParseException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
         }
-        if (entities != null) {
-            return new ArrayList<>(Arrays.asList(entities));
-        }
-        return new ArrayList<>();
+        mHistory = entities != null ? new ArrayList<>(Arrays.asList(entities)) : new ArrayList<TokenStoreEntity>();
+        return mHistory;
     }
 
     @VisibleForTesting
-    void saveTokenHistory(List<TokenStoreEntity> history) {
+    void setTokenHistory(List<TokenStoreEntity> history) {
+        mHistory = history;
         String json = new Gson().toJson(history.toArray());
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, json);
+        String encryptedJson = CryptoUtils.getInstance(mContext).encrypt(json);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, encryptedJson);
     }
 
     @VisibleForTesting

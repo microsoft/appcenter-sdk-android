@@ -115,7 +115,9 @@ public class AuthTokenContext {
     }
 
     private void updateAuthToken(String authToken, String homeAccountId) {
-        final boolean isNewUser = isNewUser(homeAccountId);
+
+        /* Check if it's a new user before changing current home account id. */
+        boolean isNewUser = isNewUser(homeAccountId);
         mAuthToken = authToken;
         mHomeAccountId = homeAccountId;
 

@@ -31,21 +31,25 @@ public interface AuthTokenStorage {
     String getToken();
 
     /**
-     * Retrieves homeAccountId value.
+     * Retrieves home account id value.
      *
      * @return unique identifier of user.
      */
     String getHomeAccountId();
 
     /**
-     * Gets the oldest token info from history.
+     * Gets the oldest token info from history. It contains a token and time
+     * when it was valid. To retrieve the next history entry, the oldest one
+     * should be removed (once it isn't required anymore).
      *
      * @return auth token info.
+     * @see AuthTokenInfo
      */
     AuthTokenInfo getOldestToken();
 
     /**
      * Removes the token from history.
+     * TODO remove only oldest, use set null for sign out
      *
      * @param token auth token to remove.
      */
