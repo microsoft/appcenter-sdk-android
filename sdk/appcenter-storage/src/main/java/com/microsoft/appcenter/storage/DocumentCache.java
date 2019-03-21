@@ -76,7 +76,7 @@ class DocumentCache {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    public <T> void write(Document<T> document, WriteOptions writeOptions) {
+    <T> void write(Document<T> document, WriteOptions writeOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
         Calendar expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
@@ -88,7 +88,7 @@ class DocumentCache {
         mDatabaseManager.replace(values);
     }
 
-    public <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+    <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
         ContentValues values;
@@ -105,7 +105,7 @@ class DocumentCache {
 
         /* We only expect one value as we do upserts in the `write` method */
         values = mDatabaseManager.nextValues(cursor);
-        if (cursor != null && values != null) {
+        if (values != null) {
             if (readOptions.isExpired(values.getAsLong(EXPIRES_AT_COLUMN_NAME))) {
                 mDatabaseManager.delete(cursor.getLong(0));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
@@ -120,7 +120,7 @@ class DocumentCache {
         return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
-    public void delete(String partition, String documentId) {
+    void delete(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(
