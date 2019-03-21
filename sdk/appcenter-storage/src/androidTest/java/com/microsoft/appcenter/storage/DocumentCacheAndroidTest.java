@@ -72,4 +72,24 @@ public class DocumentCacheAndroidTest {
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getError());
     }
+
+    @Test
+    public void readExpiredDocument() {
+
+        /* Write a document and mock device ttl to be already expired a few seconds ago. */
+        Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
+        mDocumentCache.write(document, new WriteOptions() {
+
+            @Override
+            public int getDeviceTimeToLive() {
+                return -2;
+            }
+        });
+
+        /* Read with a TTL of 1 second: already expired. */
+        Document<String> deletedDocument = mDocumentCache.read(PARTITION, ID, String.class, new ReadOptions(1));
+        assertNotNull(deletedDocument);
+        assertNull(deletedDocument.getDocument());
+        assertNotNull(deletedDocument.getError());
+    }
 }
