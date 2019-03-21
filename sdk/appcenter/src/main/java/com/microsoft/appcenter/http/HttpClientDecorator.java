@@ -7,11 +7,11 @@ package com.microsoft.appcenter.http;
 
 import java.io.IOException;
 
-abstract class HttpClientDecorator implements HttpClient {
+public abstract class HttpClientDecorator implements HttpClient {
 
-    final HttpClient mDecoratedApi;
+    protected final HttpClient mDecoratedApi;
 
-    HttpClientDecorator(HttpClient decoratedApi) {
+    public HttpClientDecorator(HttpClient decoratedApi) {
         mDecoratedApi = decoratedApi;
     }
 
