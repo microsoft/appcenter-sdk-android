@@ -370,6 +370,11 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
+    public void deleteLogs(@NonNull String group, @NonNull Date timestamp) {
+        // TODO
+    }
+
+    @Override
     public void deleteLogs(String group) {
 
         /* Log. */

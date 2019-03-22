@@ -29,6 +29,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -120,11 +121,6 @@ public class DefaultChannel implements Channel {
      * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
      */
     private int mCurrentState;
-
-    /****
-     *
-     */
-    private AuthTokenContext mAuthTokenContext = AuthTokenContext.getInstance();
 
     /**
      * Creates and initializes a new instance.
@@ -460,16 +456,41 @@ public class DefaultChannel implements Channel {
             return;
         }
 
-        /* Get oldest token to getting batch by endTime of this token*      */
-        AuthTokenInfo authTokenInfo = mAuthTokenContext.getStorage().getOldestToken();
+        /* Get auth token. */
+        AuthTokenInfo authTokenInfo = null;
+        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        AuthTokenStorage authTokenStorage = authTokenContext.getStorage();
+        if (authTokenStorage != null) {
+            authTokenInfo = authTokenStorage.getOldestToken();
+        }
+        final String authToken;
+        Date startTime = null;
+        Date endTime = null;
+        if (authTokenInfo != null) {
+            authToken = authTokenInfo.getAuthToken();
+            startTime = authTokenInfo.getStartTime();
+            endTime = authTokenInfo.getEndTime();
+        } else {
+            authToken = null;
+        }
+
+        /* Delete logs without correct token. */
+        if (startTime != null) {
+            mPersistence.deleteLogs(groupState.mName, startTime);
+        }
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, authTokenInfo.getEndTime());
+        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, endTime);
+
+        if (authTokenStorage != null && batch.size() == 0) {
+            authTokenStorage.removeToken(authToken);
+            return;
+        }
 
         /* Decrement counter. */
-        groupState.mPendingLogCount -= maxFetch;
+        groupState.mPendingLogCount -= batch.size();
 
         /* Nothing more to do if no logs. */
         if (batchId == null) {
@@ -504,7 +525,7 @@ public class DefaultChannel implements Channel {
 
             @Override
             public void run() {
-                sendLogs(groupState, stateSnapshot, batch, batchId);
+                sendLogs(groupState, stateSnapshot, batch, batchId, authToken);
             }
         });
     }
@@ -518,13 +539,13 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId, final String authToken) {
         if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAuthTokenContext.getAuthToken(), mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(authToken, mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(String payload, Map<String, String> headers) {
@@ -582,9 +603,6 @@ public class DefaultChannel implements Channel {
                     groupListener.onSuccess(log);
                 }
             }
-            /* Removing token after successful sent logs related to this token */
-            String token = mAuthTokenContext.getStorage().getOldestToken().getAuthToken();
-            mAuthTokenContext.getInstance().getStorage().removeToken(token);
             checkPendingLogs(groupState);
         }
     }
