@@ -43,8 +43,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         SQLiteUtils.class,
         AppCenterLog.class,
         DatabaseManager.class,
-        DocumentCache.class})
-public class DocumentCacheTest {
+        LocalDocumentStorage.class})
+public class LocalDocumentStorageTest {
 
     private static final String PARTITION = "partition";
 
@@ -55,19 +55,19 @@ public class DocumentCacheTest {
 
     private DatabaseManager mDatabaseManager;
 
-    private DocumentCache mDocumentCache;
+    private LocalDocumentStorage mLocalDocumentStorage;
 
     @Before
     public void setUp() throws Exception {
         mockStatic(AppCenterLog.class);
         mDatabaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
-        mDocumentCache = new DocumentCache(mock(Context.class));
+        mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class));
     }
 
     @Test
     public void upsertGetsCalledInWrite() {
-        mDocumentCache.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> values = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(values.capture());
     }
@@ -75,7 +75,7 @@ public class DocumentCacheTest {
     @Test
     public void readReturnsErrorObjectOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
-        Document<String> doc = mDocumentCache.read(PARTITION, DOCUMENT_ID, String.class, ReadOptions.CreateNoCacheOption());
+        Document<String> doc = mLocalDocumentStorage.read(PARTITION, DOCUMENT_ID, String.class, ReadOptions.CreateNoCacheOption());
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
@@ -85,7 +85,7 @@ public class DocumentCacheTest {
     @Test
     public void deleteReturnsErrorObjectOnDbRuntimeException() {
         doThrow(new RuntimeException()).when(mDatabaseManager).delete(anyString(), any(String[].class));
-        mDocumentCache.delete(PARTITION, DOCUMENT_ID);
+        mLocalDocumentStorage.delete(PARTITION, DOCUMENT_ID);
         verify(mDatabaseManager).delete(anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
     }
 

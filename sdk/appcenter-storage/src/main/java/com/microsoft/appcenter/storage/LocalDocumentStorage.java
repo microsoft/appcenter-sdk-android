@@ -23,7 +23,7 @@ import java.util.Calendar;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-class DocumentCache {
+class LocalDocumentStorage {
 
     /**
      * Database name.
@@ -37,24 +37,59 @@ class DocumentCache {
     private static final String TABLE = "cache";
 
     /**
-     * Document Id column.
-     */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "documentId";
-
-    /**
      * Partition column.
      */
     private static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
-     * Content column.
+     * Document Id column.
      */
-    private static final String CONTENT_COLUMN_NAME = "content";
+    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
-     * Expires at column.
+     * Document column.
      */
-    private static final String EXPIRES_AT_COLUMN_NAME = "expiresAt";
+    private static final String DOCUMENT_COLUMN_NAME = "document";
+
+    /**
+     * Etag column.
+     */
+    private static final String ETAG_COLUMN_NAME = "etag";
+
+    /**
+     * Expiration time column.
+     */
+    private static final String EXPIRATION_TIME_COLUMN_NAME = "expiration_time";
+
+    /**
+     * Download time column.
+     */
+    private static final String DOWNLOAD_TIME_COLUMN_NAME = "download_time";
+
+    /**
+     * Operation time column.
+     */
+    private static final String OPERATION_TIME_COLUMN_NAME = "operation_time";
+
+    /**
+     * Pending operation column.
+     */
+    private static final String PENDING_OPERATION_COLUMN_NAME = "pending_operation";
+
+    /**
+     * Pending operation CREATE value.
+     */
+    private static final String PENDING_OPERATION_CREATE_VALUE = "CREATE";
+
+    /**
+     * Pending operation REPLACE value.
+     */
+    private static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
+
+    /**
+     * Pending operation DELETE value.
+     */
+    private static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
 
     /**
      * Current version of the schema.
@@ -64,27 +99,32 @@ class DocumentCache {
     /**
      * Current schema.
      */
-    private static final ContentValues SCHEMA = getContentValues("", "", new Document<>(), Calendar.getInstance().getTimeInMillis());
+    private static final ContentValues SCHEMA =
+            getContentValues("", "", new Document<>(), "", 0, 0, 0, "");
 
     private final DatabaseManager mDatabaseManager;
 
-    private DocumentCache(DatabaseManager databaseManager) {
+    private LocalDocumentStorage(DatabaseManager databaseManager) {
         mDatabaseManager = databaseManager;
     }
 
-    DocumentCache(Context context) {
+    LocalDocumentStorage(Context context) {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
     <T> void write(Document<T> document, WriteOptions writeOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        Calendar expiresAt = Calendar.getInstance();
+        Calendar now = Calendar.getInstance();
+        Calendar expiresAt = now;
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
         ContentValues values = getContentValues(
-                document.getId(),
-                document.getPartition(),
+                document.getPartition(), document.getId(),
                 document,
-                expiresAt.getTimeInMillis());
+                document.getEtag(),
+                expiresAt.getTimeInMillis(),
+                now.getTimeInMillis(),
+                now.getTimeInMillis(),
+                PENDING_OPERATION_CREATE_VALUE);
         mDatabaseManager.replace(values);
     }
 
@@ -97,7 +137,7 @@ class DocumentCache {
                     getPartitionAndDocumentIdQueryBuilder(),
                     null,
                     new String[]{partition, documentId},
-                    EXPIRES_AT_COLUMN_NAME + " DESC");
+                    EXPIRATION_TIME_COLUMN_NAME + " DESC");
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
             return new Document<>("Failed to read from cache.", e);
@@ -106,12 +146,12 @@ class DocumentCache {
         /* We only expect one value as we do upserts in the `write` method */
         values = mDatabaseManager.nextValues(cursor);
         if (values != null) {
-            if (readOptions.isExpired(values.getAsLong(EXPIRES_AT_COLUMN_NAME))) {
+            if (readOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
                 mDatabaseManager.delete(cursor.getLong(0));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
-            Document<T> document = Utils.parseDocument(values.getAsString(CONTENT_COLUMN_NAME), documentType);
+            Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             write(document, new WriteOptions(readOptions.getDeviceTimeToLive()));
             document.setIsFromCache(true);
             return document;
@@ -139,12 +179,24 @@ class DocumentCache {
         return builder;
     }
 
-    private static <T> ContentValues getContentValues(String documentId, String partition, Document<T> document, long expiresAt) {
+    private static <T> ContentValues getContentValues(
+            String partition,
+            String documentId,
+            Document<T> document,
+            String etag,
+            long expirationTime,
+            long downloadTime,
+            long operationTime,
+            String pendingOperation) {
         ContentValues values = new ContentValues();
-        values.put(DOCUMENT_ID_COLUMN_NAME, documentId);
         values.put(PARTITION_COLUMN_NAME, partition);
-        values.put(CONTENT_COLUMN_NAME, Utils.getGson().toJson(document));
-        values.put(EXPIRES_AT_COLUMN_NAME, expiresAt);
+        values.put(DOCUMENT_ID_COLUMN_NAME, documentId);
+        values.put(DOCUMENT_COLUMN_NAME, Utils.getGson().toJson(document));
+        values.put(ETAG_COLUMN_NAME, etag);
+        values.put(EXPIRATION_TIME_COLUMN_NAME, expirationTime);
+        values.put(DOWNLOAD_TIME_COLUMN_NAME, downloadTime);
+        values.put(OPERATION_TIME_COLUMN_NAME, operationTime);
+        values.put(PENDING_OPERATION_COLUMN_NAME, pendingOperation);
         return values;
     }
 }
