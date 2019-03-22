@@ -8,7 +8,10 @@ package com.microsoft.appcenter.utils.context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
+
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashSet;
 
 /**
@@ -34,7 +37,12 @@ public class AuthTokenContext {
     /**
      * Current value of home account id.
      */
-    private String mLastHomeAccountId;
+    private String mHomeAccountId;
+
+    /**
+     * Instance of {@link AuthTokenStorage} to store token information.
+     */
+    private AuthTokenStorage mStorage;
 
     /**
      * Get unique instance.
@@ -84,22 +92,42 @@ public class AuthTokenContext {
     }
 
     /**
+     * Gets current homeAccountId value.
+     *
+     * @return unique identifier of user.
+     */
+    public synchronized String getHomeAccountId() {
+        return mHomeAccountId;
+    }
+
+    /**
      * Sets new authorization token.
      *
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
+     * @param expiresOn     time when token expires.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId) {
+    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
+        if (mStorage != null) {
+            mStorage.saveToken(authToken, homeAccountId, expiresOn);
+        }
+        updateAuthToken(authToken, homeAccountId);
+    }
+
+    private void updateAuthToken(String authToken, String homeAccountId) {
+
+        /* Check if it's a new user before changing current home account id. */
+        boolean isNewUser = isNewUser(homeAccountId);
         mAuthToken = authToken;
+        mHomeAccountId = homeAccountId;
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
-            if (isNewUser(homeAccountId)) {
+            if (isNewUser) {
                 listener.onNewUser(authToken);
             }
         }
-        mLastHomeAccountId = homeAccountId;
     }
 
     /**
@@ -109,19 +137,41 @@ public class AuthTokenContext {
      * @return true if this user is not the same as previous, false otherwise.
      */
     private synchronized boolean isNewUser(String newHomeAccountId) {
-        return mLastHomeAccountId == null || !mLastHomeAccountId.equals(newHomeAccountId);
+        return mHomeAccountId == null || !mHomeAccountId.equals(newHomeAccountId);
     }
 
     /**
      * Clears info about the token.
      */
-    public synchronized void clearToken() {
-        mAuthToken = null;
-        mLastHomeAccountId = null;
-        for (Listener listener : mListeners) {
-            listener.onNewAuthToken(null);
-            listener.onNewUser(null);
+    public synchronized void clearAuthToken() {
+        setAuthToken(null, null, null);
+    }
+
+    /**
+     * Cache auth token and account data to be used later on.
+     */
+    public synchronized void cacheAuthToken() {
+        if (mStorage != null) {
+            updateAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
         }
+    }
+
+    /**
+     * Gets token storage.
+     *
+     * @return token storage.
+     */
+    public AuthTokenStorage getStorage() {
+        return mStorage;
+    }
+
+    /**
+     * Sets current authorization token.
+     *
+     * @param storage token storage.
+     */
+    public void setStorage(AuthTokenStorage storage) {
+        mStorage = storage;
     }
 
     /**
@@ -131,11 +181,15 @@ public class AuthTokenContext {
 
         /**
          * Called whenever a new token is set.
+         *
+         * @param authToken authorization token.
          */
         void onNewAuthToken(String authToken);
 
         /**
          * Called whenever a new user signs in.
+         *
+         * @param authToken authorization token.
          */
         void onNewUser(String authToken);
     }

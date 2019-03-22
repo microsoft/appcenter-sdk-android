@@ -7,6 +7,8 @@ package com.microsoft.appcenter.identity.storage;
 
 import android.content.Context;
 
+import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
+
 /**
  * Factory class to produce instance of {@link AuthTokenStorage}.
  */

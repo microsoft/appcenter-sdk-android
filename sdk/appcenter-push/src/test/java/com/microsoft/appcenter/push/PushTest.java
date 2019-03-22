@@ -43,6 +43,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -735,7 +736,7 @@ public class PushTest {
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -748,7 +749,7 @@ public class PushTest {
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().clearToken();
+        AuthTokenContext.getInstance().clearAuthToken();
         verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -761,8 +762,8 @@ public class PushTest {
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -775,8 +776,8 @@ public class PushTest {
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
-        AuthTokenContext.getInstance().setAuthToken(mockToken, "new-id");
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        AuthTokenContext.getInstance().setAuthToken(mockToken, "new-id", mock(Date.class));
         verify(channel, times(3)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -788,7 +789,7 @@ public class PushTest {
         start(push, channel);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
@@ -801,7 +802,7 @@ public class PushTest {
         Push.setEnabled(false);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId);
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
     }
 
