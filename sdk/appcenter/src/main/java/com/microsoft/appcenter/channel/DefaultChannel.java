@@ -476,7 +476,7 @@ public class DefaultChannel implements Channel {
 
         /* Delete logs without correct token. */
         if (startTime != null) {
-            mPersistence.deleteLogs(groupState.mName, startTime);
+            mPersistence.deleteLogs(startTime);
         }
 
         /* Get a batch from Persistence. */
@@ -485,7 +485,11 @@ public class DefaultChannel implements Channel {
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, endTime);
 
         if (authTokenStorage != null && batch.size() == 0) {
-            authTokenStorage.removeToken(authToken);
+
+            /* */
+            if (endTime != null && mPersistence.countLogs(endTime) == 0) {
+                authTokenStorage.removeToken(authToken);
+            }
             return;
         }
 

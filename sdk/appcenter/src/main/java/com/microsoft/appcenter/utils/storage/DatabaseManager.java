@@ -278,12 +278,26 @@ public class DatabaseManager implements Closeable {
      *
      * @param key   The optional key for query.
      * @param value The optional value for query.
+     * @return the number of rows affected.
      */
-    public void delete(@Nullable String key, @Nullable Object value) {
+    public int delete(@Nullable String key, @Nullable Object value) {
+        return delete(key, value, ComparisonType.EQUAL);
+    }
+
+    /**
+     * Deletes the entries that
+     *
+     * @param key
+     * @param value
+     * @param comparisonType
+     * @return the number of rows affected.
+     */
+    public int delete(@Nullable String key, @Nullable Object value, @NonNull ComparisonType comparisonType) {
         try {
-            getDatabase().delete(mTable, key + " = ?", new String[]{String.valueOf(value)});
+            return getDatabase().delete(mTable, String.format("%s %s ?", key, comparisonType.getOperator()), new String[]{String.valueOf(value)});
         } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value=\"%s\" from database.", key, value), e);
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match key=\"%s\" and value%s\"%s\" from database.", key, comparisonType.getOperator(), value), e);
+            return 0;
         }
     }
 
@@ -305,7 +319,7 @@ public class DatabaseManager implements Closeable {
     public void close() {
         try {
 
-            /* Close opened database (Do not force open). */
+            /* Close opened database (do not force open). */
             mSQLiteOpenHelper.close();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to close the database.", e);
@@ -429,6 +443,25 @@ public class DatabaseManager implements Closeable {
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Could not get maximum database size.", e);
             return -1;
+        }
+    }
+
+    public enum ComparisonType {
+        EQUAL("="),
+        NOT_EQUAL("!="),
+        LESS("<"),
+        LESS_OR_EQUAL("<="),
+        GREATER(">"),
+        GREATER_OR_EQUAL(">=");
+
+        private final String mOperator;
+
+        ComparisonType(String operator) {
+            mOperator = operator;
+        }
+
+        public String getOperator() {
+            return mOperator;
         }
     }
 
