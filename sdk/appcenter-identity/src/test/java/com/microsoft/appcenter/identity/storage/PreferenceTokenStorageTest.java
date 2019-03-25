@@ -77,17 +77,17 @@ public class PreferenceTokenStorageTest {
 
         /* History is null. */
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn(null);
-        assertNull(mTokenStorage.getTokenHistory());
+        assertNull(mTokenStorage.getHistory());
 
         /* History is invalid. */
-        mTokenStorage.setTokenHistory(null);
+        mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("some bad json");
-        assertEquals(0, mTokenStorage.getTokenHistory().size());
+        assertEquals(0, mTokenStorage.getHistory().size());
 
         /* History has one token. */
-        mTokenStorage.setTokenHistory(null);
+        mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("[{\"token\":null,\"time\":null,\"expiresOn\":null}]");
-        assertEquals(1, mTokenStorage.getTokenHistory().size());
+        assertEquals(1, mTokenStorage.getHistory().size());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PreferenceTokenStorageTest {
         when(decryptedData.getDecryptedData()).thenReturn("");
         when(mCryptoUtils.decrypt(eq("empty"), eq(false))).thenReturn(decryptedData);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("empty");
-        assertNull(mTokenStorage.getTokenHistory());
+        assertNull(mTokenStorage.getHistory());
     }
 
     @Test
@@ -119,7 +119,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History is invalid. */
-        mTokenStorage.setTokenHistory(null);
+        mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         authTokenInfo = mTokenStorage.getOldestToken();
         assertNull(authTokenInfo.getAuthToken());
@@ -127,7 +127,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History has one null token. */
-        mTokenStorage.setTokenHistory(null);
+        mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
                 .thenReturn("[{\"token\":null,\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();
@@ -136,7 +136,7 @@ public class PreferenceTokenStorageTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* History has one token. */
-        mTokenStorage.setTokenHistory(null);
+        mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class)))
                 .thenReturn("[{\"token\":\"" + AUTH_TOKEN + "\",\"time\":null,\"expiresOn\":null}]");
         authTokenInfo = mTokenStorage.getOldestToken();

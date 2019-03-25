@@ -8,6 +8,7 @@ package com.microsoft.appcenter.utils.storage;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Interface for storage that works with token.
@@ -38,14 +39,12 @@ public interface AuthTokenStorage {
     String getHomeAccountId();
 
     /**
-     * Gets the oldest token info from history. It contains a token and time
-     * when it was valid. To retrieve the next history entry, the oldest one
-     * should be removed (once it isn't required anymore).
+     * Gets the token history. It contains tokens and time when it was valid.
      *
      * @return auth token info.
      * @see AuthTokenInfo
      */
-    AuthTokenInfo getOldestToken();
+    List<AuthTokenInfo> getTokenHistory();
 
     /**
      * Removes the token from history. Please note that only oldest token is

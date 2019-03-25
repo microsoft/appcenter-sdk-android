@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -50,7 +51,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
-     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List, Date)} when clearing.
+     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List, Date, Date)} when clearing.
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
@@ -411,7 +412,7 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs, null);
+        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs, null, null);
         if (logs.size() > 0 && groupState.mListener != null) {
             for (Log log : logs) {
                 groupState.mListener.onBeforeSending(log);
@@ -457,81 +458,86 @@ public class DefaultChannel implements Channel {
         }
 
         /* Get auth token. */
-        AuthTokenInfo authTokenInfo = null;
-        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        AuthTokenStorage authTokenStorage = authTokenContext.getStorage();
+        List<AuthTokenInfo> authTokenHistory = null;
+        AuthTokenStorage authTokenStorage = AuthTokenContext.getInstance().getStorage();
         if (authTokenStorage != null) {
-            authTokenInfo = authTokenStorage.getOldestToken();
+            authTokenHistory = authTokenStorage.getTokenHistory();
         }
-        final String authToken;
-        Date startTime = null;
-        Date endTime = null;
-        if (authTokenInfo != null) {
-            authToken = authTokenInfo.getAuthToken();
-            startTime = authTokenInfo.getStartTime();
-            endTime = authTokenInfo.getEndTime();
-        } else {
-            authToken = null;
+        if (authTokenHistory == null) {
+            authTokenHistory = Collections.singletonList(new AuthTokenInfo(null, null, null));
         }
-
-        /* Delete logs without correct token. */
-        if (startTime != null) {
-            mPersistence.deleteLogs(startTime);
-        }
-
-        /* Get a batch from Persistence. */
-        final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, endTime);
-
-        if (authTokenStorage != null && batch.size() == 0) {
-
-            /* */
-            if (endTime != null && mPersistence.countLogs(endTime) == 0) {
-                authTokenStorage.removeToken(authToken);
+        ListIterator<AuthTokenInfo> iterator = authTokenHistory.listIterator();
+        while (iterator.hasNext()) {
+            AuthTokenInfo authTokenInfo = iterator.next();
+            final String authToken;
+            Date startTime = null;
+            Date endTime = null;
+            if (authTokenInfo != null) {
+                authToken = authTokenInfo.getAuthToken();
+                startTime = authTokenInfo.getStartTime();
+                endTime = authTokenInfo.getEndTime();
+            } else {
+                authToken = null;
             }
+
+            /* Delete logs without correct token. */
+            if (!iterator.hasPrevious() && startTime != null) {
+                mPersistence.deleteLogs(startTime);
+            }
+
+            /* Get a batch from Persistence. */
+            final List<Log> batch = new ArrayList<>(maxFetch);
+            final int stateSnapshot = mCurrentState;
+            final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, startTime, endTime);
+
+            /* Decrement counter. */
+            groupState.mPendingLogCount -= pendingLogCount;
+
+            /* If no logs to send. */
+            if (batchId == null) {
+
+                /* Remove oldest token if there are no more logs. */
+                if (!iterator.hasPrevious() &&
+                        authTokenStorage != null && endTime != null &&
+                        mPersistence.countLogs(endTime) == 0) {
+                    authTokenStorage.removeToken(authToken);
+                }
+                continue;
+            }
+            AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+            /* Call group listener before sending logs to ingestion service. */
+            if (groupState.mListener != null) {
+                for (Log log : batch) {
+                    groupState.mListener.onBeforeSending(log);
+                }
+            }
+
+            /* Remember this batch. */
+            groupState.mSendingBatches.put(batchId, batch);
+
+            /*
+             * Due to bug on old Android versions (verified on 4.0.4),
+             * if we start an async task from here, i.e. the async handler thread,
+             * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
+             * instead of using main thread as advertised in Javadoc (and its a static field there).
+             *
+             * Our SDK guards against an application that would make a first async task in non UI
+             * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
+             * with our wrong handler to avoid creating bugs in the application code since we are
+             * a library.
+             *
+             * So make sure we execute the async task from UI thread to avoid any issue.
+             */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    sendLogs(groupState, stateSnapshot, batch, batchId, authToken);
+                }
+            });
             return;
         }
-
-        /* Decrement counter. */
-        groupState.mPendingLogCount -= batch.size();
-
-        /* Nothing more to do if no logs. */
-        if (batchId == null) {
-            return;
-        }
-        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-        /* Call group listener before sending logs to ingestion service. */
-        if (groupState.mListener != null) {
-            for (Log log : batch) {
-                groupState.mListener.onBeforeSending(log);
-            }
-        }
-
-        /* Remember this batch. */
-        groupState.mSendingBatches.put(batchId, batch);
-
-        /*
-         * Due to bug on old Android versions (verified on 4.0.4),
-         * if we start an async task from here, i.e. the async handler thread,
-         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-         * instead of using main thread as advertised in Javadoc (and its a static field there).
-         *
-         * Our SDK guards against an application that would make a first async task in non UI
-         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-         * with our wrong handler to avoid creating bugs in the application code since we are
-         * a library.
-         *
-         * So make sure we execute the async task from UI thread to avoid any issue.
-         */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                sendLogs(groupState, stateSnapshot, batch, batchId, authToken);
-            }
-        });
     }
 
     /**

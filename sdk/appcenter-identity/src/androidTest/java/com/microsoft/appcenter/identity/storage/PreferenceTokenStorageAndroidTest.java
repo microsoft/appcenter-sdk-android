@@ -79,24 +79,24 @@ public class PreferenceTokenStorageAndroidTest {
         tokenStorage.saveToken(AUTH_TOKEN, null, calendar.getTime());
 
         /* Check history. */
-        assertEquals(4, tokenStorage.getTokenHistory().size());
+        assertEquals(4, tokenStorage.getHistory().size());
         AuthTokenInfo authTokenInfo = tokenStorage.getOldestToken();
         assertNotNull(authTokenInfo);
         assertNull(authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getEndTime());
 
         /* History has empty array. */
-        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
         assertNull(AUTH_TOKEN, tokenStorage.getToken());
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        assertEquals(1, tokenStorage.getTokenHistory().size());
+        assertEquals(1, tokenStorage.getHistory().size());
 
         /* History has empty string as encrypted token. */
-        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>() {{
+        tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>() {{
             add(new PreferenceTokenStorage.TokenStoreEntity("", null, null));
         }});
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        assertEquals(2, tokenStorage.getTokenHistory().size());
+        assertEquals(2, tokenStorage.getHistory().size());
     }
 
     @Test
@@ -104,30 +104,30 @@ public class PreferenceTokenStorageAndroidTest {
         PreferenceTokenStorage tokenStorage = new PreferenceTokenStorage(mContext);
 
         /* History is empty (removing does nothing). */
-        assertNull(tokenStorage.getTokenHistory());
+        assertNull(tokenStorage.getHistory());
         tokenStorage.removeToken(null);
-        assertNull(tokenStorage.getTokenHistory());
+        assertNull(tokenStorage.getHistory());
 
         /* Save the token into storage adds 2 entries (null and AUTH_TOKEN to history. */
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        assertEquals(2, tokenStorage.getTokenHistory().size());
+        assertEquals(2, tokenStorage.getHistory().size());
 
         /* Remove last one (not allowed). */
         tokenStorage.removeToken(AUTH_TOKEN);
-        assertEquals(2, tokenStorage.getTokenHistory().size());
+        assertEquals(2, tokenStorage.getHistory().size());
 
         /* Remove first one. */
         tokenStorage.removeToken(null);
-        assertEquals(1, tokenStorage.getTokenHistory().size());
+        assertEquals(1, tokenStorage.getHistory().size());
 
         /* Remove second one (not allowed). */
         tokenStorage.removeToken(AUTH_TOKEN);
-        assertEquals(1, tokenStorage.getTokenHistory().size());
+        assertEquals(1, tokenStorage.getHistory().size());
 
         /* History has empty array (removing does nothing). */
-        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
         tokenStorage.removeToken(null);
-        assertEquals(0, tokenStorage.getTokenHistory().size());
+        assertEquals(0, tokenStorage.getHistory().size());
     }
 
     @Test
@@ -179,7 +179,7 @@ public class PreferenceTokenStorageAndroidTest {
         assertEquals(afterHour, authTokenInfo.getEndTime());
 
         /* History has empty array. */
-        tokenStorage.setTokenHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
+        tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
         authTokenInfo = tokenStorage.getOldestToken();
         assertNotNull(authTokenInfo);
         assertNull(authTokenInfo.getAuthToken());
@@ -195,6 +195,6 @@ public class PreferenceTokenStorageAndroidTest {
             String mockAccountId = UUIDUtils.randomUUID().toString();
             tokenStorage.saveToken(mockToken, mockAccountId, new Date());
         }
-        assertEquals(TOKEN_HISTORY_LIMIT, tokenStorage.getTokenHistory().size());
+        assertEquals(TOKEN_HISTORY_LIMIT, tokenStorage.getHistory().size());
     }
 }

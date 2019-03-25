@@ -408,27 +408,50 @@ public class DatabasePersistence extends Persistence {
     public void deleteLogs(@NonNull Date timestamp) {
 
         /* Log. */
-        AppCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for ");
+        AppCenterLog.debug(LOG_TAG, "Deleting logs older than " + timestamp + " from the Persistence database.");
 
-
-        /* TODO
+        /* Select ids for logs. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_GROUP + " = ?");
-        getLogsIds(builder, selectionArgsArray);
-        */
+        builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
+        try {
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{PRIMARY_KEY, COLUMN_GROUP}, new String[]{String.valueOf(timestamp)}, null);
+            try {
+                while (cursor.moveToNext()) {
+                    ContentValues values = mDatabaseManager.buildValues(cursor);
+                    Long logId = values.getAsLong(PRIMARY_KEY);
+                    String group = values.getAsString(COLUMN_GROUP);
 
-        mDatabaseManager.delete(COLUMN_TIMESTAMP + " < ?", new String[]{String.valueOf(timestamp)});
+                    /* Delete large payload files. */
+                    File directory = getLargePayloadGroupDirectory(group);
+                    deleteLog(directory, logId);
+                    mPendingDbIdentifiers.remove(logId);
+                }
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
+        }
     }
 
     @Override
     public int countLogs(@NonNull String group) {
+        return countLogs(COLUMN_GROUP + " = ?", group);
+    }
+
+    @Override
+    public int countLogs(@NonNull Date timestamp) {
+        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp));
+    }
+
+    private int countLogs(String whereClause, String ...whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_GROUP + " = ?");
+        builder.appendWhere(whereClause);
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, whereArgs, null);
             try {
                 cursor.moveToNext();
                 count = cursor.getInt(0);
@@ -442,14 +465,8 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public int countLogs(@NonNull Date timestamp) {
-        // TODO
-        return 0;
-    }
-
-    @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date timestamp) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -471,10 +488,15 @@ public class DatabasePersistence extends Persistence {
         }
 
         /* Filter by time. */
-        if (timestamp != null) {
+        if (from != null) {
             builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " <= ?");
-            selectionArgs.add(String.valueOf(timestamp.getTime()));
+            builder.appendWhere(COLUMN_TIMESTAMP + " >>= ?");
+            selectionArgs.add(String.valueOf(from.getTime()));
+        }
+        if (to != null) {
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
+            selectionArgs.add(String.valueOf(to.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */

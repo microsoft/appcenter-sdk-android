@@ -21,8 +21,8 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
@@ -71,7 +71,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public synchronized void saveToken(String token, String homeAccountId, Date expiresOn) {
-        List<TokenStoreEntity> history = getTokenHistory();
+        List<TokenStoreEntity> history = getHistory();
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
 
@@ -97,7 +97,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         }
 
         /* Update history and current token. */
-        setTokenHistory(history);
+        setHistory(history);
         if (token != null && homeAccountId != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
         } else {
@@ -107,7 +107,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public synchronized String getToken() {
-        List<TokenStoreEntity> history = getTokenHistory();
+        List<TokenStoreEntity> history = getHistory();
         if (history != null && history.size() > 0) {
             return history.get(history.size() - 1).getToken();
         }
@@ -120,26 +120,32 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     @Override
-    public synchronized AuthTokenInfo getOldestToken() {
-        List<TokenStoreEntity> history = getTokenHistory();
+    public synchronized List<AuthTokenInfo> getTokenHistory() {
+        List<TokenStoreEntity> history = getHistory();
         if (history == null || history.size() == 0) {
-            return new AuthTokenInfo(null, null, null);
+            return null;
         }
-        TokenStoreEntity storeEntity = history.get(0);
-        String token = storeEntity.getToken();
-        Date endTime = storeEntity.getExpiresOn();
-        Date nextChangeTime = history.size() > 1 ? history.get(1).getTime() : null;
-        if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
-            endTime = nextChangeTime;
-        } else if (endTime == null && nextChangeTime != null) {
-            endTime = nextChangeTime;
+
+        /* Return history with corrected end times. */
+        List<AuthTokenInfo> result = new ArrayList<>();
+        for (int i = 0; i < history.size(); i++) {
+            TokenStoreEntity storeEntity = history.get(i);
+            String token = storeEntity.getToken();
+            Date endTime = storeEntity.getExpiresOn();
+            Date nextChangeTime = history.size() > i + 1 ? history.get(i + 1).getTime() : null;
+            if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
+                endTime = nextChangeTime;
+            } else if (endTime == null && nextChangeTime != null) {
+                endTime = nextChangeTime;
+            }
+            result.add(new AuthTokenInfo(token, storeEntity.getTime(), endTime));
         }
-        return new AuthTokenInfo(token, storeEntity.getTime(), endTime);
+        return result;
     }
 
     @Override
     public synchronized void removeToken(String token) {
-        List<TokenStoreEntity> history = getTokenHistory();
+        List<TokenStoreEntity> history = getHistory();
         if (history == null || history.size() == 0) {
             AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: token history is empty.");
             return;
@@ -156,12 +162,12 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
         /* Remove the token from history. */
         history.remove(0);
-        setTokenHistory(history);
+        setHistory(history);
         AppCenterLog.debug(LOG_TAG, "The token has been removed from token history.");
     }
 
     @VisibleForTesting
-    List<TokenStoreEntity> getTokenHistory() {
+    List<TokenStoreEntity> getHistory() {
         if (mHistory != null) {
             return mHistory;
         }
@@ -185,7 +191,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     }
 
     @VisibleForTesting
-    void setTokenHistory(List<TokenStoreEntity> history) {
+    void setHistory(List<TokenStoreEntity> history) {
         mHistory = history;
         if (history != null) {
             String json = new Gson().toJson(history.toArray());

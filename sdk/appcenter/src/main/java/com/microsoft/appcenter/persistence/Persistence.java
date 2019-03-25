@@ -70,7 +70,12 @@ public abstract class Persistence implements Closeable {
      */
     public abstract int countLogs(@NonNull String group);
 
-
+    /**
+     * Gets the number of logs before {@code timestamp}.
+     *
+     * @param timestamp The time to delete only logs with time before specified.
+     * @return The number of logs.
+     */
     public abstract int countLogs(@NonNull Date timestamp);
 
     /**
@@ -80,14 +85,15 @@ public abstract class Persistence implements Closeable {
      * @param pausedTargetKeys List of target token keys to exclude from the log query.
      * @param limit            The max number of logs to be returned.
      * @param outLogs          A list to receive {@link Log} objects.
-     * @param timestamp        A time to select only logs with time before specified.
+     * @param from             A time to select only logs with time after specified.
+     * @param to               A time to select only logs with time before specified.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
     @Nullable
-    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date timestamp);
+    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to);
 
     /**
-     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List, Date)}}.
+     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List, Date, Date)}}.
      */
     public abstract void clearPendingLogState();
 
