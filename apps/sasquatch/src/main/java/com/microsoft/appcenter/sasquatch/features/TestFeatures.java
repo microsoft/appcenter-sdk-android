@@ -19,6 +19,7 @@ import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
+import com.microsoft.appcenter.sasquatch.activities.StorageActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -44,6 +45,9 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+        sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
+        sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
+
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

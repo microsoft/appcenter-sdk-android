@@ -75,7 +75,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         if (history == null) {
             history = new ArrayList<TokenStoreEntity>() {{
 
-                /* TODO add comment */
+                /*
+                 * Adding a null entry is required during the first initialization to differentiate
+                 * anonymous usage before the moment and situation when we don't have a token
+                 * in history because of the size limit for example.
+                 */
                 add(new TokenStoreEntity(null, null, null));
             }};
         }
@@ -183,9 +187,13 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     @VisibleForTesting
     void setTokenHistory(List<TokenStoreEntity> history) {
         mHistory = history;
-        String json = new Gson().toJson(history.toArray());
-        String encryptedJson = CryptoUtils.getInstance(mContext).encrypt(json);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, encryptedJson);
+        if (history != null) {
+            String json = new Gson().toJson(history.toArray());
+            String encryptedJson = CryptoUtils.getInstance(mContext).encrypt(json);
+            SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, encryptedJson);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_TOKEN_HISTORY);
+        }
     }
 
     @VisibleForTesting

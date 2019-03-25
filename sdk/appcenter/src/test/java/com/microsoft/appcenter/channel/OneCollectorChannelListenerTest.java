@@ -304,4 +304,15 @@ public class OneCollectorChannelListenerTest {
         listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
     }
+
+    @Test
+    public void setLogUrl() {
+        OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(ingestion, mock(Channel.class), mock(LogSerializer.class), UUIDUtils.randomUUID());
+
+        /* Set the log url. */
+        String logUrl = "http://mock";
+        listener.setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
+    }
 }

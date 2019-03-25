@@ -417,7 +417,7 @@ public class DatabasePersistence extends Persistence {
         getLogsIds(builder, selectionArgsArray);
         */
 
-        mDatabaseManager.delete(COLUMN_TIMESTAMP, timestamp, DatabaseManager.ComparisonType.LESS);
+        mDatabaseManager.delete(COLUMN_TIMESTAMP + " < ?", new String[]{String.valueOf(timestamp)});
     }
 
     @Override

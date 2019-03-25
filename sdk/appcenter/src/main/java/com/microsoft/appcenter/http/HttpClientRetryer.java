@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
+
 /**
  * Decorator managing retries.
  */
@@ -96,8 +98,20 @@ public class HttpClientRetryer extends HttpClientDecorator {
         @Override
         public void onCallFailed(Exception e) {
             if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
-                long delay = RETRY_INTERVALS[mRetryCount++] / 2;
-                delay += mRandom.nextInt((int) delay);
+                long delay = 0;
+
+                if (e instanceof HttpException) {
+                    HttpException httpException = (HttpException) e;
+                    if (httpException.getHeaders().containsKey(RETRY_AFTER_MS_KEY)) {
+                        delay = Long.parseLong(httpException.getHeaders().get(RETRY_AFTER_MS_KEY));
+                    }
+                }
+
+                if (delay == 0) {
+                    delay = RETRY_INTERVALS[mRetryCount++] / 2;
+                    delay += mRandom.nextInt((int) delay);
+                }
+
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
                 if (e instanceof UnknownHostException) {
                     message += " (UnknownHostException)";

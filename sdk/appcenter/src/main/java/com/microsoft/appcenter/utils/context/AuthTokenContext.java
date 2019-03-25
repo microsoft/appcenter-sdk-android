@@ -147,6 +147,9 @@ public class AuthTokenContext {
         setAuthToken(null, null, null);
     }
 
+    /**
+     * Cache auth token and account data to be used later on.
+     */
     public synchronized void cacheAuthToken() {
         if (mStorage != null) {
             updateAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
