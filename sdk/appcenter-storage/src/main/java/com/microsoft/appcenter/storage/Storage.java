@@ -546,6 +546,7 @@ public class Storage extends AbstractAppCenterService {
 
     private synchronized <T> void completeFutureAndRemovePendingCall(T value, DefaultAppCenterFuture<T> result) {
         result.complete(value);
+        mLocalDocumentStorage.write((Document)value, new WriteOptions());
         mPendingCalls.remove(result);
     }
 
