@@ -90,6 +90,10 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
                     /* Apply the new token to this time. */
                     date = lastEntry.getExpiresOn();
+                } else {
+
+                    /* If it's not the same account treat the gap as anonymous. */
+                    history.add(new TokenStoreEntity(null, null, lastEntry.getExpiresOn(), date));
                 }
             }
             history.add(new TokenStoreEntity(token, homeAccountId, date, expiresOn));
