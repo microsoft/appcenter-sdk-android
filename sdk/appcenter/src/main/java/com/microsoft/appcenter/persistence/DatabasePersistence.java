@@ -279,7 +279,7 @@ public class DatabasePersistence extends Persistence {
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
 
-            //noinspection CharsetObjectCanBeUsed
+            //noinspection CharsetObjectCanBeUsed min API level 19 required to fix this warning.
             int payloadSize = payload.getBytes("UTF-8").length;
             boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
