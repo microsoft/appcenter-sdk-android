@@ -7,6 +7,7 @@ public class PendingOperation {
     
     private String documentId;
     private String document;
+    
     private String etag;
     private long expirationTime;
 
