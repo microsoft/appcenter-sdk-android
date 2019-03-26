@@ -101,7 +101,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
         /* Limit history size. */
         if (history.size() > TOKEN_HISTORY_LIMIT) {
-            history.remove(0);
+            history.subList(0, history.size() - TOKEN_HISTORY_LIMIT).clear();
             AppCenterLog.debug(LOG_TAG, "Size of the token history is exceeded. The oldest token has been removed.");
         }
 

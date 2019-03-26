@@ -19,6 +19,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import static com.microsoft.appcenter.identity.storage.PreferenceTokenStorage.TOKEN_HISTORY_LIMIT;
 import static org.junit.Assert.assertEquals;
@@ -80,10 +81,6 @@ public class PreferenceTokenStorageAndroidTest {
 
         /* Check history. */
         assertEquals(4, tokenStorage.getHistory().size());
-        AuthTokenInfo authTokenInfo = tokenStorage.getOldestToken();
-        assertNotNull(authTokenInfo);
-        assertNull(authTokenInfo.getAuthToken());
-        assertNotNull(authTokenInfo.getEndTime());
 
         /* History has empty array. */
         tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
@@ -93,7 +90,7 @@ public class PreferenceTokenStorageAndroidTest {
 
         /* History has empty string as encrypted token. */
         tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>() {{
-            add(new PreferenceTokenStorage.TokenStoreEntity("", null, null));
+            add(new PreferenceTokenStorage.TokenStoreEntity("", null, null, null));
         }});
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(2, tokenStorage.getHistory().size());
@@ -131,7 +128,7 @@ public class PreferenceTokenStorageAndroidTest {
     }
 
     @Test
-    public void getOldestToken() {
+    public void getTokenHistory() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.HOUR, -1);
@@ -145,46 +142,37 @@ public class PreferenceTokenStorageAndroidTest {
         tokenStorage.saveToken("2", ACCOUNT_ID, afterHour);
         tokenStorage.saveToken("3", ACCOUNT_ID, afterHour);
 
-        /* Check the oldest token. */
-        AuthTokenInfo authTokenInfo = tokenStorage.getOldestToken();
+        /* Check history. */
+        List<AuthTokenInfo> history = tokenStorage.getTokenHistory();
+        assertEquals(4, history.size());
+
+        /* Check first entry. */
+        AuthTokenInfo authTokenInfo = history.get(0);
         assertNull(authTokenInfo.getAuthToken());
         assertNull(authTokenInfo.getStartTime());
         assertNotNull(authTokenInfo.getEndTime());
 
-        /* Remove the oldest token. */
-        tokenStorage.removeToken(null);
-
-        /* Check the oldest token. */
-        authTokenInfo = tokenStorage.getOldestToken();
+        /* Check second entry. */
+        authTokenInfo = history.get(1);
         assertEquals("1", authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getStartTime());
         assertEquals(beforeHour, authTokenInfo.getEndTime());
 
-        /* Remove the oldest token. */
-        tokenStorage.removeToken("1");
-
-        /* Check the oldest token. */
-        authTokenInfo = tokenStorage.getOldestToken();
+        /* Check third entry. */
+        authTokenInfo = history.get(2);
         assertEquals("2", authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getStartTime());
         assertTrue(authTokenInfo.getEndTime().before(afterHour));
 
-        /* Remove the oldest token. */
-        tokenStorage.removeToken("2");
-
-        /* Check the oldest token. */
-        authTokenInfo = tokenStorage.getOldestToken();
+        /* Check fourth entry. */
+        authTokenInfo = history.get(3);
         assertEquals("3", authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getStartTime());
         assertEquals(afterHour, authTokenInfo.getEndTime());
 
         /* History has empty array. */
         tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
-        authTokenInfo = tokenStorage.getOldestToken();
-        assertNotNull(authTokenInfo);
-        assertNull(authTokenInfo.getAuthToken());
-        assertNull(authTokenInfo.getStartTime());
-        assertNull(authTokenInfo.getEndTime());
+        assertNull(tokenStorage.getTokenHistory());
     }
 
     @Test
