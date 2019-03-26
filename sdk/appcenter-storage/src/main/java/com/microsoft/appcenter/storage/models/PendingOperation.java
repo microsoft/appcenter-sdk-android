@@ -10,6 +10,7 @@ public class PendingOperation {
     private String document;
     
     private String etag;
+    
     private long expirationTime;
 
     public PendingOperation(String operation, String partition, String documentId, String document, long expirationTime) {
