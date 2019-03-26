@@ -393,7 +393,8 @@ public class DatabasePersistence extends Persistence {
         directory.delete();
 
         /* Delete from database. */
-        mDatabaseManager.delete(COLUMN_GROUP, group);
+        int deletedCount = mDatabaseManager.delete(COLUMN_GROUP, group);
+        AppCenterLog.debug(LOG_TAG, "Deleted " + deletedCount + " logs.");
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {

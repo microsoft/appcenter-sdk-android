@@ -334,9 +334,10 @@ public class DatabaseManager implements Closeable {
      *
      * @param key   The optional key for query.
      * @param value The optional value for query.
+     * @return the number of rows affected.
      */
-    public void delete(@Nullable String key, @Nullable Object value) {
-        delete(key + " = ?", new String[]{String.valueOf(value)});
+    public int delete(@Nullable String key, @Nullable Object value) {
+        return delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
     /**
