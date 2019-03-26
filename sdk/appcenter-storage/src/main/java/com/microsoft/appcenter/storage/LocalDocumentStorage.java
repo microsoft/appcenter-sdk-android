@@ -243,6 +243,7 @@ class LocalDocumentStorage {
     }
 
     void updateOperationOnSuccess(PendingOperation operation) {
+        
         /*
             Update the document in cache (if expiration_time still valid otherwise, remove the document),
             clear the pending_operation column, update etag, download_time and document columns
