@@ -6,6 +6,7 @@ public class PendingOperation {
     private String partition;
     
     private String documentId;
+    
     private String document;
     
     private String etag;
