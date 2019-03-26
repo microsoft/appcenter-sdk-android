@@ -18,9 +18,13 @@ import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
+import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
+import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
@@ -46,7 +50,7 @@ import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 /**
  * Storage service.
  */
-public class Storage extends AbstractAppCenterService {
+public class Storage extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
      * Shared instance.
@@ -69,6 +73,8 @@ public class Storage extends AbstractAppCenterService {
     private StorageHttpClientDecorator mHttpClient;
 
     private LocalDocumentStorage mLocalDocumentStorage;
+
+    private static DataStoreEventListener eventListener;
 
     /**
      * Authorization listener for {@link AuthTokenContext}.
@@ -251,6 +257,16 @@ public class Storage extends AbstractAppCenterService {
     }
 
     /**
+     * Pass null to unregister
+     *
+     * @param listener to notify on remote operations
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
+    public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
+        eventListener = listener;
+    }
+
+    /**
      * Implements {@link #setApiUrl(String)}}.
      */
     private synchronized void setInstanceApiUrl(String apiUrl) {
@@ -260,6 +276,7 @@ public class Storage extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
+        mNetworkStateHelper.addListener(this);
         mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context);
@@ -273,6 +290,34 @@ public class Storage extends AbstractAppCenterService {
             }
         };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
+    }
+
+    /**
+     * Called whenever the network state is updated.
+     *
+     * @param connected true if connected, false otherwise.
+     */
+    @Override
+    public void onNetworkStateUpdated(boolean connected) {
+
+        /* Device comes back online */
+        if (connected) {
+            for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
+                switch (po.getOperation()) {
+                    case LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE:
+                    case LocalDocumentStorage.PENDING_OPERATION_REPLACE_VALUE:
+                        instanceCreateOrUpdate(po);
+                        break;
+
+                    case LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE:
+                        instanceDelete(po.getPartition(), po.getDocumentId());
+                        break;
+
+                    default:
+                        AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+                }
+            }
+        }
     }
 
     /**
@@ -448,6 +493,29 @@ public class Storage extends AbstractAppCenterService {
         return result;
     }
 
+    /**
+     * Create a document.
+     * The document type (T) must be JSON deserializable.
+     */
+    private synchronized void instanceCreateOrUpdate(
+            final PendingOperation pendingOperation) {
+        getTokenAndCallCosmosDbApi(
+                pendingOperation.getPartition(),
+                null,
+                new TokenExchangeServiceCallback() {
+
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        callCosmosDbCreateOrUpdateApi(tokenResult, pendingOperation);
+                    }
+
+                    @Override
+                    public void completeFuture(Exception e) {
+
+                    }
+                });
+    }
+
     private synchronized <T> void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             T document,
@@ -462,9 +530,7 @@ public class Storage extends AbstractAppCenterService {
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                new HashMap<String, String>() {{
-                    put("x-ms-documentdb-is-upsert", "true");
-                }},
+                CosmosDb.GetUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @Override
@@ -480,6 +546,31 @@ public class Storage extends AbstractAppCenterService {
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
+    }
+
+    private synchronized <T> void callCosmosDbCreateOrUpdateApi(
+            final TokenResult tokenResult,
+            final PendingOperation pendingOperation) {
+        CosmosDb.callCosmosDbApi(
+                tokenResult,
+                null,
+                mHttpClient,
+                METHOD_POST,
+                pendingOperation.getDocument(),
+                CosmosDb.GetUpsertAdditionalHeader(),
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                        notifyListenerAndUpdateOperation(payload, pendingOperation);
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        // TODO: process potential conflicts
+                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                    }
+                });
     }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
@@ -500,6 +591,24 @@ public class Storage extends AbstractAppCenterService {
                     }
                 });
         return result;
+    }
+
+    private synchronized void instanceDelete(final PendingOperation pendingOperation) {
+        getTokenAndCallCosmosDbApi(
+                pendingOperation.getPartition(),
+                null,
+                new TokenExchange.TokenExchangeServiceCallback() {
+
+                    @Override
+                    public void callCosmosDb(final TokenResult tokenResult) {
+                        callCosmosDbDeleteApi(tokenResult, pendingOperation);
+                    }
+
+                    @Override
+                    public void completeFuture(Exception e) {
+                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                    }
+                });
     }
 
     private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
@@ -525,6 +634,28 @@ public class Storage extends AbstractAppCenterService {
         mPendingCalls.put(result, cosmosDbCall);
     }
 
+    private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final PendingOperation pendingOperation) {
+        CosmosDb.callCosmosDbApi(
+                tokenResult,
+                pendingOperation.getDocumentId(),
+                mHttpClient,
+                METHOD_DELETE,
+                null,
+                new ServiceCallback() {
+
+                    @Override
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                        notifyListenerAndUpdateOperation(payload, pendingOperation);
+                    }
+
+                    @Override
+                    public void onCallFailed(Exception e) {
+                        // TODO: process potential conflicts
+                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                    }
+                });
+    }
+
     synchronized void getTokenAndCallCosmosDbApi(
             String partition,
             DefaultAppCenterFuture result,
@@ -540,7 +671,9 @@ public class Storage extends AbstractAppCenterService {
                             mApiUrl,
                             mAppSecret,
                             callback);
-            mPendingCalls.put(result, tokenExchangeServiceCall);
+            if (result != null) {
+                mPendingCalls.put(result, tokenExchangeServiceCall);
+            }
         }
     }
 
@@ -559,5 +692,29 @@ public class Storage extends AbstractAppCenterService {
         Utils.handleApiCallFailure(e);
         future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
         mPendingCalls.remove(future);
+    }
+
+    private synchronized void notifyListenerAndUpdateOperation(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
+        String etag = Utils.getEtag(cosmosDbResponsePayload);
+        pendingOperation.setEtag(etag);
+        if (eventListener != null) {
+            eventListener.onDataStoreOperationResult(
+                    pendingOperation.getOperation(),
+                    new DocumentMetadata(
+                            pendingOperation.getPartition(),
+                            pendingOperation.getDocumentId(),
+                            etag),
+                    null);
+        }
+        mLocalDocumentStorage.updateOperationOnSuccess(pendingOperation);
+    }
+
+    private synchronized void notifyListenerAndUpdateOperation(Throwable e, PendingOperation pendingOperation) {
+        if (eventListener != null) {
+            eventListener.onDataStoreOperationResult(
+                    pendingOperation.getOperation(),
+                    null,
+                    new DocumentError(e));
+        }
     }
 }

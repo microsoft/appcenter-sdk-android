@@ -151,6 +151,12 @@ public class CosmosDb {
                 serviceCallback);
     }
 
+    public static HashMap<String, String> GetUpsertAdditionalHeader() {
+        return new HashMap<String, String>() {{
+            put("x-ms-documentdb-is-upsert", "true");
+        }};
+    }
+
     private static ServiceCall callApi(
             String httpVerb,
             String url,
