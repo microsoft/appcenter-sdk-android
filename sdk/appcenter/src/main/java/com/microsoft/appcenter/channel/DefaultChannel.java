@@ -480,11 +480,6 @@ public class DefaultChannel implements Channel {
                 authToken = null;
             }
 
-            /* Delete logs without correct token. */
-            if (!iterator.hasPrevious() && startTime != null) {
-                mPersistence.deleteLogs(startTime);
-            }
-
             /* Get a batch from Persistence. */
             final List<Log> batch = new ArrayList<>(maxFetch);
             final int stateSnapshot = mCurrentState;

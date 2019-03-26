@@ -66,15 +66,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
     public synchronized void saveToken(String token, String homeAccountId, Date expiresOn) {
         List<TokenStoreEntity> history = getHistory();
         if (history == null) {
-            history = new ArrayList<TokenStoreEntity>() {{
-
-                /*
-                 * Adding a null entry is required during the first initialization to differentiate
-                 * anonymous usage before the moment and situation when we don't have a token
-                 * in history because of the size limit for example.
-                 */
-                add(new TokenStoreEntity(null, null, null, null));
-            }};
+            history = new ArrayList<>();
         }
 
         /* Do not add the same token twice in a row. */
@@ -136,9 +128,16 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
         /* Return history with corrected end times. */
         List<AuthTokenInfo> result = new ArrayList<>();
+        if (history.get(0).getToken() != null) {
+            result.add(new AuthTokenInfo(null, null, history.get(0).getTime()));
+        }
         for (int i = 0; i < history.size(); i++) {
             TokenStoreEntity storeEntity = history.get(i);
             String token = storeEntity.getToken();
+            Date startTime = storeEntity.getTime();
+            if (token == null && i == 0) {
+                startTime = null;
+            }
             Date endTime = storeEntity.getExpiresOn();
             Date nextChangeTime = history.size() > i + 1 ? history.get(i + 1).getTime() : null;
             if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
@@ -146,7 +145,7 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
             } else if (endTime == null && nextChangeTime != null) {
                 endTime = nextChangeTime;
             }
-            result.add(new AuthTokenInfo(token, storeEntity.getTime(), endTime));
+            result.add(new AuthTokenInfo(token, startTime, endTime));
         }
         return result;
     }

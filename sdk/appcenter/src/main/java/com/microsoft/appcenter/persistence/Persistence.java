@@ -56,13 +56,6 @@ public abstract class Persistence implements Closeable {
     public abstract void deleteLogs(String group);
 
     /**
-     * Deletes all logs before the {@code timestamp}.
-     *
-     * @param timestamp The time to delete only logs with time before specified.
-     */
-    public abstract void deleteLogs(@NonNull Date timestamp);
-
-    /**
      * Gets the number of logs for the given {@code group}.
      *
      * @param group The group of the storage for logs.

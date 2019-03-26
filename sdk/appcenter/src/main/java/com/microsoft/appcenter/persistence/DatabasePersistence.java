@@ -406,36 +406,6 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public void deleteLogs(@NonNull Date timestamp) {
-
-        /* Log. */
-        AppCenterLog.debug(LOG_TAG, "Deleting logs older than " + timestamp + " from the Persistence database.");
-
-        /* Select ids for logs. */
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
-        try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{PRIMARY_KEY, COLUMN_GROUP}, new String[]{String.valueOf(timestamp)}, null);
-            try {
-                while (cursor.moveToNext()) {
-                    ContentValues values = mDatabaseManager.buildValues(cursor);
-                    Long logId = values.getAsLong(PRIMARY_KEY);
-                    String group = values.getAsString(COLUMN_GROUP);
-
-                    /* Delete large payload files. */
-                    File directory = getLargePayloadGroupDirectory(group);
-                    deleteLog(directory, logId);
-                    mPendingDbIdentifiers.remove(logId);
-                }
-            } finally {
-                cursor.close();
-            }
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
-        }
-    }
-
-    @Override
     public int countLogs(@NonNull String group) {
         return countLogs(COLUMN_GROUP + " = ?", group);
     }
