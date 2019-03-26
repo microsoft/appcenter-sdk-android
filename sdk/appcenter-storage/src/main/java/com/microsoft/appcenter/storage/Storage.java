@@ -40,6 +40,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 
@@ -546,7 +547,7 @@ public class Storage extends AbstractAppCenterService {
 
     private synchronized <T> void completeFutureAndRemovePendingCall(T value, DefaultAppCenterFuture<T> result) {
         result.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions());
+        mLocalDocumentStorage.write((Document)value, new WriteOptions(), PENDING_OPERATION_NULL_VALUE);
         mPendingCalls.remove(result);
     }
 
