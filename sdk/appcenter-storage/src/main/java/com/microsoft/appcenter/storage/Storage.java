@@ -74,7 +74,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private LocalDocumentStorage mLocalDocumentStorage;
 
-    private static DataStoreEventListener eventListener;
+    private static DataStoreEventListener mEventListener;
 
     /**
      * Authorization listener for {@link AuthTokenContext}.
@@ -257,13 +257,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     /**
-     * Pass null to unregister
+     * Sets a listener that will be invoked on network status change to notify of pending operations execution status.
+     * Pass null to unregister.
      *
      * @param listener to notify on remote operations
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
-        eventListener = listener;
+        mEventListener = listener;
     }
 
     /**
@@ -276,7 +277,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mNetworkStateHelper.addListener(this);
         mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context);
@@ -329,12 +329,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthListener);
+            mNetworkStateHelper.addListener(this);
         } else {
             for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call : mPendingCalls.entrySet()) {
                 call.getKey().complete(null);
                 call.getValue().cancel();
             }
             AuthTokenContext.getInstance().removeListener(mAuthListener);
+            mNetworkStateHelper.removeListener(this);
             mPendingCalls.clear();
         }
     }
@@ -697,8 +699,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized void notifyListenerAndUpdateOperation(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
         String etag = Utils.getEtag(cosmosDbResponsePayload);
         pendingOperation.setEtag(etag);
-        if (eventListener != null) {
-            eventListener.onDataStoreOperationResult(
+        if (mEventListener != null) {
+            mEventListener.onDataStoreOperationResult(
                     pendingOperation.getOperation(),
                     new DocumentMetadata(
                             pendingOperation.getPartition(),
@@ -710,8 +712,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized void notifyListenerAndUpdateOperation(Throwable e, PendingOperation pendingOperation) {
-        if (eventListener != null) {
-            eventListener.onDataStoreOperationResult(
+        if (mEventListener != null) {
+            mEventListener.onDataStoreOperationResult(
                     pendingOperation.getOperation(),
                     null,
                     new DocumentError(e));
