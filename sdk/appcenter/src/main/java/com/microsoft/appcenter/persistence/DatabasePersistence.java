@@ -490,7 +490,7 @@ public class DatabasePersistence extends Persistence {
         /* Filter by time. */
         if (from != null) {
             builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " >>= ?");
+            builder.appendWhere(COLUMN_TIMESTAMP + " >= ?");
             selectionArgs.add(String.valueOf(from.getTime()));
         }
         if (to != null) {
