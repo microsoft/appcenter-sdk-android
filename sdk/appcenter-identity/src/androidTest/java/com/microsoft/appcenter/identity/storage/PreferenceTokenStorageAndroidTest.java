@@ -85,6 +85,7 @@ public class PreferenceTokenStorageAndroidTest {
         /* History has empty array. */
         tokenStorage.setHistory(new ArrayList<PreferenceTokenStorage.TokenStoreEntity>());
         assertNull(AUTH_TOKEN, tokenStorage.getToken());
+        assertNull(ACCOUNT_ID, tokenStorage.getHomeAccountId());
         tokenStorage.saveToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, tokenStorage.getHistory().size());
 

@@ -37,7 +37,14 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class, AuthTokenContext.class })
+@PrepareForTest({
+        AppCenterLog.class,
+        AuthTokenContext.class,
+        DefaultChannel.class,
+        DeviceInfoHelper.class,
+        HandlerUtils.class,
+        IdHelper.class
+})
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";

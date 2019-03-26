@@ -493,7 +493,7 @@ public class DefaultChannel implements Channel {
             /* Decrement counter. */
             groupState.mPendingLogCount -= maxFetch;
 
-            /* If no logs to send. */
+            /* If there are no logs to send. */
             if (batchId == null) {
 
                 /* Remove oldest token if there are no more logs. */

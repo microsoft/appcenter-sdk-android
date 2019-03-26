@@ -82,7 +82,7 @@ public class PreferenceTokenStorageTest {
         assertNull(mTokenStorage.getHistory());
         assertNull(mTokenStorage.getTokenHistory());
 
-        /* History is invalid. */
+        /* History is empty string. */
         mTokenStorage.setHistory(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         assertNull(mTokenStorage.getTokenHistory());
