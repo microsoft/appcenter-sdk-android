@@ -300,7 +300,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @Override
     public void onNetworkStateUpdated(boolean connected) {
 
-        /* Device comes back online */
+        /* If device comes back online. */
         if (connected) {
             for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
                 switch (po.getOperation()) {
