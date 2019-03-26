@@ -21,7 +21,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -31,12 +30,6 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
  * Storage for tokens that uses {@link SharedPreferencesManager}. Handles saving and encryption.
  */
 public class PreferenceTokenStorage implements AuthTokenStorage {
-
-    /**
-     * Used for distinguishing users, string field for home account id.
-     */
-    @VisibleForTesting
-    static final String PREFERENCE_KEY_HOME_ACCOUNT_ID = "AppCenter.home_account_id";
 
     /**
      * Used for saving tokens history.
@@ -80,14 +73,26 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
                  * anonymous usage before the moment and situation when we don't have a token
                  * in history because of the size limit for example.
                  */
-                add(new TokenStoreEntity(null, null, null));
+                add(new TokenStoreEntity(null, null, null, null));
             }};
         }
 
         /* Do not add the same token twice in a row. */
-        String lastToken = history.size() > 0 ? history.get(history.size() - 1).getToken() : null;
-        if (!TextUtils.equals(lastToken, token)) {
-            history.add(new TokenStoreEntity(token, new Date(), expiresOn));
+        TokenStoreEntity lastEntry = history.size() > 0 ? history.get(history.size() - 1) : null;
+        if (lastEntry == null || !TextUtils.equals(lastEntry.getToken(), token)) {
+            Date date = new Date();
+
+            /* If there is a gap between tokens. */
+            if (lastEntry != null && lastEntry.getExpiresOn() != null && date.after(lastEntry.getExpiresOn())) {
+
+                /* If the account the same or become anonymous. */
+                if (token == null || TextUtils.equals(lastEntry.getHomeAccountId(), homeAccountId)) {
+
+                    /* Apply the new token to this time. */
+                    date = lastEntry.getExpiresOn();
+                }
+            }
+            history.add(new TokenStoreEntity(token, homeAccountId, date, expiresOn));
         }
 
         /* Limit history size. */
@@ -98,11 +103,6 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
         /* Update history and current token. */
         setHistory(history);
-        if (token != null && homeAccountId != null) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_HOME_ACCOUNT_ID, homeAccountId);
-        } else {
-            SharedPreferencesManager.remove(PREFERENCE_KEY_HOME_ACCOUNT_ID);
-        }
     }
 
     @Override
@@ -116,7 +116,11 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
 
     @Override
     public synchronized String getHomeAccountId() {
-        return SharedPreferencesManager.getString(PREFERENCE_KEY_HOME_ACCOUNT_ID, null);
+        List<TokenStoreEntity> history = getHistory();
+        if (history != null && history.size() > 0) {
+            return history.get(history.size() - 1).getHomeAccountId();
+        }
+        return null;
     }
 
     @Override
@@ -208,20 +212,28 @@ public class PreferenceTokenStorage implements AuthTokenStorage {
         @SerializedName("token")
         private String mToken;
 
+        @SerializedName("homeAccountId")
+        private String mHomeAccountId;
+
         @SerializedName("time")
         private Date mTime;
 
         @SerializedName("expiresOn")
         private Date mExpiresOn;
 
-        TokenStoreEntity(String token, Date time, Date expiresOn) {
+        TokenStoreEntity(String token, String homeAccountId, Date time, Date expiresOn) {
             mToken = token;
+            mHomeAccountId = homeAccountId;
             mTime = time;
             mExpiresOn = expiresOn;
         }
 
         String getToken() {
             return mToken;
+        }
+
+        String getHomeAccountId() {
+            return mHomeAccountId;
         }
 
         Date getTime() {
