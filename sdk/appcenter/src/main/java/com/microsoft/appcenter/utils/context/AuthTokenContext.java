@@ -129,7 +129,7 @@ public class AuthTokenContext {
         }
 
         /* Check if it's a new user before changing current home account id. */
-        boolean isNewUser = lastEntry == null || TextUtils.equals(lastEntry.getHomeAccountId(), homeAccountId);
+        boolean isNewUser = lastEntry == null || !TextUtils.equals(lastEntry.getHomeAccountId(), homeAccountId);
         Date date = new Date();
 
         /* If there is a gap between tokens. */
