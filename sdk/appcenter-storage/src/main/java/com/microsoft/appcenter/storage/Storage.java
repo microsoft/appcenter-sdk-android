@@ -74,6 +74,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private LocalDocumentStorage mLocalDocumentStorage;
 
+    /**
+     * Current event listener.
+     */
     private static DataStoreEventListener mEventListener;
 
     /**
@@ -260,7 +263,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * Sets a listener that will be invoked on network status change to notify of pending operations execution status.
      * Pass null to unregister.
      *
-     * @param listener to notify on remote operations
+     * @param listener to notify on remote operations or null to unregister the previous listener.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
@@ -568,7 +571,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        // TODO: process potential conflicts
+                        
+                        /* TODO: process potential conflicts. */
                         notifyListenerAndUpdateOperation(e, pendingOperation);
                     }
                 });
@@ -601,7 +605,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 new TokenExchange.TokenExchangeServiceCallback() {
 
                     @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
+                    public void callCosmosDb(TokenResult tokenResult) {
                         callCosmosDbDeleteApi(tokenResult, pendingOperation);
                     }
 

@@ -101,7 +101,7 @@ class LocalDocumentStorage {
     private static final int VERSION = 1;
 
     /**
-     * `Where` clause to select by partition and document ID
+     * `Where` clause to select by partition and document ID.
      */
     private static final String BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE =
             String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
