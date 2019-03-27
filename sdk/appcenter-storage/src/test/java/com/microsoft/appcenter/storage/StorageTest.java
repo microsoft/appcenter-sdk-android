@@ -18,9 +18,14 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.models.BaseOptions;
+import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
+import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
@@ -87,6 +92,7 @@ public class StorageTest extends AbstractStorageTest {
     private static final String PARTITION = "custom-partition";
     private static final String DOCUMENT_ID = "document-id";
     private static final String TEST_FIELD_VALUE = "Test Value";
+    private static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
@@ -108,10 +114,10 @@ public class StorageTest extends AbstractStorageTest {
             "    \"PartitionKey\": \"%s\",\n" +
             "    \"_rid\": \"mFBtAPPa528HAAAAAAAAAA==\",\n" +
             "    \"_self\": \"dbs/mFBtAA==/colls/mFBtAPPa528=/docs/mFBtAPPa528HAAAAAAAAAA==/\",\n" +
-            "    \"_etag\": \"06000da6-0000-0000-0000-5c7093c30000\",\n" +
+            "    \"_etag\": \"%s\",\n" +
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
-            "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION);
+            "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION, ETAG);
 
     @Test
     public void singleton() {
@@ -755,7 +761,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, d.getId());
         assertEquals(PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDocument().test);
-        assertEquals("06000da6-0000-0000-0000-5c7093c30000", d.getEtag());
+        assertEquals(ETAG, d.getEtag());
         assertEquals(1550881731, d.getTimestamp());
     }
 
@@ -871,5 +877,114 @@ public class StorageTest extends AbstractStorageTest {
         Storage.unsetInstance();
         Storage.setOfflineMode(true);
         assertFalse(Storage.isOfflineMode());
+    }
+
+    @Test
+    public void PendingCreateOperationSuccess() {
+        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(new PendingOperation(
+                            LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE,
+                            PARTITION,
+                            DOCUMENT_ID,
+                            "document",
+                            BaseOptions.DEFAULT_ONE_HOUR));
+                }});
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+        ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
+        DataStoreEventListener dataStoreEventListener = mock(DataStoreEventListener.class);
+
+        Storage.setDataStoreRemoteOperationListener(dataStoreEventListener);
+        mStorage.onNetworkStateUpdated(true);
+
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, null)),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallSucceeded(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, new HashMap<String, String>());
+
+        verify(dataStoreEventListener).onDataStoreOperationResult(
+                eq(LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                documentErrorArgumentCaptor.capture());
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        assertNull(documentErrorArgumentCaptor.getValue());
+
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertEquals(ETAG, documentMetadata.getEtag());
+    }
+
+    @Test
+    public void PendingDeleteOperationSuccess() {
+        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(new PendingOperation(
+                            LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE,
+                            PARTITION,
+                            DOCUMENT_ID,
+                            "document",
+                            BaseOptions.DEFAULT_ONE_HOUR));
+                }});
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+        ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
+        DataStoreEventListener dataStoreEventListener = mock(DataStoreEventListener.class);
+
+        Storage.setDataStoreRemoteOperationListener(dataStoreEventListener);
+        mStorage.onNetworkStateUpdated(true);
+
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
+                eq(METHOD_DELETE),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallSucceeded(null, new HashMap<String, String>());
+
+        verify(dataStoreEventListener).onDataStoreOperationResult(
+                eq(LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                documentErrorArgumentCaptor.capture());
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        assertNull(documentErrorArgumentCaptor.getValue());
+
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertNull(documentMetadata.getEtag());
     }
 }

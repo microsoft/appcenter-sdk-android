@@ -310,7 +310,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         break;
 
                     case LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE:
-                        instanceDelete(po.getPartition(), po.getDocumentId());
+                        instanceDelete(po);
                         break;
 
                     default:
@@ -697,7 +697,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized void notifyListenerAndUpdateOperation(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
-        String etag = Utils.getEtag(cosmosDbResponsePayload);
+        String etag = cosmosDbResponsePayload == null || cosmosDbResponsePayload == "" ?
+                null : Utils.getEtag(cosmosDbResponsePayload);
         pendingOperation.setEtag(etag);
         if (mEventListener != null) {
             mEventListener.onDataStoreOperationResult(
