@@ -635,7 +635,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final PendingOperation pendingOperation) {
+    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation pendingOperation) {
         CosmosDb.callCosmosDbApi(
                 tokenResult,
                 pendingOperation.getDocumentId(),
@@ -651,7 +651,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        // TODO: process potential conflicts
+                        
+                        /* TODO: process potential conflicts. */
                         notifyListenerAndUpdateOperation(e, pendingOperation);
                     }
                 });

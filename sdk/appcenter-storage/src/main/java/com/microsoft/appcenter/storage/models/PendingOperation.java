@@ -1,6 +1,7 @@
 package com.microsoft.appcenter.storage.models;
 
 public class PendingOperation {
+    
     private String operation;
     
     private String partition;
