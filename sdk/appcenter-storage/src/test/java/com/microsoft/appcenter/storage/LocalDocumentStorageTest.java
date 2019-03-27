@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -25,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -66,10 +68,19 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void upsertGetsCalledInWrite() {
+    public void updateGetsCalledInWrite() {
         mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
-        ArgumentCaptor<ContentValues> values = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(values.capture());
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
+    }
+
+    @Test
+    public void updateGetsCalledInWriteWithPendingOperation() {
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), PENDING_OPERATION_NULL_VALUE);
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
     }
 
     @Test
@@ -79,7 +90,7 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
-        assertNotNull(doc.getError());
+        assertEquals(DocumentError.class, doc.getError().getClass());
     }
 
     @Test
