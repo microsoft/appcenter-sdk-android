@@ -34,6 +34,7 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -750,6 +751,7 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
+        AuthTokenContext.initialize(mApplication);
 
         /* Initialize session storage. */
         SessionContext.getInstance();

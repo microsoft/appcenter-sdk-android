@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -29,22 +28,9 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
-import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -458,14 +444,8 @@ public class DefaultChannel implements Channel {
         }
 
         /* Get auth token. */
-        List<AuthTokenInfo> authTokenHistory = null;
-        AuthTokenStorage authTokenStorage = AuthTokenContext.getInstance().getStorage();
-        if (authTokenStorage != null) {
-            authTokenHistory = authTokenStorage.getTokenHistory();
-        }
-        if (authTokenHistory == null) {
-            authTokenHistory = Collections.singletonList(new AuthTokenInfo(null, null, null));
-        }
+        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        List<AuthTokenInfo> authTokenHistory = authTokenContext.getTokenHistory();
         ListIterator<AuthTokenInfo> iterator = authTokenHistory.listIterator();
         while (iterator.hasNext()) {
             AuthTokenInfo authTokenInfo = iterator.next();
@@ -492,10 +472,9 @@ public class DefaultChannel implements Channel {
             if (batchId == null) {
 
                 /* Remove oldest token if there are no more logs. */
-                if (!iterator.hasPrevious() &&
-                        authTokenStorage != null && endTime != null &&
+                if (!iterator.hasPrevious() &&endTime != null &&
                         mPersistence.countLogs(endTime) == 0) {
-                    authTokenStorage.removeToken(authToken);
+                    authTokenContext.removeToken(authToken);
                 }
                 continue;
             }

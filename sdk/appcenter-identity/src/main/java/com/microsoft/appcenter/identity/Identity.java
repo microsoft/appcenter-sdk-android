@@ -22,7 +22,6 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -199,8 +198,6 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        authTokenContext.setStorage(TokenStorageFactory.getTokenStorage(context));
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -215,9 +212,6 @@ public class Identity extends AbstractAppCenterService {
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
-
-            /* Load the last stored token and cache it into token context. */
-            AuthTokenContext.getInstance().cacheAuthToken();
 
             /* Download the latest configuration in background. */
             downloadConfiguration();
@@ -269,7 +263,7 @@ public class Identity extends AbstractAppCenterService {
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
-        authTokenContext.clearAuthToken();
+        authTokenContext.setAuthToken(null, null, null);
     }
 
     private synchronized void downloadConfiguration() {
