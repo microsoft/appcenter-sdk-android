@@ -29,6 +29,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -421,25 +422,10 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void readEndToEnd() throws Exception {
+    public void readEndToEndWithNetwork() throws Exception {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
 
-        ArgumentCaptor<HttpClient.CallTemplate> tokenExchangeCallTemplateCallbackArgumentCaptor =
-                ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
-                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verifyNoMoreInteractions(mLocalDocumentStorage);
-        verify(mHttpClient, times(1)).callAsync(
-                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
-                eq(METHOD_POST),
-                anyMapOf(String.class, String.class),
-                tokenExchangeCallTemplateCallbackArgumentCaptor.capture(),
-                tokenExchangeServiceCallbackArgumentCaptor.capture());
-        tokenExchangeCallTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
-        tokenExchangeCallTemplateCallbackArgumentCaptor.getValue().onBeforeCalling(null, new HashMap<String, String>());
-        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
-        assertNotNull(tokenExchangeServiceCallback);
-        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+        setupAndVerifyTokenExchangeCall();
 
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
@@ -470,16 +456,60 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
+    }
 
-        /* The test passes individually, but not in a suit. Need to figure out which mocks do not get reset. */
-        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+    private void setupAndVerifyTokenExchangeCall() throws JSONException {
+        ArgumentCaptor<HttpClient.CallTemplate> tokenExchangeCallTemplateCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mHttpClient, times(1)).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                tokenExchangeCallTemplateCallbackArgumentCaptor.capture(),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        tokenExchangeCallTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
+        tokenExchangeCallTemplateCallbackArgumentCaptor.getValue().onBeforeCalling(null, new HashMap<String, String>());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeResponsePayload, new HashMap<String, String>());
+    }
+
+    @Test
+    public void readFailedCosmosDbCallFailed() throws JSONException {
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+
+        setupAndVerifyTokenExchangeCall();
+
+        ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient, times(1)).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, DOCUMENT_ID)),
+                eq(METHOD_GET),
+                anyMapOf(String.class, String.class),
+                cosmosDbCallTemplateCallbackArgumentCaptor.capture(),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        cosmosDbCallTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
+        cosmosDbCallTemplateCallbackArgumentCaptor.getValue().onBeforeCalling(null, new HashMap<String, String>());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        cosmosDbServiceCallback.onCallFailed(new Exception("Cosmos db exception."));
+
+        /*
+         *  No retries and Cosmos DB does not get called.
+         */
         verifyNoMoreInteractions(mHttpClient);
-        verify(mLocalDocumentStorage).read(
-                eq(PARTITION),
-                eq(DOCUMENT_ID),
-                eq(testDocument.getClass()),
-                any(ReadOptions.class));
+        assertNotNull(doc);
+        assertNotNull(doc.get());
+        assertNull(doc.get().getDocument());
+        assertNotNull(doc.get().getError());
+        assertThat(
+                doc.get().getError().getError().getMessage(),
+                CoreMatchers.containsString("Cosmos db exception."));
     }
 
     @Test
@@ -553,6 +583,18 @@ public class StorageTest extends AbstractStorageTest {
         assertThat(
                 doc.get().getError().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
+    }
+
+    @Test
+    public void readWithNoNetwork() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        verifyNoMoreInteractions(mHttpClient);
+        verify(mLocalDocumentStorage).read(
+                eq(PARTITION),
+                eq(DOCUMENT_ID),
+                eq(TestDocument.class),
+                any(ReadOptions.class));
     }
 
     @Test

@@ -18,6 +18,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_V
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -91,6 +93,7 @@ public class LocalDocumentStorageTest {
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
         assertEquals(DocumentError.class, doc.getError().getClass());
+        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
     }
 
     @Test
