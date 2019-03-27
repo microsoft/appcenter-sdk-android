@@ -90,7 +90,7 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void verifyOptionsContstructors() {
+    public void verifyOptionsConstructors() {
         assertEquals(BaseOptions.INFINITE, ReadOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
         assertEquals(BaseOptions.NO_CACHE, ReadOptions.CreateNoCacheOption().getDeviceTimeToLive());
         assertEquals(BaseOptions.INFINITE, WriteOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
