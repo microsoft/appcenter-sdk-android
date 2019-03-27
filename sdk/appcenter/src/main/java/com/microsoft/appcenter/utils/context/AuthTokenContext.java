@@ -202,7 +202,7 @@ public class AuthTokenContext {
     public synchronized List<AuthTokenInfo> getTokenHistory() {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null || history.size() == 0) {
-            return Collections.singletonList(new AuthTokenInfo(null, null, null));
+            return Collections.singletonList(new AuthTokenInfo());
         }
 
         /* Return history with corrected end times. */

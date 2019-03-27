@@ -466,7 +466,7 @@ public class DefaultChannel implements Channel {
             final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, startTime, endTime);
 
             /* Decrement counter. */
-            groupState.mPendingLogCount -= maxFetch;
+            groupState.mPendingLogCount -= batch.size();
 
             /* If there are no logs to send. */
             if (batchId == null) {
@@ -512,6 +512,9 @@ public class DefaultChannel implements Channel {
             });
             return;
         }
+
+        /* Nothing to send. Some corrupted entries may be deleted, reset the counter. */
+        groupState.mPendingLogCount = 0;
     }
 
     /**

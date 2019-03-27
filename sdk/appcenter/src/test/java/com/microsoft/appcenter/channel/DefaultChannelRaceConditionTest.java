@@ -41,7 +41,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 
 public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest {
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileSendingLogs() {
 
         /* Set up mocking. */
@@ -87,7 +87,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileHandlingIngestionSuccess() {
 
         /* Set up mocking. */
@@ -140,7 +140,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         verify(mockPersistence, never()).deleteLogs(anyString(), anyString());
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileHandlingIngestionFailure() {
 
         /* Set up mocking. */

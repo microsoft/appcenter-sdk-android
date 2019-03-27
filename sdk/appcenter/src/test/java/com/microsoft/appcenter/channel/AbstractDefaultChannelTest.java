@@ -18,6 +18,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
@@ -28,6 +29,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -131,6 +133,7 @@ public class AbstractDefaultChannelTest {
         mockStatic(AuthTokenContext.class);
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
         when(tokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
+        when(tokenContext.getTokenHistory()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
         when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
     }

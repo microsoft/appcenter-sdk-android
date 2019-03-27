@@ -31,6 +31,13 @@ public class AuthTokenInfo {
 
     /**
      * Init.
+     */
+    public AuthTokenInfo() {
+        this(null, null, null);
+    }
+
+    /**
+     * Init.
      *
      * @param authToken auth token.
      * @param startTime the time from which the token began to act.
