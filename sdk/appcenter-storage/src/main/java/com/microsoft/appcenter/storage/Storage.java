@@ -513,7 +513,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void completeFuture(Exception e) {
-
                     }
                 });
     }
