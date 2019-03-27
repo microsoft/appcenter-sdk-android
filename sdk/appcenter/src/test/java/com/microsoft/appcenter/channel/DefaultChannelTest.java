@@ -173,12 +173,17 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), any(Date.class), any(Date.class))).then(getGetLogsAnswer(40));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), any(Date.class), any(Date.class)))
+                .then(getGetLogsAnswer(40))
+                .then(getGetLogsAnswer(0));
 
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+
+        /* Prepare to mock timer. */
+        AtomicReference<Runnable> runnable = catchPostRunnable();
 
         /* Enqueuing 49 events. */
         for (int i = 1; i <= 49; i++) {
@@ -190,6 +195,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Enqueue another event. */
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
+
+        /* Wait for timer. */
+        assertNotNull(runnable.get());
+        runnable.get().run();
 
         /* Database returned less logs than we expected (40 vs 50), yet counter must be reset. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
@@ -215,7 +224,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
 
         /* We make second request return less logs than expected to make sure counter is reset properly. */
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer()).then(getGetLogsAnswer(49)).then(getGetLogsAnswer());
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class)))
+                .then(getGetLogsAnswer())
+                .then(getGetLogsAnswer(49))
+                .then(getGetLogsAnswer())
+                .then(getGetLogsAnswer())
+                .then(getGetLogsAnswer(0));
 
         final List<ServiceCallback> callbacks = new ArrayList<>();
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
@@ -231,6 +245,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Init channel with mocks. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
+
+        /* Prepare to mock timer. */
+        AtomicReference<Runnable> runnable = catchPostRunnable();
 
         /* Enqueue enough logs to be split in N + 1 maximum requests. */
         for (int i = 0; i < 200; i++) {
@@ -252,9 +269,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockIngestion, times(4)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Unlock all requests and check logs deleted. */
-        for (int i = 1; i < 4; i++)
+        for (int i = 1; i < 4; i++) {
             callbacks.get(i).onCallSucceeded("", null);
+        }
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
+
+        /* Wait for timer. */
+        assertNotNull(runnable.get());
+        runnable.get().run();
 
         /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
