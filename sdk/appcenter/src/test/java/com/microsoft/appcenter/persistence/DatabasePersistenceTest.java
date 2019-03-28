@@ -20,15 +20,16 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
 import org.json.JSONException;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -50,10 +52,34 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({AppCenterLog.class, DatabaseManager.class, DatabasePersistence.class})
+@RunWith(PowerMockRunner.class)
 public class DatabasePersistenceTest {
 
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
+    @Test
+    public void countLogsForDate() throws Exception {
+
+        /* Expected values. */
+        final int expectedCount = 1;
+        final Date expectedDate = new Date();
+        final String[] expectedColumns = new String[]{"COUNT(*)"};
+        final String[] expectedWhereArgs = new String[]{String.valueOf(expectedDate.getTime())};
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
+        Cursor mockCursor = mock(Cursor.class);
+        when(mockCursor.getInt(anyInt())).thenReturn(expectedCount);
+        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
+
+        /* Get count. */
+        int actualCount = persistence.countLogs(expectedDate);
+
+        /* Verify. */
+        assertEquals(expectedCount, actualCount);
+        verify(mockDatabaseManager).getCursor(any(SQLiteQueryBuilder.class), eq(expectedColumns), eq(expectedWhereArgs), anyString());
+    }
 
     @Test
     public void countLogsWithGetCountException() throws Exception {
