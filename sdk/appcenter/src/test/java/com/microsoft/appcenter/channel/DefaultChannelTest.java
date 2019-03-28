@@ -751,6 +751,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(anyString())).thenReturn(3);
         when(persistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).thenAnswer(getGetLogsAnswer(3));
+
+        /* Null AuthTokenInfo shouldn't make any difference. */
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+            add(null);
+        }});
+
+        /* Create channel. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
