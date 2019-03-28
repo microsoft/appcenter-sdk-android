@@ -98,11 +98,14 @@ class LocalDocumentStorage {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    <T> void write(Document<T> document, WriteOptions writeOptions) {
-        write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
+    <T> long write(Document<T> document, WriteOptions writeOptions) {
+        return write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
 
-    <T> void write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
+    <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
+        if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
+            return 0;
+        }
         AppCenterLog.debug(LOG_TAG, String.format("Trying to write %s:%s document to cache", document.getPartition(), document.getId()));
         Calendar expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
@@ -115,7 +118,7 @@ class LocalDocumentStorage {
                 expiresAt.getTimeInMillis(),
                 expiresAt.getTimeInMillis(),
                 pendingOperationValue);
-        mDatabaseManager.replace(values);
+        return mDatabaseManager.replace(values);
     }
 
     <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
@@ -136,7 +139,7 @@ class LocalDocumentStorage {
         /* We only expect one value as we do upserts in the `write` method */
         values = mDatabaseManager.nextValues(cursor);
         if (values != null) {
-            if (readOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
+            if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
                 mDatabaseManager.delete(cursor.getLong(0));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
@@ -148,6 +151,19 @@ class LocalDocumentStorage {
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
         return new Document<>(new StorageException("Document was not found in the cache."));
+    }
+
+    <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions){
+        Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
+        if (cachedDocument.getError()!= null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
+            return cachedDocument;
+        }
+
+        /* The document cache has been expired, or the document did not exists, create it. */
+        Document<T> writeDocument = new Document<>(document, partition, documentId);
+        long rowId = write(cachedDocument, writeOptions, cachedDocument.getError()!= null ?
+                Constants.PENDING_OPERATION_CREATE_VALUE : Constants.PENDING_OPERATION_REPLACE_VALUE);
+        return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
     }
 
     void delete(String partition, String documentId) {
