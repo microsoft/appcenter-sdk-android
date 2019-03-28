@@ -810,7 +810,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void PendingCreateOperationSuccess() {
+    public void pendingCreateOperationSuccess() {
         final PendingOperation pendingOperation = new PendingOperation(
                 LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
@@ -844,7 +844,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void PendingReplaceOperationFailure() {
+    public void pendingReplaceOperationFailure() {
         when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(new PendingOperation(
@@ -874,7 +874,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void UnsupportedPendingOperation() {
+    public void unsupportedPendingOperation() {
         when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(new PendingOperation(
@@ -889,7 +889,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void PendingDeleteOperationSuccess() {
+    public void pendingDeleteOperationSuccess() {
         final PendingOperation pendingOperation = new PendingOperation(
                 LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
