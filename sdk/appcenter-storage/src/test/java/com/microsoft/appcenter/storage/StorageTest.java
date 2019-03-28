@@ -14,6 +14,7 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
@@ -31,11 +32,13 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -80,6 +83,11 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
+@PrepareForTest({
+        CosmosDb.class,
+        TokenExchange.class,
+        TokenManager.class
+})
 public class StorageTest extends AbstractStorageTest {
 
     private static final String DATABASE_NAME = "mbaas";
@@ -700,7 +708,7 @@ public class StorageTest extends AbstractStorageTest {
         partitionNames.add(Constants.READONLY);
         when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(times((10)));
         SharedPreferencesManager.remove(matches("partitionName [0-9]"));
     }
@@ -708,7 +716,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void authTokenListenerNotCalledWhenDisabled() {
         Storage.setEnabled(false);
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches("partitionName[0-9]"));
     }
@@ -716,13 +724,12 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void authTokenListenerNotCalledWhenNewUser() {
         AuthTokenContext.getInstance().setAuthToken("someToken", "someId", new Date(Long.MAX_VALUE));
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches("partitionName[0-9]"));
     }
 
     @Test
-    @PrepareForTest(TokenManager.class)
     public void authTokenListenerNotRemoveTokenWhenNewUser() {
 
         /* Setup token manager. */
@@ -816,10 +823,6 @@ public class StorageTest extends AbstractStorageTest {
         Storage.list(PARTITION, TestDocument.class);
     }
 
-    @PrepareForTest({
-            CosmosDb.class,
-            TokenExchange.class
-    })
     @Test
     public void canCancelWhenCallNotFinished() {
         mockStatic(CosmosDb.class);

@@ -15,21 +15,26 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static org.mockito.Matchers.any;
@@ -42,6 +47,7 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@RunWith(PowerMockRunner.class)
 @PrepareForTest({
         Storage.class,
         SystemClock.class,
@@ -49,18 +55,16 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         FileManager.class,
         AppCenterLog.class,
         AppCenter.class,
+        CryptoUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
+        JSONUtils.class,
         NetworkStateHelper.class,
         LocalDocumentStorage.class
 })
-
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
-
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     protected HttpClientRetryer mHttpClient;
@@ -137,6 +141,11 @@ abstract public class AbstractStorageTest {
         Storage storage = Storage.getInstance();
         mChannel = start(storage);
         Storage.setApiUrl("default");
+
+        /* Mock utils. */
+        mockStatic(CryptoUtils.class);
+        PowerMockito.when(CryptoUtils.getInstance(any(Context.class))).thenReturn(Mockito.mock(CryptoUtils.class));
+        mockStatic(JSONUtils.class);
     }
 
     @NonNull
