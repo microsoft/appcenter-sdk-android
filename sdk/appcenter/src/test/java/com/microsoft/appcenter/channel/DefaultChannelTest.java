@@ -975,7 +975,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(0));
         when(mockPersistence.countLogs(anyString())).thenReturn(70);
         when(mockPersistence.countLogs(any(Date.class))).thenReturn(0);
-        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(new ArrayList<AuthTokenInfo>() {{
             add(new AuthTokenInfo(null, null, changeTokenDate));
             add(new AuthTokenInfo("42", changeTokenDate, new Date(Long.MAX_VALUE)));
         }});
@@ -997,7 +997,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(0));
         when(mockPersistence.countLogs(anyString())).thenReturn(70);
         when(mockPersistence.countLogs(any(Date.class))).thenReturn(5);
-        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(new ArrayList<AuthTokenInfo>() {{
             add(new AuthTokenInfo(null, null, changeTokenDate));
             add(new AuthTokenInfo("42", changeTokenDate, new Date(Long.MAX_VALUE)));
         }});
@@ -1016,7 +1016,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 .then(getGetLogsAnswer(0));
         when(mockPersistence.countLogs(anyString())).thenReturn(50);
         when(mockPersistence.countLogs(any(Date.class))).thenReturn(0);
-        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(new ArrayList<AuthTokenInfo>() {{
             add(new AuthTokenInfo("42", changeTokenDate, null));
         }});
         sendWithDefaultChannel(mockPersistence);

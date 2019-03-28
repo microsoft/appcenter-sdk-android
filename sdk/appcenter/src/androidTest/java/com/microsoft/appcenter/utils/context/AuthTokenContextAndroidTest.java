@@ -130,7 +130,7 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.setAuthToken("3", ACCOUNT_ID, afterHour);
 
         /* Check history. */
-        List<AuthTokenInfo> history = mAuthTokenContext.getTokenHistory();
+        List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(4, history.size());
 
         /* Check first entry. */
@@ -159,13 +159,13 @@ public class AuthTokenContextAndroidTest {
 
         /* History has empty array. */
         mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>());
-        history = mAuthTokenContext.getTokenHistory();
+        history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
 
         /* History is null. */
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, null);
         assertEquals(0, mAuthTokenContext.getHistory().size());
-        history = mAuthTokenContext.getTokenHistory();
+        history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         authTokenInfo = history.get(0);
         assertNull(authTokenInfo.getAuthToken());
@@ -176,7 +176,7 @@ public class AuthTokenContextAndroidTest {
         /* History is empty string. */
         mAuthTokenContext.setHistory(null);
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "");
-        history = mAuthTokenContext.getTokenHistory();
+        history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         authTokenInfo = history.get(0);
         assertNull(authTokenInfo.getAuthToken());
@@ -186,7 +186,7 @@ public class AuthTokenContextAndroidTest {
         /* History is invalid. */
         mAuthTokenContext.setHistory(null);
         SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "some bad value");
-        history = mAuthTokenContext.getTokenHistory();
+        history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         authTokenInfo = history.get(0);
         assertNull(authTokenInfo.getAuthToken());

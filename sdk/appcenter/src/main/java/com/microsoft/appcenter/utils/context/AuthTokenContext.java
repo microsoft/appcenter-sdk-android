@@ -199,13 +199,13 @@ public class AuthTokenContext {
     }
 
     /**
-     * Gets the token history. It contains tokens and time when it was valid.
+     * Gets list of auth tokens validity info. It contains tokens and time when it was valid.
      *
      * @return auth token info.
      * @see AuthTokenInfo
      */
     @NonNull
-    public synchronized List<AuthTokenInfo> getTokenHistory() {
+    public synchronized List<AuthTokenInfo> getAuthTokenValidityList() {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null || history.size() == 0) {
             return Collections.singletonList(new AuthTokenInfo());

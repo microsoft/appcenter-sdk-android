@@ -135,7 +135,7 @@ public class AbstractDefaultChannelTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
         mockStatic(AuthTokenContext.class);
         when(mAuthTokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
-        when(mAuthTokenContext.getTokenHistory()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
     }

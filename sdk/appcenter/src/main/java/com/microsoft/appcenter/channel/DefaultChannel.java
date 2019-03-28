@@ -445,7 +445,7 @@ public class DefaultChannel implements Channel {
 
         /* Get auth token. */
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        List<AuthTokenInfo> authTokenHistory = authTokenContext.getTokenHistory();
+        List<AuthTokenInfo> authTokenHistory = authTokenContext.getAuthTokenValidityList();
         ListIterator<AuthTokenInfo> iterator = authTokenHistory.listIterator();
         while (iterator.hasNext()) {
             AuthTokenInfo authTokenInfo = iterator.next();
