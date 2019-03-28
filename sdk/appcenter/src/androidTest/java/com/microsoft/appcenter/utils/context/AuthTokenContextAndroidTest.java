@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.TOKEN_HISTORY_LIMIT;
 import static org.junit.Assert.*;
 
@@ -42,13 +43,13 @@ public class AuthTokenContextAndroidTest {
     public void saveToken() {
 
         /* Initial values are null. */
-        assertNull(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
-        assertNull(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertNull( mAuthTokenContext.getAuthToken());
+        assertNull( mAuthTokenContext.getHomeAccountId());
 
         /* Account id is still null we can't pass valid token. */
         mAuthTokenContext.setAuthToken(null, ACCOUNT_ID, new Date());
-        assertNull(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
-        assertNull(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAuthToken());
+        assertNull(mAuthTokenContext.getHomeAccountId());
 
         /* Save the token into storage. */
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
@@ -96,16 +97,12 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.removeToken(null);
         assertNull(mAuthTokenContext.getHistory());
 
-        /* Save the token into storage adds 2 entries (null and AUTH_TOKEN to history. */
+        /* Save the token into storage. */
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        assertEquals(2, mAuthTokenContext.getHistory().size());
+        assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Remove last one (not allowed). */
         mAuthTokenContext.removeToken(AUTH_TOKEN);
-        assertEquals(2, mAuthTokenContext.getHistory().size());
-
-        /* Remove first one. */
-        mAuthTokenContext.removeToken(null);
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Remove second one (not allowed). */
@@ -128,7 +125,6 @@ public class AuthTokenContextAndroidTest {
         Date afterHour = calendar.getTime();
 
         /* Store some tokens. */
-        //PreferencemAuthTokenContext mAuthTokenContext = new PreferencemAuthTokenContext(mContext);
         mAuthTokenContext.setAuthToken("1", ACCOUNT_ID, beforeHour);
         mAuthTokenContext.setAuthToken("2", ACCOUNT_ID, afterHour);
         mAuthTokenContext.setAuthToken("3", ACCOUNT_ID, afterHour);
@@ -163,7 +159,39 @@ public class AuthTokenContextAndroidTest {
 
         /* History has empty array. */
         mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>());
-        assertNull(mAuthTokenContext.getTokenHistory());
+        history = mAuthTokenContext.getTokenHistory();
+        assertEquals(1, history.size());
+
+        /* History is null. */
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        assertEquals(0, mAuthTokenContext.getHistory().size());
+        history = mAuthTokenContext.getTokenHistory();
+        assertEquals(1, history.size());
+        authTokenInfo = history.get(0);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
+
+
+        /* History is empty string. */
+        mAuthTokenContext.setHistory(null);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "");
+        history = mAuthTokenContext.getTokenHistory();
+        assertEquals(1, history.size());
+        authTokenInfo = history.get(0);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
+
+        /* History is invalid. */
+        mAuthTokenContext.setHistory(null);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "some bad value");
+        history = mAuthTokenContext.getTokenHistory();
+        assertEquals(1, history.size());
+        authTokenInfo = history.get(0);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
     }
 
     @Test

@@ -128,7 +128,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Start. */
         Channel channel = start(identity);
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
         verify(channel).removeGroup(eq(identity.getGroupName()));
         verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
 

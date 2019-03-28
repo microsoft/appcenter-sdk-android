@@ -122,6 +122,12 @@ public class AuthTokenContext {
             history = new ArrayList<>();
         }
 
+        /* Do not store any data for anonymous token. */
+        if (authToken == null) {
+            homeAccountId = null;
+            expiresOn = null;
+        }
+
         /* Do not add the same token twice in a row. */
         AuthTokenHistoryEntry lastEntry = history.size() > 0 ? history.get(history.size() - 1) : null;
         if (lastEntry != null && TextUtils.equals(lastEntry.getAuthToken(), authToken)) {
