@@ -74,15 +74,19 @@ final class AuthTokenHistoryEntry implements Model {
     public void read(JSONObject object) throws JSONException {
         setAuthToken(object.optString(AUTH_TOKEN, null));
         setHomeAccountId(object.optString(HOME_ACCOUNT_ID, null));
-        setTime(JSONDateUtils.toDate(object.optString(TIME, null)));
-        setExpiresOn(JSONDateUtils.toDate(object.optString(EXPIRES_ON, null)));
+        String time = object.optString(TIME, null);
+        setTime(time != null ? JSONDateUtils.toDate(time) : null);
+        String expiresOn = object.optString(EXPIRES_ON, null);
+        setExpiresOn(expiresOn != null ? JSONDateUtils.toDate(expiresOn) : null);
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, AUTH_TOKEN, getAuthToken());
         JSONUtils.write(writer, HOME_ACCOUNT_ID, getHomeAccountId());
-        JSONUtils.write(writer, TIME, JSONDateUtils.toString(getTime()));
-        JSONUtils.write(writer, EXPIRES_ON, JSONDateUtils.toString(getExpiresOn()));
+        Date time = getTime();
+        JSONUtils.write(writer, TIME, time != null ? JSONDateUtils.toString(time) : null);
+        Date expiresOn = getExpiresOn();
+        JSONUtils.write(writer, EXPIRES_ON, expiresOn != null ? JSONDateUtils.toString(expiresOn) : null);
     }
 }

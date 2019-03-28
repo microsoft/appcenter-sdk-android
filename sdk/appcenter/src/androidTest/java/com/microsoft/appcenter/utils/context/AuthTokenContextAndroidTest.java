@@ -3,6 +3,7 @@ package com.microsoft.appcenter.utils.context;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.After;
 import org.junit.Before;
@@ -43,13 +44,19 @@ public class AuthTokenContextAndroidTest {
     public void setAuthToken() {
 
         /* Initial values are null. */
-        assertNull( mAuthTokenContext.getAuthToken());
-        assertNull( mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAuthToken());
+        assertNull(mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getHistory());
+        List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
+        assertEquals(1, history.size());
 
         /* Account id is still null we can't pass valid token. */
         mAuthTokenContext.setAuthToken(null, ACCOUNT_ID, new Date());
         assertNull(mAuthTokenContext.getAuthToken());
         assertNull(mAuthTokenContext.getHomeAccountId());
+        assertEquals(1, mAuthTokenContext.getHistory().size());
+        history = mAuthTokenContext.getAuthTokenValidityList();
+        assertEquals(1, history.size());
 
         /* Save the token into storage. */
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
@@ -73,6 +80,8 @@ public class AuthTokenContextAndroidTest {
 
         /* Check history. */
         assertEquals(4, mAuthTokenContext.getHistory().size());
+        history = mAuthTokenContext.getAuthTokenValidityList();
+        assertEquals(4, history.size());
     }
 
     @Test
@@ -122,6 +131,34 @@ public class AuthTokenContextAndroidTest {
         /* Add some token to empty history. */
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void historyIsEmptyInfo() {
+        mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>() {{
+            add(new AuthTokenHistoryEntry());
+        }});
+        assertEquals(1, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void historyIsValidJson() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        String data = CryptoUtils.getInstance(context).encrypt("[{},{" +
+                "\"authToken\":\"f8950b6a-2f63-49f2-8b02-2dc5577ec4bf\"," +
+                "\"homeAccountId\":\"fa45f2a0-9634-46ff-9c09-36224542e1fc\"," +
+                "\"time\":\"2019-03-28T18:41:48.247Z\"," +
+                "\"expiresOn\":\"2019-03-28T18:41:37.276Z\"}]");
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, data);
+        assertEquals(2, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void historyIsInvalidJson() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        String data = CryptoUtils.getInstance(context).encrypt("bad json");
+        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, data);
+        assertNull(mAuthTokenContext.getHistory());
     }
 
     @Test
@@ -194,42 +231,6 @@ public class AuthTokenContextAndroidTest {
         assertEquals("3", authTokenInfo.getAuthToken());
         assertNotNull(authTokenInfo.getStartTime());
         assertEquals(afterHour, authTokenInfo.getEndTime());
-
-        /* History has empty array. */
-        mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>());
-        history = mAuthTokenContext.getAuthTokenValidityList();
-        assertEquals(1, history.size());
-
-        /* History is null. */
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, null);
-        assertEquals(0, mAuthTokenContext.getHistory().size());
-        history = mAuthTokenContext.getAuthTokenValidityList();
-        assertEquals(1, history.size());
-        authTokenInfo = history.get(0);
-        assertNull(authTokenInfo.getAuthToken());
-        assertNull(authTokenInfo.getStartTime());
-        assertNull(authTokenInfo.getEndTime());
-
-
-        /* History is empty string. */
-        mAuthTokenContext.setHistory(null);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "");
-        history = mAuthTokenContext.getAuthTokenValidityList();
-        assertEquals(1, history.size());
-        authTokenInfo = history.get(0);
-        assertNull(authTokenInfo.getAuthToken());
-        assertNull(authTokenInfo.getStartTime());
-        assertNull(authTokenInfo.getEndTime());
-
-        /* History is invalid. */
-        mAuthTokenContext.setHistory(null);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, "some bad value");
-        history = mAuthTokenContext.getAuthTokenValidityList();
-        assertEquals(1, history.size());
-        authTokenInfo = history.get(0);
-        assertNull(authTokenInfo.getAuthToken());
-        assertNull(authTokenInfo.getStartTime());
-        assertNull(authTokenInfo.getEndTime());
     }
 
     @Test
