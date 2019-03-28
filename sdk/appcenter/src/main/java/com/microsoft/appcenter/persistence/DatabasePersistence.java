@@ -88,6 +88,7 @@ public class DatabasePersistence extends Persistence {
 
     /**
      * Name of date column in the table.
+     * Value is stored in milliseconds.
      */
     @VisibleForTesting
     static final String COLUMN_TIMESTAMP = "timestamp";
@@ -412,7 +413,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public int countLogs(@NonNull Date timestamp) {
-        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp));
+        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
     }
 
     private int countLogs(String whereClause, String ...whereArgs) {
