@@ -16,6 +16,8 @@
     <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
     <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
     <string name="title_storage" tools:ignore="MissingTranslation">Storage</string>
+    <string name="title_app_document" tools:ignore="MissingTranslation">App Document</string>
+    <string name="title_user_document" tools:ignore="MissingTranslation">User Document</string>
     <string name="storage_activity_default_text" tools:ignore="MissingTranslation">Nothing here but a lot happening in Logcat</string>
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
@@ -37,6 +39,7 @@
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>
+    <string name="storage_type" tools:ignore="MissingTranslation">Storage Type</string>
     <string-array name="typed_property_types" tools:ignore="MissingTranslation">
         <item>String</item>
         <item>Boolean</item>

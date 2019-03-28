@@ -8,10 +8,24 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
     android:padding="16dp"
     tools:context=".activities.StorageActivity">
     <TextView
+        android:id="@+id/storage_type_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/storage_activity_default_text" />
-    </LinearLayout>
+        android:text="@string/storage_type" />
+    <Spinner
+        android:id="@+id/storage_type"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+</LinearLayout>
