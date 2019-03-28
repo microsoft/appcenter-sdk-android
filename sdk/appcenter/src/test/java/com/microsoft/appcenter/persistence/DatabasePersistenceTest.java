@@ -20,12 +20,12 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
 import org.json.JSONException;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,8 +52,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({AppCenterLog.class, DatabaseManager.class, DatabasePersistence.class})
-@RunWith(PowerMockRunner.class)
 public class DatabasePersistenceTest {
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
     public void countLogsForDate() throws Exception {
