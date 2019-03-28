@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.storage.models;
 
 /**
- * Pending operation
+ * Pending operation.
  */
 public class PendingOperation {
     
