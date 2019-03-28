@@ -1134,6 +1134,54 @@ public class DatabasePersistenceAndroidTest {
     }
 
     @Test
+    public void getLogsFromYesterday() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        buildLogs(persistence);
+
+        /* Get logs and check order. */
+        List<Log> outputLogs = new ArrayList<>();
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        Date from = cal.getTime();
+        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, from, null);
+
+        /* Verify. */
+        assertEquals(1, outputLogs.size());
+    }
+
+    @Test
+    public void getLogsForPeriod() throws PersistenceException {
+
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        buildLogs(persistence);
+
+        /* Get logs and check order. */
+        List<Log> outputLogs = new ArrayList<>();
+        final Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -1);
+        Date to = cal.getTime();
+        cal.add(Calendar.DATE, -2);
+        Date from = cal.getTime();
+        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs, from, to);
+
+        /* Verify. */
+        assertEquals(2, outputLogs.size());
+    }
+
+    @Test
     public void countLogsWithYesterdayDate() throws PersistenceException {
 
         /* Initialize database persistence. */
