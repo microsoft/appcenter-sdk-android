@@ -472,7 +472,7 @@ public class DefaultChannel implements Channel {
             if (batchId == null) {
 
                 /* Remove oldest token if there are no more logs. */
-                if (!iterator.hasPrevious() &&endTime != null &&
+                if (iterator.previousIndex() == 0 && endTime != null &&
                         mPersistence.countLogs(endTime) == 0) {
                     authTokenContext.removeToken(authToken);
                 }

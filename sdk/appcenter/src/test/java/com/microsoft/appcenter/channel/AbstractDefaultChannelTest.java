@@ -63,6 +63,9 @@ public class AbstractDefaultChannelTest {
     @Mock
     protected Handler mAppCenterHandler;
 
+    @Mock
+    protected AuthTokenContext mAuthTokenContext;
+
     static Answer<String> getGetLogsAnswer() {
         return getGetLogsAnswer(-1);
     }
@@ -131,10 +134,9 @@ public class AbstractDefaultChannelTest {
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
         mockStatic(AuthTokenContext.class);
-        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        when(tokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
-        when(tokenContext.getTokenHistory()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
-        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
-        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
+        when(mAuthTokenContext.getTokenHistory()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
     }
 }

@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -40,11 +41,7 @@ import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -172,13 +169,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), any(Date.class), any(Date.class)))
                 .then(getGetLogsAnswer(40))
                 .then(getGetLogsAnswer(0));
-
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
-
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
@@ -967,5 +961,84 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Verify listener and database get the same flags. */
         verify(listener).onPreparedLog(criticalLog, TEST_GROUP, Flags.PERSISTENCE_CRITICAL);
         verify(persistence).putLog(criticalLog, TEST_GROUP, Flags.PERSISTENCE_CRITICAL);
+    }
+
+    @Test
+    public void removeTokenIfNoMoreLogs() {
+        Persistence mockPersistence = mock(Persistence.class);
+        final Date changeTokenDate = new Date();
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), isNull(Date.class), eq(changeTokenDate)))
+                .then(getGetLogsAnswer(10))
+                .then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), eq(changeTokenDate), any(Date.class)))
+                .then(getGetLogsAnswer(50))
+                .then(getGetLogsAnswer(0));
+        when(mockPersistence.countLogs(anyString())).thenReturn(70);
+        when(mockPersistence.countLogs(any(Date.class))).thenReturn(0);
+        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+            add(new AuthTokenInfo(null, null, changeTokenDate));
+            add(new AuthTokenInfo("42", changeTokenDate, new Date(Long.MAX_VALUE)));
+        }});
+        sendWithDefaultChannel(mockPersistence);
+
+        /* The oldest token is removed. */
+        verify(mAuthTokenContext, times(2)).removeToken(isNull(String.class));
+    }
+
+    @Test
+    public void doNotRemoveTokenIfThereAreLogsInOtherChannels() {
+        Persistence mockPersistence = mock(Persistence.class);
+        final Date changeTokenDate = new Date();
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), isNull(Date.class), eq(changeTokenDate)))
+                .then(getGetLogsAnswer(10))
+                .then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), eq(changeTokenDate), any(Date.class)))
+                .then(getGetLogsAnswer(50))
+                .then(getGetLogsAnswer(0));
+        when(mockPersistence.countLogs(anyString())).thenReturn(70);
+        when(mockPersistence.countLogs(any(Date.class))).thenReturn(5);
+        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+            add(new AuthTokenInfo(null, null, changeTokenDate));
+            add(new AuthTokenInfo("42", changeTokenDate, new Date(Long.MAX_VALUE)));
+        }});
+        sendWithDefaultChannel(mockPersistence);
+
+        /* The oldest token is removed. */
+        verify(mAuthTokenContext, never()).removeToken(isNull(String.class));
+    }
+
+    @Test
+    public void doNotRemoveCurrentToken() {
+        Persistence mockPersistence = mock(Persistence.class);
+        final Date changeTokenDate = new Date();
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<ArrayList<Log>>any(), eq(changeTokenDate), isNull(Date.class)))
+                .then(getGetLogsAnswer(40))
+                .then(getGetLogsAnswer(0));
+        when(mockPersistence.countLogs(anyString())).thenReturn(50);
+        when(mockPersistence.countLogs(any(Date.class))).thenReturn(0);
+        when(mAuthTokenContext.getTokenHistory()).thenReturn(new ArrayList<AuthTokenInfo>() {{
+            add(new AuthTokenInfo("42", changeTokenDate, null));
+        }});
+        sendWithDefaultChannel(mockPersistence);
+
+        /* The oldest token is removed. */
+        verify(mAuthTokenContext, never()).removeToken(isNull(String.class));
+    }
+
+    private void sendWithDefaultChannel(Persistence mockPersistence) {
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+
+        /* Prepare to mock timer. */
+        AtomicReference<Runnable> runnable = catchPostRunnable();
+
+        /* Create channel. */
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+
+        /* Wait for timer. */
+        assertNotNull(runnable.get());
+        runnable.get().run();
     }
 }
