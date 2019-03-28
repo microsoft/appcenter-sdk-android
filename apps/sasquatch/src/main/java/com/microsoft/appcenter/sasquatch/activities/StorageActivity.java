@@ -38,7 +38,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private ListView listView;
 
-    private String [] userDocumentList = {"Doc1-User", "Doc2-User","Doc3-User", "Doc4-User", "Doc5-User","Doc6-User", "Doc7-User", "Doc8-User","Doc9-User", "Doc10-User", "Doc11-User","Doc12-User"};
+    private String[] userDocumentList = {"Doc1-User", "Doc2-User", "Doc3-User", "Doc4-User", "Doc5-User", "Doc6-User", "Doc7-User", "Doc8-User", "Doc9-User", "Doc10-User", "Doc11-User", "Doc12-User"};
 
     private final ArrayList<String> appDocumentList = new ArrayList<String>();
 
@@ -91,17 +91,17 @@ public class StorageActivity extends AppCompatActivity {
         }
     }
 
-    private void updateStorageType(int position){
-        switch (position){
+    private void updateStorageType(int position) {
+        switch (position) {
             case 0:
-                listView.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,appDocumentList));
+                listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, appDocumentList));
                 break;
             case 1:
-                if(AuthenticationProviderActivity.userID != null){
-                    listView.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,userDocumentList));
-                }else{
-                    String [] signInReminder = {"Please Sign In Identity First Before Get User Document!"};
-                    listView.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, signInReminder));
+                if (AuthenticationProviderActivity.userID != null) {
+                    listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, userDocumentList));
+                } else {
+                    String[] signInReminder = {"Please Sign In Identity First Before Get User Document!"};
+                    listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, signInReminder));
                 }
                 break;
         }
@@ -109,11 +109,11 @@ public class StorageActivity extends AppCompatActivity {
 
     private void listDocuments(Class<?> storage, String partition) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         Object future = storage.getMethod("list", String.class, Class.class).invoke(null, partition, TestDocument.class);
-        ((AppCenterFuture<PaginatedDocuments<TestDocument>>)future).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+        ((AppCenterFuture<PaginatedDocuments<TestDocument>>) future).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
             @Override
             public void accept(PaginatedDocuments<TestDocument> documents) {
                 int listSize = documents.getCurrentPage().getItems().size();
-                for (int i = 0; i < listSize; i++){
+                for (int i = 0; i < listSize; i++) {
                     appDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
                 }
             }
