@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.utils.context;
 
 import android.content.Context;
+import android.text.TextUtils;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -15,6 +16,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -27,8 +30,14 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest({CryptoUtils.class, JSONUtils.class, SharedPreferencesManager.class})
+@PrepareForTest({
+        CryptoUtils.class,
+        JSONUtils.class,
+        TextUtils.class,
+        SharedPreferencesManager.class
+})
 @RunWith(PowerMockRunner.class)
 public class AuthTokenContextTest {
 
@@ -44,10 +53,20 @@ public class AuthTokenContextTest {
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
         mockStatic(SharedPreferencesManager.class);
-        mAuthTokenContext = AuthTokenContext.getInstance();
+        mockStatic(TextUtils.class);
+        when(TextUtils.equals(any(CharSequence.class), any(CharSequence.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) {
+                CharSequence a = (CharSequence) invocation.getArguments()[0];
+                CharSequence b = (CharSequence) invocation.getArguments()[1];
+                return a == b || (a != null && a.equals(b));
+            }
+        });
 
         /* JSON library is part of Android SDK and doesn't available here. */
         mockStatic(JSONUtils.class);
+        mAuthTokenContext = AuthTokenContext.getInstance();
     }
 
     @After
@@ -63,7 +82,12 @@ public class AuthTokenContextTest {
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
+        mAuthTokenContext.setAuthToken("42", "mock-user", mock(Date.class));
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, "mock-user", mock(Date.class));
+
+        /* Verify that listener is called. */
+        verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
+        verify(mockListener, times(1)).onNewUser(notNull(String.class));
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);

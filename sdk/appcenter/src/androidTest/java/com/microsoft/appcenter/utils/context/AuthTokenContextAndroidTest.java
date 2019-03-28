@@ -40,7 +40,7 @@ public class AuthTokenContextAndroidTest {
     }
 
     @Test
-    public void saveToken() {
+    public void setAuthToken() {
 
         /* Initial values are null. */
         assertNull( mAuthTokenContext.getAuthToken());
@@ -73,20 +73,55 @@ public class AuthTokenContextAndroidTest {
 
         /* Check history. */
         assertEquals(4, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void historyIsNull() {
+        assertNull(mAuthTokenContext.getAuthToken());
+        assertNull(mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getHistory());
+
+        /* Removing does nothing. */
+        mAuthTokenContext.removeToken(null);
+        assertNull(mAuthTokenContext.getHistory());
+
+        /* Check validity list.*/
+        List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
+        assertEquals(1, history.size());
+        AuthTokenInfo authTokenInfo = history.get(0);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
+
+        /* Add some token to empty history. */
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
+        assertEquals(1, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void historyIsEmptyArray() {
 
         /* History has empty array. */
         mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>());
-        assertNull(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
-        assertNull(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAuthToken());
+        assertNull(mAuthTokenContext.getHomeAccountId());
+        assertEquals(0, mAuthTokenContext.getHistory().size());
+
+        /* Removing does nothing. */
+        mAuthTokenContext.removeToken(null);
+        assertEquals(0, mAuthTokenContext.getHistory().size());
+
+        /* Check validity list.*/
+        List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
+        assertEquals(1, history.size());
+        AuthTokenInfo authTokenInfo = history.get(0);
+        assertNull(authTokenInfo.getAuthToken());
+        assertNull(authTokenInfo.getStartTime());
+        assertNull(authTokenInfo.getEndTime());
+
+        /* Add some token to empty history. */
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
-
-        /* History has empty string as encrypted token. */
-        mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>() {{
-            add(new AuthTokenHistoryEntry());
-        }});
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        assertEquals(2, mAuthTokenContext.getHistory().size());
     }
 
     @Test
@@ -101,22 +136,25 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
-        /* Remove last one (not allowed). */
+        /* Remove current token (not allowed). */
         mAuthTokenContext.removeToken(AUTH_TOKEN);
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
-        /* Remove second one (not allowed). */
+        /* Add second token. */
+        mAuthTokenContext.setAuthToken("42", ACCOUNT_ID, new Date(Long.MAX_VALUE));
+        assertEquals(2, mAuthTokenContext.getHistory().size());
+
+        /* Remove current token (not allowed). */
+        mAuthTokenContext.removeToken("42");
+        assertEquals(2, mAuthTokenContext.getHistory().size());
+
+        /* Remove oldest token. */
         mAuthTokenContext.removeToken(AUTH_TOKEN);
         assertEquals(1, mAuthTokenContext.getHistory().size());
-
-        /* History has empty array (removing does nothing). */
-        mAuthTokenContext.setHistory(new ArrayList<AuthTokenHistoryEntry>());
-        mAuthTokenContext.removeToken(null);
-        assertEquals(0, mAuthTokenContext.getHistory().size());
     }
 
     @Test
-    public void getTokenHistory() {
+    public void getAuthTokenValidityList() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.HOUR, -1);
