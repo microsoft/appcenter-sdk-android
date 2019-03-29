@@ -92,4 +92,21 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getError());
     }
+
+    @Test
+    public void createDocument() {
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
+        Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertEquals("Test", createdDocument.getDocument());
+    }
+
+    @Test
+    public void updateDocument() {
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test1", String.class, new WriteOptions());
+        Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertEquals("Test1", createdDocument.getDocument());
+    }
 }

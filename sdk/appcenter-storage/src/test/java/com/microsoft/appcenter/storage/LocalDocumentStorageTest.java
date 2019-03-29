@@ -28,7 +28,6 @@ import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -119,16 +118,13 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void documentUpdate(){
+    public void createOrUpdateFailedToWriteException() {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
-        mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID,"test", String.class, new WriteOptions());
-        when(mLocalDocumentStorage.create()).thenCallRealMethod();
-        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        ArgumentCaptor<String> operationCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mDatabaseManager).replace(argumentCaptor.capture());
-        ContentValues value = argumentCaptor.getValue();
-        assertNotNull(value);
+        when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
+        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID,"test", String.class, new WriteOptions());
+        assertNotNull(doc);
+        assertNotNull(doc.getError().getError());
     }
 
     @Test
