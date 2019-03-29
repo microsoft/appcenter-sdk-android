@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage.models;
 
-import java.util.Calendar;
-
 public abstract class BaseOptions {
 
     /**
