@@ -12,7 +12,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.storage.exception.StorageException;
-import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
@@ -182,7 +181,7 @@ class LocalDocumentStorage {
         values.put(DOCUMENT_ID_COLUMN_NAME, operation.getDocumentId());
         values.put(DOCUMENT_COLUMN_NAME, operation.getDocument());
         values.put(ETAG_COLUMN_NAME, operation.getEtag());
-        values.put(EXPIRATION_TIME_COLUMN_NAME, now + BaseOptions.DEFAULT_ONE_HOUR); // TODO: how to figure out the next expiration time?
+        values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
         values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
         values.put(OPERATION_TIME_COLUMN_NAME, now);
         values.put(PENDING_OPERATION_COLUMN_NAME, "");
@@ -198,6 +197,10 @@ class LocalDocumentStorage {
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to delete from cache: ", e);
         }
+    }
+
+    void delete(PendingOperation pendingOperation) {
+        delete(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
 
     List<PendingOperation> getPendingOperations() {
@@ -242,7 +245,7 @@ class LocalDocumentStorage {
         return values;
     }
 
-    void updateOperationOnSuccess(PendingOperation operation) {
+    void updateLocalCopy(PendingOperation operation) {
         
         /*
             Update the document in cache (if expiration_time still valid otherwise, remove the document),

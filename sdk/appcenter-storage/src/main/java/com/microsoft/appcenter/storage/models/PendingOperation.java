@@ -45,35 +45,42 @@ public class PendingOperation {
     }
 
     /**
-     * @return document ID
+     * @return document ID.
      */
     public String getDocumentId() {
         return documentId;
     }
 
     /**
-     * @return document object
+     * @return document object.
      */
     public String getDocument() {
         return document;
     }
 
     /**
-     * @return Cosmos DB etag
+     * @param document object.
+     */
+    public void setDocument(String document) {
+        this.document = document;
+    }
+
+    /**
+     * @return Cosmos DB etag.
      */
     public String getEtag() {
         return etag;
     }
 
     /**
-     * @param etag setter
+     * @param etag setter.
      */
     public void setEtag(String etag) {
         this.etag = etag;
     }
 
     /**
-     * @return document expiration time
+     * @return document expiration time.
      */
     public long getExpirationTime() {
         return expirationTime;

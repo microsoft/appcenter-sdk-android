@@ -12,12 +12,14 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.DocumentError;
@@ -306,18 +308,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         /* If device comes back online. */
         if (connected) {
             for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
-                switch (po.getOperation()) {
-                    case LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE:
-                    case LocalDocumentStorage.PENDING_OPERATION_REPLACE_VALUE:
-                        instanceCreateOrUpdate(po);
-                        break;
-
-                    case LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE:
-                        instanceDelete(po);
-                        break;
-
-                    default:
-                        AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+                if (LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                        LocalDocumentStorage.PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                    instanceCreateOrUpdate(po);
+                } else if (LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                    instanceDelete(po);
+                } else {
+                    AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
                 }
             }
         }
@@ -516,6 +513,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void completeFuture(Exception e) {
+                        notifyListenerAndUpdateOperationOnFailure(
+                                new StorageException("Failed to get Cosmos DB token for performing a create or update operation.", e),
+                                pendingOperation);
                     }
                 });
     }
@@ -566,14 +566,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        notifyListenerAndUpdateOperation(payload, pendingOperation);
+                        notifyListenerAndUpdateOperationOnSuccess(payload, pendingOperation);
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        
-                        /* TODO: process potential conflicts. */
-                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                        notifyListenerAndUpdateOperationOnFailure(
+                                new StorageException("Failed to call Cosmos create or replace API", e),
+                                pendingOperation);
                     }
                 });
     }
@@ -611,7 +611,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void completeFuture(Exception e) {
-                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                        notifyListenerAndUpdateOperationOnFailure(
+                                new StorageException("Failed to get Cosmos DB token for performing a delete operation.", e),
+                                pendingOperation);
                     }
                 });
     }
@@ -650,14 +652,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        notifyListenerAndUpdateOperation(payload, pendingOperation);
+                        notifyListenerAndUpdateOperationOnSuccess(payload, pendingOperation);
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        
-                        /* TODO: process potential conflicts. */
-                        notifyListenerAndUpdateOperation(e, pendingOperation);
+                        notifyListenerAndUpdateOperationOnFailure(
+                                new StorageException("Failed to call Cosmos delete API", e),
+                                pendingOperation);
                     }
                 });
     }
@@ -700,10 +702,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
-    private synchronized void notifyListenerAndUpdateOperation(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
-        String etag = cosmosDbResponsePayload == null || cosmosDbResponsePayload == "" ?
-                null : Utils.getEtag(cosmosDbResponsePayload);
+    private synchronized void notifyListenerAndUpdateOperationOnSuccess(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
+        String etag = Utils.getEtag(cosmosDbResponsePayload);
         pendingOperation.setEtag(etag);
+        pendingOperation.setDocument(cosmosDbResponsePayload);
         if (mEventListener != null) {
             mEventListener.onDataStoreOperationResult(
                     pendingOperation.getOperation(),
@@ -713,15 +715,32 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             etag),
                     null);
         }
-        mLocalDocumentStorage.updateOperationOnSuccess(pendingOperation);
+        mLocalDocumentStorage.updateLocalCopy(pendingOperation);
     }
 
-    private synchronized void notifyListenerAndUpdateOperation(Throwable e, PendingOperation pendingOperation) {
+    private synchronized void notifyListenerAndUpdateOperationOnFailure(StorageException e, PendingOperation pendingOperation) {
+        AppCenterLog.error(LOG_TAG, "Remote operation failed", e);
+        boolean deleteLocalCopy = false;
+        if (e.getCause() instanceof HttpException) {
+            switch (((HttpException) e.getCause()).getStatusCode()) {
+                /* The document was removed on the server. */
+                case 404:
+                    /* Partition and document_id combination is already present in the DB. */
+                case 409:
+                    deleteLocalCopy = true;
+                    break;
+            }
+        }
         if (mEventListener != null) {
             mEventListener.onDataStoreOperationResult(
                     pendingOperation.getOperation(),
                     null,
                     new DocumentError(e));
+        }
+        if (deleteLocalCopy) {
+            mLocalDocumentStorage.delete(pendingOperation);
+        } else {
+            mLocalDocumentStorage.updateLocalCopy(pendingOperation);
         }
     }
 }

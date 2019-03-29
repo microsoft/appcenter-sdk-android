@@ -13,8 +13,12 @@ import android.util.Log;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.storage.client.CosmosDb;
+import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -25,6 +29,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Rule;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -32,10 +37,17 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.HashMap;
+
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -56,6 +68,38 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 })
 
 abstract public class AbstractStorageTest {
+
+    static final String DATABASE_NAME = "mbaas";
+    static final String COLLECTION_NAME = "appcenter";
+    static final String PARTITION = "custom-partition";
+    static final String DOCUMENT_ID = "document-id";
+    static final String TEST_FIELD_VALUE = "Test Value";
+    static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
+    static String tokenExchangeResponsePayload = String.format("{\n" +
+            "    \"tokens\": [\n" +
+            "        {\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"%s\",\n" +
+            "            \"dbCollectionName\": \"%s\",\n" +
+            "            \"token\": \"ha-ha-ha-ha\",\n" +
+            "            \"status\": \"Succeed\"\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}", PARTITION, DATABASE_NAME, COLLECTION_NAME);
+
+    static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
+            "    \"document\": {\n" +
+            "        \"test\": \"%s\"\n" +
+            "    },\n" +
+            "    \"id\": \"%s\",\n" +
+            "    \"PartitionKey\": \"%s\",\n" +
+            "    \"_rid\": \"mFBtAPPa528HAAAAAAAAAA==\",\n" +
+            "    \"_self\": \"dbs/mFBtAA==/colls/mFBtAPPa528=/docs/mFBtAPPa528HAAAAAAAAAA==/\",\n" +
+            "    \"_etag\": \"%s\",\n" +
+            "    \"_attachments\": \"attachments/\",\n" +
+            "    \"_ts\": 1550881731\n" +
+            "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION, ETAG);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
@@ -145,5 +189,51 @@ abstract public class AbstractStorageTest {
         storage.onStarting(mAppCenterHandler);
         storage.onStarted(Mockito.mock(Context.class), channel, "", null, true);
         return channel;
+    }
+
+    void verifyTokenExchangeToCosmosDbFlow(
+            String documentId,
+            String cosmosCallApiMethod,
+            String cosmosSuccessPayload,
+            Exception cosmosFailureException) {
+        verityTokenExchangeFlow(tokenExchangeResponsePayload, null);
+        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentId)),
+                eq(cosmosCallApiMethod),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                cosmosDbServiceCallbackArgumentCaptor.capture());
+        ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(cosmosDbServiceCallback);
+        if (cosmosSuccessPayload != null) {
+            cosmosDbServiceCallback.onCallSucceeded(cosmosSuccessPayload, new HashMap<String, String>());
+        }
+        if (cosmosFailureException != null) {
+            cosmosDbServiceCallback.onCallFailed(cosmosFailureException);
+        }
+    }
+
+    void verityTokenExchangeFlow(
+            String tokenExchangeSuccessResponsePayload,
+            Exception tokenExchangeFailureResponse) {
+        ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
+                ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
+        verify(mHttpClient).callAsync(
+                endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
+                eq(METHOD_POST),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                tokenExchangeServiceCallbackArgumentCaptor.capture());
+        TokenExchange.TokenExchangeServiceCallback tokenExchangeServiceCallback = tokenExchangeServiceCallbackArgumentCaptor.getValue();
+        assertNotNull(tokenExchangeServiceCallback);
+
+        if (tokenExchangeSuccessResponsePayload != null) {
+            tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload, new HashMap<String, String>());
+        }
+        if (tokenExchangeFailureResponse != null) {
+            tokenExchangeServiceCallback.onCallFailed(tokenExchangeFailureResponse);
+        }
     }
 }

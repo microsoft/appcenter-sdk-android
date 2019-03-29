@@ -30,9 +30,16 @@ public final class Utils {
     }
 
     static String getEtag(String cosmosDbPayload) {
-        JsonObject cosmosResponseJson = sParser.parse(cosmosDbPayload).getAsJsonObject();
+        if (cosmosDbPayload == null) {
+            return null;
+        }
+        JsonElement parsedPayload = sParser.parse(cosmosDbPayload);
+        if (!parsedPayload.isJsonObject()) {
+            return null;
+        }
+        JsonObject cosmosResponseJson = parsedPayload.getAsJsonObject();
         return cosmosResponseJson.has(Constants.ETAG_FIELD_NAME) ?
-                cosmosResponseJson.get(Constants.ETAG_FIELD_NAME).getAsString() : "";
+                cosmosResponseJson.get(Constants.ETAG_FIELD_NAME).getAsString() : null;
     }
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
