@@ -161,9 +161,16 @@ class LocalDocumentStorage {
 
         /* The document cache has been expired, or the document did not exists, create it. */
         Document<T> writeDocument = new Document<>(document, partition, documentId);
-        long rowId = write(cachedDocument, writeOptions, cachedDocument.getError()!= null ?
-                Constants.PENDING_OPERATION_CREATE_VALUE : Constants.PENDING_OPERATION_REPLACE_VALUE);
+        long rowId = cachedDocument.getError() != null ? create(writeDocument, writeOptions) : update(writeDocument, writeOptions);
         return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
+    }
+
+    <T> long create(Document<T> document, WriteOptions writeOptions){
+        return write(document, writeOptions, Constants.PENDING_OPERATION_CREATE_VALUE);
+    }
+
+    <T> long update(Document<T> document, WriteOptions writeOptions){
+        return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
     void delete(String partition, String documentId) {
