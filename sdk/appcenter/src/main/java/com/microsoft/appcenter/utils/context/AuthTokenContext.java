@@ -68,6 +68,11 @@ public class AuthTokenContext {
     private List<AuthTokenHistoryEntry> mHistory;
 
     /**
+     * {@code true} if the current token should be reset.
+     */
+    private boolean mResetAuthTokenRequired = true;
+
+    /**
      * Initializes AuthTokenContext class.
      *
      * @param context {@link Context} instance.
@@ -114,6 +119,25 @@ public class AuthTokenContext {
      */
     public synchronized void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
+    }
+
+    /**
+     * Prevents resetting the current auth token if it exists. Should be called during
+     * initialization process if the current auth token should be kept.
+     */
+    public synchronized void preventResetAuthTokenAfterStart() {
+        mResetAuthTokenRequired = false;
+    }
+
+    /**
+     * Finishes initialization process. Resets current token if nothing prevents it.
+     */
+    public synchronized void finishStartServices() {
+        if (!mResetAuthTokenRequired) {
+            return;
+        }
+        mResetAuthTokenRequired = false;
+        setAuthToken(null, null, null);
     }
 
     /**

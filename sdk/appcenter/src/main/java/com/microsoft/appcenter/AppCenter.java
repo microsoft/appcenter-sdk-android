@@ -929,6 +929,11 @@ public class AppCenter {
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
+
+            /* Finish auth token context initialization. */
+            AuthTokenContext.getInstance().finishStartServices();
+
+            /* Send start service log. */
             for (AppCenterService service : updatedServices) {
                 mStartedServicesNamesToLog.add(service.getServiceName());
             }
