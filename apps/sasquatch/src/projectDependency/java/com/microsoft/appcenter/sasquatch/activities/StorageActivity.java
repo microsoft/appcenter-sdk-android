@@ -17,9 +17,9 @@ import android.widget.Spinner;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -38,7 +38,10 @@ public class StorageActivity extends AppCompatActivity {
 
     private ListView listView;
 
-    private String[] userDocumentList = {"Doc1-User", "Doc2-User", "Doc3-User", "Doc4-User", "Doc5-User", "Doc6-User", "Doc7-User", "Doc8-User", "Doc9-User", "Doc10-User", "Doc11-User", "Doc12-User"};
+    private ArrayList<String> userDocumentList = new ArrayList<String>() {{
+        add("Doc1-User");
+        add("Doc2-User");
+    }};
 
     private final ArrayList<String> appDocumentList = new ArrayList<String>();
 
@@ -47,14 +50,15 @@ public class StorageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage);
 
-        /* TODO remove reflection once Storage published to jCenter. */
-        try {
-            Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
-            listDocuments(storage, Constants.READONLY);
-            Thread.currentThread().sleep(1000);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Storage.Module call failed", e);
-        }
+        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+            @Override
+            public void accept(PaginatedDocuments<TestDocument> documents) {
+                int listSize = documents.getCurrentPage().getItems().size();
+                for (int i = 0; i < listSize; i++) {
+                    appDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
+                }
+            }
+        });
 
         /* Transmission target views init. */
         mStorageTypeSpinner = findViewById(R.id.storage_type);
@@ -79,7 +83,6 @@ public class StorageActivity extends AppCompatActivity {
             }
         });
 
-
         /* TODO remove reflection once Storage published to jCenter. */
         try {
             Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
@@ -94,31 +97,20 @@ public class StorageActivity extends AppCompatActivity {
     private void updateStorageType(int position) {
         switch (position) {
             case 0:
-                listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, appDocumentList));
+                listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, appDocumentList));
                 break;
             case 1:
                 if (AuthenticationProviderActivity.userID != null) {
-                    listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, userDocumentList));
+                    CustomItemAdapter adapterUser = new CustomItemAdapter(userDocumentList, this);
+                    listView.setAdapter(adapterUser);
                 } else {
-                    String[] signInReminder = {"Please Sign In Identity First Before Get User Document!"};
-                    listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, signInReminder));
+                    ArrayList<String> signInReminder = new ArrayList<String>() {{
+                        add("Please Sign In Identity First Before Get User Document!");
+                    }};
+                    listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, signInReminder));
                 }
                 break;
         }
-    }
-
-    private void listDocuments(Class<?> storage, String partition) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        Object future = storage.getMethod("list", String.class, Class.class).invoke(null, partition, TestDocument.class);
-        ((AppCenterFuture<PaginatedDocuments<TestDocument>>) future).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
-            @Override
-            public void accept(PaginatedDocuments<TestDocument> documents) {
-                int listSize = documents.getCurrentPage().getItems().size();
-                for (int i = 0; i < listSize; i++) {
-                    appDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
-                }
-            }
-
-        });
     }
 
     private void deleteDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
