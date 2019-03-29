@@ -18,7 +18,6 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
@@ -29,6 +28,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 

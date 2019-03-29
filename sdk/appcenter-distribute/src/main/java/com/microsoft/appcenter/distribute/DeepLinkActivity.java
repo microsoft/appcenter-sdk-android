@@ -14,8 +14,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_TESTER_APP_UPDATE_SETUP_FAILED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_UPDATE_SETUP_FAILED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.EXTRA_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 /**

@@ -311,19 +311,21 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Deletes the entries that matches key == value.
+     * Deletes the entries that matches the condition.
      *
      * @param whereClause the optional WHERE clause to apply when deleting.
      *                    Passing null will delete all rows.
      * @param whereArgs   You may include ?s in the where clause, which
      *                    will be replaced by the values from whereArgs. The values
      *                    will be bound as Strings.
+     * @return the number of rows affected.
      */
-    public void delete(String whereClause, String[] whereArgs) {
+    public int delete(String whereClause, String[] whereArgs) {
         try {
-            getDatabase().delete(mTable, whereClause, whereArgs);
+            return getDatabase().delete(mTable, whereClause, whereArgs);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
+            return 0;
         }
     }
 
@@ -332,9 +334,10 @@ public class DatabaseManager implements Closeable {
      *
      * @param key   The optional key for query.
      * @param value The optional value for query.
+     * @return the number of rows affected.
      */
-    public void delete(@Nullable String key, @Nullable Object value) {
-        delete(key + " = ?", new String[]{String.valueOf(value)});
+    public int delete(@Nullable String key, @Nullable Object value) {
+        return delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
     /**
@@ -355,7 +358,7 @@ public class DatabaseManager implements Closeable {
     public void close() {
         try {
 
-            /* Close opened database (Do not force open). */
+            /* Close opened database (do not force open). */
             mSQLiteOpenHelper.close();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to close the database.", e);

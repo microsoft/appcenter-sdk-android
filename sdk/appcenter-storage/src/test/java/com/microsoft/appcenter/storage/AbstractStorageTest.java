@@ -15,18 +15,19 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -49,12 +50,13 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         FileManager.class,
         AppCenterLog.class,
         AppCenter.class,
+        CryptoUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
+        JSONUtils.class,
         NetworkStateHelper.class,
         LocalDocumentStorage.class
 })
-
 abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
@@ -126,7 +128,7 @@ abstract public class AbstractStorageTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
-        mHttpClient = Mockito.mock(HttpClientRetryer.class);
+        mHttpClient = mock(HttpClientRetryer.class);
         whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
         when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(true);
         mockStatic(NetworkStateHelper.class);
@@ -137,13 +139,18 @@ abstract public class AbstractStorageTest {
         Storage storage = Storage.getInstance();
         mChannel = start(storage);
         Storage.setApiUrl("default");
+
+        /* Mock utils. */
+        mockStatic(CryptoUtils.class);
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
+        mockStatic(JSONUtils.class);
     }
 
     @NonNull
     private Channel start(Storage storage) {
-        Channel channel = Mockito.mock(Channel.class);
+        Channel channel = mock(Channel.class);
         storage.onStarting(mAppCenterHandler);
-        storage.onStarted(Mockito.mock(Context.class), channel, "", null, true);
+        storage.onStarted(mock(Context.class), channel, "", null, true);
         return channel;
     }
 }
