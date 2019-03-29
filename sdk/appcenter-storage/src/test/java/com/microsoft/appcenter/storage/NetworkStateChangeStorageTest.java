@@ -15,6 +15,9 @@ import java.util.ArrayList;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -33,7 +36,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingCreateOperationSuccess() {
         final PendingOperation pendingOperation = new PendingOperation(
-                LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE,
+                PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
@@ -50,7 +53,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
-                eq(LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE),
+                eq(PENDING_OPERATION_CREATE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DocumentError.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
@@ -75,7 +78,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingCreateOperationSuccessWithNoListener() {
         final PendingOperation pendingOperation = new PendingOperation(
-                LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE,
+                PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
@@ -102,12 +105,12 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void pendingReplaceOperationFailure() {
-        verifyPendingOperationFailure(LocalDocumentStorage.PENDING_OPERATION_REPLACE_VALUE, METHOD_POST, null);
+        verifyPendingOperationFailure(PENDING_OPERATION_REPLACE_VALUE, METHOD_POST, null);
     }
 
     @Test
     public void pendingDeleteOperationFailure() {
-        verifyPendingOperationFailure(LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE, METHOD_DELETE, DOCUMENT_ID);
+        verifyPendingOperationFailure(PENDING_OPERATION_DELETE_VALUE, METHOD_DELETE, DOCUMENT_ID);
     }
 
     private void verifyPendingOperationFailure(String operation, String cosmosDbMethod, String documentId) {
@@ -178,12 +181,12 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void tokenExchangeCallFailsOnDelete() {
-        verifyTokenExchangeCallFails(LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE);
+        verifyTokenExchangeCallFails(PENDING_OPERATION_DELETE_VALUE);
     }
 
     @Test
     public void tokenExchangeCallFailsOnCreateOrUpdate() {
-        verifyTokenExchangeCallFails(LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE);
+        verifyTokenExchangeCallFails(PENDING_OPERATION_CREATE_VALUE);
     }
 
     private void verifyTokenExchangeCallFails(String operation) {
@@ -215,7 +218,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationSuccess() {
         final PendingOperation pendingOperation = new PendingOperation(
-                LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE,
+                PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
@@ -232,7 +235,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
-                eq(LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE),
+                eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DocumentError.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
@@ -249,7 +252,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationWithConflict() {
         final PendingOperation pendingOperation = new PendingOperation(
-                LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE,
+                PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",

@@ -46,6 +46,9 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 
@@ -308,10 +311,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         /* If device comes back online. */
         if (connected) {
             for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
-                if (LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                        LocalDocumentStorage.PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                        PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
                     instanceCreateOrUpdate(po);
-                } else if (LocalDocumentStorage.PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
                     instanceDelete(po);
                 } else {
                     AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
@@ -362,8 +365,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-
-        /* Temporary: read from Cosmos DB when connected and from cache otherwise */
         if (mNetworkStateHelper.isNetworkConnected()) {
             getTokenAndCallCosmosDbApi(
                     partition,
@@ -377,7 +378,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                         @Override
                         public void completeFuture(Exception e) {
-                            completeFutureAndRemovePendingCall(e, result);
+                            Storage.this.completeFuture(e, result);
                         }
                     });
         } else {
@@ -402,12 +403,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(Utils.parseDocument(payload, documentType), result);
+                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, null);
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
+                        completeFuture(e, result);
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
@@ -455,7 +456,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                 .withHttpClient(mHttpClient)
                                 .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .withDocumentType(documentType);
-                        completeFutureAndRemovePendingCall(paginatedDocuments, result);
+                        completeFuture(paginatedDocuments, result);
                     }
 
                     @Override
@@ -489,7 +490,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
+                        Storage.this.completeFuture(e, result);
                     }
                 });
         return result;
@@ -540,13 +541,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                        completeFutureAndRemovePendingCall(cosmosDbDocument, result);
+                        completeFuture(cosmosDbDocument, result);
                         mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
+                        completeFuture(e, result);
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
@@ -592,7 +593,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
+                        Storage.this.completeFuture(e, result);
                     }
                 });
         return result;
@@ -629,13 +630,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndRemovePendingCall(new Document<Void>(), result);
+                        completeFuture(new Document<Void>(), result);
                         mLocalDocumentStorage.delete(tokenResult.partition(), documentId);
                     }
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        completeFutureAndRemovePendingCall(e, result);
+                        completeFuture(e, result);
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
@@ -685,19 +686,25 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         }
     }
 
-    private synchronized <T> void completeFutureAndRemovePendingCall(T value, DefaultAppCenterFuture<T> result) {
-        result.complete(value);
-        mPendingCalls.remove(result);
+    private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {
+        future.complete(value);
+        mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureAndRemovePendingCall(Exception e, DefaultAppCenterFuture<Document<T>> future) {
-        Utils.handleApiCallFailure(e);
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future, String pendingOperationValue) {
+        future.complete(value);
+        mLocalDocumentStorage.write((Document)value, new WriteOptions(), pendingOperationValue);
+        mPendingCalls.remove(future);
+    }
+
+    private synchronized <T> void completeFuture(Exception e, DefaultAppCenterFuture<Document<T>> future) {
+        Utils.logApiCallFailure(e);
         future.complete(new Document<T>(e));
         mPendingCalls.remove(future);
     }
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
-        Utils.handleApiCallFailure(e);
+        Utils.logApiCallFailure(e);
         future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
         mPendingCalls.remove(future);
     }

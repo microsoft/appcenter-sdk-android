@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -102,7 +103,7 @@ public class LocalDocumentStorageAndroidTest {
         mLocalDocumentStorage.write(document, new WriteOptions(5));
 
         mLocalDocumentStorage.updateLocalCopy(
-                new PendingOperation(LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE, PARTITION, ID, document.getDocument(), 10));
+                new PendingOperation(PENDING_OPERATION_CREATE_VALUE, PARTITION, ID, document.getDocument(), 10));
 
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(0, operations.size());

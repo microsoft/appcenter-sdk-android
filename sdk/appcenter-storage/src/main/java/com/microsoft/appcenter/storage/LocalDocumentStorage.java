@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 
 class LocalDocumentStorage {
 
@@ -80,21 +81,6 @@ class LocalDocumentStorage {
     private static final String PENDING_OPERATION_COLUMN_NAME = "pending_operation";
 
     /**
-     * Pending operation CREATE value.
-     */
-    static final String PENDING_OPERATION_CREATE_VALUE = "CREATE";
-
-    /**
-     * Pending operation REPLACE value.
-     */
-    static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
-
-    /**
-     * Pending operation DELETE value.
-     */
-    static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
-
-    /**
      * Current version of the schema.
      */
     private static final int VERSION = 1;
@@ -122,18 +108,22 @@ class LocalDocumentStorage {
     }
 
     <T> void write(Document<T> document, WriteOptions writeOptions) {
+        write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
+    }
+
+    <T> void write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        Calendar now = Calendar.getInstance();
-        Calendar expiresAt = now;
+        Calendar expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
         ContentValues values = getContentValues(
-                document.getPartition(), document.getId(),
+                document.getPartition(),
+                document.getId(),
                 document,
                 document.getEtag(),
                 expiresAt.getTimeInMillis(),
-                now.getTimeInMillis(),
-                now.getTimeInMillis(),
-                null);
+                expiresAt.getTimeInMillis(),
+                expiresAt.getTimeInMillis(),
+                pendingOperationValue);
         mDatabaseManager.replace(values);
     }
 
