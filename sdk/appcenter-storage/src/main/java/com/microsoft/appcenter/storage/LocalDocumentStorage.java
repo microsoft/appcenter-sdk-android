@@ -153,7 +153,7 @@ class LocalDocumentStorage {
         return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
-    <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions){
+    <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
         if (cachedDocument.getError()!= null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
             return cachedDocument;
