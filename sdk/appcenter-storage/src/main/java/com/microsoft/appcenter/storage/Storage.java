@@ -435,7 +435,7 @@ public class Storage extends AbstractAppCenterService {
                     new TokenExchangeServiceCallback() {
 
                         @Override
-                        public void callCosmosDb(final TokenResult tokenResult) {
+                        public void callCosmosDb(TokenResult tokenResult) {
                             callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
                         }
 
