@@ -7,10 +7,12 @@ package com.microsoft.appcenter.utils.context;
 
 import android.content.Context;
 import android.text.TextUtils;
+
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
@@ -32,10 +34,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.spy;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({

@@ -13,7 +13,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
-import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;

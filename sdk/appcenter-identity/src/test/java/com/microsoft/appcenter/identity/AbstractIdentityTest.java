@@ -7,6 +7,7 @@ package com.microsoft.appcenter.identity;
 
 import android.os.SystemClock;
 import android.util.Log;
+
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -20,6 +21,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
@@ -28,9 +30,15 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
         Identity.class,

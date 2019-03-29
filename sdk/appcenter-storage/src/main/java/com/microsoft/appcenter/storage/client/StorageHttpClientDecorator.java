@@ -1,10 +1,14 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.storage.client;
 
 import android.accounts.NetworkErrorException;
 
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientDecorator;
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 

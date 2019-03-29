@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.storage;
 
 import android.accounts.NetworkErrorException;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -17,10 +18,16 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
-import com.microsoft.appcenter.storage.models.*;
+import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.ReadOptions;
+import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,11 +36,29 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.*;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -45,10 +70,13 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.refEq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({

@@ -1,10 +1,17 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.utils.context;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
+
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +23,10 @@ import java.util.List;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.TOKEN_HISTORY_LIMIT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class AuthTokenContextAndroidTest {
 

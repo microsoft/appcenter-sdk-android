@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -30,7 +31,19 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 

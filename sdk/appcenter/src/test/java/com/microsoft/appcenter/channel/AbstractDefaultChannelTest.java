@@ -17,8 +17,8 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;

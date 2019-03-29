@@ -11,7 +11,6 @@ import android.text.TextUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * HTTP exception.

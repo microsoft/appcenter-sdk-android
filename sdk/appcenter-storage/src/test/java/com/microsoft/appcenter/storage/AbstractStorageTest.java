@@ -9,6 +9,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.util.Log;
+
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
@@ -23,6 +24,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
@@ -31,9 +33,15 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
         Storage.class,
