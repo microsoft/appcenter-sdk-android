@@ -1194,13 +1194,12 @@ public class DatabasePersistenceAndroidTest {
         buildLogs(persistence);
 
         /* Create yesterday date. */
-        final Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -1);
         Date to = cal.getTime();
 
         /* Count logs. */
         int actualCount = persistence.countLogs(to);
-
         assertEquals(3, actualCount);
     }
 
@@ -1217,13 +1216,12 @@ public class DatabasePersistenceAndroidTest {
         buildLogs(persistence);
 
         /* Create yesterday date. */
-        final Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, +1);
         Date to = cal.getTime();
 
         /* Count logs. */
         int actualCount = persistence.countLogs(to);
-
         assertEquals(4, actualCount);
     }
 
