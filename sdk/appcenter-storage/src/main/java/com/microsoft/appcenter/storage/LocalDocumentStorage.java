@@ -90,6 +90,8 @@ class LocalDocumentStorage {
 
     private final DatabaseManager mDatabaseManager;
 
+    private static final String FailedToReadCacheMessage = "Failed to read from cache.";
+
     private LocalDocumentStorage(DatabaseManager databaseManager) {
         mDatabaseManager = databaseManager;
     }
@@ -133,7 +135,7 @@ class LocalDocumentStorage {
                     EXPIRATION_TIME_COLUMN_NAME + " DESC");
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
-            return new Document<>("Failed to read from cache.", e);
+            return new Document<>(FailedToReadCacheMessage, e);
         }
 
         /* We only expect one value as we do upserts in the `write` method */
@@ -155,7 +157,7 @@ class LocalDocumentStorage {
 
     <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
-        if (cachedDocument.getError() != null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
+        if (cachedDocument.getError() != null && cachedDocument.getError().getError().getMessage().equals(FailedToReadCacheMessage)) {
             return cachedDocument;
         }
 

@@ -43,12 +43,4 @@ public abstract class BaseOptions {
     public int getDeviceTimeToLive() {
         return mTtl;
     }
-
-    /**
-     * @param expiredAt timestamp of when the document is expired.
-     * @return whether a document is expired.
-     */
-    public static boolean isExpired(long expiredAt) {
-        return Calendar.getInstance().getTimeInMillis() >= expiredAt;
-    }
 }
