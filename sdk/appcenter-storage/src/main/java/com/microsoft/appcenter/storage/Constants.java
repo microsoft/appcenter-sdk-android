@@ -44,7 +44,7 @@ public final class Constants {
     /**
      * Pending operation NULL value.
      */
-    public static final String PENDING_OPERATION_NULL_VALUE = "NULL";
+    public static final String PENDING_OPERATION_NULL_VALUE = null;
 
     /**
      * Base URL to call token exchange service.
