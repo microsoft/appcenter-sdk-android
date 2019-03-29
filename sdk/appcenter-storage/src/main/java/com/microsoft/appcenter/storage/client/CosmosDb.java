@@ -53,6 +53,11 @@ public class CosmosDb {
     static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
 
     /**
+     * Cosmos DB upsert header.
+     */
+    private static final String X_MS_DOCUMENTDB_IS_UPSERT = "x-ms-documentdb-is-upsert";
+
+    /**
      * Returns Current Time in RFC 1123 format, e.g,
      * Fri, 01 Dec 2017 19:22:30 GMT.
      *
@@ -153,7 +158,7 @@ public class CosmosDb {
 
     public static HashMap<String, String> GetUpsertAdditionalHeader() {
         return new HashMap<String, String>() {{
-            put("x-ms-documentdb-is-upsert", "true");
+            put(X_MS_DOCUMENTDB_IS_UPSERT, "true");
         }};
     }
 
