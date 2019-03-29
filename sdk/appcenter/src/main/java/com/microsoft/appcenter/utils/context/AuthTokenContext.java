@@ -273,6 +273,25 @@ public class AuthTokenContext {
         AppCenterLog.debug(LOG_TAG, "The token has been removed from token history.");
     }
 
+    /**
+     * Performs check on auth token and calls relevant delegate to refresh it.
+     *
+     * @param authTokenInfo auth token to check for expiration.
+     */
+    public synchronized void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
+        boolean isLastToken = (authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
+        boolean isAboutToExpire = authTokenInfo.isExpiresSoon();
+        if (!isLastToken || !isAboutToExpire) {
+            return;
+        }
+
+        for (Listener listener : mListeners) {
+            listener.onTokenRequiresRefresh(lastToken.getHomeAccountId());
+        }
+    }
+
     @VisibleForTesting
     List<AuthTokenHistoryEntry> getHistory() {
         if (mHistory != null) {
@@ -353,5 +372,12 @@ public class AuthTokenContext {
          * @param authToken authorization token.
          */
         void onNewUser(String authToken);
+
+        /**
+         * Called whenever token needs to be refreshed.
+         *
+         * @param homeAccountId account id to call refresh with.
+         */
+        void onTokenRequiresRefresh(String homeAccountId);
     }
 }

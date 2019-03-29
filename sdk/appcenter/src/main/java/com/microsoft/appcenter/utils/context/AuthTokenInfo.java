@@ -12,6 +12,8 @@ import java.util.Date;
  */
 public class AuthTokenInfo {
 
+    private static final int EXPIRATION_OFFSET_TO_REFRESH_SEC = 10 * 60;
+
     /**
      * Auth token (<code>null</code> for anonymous).
      */
@@ -47,6 +49,15 @@ public class AuthTokenInfo {
         mAuthToken = authToken;
         mStartTime = startTime;
         mEndTime = endTime;
+    }
+
+    /**
+     * Returns true if token is about to expire.
+     *
+     * @return boolean, true if expires soon
+     */
+    public boolean isExpiresSoon() {
+        return (new Date().getTime() + EXPIRATION_OFFSET_TO_REFRESH_SEC * 1000) >= this.mEndTime.getTime();
     }
 
     /**
