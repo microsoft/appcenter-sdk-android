@@ -40,7 +40,6 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
 
@@ -354,7 +353,7 @@ public class Storage extends AbstractAppCenterService {
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, PENDING_OPERATION_NULL_VALUE);
+                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, null);
                     }
 
                     @Override

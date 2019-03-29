@@ -27,7 +27,6 @@ import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_NULL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -79,7 +78,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void updateGetsCalledInWriteWithPendingOperation() {
-        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), PENDING_OPERATION_NULL_VALUE);
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), null);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
