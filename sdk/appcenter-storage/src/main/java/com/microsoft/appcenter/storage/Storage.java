@@ -478,21 +478,26 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final Class<T> documentType,
             final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchangeServiceCallback() {
+        if (mNetworkStateHelper.isNetworkConnected()) {
+            getTokenAndCallCosmosDbApi(
+                    partition,
+                    result,
+                    new TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
-                    }
+                        @Override
+                        public void callCosmosDb(TokenResult tokenResult) {
+                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
+                        }
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        Storage.this.completeFuture(e, result);
-                    }
-                });
+                        @Override
+                        public void completeFuture(Exception e) {
+                            Storage.this.completeFuture(e, result);
+                        }
+                    });
+        } else {
+            Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdate(partition, documentId, document, documentType, writeOptions);
+            result.complete(createdOrUpdatedDocument);
+        }
         return result;
     }
 

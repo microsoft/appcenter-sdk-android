@@ -20,7 +20,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
-
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;

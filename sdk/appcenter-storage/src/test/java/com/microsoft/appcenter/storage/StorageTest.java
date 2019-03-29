@@ -33,7 +33,6 @@ import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -72,15 +71,20 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.refEq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
+@PrepareForTest({
+        CosmosDb.class,
+        TokenExchange.class,
+        TokenManager.class
+})
 public class StorageTest extends AbstractStorageTest {
 
     @Test
@@ -548,7 +552,8 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void createEndToEnd() {
+    public void createEndToEndWithNetwork() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -566,6 +571,21 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
+    }
+
+    @Test
+    public void createWithNoNetwork(){
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        TestDocument testDocument = new TestDocument("test");
+        Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
+        verifyNoMoreInteractions(mHttpClient);
+        verify(mLocalDocumentStorage).createOrUpdate(
+                eq(PARTITION),
+                eq(DOCUMENT_ID),
+                eq(testDocument),
+                eq(TestDocument.class),
+                any(WriteOptions.class)
+        );
     }
 
     @Test
@@ -646,7 +666,7 @@ public class StorageTest extends AbstractStorageTest {
         partitionNames.add(Constants.READONLY);
         when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(times((10)));
         SharedPreferencesManager.remove(matches("partitionName [0-9]"));
     }
@@ -654,7 +674,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void authTokenListenerNotCalledWhenDisabled() {
         Storage.setEnabled(false);
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches("partitionName[0-9]"));
     }
@@ -662,13 +682,12 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void authTokenListenerNotCalledWhenNewUser() {
         AuthTokenContext.getInstance().setAuthToken("someToken", "someId", new Date(Long.MAX_VALUE));
-        AuthTokenContext.getInstance().clearAuthToken();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches("partitionName[0-9]"));
     }
 
     @Test
-    @PrepareForTest(TokenManager.class)
     public void authTokenListenerNotRemoveTokenWhenNewUser() {
 
         /* Setup token manager. */
@@ -762,10 +781,6 @@ public class StorageTest extends AbstractStorageTest {
         Storage.list(PARTITION, TestDocument.class);
     }
 
-    @PrepareForTest({
-            CosmosDb.class,
-            TokenExchange.class
-    })
     @Test
     public void canCancelWhenCallNotFinished() {
         mockStatic(CosmosDb.class);
@@ -795,7 +810,7 @@ public class StorageTest extends AbstractStorageTest {
     public void offlineModeEnabledOnDecorator() {
         StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
         httpClientDecorator.setOfflineMode(true);
-        ServiceCallback serviceCallback = Mockito.mock(ServiceCallback.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
         verify(serviceCallback).onCallFailed(isA(NetworkErrorException.class));
         verifyNoMoreInteractions(mHttpClient);

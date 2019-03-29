@@ -17,6 +17,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,6 +29,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -37,7 +39,14 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
-@PrepareForTest({DefaultChannel.class, IdHelper.class, DeviceInfoHelper.class, AppCenterLog.class, HandlerUtils.class, AuthTokenContext.class })
+@PrepareForTest({
+        AppCenterLog.class,
+        AuthTokenContext.class,
+        DefaultChannel.class,
+        DeviceInfoHelper.class,
+        HandlerUtils.class,
+        IdHelper.class
+})
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
@@ -54,6 +63,9 @@ public class AbstractDefaultChannelTest {
     @Mock
     protected Handler mAppCenterHandler;
 
+    @Mock
+    protected AuthTokenContext mAuthTokenContext;
+
     static Answer<String> getGetLogsAnswer() {
         return getGetLogsAnswer(-1);
     }
@@ -65,14 +77,14 @@ public class AbstractDefaultChannelTest {
             @SuppressWarnings("unchecked")
             public String answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
+                int length = size >= 0 ? size : (int) args[2];
                 if (args[3] instanceof ArrayList) {
                     ArrayList logs = (ArrayList) args[3];
-                    int length = size >= 0 ? size : (int) args[2];
                     for (int i = 0; i < length; i++) {
                         logs.add(mock(Log.class));
                     }
                 }
-                return UUIDUtils.randomUUID().toString();
+                return length > 0 ? UUIDUtils.randomUUID().toString() : null;
             }
         };
     }
@@ -122,9 +134,9 @@ public class AbstractDefaultChannelTest {
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
         mockStatic(AuthTokenContext.class);
-        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        when(tokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
-        when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
-        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
+        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
     }
 }

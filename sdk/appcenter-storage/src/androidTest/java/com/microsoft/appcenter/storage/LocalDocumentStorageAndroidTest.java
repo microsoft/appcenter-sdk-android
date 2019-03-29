@@ -100,6 +100,7 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void updateLocalCopyDeletesExpiredOperation() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
         mLocalDocumentStorage.write(document, new WriteOptions() {
@@ -131,5 +132,21 @@ public class LocalDocumentStorageAndroidTest {
 
         operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
+=======
+    public void createDocument() {
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
+        Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertEquals("Test", createdDocument.getDocument());
+    }
+
+    @Test
+    public void updateDocument() {
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
+        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test1", String.class, new WriteOptions());
+        Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertEquals("Test1", createdDocument.getDocument());
+>>>>>>> 3494a4af54797ae8f6fde74ca07a3c8b8e6ddec0
     }
 }

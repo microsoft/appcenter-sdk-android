@@ -88,6 +88,7 @@ public class DatabasePersistence extends Persistence {
 
     /**
      * Name of date column in the table.
+     * Value is stored in milliseconds.
      */
     @VisibleForTesting
     static final String COLUMN_TIMESTAMP = "timestamp";
@@ -278,6 +279,8 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with flags=" + flags);
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
+
+            //noinspection CharsetObjectCanBeUsed min API level 19 required to fix this warning.
             int payloadSize = payload.getBytes("UTF-8").length;
             boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
@@ -358,6 +361,7 @@ public class DatabasePersistence extends Persistence {
         AppCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
         AppCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
 
+        /* Delete logs. */
         List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
         File directory = getLargePayloadGroupDirectory(group);
         if (dbIdentifiers != null) {
@@ -375,7 +379,7 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
-        /* Delete large payload files */
+        /* Delete large payload files. */
         File directory = getLargePayloadGroupDirectory(group);
         File[] files = directory.listFiles();
         if (files != null) {
@@ -390,7 +394,8 @@ public class DatabasePersistence extends Persistence {
         directory.delete();
 
         /* Delete from database. */
-        mDatabaseManager.delete(COLUMN_GROUP, group);
+        int deletedCount = mDatabaseManager.delete(COLUMN_GROUP, group);
+        AppCenterLog.debug(LOG_TAG, "Deleted " + deletedCount + " logs.");
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
@@ -403,13 +408,22 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public int countLogs(@NonNull String group) {
+        return countLogs(COLUMN_GROUP + " = ?", group);
+    }
+
+    @Override
+    public int countLogs(@NonNull Date timestamp) {
+        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
+    }
+
+    private int countLogs(String whereClause, String ...whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_GROUP + " = ?");
+        builder.appendWhere(whereClause);
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, whereArgs, null);
             try {
                 cursor.moveToNext();
                 count = cursor.getInt(0);
@@ -424,7 +438,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date timestamp) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -446,10 +460,15 @@ public class DatabasePersistence extends Persistence {
         }
 
         /* Filter by time. */
-        if (timestamp != null) {
+        if (from != null) {
             builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " <= ?");
-            selectionArgs.add(String.valueOf(timestamp.getTime()));
+            builder.appendWhere(COLUMN_TIMESTAMP + " >= ?");
+            selectionArgs.add(String.valueOf(from.getTime()));
+        }
+        if (to != null) {
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
+            selectionArgs.add(String.valueOf(to.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
@@ -478,7 +497,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgsArray);
+                List<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
                 for (Long corruptedId : corruptedIds) {
                     if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
@@ -592,15 +611,15 @@ public class DatabasePersistence extends Persistence {
         mDatabaseManager.close();
     }
 
-    private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
+    private List<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
         try {
             Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
                 while (cursor.moveToNext()) {
                     ContentValues idValues = mDatabaseManager.buildValues(cursor);
-                    Long invalidId = idValues.getAsLong(PRIMARY_KEY);
-                    result.add(invalidId);
+                    Long id = idValues.getAsLong(PRIMARY_KEY);
+                    result.add(id);
                 }
             } finally {
                 cursor.close();

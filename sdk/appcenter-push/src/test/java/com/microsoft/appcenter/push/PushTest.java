@@ -12,13 +12,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.TextUtils;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
@@ -29,6 +31,7 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
@@ -87,7 +90,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
         SharedPreferencesManager.class,
         FirebaseInstanceId.class,
         FirebaseAnalytics.class,
-        HandlerUtils.class
+        HandlerUtils.class,
+        CryptoUtils.class,
+        JSONUtils.class,
+        TextUtils.class
 })
 public class PushTest {
 
@@ -175,6 +181,21 @@ public class PushTest {
 
         /* Mock package manager. */
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
+
+        /* Mock text, JSON and crypto utils. */
+        mockStatic(JSONUtils.class);
+        mockStatic(CryptoUtils.class);
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
+        mockStatic(TextUtils.class);
+        when(TextUtils.equals(any(CharSequence.class), any(CharSequence.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) {
+                CharSequence a = (CharSequence) invocation.getArguments()[0];
+                CharSequence b = (CharSequence) invocation.getArguments()[1];
+                return a == b || (a != null && a.equals(b));
+            }
+        });
     }
 
     private void start(Push push, Channel channel) {
@@ -454,7 +475,7 @@ public class PushTest {
 
     @Test
     public void receivedPushInBackgroundWithoutFirebaseWithoutDebugLog() {
-        when(AppCenterLog.getLogLevel()).thenReturn(Log.INFO);
+        when(AppCenterLog.getLogLevel()).thenReturn(android.util.Log.INFO);
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         Intent pushIntent = mock(Intent.class);
@@ -731,79 +752,79 @@ public class PushTest {
     public void verifyEnqueueCalledOnNewAuthToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
-        verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueCalledAnonymouslyOnClearToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
-        AuthTokenContext.getInstance().clearAuthToken();
-        verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueNotCalledOnTheSameUser() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
-        verify(channel, times(2)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueCalledOnNewUser() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
-        AuthTokenContext.getInstance().setAuthToken(mockToken, "new-id", mock(Date.class));
-        verify(channel, times(3)).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        AuthTokenContext.getInstance().setAuthToken("new-token", "new-id", mock(Date.class));
+        verify(channel, times(3)).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueNotCalledOnNewAuthTokenBeforeRegistration() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
-        verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueNotCalledOnPushDisabled() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         Push.setEnabled(false);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
-        verify(channel, never()).enqueue(any(com.microsoft.appcenter.ingestion.models.Log.class), anyString(), anyInt());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
