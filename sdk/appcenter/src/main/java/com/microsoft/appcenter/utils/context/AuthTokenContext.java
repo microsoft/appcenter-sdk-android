@@ -208,7 +208,7 @@ public class AuthTokenContext {
     /**
      * Gets list of auth tokens validity info. It contains tokens and time when it was valid.
      *
-     * @return auth token info.
+     * @return list of auth tokens validity info.
      * @see AuthTokenInfo
      */
     @NonNull
@@ -251,7 +251,7 @@ public class AuthTokenContext {
      *              token can be removed, it's required to avoid removing
      *              the wrong one on duplicated calls etc.
      */
-    public synchronized void removeToken(String token) {
+    public synchronized void removeOldestTokenIfMatching(String token) {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null || history.size() == 0) {
             AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: token history is empty.");

@@ -487,7 +487,7 @@ public class DefaultChannel implements Channel {
                 /* Remove oldest token if there are no more logs. */
                 if (iterator.previousIndex() == 0 && endTime != null &&
                         mPersistence.countLogs(endTime) == 0) {
-                    authTokenContext.removeToken(authToken);
+                    authTokenContext.removeOldestTokenIfMatching(authToken);
                 }
                 continue;
             }

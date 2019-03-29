@@ -994,7 +994,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         sendWithDefaultChannel(mockPersistence);
 
         /* The oldest token is removed. */
-        verify(mAuthTokenContext, times(2)).removeToken(isNull(String.class));
+        verify(mAuthTokenContext, times(2)).removeOldestTokenIfMatching(isNull(String.class));
     }
 
     @Test
@@ -1016,7 +1016,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         sendWithDefaultChannel(mockPersistence);
 
         /* The oldest token is removed. */
-        verify(mAuthTokenContext, never()).removeToken(isNull(String.class));
+        verify(mAuthTokenContext, never()).removeOldestTokenIfMatching(isNull(String.class));
     }
 
     @Test
@@ -1034,7 +1034,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         sendWithDefaultChannel(mockPersistence);
 
         /* The oldest token is removed. */
-        verify(mAuthTokenContext, never()).removeToken(isNull(String.class));
+        verify(mAuthTokenContext, never()).removeOldestTokenIfMatching(isNull(String.class));
     }
 
     private void sendWithDefaultChannel(Persistence mockPersistence) {

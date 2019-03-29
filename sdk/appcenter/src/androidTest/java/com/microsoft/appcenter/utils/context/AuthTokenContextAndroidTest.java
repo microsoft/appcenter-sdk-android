@@ -101,7 +101,7 @@ public class AuthTokenContextAndroidTest {
         assertNull(mAuthTokenContext.getHistory());
 
         /* Removing does nothing. */
-        mAuthTokenContext.removeToken(null);
+        mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertNull(mAuthTokenContext.getHistory());
 
         /* Check validity list.*/
@@ -127,7 +127,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(0, mAuthTokenContext.getHistory().size());
 
         /* Removing does nothing. */
-        mAuthTokenContext.removeToken(null);
+        mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertEquals(0, mAuthTokenContext.getHistory().size());
 
         /* Check validity list.*/
@@ -176,7 +176,7 @@ public class AuthTokenContextAndroidTest {
 
         /* History is empty (removing does nothing). */
         assertNull(mAuthTokenContext.getHistory());
-        mAuthTokenContext.removeToken(null);
+        mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertNull(mAuthTokenContext.getHistory());
 
         /* Save the token into storage. */
@@ -184,7 +184,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Remove current token (not allowed). */
-        mAuthTokenContext.removeToken(AUTH_TOKEN);
+        mAuthTokenContext.removeOldestTokenIfMatching(AUTH_TOKEN);
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Add second token. */
@@ -192,11 +192,11 @@ public class AuthTokenContextAndroidTest {
         assertEquals(2, mAuthTokenContext.getHistory().size());
 
         /* Remove current token (not allowed). */
-        mAuthTokenContext.removeToken("42");
+        mAuthTokenContext.removeOldestTokenIfMatching("42");
         assertEquals(2, mAuthTokenContext.getHistory().size());
 
         /* Remove oldest token. */
-        mAuthTokenContext.removeToken(AUTH_TOKEN);
+        mAuthTokenContext.removeOldestTokenIfMatching(AUTH_TOKEN);
         assertEquals(1, mAuthTokenContext.getHistory().size());
     }
 
