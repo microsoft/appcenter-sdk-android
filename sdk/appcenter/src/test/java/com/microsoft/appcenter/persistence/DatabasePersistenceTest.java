@@ -61,10 +61,10 @@ public class DatabasePersistenceTest {
     public void countLogsForDate() throws Exception {
 
         /* Expected values. */
-        final int expectedCount = 1;
-        final Date expectedDate = new Date();
-        final String[] expectedColumns = new String[]{"COUNT(*)"};
-        final String[] expectedWhereArgs = new String[]{String.valueOf(expectedDate.getTime())};
+        int expectedCount = 1;
+        Date expectedDate = new Date();
+        String[] expectedColumns = new String[]{"COUNT(*)"};
+        String[] expectedWhereArgs = new String[]{String.valueOf(expectedDate.getTime())};
 
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
