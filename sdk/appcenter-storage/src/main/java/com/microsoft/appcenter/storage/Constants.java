@@ -42,11 +42,6 @@ public final class Constants {
     public static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
 
     /**
-     * Pending operation NULL value.
-     */
-    public static final String PENDING_OPERATION_NULL_VALUE = "NULL";
-
-    /**
      * Base URL to call token exchange service.
      */
     static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.

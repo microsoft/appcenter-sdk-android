@@ -101,12 +101,12 @@ class LocalDocumentStorage {
     <T> long write(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
-
+    
     <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
         }
-        AppCenterLog.debug(LOG_TAG, String.format("Trying to write %s:%s document to cache", document.getPartition(), document.getId()));
+        AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
         Calendar expiresAt = Calendar.getInstance();
         expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
         ContentValues values = getContentValues(

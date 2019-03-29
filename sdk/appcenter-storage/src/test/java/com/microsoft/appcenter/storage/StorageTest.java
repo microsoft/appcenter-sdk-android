@@ -423,10 +423,14 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readEndToEndWithNetwork() throws Exception {
+
+        /* Mock http call to get token. */
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
 
+        /* Do token exchange. */
         setupAndVerifyTokenExchangeCall();
 
+        /* Make cosmos db http call with exchanged token. */
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
@@ -443,6 +447,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(cosmosDbServiceCallback);
         cosmosDbServiceCallback.onCallSucceeded(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, new HashMap<String, String>());
 
+        /* Get and verify token. */
         assertNotNull(doc);
 
         Document<TestDocument> testCosmosDocument = doc.get();
@@ -586,7 +591,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void readWithNoNetwork() {
+    public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
