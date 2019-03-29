@@ -539,7 +539,7 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId, final String authToken) {
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId, String authToken) {
         if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
