@@ -45,8 +45,8 @@ public abstract class BaseOptions {
     }
 
     /**
-     * @param expiredAt timestamp of when the document was expired.
-     * @return whether a document has been expired.
+     * @param expiredAt timestamp of when the document is expired.
+     * @return whether a document is expired.
      */
     public static boolean isExpired(long expiredAt) {
         return Calendar.getInstance().getTimeInMillis() >= expiredAt;
