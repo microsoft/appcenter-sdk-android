@@ -292,7 +292,6 @@ public class AuthTokenContext {
         } catch (JSONException e) {
             AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
         }
-
         return mHistory;
     }
 
