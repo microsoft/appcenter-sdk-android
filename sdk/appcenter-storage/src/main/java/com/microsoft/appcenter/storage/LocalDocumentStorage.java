@@ -185,7 +185,7 @@ class LocalDocumentStorage {
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
         Cursor cursor = mDatabaseManager.getCursor(builder, null, null, null);
         try {
-            while (cursor.moveToNext()) {
+                while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
                 result.add(new PendingOperation(
                         values.getAsString(PENDING_OPERATION_COLUMN_NAME),
@@ -207,7 +207,7 @@ class LocalDocumentStorage {
             clear the pending_operation column, update etag, download_time and document columns
          */
         long now = Calendar.getInstance().getTimeInMillis();
-        if (operation.getExpirationTime() < now) {
+        if (operation.getExpirationTime() <= now) {
             delete(operation);
         } else {
             mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);

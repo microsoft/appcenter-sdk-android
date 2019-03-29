@@ -82,7 +82,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     /**
      * Current event listener.
      */
-    private static DataStoreEventListener mEventListener;
+    private DataStoreEventListener mEventListener;
 
     /**
      * Authorization listener for {@link AuthTokenContext}.
@@ -272,7 +272,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
-        mEventListener = listener;
+        getInstance().mEventListener = listener;
     }
 
     /**

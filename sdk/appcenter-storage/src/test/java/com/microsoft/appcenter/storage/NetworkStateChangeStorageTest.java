@@ -281,4 +281,25 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         verify(mLocalDocumentStorage).delete(eq(pendingOperation));
     }
+
+    @Test
+    public void pendingDeleteOperationWithConflictNoListener() {
+        final PendingOperation pendingOperation = new PendingOperation(
+                PENDING_OPERATION_DELETE_VALUE,
+                PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_ONE_HOUR);
+        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(pendingOperation);
+                }});
+
+        mStorage.onNetworkStateUpdated(true);
+
+        HttpException cosmosFailureException = new HttpException(409, "Conflict");
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, cosmosFailureException);
+
+        verify(mLocalDocumentStorage).delete(eq(pendingOperation));
+    }
 }
