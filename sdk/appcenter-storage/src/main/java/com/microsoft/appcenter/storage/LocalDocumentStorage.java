@@ -133,7 +133,7 @@ class LocalDocumentStorage {
                 expiresAt.getTimeInMillis(),
                 now.getTimeInMillis(),
                 now.getTimeInMillis(),
-                PENDING_OPERATION_CREATE_VALUE);
+                null);
         mDatabaseManager.replace(values);
     }
 
@@ -175,19 +175,6 @@ class LocalDocumentStorage {
         return builder;
     }
 
-    private static ContentValues getContentValues(PendingOperation operation, long now) {
-        ContentValues values = new ContentValues();
-        values.put(PARTITION_COLUMN_NAME, operation.getPartition());
-        values.put(DOCUMENT_ID_COLUMN_NAME, operation.getDocumentId());
-        values.put(DOCUMENT_COLUMN_NAME, operation.getDocument());
-        values.put(ETAG_COLUMN_NAME, operation.getEtag());
-        values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
-        values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
-        values.put(OPERATION_TIME_COLUMN_NAME, now);
-        values.put(PENDING_OPERATION_COLUMN_NAME, "");
-        return values;
-    }
-
     void delete(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
@@ -224,6 +211,20 @@ class LocalDocumentStorage {
         return result;
     }
 
+    void updateLocalCopy(PendingOperation operation) {
+
+        /*
+            Update the document in cache (if expiration_time still valid otherwise, remove the document),
+            clear the pending_operation column, update etag, download_time and document columns
+         */
+        long now = Calendar.getInstance().getTimeInMillis();
+        if (operation.getExpirationTime() > now) {
+            delete(operation);
+        } else {
+            mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        }
+    }
+
     private static <T> ContentValues getContentValues(
             String partition,
             String documentId,
@@ -245,17 +246,16 @@ class LocalDocumentStorage {
         return values;
     }
 
-    void updateLocalCopy(PendingOperation operation) {
-        
-        /*
-            Update the document in cache (if expiration_time still valid otherwise, remove the document),
-            clear the pending_operation column, update etag, download_time and document columns
-         */
-        long now = Calendar.getInstance().getTimeInMillis();
-        if (operation.getExpirationTime() > now) {
-            delete(operation.getPartition(), operation.getDocumentId());
-        } else {
-            mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
-        }
+    private static ContentValues getContentValues(PendingOperation operation, long now) {
+        ContentValues values = new ContentValues();
+        values.put(PARTITION_COLUMN_NAME, operation.getPartition());
+        values.put(DOCUMENT_ID_COLUMN_NAME, operation.getDocumentId());
+        values.put(DOCUMENT_COLUMN_NAME, operation.getDocument());
+        values.put(ETAG_COLUMN_NAME, operation.getEtag());
+        values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
+        values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
+        values.put(OPERATION_TIME_COLUMN_NAME, now);
+        values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
+        return values;
     }
 }

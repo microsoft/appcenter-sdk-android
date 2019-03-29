@@ -10,6 +10,7 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 
@@ -17,6 +18,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -91,5 +94,17 @@ public class LocalDocumentStorageAndroidTest {
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getError());
+    }
+
+    //@Test
+    public void updateLocalCopyDeletesExpiredOperation() {
+        Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
+        mLocalDocumentStorage.write(document, new WriteOptions(5));
+
+        mLocalDocumentStorage.updateLocalCopy(
+                new PendingOperation(LocalDocumentStorage.PENDING_OPERATION_CREATE_VALUE, PARTITION, ID, document.getDocument(), 10));
+
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(0, operations.size());
     }
 }
