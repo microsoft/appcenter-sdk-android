@@ -607,7 +607,8 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void createEndToEnd() {
+    public void createEndToEndWithNetwork() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
 
@@ -650,6 +651,21 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
+    }
+
+    @Test
+    public void createWithNoNetwork(){
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        TestDocument testDocument = new TestDocument("test");
+        Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
+        verifyNoMoreInteractions(mHttpClient);
+        verify(mLocalDocumentStorage).createOrUpdate(
+                eq(PARTITION),
+                eq(DOCUMENT_ID),
+                eq(testDocument),
+                eq(TestDocument.class),
+                any(WriteOptions.class)
+        );
     }
 
     @Test

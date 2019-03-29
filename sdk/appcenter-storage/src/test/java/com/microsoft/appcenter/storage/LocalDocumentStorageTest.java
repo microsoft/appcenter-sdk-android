@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.storage.models.BaseOptions;
@@ -36,6 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -60,10 +62,13 @@ public class LocalDocumentStorageTest {
 
     private LocalDocumentStorage mLocalDocumentStorage;
 
+    private Cursor mCursor;
+
     @Before
     public void setUp() throws Exception {
         mockStatic(AppCenterLog.class);
         mDatabaseManager = mock(DatabaseManager.class);
+        mCursor = mock(Cursor.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
         mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class));
     }
@@ -74,6 +79,12 @@ public class LocalDocumentStorageTest {
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
+    }
+
+    @Test
+    public void localStorageDoNotWriteWhenNotCache() {
+        mLocalDocumentStorage.write(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE));
+        verify(mDatabaseManager, never()).replace(any(ContentValues.class));
     }
 
     @Test
@@ -93,6 +104,27 @@ public class LocalDocumentStorageTest {
         assertTrue(doc.failed());
         assertEquals(DocumentError.class, doc.getError().getClass());
         assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
+    }
+
+    @Test
+    public void createOrUpdateReturnErrorOnDbRuntimeException() {
+        when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
+        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
+        assertNotNull(doc);
+        assertNull(doc.getDocument());
+        assertTrue(doc.failed());
+        assertEquals(DocumentError.class, doc.getError().getClass());
+        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
+    }
+
+    @Test
+    public void createOrUpdateFailedToWriteException() {
+        when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
+        when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
+        when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
+        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
+        assertNotNull(doc);
+        assertNotNull(doc.getError().getError());
     }
 
     @Test
@@ -118,6 +150,6 @@ public class LocalDocumentStorageTest {
     @Test
     public void optionsExpirationTest() {
         ReadOptions readOptions = new ReadOptions(1);
-        assertTrue(readOptions.isExpired(-1));
+        assertTrue(ReadOptions.isExpired(-1));
     }
 }

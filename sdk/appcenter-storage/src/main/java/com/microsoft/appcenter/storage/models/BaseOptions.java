@@ -45,11 +45,10 @@ public abstract class BaseOptions {
     }
 
     /**
-     * @param lastModified timestamp of when the document was last modified
-     * @return whether a document with the specified TTL has expired since it was last modified
+     * @param expiredAt timestamp of when the document is expired.
+     * @return whether a document is expired.
      */
-    public boolean isExpired(long lastModified) {
-        long documentAge = Calendar.getInstance().getTimeInMillis() - lastModified;
-        return documentAge > mTtl * 1000;
+    public static boolean isExpired(long expiredAt) {
+        return Calendar.getInstance().getTimeInMillis() >= expiredAt;
     }
 }
