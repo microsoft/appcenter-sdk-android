@@ -735,8 +735,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         boolean deleteLocalCopy = false;
         if (e.getCause() instanceof HttpException) {
             switch (((HttpException) e.getCause()).getStatusCode()) {
+                
                 /* The document was removed on the server. */
                 case 404:
+                
                 /* Partition and document_id combination is already present in the DB. */
                 case 409:
                     deleteLocalCopy = true;

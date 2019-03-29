@@ -73,12 +73,18 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 })
 abstract public class AbstractStorageTest {
 
+    
     private static final String DATABASE_NAME = "mbaas";
+    
     private static final String COLLECTION_NAME = "appcenter";
+    
     static final String PARTITION = "custom-partition";
+    
     static final String DOCUMENT_ID = "document-id";
+    
     static final String TEST_FIELD_VALUE = "Test Value";
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
+    
     private static String tokenExchangeResponsePayload = String.format("{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
