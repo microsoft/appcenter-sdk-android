@@ -11,12 +11,14 @@ import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +30,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -66,10 +69,19 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void upsertGetsCalledInWrite() {
+    public void updateGetsCalledInWrite() {
         mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
-        ArgumentCaptor<ContentValues> values = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(values.capture());
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
+    }
+
+    @Test
+    public void updateGetsCalledInWriteWithPendingOperation() {
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), null);
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
     }
 
     @Test
@@ -79,7 +91,8 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
-        assertNotNull(doc.getError());
+        assertEquals(DocumentError.class, doc.getError().getClass());
+        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
     }
 
     @Test
@@ -90,7 +103,7 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void verifyOptionsContstructors() {
+    public void verifyOptionsConstructors() {
         assertEquals(BaseOptions.INFINITE, ReadOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
         assertEquals(BaseOptions.NO_CACHE, ReadOptions.CreateNoCacheOption().getDeviceTimeToLive());
         assertEquals(BaseOptions.INFINITE, WriteOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());

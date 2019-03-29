@@ -59,11 +59,11 @@ public final class Utils {
     }
 
     /**
-     * Handle API call failure.
+     * Log the exception from a failed API call.
      *
      * @param e Exception to display in the log.
      */
-    public static synchronized void handleApiCallFailure(Exception e) {
+    public static synchronized void logApiCallFailure(Exception e) {
         AppCenterLog.error(Constants.LOG_TAG, "Failed to call App Center APIs", e);
         if (!HttpUtils.isRecoverableError(e)) {
             if (e instanceof HttpException) {
