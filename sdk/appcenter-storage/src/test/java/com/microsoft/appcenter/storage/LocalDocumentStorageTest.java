@@ -107,9 +107,9 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void createOrUpdateReturnErrorOnDbRuntimeException(){
+    public void createOrUpdateReturnErrorOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
-        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID,"test", String.class, new WriteOptions());
+        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
@@ -122,7 +122,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
         when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
-        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID,"test", String.class, new WriteOptions());
+        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNotNull(doc.getError().getError());
     }
@@ -150,6 +150,6 @@ public class LocalDocumentStorageTest {
     @Test
     public void optionsExpirationTest() {
         ReadOptions readOptions = new ReadOptions(1);
-        assertTrue(readOptions.isExpired(-1));
+        assertTrue(ReadOptions.isExpired(-1));
     }
 }

@@ -98,10 +98,10 @@ class LocalDocumentStorage {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    <T> long write(Document<T> document, WriteOptions writeOptions) {
-        return write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
+    <T> void write(Document<T> document, WriteOptions writeOptions) {
+        write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
-    
+
     <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
@@ -155,7 +155,7 @@ class LocalDocumentStorage {
 
     <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
-        if (cachedDocument.getError()!= null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
+        if (cachedDocument.getError() != null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
             return cachedDocument;
         }
 
@@ -165,11 +165,11 @@ class LocalDocumentStorage {
         return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
     }
 
-    <T> long create(Document<T> document, WriteOptions writeOptions){
+    private <T> long create(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_CREATE_VALUE);
     }
 
-    <T> long update(Document<T> document, WriteOptions writeOptions){
+    private <T> long update(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
