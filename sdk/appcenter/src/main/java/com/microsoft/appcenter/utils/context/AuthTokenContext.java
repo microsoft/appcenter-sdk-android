@@ -148,7 +148,7 @@ public class AuthTokenContext {
         /* If there is a gap between tokens. */
         if (lastEntry != null && lastEntry.getExpiresOn() != null && date.after(lastEntry.getExpiresOn())) {
 
-            /* If the account the same or become anonymous. */
+            /* If the account is the same or becomes anonymous. */
             if (!isNewUser || authToken == null) {
 
                 /* Apply the new token to this time. */
