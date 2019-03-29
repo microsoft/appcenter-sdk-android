@@ -125,7 +125,7 @@ public class Identity extends AbstractAppCenterService {
      */
     private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
 
-    private AuthTokenContext.Listener mOnTokenRequiresRefreshing = new AbstractTokenContextListener() {
+    private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
@@ -224,7 +224,7 @@ public class Identity extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(mOnTokenRequiresRefreshing);
+            AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
@@ -232,7 +232,7 @@ public class Identity extends AbstractAppCenterService {
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
-            AuthTokenContext.getInstance().removeListener(mOnTokenRequiresRefreshing);
+            AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;

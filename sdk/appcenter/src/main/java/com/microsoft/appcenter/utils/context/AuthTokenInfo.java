@@ -12,6 +12,9 @@ import java.util.Date;
  */
 public class AuthTokenInfo {
 
+    /**
+     * Time till expiration (in seconds) when we assume token is about to expire and can refresh token.
+     */
     private static final int EXPIRATION_OFFSET_TO_REFRESH_SEC = 10 * 60;
 
     /**
@@ -54,10 +57,15 @@ public class AuthTokenInfo {
     /**
      * Returns true if token is about to expire.
      *
-     * @return boolean, true if expires soon
+     * @return boolean, true if expires soon.
      */
     public boolean isExpiresSoon() {
-        return (new Date().getTime() + EXPIRATION_OFFSET_TO_REFRESH_SEC * 1000) >= this.mEndTime.getTime();
+        if (mEndTime == null) {
+            return false;
+        }
+        Date currentDate = new Date();
+        currentDate.setTime(currentDate.getTime() + EXPIRATION_OFFSET_TO_REFRESH_SEC * 1000);
+        return currentDate.after(mEndTime);
     }
 
     /**

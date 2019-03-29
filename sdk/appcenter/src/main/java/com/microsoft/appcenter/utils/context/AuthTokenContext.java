@@ -286,7 +286,6 @@ public class AuthTokenContext {
         if (!isLastToken || !isAboutToExpire) {
             return;
         }
-
         for (Listener listener : mListeners) {
             listener.onTokenRequiresRefresh(lastToken.getHomeAccountId());
         }
