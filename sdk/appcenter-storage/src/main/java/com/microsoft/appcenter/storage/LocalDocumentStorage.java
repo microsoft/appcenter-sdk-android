@@ -113,16 +113,15 @@ class LocalDocumentStorage {
 
     <T> void write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        Calendar expiresAt = Calendar.getInstance();
-        expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
+        long now = Calendar.getInstance().getTimeInMillis();
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
                 document,
                 document.getEtag(),
-                expiresAt.getTimeInMillis(),
-                expiresAt.getTimeInMillis(),
-                expiresAt.getTimeInMillis(),
+                now + writeOptions.getDeviceTimeToLive() * 1000,
+                now,
+                now,
                 pendingOperationValue);
         mDatabaseManager.replace(values);
     }
@@ -208,7 +207,7 @@ class LocalDocumentStorage {
             clear the pending_operation column, update etag, download_time and document columns
          */
         long now = Calendar.getInstance().getTimeInMillis();
-        if (operation.getExpirationTime() > now) {
+        if (operation.getExpirationTime() < now) {
             delete(operation);
         } else {
             mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
