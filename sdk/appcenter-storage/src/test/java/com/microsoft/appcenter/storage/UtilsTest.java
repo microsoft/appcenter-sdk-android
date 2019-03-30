@@ -9,7 +9,9 @@ import com.microsoft.appcenter.storage.models.Document;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 
 public class UtilsTest {
 
@@ -17,5 +19,12 @@ public class UtilsTest {
     public void canParseWhenDocumentMalformed() {
         Document<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
         assertNotNull(document.getError());
+    }
+
+    @Test
+    public void getETag() {
+        assertNull(Utils.getEtag(null));
+        assertNull(Utils.getEtag(""));
+        assertNull(Utils.getEtag("{a:1}"));
     }
 }

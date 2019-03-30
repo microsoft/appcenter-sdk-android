@@ -20,9 +20,9 @@ public abstract class BaseOptions {
     public static final int NO_CACHE = 0;
 
     /**
-     * Default caching value of one hour
+     * Default caching value of one hour.
      */
-    private static final int DEFAULT_ONE_HOUR = 60 * 60;
+    public static final int DEFAULT_ONE_HOUR = 60 * 60;
 
     private int mTtl;
 

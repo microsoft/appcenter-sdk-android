@@ -10,13 +10,17 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Calendar;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,6 +36,8 @@ public class LocalDocumentStorageAndroidTest {
     private static final String PARTITION = "partition";
 
     private static final String ID = "id";
+
+    private static final long mNow = Calendar.getInstance().getTimeInMillis();
 
     /**
      * Context instance.
@@ -51,8 +57,8 @@ public class LocalDocumentStorageAndroidTest {
         mLocalDocumentStorage = new LocalDocumentStorage(sContext);
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @After
+    public void tearDown() {
         sContext.deleteDatabase(LocalDocumentStorage.DATABASE);
     }
 
@@ -94,6 +100,39 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void updateLocalCopyDeletesExpiredOperation() {
+        Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
+        mLocalDocumentStorage.write(document, new WriteOptions() {
+
+            @Override
+            public int getDeviceTimeToLive() {
+                return -10;
+            }
+        });
+
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+
+        mLocalDocumentStorage.updateLocalCopy(operations.get(0));
+
+        operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(0, operations.size());
+    }
+
+    @Test
+    public void updateLocalCopyReplacesNotExpiredOperation() {
+        Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
+        mLocalDocumentStorage.write(document, new WriteOptions(10));
+
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+
+        mLocalDocumentStorage.updateLocalCopy(operations.get(0));
+
+        operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+    }
+
     public void createDocument() {
         mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
         Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());

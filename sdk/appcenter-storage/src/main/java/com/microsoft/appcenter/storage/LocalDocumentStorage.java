@@ -13,13 +13,16 @@ import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
@@ -83,6 +86,12 @@ class LocalDocumentStorage {
     private static final int VERSION = 1;
 
     /**
+     * `Where` clause to select by partition and document ID.
+     */
+    private static final String BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE =
+            String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+
+    /**
      * Current schema.
      */
     private static final ContentValues SCHEMA =
@@ -107,16 +116,15 @@ class LocalDocumentStorage {
             return 0;
         }
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        Calendar expiresAt = Calendar.getInstance();
-        expiresAt.add(Calendar.SECOND, writeOptions.getDeviceTimeToLive());
+        long now = Calendar.getInstance().getTimeInMillis();
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
                 document,
                 document.getEtag(),
-                expiresAt.getTimeInMillis(),
-                expiresAt.getTimeInMillis(),
-                expiresAt.getTimeInMillis(),
+                now + writeOptions.getDeviceTimeToLive() * 1000,
+                now,
+                now,
                 pendingOperationValue);
         return mDatabaseManager.replace(values);
     }
@@ -153,6 +161,12 @@ class LocalDocumentStorage {
         return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
+    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE);
+        return builder;
+    }
+
     <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
         if (cachedDocument.getError() != null && cachedDocument.getError().getError().getMessage().equals("Failed to read from cache.")) {
@@ -177,19 +191,50 @@ class LocalDocumentStorage {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(
-                    String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME),
+                    BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
                     new String[]{partition, documentId});
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to delete from cache: ", e);
         }
     }
 
-    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
+    void delete(PendingOperation pendingOperation) {
+        delete(pendingOperation.getPartition(), pendingOperation.getDocumentId());
+    }
+
+    List<PendingOperation> getPendingOperations() {
+        List<PendingOperation> result = new ArrayList<>();
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(PARTITION_COLUMN_NAME + " = ?");
-        builder.appendWhere(" AND ");
-        builder.appendWhere(DOCUMENT_ID_COLUMN_NAME + " = ?");
-        return builder;
+        builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
+        Cursor cursor = mDatabaseManager.getCursor(builder, null, null, null);
+        try {
+                while (cursor.moveToNext()) {
+                ContentValues values = mDatabaseManager.buildValues(cursor);
+                result.add(new PendingOperation(
+                        values.getAsString(PENDING_OPERATION_COLUMN_NAME),
+                        values.getAsString(PARTITION_COLUMN_NAME),
+                        values.getAsString(DOCUMENT_ID_COLUMN_NAME),
+                        values.getAsString(DOCUMENT_COLUMN_NAME),
+                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME)));
+            }
+        } finally {
+            cursor.close();
+        }
+        return result;
+    }
+
+    void updateLocalCopy(PendingOperation operation) {
+
+        /*
+            Update the document in cache (if expiration_time still valid otherwise, remove the document),
+            clear the pending_operation column, update etag, download_time and document columns
+         */
+        long now = Calendar.getInstance().getTimeInMillis();
+        if (operation.getExpirationTime() <= now) {
+            delete(operation);
+        } else {
+            mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        }
     }
 
     private static <T> ContentValues getContentValues(
@@ -210,6 +255,19 @@ class LocalDocumentStorage {
         values.put(DOWNLOAD_TIME_COLUMN_NAME, downloadTime);
         values.put(OPERATION_TIME_COLUMN_NAME, operationTime);
         values.put(PENDING_OPERATION_COLUMN_NAME, pendingOperation);
+        return values;
+    }
+
+    private static ContentValues getContentValues(PendingOperation operation, long now) {
+        ContentValues values = new ContentValues();
+        values.put(PARTITION_COLUMN_NAME, operation.getPartition());
+        values.put(DOCUMENT_ID_COLUMN_NAME, operation.getDocumentId());
+        values.put(DOCUMENT_COLUMN_NAME, operation.getDocument());
+        values.put(ETAG_COLUMN_NAME, operation.getEtag());
+        values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
+        values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
+        values.put(OPERATION_TIME_COLUMN_NAME, now);
+        values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
         return values;
     }
 }

@@ -29,17 +29,30 @@ public final class Utils {
         return parseDocument(sParser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
     }
 
+    static String getEtag(String cosmosDbPayload) {
+        if (cosmosDbPayload == null) {
+            return null;
+        }
+        JsonElement parsedPayload = sParser.parse(cosmosDbPayload);
+        if (!parsedPayload.isJsonObject()) {
+            return null;
+        }
+        JsonObject cosmosResponseJson = parsedPayload.getAsJsonObject();
+        return cosmosResponseJson.has(Constants.ETAG_FIELD_NAME) ?
+                cosmosResponseJson.get(Constants.ETAG_FIELD_NAME).getAsString() : null;
+    }
+
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
         T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
         try {
-            return new Document<T>(
+            return new Document<>(
                     document,
                     obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
                     obj.get(Constants.ID_FIELD_NAME).getAsString(),
                     obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
                     obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
         } catch (Exception exception) {
-            return new Document<T>(exception);
+            return new Document<>(exception);
         }
     }
 

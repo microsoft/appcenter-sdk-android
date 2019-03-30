@@ -13,6 +13,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.DocumentError;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -27,6 +28,8 @@ import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -104,6 +107,14 @@ public class LocalDocumentStorageTest {
         assertTrue(doc.failed());
         assertEquals(DocumentError.class, doc.getError().getClass());
         assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void cursorThrowsInGetOperations() {
+        Cursor cursor = mock(Cursor.class);
+        when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(cursor);
+        when(cursor.moveToNext()).thenThrow(new RuntimeException());
+        List<PendingOperation> pendingOperations = mLocalDocumentStorage.getPendingOperations();
     }
 
     @Test
