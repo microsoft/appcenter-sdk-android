@@ -547,7 +547,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteTokenExchangeCallFails() {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, new HttpException(503, exceptionMessage));
+        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
