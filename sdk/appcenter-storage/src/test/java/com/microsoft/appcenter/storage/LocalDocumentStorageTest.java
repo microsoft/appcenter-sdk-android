@@ -106,7 +106,7 @@ public class LocalDocumentStorageTest {
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
         assertEquals(DocumentError.class, doc.getError().getClass());
-        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
+        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test(expected = RuntimeException.class)
@@ -125,7 +125,7 @@ public class LocalDocumentStorageTest {
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
         assertEquals(DocumentError.class, doc.getError().getClass());
-        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString("Failed to read from cache."));
+        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test

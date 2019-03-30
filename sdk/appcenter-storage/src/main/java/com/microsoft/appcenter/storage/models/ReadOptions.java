@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage.models;
 
+import java.util.Calendar;
+
 public class ReadOptions extends BaseOptions {
 
     public ReadOptions() {
@@ -21,5 +23,13 @@ public class ReadOptions extends BaseOptions {
 
     public static ReadOptions CreateNoCacheOption() {
         return new ReadOptions(BaseOptions.NO_CACHE);
+    }
+
+    /**
+     * @param expiredAt timestamp of when the document is expired.
+     * @return whether a document is expired.
+     */
+    public static boolean isExpired(long expiredAt) {
+        return Calendar.getInstance().getTimeInMillis() >= expiredAt;
     }
 }
