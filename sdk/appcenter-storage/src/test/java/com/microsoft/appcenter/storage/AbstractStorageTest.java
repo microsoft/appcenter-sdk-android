@@ -43,6 +43,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -210,7 +211,7 @@ abstract public class AbstractStorageTest {
             String documentId,
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
-            Exception cosmosFailureException) {
+            Exception cosmosFailureException) throws JSONException {
         verityTokenExchangeFlow(tokenExchangeResponsePayload, null);
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
@@ -224,11 +225,7 @@ abstract public class AbstractStorageTest {
                 cosmosDbServiceCallbackArgumentCaptor.capture());
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         HttpClient.CallTemplate callTemplate = cosmosDbCallTemplateCallbackArgumentCaptor.getValue();
-        try {
-            callTemplate.buildRequestBody();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        callTemplate.buildRequestBody();
         callTemplate.onBeforeCalling(null, new HashMap<String, String>());
         assertNotNull(cosmosDbServiceCallback);
         if (cosmosSuccessPayload != null) {
@@ -241,7 +238,7 @@ abstract public class AbstractStorageTest {
 
     void verityTokenExchangeFlow(
             String tokenExchangeSuccessResponsePayload,
-            Exception tokenExchangeFailureResponse) {
+            Exception tokenExchangeFailureResponse) throws JSONException {
         ArgumentCaptor<AbstractAppCallTemplate> tokenExchangeTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(AbstractAppCallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
@@ -257,6 +254,7 @@ abstract public class AbstractStorageTest {
         assertNotNull(tokenExchangeServiceCallback);
 
         tokenExchangeTemplateCallbackArgumentCaptor.getValue().onBeforeCalling(null, new HashMap<String, String>());
+        tokenExchangeTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
         if (tokenExchangeSuccessResponsePayload != null) {
             tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload, new HashMap<String, String>());
         }

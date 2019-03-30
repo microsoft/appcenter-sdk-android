@@ -12,6 +12,7 @@ import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 
+import org.json.JSONException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -39,7 +40,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     private DataStoreEventListener mDataStoreEventListener;
 
     @Test
-    public void pendingCreateOperationSuccess() {
+    public void pendingCreateOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
@@ -81,7 +82,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingCreateOperationSuccessWithNoListener() {
+    public void pendingCreateOperationSuccessWithNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
@@ -109,16 +110,16 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingReplaceOperationFailure() {
+    public void pendingReplaceOperationFailure() throws JSONException {
         verifyPendingOperationFailure(PENDING_OPERATION_REPLACE_VALUE, METHOD_POST, null);
     }
 
     @Test
-    public void pendingDeleteOperationFailure() {
+    public void pendingDeleteOperationFailure() throws JSONException {
         verifyPendingOperationFailure(PENDING_OPERATION_DELETE_VALUE, METHOD_DELETE, DOCUMENT_ID);
     }
 
-    private void verifyPendingOperationFailure(String operation, String cosmosDbMethod, String documentId) {
+    private void verifyPendingOperationFailure(String operation, String cosmosDbMethod, String documentId) throws JSONException {
         final String document = "document";
         final PendingOperation pendingOperation =
                 new PendingOperation(
@@ -185,16 +186,16 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void tokenExchangeCallFailsOnDelete() {
+    public void tokenExchangeCallFailsOnDelete() throws JSONException {
         verifyTokenExchangeCallFails(PENDING_OPERATION_DELETE_VALUE);
     }
 
     @Test
-    public void tokenExchangeCallFailsOnCreateOrUpdate() {
+    public void tokenExchangeCallFailsOnCreateOrUpdate() throws JSONException {
         verifyTokenExchangeCallFails(PENDING_OPERATION_CREATE_VALUE);
     }
 
-    private void verifyTokenExchangeCallFails(String operation) {
+    private void verifyTokenExchangeCallFails(String operation) throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 operation,
                 PARTITION,
@@ -221,7 +222,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingDeleteOperationSuccess() {
+    public void pendingDeleteOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
@@ -255,7 +256,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingDeleteOperationWithConflict() {
+    public void pendingDeleteOperationWithConflict() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
@@ -288,7 +289,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingDeleteOperationWithConflictNoListener() {
+    public void pendingDeleteOperationWithConflictNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,

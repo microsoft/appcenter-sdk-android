@@ -9,8 +9,9 @@ import com.microsoft.appcenter.storage.models.Document;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertNull;
-import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 
 public class UtilsTest {
 

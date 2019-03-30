@@ -29,6 +29,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -316,7 +317,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void listEndToEndWhenMakeTokenExchangeCallFails() {
+    public void listEndToEndWhenMakeTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(PARTITION, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
@@ -335,7 +336,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void replaceEndToEnd() {
+    public void replaceEndToEnd() throws JSONException {
 
         /* Mock http call to get token. */
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
@@ -360,7 +361,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void readEndToEndWithNetwork() {
+    public void readEndToEndWithNetwork() throws JSONException {
 
         /* Mock http call to get token. */
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
@@ -385,7 +386,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void readFailedCosmosDbCallFailed() {
+    public void readFailedCosmosDbCallFailed() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, null, new Exception("Cosmos db exception."));
 
@@ -445,7 +446,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void readTokenExchangeCallFails() {
+    public void readTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
@@ -477,7 +478,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void createEndToEndWithNetwork() {
+    public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
@@ -514,7 +515,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void createTokenExchangeCallFails() {
+    public void createTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, null, new HttpException(503, exceptionMessage));
@@ -533,7 +534,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void deleteEndToEnd() {
+    public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
@@ -544,7 +545,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void deleteTokenExchangeCallFails() {
+    public void deleteTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));

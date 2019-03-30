@@ -85,6 +85,7 @@ public class TokenExchange {
 
                     @Override
                     public String buildRequestBody() {
+                        new Exception().printStackTrace();
                         return buildAppCenterGetDbTokenBodyPayload(partition);
                     }
                 },
