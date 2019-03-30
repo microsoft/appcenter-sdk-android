@@ -321,7 +321,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(PARTITION, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_GET, null, new HttpException(503, exceptionMessage));
+        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -500,7 +500,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void createWithNoNetwork(){
+    public void createWithNoNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         TestDocument testDocument = new TestDocument("test");
         Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
@@ -518,7 +518,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, null, new HttpException(503, exceptionMessage));
+        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
