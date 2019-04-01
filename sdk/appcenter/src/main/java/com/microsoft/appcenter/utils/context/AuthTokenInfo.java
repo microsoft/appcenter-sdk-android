@@ -66,7 +66,7 @@ public class AuthTokenInfo {
         }
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, EXPIRATION_OFFSET_TO_REFRESH_SEC);
-        return calendar.after(mEndTime);
+        return calendar.getTime().after(mEndTime);
     }
 
     /**
