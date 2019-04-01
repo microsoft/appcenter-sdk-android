@@ -42,6 +42,7 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -163,28 +164,12 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken("authToken2", "accountId2", calendar.getTime());
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
-        final boolean[] isCallbackCalled = {false};
-        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
-            @Override
-            public void onNewAuthToken(String authToken) {
-
-            }
-
-            @Override
-            public void onNewUser(String authToken) {
-
-            }
-
-            @Override
-            public void onTokenRequiresRefresh(String homeAccountId) {
-                isCallbackCalled[0] = true;
-            }
-        };
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
         mAuthTokenContext.addListener(listener);
 
         /* Check that we receive callback call. */
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        assertTrue(isCallbackCalled[0]);
+        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test
@@ -197,23 +182,7 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken("authToken2", "accountId", calendar.getTime());
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
-        final boolean[] isCallbackCalled = {false};
-        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
-            @Override
-            public void onNewAuthToken(String authToken) {
-
-            }
-
-            @Override
-            public void onNewUser(String authToken) {
-
-            }
-
-            @Override
-            public void onTokenRequiresRefresh(String homeAccountId) {
-                isCallbackCalled[0] = true;
-            }
-        };
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
         mAuthTokenContext.addListener(listener);
 
         /* Token not expired check. */
@@ -222,7 +191,7 @@ public class AuthTokenContextTest {
         /* Token is not last check. */
         authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 2);
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        Assert.assertFalse(isCallbackCalled[0]);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test
@@ -231,49 +200,19 @@ public class AuthTokenContextTest {
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
         final boolean[] isCallbackCalled = {false};
-        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
-            @Override
-            public void onNewAuthToken(String authToken) {
-
-            }
-
-            @Override
-            public void onNewUser(String authToken) {
-
-            }
-
-            @Override
-            public void onTokenRequiresRefresh(String homeAccountId) {
-                isCallbackCalled[0] = true;
-            }
-        };
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
 
         /* If expires date is null, we should not be able to reach that method. */
         mAuthTokenContext.addListener(listener);
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
         Assert.assertFalse(isCallbackCalled[0]);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test
     public void tokenRefreshCheckNoHistoryOrHistoryIsNull() {
         AuthTokenInfo authTokenInfoMock = mock(AuthTokenInfo.class);
-        final boolean[] isCallbackCalled = {false};
-        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
-            @Override
-            public void onNewAuthToken(String authToken) {
-
-            }
-
-            @Override
-            public void onNewUser(String authToken) {
-
-            }
-
-            @Override
-            public void onTokenRequiresRefresh(String homeAccountId) {
-                isCallbackCalled[0] = true;
-            }
-        };
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
         mAuthTokenContext.addListener(listener);
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
         List<AuthTokenHistoryEntry> dummyList = new ArrayList<>(0);
@@ -282,7 +221,7 @@ public class AuthTokenContextTest {
 
         /* If we have null or empty history, we should not be able to reach that method. */
         verify(authTokenInfoMock, Mockito.never()).isExpiresSoon();
-        Assert.assertFalse(isCallbackCalled[0]);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test
