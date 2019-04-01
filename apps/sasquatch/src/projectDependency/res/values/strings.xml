@@ -6,4 +6,5 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" tools:ignore="MissingTranslation">Sasquatch Test</string>
+    <string name="sign_in_reminder" tools:ignore="MissingTranslation">Please Sign In Identity First Before Get User Document!</string>
 </resources>

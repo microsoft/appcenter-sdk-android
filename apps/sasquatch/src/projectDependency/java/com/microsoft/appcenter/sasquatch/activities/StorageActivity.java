@@ -50,7 +50,9 @@ public class StorageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage);
 
+        /* List the document. */
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+
             @Override
             public void accept(PaginatedDocuments<TestDocument> documents) {
                 int listSize = documents.getCurrentPage().getItems().size();
@@ -83,15 +85,9 @@ public class StorageActivity extends AppCompatActivity {
             }
         });
 
-        /* TODO remove reflection once Storage published to jCenter. */
-        try {
-            Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
-            createDocument(storage);
-            readDocument(storage);
-            deleteDocument(storage);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Storage.Module call failed", e);
-        }
+        Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
+        Storage.read("test-partition-other", "document-id-123", TestDocument.class);
+        Storage.delete("test-partition", "document-id-123");
     }
 
     private void updateStorageType(int position) {
@@ -104,30 +100,12 @@ public class StorageActivity extends AppCompatActivity {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(userDocumentList, this);
                     listView.setAdapter(adapterUser);
                 } else {
-                    ArrayList<String> signInReminder = new ArrayList<String>() {{
-                        add("Please Sign In Identity First Before Get User Document!");
+                    final ArrayList<String> signInReminder = new ArrayList<String>() {{
+                        add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     }};
                     listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, signInReminder));
                 }
                 break;
         }
-    }
-
-    private void deleteDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        storage
-                .getMethod("delete", String.class, String.class)
-                .invoke(null, "test-partition", "document-id-123");
-    }
-
-    private void readDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        storage
-                .getMethod("read", String.class, String.class, Class.class)
-                .invoke(null, "test-partition-other", "document-id-123", TestDocument.class);
-    }
-
-    private void createDocument(Class<?> storage) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        storage
-                .getMethod("create", String.class, String.class, Object.class, Class.class)
-                .invoke(null, "test-partition", "document-id-123", new TestDocument(), TestDocument.class);
     }
 }
