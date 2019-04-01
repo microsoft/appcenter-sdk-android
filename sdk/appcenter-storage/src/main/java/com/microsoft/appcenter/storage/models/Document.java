@@ -74,7 +74,7 @@ public class Document<T> {
      *
      * @return Document error.
      */
-    public DocumentError getError() {
+    public DocumentError getDocumentError() {
         return documentError;
     }
 
@@ -143,6 +143,6 @@ public class Document<T> {
      * @return whether the document has an error associated with it
      */
     public boolean failed() {
-        return this.getError() != null;
+        return this.getDocumentError() != null;
     }
 }
