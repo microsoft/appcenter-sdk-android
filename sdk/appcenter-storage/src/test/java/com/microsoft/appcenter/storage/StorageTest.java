@@ -701,21 +701,21 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void setStorageModuleOfflineMode() {
-        assertFalse(Storage.isOfflineMode());
-        Storage.setOfflineMode(true);
+        assertFalse(Storage.isOfflineModeEnabled());
+        Storage.setOfflineModeEnabled(true);
 
         /* offline mode is enabled. */
-        assertTrue(Storage.isOfflineMode());
+        assertTrue(Storage.isOfflineModeEnabled());
 
         /* offline mode is reset.  */
-        Storage.setOfflineMode(false);
-        assertFalse(Storage.isOfflineMode());
+        Storage.setOfflineModeEnabled(false);
+        assertFalse(Storage.isOfflineModeEnabled());
     }
 
     @Test
     public void offlineModeEnabledOnDecorator() {
         StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setOfflineMode(true);
+        httpClientDecorator.setOfflineModeEnabled(true);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
         verify(serviceCallback).onCallFailed(isA(NetworkErrorException.class));
@@ -725,7 +725,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void offlineModeDisabledOnDecorator() {
         StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setOfflineMode(false);
+        httpClientDecorator.setOfflineModeEnabled(false);
         String url = "url";
         String method = "method";
         Map<String, String> headers = new HashMap<>();
@@ -736,7 +736,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void setOfflineModeBeforeStartDoesNotWork() {
         Storage.unsetInstance();
-        Storage.setOfflineMode(true);
-        assertFalse(Storage.isOfflineMode());
+        Storage.setOfflineModeEnabled(true);
+        assertFalse(Storage.isOfflineModeEnabled());
     }
 }

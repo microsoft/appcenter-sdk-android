@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class StorageHttpClientDecorator extends HttpClientDecorator {
 
-    private boolean mOfflineMode;
+    private boolean mOfflineModeEnabled;
 
     public StorageHttpClientDecorator(HttpClient decoratedApi) {
         super(decoratedApi);
@@ -34,7 +34,7 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
      */
     @Override
     public synchronized ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
-        if (mOfflineMode) {
+        if (mOfflineModeEnabled) {
             serviceCallback.onCallFailed(new NetworkErrorException("Storage offline simulation mode is enabled"));
         } else {
             mDecoratedApi.callAsync(url, method, headers, callTemplate, serviceCallback);
@@ -47,16 +47,16 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
      *
      * @return true if offline mode is enabled, false otherwise.
      */
-    public synchronized boolean isOfflineMode() {
-        return mOfflineMode;
+    public synchronized boolean isOfflineModeEnabled() {
+        return mOfflineModeEnabled;
     }
 
     /**
      * Set offline mode enabled or disabled.
      *
-     * @param offlineMode true to enable offline, mode false to disable.
+     * @param offlineModeEnabled true to enable offline, mode false to disable.
      */
-    public synchronized void setOfflineMode(boolean offlineMode) {
-        mOfflineMode = offlineMode;
+    public synchronized void setOfflineModeEnabled(boolean offlineModeEnabled) {
+        mOfflineModeEnabled = offlineModeEnabled;
     }
 }
