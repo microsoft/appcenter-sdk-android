@@ -149,18 +149,18 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @see AppCenterFuture
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static boolean isOfflineMode() {
-        return getInstance().isOfflineModeInstance();
+    public static boolean isOfflineModeEnabled() {
+        return getInstance().isOfflineModeEnabledInstance();
     }
 
     /**
      * Enable or disable offline mode.
      *
-     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     * @param offlineModeEnabled <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static void setOfflineMode(boolean offlineMode) {
-        getInstance().setOfflineModeInstance(offlineMode);
+    public static void setOfflineModeEnabled(boolean offlineModeEnabled) {
+        getInstance().setOfflineModeEnabledInstance(offlineModeEnabled);
     }
 
     /**
@@ -169,9 +169,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    private synchronized boolean isOfflineModeInstance() {
+    private synchronized boolean isOfflineModeEnabledInstance() {
         if (mHttpClient != null) {
-            return mHttpClient.isOfflineMode();
+            return mHttpClient.isOfflineModeEnabled();
         }
         AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
         return false;
@@ -182,9 +182,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      *
      * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
-    private synchronized void setOfflineModeInstance(boolean offlineMode) {
+    private synchronized void setOfflineModeEnabledInstance(boolean offlineMode) {
         if (mHttpClient != null) {
-            mHttpClient.setOfflineMode(offlineMode);
+            mHttpClient.setOfflineModeEnabled(offlineMode);
         } else {
             AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
         }
