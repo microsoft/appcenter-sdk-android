@@ -133,7 +133,7 @@ public class Identity extends AbstractAppCenterService {
             if (account != null) {
                 silentSignIn(account);
             } else {
-                AppCenterLog.warn(LOG_TAG, "Account is changed, reset to anonymous sending.");
+                AppCenterLog.info(LOG_TAG, "Account is changed, reset to anonymous sending.");
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
             }
         }

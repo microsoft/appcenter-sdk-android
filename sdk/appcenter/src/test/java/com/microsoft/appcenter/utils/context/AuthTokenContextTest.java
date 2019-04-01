@@ -16,10 +16,12 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -28,10 +30,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
@@ -147,6 +151,127 @@ public class AuthTokenContextTest {
     public void historyEmptyString() {
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         assertNull(mAuthTokenContext.getHistory());
+    }
+
+    @Test
+    public void tokenRefreshCheck() {
+        Date token2EndTime = new Date();
+        token2EndTime.setTime(token2EndTime.getTime() - 1);
+        Date token1EndTime = new Date(token2EndTime.getTime() - 10);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", token1EndTime);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId2", token2EndTime);
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        final boolean[] isCallbackCalled = {false};
+        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
+            @Override
+            public void onNewAuthToken(String authToken) {
+
+            }
+
+            @Override
+            public void onNewUser(String authToken) {
+
+            }
+
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                isCallbackCalled[0] = true;
+            }
+        };
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        assertTrue(isCallbackCalled[0]);
+    }
+
+    @Test
+    public void tokenRefreshCheckNotExpiresOrNotLast() {
+        Date tokenEndTime = new Date();
+        tokenEndTime.setTime(tokenEndTime.getTime() + 86400_000);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId", tokenEndTime);
+        tokenEndTime.setTime(tokenEndTime.getTime() + 86401_000);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId", tokenEndTime);
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        final boolean[] isCallbackCalled = {false};
+        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
+            @Override
+            public void onNewAuthToken(String authToken) {
+
+            }
+
+            @Override
+            public void onNewUser(String authToken) {
+
+            }
+
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                isCallbackCalled[0] = true;
+            }
+        };
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 2);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        Assert.assertFalse(isCallbackCalled[0]);
+    }
+
+    @Test
+    public void tokenRefreshCheckWhenExpiresIsNull() {
+        mAuthTokenContext.setAuthToken("authToken2", "accountId", null);
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        final boolean[] isCallbackCalled = {false};
+        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
+            @Override
+            public void onNewAuthToken(String authToken) {
+
+            }
+
+            @Override
+            public void onNewUser(String authToken) {
+
+            }
+
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                isCallbackCalled[0] = true;
+            }
+        };
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        Assert.assertFalse(isCallbackCalled[0]);
+    }
+
+    @Test
+    public void tokenRefreshCheckNoHistoryOrHistoryIsNull() {
+        AuthTokenInfo authTokenInfoMock = mock(AuthTokenInfo.class);
+        final boolean[] isCallbackCalled = {false};
+        AuthTokenContext.Listener listener = new AuthTokenContext.Listener() {
+            @Override
+            public void onNewAuthToken(String authToken) {
+
+            }
+
+            @Override
+            public void onNewUser(String authToken) {
+
+            }
+
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                isCallbackCalled[0] = true;
+            }
+        };
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
+        List<AuthTokenHistoryEntry> dummyList = new ArrayList<>(0);
+        mAuthTokenContext.setHistory(dummyList);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
+        /* If we have null or empty history, we should not be able to reach that method.*/
+        verify(authTokenInfoMock, Mockito.never()).isExpiresSoon();
+        Assert.assertFalse(isCallbackCalled[0]);
     }
 
     @Test
