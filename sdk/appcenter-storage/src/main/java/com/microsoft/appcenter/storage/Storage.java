@@ -403,7 +403,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, null);
+                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -696,9 +696,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future, String pendingOperationValue) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions(), pendingOperationValue);
+        mLocalDocumentStorage.write((Document)value, new WriteOptions(), null);
         mPendingCalls.remove(future);
     }
 
