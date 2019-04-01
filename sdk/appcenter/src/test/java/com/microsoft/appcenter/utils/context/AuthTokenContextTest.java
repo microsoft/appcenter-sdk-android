@@ -176,7 +176,7 @@ public class AuthTokenContextTest {
     public void tokenRefreshCheckNotExpiresOrNotLast() {
         Date tokenEndTime = new Date();
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.SECOND, 86400);
+        calendar.add(Calendar.HOUR, 24);
         mAuthTokenContext.setAuthToken("authToken1", "accountId", calendar.getTime());
         calendar.add(Calendar.SECOND, 1);
         mAuthTokenContext.setAuthToken("authToken2", "accountId", calendar.getTime());
