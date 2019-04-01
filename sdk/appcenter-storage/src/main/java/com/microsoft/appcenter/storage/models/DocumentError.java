@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage.models;
 
+import android.support.annotation.NonNull;
+
 /**
  * Details of the remote operation execution failures.
  */
@@ -16,7 +18,7 @@ public class DocumentError {
      * @param exception that occurred during the network state change.
      */
     @SuppressWarnings("WeakerAccess")
-    public DocumentError(Throwable exception) {
+    public DocumentError(@NonNull Throwable exception) {
         this.exception = exception;
     }
 
