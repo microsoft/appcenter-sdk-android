@@ -47,7 +47,6 @@ import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.File;
@@ -72,6 +71,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -1103,7 +1103,7 @@ public class IdentityTest extends AbstractIdentityTest {
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(tokenInfo);
 
         /* Check token is cleared when account is null. */
-        PowerMockito.verifyPrivate(identity).invoke("silentSignIn", account);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
     }
 
     @Test
