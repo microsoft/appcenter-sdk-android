@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -63,9 +64,9 @@ public class AuthTokenInfo {
         if (mEndTime == null) {
             return false;
         }
-        Date currentDate = new Date();
-        currentDate.setTime(currentDate.getTime() + EXPIRATION_OFFSET_TO_REFRESH_SEC * 1000);
-        return currentDate.after(mEndTime);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, EXPIRATION_OFFSET_TO_REFRESH_SEC);
+        return calendar.after(mEndTime);
     }
 
     /**
