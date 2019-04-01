@@ -5,10 +5,14 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -37,6 +41,8 @@ public class StorageActivity extends AppCompatActivity {
     private Spinner mStorageTypeSpinner;
 
     private ListView listView;
+
+    private int mStorageType;
 
     private ArrayList<String> userDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
@@ -90,12 +96,43 @@ public class StorageActivity extends AppCompatActivity {
         Storage.delete("test-partition", "document-id-123");
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.add, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_add:
+                if (mStorageType == 1) {
+                    Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
+                    builder.setIcon(R.drawable.ic_appcenter_logo);
+                    builder.setTitle(getApplicationContext().getResources().getString(R.string.storage_type_reminder));
+                    builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            builder.setCancelable(true);
+                        }
+                    });
+                    builder.show();
+                }
+                break;
+        }
+        return true;
+    }
+
     private void updateStorageType(int position) {
         switch (position) {
             case 0:
+                mStorageType = 0;
                 listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, appDocumentList));
                 break;
             case 1:
+                mStorageType = 1;
                 if (AuthenticationProviderActivity.userID != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(userDocumentList, this);
                     listView.setAdapter(adapterUser);
