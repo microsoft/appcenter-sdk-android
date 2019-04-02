@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,15 +133,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Dump response stream to a string.
      */
-    private String readResponse(HttpURLConnection urlConnection) throws IOException {
+    private String readResponse(HttpURLConnection httpsURLConnection) throws IOException {
 
         /*
          * Though content length header value is less than actual payload length (gzip), we want to init
          * buffer with a reasonable start size to optimize (default is 16 and is way too low for this
          * use case).
          */
-        StringBuilder builder = new StringBuilder(max(urlConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
-        InputStream stream = getInputStream(urlConnection);
+        StringBuilder builder = new StringBuilder(max(httpsURLConnection.getContentLength(), DEFAULT_STRING_BUILDER_CAPACITY));
+        InputStream stream = getInputStream(httpsURLConnection);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -159,12 +160,12 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         }
     }
 
-    private static InputStream getInputStream(HttpURLConnection urlConnection) throws IOException {
-        int status = urlConnection.getResponseCode();
+    private static InputStream getInputStream(HttpURLConnection httpsURLConnection) throws IOException {
+        int status = httpsURLConnection.getResponseCode();
         if (status >= 200 && status < 400) {
-            return urlConnection.getInputStream();
+            return httpsURLConnection.getInputStream();
         } else {
-            return urlConnection.getErrorStream();
+            return httpsURLConnection.getErrorStream();
         }
     }
 
@@ -175,7 +176,16 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
         /* HTTP session. */
         URL url = new URL(mUrl);
-        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+        if (!url.getProtocol().equals("https")) {
+            throw new IOException("App Center doesn't support \"" + url.getProtocol() + "\" protocol. Only HTTPS protocol is allowed.");
+        }
+        URLConnection urlConnection = url.openConnection();
+        HttpsURLConnection httpsURLConnection;
+        if (urlConnection instanceof HttpsURLConnection) {
+            httpsURLConnection = (HttpsURLConnection) urlConnection;
+        } else {
+            throw new IOException("App Center supports only HTTPS connection.");
+        }
         try {
 
             /*
@@ -192,15 +202,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
              * See https://github.com/square/okhttp/issues/2372#issuecomment-244807676
              */
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                urlConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
+                httpsURLConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
             }
 
             /* Configure connection timeouts. */
-            urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
-            urlConnection.setReadTimeout(READ_TIMEOUT);
+            httpsURLConnection.setConnectTimeout(CONNECT_TIMEOUT);
+            httpsURLConnection.setReadTimeout(READ_TIMEOUT);
 
             /* Build payload now if POST. */
-            urlConnection.setRequestMethod(mMethod);
+            httpsURLConnection.setRequestMethod(mMethod);
             String payload = null;
             byte[] binaryPayload = null;
             boolean shouldCompress = false;
@@ -225,7 +235,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
             /* Send headers. */
             for (Map.Entry<String, String> header : mHeaders.entrySet()) {
-                urlConnection.setRequestProperty(header.getKey(), header.getValue());
+                httpsURLConnection.setRequestProperty(header.getKey(), header.getValue());
             }
             if (isCancelled()) {
                 return null;
@@ -260,9 +270,9 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 }
 
                 /* Send payload on the wire. */
-                urlConnection.setDoOutput(true);
-                urlConnection.setFixedLengthStreamingMode(binaryPayload.length);
-                OutputStream out = urlConnection.getOutputStream();
+                httpsURLConnection.setDoOutput(true);
+                httpsURLConnection.setFixedLengthStreamingMode(binaryPayload.length);
+                OutputStream out = httpsURLConnection.getOutputStream();
 
                 //noinspection TryFinallyCanBeTryWithResources
                 try {
@@ -276,10 +286,10 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             }
 
             /* Read response. */
-            int status = urlConnection.getResponseCode();
-            String response = readResponse(urlConnection);
+            int status = httpsURLConnection.getResponseCode();
+            String response = readResponse(httpsURLConnection);
             if (AppCenterLog.getLogLevel() <= Log.VERBOSE) {
-                String contentType = urlConnection.getHeaderField(CONTENT_TYPE_KEY);
+                String contentType = httpsURLConnection.getHeaderField(CONTENT_TYPE_KEY);
                 String logPayload;
                 if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
                     logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
@@ -289,7 +299,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 AppCenterLog.verbose(LOG_TAG, "HTTP response status=" + status + " payload=" + logPayload);
             }
             Map<String, String> responseHeaders = new HashMap<>();
-            for (Map.Entry<String, List<String>> header : urlConnection.getHeaderFields().entrySet()) {
+            for (Map.Entry<String, List<String>> header : httpsURLConnection.getHeaderFields().entrySet()) {
                 responseHeaders.put(header.getKey(), header.getValue().iterator().next());
             }
 
@@ -303,7 +313,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         } finally {
 
             /* Release connection. */
-            urlConnection.disconnect();
+            httpsURLConnection.disconnect();
         }
     }
 

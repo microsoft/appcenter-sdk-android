@@ -778,8 +778,10 @@ public class AppCenter {
         mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
         if (mLogUrl != null) {
             if (mAppSecret != null) {
+                AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + mLogUrl);
                 mChannel.setLogUrl(mLogUrl);
             } else {
+                AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint has been changed to " + mLogUrl);
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
