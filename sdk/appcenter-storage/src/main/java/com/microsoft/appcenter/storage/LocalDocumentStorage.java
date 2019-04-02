@@ -113,11 +113,11 @@ class LocalDocumentStorage {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    <T> void write(Document<T> document, WriteOptions writeOptions) {
-        write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
+    <T> void write(Document<T> document, WriteOptions writeOptions, boolean isOffline) {
+        write(document, writeOptions, isOffline ? PENDING_OPERATION_CREATE_VALUE : null);
     }
 
-    <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
+    private <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
         }
@@ -159,7 +159,7 @@ class LocalDocumentStorage {
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
-            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()));
+            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
             document.setIsFromCache(true);
             return document;
         }

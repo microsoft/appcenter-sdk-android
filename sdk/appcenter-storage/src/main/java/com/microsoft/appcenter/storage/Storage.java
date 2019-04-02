@@ -403,7 +403,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result);
+                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, false);
                     }
 
                     @Override
@@ -547,7 +547,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFuture(cosmosDbDocument, result);
-                        mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
+                        mLocalDocumentStorage.write(cosmosDbDocument, writeOptions, false);
                     }
 
                     @Override
@@ -696,9 +696,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future, boolean isOffline) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions(), null);
+        mLocalDocumentStorage.write((Document)value, new WriteOptions(), isOffline);
         mPendingCalls.remove(future);
     }
 

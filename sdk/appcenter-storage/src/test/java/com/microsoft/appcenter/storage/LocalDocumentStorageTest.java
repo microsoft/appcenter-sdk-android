@@ -78,7 +78,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void updateGetsCalledInWrite() {
-        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), true);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
@@ -86,13 +86,13 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void localStorageDoNotWriteWhenNotCache() {
-        mLocalDocumentStorage.write(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE));
+        mLocalDocumentStorage.write(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE), false);
         verify(mDatabaseManager, never()).replace(any(ContentValues.class));
     }
 
     @Test
     public void updateGetsCalledInWriteWithPendingOperation() {
-        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), null);
+        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), true);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
