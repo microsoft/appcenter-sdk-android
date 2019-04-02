@@ -39,6 +39,7 @@ public class StorageActivity extends AppCompatActivity {
     private int mStorageType;
 
     private final ArrayList<String> mAppDocumentList = new ArrayList<>();
+    
     private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
         add("Doc2-User");
