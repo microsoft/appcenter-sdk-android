@@ -9,4 +9,8 @@
     <string name="sign_in_reminder" tools:ignore="MissingTranslation">Please Sign In to Identity before getting user document.</string>
     <string name="storage_type_reminder" tools:ignore="MissingTranslation">Only User document can be added.</string>
     <string name="alert_ok" tools:ignore="MissingTranslation">OK</string>
+    <string-array name="storage_type_names" tools:ignore="InconsistentArrays,MissingTranslation">
+        <item>App</item>
+        <item>User</item>
+    </string-array>
 </resources>
