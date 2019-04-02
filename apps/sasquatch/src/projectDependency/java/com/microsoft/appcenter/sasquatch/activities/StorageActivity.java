@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,10 +24,7 @@ import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 class TestDocument {
 
@@ -38,18 +34,15 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    private Spinner mStorageTypeSpinner;
-
     private ListView listView;
 
     private int mStorageType;
 
-    private ArrayList<String> userDocumentList = new ArrayList<String>() {{
+    private final ArrayList<String> mAppDocumentList = new ArrayList<>();
+    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
         add("Doc2-User");
     }};
-
-    private final ArrayList<String> appDocumentList = new ArrayList<String>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,16 +56,16 @@ public class StorageActivity extends AppCompatActivity {
             public void accept(PaginatedDocuments<TestDocument> documents) {
                 int listSize = documents.getCurrentPage().getItems().size();
                 for (int i = 0; i < listSize; i++) {
-                    appDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
+                    mAppDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
                 }
             }
         });
 
         /* Transmission target views init. */
-        mStorageTypeSpinner = findViewById(R.id.storage_type);
+        Spinner storageTypeSpinner = findViewById(R.id.storage_type);
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_type_names));
-        mStorageTypeSpinner.setAdapter(typeAdapter);
-        mStorageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        storageTypeSpinner.setAdapter(typeAdapter);
+        storageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -86,11 +79,11 @@ public class StorageActivity extends AppCompatActivity {
 
         listView = findViewById(R.id.list);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             }
         });
-
         Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
         Storage.read("test-partition-other", "document-id-123", TestDocument.class);
         Storage.delete("test-partition", "document-id-123");
@@ -113,6 +106,7 @@ public class StorageActivity extends AppCompatActivity {
                     builder.setIcon(R.drawable.ic_appcenter_logo);
                     builder.setTitle(getApplicationContext().getResources().getString(R.string.storage_type_reminder));
                     builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
+
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             builder.setCancelable(true);
@@ -129,18 +123,18 @@ public class StorageActivity extends AppCompatActivity {
         switch (position) {
             case 0:
                 mStorageType = 0;
-                listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, appDocumentList));
+                listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, mAppDocumentList));
                 break;
             case 1:
                 mStorageType = 1;
                 if (AuthenticationProviderActivity.userID != null) {
-                    CustomItemAdapter adapterUser = new CustomItemAdapter(userDocumentList, this);
+                    CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     listView.setAdapter(adapterUser);
                 } else {
                     final ArrayList<String> signInReminder = new ArrayList<String>() {{
                         add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     }};
-                    listView.setAdapter(new ArrayAdapter<String>(this, R.layout.item_view_app, signInReminder));
+                    listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));
                 }
                 break;
         }

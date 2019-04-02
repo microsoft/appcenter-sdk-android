@@ -20,48 +20,50 @@ import java.util.ArrayList;
 
 public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
 
-    private ArrayList<String> mlist = new ArrayList<String>();
+    private ArrayList<String> mList;
 
-    private Context mcontext;
+    private Context mContext;
 
-    public CustomItemAdapter(ArrayList<String> list, Context context){
-        this.mlist = list;
-        this.mcontext = context;
+    CustomItemAdapter(ArrayList<String> list, Context context) {
+        this.mList = list;
+        this.mContext = context;
     }
 
     @Override
     public int getCount() {
-        return mlist.size();
+        return mList.size();
     }
+
     @Override
     public Object getItem(int position) {
-        return mlist.get(position);
+        return mList.get(position);
     }
+
     @Override
     public long getItemId(int position) {
         return 0;
     }
+
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         View view = convertView;
-        if(view == null){
-            LayoutInflater inflater = (LayoutInflater) mcontext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.item_view_property,null);
-        }
-
-        TextView listItemText = (TextView) view.findViewById(R.id.property);
-        listItemText.setText(mlist.get(position));
-
-        ImageButton deleteBtn = (ImageButton)view.findViewById(R.id.delete_button);
-
-        deleteBtn.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                mlist.remove(position);
-                notifyDataSetChanged();
+        if (view == null) {
+            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if (inflater != null) {
+                view = inflater.inflate(R.layout.item_view_property, parent, false);
             }
-        });
-
+        } else {
+            TextView listItemText = view.findViewById(R.id.property);
+            listItemText.setText(mList.get(position));
+            ImageButton deleteBtn = view.findViewById(R.id.delete_button);
+            deleteBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mList.remove(position);
+                    notifyDataSetChanged();
+                }
+            });
+        }
         return view;
     }
 }
