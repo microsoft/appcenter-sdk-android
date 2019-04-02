@@ -21,11 +21,11 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -55,7 +55,7 @@ public class AuthTokenContext {
     /**
      * Global listeners collection.
      */
-    private final Collection<Listener> mListeners = new LinkedHashSet<>();
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
 
     /**
      * {@link Context} instance.
@@ -103,7 +103,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be notified of changes.
      */
-    public synchronized void addListener(@NonNull Listener listener) {
+    public void addListener(@NonNull Listener listener) {
         mListeners.add(listener);
     }
 
@@ -112,7 +112,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be removed.
      */
-    public synchronized void removeListener(@NonNull Listener listener) {
+    public void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
     }
 
@@ -123,7 +123,30 @@ public class AuthTokenContext {
      * @param homeAccountId unique user id.
      * @param expiresOn     time when token expires.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
+    public void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
+        Boolean isNewUser = addTokenHistory(authToken, homeAccountId, expiresOn);
+        if (isNewUser == null) {
+            return;
+        }
+
+        /* Call listeners so that they can react on new token. */
+        for (Listener listener : mListeners) {
+            listener.onNewAuthToken(authToken);
+            if (isNewUser) {
+                listener.onNewUser(authToken);
+            }
+        }
+    }
+
+    /**
+     * Add token history.
+     *
+     * @param authToken     authorization token.
+     * @param homeAccountId unique user id.
+     * @param expiresOn     time when token expires.
+     * @return isNewUser    is new user
+     */
+    private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null) {
             history = new ArrayList<>();
@@ -138,7 +161,7 @@ public class AuthTokenContext {
         /* Do not add the same token twice in a row. */
         AuthTokenHistoryEntry lastEntry = history.size() > 0 ? history.get(history.size() - 1) : null;
         if (lastEntry != null && TextUtils.equals(lastEntry.getAuthToken(), authToken)) {
-            return;
+            return null;
         }
 
         /* Check if it's a new user before changing current home account id. */
@@ -169,14 +192,7 @@ public class AuthTokenContext {
 
         /* Update history and current token. */
         setHistory(history);
-
-        /* Call listeners so that they can react on new token. */
-        for (Listener listener : mListeners) {
-            listener.onNewAuthToken(authToken);
-            if (isNewUser) {
-                listener.onNewUser(authToken);
-            }
-        }
+        return isNewUser;
     }
 
     /**
