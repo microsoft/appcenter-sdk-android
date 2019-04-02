@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
@@ -215,6 +216,9 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
+        /* */
+        AuthTokenContext.getInstance().addListener(groupState);
+
         /*
          * If no app secret, don't resume sending App Center logs from storage.
          * If the ingestion is alternate implementation we assume One Collector
@@ -238,6 +242,7 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
+            AuthTokenContext.getInstance().removeListener(groupState);
         }
 
         /* Call listeners so that they can react on group removed. */
@@ -530,7 +535,7 @@ public class DefaultChannel implements Channel {
         }
 
         /* Nothing to send. Some corrupted entries may be deleted, reset the counter. */
-        groupState.mPendingLogCount = 0;
+        groupState.mPendingLogCount = mPersistence.countLogs(groupState.mName);
     }
 
     /**
@@ -784,7 +789,7 @@ public class DefaultChannel implements Channel {
      * State for a specific log group.
      */
     @VisibleForTesting
-    class GroupState {
+    class GroupState extends AbstractTokenContextListener {
 
         /**
          * Group name.
@@ -871,6 +876,11 @@ public class DefaultChannel implements Channel {
             mMaxParallelBatches = maxParallelBatches;
             mIngestion = ingestion;
             mListener = listener;
+        }
+
+        @Override
+        public void onNewAuthToken(String authToken) {
+            checkPendingLogs(this);
         }
     }
 }
