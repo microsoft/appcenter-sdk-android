@@ -285,7 +285,7 @@ public class AuthTokenContext {
         }
         AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
         boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
-        boolean isAboutToExpire = authTokenInfo.isExpiresSoon();
+        boolean isAboutToExpire = authTokenInfo.isAboutToExpire();
         if (!isLastToken || !isAboutToExpire) {
             return;
         }

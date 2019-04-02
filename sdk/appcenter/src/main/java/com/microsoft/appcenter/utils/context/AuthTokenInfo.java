@@ -60,7 +60,7 @@ public class AuthTokenInfo {
      *
      * @return boolean, true if expires soon.
      */
-    public boolean isExpiresSoon() {
+    boolean isAboutToExpire() {
         if (mEndTime == null) {
             return false;
         }
