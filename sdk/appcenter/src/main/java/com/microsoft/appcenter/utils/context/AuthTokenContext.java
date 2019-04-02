@@ -124,6 +124,12 @@ public class AuthTokenContext {
      * @param expiresOn     time when token expires.
      */
     public void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
+
+        /* Do not store any data for anonymous token. */
+        if (authToken == null) {
+            homeAccountId = null;
+            expiresOn = null;
+        }
         Boolean isNewUser = addTokenHistory(authToken, homeAccountId, expiresOn);
         if (isNewUser == null) {
             return;
@@ -150,12 +156,6 @@ public class AuthTokenContext {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null) {
             history = new ArrayList<>();
-        }
-
-        /* Do not store any data for anonymous token. */
-        if (authToken == null) {
-            homeAccountId = null;
-            expiresOn = null;
         }
 
         /* Do not add the same token twice in a row. */
