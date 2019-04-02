@@ -125,14 +125,14 @@ public class AuthTokenContext {
      * Prevents resetting the current auth token if it exists. Should be called during
      * initialization process if the current auth token should be kept.
      */
-    public synchronized void preventResetAuthTokenAfterStart() {
+    public synchronized void doNotResetAuthAfterStart() {
         mResetAuthTokenRequired = false;
     }
 
     /**
      * Finishes initialization process. Resets current token if nothing prevents it.
      */
-    public synchronized void finishStartServices() {
+    public synchronized void finishInitialization() {
         if (!mResetAuthTokenRequired) {
             return;
         }

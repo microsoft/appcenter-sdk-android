@@ -931,7 +931,7 @@ public class AppCenter {
         if (startFromApp) {
 
             /* Finish auth token context initialization. */
-            AuthTokenContext.getInstance().finishStartServices();
+            AuthTokenContext.getInstance().finishInitialization();
 
             /* Send start service log. */
             for (AppCenterService service : updatedServices) {
