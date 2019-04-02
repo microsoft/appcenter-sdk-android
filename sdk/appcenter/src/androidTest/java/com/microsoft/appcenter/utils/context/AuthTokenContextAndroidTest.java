@@ -257,10 +257,10 @@ public class AuthTokenContextAndroidTest {
     @Test
     public void preventResetAuthTokenAfterStart() {
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
-        List<AuthTokenHistoryEntry> list = mAuthTokenContext.getHistory();
+        List<AuthTokenHistoryEntry> listBeforeFinishInitialization = mAuthTokenContext.getHistory();
         mAuthTokenContext.doNotResetAuthAfterStart();
         mAuthTokenContext.finishInitialization();
-        List<AuthTokenHistoryEntry> list2 = mAuthTokenContext.getHistory();
-        assertEquals(list.size(), list2.size());
+        List<AuthTokenHistoryEntry> listAfterFinishInitialization = mAuthTokenContext.getHistory();
+        assertEquals(listBeforeFinishInitialization.size(), listAfterFinishInitialization.size());
     }
 }
