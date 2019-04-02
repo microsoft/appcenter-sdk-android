@@ -36,7 +36,6 @@ import java.util.List;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
@@ -153,6 +152,19 @@ public class AuthTokenContextTest {
     public void historyEmptyString() {
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         assertNull(mAuthTokenContext.getHistory());
+    }
+
+    @Test
+    public void tokenRefreshOnNull() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+
+        /* Check that we receive callback call. */
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(null);
+        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test
