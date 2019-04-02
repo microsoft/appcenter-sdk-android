@@ -161,10 +161,21 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
         mAuthTokenContext.addListener(listener);
-
-        /* Check that we receive callback call. */
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(null);
-        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshOnNullToken() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+        AuthTokenInfo mockTokenInfo = mock(AuthTokenInfo.class);
+        when(mockTokenInfo.getAuthToken()).thenReturn(null);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(mockTokenInfo);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test

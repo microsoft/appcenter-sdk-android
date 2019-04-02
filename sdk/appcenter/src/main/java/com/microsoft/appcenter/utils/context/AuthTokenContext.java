@@ -280,11 +280,11 @@ public class AuthTokenContext {
      */
     public synchronized void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
         List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null || history.size() == 0) {
+        if (history == null || history.size() == 0 || authTokenInfo == null) {
             return;
         }
         AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
-        boolean isLastToken = (authTokenInfo.getAuthToken()!=null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
+        boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
         boolean isAboutToExpire = authTokenInfo.isExpiresSoon();
         if (!isLastToken || !isAboutToExpire) {
             return;
