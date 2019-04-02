@@ -469,6 +469,9 @@ public class DefaultChannel implements Channel {
                 authToken = authTokenInfo.getAuthToken();
                 startTime = authTokenInfo.getStartTime();
                 endTime = authTokenInfo.getEndTime();
+
+                /* Check if token is about to expired or about to expire, and refresh it if necessary. */
+                authTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
             } else {
                 authToken = null;
             }

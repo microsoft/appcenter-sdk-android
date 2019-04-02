@@ -24,6 +24,8 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -52,6 +54,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +71,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -662,7 +666,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class) );
+        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -1043,6 +1047,63 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Sign out should clear token. */
         Identity.signOut();
         verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+    }
+
+    @Test
+    public void testListenerCalledOnTokenRefreshAccountIsNull() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        List<AuthTokenInfo> tokenInfoList = Collections.singletonList(new AuthTokenInfo("token", null, new Date()));
+        AuthTokenInfo tokenInfo = tokenInfoList.get(0);
+        when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(null);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(tokenInfo);
+
+        /* Check token is cleared when account is null. */
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+    }
+
+    @Test
+    public void testListenerCalledOnTokenRefreshAccount() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(mockValidForAppCenterConfig(), httpClient);
+
+        /* Mock foreground. */
+        identity.onActivityResumed(mock(Activity.class));
+
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        IAccount account = mock(IAccount.class);
+        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
+        when(accountIdentifier.getIdentifier()).thenReturn("accountId");
+        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(account);
+        when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(account);
+
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("randomAsccountId");
+        List<AuthTokenInfo> tokenInfoList = Collections.singletonList(new AuthTokenInfo("token", null, new Date()));
+        AuthTokenInfo tokenInfo = tokenInfoList.get(0);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(tokenInfo);
+
+        /* Check token is cleared when account is null. */
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
     }
 
     @Test
