@@ -18,7 +18,7 @@ public class UtilsTest {
     @Test
     public void canParseWhenDocumentMalformed() {
         Document<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
-        assertNotNull(document.getError());
+        assertNotNull(document.getDocumentError());
     }
 
     @Test

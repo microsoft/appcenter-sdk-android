@@ -175,13 +175,13 @@ class LocalDocumentStorage {
 
     <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
-        if (cachedDocument.getError() != null && cachedDocument.getError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
+        if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
 
         /* The document cache has been expired, or the document did not exists, create it. */
         Document<T> writeDocument = new Document<>(document, partition, documentId);
-        long rowId = cachedDocument.getError() != null ? create(writeDocument, writeOptions) : update(writeDocument, writeOptions);
+        long rowId = cachedDocument.getDocumentError() != null ? create(writeDocument, writeOptions) : update(writeDocument, writeOptions);
         return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
     }
 
@@ -213,6 +213,8 @@ class LocalDocumentStorage {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
         Cursor cursor = mDatabaseManager.getCursor(builder, null, null, null);
+
+        //noinspection TryFinallyCanBeTryWithResources
         try {
                 while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);

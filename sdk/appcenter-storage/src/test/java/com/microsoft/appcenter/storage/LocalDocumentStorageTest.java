@@ -105,8 +105,8 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
-        assertEquals(DocumentError.class, doc.getError().getClass());
-        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
+        assertEquals(DocumentError.class, doc.getDocumentError().getClass());
+        assertThat(doc.getDocumentError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test(expected = RuntimeException.class)
@@ -124,8 +124,8 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
-        assertEquals(DocumentError.class, doc.getError().getClass());
-        assertThat(doc.getError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
+        assertEquals(DocumentError.class, doc.getDocumentError().getClass());
+        assertThat(doc.getDocumentError().getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test
@@ -135,7 +135,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
         Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
-        assertNotNull(doc.getError().getError());
+        assertNotNull(doc.getDocumentError().getError());
     }
 
     @Test

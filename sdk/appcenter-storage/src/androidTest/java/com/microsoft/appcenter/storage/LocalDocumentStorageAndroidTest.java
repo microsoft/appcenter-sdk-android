@@ -76,7 +76,7 @@ public class LocalDocumentStorageAndroidTest {
         Document<String> deletedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
-        assertNotNull(deletedDocument.getError());
+        assertNotNull(deletedDocument.getDocumentError());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class LocalDocumentStorageAndroidTest {
         Document<String> deletedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions(1));
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
-        assertNotNull(deletedDocument.getError());
+        assertNotNull(deletedDocument.getDocumentError());
     }
 
     @Test

@@ -275,7 +275,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(3, documents.size());
         assertEquals(firstPartDocuments.get(0).getId(), documents.get(0).getId());
         assertEquals(secondPartDocuments.get(0).getId(), documents.get(2).getId());
-        assertNotNull(iterator.next().getError());
+        assertNotNull(iterator.next().getDocumentError());
 
         /* Verify not throws exception. */
         iterator.remove();
@@ -351,7 +351,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(testCosmosDocument);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
-        assertNull(testCosmosDocument.getError());
+        assertNull(testCosmosDocument.getDocumentError());
         assertNotNull(testCosmosDocument.getEtag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
@@ -376,7 +376,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(testCosmosDocument);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
-        assertNull(testCosmosDocument.getError());
+        assertNull(testCosmosDocument.getDocumentError());
         assertNotNull(testCosmosDocument.getEtag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
@@ -397,9 +397,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNotNull(doc.get().getError());
+        assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getError().getError().getMessage(),
+                doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString("Cosmos db exception."));
     }
 
@@ -439,9 +439,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNotNull(doc.get().getError());
+        assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getError().getError().getMessage(),
+                doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString(tokenExchangeFailedResponsePayload));
     }
 
@@ -459,9 +459,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNotNull(doc.get().getError());
+        assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getError().getError().getMessage(),
+                doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -490,7 +490,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
-        assertNull(testCosmosDocument.getError());
+        assertNull(testCosmosDocument.getDocumentError());
         assertNotNull(testCosmosDocument.getEtag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
@@ -527,9 +527,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNotNull(doc.get().getError());
+        assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getError().getError().getMessage(),
+                doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -541,7 +541,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNull(doc.get().getError());
+        assertNull(doc.get().getDocumentError());
     }
 
     @Test
@@ -557,9 +557,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
-        assertNotNull(doc.get().getError());
+        assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getError().getError().getMessage(),
+                doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
