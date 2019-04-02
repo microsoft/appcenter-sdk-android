@@ -30,7 +30,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private boolean mUserLeaving;
 
-    public static String userID;
+    public static String sUserID;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,7 +80,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                     Method getUserInformation = signInResultClass.getMethod("getUserInformation");
                                     Object userInformation = getUserInformation.invoke(signInResult);
                                     String accountId = (String) userInformation.getClass().getMethod("getAccountId").invoke(userInformation);
-                                    userID = accountId;
+                                    sUserID = accountId;
                                     Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
                                 } catch (Exception e) {
                                     Log.e(LOG_TAG, "Identity.signIn failed", e);
@@ -100,7 +100,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     try {
                         identity.getMethod("signOut").invoke(null);
-                        userID = null;
+                        sUserID = null;
                     } catch (Exception e) {
                         Log.e(LOG_TAG, "Identity.signOut failed", e);
                     }

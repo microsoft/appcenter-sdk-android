@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,10 +24,7 @@ import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 class TestDocument {
 
@@ -37,6 +33,8 @@ class TestDocument {
 }
 
 public class StorageActivity extends AppCompatActivity {
+
+    private final ArrayList<String> appDocumentList = new ArrayList<String>();
 
     private Spinner mStorageTypeSpinner;
 
@@ -48,8 +46,6 @@ public class StorageActivity extends AppCompatActivity {
         add("Doc1-User");
         add("Doc2-User");
     }};
-
-    private final ArrayList<String> appDocumentList = new ArrayList<String>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -133,7 +129,7 @@ public class StorageActivity extends AppCompatActivity {
                 break;
             case 1:
                 mStorageType = 1;
-                if (AuthenticationProviderActivity.userID != null) {
+                if (AuthenticationProviderActivity.sUserID != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(userDocumentList, this);
                     listView.setAdapter(adapterUser);
                 } else {

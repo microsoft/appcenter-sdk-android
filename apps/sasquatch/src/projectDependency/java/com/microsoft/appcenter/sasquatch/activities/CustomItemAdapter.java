@@ -24,7 +24,7 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
 
     private Context mcontext;
 
-    public CustomItemAdapter(ArrayList<String> list, Context context){
+    public CustomItemAdapter(ArrayList<String> list, Context context) {
         this.mlist = list;
         this.mcontext = context;
     }
@@ -33,35 +33,35 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
     public int getCount() {
         return mlist.size();
     }
+
     @Override
     public Object getItem(int position) {
         return mlist.get(position);
     }
+
     @Override
     public long getItemId(int position) {
         return 0;
     }
+
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         View view = convertView;
-        if(view == null){
+        if (view == null) {
             LayoutInflater inflater = (LayoutInflater) mcontext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.item_view_property,null);
+            view = inflater.inflate(R.layout.item_view_property, null);
         }
 
-        TextView listItemText = (TextView) view.findViewById(R.id.property);
+        TextView listItemText = view.findViewById(R.id.property);
         listItemText.setText(mlist.get(position));
-
-        ImageButton deleteBtn = (ImageButton)view.findViewById(R.id.delete_button);
-
-        deleteBtn.setOnClickListener(new View.OnClickListener(){
+        ImageButton deleteBtn = view.findViewById(R.id.delete_button);
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mlist.remove(position);
                 notifyDataSetChanged();
             }
         });
-
         return view;
     }
 }
