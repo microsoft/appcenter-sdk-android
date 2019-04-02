@@ -198,6 +198,9 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+
+        /* The auth token from the previous launch is required. */
+        AuthTokenContext.getInstance().doNotResetAuthAfterStart();
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
