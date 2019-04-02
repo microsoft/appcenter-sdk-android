@@ -29,7 +29,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
@@ -169,16 +168,16 @@ public class AuthTokenContextTest {
         assertEquals(0, mAuthTokenContext.getHistory().size());
     }
 
-
     @Test(timeout = 5000)
     public void listenerDeadlock() {
         final CountDownLatch latch1 = new CountDownLatch(1);
         final CountDownLatch latch2 = new CountDownLatch(1);
         mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+
             @Override
             public void onNewAuthToken(String authToken) {
                 latch1.countDown();
-                try{
+                try {
                     latch2.await();
                 } catch (InterruptedException ignored) {
                 }
@@ -201,6 +200,5 @@ public class AuthTokenContextTest {
             }
         }).start();
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, "some-id", null);
-
     }
 }
