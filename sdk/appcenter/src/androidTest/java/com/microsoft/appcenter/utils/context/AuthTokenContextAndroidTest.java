@@ -42,6 +42,7 @@ public class AuthTokenContextAndroidTest {
         SharedPreferencesManager.initialize(context);
         AuthTokenContext.initialize(context);
         mAuthTokenContext = AuthTokenContext.getInstance();
+        mAuthTokenContext.setHistory(null);
     }
 
     @After
@@ -104,7 +105,7 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertNull(mAuthTokenContext.getHistory());
 
-        /* Check validity list.*/
+        /* Check validity list. */
         List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         AuthTokenInfo authTokenInfo = history.get(0);
@@ -130,7 +131,7 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertEquals(0, mAuthTokenContext.getHistory().size());
 
-        /* Check validity list.*/
+        /* Check validity list. */
         List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         AuthTokenInfo authTokenInfo = history.get(0);
@@ -251,5 +252,15 @@ public class AuthTokenContextAndroidTest {
             mAuthTokenContext.setAuthToken(mockToken, mockAccountId, new Date());
         }
         assertEquals(TOKEN_HISTORY_LIMIT, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void preventResetAuthTokenAfterStart() {
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
+        List<AuthTokenHistoryEntry> listBeforeFinishInitialization = mAuthTokenContext.getHistory();
+        mAuthTokenContext.doNotResetAuthAfterStart();
+        mAuthTokenContext.finishInitialization();
+        List<AuthTokenHistoryEntry> listAfterFinishInitialization = mAuthTokenContext.getHistory();
+        assertEquals(listBeforeFinishInitialization.size(), listAfterFinishInitialization.size());
     }
 }

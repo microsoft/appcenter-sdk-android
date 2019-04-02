@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 1.11.5
+
+### AppCenterDistribute
+
+* **[Fix]** Fix in-app updates not working on new Samsung devices.
+
 ## Version 1.11.4
 
 ### AppCenter

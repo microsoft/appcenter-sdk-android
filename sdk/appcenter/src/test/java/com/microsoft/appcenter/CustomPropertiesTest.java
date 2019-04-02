@@ -232,9 +232,9 @@ public class CustomPropertiesTest {
     }
 
     @Test
-    public void maxPropertiesCount(){
+    public void maxPropertiesCount() {
         CustomProperties properties = new CustomProperties();
-        for (int i = 0; i < CustomProperties.MAX_PROPERTIES_COUNT; i++){
+        for (int i = 0; i < CustomProperties.MAX_PROPERTIES_COUNT; i++) {
             properties.set("key" + i, "value" + i);
         }
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());
