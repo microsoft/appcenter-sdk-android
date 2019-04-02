@@ -113,8 +113,12 @@ class LocalDocumentStorage {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    <T> void write(Document<T> document, WriteOptions writeOptions, boolean isOffline) {
-        write(document, writeOptions, isOffline ? PENDING_OPERATION_CREATE_VALUE : null);
+    <T> void writeOffline(Document<T> document, WriteOptions writeOptions) {
+        write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
+    }
+
+    <T> void writeOnline(Document<T> document, WriteOptions writeOptions) {
+        write(document, writeOptions, null);
     }
 
     private <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
@@ -173,7 +177,7 @@ class LocalDocumentStorage {
         return builder;
     }
 
-    <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+    <T> Document<T> createOrUpdateOffline(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
         if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
@@ -181,15 +185,15 @@ class LocalDocumentStorage {
 
         /* The document cache has been expired, or the document did not exists, create it. */
         Document<T> writeDocument = new Document<>(document, partition, documentId);
-        long rowId = cachedDocument.getDocumentError() != null ? create(writeDocument, writeOptions) : update(writeDocument, writeOptions);
+        long rowId = cachedDocument.getDocumentError() != null ? createOffline(writeDocument, writeOptions) : updateOffline(writeDocument, writeOptions);
         return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
     }
 
-    private <T> long create(Document<T> document, WriteOptions writeOptions) {
+    private <T> long createOffline(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_CREATE_VALUE);
     }
 
-    private <T> long update(Document<T> document, WriteOptions writeOptions) {
+    private <T> long updateOffline(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 

@@ -486,7 +486,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        verify(mLocalDocumentStorage, times(1)).write(refEq(testCosmosDocument), refEq(writeOptions), eq(false));
+        verify(mLocalDocumentStorage, times(1)).writeOnline(refEq(testCosmosDocument), refEq(writeOptions));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -505,7 +505,7 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = new TestDocument("test");
         Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
-        verify(mLocalDocumentStorage).createOrUpdate(
+        verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument),

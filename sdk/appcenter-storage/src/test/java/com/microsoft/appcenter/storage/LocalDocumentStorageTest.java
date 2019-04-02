@@ -78,7 +78,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void updateGetsCalledInWrite() {
-        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), true);
+        mLocalDocumentStorage.writeOnline(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
@@ -86,13 +86,13 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void localStorageDoNotWriteWhenNotCache() {
-        mLocalDocumentStorage.write(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE), false);
+        mLocalDocumentStorage.writeOffline(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE));
         verify(mDatabaseManager, never()).replace(any(ContentValues.class));
     }
 
     @Test
     public void updateGetsCalledInWriteWithPendingOperation() {
-        mLocalDocumentStorage.write(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions(), true);
+        mLocalDocumentStorage.writeOnline(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
@@ -120,7 +120,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void createOrUpdateReturnErrorOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
-        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
+        Document<String> doc = mLocalDocumentStorage.createOrUpdateOffline(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
@@ -133,7 +133,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
         when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
-        Document<String> doc = mLocalDocumentStorage.createOrUpdate(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
+        Document<String> doc = mLocalDocumentStorage.createOrUpdateOffline(PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNotNull(doc.getDocumentError().getError());
     }
