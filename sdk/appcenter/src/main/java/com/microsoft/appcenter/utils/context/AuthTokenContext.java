@@ -150,7 +150,7 @@ public class AuthTokenContext {
      * @param authToken     authorization token.
      * @param homeAccountId unique user id.
      * @param expiresOn     time when token expires.
-     * @return isNewUser    is new user
+     * @return true if it is a new user.
      */
     private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
         List<AuthTokenHistoryEntry> history = getHistory();
