@@ -34,7 +34,7 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    private ListView listView;
+    private ListView mListView;
 
     private int mStorageType;
 
@@ -78,8 +78,8 @@ public class StorageActivity extends AppCompatActivity {
             }
         });
 
-        listView = findViewById(R.id.list);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mListView = findViewById(R.id.list);
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -124,18 +124,18 @@ public class StorageActivity extends AppCompatActivity {
         switch (position) {
             case 0:
                 mStorageType = 0;
-                listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, mAppDocumentList));
+                mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, mAppDocumentList));
                 break;
             case 1:
                 mStorageType = 1;
-                if (AuthenticationProviderActivity.userID != null) {
+                if (AuthenticationProviderActivity.sUserID != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
-                    listView.setAdapter(adapterUser);
+                    mListView.setAdapter(adapterUser);
                 } else {
                     final ArrayList<String> signInReminder = new ArrayList<String>() {{
                         add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     }};
-                    listView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));
+                    mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));
                 }
                 break;
         }

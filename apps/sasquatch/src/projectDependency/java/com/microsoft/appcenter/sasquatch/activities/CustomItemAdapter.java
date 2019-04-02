@@ -57,6 +57,7 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
             listItemText.setText(mList.get(position));
             ImageButton deleteBtn = view.findViewById(R.id.delete_button);
             deleteBtn.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     mList.remove(position);
