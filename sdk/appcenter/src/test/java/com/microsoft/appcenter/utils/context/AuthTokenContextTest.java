@@ -28,6 +28,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
@@ -165,5 +167,40 @@ public class AuthTokenContextTest {
         when(mCryptoUtils.decrypt(eq("secret"), eq(false))).thenReturn(decryptedData);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("secret");
         assertEquals(0, mAuthTokenContext.getHistory().size());
+    }
+
+
+    @Test(timeout = 5000)
+    public void listenerDeadlock() {
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+            @Override
+            public void onNewAuthToken(String authToken) {
+                latch1.countDown();
+                try{
+                    latch2.await();
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Wait for listener call. */
+                try {
+                    latch1.await();
+                } catch (InterruptedException ignored) {
+                }
+
+                /* Call something synchronized. */
+                assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
+                latch2.countDown();
+            }
+        }).start();
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, "some-id", null);
+
     }
 }
