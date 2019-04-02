@@ -52,7 +52,8 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
             if (inflater != null) {
                 view = inflater.inflate(R.layout.item_view_property, parent, false);
             }
-        } else {
+        }
+        if (view != null) {
             TextView listItemText = view.findViewById(R.id.property);
             listItemText.setText(mList.get(position));
             ImageButton deleteBtn = view.findViewById(R.id.delete_button);
