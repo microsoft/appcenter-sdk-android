@@ -567,20 +567,22 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.writeDelete(anyString(), anyString())).thenReturn(true);
-        Storage.delete(PARTITION, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> result = Storage.delete(PARTITION, DOCUMENT_ID);
         verify(mLocalDocumentStorage, times(1)).writeDelete(eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
+        assertNull(result.get().getDocumentError());
     }
 
     @Test
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.writeDelete(anyString(), anyString())).thenReturn(false);
-        Storage.delete(PARTITION, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> result = Storage.delete(PARTITION, DOCUMENT_ID);
         verify(mLocalDocumentStorage, times(1)).writeDelete(eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
+        assertNotNull(result.get().getDocumentError());
     }
 
     @Test
