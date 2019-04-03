@@ -318,20 +318,33 @@ public class AuthTokenContext {
      *
      * @param authTokenInfo auth token to check for expiration.
      */
-    public synchronized void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
+    public void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
+        String homeAccountId = checkRefreshedToken(authTokenInfo);
+        if (homeAccountId == null) {
+            return;
+        }
+        for (Listener listener : mListeners) {
+            listener.onTokenRequiresRefresh(homeAccountId);
+        }
+    }
+
+    /**
+     * Performs check on auth token refresh.
+     *
+     * @param authTokenInfo auth token to check for expiration.
+     */
+    private synchronized String checkRefreshedToken(AuthTokenInfo authTokenInfo) {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null || history.size() == 0 || authTokenInfo == null) {
-            return;
+            return null;
         }
         AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
         boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
         boolean isAboutToExpire = authTokenInfo.isAboutToExpire();
         if (!isLastToken || !isAboutToExpire) {
-            return;
+            return null;
         }
-        for (Listener listener : mListeners) {
-            listener.onTokenRequiresRefresh(lastToken.getHomeAccountId());
-        }
+        return lastToken.getHomeAccountId();
     }
 
     @VisibleForTesting
