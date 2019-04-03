@@ -738,7 +738,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 /* The document was removed on the server. */
                 case 404:
-
                 case 409:
 
                     /* Partition and document_id combination is already present in the DB. */
