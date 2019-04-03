@@ -149,7 +149,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void writeDeleteFails() {
         when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
-        boolean isSuccess = mLocalDocumentStorage.writeDelete(PARTITION, DOCUMENT_ID);
+        boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
@@ -159,7 +159,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void writeDeleteSucceeds() {
         when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(1L);
-        boolean isSuccess = mLocalDocumentStorage.writeDelete(PARTITION, DOCUMENT_ID);
+        boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
