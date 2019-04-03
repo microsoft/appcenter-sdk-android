@@ -216,7 +216,7 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
-        /* */
+        /* Listen for token refreshed to unblock sending logs after waiting for the token update. */
         AuthTokenContext.getInstance().addListener(groupState);
 
         /*
@@ -534,7 +534,7 @@ public class DefaultChannel implements Channel {
             return;
         }
 
-        /* Nothing to send. Some corrupted entries may be deleted, reset the counter. */
+        /* Some corrupted entries may be deleted, reset the counter to actual amount of logs pending to be sent. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupState.mName);
     }
 
