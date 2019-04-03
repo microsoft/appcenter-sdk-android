@@ -74,7 +74,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         NetworkStateHelper.class,
         LocalDocumentStorage.class
 })
-@RunWith(PowerMockRunner.class)
 abstract public class AbstractStorageTest {
 
     private static final String DATABASE_NAME = "mbaas";
@@ -117,8 +116,8 @@ abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
-//    @Rule
-//    public PowerMockRule mPowerMockRule = new PowerMockRule();
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     protected HttpClientRetryer mHttpClient;
