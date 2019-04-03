@@ -152,7 +152,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void deleteOfflineAddsOnePendingOperation() {
-        mLocalDocumentStorage.deleteOffline(PARTITION, ID);
+        mLocalDocumentStorage.markForDeletion(PARTITION, ID);
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
     }
@@ -164,7 +164,7 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
         assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
-        mLocalDocumentStorage.deleteOffline(PARTITION, ID);
+        mLocalDocumentStorage.markForDeletion(PARTITION, ID);
         operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
         operation = operations.get(0);

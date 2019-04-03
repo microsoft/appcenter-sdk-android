@@ -199,12 +199,26 @@ class LocalDocumentStorage {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
-    void deleteOffline(String partition, String documentId) {
-        PendingOperation operation = new PendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE, partition, documentId, null, 0);
-        long now = Calendar.getInstance().getTimeInMillis();
-        mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+    /**
+     * Creates or overwrites specified document entry in the cache. Sets the de-serialized value of
+     * the document to null and the pending operation to DELETE.
+     *
+     * @param partition  Partition key.
+     * @param documentId Document id.
+     * @return True if cache was successfully written to, false otherwise.
+     */
+    boolean markForDeletion(String partition, String documentId) {
+        Document<Void> writeDocument = new Document<>(null, partition, documentId);
+        long rowId = write(writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE);
+        return rowId > 0;
     }
 
+    /**
+     * Deletes the specified document from the local cache.
+     *
+     * @param partition  Partition key.
+     * @param documentId Document id.
+     */
     void deleteOnline(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
@@ -216,6 +230,10 @@ class LocalDocumentStorage {
         }
     }
 
+    /**
+     * Deletes the specified document from the cache.
+     * @param pendingOperation Pending operation to delete.
+     */
     void deletePendingOperation(PendingOperation pendingOperation) {
         deleteOnline(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }

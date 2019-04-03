@@ -634,8 +634,18 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         }
                     });
         } else {
-            mLocalDocumentStorage.deleteOffline(partition, documentId);
-            completeFuture(new Document<Void>(), result);
+            postAsyncGetter(new Runnable() {
+
+                @Override
+                public void run() {
+                    boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(partition, documentId);
+                    if (isWriteSucceed) {
+                        Storage.this.completeFuture(new Document<Void>(), result);
+                    } else {
+                        Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+                    }
+                }
+            }, result, null);
         }
         return result;
     }
