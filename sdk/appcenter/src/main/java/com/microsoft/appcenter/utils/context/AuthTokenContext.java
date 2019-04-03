@@ -21,11 +21,11 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -55,7 +55,7 @@ public class AuthTokenContext {
     /**
      * Global listeners collection.
      */
-    private final Collection<Listener> mListeners = new LinkedHashSet<>();
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
 
     /**
      * {@link Context} instance.
@@ -108,7 +108,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be notified of changes.
      */
-    public synchronized void addListener(@NonNull Listener listener) {
+    public void addListener(@NonNull Listener listener) {
         mListeners.add(listener);
     }
 
@@ -117,7 +117,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be removed.
      */
-    public synchronized void removeListener(@NonNull Listener listener) {
+    public void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
     }
 
@@ -147,22 +147,45 @@ public class AuthTokenContext {
      * @param homeAccountId unique user id.
      * @param expiresOn     time when token expires.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null) {
-            history = new ArrayList<>();
-        }
+    public void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
 
         /* Do not store any data for anonymous token. */
         if (authToken == null) {
             homeAccountId = null;
             expiresOn = null;
         }
+        Boolean isNewUser = addTokenHistory(authToken, homeAccountId, expiresOn);
+        if (isNewUser == null) {
+            return;
+        }
+
+        /* Call listeners so that they can react on new token. */
+        for (Listener listener : mListeners) {
+            listener.onNewAuthToken(authToken);
+            if (isNewUser) {
+                listener.onNewUser(authToken);
+            }
+        }
+    }
+
+    /**
+     * Add token history.
+     *
+     * @param authToken     authorization token.
+     * @param homeAccountId unique user id.
+     * @param expiresOn     time when token expires.
+     * @return true if it is a new user.
+     */
+    private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history == null) {
+            history = new ArrayList<>();
+        }
 
         /* Do not add the same token twice in a row. */
         AuthTokenHistoryEntry lastEntry = history.size() > 0 ? history.get(history.size() - 1) : null;
         if (lastEntry != null && TextUtils.equals(lastEntry.getAuthToken(), authToken)) {
-            return;
+            return null;
         }
 
         /* Check if it's a new user before changing current home account id. */
@@ -193,14 +216,7 @@ public class AuthTokenContext {
 
         /* Update history and current token. */
         setHistory(history);
-
-        /* Call listeners so that they can react on new token. */
-        for (Listener listener : mListeners) {
-            listener.onNewAuthToken(authToken);
-            if (isNewUser) {
-                listener.onNewUser(authToken);
-            }
-        }
+        return isNewUser;
     }
 
     /**
@@ -208,12 +224,9 @@ public class AuthTokenContext {
      *
      * @return authorization token.
      */
-    public synchronized String getAuthToken() {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history != null && history.size() > 0) {
-            return history.get(history.size() - 1).getAuthToken();
-        }
-        return null;
+    public String getAuthToken() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getAuthToken() : null;
     }
 
     /**
@@ -221,12 +234,9 @@ public class AuthTokenContext {
      *
      * @return unique identifier of user.
      */
-    public synchronized String getHomeAccountId() {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history != null && history.size() > 0) {
-            return history.get(history.size() - 1).getHomeAccountId();
-        }
-        return null;
+    public String getHomeAccountId() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getHomeAccountId() : null;
     }
 
     /**
@@ -302,20 +312,29 @@ public class AuthTokenContext {
      *
      * @param authTokenInfo auth token to check for expiration.
      */
-    public synchronized void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null || history.size() == 0 || authTokenInfo == null) {
-            return;
-        }
-        AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
-        boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
-        boolean isAboutToExpire = authTokenInfo.isAboutToExpire();
-        if (!isLastToken || !isAboutToExpire) {
+    public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire()) {
             return;
         }
         for (Listener listener : mListeners) {
-            listener.onTokenRequiresRefresh(lastToken.getHomeAccountId());
+            listener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
+    }
+
+    /**
+     * Gets the last entry from history.
+     *
+     * @return the last auth token entry.
+     */
+    private synchronized AuthTokenHistoryEntry getLastHistoryEntry() {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history != null && history.size() > 0) {
+            return history.get(history.size() - 1);
+        }
+        return null;
     }
 
     @VisibleForTesting
