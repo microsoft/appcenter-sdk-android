@@ -325,7 +325,9 @@ public class AuthTokenContext {
     }
 
     /**
-     * @return last auth token history.
+     * Gets the last entry from history.
+     *
+     * @return the last auth token entry.
      */
     private synchronized AuthTokenHistoryEntry getLastHistoryEntry() {
         List<AuthTokenHistoryEntry> history = getHistory();

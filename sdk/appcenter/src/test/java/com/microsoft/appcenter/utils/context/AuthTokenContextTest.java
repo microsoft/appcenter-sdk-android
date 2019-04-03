@@ -28,7 +28,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -41,7 +40,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -183,7 +181,7 @@ public class AuthTokenContextTest {
 
         /* Check that we receive callback call. */
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
+        verify(listener).onTokenRequiresRefresh(eq("accountId2"));
     }
 
     @Test
@@ -233,25 +231,8 @@ public class AuthTokenContextTest {
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
 
         /* If we have null or empty history, we should not be able to reach that method. */
+        verify(authTokenInfoMock, never()).isAboutToExpire();
         verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
-    }
-
-    @Test
-    public void checkIfTokenNeedsToBeRefreshedWithValidAccountId() {
-        String token = "auth-token";
-        String homeAccountId = "homeAccountId";
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, -1);
-        AuthTokenContext spyAuthCtx = spy(mAuthTokenContext);
-        List<AuthTokenHistoryEntry> dummyList = Arrays.asList(new AuthTokenHistoryEntry(token, homeAccountId, null, null));
-        doReturn(dummyList).when(spyAuthCtx).getHistory();
-        AuthTokenInfo authTokenInfoMock = new AuthTokenInfo(token, calendar.getTime(), calendar.getTime());
-        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
-        spyAuthCtx.addListener(listener);
-        spyAuthCtx.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
-
-        /* If we have null or empty history, we should not be able to reach that method. */
-        verify(listener).onTokenRequiresRefresh(homeAccountId);
     }
 
     @Test
