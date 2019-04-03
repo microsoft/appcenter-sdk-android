@@ -960,6 +960,7 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof CancellationException);
         assertNull(future.get().getUserInformation());
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -982,6 +983,7 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof MsalException);
         assertNull(future.get().getUserInformation());
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
