@@ -581,8 +581,7 @@ public class Identity extends AbstractAppCenterService {
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 Date expiresOn = authenticationResult.getExpiresOn();
-                AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-                authTokenContext.setAuthToken(authenticationResult.getIdToken(), homeAccountId, expiresOn);
+                AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken(), homeAccountId, expiresOn);
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                 completeSignIn(new UserInformation(accountId), null);
@@ -590,14 +589,28 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    private void handleSignInError(MsalException exception) {
-        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
-        completeSignIn(null, exception);
+    private void handleSignInError(final MsalException exception) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                completeSignIn(null, exception);
+            }
+        });
     }
 
     private void handleSignInCancellation() {
-        AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
-        completeSignIn(null, new CancellationException("User cancelled sign-in."));
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+                completeSignIn(null, new CancellationException("User cancelled sign-in."));
+            }
+        });
     }
 
     private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
