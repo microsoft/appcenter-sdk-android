@@ -25,7 +25,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -44,6 +43,8 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -344,6 +345,32 @@ public class MainActivity extends AppCompatActivity {
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
+
+        /* TODO once all modules released to jCenter, use varags syntax directly with `Module.class`. */
+        List<Class> services = new ArrayList<Class>() {{
+            add(Analytics.class);
+            add(Crashes.class);
+            add(Distribute.class);
+            add(Push.class);
+        }};
+
+        /* TODO once Identity released to jCenter, use Identity.class directly. */
+        try {
+            String className = "com.microsoft.appcenter.identity.Identity";
+
+            //noinspection unchecked
+            services.add(Class.forName(className));
+        } catch (ClassNotFoundException ignored) {
+        }
+
+        /* TODO once Storage released to jCenter, use Storage.class directly. */
+        try {
+            String className = "com.microsoft.appcenter.storage.Storage";
+
+            //noinspection unchecked
+            services.add(Class.forName(className));
+        } catch (ClassNotFoundException ignored) {
+        }
         switch (startType) {
             case APP_SECRET:
                 appIdArg = appId;
@@ -355,30 +382,12 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
+                //noinspection unchecked
+                AppCenter.start(application, services.toArray(new Class[0]));
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
-
-        /* TODO once Identity released to jCenter, use Identity.class directly in the start calls. */
-        try {
-            String className = "com.microsoft.appcenter.identity.Identity";
-
-            @SuppressWarnings("unchecked")
-            Class<AppCenterService> identity = (Class<AppCenterService>) Class.forName(className);
-            AppCenter.start(identity);
-        } catch (ClassNotFoundException ignored) {
-        }
-
-        /* TODO once Storage released to jCenter, use Storage.class directly in the start calls. */
-        try {
-            String className = "com.microsoft.appcenter.storage.Storage";
-
-            @SuppressWarnings("unchecked")
-            Class<AppCenterService> storage = (Class<AppCenterService>) Class.forName(className);
-            AppCenter.start(storage);
-        } catch (ClassNotFoundException ignored) {
-        }
+        //noinspection unchecked
+        AppCenter.start(application, appIdArg, services.toArray(new Class[0]));
     }
 
     public enum StartType {
