@@ -149,18 +149,18 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @see AppCenterFuture
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static boolean isOfflineMode() {
-        return getInstance().isOfflineModeInstance();
+    public static boolean isOfflineModeEnabled() {
+        return getInstance().isOfflineModeEnabledInstance();
     }
 
     /**
      * Enable or disable offline mode.
      *
-     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
+     * @param offlineModeEnabled <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static void setOfflineMode(boolean offlineMode) {
-        getInstance().setOfflineModeInstance(offlineMode);
+    public static void setOfflineModeEnabled(boolean offlineModeEnabled) {
+        getInstance().setOfflineModeEnabledInstance(offlineModeEnabled);
     }
 
     /**
@@ -169,9 +169,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    private synchronized boolean isOfflineModeInstance() {
+    private synchronized boolean isOfflineModeEnabledInstance() {
         if (mHttpClient != null) {
-            return mHttpClient.isOfflineMode();
+            return mHttpClient.isOfflineModeEnabled();
         }
         AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
         return false;
@@ -182,9 +182,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      *
      * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
      */
-    private synchronized void setOfflineModeInstance(boolean offlineMode) {
+    private synchronized void setOfflineModeEnabledInstance(boolean offlineMode) {
         if (mHttpClient != null) {
-            mHttpClient.setOfflineMode(offlineMode);
+            mHttpClient.setOfflineModeEnabled(offlineMode);
         } else {
             AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
         }
@@ -403,7 +403,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result, null);
+                        completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result);
                     }
 
                     @Override
@@ -540,7 +540,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                CosmosDb.GetUpsertAdditionalHeader(),
+                CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @Override
@@ -558,7 +558,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    private synchronized <T> void callCosmosDbCreateOrUpdateApi(
+    private synchronized void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             final PendingOperation pendingOperation) {
         CosmosDb.callCosmosDbApi(
@@ -567,7 +567,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 pendingOperation.getDocument(),
-                CosmosDb.GetUpsertAdditionalHeader(),
+                CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @Override
@@ -705,9 +705,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future, String pendingOperationValue) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions(), pendingOperationValue);
+        mLocalDocumentStorage.write((Document) value, new WriteOptions(), null);
         mPendingCalls.remove(future);
     }
 
@@ -744,12 +744,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         boolean deleteLocalCopy = false;
         if (e.getCause() instanceof HttpException) {
             switch (((HttpException) e.getCause()).getStatusCode()) {
-                
+
                 /* The document was removed on the server. */
                 case 404:
-                
-                /* Partition and document_id combination is already present in the DB. */
                 case 409:
+
+                    /* Partition and document_id combination is already present in the DB. */
                     deleteLocalCopy = true;
                     break;
             }

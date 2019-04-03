@@ -68,6 +68,11 @@ public class AuthTokenContext {
     private List<AuthTokenHistoryEntry> mHistory;
 
     /**
+     * {@code true} if the current token should be reset.
+     */
+    private boolean mResetAuthTokenRequired = true;
+
+    /**
      * Initializes AuthTokenContext class.
      *
      * @param context {@link Context} instance.
@@ -114,6 +119,25 @@ public class AuthTokenContext {
      */
     public synchronized void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
+    }
+
+    /**
+     * Prevents resetting the current auth token if it exists. Should be called during
+     * initialization process if the current auth token should be kept.
+     */
+    public synchronized void doNotResetAuthAfterStart() {
+        mResetAuthTokenRequired = false;
+    }
+
+    /**
+     * Finishes initialization process. Resets current token if nothing prevents it.
+     */
+    public synchronized void finishInitialization() {
+        if (!mResetAuthTokenRequired) {
+            return;
+        }
+        mResetAuthTokenRequired = false;
+        setAuthToken(null, null, null);
     }
 
     /**
@@ -273,6 +297,27 @@ public class AuthTokenContext {
         AppCenterLog.debug(LOG_TAG, "The token has been removed from token history.");
     }
 
+    /**
+     * Performs check on auth token and calls relevant delegate to refresh it.
+     *
+     * @param authTokenInfo auth token to check for expiration.
+     */
+    public synchronized void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history == null || history.size() == 0 || authTokenInfo == null) {
+            return;
+        }
+        AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
+        boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
+        boolean isAboutToExpire = authTokenInfo.isAboutToExpire();
+        if (!isLastToken || !isAboutToExpire) {
+            return;
+        }
+        for (Listener listener : mListeners) {
+            listener.onTokenRequiresRefresh(lastToken.getHomeAccountId());
+        }
+    }
+
     @VisibleForTesting
     List<AuthTokenHistoryEntry> getHistory() {
         if (mHistory != null) {
@@ -353,5 +398,12 @@ public class AuthTokenContext {
          * @param authToken authorization token.
          */
         void onNewUser(String authToken);
+
+        /**
+         * Called whenever token needs to be refreshed.
+         *
+         * @param homeAccountId account id to call refresh with.
+         */
+        void onTokenRequiresRefresh(String homeAccountId);
     }
 }

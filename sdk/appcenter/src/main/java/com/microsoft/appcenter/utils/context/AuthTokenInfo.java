@@ -5,12 +5,18 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
  * Auth token information object.
  */
 public class AuthTokenInfo {
+
+    /**
+     * Time till expiration (in seconds) when we assume token is about to expire and can refresh token.
+     */
+    private static final int EXPIRATION_OFFSET_TO_REFRESH_SEC = 10 * 60;
 
     /**
      * Auth token (<code>null</code> for anonymous).
@@ -47,6 +53,20 @@ public class AuthTokenInfo {
         mAuthToken = authToken;
         mStartTime = startTime;
         mEndTime = endTime;
+    }
+
+    /**
+     * Returns true if token is about to expire.
+     *
+     * @return boolean, true if expires soon.
+     */
+    boolean isAboutToExpire() {
+        if (mEndTime == null) {
+            return false;
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, EXPIRATION_OFFSET_TO_REFRESH_SEC);
+        return calendar.getTime().after(mEndTime);
     }
 
     /**

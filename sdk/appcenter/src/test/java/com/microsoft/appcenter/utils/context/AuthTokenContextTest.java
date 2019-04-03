@@ -16,10 +16,12 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -27,7 +29,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
@@ -37,6 +41,7 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -147,6 +152,99 @@ public class AuthTokenContextTest {
     public void historyEmptyString() {
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("");
         assertNull(mAuthTokenContext.getHistory());
+    }
+
+    @Test
+    public void tokenRefreshOnNull() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(null);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshOnNullToken() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+        AuthTokenInfo mockTokenInfo = mock(AuthTokenInfo.class);
+        when(mockTokenInfo.getAuthToken()).thenReturn(null);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(mockTokenInfo);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshCheck() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        calendar.add(Calendar.SECOND, 1);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId2", calendar.getTime());
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+
+        /* Check that we receive callback call. */
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshCheckNotExpiresOrNotLast() {
+        Date tokenEndTime = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR, 24);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId", calendar.getTime());
+        calendar.add(Calendar.SECOND, 1);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId", calendar.getTime());
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+
+        /* Token not expired check. */
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+
+        /* Token is not last check. */
+        authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 2);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshCheckWhenExpiresIsNull() {
+        mAuthTokenContext.setAuthToken("authToken2", "accountId", null);
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        final boolean[] isCallbackCalled = {false};
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+
+        /* If expires date is null, we should not be able to reach that method. */
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        Assert.assertFalse(isCallbackCalled[0]);
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
+    }
+
+    @Test
+    public void tokenRefreshCheckNoHistoryOrHistoryIsNull() {
+        AuthTokenInfo authTokenInfoMock = mock(AuthTokenInfo.class);
+        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
+        mAuthTokenContext.addListener(listener);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
+        List<AuthTokenHistoryEntry> dummyList = new ArrayList<>(0);
+        mAuthTokenContext.setHistory(dummyList);
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
+
+        /* If we have null or empty history, we should not be able to reach that method. */
+        verify(authTokenInfoMock, Mockito.never()).isAboutToExpire();
+        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
     @Test

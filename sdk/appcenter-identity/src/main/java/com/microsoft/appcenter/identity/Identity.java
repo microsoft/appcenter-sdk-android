@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -124,6 +125,20 @@ public class Identity extends AbstractAppCenterService {
      */
     private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
 
+    private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
+
+        @Override
+        public void onTokenRequiresRefresh(String homeAccountId) {
+            IAccount account = retrieveAccount(homeAccountId);
+            if (account != null) {
+                silentSignIn(account);
+            } else {
+                AppCenterLog.info(LOG_TAG, "Account is changed, reset to anonymous sending.");
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            }
+        }
+    };
+
     /**
      * Get shared instance.
      *
@@ -198,6 +213,9 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+
+        /* The auth token from the previous launch is required. */
+        AuthTokenContext.getInstance().doNotResetAuthAfterStart();
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -209,6 +227,7 @@ public class Identity extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
@@ -216,6 +235,7 @@ public class Identity extends AbstractAppCenterService {
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
+            AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
