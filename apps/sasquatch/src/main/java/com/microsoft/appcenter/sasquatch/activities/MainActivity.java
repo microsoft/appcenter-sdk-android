@@ -345,6 +345,8 @@ public class MainActivity extends AppCompatActivity {
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
+
+        /* TODO once all modules released to jCenter, use varags syntax directly with `Module.class`. */
         List<Class> services = new ArrayList<Class>() {{
             add(Analytics.class);
             add(Crashes.class);
