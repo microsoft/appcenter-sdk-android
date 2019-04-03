@@ -324,6 +324,9 @@ public class AuthTokenContext {
         }
     }
 
+    /**
+     * @return last auth token history.
+     */
     private synchronized AuthTokenHistoryEntry getLastHistoryEntry() {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history != null && history.size() > 0) {
