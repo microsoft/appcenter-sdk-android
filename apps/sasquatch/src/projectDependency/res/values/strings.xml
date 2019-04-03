@@ -13,4 +13,10 @@
         <item>App</item>
         <item>User</item>
     </string-array>
+    <string name="new_user_document_title" tools:ignore="MissingTranslation">New User Document</string>
+    <string name="user_document_id" tools:ignore="MissingTranslation">ID:</string>
+    <string name="user_document_id_reminder" tools:ignore="MissingTranslation">Please input an user document id.</string>
+    <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
+    <string name="save_button" tools:ignore="MissingTranslation">Save</string>
+    <string name="app_document_detail_title" tools:ignore="MissingTranslation">App Document Detail</string>
 </resources>

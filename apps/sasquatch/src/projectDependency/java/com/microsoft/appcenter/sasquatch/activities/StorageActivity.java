@@ -5,7 +5,10 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -26,6 +29,8 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
 
+import static android.os.SystemClock.sleep;
+
 class TestDocument {
 
     @SuppressWarnings("unused")
@@ -34,12 +39,12 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
+    private final ArrayList<String> mAppDocumentList = new ArrayList<>();
+
     private ListView mListView;
 
     private int mStorageType;
 
-    private final ArrayList<String> mAppDocumentList = new ArrayList<>();
-    
     private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
         add("Doc2-User");
@@ -61,6 +66,7 @@ public class StorageActivity extends AppCompatActivity {
                 }
             }
         });
+        sleep(2000);
 
         /* Transmission target views init. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -83,6 +89,9 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
+                intent.putExtra("documentId", mAppDocumentList.get(position));
+                startActivity(intent);
             }
         });
         Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
@@ -101,7 +110,8 @@ public class StorageActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_add:
                 if (mStorageType == 1) {
-                    Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
+                    Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
+                    startActivity(intent);
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
                     builder.setIcon(R.drawable.ic_appcenter_logo);
@@ -128,7 +138,9 @@ public class StorageActivity extends AppCompatActivity {
                 break;
             case 1:
                 mStorageType = 1;
-                if (AuthenticationProviderActivity.sUserID != null) {
+                SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
+                String accoutId = preferences.getString("accoutId", null);
+                if (accoutId != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     mListView.setAdapter(adapterUser);
                 } else {
