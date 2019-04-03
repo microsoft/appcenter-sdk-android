@@ -25,6 +25,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -53,6 +54,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.spy;
 
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
@@ -1052,5 +1054,23 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Wait for timer. */
         assertNotNull(runnable.get());
         runnable.get().run();
+    }
+
+    @Test
+    public void scheduleLogsWithNewToken() {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Create channel. Verify scheduling logs. */
+        Persistence mockPersistence = mock(Persistence.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+
+        /* Verify the logs triggered immediately or scheduled. */
+        listenerArgumentCaptor.getValue().onNewAuthToken("test");
+        verify(channel, times(2)).checkPendingLogs(any(DefaultChannel.GroupState.class));
     }
 }
