@@ -586,21 +586,26 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+        if (mNetworkStateHelper.isNetworkConnected()) {
+            getTokenAndCallCosmosDbApi(
+                    partition,
+                    result,
+                    new TokenExchange.TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbDeleteApi(tokenResult, documentId, result);
-                    }
+                        @Override
+                        public void callCosmosDb(final TokenResult tokenResult) {
+                            callCosmosDbDeleteApi(tokenResult, documentId, result);
+                        }
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        Storage.this.completeFuture(e, result);
-                    }
-                });
+                        @Override
+                        public void completeFuture(Exception e) {
+                            Storage.this.completeFuture(e, result);
+                        }
+                    });
+        } else {
+            mLocalDocumentStorage.deleteOffline(partition, documentId);
+            completeFuture(new Document<Void>(), result);
+        }
         return result;
     }
 
@@ -636,7 +641,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         completeFuture(new Document<Void>(), result);
-                        mLocalDocumentStorage.delete(tokenResult.partition(), documentId);
+                        mLocalDocumentStorage.deleteOnline(tokenResult.partition(), documentId);
                     }
 
                     @Override
@@ -718,6 +723,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         String etag = Utils.getEtag(cosmosDbResponsePayload);
         pendingOperation.setEtag(etag);
         pendingOperation.setDocument(cosmosDbResponsePayload);
+        pendingOperation.setOperation(null);
         if (mEventListener != null) {
             mEventListener.onDataStoreOperationResult(
                     pendingOperation.getOperation(),
@@ -727,7 +733,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             etag),
                     null);
         }
-        mLocalDocumentStorage.updateLocalCopy(pendingOperation);
+        mLocalDocumentStorage.updatePendingOperation(pendingOperation);
     }
 
     private synchronized void notifyListenerAndUpdateOperationOnFailure(StorageException e, PendingOperation pendingOperation) {
@@ -752,9 +758,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     new DocumentError(e));
         }
         if (deleteLocalCopy) {
-            mLocalDocumentStorage.delete(pendingOperation);
+            mLocalDocumentStorage.deletePendingOperation(pendingOperation);
         } else {
-            mLocalDocumentStorage.updateLocalCopy(pendingOperation);
+            mLocalDocumentStorage.updatePendingOperation(pendingOperation);
         }
     }
 }

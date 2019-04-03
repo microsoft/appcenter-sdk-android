@@ -197,7 +197,13 @@ class LocalDocumentStorage {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
-    void delete(String partition, String documentId) {
+    void deleteOffline(String partition, String documentId) {
+        PendingOperation operation = new PendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE, partition, documentId, null, 0);
+        long now = Calendar.getInstance().getTimeInMillis();
+        mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+    }
+
+    void deleteOnline(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(
@@ -208,8 +214,8 @@ class LocalDocumentStorage {
         }
     }
 
-    void delete(PendingOperation pendingOperation) {
-        delete(pendingOperation.getPartition(), pendingOperation.getDocumentId());
+    void deletePendingOperation(PendingOperation pendingOperation) {
+        deleteOnline(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
 
     List<PendingOperation> getPendingOperations() {
@@ -235,7 +241,7 @@ class LocalDocumentStorage {
         return result;
     }
 
-    void updateLocalCopy(PendingOperation operation) {
+    void updatePendingOperation(PendingOperation operation) {
 
         /*
             Update the document in cache (if expiration_time still valid otherwise, remove the document),
@@ -243,7 +249,7 @@ class LocalDocumentStorage {
          */
         long now = Calendar.getInstance().getTimeInMillis();
         if (operation.getExpirationTime() <= now) {
-            delete(operation);
+            deletePendingOperation(operation);
         } else {
             mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
         }
@@ -279,7 +285,7 @@ class LocalDocumentStorage {
         values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
         values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
         values.put(OPERATION_TIME_COLUMN_NAME, now);
-        values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
+        values.put(PENDING_OPERATION_COLUMN_NAME, operation.getOperation());
         return values;
     }
 }

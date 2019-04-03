@@ -141,7 +141,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void deleteReturnsErrorObjectOnDbRuntimeException() {
         doThrow(new RuntimeException()).when(mDatabaseManager).delete(anyString(), any(String[].class));
-        mLocalDocumentStorage.delete(PARTITION, DOCUMENT_ID);
+        mLocalDocumentStorage.deleteOnline(PARTITION, DOCUMENT_ID);
         verify(mDatabaseManager).delete(anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
     }
 

@@ -537,7 +537,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
-        verify(mLocalDocumentStorage, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
