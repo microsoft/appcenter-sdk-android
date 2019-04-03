@@ -319,10 +319,10 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
-        if (authTokenInfo == null || authTokenInfo.isAboutToExpire()) {
+        if (authTokenInfo == null) {
             return;
         }
-        boolean homeAccountId = isAuthTokenNeedsToBeRefreshed(authTokenInfo.getAuthToken());
+        boolean homeAccountId = isAuthTokenNeedsToBeRefreshed(authTokenInfo.getAuthToken(), authTokenInfo.isAboutToExpire());
         if (!homeAccountId) {
             return;
         }
@@ -337,14 +337,14 @@ public class AuthTokenContext {
      * @param authToken auth token.
      * @return true if token refresh.
      */
-    private synchronized boolean isAuthTokenNeedsToBeRefreshed(String authToken) {
+    private synchronized boolean isAuthTokenNeedsToBeRefreshed(String authToken, boolean isAboutToExpire) {
         List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null || history.size() == 0 || authToken == null) {
+        if (history == null || history.size() == 0) {
             return false;
         }
         AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
-        boolean isLastToken = (authToken.equals(lastToken.getAuthToken()));
-        if (!isLastToken) {
+        boolean isLastToken = (authToken != null && authToken.equals(lastToken.getAuthToken()));
+        if (!isLastToken || !isAboutToExpire) {
             return false;
         }
         return true;

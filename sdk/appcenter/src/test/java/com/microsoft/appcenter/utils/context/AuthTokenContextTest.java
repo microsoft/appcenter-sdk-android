@@ -243,7 +243,6 @@ public class AuthTokenContextTest {
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
 
         /* If we have null or empty history, we should not be able to reach that method. */
-        verify(authTokenInfoMock, Mockito.never()).isAboutToExpire();
         verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
