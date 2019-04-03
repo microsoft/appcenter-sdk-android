@@ -228,7 +228,7 @@ class LocalDocumentStorage {
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
-                while (cursor.moveToNext()) {
+            while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
                 result.add(new PendingOperation(
                         values.getAsString(PENDING_OPERATION_COLUMN_NAME),

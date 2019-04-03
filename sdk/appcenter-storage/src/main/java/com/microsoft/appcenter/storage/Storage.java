@@ -574,7 +574,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             public void run() {
                                 Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                                 completeFuture(cosmosDbDocument, result);
-                                mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
+                                mLocalDocumentStorage.writeOnline(cosmosDbDocument, writeOptions);
                             }
                         });
                     }
