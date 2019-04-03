@@ -32,6 +32,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -143,6 +144,26 @@ public class LocalDocumentStorageTest {
         doThrow(new RuntimeException()).when(mDatabaseManager).delete(anyString(), any(String[].class));
         mLocalDocumentStorage.delete(PARTITION, DOCUMENT_ID);
         verify(mDatabaseManager).delete(anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
+    }
+
+    @Test
+    public void writeDeleteFails() {
+        when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(-1L);
+        boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
+        assertFalse(isSuccess);
+    }
+
+    @Test
+    public void writeDeleteSucceeds() {
+        when(mDatabaseManager.replace(any(ContentValues.class))).thenReturn(1L);
+        boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
+        ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
+        verify(mDatabaseManager).replace(argumentCaptor.capture());
+        assertNotNull(argumentCaptor.getValue());
+        assertTrue(isSuccess);
     }
 
     @Test
