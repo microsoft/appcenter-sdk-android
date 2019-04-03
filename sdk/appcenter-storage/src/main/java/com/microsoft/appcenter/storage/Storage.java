@@ -544,7 +544,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFuture(cosmosDbDocument, result);
                         mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
