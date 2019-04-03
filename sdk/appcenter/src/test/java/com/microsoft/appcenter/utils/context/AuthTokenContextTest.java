@@ -298,4 +298,38 @@ public class AuthTokenContextTest {
         }).start();
         mAuthTokenContext.setAuthToken(AUTH_TOKEN, "some-id", null);
     }
+
+    @Test(timeout = 5000)
+    public void listenerDeadlockCheckIfTokenNeedsToBeRefreshed() {
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                latch1.countDown();
+                try {
+                    latch2.await();
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Wait for listener call. */
+                try {
+                    latch1.await();
+                } catch (InterruptedException ignored) {
+                }
+
+                /* Call something synchronized. */
+                assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
+                latch2.countDown();
+            }
+        }).start();
+        AuthTokenInfo info =  new AuthTokenInfo(AUTH_TOKEN, mock(Date.class),  mock(Date.class));
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(info);
+    }
 }
