@@ -75,12 +75,14 @@ public class TokenManager {
      */
     public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNames();
-        if (!partitionNamesSet.contains(tokenResult.partition())) {
-            partitionNamesSet.add(tokenResult.partition());
+        String removedAccountIdPartition = Utils.removeAccountIdFromPartitionName(tokenResult.partition());
+        if (!partitionNamesSet.contains(removedAccountIdPartition)) {
+            partitionNamesSet.add(removedAccountIdPartition);
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(tokenResult.partition(), Utils.getGson().toJson(tokenResult));
+        SharedPreferencesManager.putString(removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
     }
+
 
     /**
      * Remove the cached token access to specific partition.

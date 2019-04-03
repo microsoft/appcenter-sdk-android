@@ -43,7 +43,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -70,7 +69,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HttpUtils.class,
         JSONUtils.class,
         NetworkStateHelper.class,
-        LocalDocumentStorage.class
+        LocalDocumentStorage.class,
+        Utils.class
 })
 abstract public class AbstractStorageTest {
 
