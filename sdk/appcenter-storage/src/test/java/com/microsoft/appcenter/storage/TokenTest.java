@@ -172,6 +172,32 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
+    public void canReadTokenFromCacheWhenTokenResultStatusFailed() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(READONLY_PARTITION_NAME)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withStatus("Failed")
+                .withToken(FAKE_TOKEN));
+        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+        TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
+
+        /* Make the call. */
+        Storage.getInstance()
+                .getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+
+        /* Verify. */
+        verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
+    }
+
+    @Test
     public void canReadTokenFromCacheWhenTokenValid() {
 
         /* Setup mock to get expiration token from cache. */
@@ -183,6 +209,7 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
+                .withStatus("Succeed")
                 .withToken(FAKE_TOKEN));
         when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
