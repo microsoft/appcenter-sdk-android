@@ -382,7 +382,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         }
                     });
         } else {
-            Document<T> cachedDocument = mLocalDocumentStorage.read(partition, documentId, documentType, readOptions);
+            Document<T> cachedDocument = mLocalDocumentStorage.read(appendAccountIdToPartitionName(partition), documentId, documentType, readOptions);
             result.complete(cachedDocument);
         }
         return result;
@@ -484,9 +484,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     result,
                     new TokenExchangeServiceCallback() {
 
+                        // TODO* fix the wrong partition name
                         @Override
                         public void callCosmosDb(TokenResult tokenResult) {
-                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
+                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
                         }
 
                         @Override
@@ -495,6 +496,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         }
                     });
         } else {
+
+            // TODO* fix the wrong partition name.
             Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdate(partition, documentId, document, documentType, writeOptions);
             result.complete(createdOrUpdatedDocument);
         }
@@ -606,6 +609,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized void instanceDelete(final PendingOperation pendingOperation) {
         getTokenAndCallCosmosDbApi(
+
+                // TODO* remove the user id from the partition name.
                 pendingOperation.getPartition(),
                 null,
                 new TokenExchange.TokenExchangeServiceCallback() {
@@ -756,5 +761,15 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         } else {
             mLocalDocumentStorage.updateLocalCopy(pendingOperation);
         }
+    }
+
+    private String appendAccountIdToPartitionName(String partitionName) {
+        TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
+        if (result == null) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
+        } else {
+            partitionName = result.partition();
+        }
+        return partitionName;
     }
 }

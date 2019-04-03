@@ -468,7 +468,17 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        String tokenResult = String.format("{\n" +
+                "            \"partition\": \"%s\",\n" +
+                "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+                "            \"dbName\": \"db\",\n" +
+                "            \"dbCollectionName\": \"collection\",\n" +
+                "            \"token\": \"%s\",\n" +
+                "            \"status\": \"Succeed\",\n" +
+                "            \"accountId\": \"accountId\"\n" +
+                "}", PARTITION, "token");
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
                 eq(PARTITION),

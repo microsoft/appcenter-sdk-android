@@ -78,7 +78,9 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION = "custom-partition";
+    static final String PARTITION_NAME = "custom-partition";
+
+    static final String PARTITION = PARTITION_NAME + "-bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
     static final String DOCUMENT_ID = "document-id";
 

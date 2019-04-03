@@ -54,14 +54,17 @@ public class TokenManager {
      * @param partitionName The partition name for get the token.
      * @return Cached token.
      */
-    public TokenResult getCachedToken(String partitionName) {
+    TokenResult getCachedToken(String partitionName) {
+        return getCachedToken(partitionName, false);
+    }
+
+    TokenResult getCachedToken(String partitionName, Boolean includeExpiredToken) {
         TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
-        if (token != null) {
+        if (token != null && !includeExpiredToken) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
             /* The token is considered expired. */
             if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
-                removeCachedToken(partitionName);
                 return null;
             }
         }
@@ -81,19 +84,6 @@ public class TokenManager {
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
         SharedPreferencesManager.putString(removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
-    }
-
-
-    /**
-     * Remove the cached token access to specific partition.
-     *
-     * @param partitionName The partition name used to access the token.
-     */
-    private synchronized void removeCachedToken(String partitionName) {
-        Set<String> partitionNamesSet = getPartitionNames();
-        partitionNamesSet.remove(partitionName);
-        SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
-        SharedPreferencesManager.remove(partitionName);
     }
 
     /**
