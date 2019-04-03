@@ -540,11 +540,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                CosmosDb.GetUpsertAdditionalHeader(),
+                CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                         completeFuture(cosmosDbDocument, result);
                         mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
@@ -558,7 +558,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    private synchronized <T> void callCosmosDbCreateOrUpdateApi(
+    private synchronized void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             final PendingOperation pendingOperation) {
         CosmosDb.callCosmosDbApi(
@@ -567,7 +567,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 pendingOperation.getDocument(),
-                CosmosDb.GetUpsertAdditionalHeader(),
+                CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @Override
@@ -698,7 +698,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions(), null);
+        mLocalDocumentStorage.write((Document) value, new WriteOptions(), null);
         mPendingCalls.remove(future);
     }
 
@@ -735,11 +735,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         boolean deleteLocalCopy = false;
         if (e.getCause() instanceof HttpException) {
             switch (((HttpException) e.getCause()).getStatusCode()) {
-                
+
                 /* The document was removed on the server. */
                 case 404:
-                
-                /* Partition and document_id combination is already present in the DB. */
+
+                    /* Partition and document_id combination is already present in the DB. */
                 case 409:
                     deleteLocalCopy = true;
                     break;
