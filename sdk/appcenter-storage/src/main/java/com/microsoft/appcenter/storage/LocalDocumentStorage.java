@@ -193,6 +193,12 @@ class LocalDocumentStorage {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
+    boolean writeDelete(String partition, String documentId) {
+        Document<Void> writeDocument = new Document<>(null, partition, documentId);
+        long rowId = write(writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE);
+        return rowId > 0;
+    }
+
     void delete(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {

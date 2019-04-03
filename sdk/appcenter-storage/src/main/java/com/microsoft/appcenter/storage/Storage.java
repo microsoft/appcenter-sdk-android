@@ -586,21 +586,30 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchange.TokenExchangeServiceCallback() {
+        if (mNetworkStateHelper.isNetworkConnected()) {
+            getTokenAndCallCosmosDbApi(
+                    partition,
+                    result,
+                    new TokenExchange.TokenExchangeServiceCallback() {
 
-                    @Override
-                    public void callCosmosDb(final TokenResult tokenResult) {
-                        callCosmosDbDeleteApi(tokenResult, documentId, result);
-                    }
+                        @Override
+                        public void callCosmosDb(final TokenResult tokenResult) {
+                            callCosmosDbDeleteApi(tokenResult, documentId, result);
+                        }
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        Storage.this.completeFuture(e, result);
-                    }
-                });
+                        @Override
+                        public void completeFuture(Exception e) {
+                            Storage.this.completeFuture(e, result);
+                        }
+                    });
+        } else {
+            boolean isWriteSucceed = mLocalDocumentStorage.writeDelete(partition, documentId);
+            if (isWriteSucceed) {
+                Storage.this.completeFuture(new Document<Void>(), result);
+            } else {
+                Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+            }
+        }
         return result;
     }
 

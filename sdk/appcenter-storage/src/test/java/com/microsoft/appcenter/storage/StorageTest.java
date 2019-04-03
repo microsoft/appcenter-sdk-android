@@ -321,7 +321,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(PARTITION, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -518,7 +518,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -548,7 +548,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verityTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -561,6 +561,26 @@ public class StorageTest extends AbstractStorageTest {
         assertThat(
                 doc.get().getError().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
+    }
+
+    @Test
+    public void deleteWithoutNetworkSucceeds() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(mLocalDocumentStorage.writeDelete(anyString(), anyString())).thenReturn(true);
+        Storage.delete(PARTITION, DOCUMENT_ID);
+        verify(mLocalDocumentStorage, times(1)).writeDelete(eq(PARTITION), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        verifyNoMoreInteractions(mHttpClient);
+    }
+
+    @Test
+    public void deleteWithoutNetworkFails() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(mLocalDocumentStorage.writeDelete(anyString(), anyString())).thenReturn(false);
+        Storage.delete(PARTITION, DOCUMENT_ID);
+        verify(mLocalDocumentStorage, times(1)).writeDelete(eq(PARTITION), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        verifyNoMoreInteractions(mHttpClient);
     }
 
     @Test
