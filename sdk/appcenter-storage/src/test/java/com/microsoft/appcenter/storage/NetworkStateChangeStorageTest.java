@@ -209,7 +209,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
-        verityTokenExchangeFlow(null, new Exception("Yeah, it failed."));
+        verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
         ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
         verify(mDataStoreEventListener).onDataStoreOperationResult(
