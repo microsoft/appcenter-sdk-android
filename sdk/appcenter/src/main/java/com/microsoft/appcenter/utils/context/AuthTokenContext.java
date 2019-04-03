@@ -224,12 +224,9 @@ public class AuthTokenContext {
      *
      * @return authorization token.
      */
-    public synchronized String getAuthToken() {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history != null && history.size() > 0) {
-            return history.get(history.size() - 1).getAuthToken();
-        }
-        return null;
+    public String getAuthToken() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getAuthToken() : null;
     }
 
     /**
@@ -237,12 +234,9 @@ public class AuthTokenContext {
      *
      * @return unique identifier of user.
      */
-    public synchronized String getHomeAccountId() {
-        List<AuthTokenHistoryEntry> history = getHistory();
-        if (history != null && history.size() > 0) {
-            return history.get(history.size() - 1).getHomeAccountId();
-        }
-        return null;
+    public String getHomeAccountId() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getHomeAccountId() : null;
     }
 
     /**
@@ -318,36 +312,24 @@ public class AuthTokenContext {
      *
      * @param authTokenInfo auth token to check for expiration.
      */
-    public void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
-        if (authTokenInfo == null) {
-            return;
-        }
-        boolean homeAccountId = isAuthTokenNeedsToBeRefreshed(authTokenInfo.getAuthToken(), authTokenInfo.isAboutToExpire());
-        if (!homeAccountId) {
+    public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire()) {
             return;
         }
         for (Listener listener : mListeners) {
-            listener.onTokenRequiresRefresh(authTokenInfo.getAuthToken());
+            listener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
     }
 
-    /**
-     * Performs check is auth token needs to be refreshed.
-     *
-     * @param authToken auth token.
-     * @return true if token refresh.
-     */
-    private synchronized boolean isAuthTokenNeedsToBeRefreshed(String authToken, boolean isAboutToExpire) {
+    private synchronized AuthTokenHistoryEntry getLastHistoryEntry() {
         List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null || history.size() == 0) {
-            return false;
+        if (history != null && history.size() > 0) {
+            return history.get(history.size() - 1);
         }
-        AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
-        boolean isLastToken = (authToken != null && authToken.equals(lastToken.getAuthToken()));
-        if (!isLastToken || !isAboutToExpire) {
-            return false;
-        }
-        return true;
+        return null;
     }
 
     @VisibleForTesting
