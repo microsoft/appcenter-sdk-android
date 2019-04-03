@@ -87,7 +87,10 @@ public class Utils {
     }
 
     public static String removeAccountIdFromPartitionName(String partition) {
-        return partition;
+        if (partition.equals(Constants.READONLY)) {
+            return partition;
+        }
+        return partition.substring(0, partition.length() - Constants.PARTITION_KEY_SUFFIX_LENGTH);
     }
 
     public static Gson getGson() {
