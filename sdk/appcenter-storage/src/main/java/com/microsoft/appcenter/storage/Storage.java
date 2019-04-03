@@ -52,6 +52,7 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
+import static com.microsoft.appcenter.storage.Constants.TOKEN_RESULT_SUCCEED;
 
 /**
  * Storage service.
@@ -677,12 +678,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             TokenExchangeServiceCallback callback) {
         TokenResult cachedTokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (cachedTokenResult != null) {
-            int cachedTokenResultStatusCode = Integer.parseInt(cachedTokenResult.status());
-            if (cachedTokenResultStatusCode == 200) {
+            if (cachedTokenResult.status().equals(TOKEN_RESULT_SUCCEED)) {
                 callback.callCosmosDb(cachedTokenResult);
             } else {
-                AppCenterLog.error(LOG_TAG, String.format("The token store returned %d", cachedTokenResultStatusCode));
-                callback.onCallFailed(new HttpException(cachedTokenResultStatusCode));
+                callback.onCallFailed(new StorageException(String.format("The token status result was '%s'", cachedTokenResult.status())));
             }
         } else {
             ServiceCall tokenExchangeServiceCall =
@@ -705,7 +704,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document)value, new WriteOptions(), null);
+        mLocalDocumentStorage.write((Document) value, new WriteOptions(), null);
         mPendingCalls.remove(future);
     }
 
@@ -742,11 +741,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         boolean deleteLocalCopy = false;
         if (e.getCause() instanceof HttpException) {
             switch (((HttpException) e.getCause()).getStatusCode()) {
-                
+
                 /* The document was removed on the server. */
                 case 404:
-                
-                /* Partition and document_id combination is already present in the DB. */
+
+                    /* Partition and document_id combination is already present in the DB. */
                 case 409:
                     deleteLocalCopy = true;
                     break;

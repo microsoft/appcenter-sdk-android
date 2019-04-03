@@ -33,11 +33,13 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.HashMap;
@@ -72,6 +74,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         NetworkStateHelper.class,
         LocalDocumentStorage.class
 })
+@RunWith(PowerMockRunner.class)
 abstract public class AbstractStorageTest {
 
     private static final String DATABASE_NAME = "mbaas";
@@ -114,8 +117,8 @@ abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
+//    @Rule
+//    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     protected HttpClientRetryer mHttpClient;
