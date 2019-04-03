@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
@@ -155,17 +155,6 @@ public class AuthTokenContextTest {
     }
 
     @Test
-    public void tokenRefreshOnNull() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.SECOND, -60);
-        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
-        AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
-        mAuthTokenContext.addListener(listener);
-        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(null);
-        verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
-    }
-
-    @Test
     public void tokenRefreshOnNullToken() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, -60);
@@ -192,12 +181,11 @@ public class AuthTokenContextTest {
 
         /* Check that we receive callback call. */
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        verify(listener, times(1)).onTokenRequiresRefresh(notNull(String.class));
+        verify(listener).onTokenRequiresRefresh(eq("accountId2"));
     }
 
     @Test
     public void tokenRefreshCheckNotExpiresOrNotLast() {
-        Date tokenEndTime = new Date();
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, 24);
         mAuthTokenContext.setAuthToken("authToken1", "accountId", calendar.getTime());
@@ -243,7 +231,7 @@ public class AuthTokenContextTest {
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfoMock);
 
         /* If we have null or empty history, we should not be able to reach that method. */
-        verify(authTokenInfoMock, Mockito.never()).isAboutToExpire();
+        verify(authTokenInfoMock, never()).isAboutToExpire();
         verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 
@@ -263,5 +251,74 @@ public class AuthTokenContextTest {
         when(mCryptoUtils.decrypt(eq("secret"), eq(false))).thenReturn(decryptedData);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("secret");
         assertEquals(0, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test(timeout = 5000)
+    public void listenerDeadlock() {
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+
+            @Override
+            public void onNewAuthToken(String authToken) {
+                latch1.countDown();
+                try {
+                    latch2.await();
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Wait for listener call. */
+                try {
+                    latch1.await();
+                } catch (InterruptedException ignored) {
+                }
+
+                /* Call something synchronized. */
+                assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
+                latch2.countDown();
+            }
+        }).start();
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, "some-id", null);
+    }
+
+    @Test(timeout = 5000)
+    public void listenerDeadlockCheckIfTokenNeedsToBeRefreshed() {
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+
+            @Override
+            public void onTokenRequiresRefresh(String homeAccountId) {
+                latch1.countDown();
+                try {
+                    latch2.await();
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                /* Wait for listener call. */
+                try {
+                    latch1.await();
+                } catch (InterruptedException ignored) {
+                }
+
+                /* Call something synchronized. */
+                assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
+                latch2.countDown();
+            }
+        }).start();
+        AuthTokenInfo info = new AuthTokenInfo(AUTH_TOKEN, mock(Date.class), mock(Date.class));
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(info);
     }
 }
