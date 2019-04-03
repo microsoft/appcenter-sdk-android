@@ -319,33 +319,35 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
-        String homeAccountId = getHomeAccountId(authTokenInfo);
-        if (homeAccountId == null) {
+        if (authTokenInfo == null || authTokenInfo.isAboutToExpire()) {
+            return;
+        }
+        boolean homeAccountId = isAuthTokenNeedsToBeRefreshed(authTokenInfo.getAuthToken());
+        if (!homeAccountId) {
             return;
         }
         for (Listener listener : mListeners) {
-            listener.onTokenRequiresRefresh(homeAccountId);
+            listener.onTokenRequiresRefresh(authTokenInfo.getAuthToken());
         }
     }
 
     /**
-     * Performs check on auth token refresh.
+     * Performs check is auth token needs to be refreshed.
      *
-     * @param authTokenInfo auth token to check for expiration.
-     * @return home account id if token refresh.
+     * @param authToken auth token.
+     * @return true if token refresh.
      */
-    private synchronized String getHomeAccountId(AuthTokenInfo authTokenInfo) {
+    private synchronized boolean isAuthTokenNeedsToBeRefreshed(String authToken) {
         List<AuthTokenHistoryEntry> history = getHistory();
-        if (history == null || history.size() == 0 || authTokenInfo == null) {
-            return null;
+        if (history == null || history.size() == 0 || authToken == null) {
+            return false;
         }
         AuthTokenHistoryEntry lastToken = history.get(history.size() - 1);
-        boolean isLastToken = (authTokenInfo.getAuthToken() != null && authTokenInfo.getAuthToken().equals(lastToken.getAuthToken()));
-        boolean isAboutToExpire = authTokenInfo.isAboutToExpire();
-        if (!isLastToken || !isAboutToExpire) {
-            return null;
+        boolean isLastToken = (authToken.equals(lastToken.getAuthToken()));
+        if (!isLastToken) {
+            return false;
         }
-        return lastToken.getHomeAccountId();
+        return true;
     }
 
     @VisibleForTesting
