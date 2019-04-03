@@ -319,7 +319,7 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(AuthTokenInfo authTokenInfo) {
-        String homeAccountId = checkRefreshedToken(authTokenInfo);
+        String homeAccountId = getHomeAccountId(authTokenInfo);
         if (homeAccountId == null) {
             return;
         }
@@ -332,8 +332,9 @@ public class AuthTokenContext {
      * Performs check on auth token refresh.
      *
      * @param authTokenInfo auth token to check for expiration.
+     * @return home account id if token refresh.
      */
-    private synchronized String checkRefreshedToken(AuthTokenInfo authTokenInfo) {
+    private synchronized String getHomeAccountId(AuthTokenInfo authTokenInfo) {
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null || history.size() == 0 || authTokenInfo == null) {
             return null;

@@ -304,6 +304,7 @@ public class AuthTokenContextTest {
         final CountDownLatch latch1 = new CountDownLatch(1);
         final CountDownLatch latch2 = new CountDownLatch(1);
         mAuthTokenContext.addListener(new AbstractTokenContextListener() {
+
             @Override
             public void onTokenRequiresRefresh(String homeAccountId) {
                 latch1.countDown();
@@ -329,7 +330,7 @@ public class AuthTokenContextTest {
                 latch2.countDown();
             }
         }).start();
-        AuthTokenInfo info =  new AuthTokenInfo(AUTH_TOKEN, mock(Date.class),  mock(Date.class));
+        AuthTokenInfo info = new AuthTokenInfo(AUTH_TOKEN, mock(Date.class), mock(Date.class));
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(info);
     }
 }
