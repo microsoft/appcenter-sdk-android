@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage;
 
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.TokenExchange;
@@ -175,26 +176,29 @@ public class TokenTest extends AbstractStorageTest {
     public void canReadTokenFromCacheWhenTokenResultStatusFailed() {
 
         /* Setup mock to get expiration token from cache. */
+        final Exception expectedException = new HttpException(404);
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(READONLY_PARTITION_NAME)
-                .withExpirationTime(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withStatus("Failed")
-                .withToken(FAKE_TOKEN));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+        String result = new Gson().toJson(new HttpException(404));
+        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(result);
+        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
-        doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
+        doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(tokenResultCapture.capture());
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(mTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallFailed(expectedException);
+                return mock(ServiceCall.class);
+            }
+        });
 
         /* Make the call. */
         Storage.getInstance()
                 .getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */
-        verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
+        verify(mTokenExchangeServiceCallback).onCallFailed(any(HttpException.class));
     }
 
     @Test

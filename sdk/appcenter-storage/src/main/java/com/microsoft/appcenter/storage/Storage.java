@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -676,7 +677,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             TokenExchangeServiceCallback callback) {
         TokenResult cachedTokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (cachedTokenResult != null) {
-            callback.callCosmosDb(cachedTokenResult);
+            int cachedTokenResultStatusCode = Integer.parseInt(cachedTokenResult.status());
+            if (cachedTokenResultStatusCode == 200) {
+                callback.callCosmosDb(cachedTokenResult);
+            } else {
+                AppCenterLog.error(LOG_TAG, String.format("The token store returned %d", cachedTokenResultStatusCode));
+                callback.onCallFailed(new HttpException(cachedTokenResultStatusCode));
+            }
         } else {
             ServiceCall tokenExchangeServiceCall =
                     TokenExchange.getDbToken(

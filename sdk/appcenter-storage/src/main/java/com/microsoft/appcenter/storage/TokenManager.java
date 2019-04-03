@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+
 /**
  * Token cache service.
  */
@@ -60,22 +62,16 @@ public class TokenManager {
         if (token != null) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
-            /* Token result was cached but status was not 'succeed'. */
-            if (!token.status().equals(Constants.TOKEN_RESULT_SUCCEED)) {
-                AppCenterLog.warn(Constants.LOG_TAG, String.format("Cached token result was failed for partition '%s'", partitionName));
-                return null;
-            }
-
             /* The token is expired. */
             if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
-                AppCenterLog.warn(Constants.LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
+                AppCenterLog.warn(LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
                 removeCachedToken(partitionName);
                 return null;
             }
-            AppCenterLog.debug(Constants.LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
+            AppCenterLog.debug(LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
             return token;
         }
-        AppCenterLog.warn(Constants.LOG_TAG, String.format("Failed to retrieve token or none found in cache for partition '%s'", partitionName));
+        AppCenterLog.warn(LOG_TAG, String.format("Failed to retrieve token or none found in cache for partition '%s'", partitionName));
         return null;
     }
 
@@ -103,7 +99,7 @@ public class TokenManager {
         partitionNamesSet.remove(partitionName);
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         SharedPreferencesManager.remove(partitionName);
-        AppCenterLog.info(Constants.LOG_TAG, String.format("Removed token for partition '%s'", partitionName));
+        AppCenterLog.info(LOG_TAG, String.format("Removed token for partition '%s'", partitionName));
     }
 
     /**
@@ -120,6 +116,6 @@ public class TokenManager {
         }
         partitionNamesSet.clear();
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
-        AppCenterLog.info(Constants.LOG_TAG, String.format("Removed all tokens in all partitions"));
+        AppCenterLog.info(LOG_TAG, String.format("Removed all tokens in all partitions"));
     }
 }
