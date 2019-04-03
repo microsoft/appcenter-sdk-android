@@ -777,35 +777,25 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
-    private synchronized void notifyListenerAndUpdateOperationOnSuccess(String cosmosDbResponsePayload, PendingOperation pendingOperation) {
-        String etag = Utils.getEtag(cosmosDbResponsePayload);
-        pendingOperation.setEtag(etag);
-        pendingOperation.setDocument(cosmosDbResponsePayload);
-        if (mEventListener != null) {
-            mEventListener.onDataStoreOperationResult(
-                    pendingOperation.getOperation(),
-                    new DocumentMetadata(
-                            pendingOperation.getPartition(),
-                            pendingOperation.getDocumentId(),
-                            etag),
-                    null);
-        }
-        mLocalDocumentStorage.updateLocalCopy(pendingOperation);
-    }
+    private void notifyListenerAndUpdateOperationOnSuccess(final String cosmosDbResponsePayload, final PendingOperation pendingOperation) {
+        post(new Runnable() {
 
-    private synchronized void notifyListenerAndUpdateOperationOnFailure(StorageException e, PendingOperation pendingOperation) {
-        AppCenterLog.error(LOG_TAG, "Remote operation failed", e);
-        boolean deleteLocalCopy = false;
-        if (e.getCause() instanceof HttpException) {
-            switch (((HttpException) e.getCause()).getStatusCode()) {
-
-                /* The document was removed on the server. */
-                case 404:
-
-                    /* Partition and document_id combination is already present in the DB. */
-                case 409:
-                    deleteLocalCopy = true;
-                    break;
+            @Override
+            public void run() {
+                String etag = Utils.getEtag(cosmosDbResponsePayload);
+                pendingOperation.setEtag(etag);
+                pendingOperation.setDocument(cosmosDbResponsePayload);
+                DataStoreEventListener eventListener = mEventListener;
+                if (eventListener != null) {
+                    eventListener.onDataStoreOperationResult(
+                            pendingOperation.getOperation(),
+                            new DocumentMetadata(
+                                    pendingOperation.getPartition(),
+                                    pendingOperation.getDocumentId(),
+                                    etag),
+                            null);
+                }
+                mLocalDocumentStorage.updateLocalCopy(pendingOperation);
             }
         });
     }
