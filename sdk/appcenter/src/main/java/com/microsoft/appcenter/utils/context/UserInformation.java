@@ -21,7 +21,7 @@ public class UserInformation {
      *
      * @param accountId User account identifier.
      */
-    UserInformation(String accountId) {
+    public UserInformation(String accountId) {
         mAccountId = accountId;
     }
 
