@@ -15,10 +15,11 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
-import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.exception.StorageException;
@@ -45,7 +46,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.storage.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
@@ -53,6 +53,7 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 /**
  * Storage service.
@@ -77,7 +78,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private StorageHttpClientDecorator mHttpClient;
+    private HttpClient mHttpClient;
 
     private LocalDocumentStorage mLocalDocumentStorage;
 
@@ -239,7 +240,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
+        mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context);
         mAuthListener = new AbstractTokenContextListener() {

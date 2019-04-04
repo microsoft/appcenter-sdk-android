@@ -16,7 +16,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
-import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
