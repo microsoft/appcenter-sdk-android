@@ -6,12 +6,15 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
+
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 /**
  * Token cache service.
@@ -63,11 +66,15 @@ public class TokenManager {
         if (token != null && !includeExpiredToken) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
-            /* The token is considered expired. */
+            /* The token is expired. */
             if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
+                AppCenterLog.warn(LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
                 return null;
             }
+            AppCenterLog.debug(LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
+            return token;
         }
+        AppCenterLog.warn(LOG_TAG, String.format("Failed to retrieve token or none found in cache for partition '%s'", partitionName));
         return token;
     }
 
@@ -100,5 +107,6 @@ public class TokenManager {
         }
         partitionNamesSet.clear();
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
+        AppCenterLog.info(LOG_TAG, String.format("Removed all tokens in all partitions"));
     }
 }

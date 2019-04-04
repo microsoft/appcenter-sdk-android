@@ -51,12 +51,14 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    private static final String PARTITION_COLUMN_NAME = "partition";
+    @VisibleForTesting
+    static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    @VisibleForTesting
+    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -115,11 +117,15 @@ class LocalDocumentStorage {
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
-    <T> void write(Document<T> document, WriteOptions writeOptions) {
+    <T> void writeOffline(Document<T> document, WriteOptions writeOptions) {
         write(document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
 
-    <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
+    <T> void writeOnline(Document<T> document, WriteOptions writeOptions) {
+        write(document, writeOptions, null);
+    }
+
+    private <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
         }
@@ -134,7 +140,7 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(values);
+        return mDatabaseManager.replace(values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
@@ -161,7 +167,7 @@ class LocalDocumentStorage {
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
-            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()));
+            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
             document.setIsFromCache(true);
             return document;
         }
@@ -175,7 +181,7 @@ class LocalDocumentStorage {
         return builder;
     }
 
-    <T> Document<T> createOrUpdate(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+    <T> Document<T> createOrUpdateOffline(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
         if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
@@ -183,15 +189,15 @@ class LocalDocumentStorage {
 
         /* The document cache has been expired, or the document did not exists, create it. */
         Document<T> writeDocument = new Document<>(document, partition, documentId);
-        long rowId = cachedDocument.getDocumentError() != null ? create(writeDocument, writeOptions) : update(writeDocument, writeOptions);
+        long rowId = cachedDocument.getDocumentError() != null ? createOffline(writeDocument, writeOptions) : updateOffline(writeDocument, writeOptions);
         return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
     }
 
-    private <T> long create(Document<T> document, WriteOptions writeOptions) {
+    private <T> long createOffline(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_CREATE_VALUE);
     }
 
-    private <T> long update(Document<T> document, WriteOptions writeOptions) {
+    private <T> long updateOffline(Document<T> document, WriteOptions writeOptions) {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
@@ -211,10 +217,11 @@ class LocalDocumentStorage {
 
     /**
      * Deletes the specified document from the local cache.
-     * @param partition Partition key.
+     *
+     * @param partition  Partition key.
      * @param documentId Document id.
      */
-    void delete(String partition, String documentId) {
+    void deleteOnline(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(
@@ -229,8 +236,8 @@ class LocalDocumentStorage {
      * Deletes the specified document from the cache.
      * @param pendingOperation Pending operation to delete.
      */
-    void delete(PendingOperation pendingOperation) {
-        delete(pendingOperation.getPartition(), pendingOperation.getDocumentId());
+    void deletePendingOperation(PendingOperation pendingOperation) {
+        deleteOnline(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
 
     List<PendingOperation> getPendingOperations() {
@@ -241,7 +248,7 @@ class LocalDocumentStorage {
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
-                while (cursor.moveToNext()) {
+            while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
                 result.add(new PendingOperation(
                         values.getAsString(PENDING_OPERATION_COLUMN_NAME),
@@ -256,7 +263,7 @@ class LocalDocumentStorage {
         return result;
     }
 
-    void updateLocalCopy(PendingOperation operation) {
+    void updatePendingOperation(PendingOperation operation) {
 
         /*
             Update the document in cache (if expiration_time still valid otherwise, remove the document),
@@ -264,7 +271,7 @@ class LocalDocumentStorage {
          */
         long now = Calendar.getInstance().getTimeInMillis();
         if (operation.getExpirationTime() <= now) {
-            delete(operation);
+            deletePendingOperation(operation);
         } else {
             mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
         }
@@ -300,7 +307,7 @@ class LocalDocumentStorage {
         values.put(EXPIRATION_TIME_COLUMN_NAME, operation.getExpirationTime());
         values.put(DOWNLOAD_TIME_COLUMN_NAME, now);
         values.put(OPERATION_TIME_COLUMN_NAME, now);
-        values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
+        values.put(PENDING_OPERATION_COLUMN_NAME, operation.getOperation());
         return values;
     }
 }

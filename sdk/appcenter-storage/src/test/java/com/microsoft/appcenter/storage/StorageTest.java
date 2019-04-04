@@ -497,7 +497,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        verify(mLocalDocumentStorage, times(1)).write(refEq(testCosmosDocument), refEq(writeOptions));
+        verify(mLocalDocumentStorage, times(1)).writeOnline(refEq(testCosmosDocument), refEq(writeOptions));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -517,7 +517,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
         Storage.create(PARTITION_NAME, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
-        verify(mLocalDocumentStorage).createOrUpdate(
+        verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument),
@@ -549,7 +549,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
-        verify(mLocalDocumentStorage, times(1)).delete(eq(PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
