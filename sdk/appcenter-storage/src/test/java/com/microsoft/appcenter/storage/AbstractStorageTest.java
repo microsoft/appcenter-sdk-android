@@ -43,6 +43,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -217,7 +218,7 @@ abstract public class AbstractStorageTest {
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
             Exception cosmosFailureException) throws JSONException {
-        verityTokenExchangeFlow(tokenExchangeResponsePayload, null);
+        verifyTokenExchangeFlow(tokenExchangeResponsePayload, null);
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
@@ -241,7 +242,7 @@ abstract public class AbstractStorageTest {
         }
     }
 
-    void verityTokenExchangeFlow(
+    void verifyTokenExchangeFlow(
             String tokenExchangeSuccessResponsePayload,
             Exception tokenExchangeFailureResponse) throws JSONException {
         ArgumentCaptor<AbstractAppCallTemplate> tokenExchangeTemplateCallbackArgumentCaptor =

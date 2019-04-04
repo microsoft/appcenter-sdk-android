@@ -10,6 +10,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
@@ -27,6 +28,7 @@ import java.util.List;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 
+@WorkerThread
 class LocalDocumentStorage {
 
     /**
@@ -193,6 +195,25 @@ class LocalDocumentStorage {
         return write(document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
+    /**
+     * Creates or overwrites specified document entry in the cache. Sets the de-serialized value of
+     * the document to null and the pending operation to DELETE.
+     *
+     * @param partition  Partition key.
+     * @param documentId Document id.
+     * @return True if cache was successfully written to, false otherwise.
+     */
+    boolean markForDeletion(String partition, String documentId) {
+        Document<Void> writeDocument = new Document<>(null, partition, documentId);
+        long rowId = write(writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE);
+        return rowId > 0;
+    }
+
+    /**
+     * Deletes the specified document from the local cache.
+     * @param partition Partition key.
+     * @param documentId Document id.
+     */
     void delete(String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
@@ -204,6 +225,10 @@ class LocalDocumentStorage {
         }
     }
 
+    /**
+     * Deletes the specified document from the cache.
+     * @param pendingOperation Pending operation to delete.
+     */
     void delete(PendingOperation pendingOperation) {
         delete(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
