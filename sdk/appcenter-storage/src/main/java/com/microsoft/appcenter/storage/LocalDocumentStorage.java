@@ -138,7 +138,7 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(values);
+        return mDatabaseManager.replace(values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {

@@ -82,6 +82,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-databaseManagerScannerNext");
         sContext.deleteDatabase("test-setMaximumSize");
         sContext.deleteDatabase("test-replace");
+        sContext.deleteDatabase("test-replace-by-multiple-columns");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -433,6 +434,52 @@ public class DatabaseManagerAndroidTest {
 
             /* Replace by matching an unknown property fails. */
             assertEquals(-1, databaseManager.replace(contentValues, "COLUMN_NOT_FOUND"));
+            assertEquals(4L, databaseManager.getRowCount());
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseManager.close();
+        }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
+    }
+
+    @Test
+    public void replaceByMultipleColumns() {
+
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-replace-by-multiple-columns", "databaseManager", 1, mSchema, listener);
+        String[] documentIdProperties = new String[]{"COL_STRING", "COL_INTEGER"};
+
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            assertEquals(0L, databaseManager.getRowCount());
+            ContentValues contentValues = generateContentValues();
+            contentValues.put(documentIdProperties[0], "some id");
+            contentValues.put(documentIdProperties[1], 0);
+            databaseManager.replace(contentValues, documentIdProperties);
+            assertEquals(1L, databaseManager.getRowCount());
+            databaseManager.replace(contentValues, documentIdProperties);
+            assertEquals(1L, databaseManager.getRowCount());
+
+            /* Set the documentIdProperty to another value, new row should be created. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperties[0], "new id");
+            contentValues.put(documentIdProperties[1], 1);
+            databaseManager.replace(contentValues, documentIdProperties);
+            assertEquals(2L, databaseManager.getRowCount());
+
+            /* Replace a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
+            contentValues = generateContentValues();
+            contentValues.put(documentIdProperties[0], "new id");
+            contentValues.put(documentIdProperties[1], 1);
+            databaseManager.replace(contentValues);
+            databaseManager.replace(contentValues, documentIdProperties);
+            assertEquals(4L, databaseManager.getRowCount());
+
+            /* Replace by matching an unknown property fails. */
+            assertEquals(-1, databaseManager.replace(contentValues, "COLUMN_NOT_FOUND", "Random_Column"));
             assertEquals(4L, databaseManager.getRowCount());
         } finally {
 
