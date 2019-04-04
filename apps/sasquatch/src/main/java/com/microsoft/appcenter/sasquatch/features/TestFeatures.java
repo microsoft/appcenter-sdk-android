@@ -51,8 +51,6 @@ public final class TestFeatures {
             Class.forName("com.microsoft.appcenter.storage.Storage");
             sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
             sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
-            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_app_document));
-            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_user_document));
         } catch (ClassNotFoundException ignore) {
         }
     }
