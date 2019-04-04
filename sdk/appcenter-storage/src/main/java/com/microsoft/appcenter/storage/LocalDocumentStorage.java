@@ -114,7 +114,6 @@ class LocalDocumentStorage {
     }
 
     LocalDocumentStorage(Context context) {
-        // TODO: implement a multi-table listener
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
@@ -281,7 +280,7 @@ class LocalDocumentStorage {
         }
     }
 
-    private String getTableName(String partition) {
+    static String getTableName(String partition) {
         return TABLE;
     }
 

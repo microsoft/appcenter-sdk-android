@@ -220,7 +220,7 @@ public class DatabaseManager implements Closeable {
      * @return If an entry was inserted or updated, the database identifier. Otherwise -1.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long replace(String table, @NonNull ContentValues values, String... properties) {
+    public long replace(@NonNull String table, @NonNull ContentValues values, String... properties) {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         List<String> selectionArgs = new ArrayList<>();
         try {
@@ -316,7 +316,7 @@ public class DatabaseManager implements Closeable {
      * @param table The table to perform the operation on.
      * @param id The database identifier.
      */
-    public void delete(String table, @IntRange(from = 0) long id) {
+    public void delete(@NonNull String table, @IntRange(from = 0) long id) {
         delete(table, PRIMARY_KEY, id);
     }
 
@@ -335,7 +335,7 @@ public class DatabaseManager implements Closeable {
      * @param table The table to perform the operation on.
      * @param idList The list of database identifiers.
      */
-    public void delete(String table, @NonNull List<Long> idList) {
+    public void delete(@NonNull String table, @NonNull List<Long> idList) {
         if (idList.size() <= 0) {
             return;
         }
@@ -371,7 +371,7 @@ public class DatabaseManager implements Closeable {
      *                    will be bound as Strings.
      * @return the number of rows affected.
      */
-    public int delete(String table, String whereClause, String[] whereArgs) {
+    public int delete(@NonNull String table, String whereClause, String[] whereArgs) {
         try {
             return getDatabase().delete(table, whereClause, whereArgs);
         } catch (RuntimeException e) {
@@ -400,7 +400,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return the number of rows affected.
      */
-    public int delete(String table, @Nullable String key, @Nullable Object value) {
+    public int delete(@NonNull String table, @Nullable String key, @Nullable Object value) {
         return delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
@@ -468,7 +468,7 @@ public class DatabaseManager implements Closeable {
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
+    public Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }

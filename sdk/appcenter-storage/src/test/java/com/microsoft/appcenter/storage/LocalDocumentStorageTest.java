@@ -82,7 +82,7 @@ public class LocalDocumentStorageTest {
     public void updateGetsCalledInWrite() {
         mLocalDocumentStorage.writeOnline(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(anyString(), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
+        verify(mDatabaseManager).replace(eq(LocalDocumentStorage.getTableName(PARTITION)), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
     }
 
@@ -96,7 +96,7 @@ public class LocalDocumentStorageTest {
     public void updateGetsCalledInWriteWithPendingOperation() {
         mLocalDocumentStorage.writeOnline(new Document<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(anyString(), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
+        verify(mDatabaseManager).replace(eq(LocalDocumentStorage.getTableName(PARTITION)), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
     }
 
@@ -144,7 +144,7 @@ public class LocalDocumentStorageTest {
     public void deleteReturnsErrorObjectOnDbRuntimeException() {
         doThrow(new RuntimeException()).when(mDatabaseManager).delete(anyString(), anyString(), any(String[].class));
         mLocalDocumentStorage.deleteOnline(PARTITION, DOCUMENT_ID);
-        verify(mDatabaseManager).delete(anyString(), anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
+        verify(mDatabaseManager).delete(eq(LocalDocumentStorage.getTableName(PARTITION)), anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
     }
 
     @Test
@@ -152,7 +152,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.replace(any(ContentValues.class), anyString(), anyString())).thenReturn(-1L);
         boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(anyString(), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
+        verify(mDatabaseManager).replace(eq(LocalDocumentStorage.getTableName(PARTITION)), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
         assertFalse(isSuccess);
     }
@@ -162,7 +162,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class), anyString(), anyString())).thenReturn(1L);
         boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(anyString(), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
+        verify(mDatabaseManager).replace(eq(LocalDocumentStorage.getTableName(PARTITION)), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
         assertTrue(isSuccess);
     }
