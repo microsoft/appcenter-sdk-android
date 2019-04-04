@@ -493,8 +493,8 @@ public class DatabaseManagerAndroidTest {
 
     @Test
     public void testMultipleTables() {
-        final String firstTable = "firstTable";
-        final String secondTable = "secondTable";
+       String firstTable = "firstTable";
+       String secondTable = "secondTable";
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);

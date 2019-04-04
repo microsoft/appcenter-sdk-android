@@ -155,7 +155,7 @@ public class DatabaseManager implements Closeable {
      * Creates a new table in the database.
      * @param table name.
      */
-    public void createTable(String table) {
+    public void createTable(@NonNull String table) {
         createTable(getDatabase(), table);
     }
 
@@ -163,9 +163,9 @@ public class DatabaseManager implements Closeable {
      * Deletes a table in the database.
      * @param table name.
      */
-    public void dropTable(String table) {
+    public void dropTable(@NonNull String table) {
         SQLiteDatabase db = getDatabase();
-        db.execSQL(String.format("DROP TABLE %s", table));
+        db.execSQL(String.format("DROP TABLE `%s`", table));
     }
 
     /**
@@ -513,6 +513,7 @@ public class DatabaseManager implements Closeable {
     }
 
     private void createTable(SQLiteDatabase db, String table) {
+        
         /* Generate a schema from specimen. */
         StringBuilder sql = new StringBuilder("CREATE TABLE `");
         sql.append(table);
