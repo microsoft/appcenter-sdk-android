@@ -38,13 +38,6 @@ public class PendingOperation {
     }
 
     /**
-     * @param operation name.
-     */
-    public void setOperation(String operation) {
-        this.operation = operation;
-    }
-
-    /**
      * @return partition name.
      */
     public String getPartition() {
