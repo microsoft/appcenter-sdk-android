@@ -40,6 +40,12 @@ public class StorageActivity extends AppCompatActivity {
     private ListView mListView;
 
     private ArrayAdapter<String> mAppDocumentListAdapter;
+
+    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
+        add("Doc1-User");
+        add("Doc2-User");
+    }};
+
     private StorageType mStorageType = StorageType.READONLY;
 
     @Override
@@ -47,7 +53,7 @@ public class StorageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage);
 
-        /* List the document. */
+        /* List the app read-only documents. */
         mAppDocumentListAdapter = new ArrayAdapter<>(this, R.layout.item_view_app);
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
@@ -60,7 +66,7 @@ public class StorageActivity extends AppCompatActivity {
             }
         });
 
-        /* Transmission target views init. */
+        /* Selector for App VS User documents. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_type_names));
         storageTypeSpinner.setAdapter(typeAdapter);
@@ -76,6 +82,7 @@ public class StorageActivity extends AppCompatActivity {
             }
         });
 
+        /* Create the list view. */
         mListView = findViewById(R.id.list);
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -86,15 +93,12 @@ public class StorageActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        /* Some ad-hoc calls TODO replace by a UI equivalent. */
         Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
         Storage.read("test-partition-other", "document-id-123", TestDocument.class);
         Storage.delete("test-partition", "document-id-123");
     }
-
-    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
-        add("Doc1-User");
-        add("Doc2-User");
-    }};
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -148,7 +152,7 @@ public class StorageActivity extends AppCompatActivity {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     mListView.setAdapter(adapterUser);
                 } else {
-                    final ArrayList<String> signInReminder = new ArrayList<String>() {{
+                    ArrayList<String> signInReminder = new ArrayList<String>() {{
                         add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     }};
                     mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));

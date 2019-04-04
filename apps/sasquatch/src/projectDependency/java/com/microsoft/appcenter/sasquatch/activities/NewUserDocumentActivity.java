@@ -20,7 +20,6 @@ import java.util.List;
 
 public class NewUserDocumentActivity extends AppCompatActivity {
 
-
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     @Override
