@@ -207,13 +207,15 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long replace(@NonNull ContentValues values, String... properties) {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        List<String> selectionArgs = new ArrayList<>();
         try {
-            SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-            List<String> selectionArgs = new ArrayList<>();
+            List<String> propertyQueryList = new ArrayList<>();
             for (String property : properties) {
-                builder.appendWhere(property + " = ?");
+                propertyQueryList.add(property + " = ?");
                 selectionArgs.add(values.getAsString(property));
             }
+            builder.appendWhere(TextUtils.join(" AND ", propertyQueryList));
             if (selectionArgs.size() > 0) {
                 Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
                 try {

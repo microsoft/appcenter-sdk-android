@@ -65,14 +65,14 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void writeReadDelete() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mLocalDocumentStorage.write(document, new WriteOptions());
+        mLocalDocumentStorage.writeOnline(document, new WriteOptions());
         Document<String> cachedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertEquals(document.getDocument(), cachedDocument.getDocument());
         assertFalse(document.failed());
         assertFalse(document.isFromCache());
         assertTrue(cachedDocument.isFromCache());
-        mLocalDocumentStorage.delete(PARTITION, ID);
+        mLocalDocumentStorage.deleteOnline(PARTITION, ID);
         Document<String> deletedDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
@@ -84,7 +84,7 @@ public class LocalDocumentStorageAndroidTest {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mLocalDocumentStorage.write(document, new WriteOptions() {
+        mLocalDocumentStorage.writeOnline(document, new WriteOptions() {
 
             @Override
             public int getDeviceTimeToLive() {
@@ -102,7 +102,7 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void updateLocalCopyDeletesExpiredOperation() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mLocalDocumentStorage.write(document, new WriteOptions() {
+        mLocalDocumentStorage.writeOffline(document, new WriteOptions() {
 
             @Override
             public int getDeviceTimeToLive() {
@@ -113,7 +113,7 @@ public class LocalDocumentStorageAndroidTest {
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
 
-        mLocalDocumentStorage.updateLocalCopy(operations.get(0));
+        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
 
         operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(0, operations.size());
@@ -122,19 +122,20 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void updateLocalCopyReplacesNotExpiredOperation() {
         Document<String> document = new Document<>(TEST_VALUE, PARTITION, ID);
-        mLocalDocumentStorage.write(document, new WriteOptions(10));
+        mLocalDocumentStorage.writeOffline(document, new WriteOptions(10));
 
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
 
-        mLocalDocumentStorage.updateLocalCopy(operations.get(0));
+        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
 
         operations = mLocalDocumentStorage.getPendingOperations();
         assertEquals(1, operations.size());
     }
 
+    @Test
     public void createDocument() {
-        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions());
         Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test", createdDocument.getDocument());
@@ -142,10 +143,48 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void updateDocument() {
-        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test", String.class, new WriteOptions());
-        mLocalDocumentStorage.createOrUpdate(PARTITION, ID, "Test1", String.class, new WriteOptions());
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions());
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test1", String.class, new WriteOptions());
         Document<String> createdDocument = mLocalDocumentStorage.read(PARTITION, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test1", createdDocument.getDocument());
+    }
+
+    @Test
+    public void deleteOfflineAddsOnePendingOperation() {
+        mLocalDocumentStorage.markForDeletion(PARTITION, ID);
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+    }
+
+    @Test
+    public void createAndDeleteOffline() {
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions());
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        boolean updated = mLocalDocumentStorage.markForDeletion(PARTITION, ID);
+        assertTrue(updated);
+        operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+        operation = operations.get(0);
+        assertEquals(Constants.PENDING_OPERATION_DELETE_VALUE, operation.getOperation());
+    }
+
+    @Test
+    public void createAndUpdateOffline() {
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions());
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertTrue(operation.getDocument().contains("Test"));
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test2", String.class, new WriteOptions());
+        operations = mLocalDocumentStorage.getPendingOperations();
+        assertEquals(1, operations.size());
+        operation = operations.get(0);
+        assertEquals(Constants.PENDING_OPERATION_REPLACE_VALUE, operation.getOperation());
+        assertTrue(operation.getDocument().contains("Test2"));
     }
 }

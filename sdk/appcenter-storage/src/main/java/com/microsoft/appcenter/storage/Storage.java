@@ -514,7 +514,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdate(partition, documentId, document, documentType, writeOptions);
+                    Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(partition, documentId, document, documentType, writeOptions);
                     result.complete(createdOrUpdatedDocument);
                 }
             }, result, null);
@@ -574,7 +574,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             public void run() {
                                 Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                                 completeFuture(cosmosDbDocument, result);
-                                mLocalDocumentStorage.write(cosmosDbDocument, writeOptions);
+                                mLocalDocumentStorage.writeOnline(cosmosDbDocument, writeOptions);
                             }
                         });
                     }
@@ -688,7 +688,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 completeFuture(new Document<Void>(), result);
-                                mLocalDocumentStorage.delete(tokenResult.partition(), documentId);
+                                mLocalDocumentStorage.deleteOnline(tokenResult.partition(), documentId);
                             }
                         });
                     }
@@ -755,7 +755,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @WorkerThread
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.write((Document) value, new WriteOptions(), null);
+        mLocalDocumentStorage.writeOnline((Document)value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
@@ -789,7 +789,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     etag),
                             null);
                 }
-                mLocalDocumentStorage.updateLocalCopy(pendingOperation);
+                mLocalDocumentStorage.updatePendingOperation(pendingOperation);
             }
         });
     }
@@ -821,9 +821,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             new DocumentError(e));
                 }
                 if (deleteLocalCopy) {
-                    mLocalDocumentStorage.delete(pendingOperation);
+                    mLocalDocumentStorage.deletePendingOperation(pendingOperation);
                 } else {
-                    mLocalDocumentStorage.updateLocalCopy(pendingOperation);
+                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
                 }
             }
         });
