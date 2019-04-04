@@ -55,9 +55,9 @@ public class DatabaseManager implements Closeable {
     private final String mDatabase;
 
     /**
-     * Table name.
+     * Default table name. Used as default value in methods which require a table name to work.
      */
-    private final String mTable;
+    private final String mDefaultTable;
 
     /**
      * Schema, e.g. a specimen with dummy values to have keys and their corresponding value's type.
@@ -77,44 +77,25 @@ public class DatabaseManager implements Closeable {
     /**
      * Initializes the table in the database.
      *
-     * @param context  The application context.
-     * @param database The database name.
-     * @param table    The table name.
-     * @param version  The version of current schema.
-     * @param schema   The schema.
-     * @param listener The error listener.
+     * @param context       The application context.
+     * @param database      The database name.
+     * @param defaultTable  The default table name.
+     * @param version       The version of current schema.
+     * @param schema        The schema.
+     * @param listener      The error listener.
      */
-    public DatabaseManager(Context context, String database, String table, int version,
+    public DatabaseManager(Context context, String database, String defaultTable, int version,
                            ContentValues schema, Listener listener) {
         mContext = context;
         mDatabase = database;
-        mTable = table;
+        mDefaultTable = defaultTable;
         mSchema = schema;
         mListener = listener;
         mSQLiteOpenHelper = new SQLiteOpenHelper(context, database, null, version) {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-
-                /* Generate a schema from specimen. */
-                StringBuilder sql = new StringBuilder("CREATE TABLE `");
-                sql.append(mTable);
-                sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
-                for (Map.Entry<String, Object> col : mSchema.valueSet()) {
-                    sql.append(", `").append(col.getKey()).append("` ");
-                    Object val = col.getValue();
-                    if (val instanceof Double || val instanceof Float) {
-                        sql.append("REAL");
-                    } else if (val instanceof Number || val instanceof Boolean) {
-                        sql.append("INTEGER");
-                    } else if (val instanceof byte[]) {
-                        sql.append("BLOB");
-                    } else {
-                        sql.append("TEXT");
-                    }
-                }
-                sql.append(");");
-                db.execSQL(sql.toString());
+                createTable(db, mDefaultTable);
                 mListener.onCreate(db);
             }
 
@@ -123,7 +104,7 @@ public class DatabaseManager implements Closeable {
 
                 /* Upgrade by destroying the old table unless managed. */
                 if (!mListener.onUpgrade(db, oldVersion, newVersion)) {
-                    db.execSQL("DROP TABLE `" + mTable + "`");
+                    db.execSQL("DROP TABLE `" + mDefaultTable + "`");
                     onCreate(db);
                 }
             }
@@ -171,6 +152,23 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
+     * Creates a new table in the database.
+     * @param table name.
+     */
+    public void createTable(String table) {
+        createTable(getDatabase(), table);
+    }
+
+    /**
+     * Deletes a table in the database.
+     * @param table name.
+     */
+    public void dropTable(String table) {
+        SQLiteDatabase db = getDatabase();
+        db.execSQL(String.format("DROP TABLE %s", table));
+    }
+
+    /**
      * Converts a cursor to an entry.
      *
      * @param cursor The cursor to be converted to an entry.
@@ -207,7 +205,7 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long replace(@NonNull ContentValues values, String... properties) {
-        return replace(mTable, values, properties);
+        return replace(mDefaultTable, values, properties);
     }
 
     /**
@@ -268,7 +266,7 @@ public class DatabaseManager implements Closeable {
                 try {
 
                     /* Insert data. */
-                    id = getDatabase().insertOrThrow(mTable, null, values);
+                    id = getDatabase().insertOrThrow(mDefaultTable, null, values);
                 } catch (SQLiteFullException e) {
 
                     /* Delete the oldest log. */
@@ -307,7 +305,7 @@ public class DatabaseManager implements Closeable {
      * @param id The database identifier.
      */
     public void delete(@IntRange(from = 0) long id) {
-        delete(mTable, id);
+        delete(mDefaultTable, id);
     }
 
     /**
@@ -326,7 +324,7 @@ public class DatabaseManager implements Closeable {
      * @param idList The list of database identifiers.
      */
     public void delete(@NonNull List<Long> idList) {
-        delete(mTable, idList);
+        delete(mDefaultTable, idList);
     }
 
     /**
@@ -357,7 +355,7 @@ public class DatabaseManager implements Closeable {
      * @return the number of rows affected.
      */
     public int delete(String whereClause, String[] whereArgs) {
-        return delete(mTable, whereClause, whereArgs);
+        return delete(mDefaultTable, whereClause, whereArgs);
     }
 
     /**
@@ -388,7 +386,7 @@ public class DatabaseManager implements Closeable {
      * @return the number of rows affected.
      */
     public int delete(@Nullable String key, @Nullable Object value) {
-        return delete(mTable, key, value);
+        return delete(mDefaultTable, key, value);
     }
 
     /**
@@ -409,7 +407,7 @@ public class DatabaseManager implements Closeable {
      */
     public void clear() {
         try {
-            getDatabase().delete(mTable, null, null);
+            getDatabase().delete(mDefaultTable, null, null);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to clear the table.", e);
         }
@@ -436,7 +434,7 @@ public class DatabaseManager implements Closeable {
      */
     public final long getRowCount() {
         try {
-            return DatabaseUtils.queryNumEntries(getDatabase(), mTable);
+            return DatabaseUtils.queryNumEntries(getDatabase(), mDefaultTable);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get row count of database.", e);
             return -1;
@@ -454,7 +452,7 @@ public class DatabaseManager implements Closeable {
      * @throws RuntimeException If an error occurs.
      */
     public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
-        return getCursor(mTable, queryBuilder, columns, selectionArgs, sortOrder);
+        return getCursor(mDefaultTable, queryBuilder, columns, selectionArgs, sortOrder);
     }
 
     /**
@@ -512,6 +510,28 @@ public class DatabaseManager implements Closeable {
     void setSQLiteOpenHelper(@NonNull SQLiteOpenHelper helper) {
         mSQLiteOpenHelper.close();
         mSQLiteOpenHelper = helper;
+    }
+
+    private void createTable(SQLiteDatabase db, String table) {
+        /* Generate a schema from specimen. */
+        StringBuilder sql = new StringBuilder("CREATE TABLE `");
+        sql.append(table);
+        sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
+        for (Map.Entry<String, Object> col : mSchema.valueSet()) {
+            sql.append(", `").append(col.getKey()).append("` ");
+            Object val = col.getValue();
+            if (val instanceof Double || val instanceof Float) {
+                sql.append("REAL");
+            } else if (val instanceof Number || val instanceof Boolean) {
+                sql.append("INTEGER");
+            } else if (val instanceof byte[]) {
+                sql.append("BLOB");
+            } else {
+                sql.append("TEXT");
+            }
+        }
+        sql.append(");");
+        db.execSQL(sql.toString());
     }
 
     /**

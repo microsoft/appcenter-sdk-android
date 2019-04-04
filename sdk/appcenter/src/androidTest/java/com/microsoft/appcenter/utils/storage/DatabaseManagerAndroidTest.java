@@ -83,6 +83,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-setMaximumSize");
         sContext.deleteDatabase("test-replace");
         sContext.deleteDatabase("test-replace-by-multiple-columns");
+        sContext.deleteDatabase("test-multiple-tables");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -488,5 +489,41 @@ public class DatabaseManagerAndroidTest {
             databaseManager.close();
         }
         verify(listener).onCreate(any(SQLiteDatabase.class));
+    }
+
+    @Test
+    public void testMultipleTables() {
+        final String firstTable = "firstTable";
+        final String secondTable = "secondTable";
+
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables", firstTable, 1, mSchema, listener);
+        assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
+        assertFalse(isTableExists(databaseManager.getDatabase(), secondTable));
+
+        databaseManager.createTable(secondTable);
+        assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
+        assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
+
+        databaseManager.dropTable(firstTable);
+        assertFalse(isTableExists(databaseManager.getDatabase(), firstTable));
+        assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
+
+        databaseManager.dropTable(secondTable);
+        assertFalse(isTableExists(databaseManager.getDatabase(), firstTable));
+        assertFalse(isTableExists(databaseManager.getDatabase(), secondTable));
+    }
+
+    private boolean isTableExists(SQLiteDatabase db, String tableName) {
+        Cursor cursor = db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '" + tableName + "'", null);
+        if(cursor!=null) {
+            if(cursor.getCount()>0) {
+                cursor.close();
+                return true;
+            }
+            cursor.close();
+        }
+        return false;
     }
 }
