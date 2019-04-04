@@ -519,12 +519,16 @@ public class DatabaseManagerAndroidTest {
     public void testMultipleTablesReadWrite() {
         String firstTable = "firstTable";
         ContentValues schema1 = new ContentValues();
-        schema1.put("colStr", "str");
-        schema1.put("colInt", -1);
+        String colStr = "colStr";
+        schema1.put(colStr, "str");
+        String colInt = "colInt";
+        schema1.put(colInt, -1);
         String secondTable = "secondTable";
         ContentValues schema2 = new ContentValues();
-        schema2.put("colBool", true);
-        schema2.put("colDouble", 1.1);
+        String colBool = "colBool";
+        schema2.put(colBool, true);
+        String colReal = "colReal";
+        schema2.put(colReal, 1.1);
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
@@ -541,23 +545,23 @@ public class DatabaseManagerAndroidTest {
         assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
 
         schema1 = new ContentValues();
-        schema1.put("colStr", "First Table String");
-        schema1.put("colInt", 55);
-        schema2 = new ContentValues();
-        schema2.put("colBool", false);
-        schema2.put("colFloat", 15.41);
+        schema1.put(colStr, "First Table String");
+        schema1.put(colInt, 55);
         databaseManager.replace(firstTable, schema1);
+        schema2 = new ContentValues();
+        schema2.put(colBool, false);
+        schema2.put(colReal, 15.41);
         databaseManager.replace(secondTable, schema2);
 
         Cursor cursor1 = databaseManager.getCursor(firstTable, null, null, null, null);
         cursor1.moveToNext();
-        assertEquals("First Table String", cursor1.getString(cursor1.getColumnIndex("colStr")));
-        assertEquals(55, cursor1.getInt(cursor1.getColumnIndex("colInt")));
+        assertEquals("First Table String", cursor1.getString(cursor1.getColumnIndex(colStr)));
+        assertEquals(55, cursor1.getInt(cursor1.getColumnIndex(colInt)));
 
         Cursor cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
         cursor2.moveToNext();
-        assertEquals(0, cursor2.getInt(cursor2.getColumnIndex("colBool")));
-        assertEquals(15.41, cursor2.getFloat(cursor2.getColumnIndex("colFloat")));
+        assertEquals(0, cursor2.getInt(cursor2.getColumnIndex(colBool)));
+        assertEquals(15.41, cursor2.getFloat(cursor2.getColumnIndex(colReal)), 0.1);
     }
 
     private boolean isTableExists(SQLiteDatabase db, String tableName) {
