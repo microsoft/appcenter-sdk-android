@@ -28,6 +28,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
+import com.microsoft.appcenter.utils.context.UserInformation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -313,7 +314,7 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public synchronized void onNewUser(String authToken) {
+            public synchronized void onNewUser(UserInformation userInfo) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }

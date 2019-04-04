@@ -163,7 +163,8 @@ public class AuthTokenContext {
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
             if (isNewUser) {
-                listener.onNewUser(authToken);
+                UserInformation userInfo = homeAccountId == null ? null : new UserInformation(homeAccountId);
+                listener.onNewUser(userInfo);
             }
         }
     }
@@ -414,9 +415,9 @@ public class AuthTokenContext {
         /**
          * Called whenever a new user signs in.
          *
-         * @param authToken authorization token.
+         * @param userInfo user information.
          */
-        void onNewUser(String authToken);
+        void onNewUser(UserInformation userInfo);
 
         /**
          * Called whenever token needs to be refreshed.

@@ -38,6 +38,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.UserInformation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -293,8 +294,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public void onNewUser(String authToken) {
-                if (authToken == null) {
+            public void onNewUser(UserInformation userInfo) {
+                if (userInfo == null) {
                     TokenManager.getInstance().removeAllCachedTokens();
                 }
             }

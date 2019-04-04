@@ -109,7 +109,7 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called. */
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
-        verify(mockListener, times(1)).onNewUser(notNull(String.class));
+        verify(mockListener, times(1)).onNewUser(notNull(UserInformation.class));
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);
@@ -119,7 +119,7 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called on empty token. */
         verify(mockListener, times(1)).onNewAuthToken(isNull(String.class));
-        verify(mockListener, times(1)).onNewUser(isNull(String.class));
+        verify(mockListener, times(1)).onNewUser(isNull(UserInformation.class));
         assertNull(mAuthTokenContext.getAuthToken());
 
         /* Remove listener. */
