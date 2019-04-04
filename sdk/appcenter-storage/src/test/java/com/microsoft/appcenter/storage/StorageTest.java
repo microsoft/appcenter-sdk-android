@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import android.accounts.NetworkErrorException;
-
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -16,7 +14,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
-import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
@@ -731,46 +728,5 @@ public class StorageTest extends AbstractStorageTest {
         Storage.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
-    }
-
-    @Test
-    public void setStorageModuleOfflineMode() {
-        assertFalse(Storage.isOfflineModeEnabled());
-        Storage.setOfflineModeEnabled(true);
-
-        /* offline mode is enabled. */
-        assertTrue(Storage.isOfflineModeEnabled());
-
-        /* offline mode is reset.  */
-        Storage.setOfflineModeEnabled(false);
-        assertFalse(Storage.isOfflineModeEnabled());
-    }
-
-    @Test
-    public void offlineModeEnabledOnDecorator() {
-        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setOfflineModeEnabled(true);
-        ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        httpClientDecorator.callAsync(null, null, null, null, serviceCallback);
-        verify(serviceCallback).onCallFailed(isA(NetworkErrorException.class));
-        verifyNoMoreInteractions(mHttpClient);
-    }
-
-    @Test
-    public void offlineModeDisabledOnDecorator() {
-        StorageHttpClientDecorator httpClientDecorator = new StorageHttpClientDecorator(mHttpClient);
-        httpClientDecorator.setOfflineModeEnabled(false);
-        String url = "url";
-        String method = "method";
-        Map<String, String> headers = new HashMap<>();
-        httpClientDecorator.callAsync(url, method, headers, null, null);
-        verify(mHttpClient).callAsync(eq(url), eq(method), eq(headers), isNull(HttpClient.CallTemplate.class), isNull(ServiceCallback.class));
-    }
-
-    @Test
-    public void setOfflineModeBeforeStartDoesNotWork() {
-        Storage.unsetInstance();
-        Storage.setOfflineModeEnabled(true);
-        assertFalse(Storage.isOfflineModeEnabled());
     }
 }
