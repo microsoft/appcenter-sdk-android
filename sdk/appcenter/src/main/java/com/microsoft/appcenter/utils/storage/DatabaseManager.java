@@ -207,6 +207,20 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long replace(@NonNull ContentValues values, String... properties) {
+        return replace(mTable, values, properties);
+    }
+
+    /**
+     * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
+     *
+     *
+     * @param table      The table to perform the operation on.
+     * @param values     The entry to be stored.
+     * @param properties The property to be used for filter the rows.
+     * @return If an entry was inserted or updated, the database identifier. Otherwise -1.
+     */
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    public long replace(@NonNull String table, @NonNull ContentValues values, String... properties) {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         List<String> selectionArgs = new ArrayList<>();
         try {
@@ -229,7 +243,7 @@ public class DatabaseManager implements Closeable {
                     cursor.close();
                 }
             }
-            return getDatabase().replace(mTable, null, values);
+            return getDatabase().replace(table, null, values);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to replace values (%s) from database %s.", values.toString(), mDatabase), e);
         }
@@ -293,7 +307,17 @@ public class DatabaseManager implements Closeable {
      * @param id The database identifier.
      */
     public void delete(@IntRange(from = 0) long id) {
-        delete(PRIMARY_KEY, id);
+        delete(mTable, id);
+    }
+
+    /**
+     * Deletes the entry by the identifier from the database.
+     *
+     * @param table The table to perform the operation on.
+     * @param id The database identifier.
+     */
+    public void delete(@NonNull String table, @IntRange(from = 0) long id) {
+        delete(table, PRIMARY_KEY, id);
     }
 
     /**
@@ -302,11 +326,21 @@ public class DatabaseManager implements Closeable {
      * @param idList The list of database identifiers.
      */
     public void delete(@NonNull List<Long> idList) {
+        delete(mTable, idList);
+    }
+
+    /**
+     * Deletes the entries by the identifier from the database.
+     *
+     * @param table The table to perform the operation on.
+     * @param idList The list of database identifiers.
+     */
+    public void delete(@NonNull String table, @NonNull List<Long> idList) {
         if (idList.size() <= 0) {
             return;
         }
         try {
-            getDatabase().execSQL(String.format("DELETE FROM " + mTable + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
+            getDatabase().execSQL(String.format("DELETE FROM " + table + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database %s.", Arrays.toString(idList.toArray()), mDatabase), e);
         }
@@ -323,8 +357,23 @@ public class DatabaseManager implements Closeable {
      * @return the number of rows affected.
      */
     public int delete(String whereClause, String[] whereArgs) {
+        return delete(mTable, whereClause, whereArgs);
+    }
+
+    /**
+     * Deletes the entries that matches the condition.
+     *
+     * @param table The table to perform the operation on.
+     * @param whereClause the optional WHERE clause to apply when deleting.
+     *                    Passing null will delete all rows.
+     * @param whereArgs   You may include ?s in the where clause, which
+     *                    will be replaced by the values from whereArgs. The values
+     *                    will be bound as Strings.
+     * @return the number of rows affected.
+     */
+    public int delete(@NonNull String table, String whereClause, String[] whereArgs) {
         try {
-            return getDatabase().delete(mTable, whereClause, whereArgs);
+            return getDatabase().delete(table, whereClause, whereArgs);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
             return 0;
@@ -339,6 +388,19 @@ public class DatabaseManager implements Closeable {
      * @return the number of rows affected.
      */
     public int delete(@Nullable String key, @Nullable Object value) {
+        return delete(mTable, key, value);
+    }
+
+    /**
+     * Deletes the entries that matches key == value.
+     *
+     *
+     * @param table The table to perform the operation on.
+     * @param key   The optional key for query.
+     * @param value The optional value for query.
+     * @return the number of rows affected.
+     */
+    public int delete(@NonNull String table, @Nullable String key, @Nullable Object value) {
         return delete(key + " = ?", new String[]{String.valueOf(value)});
     }
 
@@ -392,10 +454,25 @@ public class DatabaseManager implements Closeable {
      * @throws RuntimeException If an error occurs.
      */
     public Cursor getCursor(@Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
+        return getCursor(mTable, queryBuilder, columns, selectionArgs, sortOrder);
+    }
+
+    /**
+     * Gets a cursor for all rows in the table, all rows where key matches value if specified.
+     *
+     * @param table         The table to perform the operation on.
+     * @param queryBuilder  The query builder that contains SQL query.
+     * @param columns       Columns to select, null for all.
+     * @param selectionArgs The array of values for selection.
+     * @param sortOrder     Sorting order (ORDER BY clause without ORDER BY itself).
+     * @return A cursor for all rows that matches the given criteria.
+     * @throws RuntimeException If an error occurs.
+     */
+    public Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
-        queryBuilder.setTables(mTable);
+        queryBuilder.setTables(table);
         return queryBuilder.query(getDatabase(), columns, null, selectionArgs, null, null, sortOrder);
     }
 
