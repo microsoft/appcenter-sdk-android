@@ -82,7 +82,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                     String accountId = (String) userInformation.getClass().getMethod("getAccountId").invoke(userInformation);
                                     SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
                                     SharedPreferences.Editor edit = preferences.edit();
-                                    edit.putString("accoutId", accountId);
+                                    edit.putString("accountId", accountId);
                                     edit.apply();
                                     Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
                                 } catch (Exception e) {
@@ -105,7 +105,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                         identity.getMethod("signOut").invoke(null);
                         SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
                         SharedPreferences.Editor edit = preferences.edit();
-                        edit.putString("accoutId", null);
+                        edit.putString("accountId", null);
                         edit.apply();
                     } catch (Exception e) {
                         Log.e(LOG_TAG, "Identity.signOut failed", e);

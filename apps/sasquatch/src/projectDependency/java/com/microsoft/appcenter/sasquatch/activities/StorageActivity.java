@@ -110,8 +110,12 @@ public class StorageActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_add:
                 if (mStorageType == 1) {
+                    SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
+                    String accountId = preferences.getString("accountId", null);
+                    if (accountId != null) {
                     Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
                     startActivity(intent);
+                    }
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
                     builder.setIcon(R.drawable.ic_appcenter_logo);
@@ -139,8 +143,8 @@ public class StorageActivity extends AppCompatActivity {
             case 1:
                 mStorageType = 1;
                 SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                String accoutId = preferences.getString("accoutId", null);
-                if (accoutId != null) {
+                String accountId = preferences.getString("accountId", null);
+                if (accountId != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     mListView.setAdapter(adapterUser);
                 } else {
