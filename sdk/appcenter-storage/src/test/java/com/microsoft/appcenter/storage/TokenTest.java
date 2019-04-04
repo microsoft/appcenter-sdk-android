@@ -268,6 +268,8 @@ public class TokenTest extends AbstractStorageTest {
 
     @Test
     public void cachedTokenPartitionKeyDoesNotContainUserId() {
+
+        /* Create a partition and corresponding TokenResult. */
         String partition = "partition";
         String accountId = "accountId";
         String partitionWithAccountId = partition + "-" + accountId;
@@ -278,7 +280,11 @@ public class TokenTest extends AbstractStorageTest {
         TokenResult result = new TokenResult().withPartition(partitionWithAccountId).withAccountId(accountId);
         Set<String> partitions = new HashSet<>();
         partitions.add(partition);
+
+        /* Attempt to cache the token result. */
         TokenManager.getInstance().setCachedToken(result);
+
+        /* Verify that the cached partition name does not contain the account ID. */
         verifyStatic();
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitions);
         verifyStatic();
