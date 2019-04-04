@@ -41,22 +41,4 @@ public class StorageHttpClientDecorator extends HttpClientDecorator {
         }
         return null;
     }
-
-    /**
-     * Check whether offline mode is enabled or not.
-     *
-     * @return true if offline mode is enabled, false otherwise.
-     */
-    public synchronized boolean isOfflineModeEnabled() {
-        return mOfflineModeEnabled;
-    }
-
-    /**
-     * Set offline mode enabled or disabled.
-     *
-     * @param offlineModeEnabled true to enable offline, mode false to disable.
-     */
-    public synchronized void setOfflineModeEnabled(boolean offlineModeEnabled) {
-        mOfflineModeEnabled = offlineModeEnabled;
-    }
 }

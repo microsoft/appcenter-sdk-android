@@ -145,54 +145,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     /**
-     * Check whether offline mode is enabled or not.
-     *
-     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see AppCenterFuture
-     */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static boolean isOfflineModeEnabled() {
-        return getInstance().isOfflineModeEnabledInstance();
-    }
-
-    /**
-     * Enable or disable offline mode.
-     *
-     * @param offlineModeEnabled <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
-     */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static void setOfflineModeEnabled(boolean offlineModeEnabled) {
-        getInstance().setOfflineModeEnabledInstance(offlineModeEnabled);
-    }
-
-    /**
-     * Check whether offline mode is enabled or not.
-     *
-     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see AppCenterFuture
-     */
-    private synchronized boolean isOfflineModeEnabledInstance() {
-        if (mHttpClient != null) {
-            return mHttpClient.isOfflineModeEnabled();
-        }
-        AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
-        return false;
-    }
-
-    /**
-     * Enable or disable offline mode.
-     *
-     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
-     */
-    private synchronized void setOfflineModeEnabledInstance(boolean offlineMode) {
-        if (mHttpClient != null) {
-            mHttpClient.setOfflineModeEnabled(offlineMode);
-        } else {
-            AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
-        }
-    }
-
-    /**
      * Read a document.
      * The document type (T) must be JSON deserializable.
      */
