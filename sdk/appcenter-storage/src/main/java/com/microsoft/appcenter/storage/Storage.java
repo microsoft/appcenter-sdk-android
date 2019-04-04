@@ -484,7 +484,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     result,
                     new TokenExchangeServiceCallback() {
 
-                        // TODO* fix the wrong partition name
                         @Override
                         public void callCosmosDb(TokenResult tokenResult) {
                             callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
@@ -496,9 +495,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         }
                     });
         } else {
-
-            // TODO* fix the wrong partition name.
-            Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdate(partition, documentId, document, documentType, writeOptions);
+            Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdate(appendAccountIdToPartitionName(partition), documentId, document, documentType, writeOptions);
             result.complete(createdOrUpdatedDocument);
         }
         return result;
@@ -511,7 +508,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized void instanceCreateOrUpdate(
             final PendingOperation pendingOperation) {
         getTokenAndCallCosmosDbApi(
-                pendingOperation.getPartition(),
+
+                Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
                 new TokenExchangeServiceCallback() {
 
@@ -609,9 +607,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized void instanceDelete(final PendingOperation pendingOperation) {
         getTokenAndCallCosmosDbApi(
-
-                // TODO* remove the user id from the partition name.
-                pendingOperation.getPartition(),
+                Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
                 new TokenExchange.TokenExchangeServiceCallback() {
 

@@ -87,6 +87,16 @@ import static org.powermock.api.mockito.PowerMockito.when;
 })
 public class StorageTest extends AbstractStorageTest {
 
+    private String tokenResult = String.format("{\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"db\",\n" +
+            "            \"dbCollectionName\": \"collection\",\n" +
+            "            \"token\": \"%s\",\n" +
+            "            \"status\": \"Succeed\",\n" +
+            "            \"accountId\": \"accountId\"\n" +
+            "}", PARTITION, "token");
+
     @Test
     public void singleton() {
         Assert.assertSame(Storage.getInstance(), Storage.getInstance());
@@ -468,15 +478,6 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        String tokenResult = String.format("{\n" +
-                "            \"partition\": \"%s\",\n" +
-                "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
-                "            \"dbName\": \"db\",\n" +
-                "            \"dbCollectionName\": \"collection\",\n" +
-                "            \"token\": \"%s\",\n" +
-                "            \"status\": \"Succeed\",\n" +
-                "            \"accountId\": \"accountId\"\n" +
-                "}", PARTITION, "token");
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
         Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
@@ -491,7 +492,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION_NAME, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
@@ -513,7 +514,8 @@ public class StorageTest extends AbstractStorageTest {
     public void createWithNoNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         TestDocument testDocument = new TestDocument("test");
-        Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Storage.create(PARTITION_NAME, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).createOrUpdate(
                 eq(PARTITION),
