@@ -53,7 +53,6 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
-import static com.microsoft.appcenter.storage.Constants.TOKEN_RESULT_SUCCEED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -132,11 +131,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(PARTITION)
-                .withStatus(TOKEN_RESULT_SUCCEED)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken("fakeToken"));
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -174,11 +169,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(PARTITION)
-                .withStatus(TOKEN_RESULT_SUCCEED)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken("fakeToken"));
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -234,11 +225,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(PARTITION)
-                .withStatus(TOKEN_RESULT_SUCCEED)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken("fakeToken"));
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -298,11 +285,7 @@ public class StorageTest extends AbstractStorageTest {
     public void listEndToEndWhenExceptionHappened() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(PARTITION)
-                .withStatus(TOKEN_RESULT_SUCCEED)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken("fakeToken"));
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
@@ -708,11 +691,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup after get the token from cache, all the http call will fail. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(PARTITION)
-                .withStatus(TOKEN_RESULT_SUCCEED)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken("fakeToken"));
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 

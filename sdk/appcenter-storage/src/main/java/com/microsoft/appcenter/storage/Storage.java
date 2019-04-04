@@ -13,7 +13,6 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -54,7 +53,6 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
-import static com.microsoft.appcenter.storage.Constants.TOKEN_RESULT_SUCCEED;
 
 /**
  * Storage service.
@@ -734,11 +732,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             TokenExchangeServiceCallback callback) {
         TokenResult cachedTokenResult = TokenManager.getInstance().getCachedToken(partition);
         if (cachedTokenResult != null) {
-            if (cachedTokenResult.status().equals(TOKEN_RESULT_SUCCEED)) {
-                callback.callCosmosDb(cachedTokenResult);
-            } else {
-                callback.onCallFailed(new StorageException(String.format("The token status result was '%s'", cachedTokenResult.status())));
-            }
+            callback.callCosmosDb(cachedTokenResult);
         } else {
             ServiceCall tokenExchangeServiceCall =
                     TokenExchange.getDbToken(

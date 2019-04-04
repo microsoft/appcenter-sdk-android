@@ -7,11 +7,9 @@ package com.microsoft.appcenter.storage;
 
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.TokenExchange;
-import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -32,7 +30,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TimeZone;
 
-import static com.microsoft.appcenter.storage.Constants.TOKEN_RESULT_SUCCEED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -175,42 +172,6 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canReadTokenFromCacheWhenTokenResultStatusFailed() {
-
-        /* Setup mock to get expiration token from cache. */
-        final Exception expectedException = new StorageException("error");
-        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(READONLY_PARTITION_NAME)
-                .withExpirationTime(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withStatus("Failed")
-                .withToken(FAKE_TOKEN));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
-        ArgumentCaptor<StorageException> storageExceptionArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
-        TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
-        doNothing().when(mTokenExchangeServiceCallback).onCallFailed(storageExceptionArgumentCaptor.capture());
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(mTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallFailed(expectedException);
-                return mock(ServiceCall.class);
-            }
-        });
-
-        /* Make the call. */
-        Storage.getInstance()
-                .getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
-
-        /* Verify. */
-        verify(mTokenExchangeServiceCallback).onCallFailed(any(StorageException.class));
-    }
-
-    @Test
     public void canReadTokenFromCacheWhenTokenValid() {
 
         /* Setup mock to get expiration token from cache. */
@@ -222,7 +183,6 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
-                .withStatus(TOKEN_RESULT_SUCCEED)
                 .withToken(FAKE_TOKEN));
         when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
@@ -246,7 +206,7 @@ public class TokenTest extends AbstractStorageTest {
         String tokenResult = new Gson().toJson(new TokenResult()
                 .withDbAccount("lemmings-01-8f37d78902")
                 .withDbCollectionName("collection")
-                .withStatus(TOKEN_RESULT_SUCCEED)
+                .withStatus("Succeed")
                 .withPartition(READONLY_PARTITION_NAME)
                 .withExpirationTime(expirationDate.getTime())
                 .withToken(inValidToken));
