@@ -7,6 +7,6 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.support.v7.app.AppCompatActivity;
 
-// TODO merge StorageActivity from projectDependency and jcenterDependency back to main java folder
+// TODO merge NewUserDocumentActivity from projectDependency and jcenterDependency back to main java folder
 public class NewUserDocumentActivity extends AppCompatActivity {
 }
