@@ -84,6 +84,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-replace");
         sContext.deleteDatabase("test-replace-by-multiple-columns");
         sContext.deleteDatabase("test-multiple-tables");
+        sContext.deleteDatabase("test-multiple-tables-read-write");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -498,7 +499,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables", firstTable, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables-read-write", firstTable, 1, mSchema, listener);
         assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
         assertFalse(isTableExists(databaseManager.getDatabase(), secondTable));
 
