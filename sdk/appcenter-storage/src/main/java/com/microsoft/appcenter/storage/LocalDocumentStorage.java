@@ -51,12 +51,14 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    private static final String PARTITION_COLUMN_NAME = "partition";
+    @VisibleForTesting
+    static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    @VisibleForTesting
+    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
