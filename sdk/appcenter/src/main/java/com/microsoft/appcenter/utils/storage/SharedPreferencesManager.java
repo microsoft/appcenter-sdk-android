@@ -14,7 +14,7 @@ import android.support.annotation.Nullable;
 import java.util.Set;
 
 /**
- * Shared preferences manager
+ * Shared preferences manager.
  */
 public class SharedPreferencesManager {
 

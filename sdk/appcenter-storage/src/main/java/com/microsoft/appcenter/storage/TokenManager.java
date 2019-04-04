@@ -6,12 +6,15 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.storage.models.TokenResult;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
+
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 /**
  * Token cache service.
@@ -54,17 +57,24 @@ public class TokenManager {
      * @param partitionName The partition name for get the token.
      * @return Cached token.
      */
-    public TokenResult getCachedToken(String partitionName) {
+    TokenResult getCachedToken(String partitionName) {
+        return getCachedToken(partitionName, false);
+    }
+
+    TokenResult getCachedToken(String partitionName, Boolean includeExpiredToken) {
         TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
-        if (token != null) {
+        if (token != null && !includeExpiredToken) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
-            /* The token is considered expired. */
+            /* The token is expired. */
             if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
-                removeCachedToken(partitionName);
+                AppCenterLog.warn(LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
                 return null;
             }
+            AppCenterLog.debug(LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
+            return token;
         }
+        AppCenterLog.warn(LOG_TAG, String.format("Failed to retrieve token or none found in cache for partition '%s'", partitionName));
         return token;
     }
 
@@ -75,23 +85,12 @@ public class TokenManager {
      */
     public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNames();
-        if (!partitionNamesSet.contains(tokenResult.partition())) {
-            partitionNamesSet.add(tokenResult.partition());
+        String removedAccountIdPartition = Utils.removeAccountIdFromPartitionName(tokenResult.partition());
+        if (!partitionNamesSet.contains(removedAccountIdPartition)) {
+            partitionNamesSet.add(removedAccountIdPartition);
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(tokenResult.partition(), Utils.getGson().toJson(tokenResult));
-    }
-
-    /**
-     * Remove the cached token access to specific partition.
-     *
-     * @param partitionName The partition name used to access the token.
-     */
-    private synchronized void removeCachedToken(String partitionName) {
-        Set<String> partitionNamesSet = getPartitionNames();
-        partitionNamesSet.remove(partitionName);
-        SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
-        SharedPreferencesManager.remove(partitionName);
+        SharedPreferencesManager.putString(removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
     }
 
     /**
@@ -108,5 +107,6 @@ public class TokenManager {
         }
         partitionNamesSet.clear();
         SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
+        AppCenterLog.info(LOG_TAG, String.format("Removed all tokens in all partitions"));
     }
 }

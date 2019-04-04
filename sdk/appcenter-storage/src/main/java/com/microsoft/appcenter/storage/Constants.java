@@ -26,6 +26,23 @@ public final class Constants {
 
     public static final String TIMESTAMP_FIELD_NAME = "_ts";
 
+    public static final int PARTITION_KEY_SUFFIX_LENGTH = 37;
+
+    /**
+     * Pending operation CREATE value.
+     */
+    public static final String PENDING_OPERATION_CREATE_VALUE = "CREATE";
+
+    /**
+     * Pending operation REPLACE value.
+     */
+    public static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
+
+    /**
+     * Pending operation DELETE value.
+     */
+    public static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
+
     /**
      * Base URL to call token exchange service.
      */

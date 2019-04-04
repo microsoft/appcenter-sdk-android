@@ -22,12 +22,12 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.identity.storage.TokenStorageFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -125,6 +125,20 @@ public class Identity extends AbstractAppCenterService {
      */
     private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
 
+    private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
+
+        @Override
+        public void onTokenRequiresRefresh(String homeAccountId) {
+            IAccount account = retrieveAccount(homeAccountId);
+            if (account != null) {
+                silentSignIn(account);
+            } else {
+                AppCenterLog.info(LOG_TAG, "Account is changed, reset to anonymous sending.");
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            }
+        }
+    };
+
     /**
      * Get shared instance.
      *
@@ -199,8 +213,9 @@ public class Identity extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        authTokenContext.setStorage(TokenStorageFactory.getTokenStorage(context));
+
+        /* The auth token from the previous launch is required. */
+        AuthTokenContext.getInstance().doNotResetAuthAfterStart();
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
@@ -212,16 +227,15 @@ public class Identity extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
 
-            /* Load the last stored token and cache it into token context. */
-            AuthTokenContext.getInstance().cacheAuthToken();
-
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
+            AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
@@ -269,7 +283,7 @@ public class Identity extends AbstractAppCenterService {
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
-        authTokenContext.clearAuthToken();
+        authTokenContext.setAuthToken(null, null, null);
     }
 
     private synchronized void downloadConfiguration() {
@@ -567,8 +581,7 @@ public class Identity extends AbstractAppCenterService {
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 Date expiresOn = authenticationResult.getExpiresOn();
-                AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-                authTokenContext.setAuthToken(authenticationResult.getIdToken(), homeAccountId, expiresOn);
+                AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken(), homeAccountId, expiresOn);
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                 completeSignIn(new UserInformation(accountId), null);
@@ -576,14 +589,28 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    private void handleSignInError(MsalException exception) {
-        AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
-        completeSignIn(null, exception);
+    private void handleSignInError(final MsalException exception) {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
+                completeSignIn(null, exception);
+            }
+        });
     }
 
     private void handleSignInCancellation() {
-        AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
-        completeSignIn(null, new CancellationException("User cancelled sign-in."));
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
+                completeSignIn(null, new CancellationException("User cancelled sign-in."));
+            }
+        });
     }
 
     private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {

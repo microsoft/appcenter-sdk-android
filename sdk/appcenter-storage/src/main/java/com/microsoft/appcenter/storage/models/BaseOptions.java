@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage.models;
 
-import java.util.Calendar;
-
 public abstract class BaseOptions {
 
     /**
@@ -20,9 +18,9 @@ public abstract class BaseOptions {
     public static final int NO_CACHE = 0;
 
     /**
-     * Default caching value of one hour
+     * Default caching value of one hour.
      */
-    private static final int DEFAULT_ONE_HOUR = 60 * 60;
+    public static final int DEFAULT_ONE_HOUR = 60 * 60;
 
     private int mTtl;
 
@@ -42,14 +40,5 @@ public abstract class BaseOptions {
      */
     public int getDeviceTimeToLive() {
         return mTtl;
-    }
-
-    /**
-     * @param lastModified timestamp of when the document was last modified
-     * @return whether a document with the specified TTL has expired since it was last modified
-     */
-    public boolean isExpired(long lastModified) {
-        long documentAge = Calendar.getInstance().getTimeInMillis() - lastModified;
-        return documentAge > mTtl * 1000;
     }
 }

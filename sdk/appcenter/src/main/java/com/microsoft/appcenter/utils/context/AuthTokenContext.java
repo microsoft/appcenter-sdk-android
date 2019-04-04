@@ -5,14 +5,29 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
 
-import com.microsoft.appcenter.utils.storage.AuthTokenStorage;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import java.util.Collection;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
 /**
  * Utility to store and retrieve the latest authorization token.
@@ -20,29 +35,53 @@ import java.util.LinkedHashSet;
 public class AuthTokenContext {
 
     /**
+     * Used for saving tokens history.
+     */
+    @VisibleForTesting
+    static final String PREFERENCE_KEY_TOKEN_HISTORY = "AppCenter.auth_token_history";
+
+    /**
+     * The maximum number of tokens stored in the history.
+     */
+    @VisibleForTesting
+    static final int TOKEN_HISTORY_LIMIT = 5;
+
+    /**
      * Unique instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static AuthTokenContext sInstance;
 
     /**
      * Global listeners collection.
      */
-    private final Collection<Listener> mListeners = new LinkedHashSet<>();
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
 
     /**
-     * Current value of auth token.
+     * {@link Context} instance.
      */
-    private String mAuthToken;
+    private Context mContext;
 
     /**
-     * Current value of home account id.
+     * Token history.
      */
-    private String mHomeAccountId;
+    private List<AuthTokenHistoryEntry> mHistory;
 
     /**
-     * Instance of {@link AuthTokenStorage} to store token information.
+     * {@code true} if the current token should be reset.
      */
-    private AuthTokenStorage mStorage;
+    private boolean mResetAuthTokenRequired = true;
+
+    /**
+     * Initializes AuthTokenContext class.
+     *
+     * @param context {@link Context} instance.
+     */
+    public static synchronized void initialize(@NonNull Context context) {
+        AuthTokenContext authTokenContext = getInstance();
+        authTokenContext.mContext = context.getApplicationContext();
+        authTokenContext.getHistory();
+    }
 
     /**
      * Get unique instance.
@@ -69,7 +108,7 @@ public class AuthTokenContext {
      *
      * @param listener listener to be notified of changes.
      */
-    public synchronized void addListener(@NonNull Listener listener) {
+    public void addListener(@NonNull Listener listener) {
         mListeners.add(listener);
     }
 
@@ -78,26 +117,27 @@ public class AuthTokenContext {
      *
      * @param listener listener to be removed.
      */
-    public synchronized void removeListener(@NonNull Listener listener) {
+    public void removeListener(@NonNull Listener listener) {
         mListeners.remove(listener);
     }
 
     /**
-     * Gets current authorization token.
-     *
-     * @return authorization token.
+     * Prevents resetting the current auth token if it exists. Should be called during
+     * initialization process if the current auth token should be kept.
      */
-    public synchronized String getAuthToken() {
-        return mAuthToken;
+    public synchronized void doNotResetAuthAfterStart() {
+        mResetAuthTokenRequired = false;
     }
 
     /**
-     * Gets current homeAccountId value.
-     *
-     * @return unique identifier of user.
+     * Finishes initialization process. Resets current token if nothing prevents it.
      */
-    public synchronized String getHomeAccountId() {
-        return mHomeAccountId;
+    public synchronized void finishInitialization() {
+        if (!mResetAuthTokenRequired) {
+            return;
+        }
+        mResetAuthTokenRequired = false;
+        setAuthToken(null, null, null);
     }
 
     /**
@@ -107,19 +147,17 @@ public class AuthTokenContext {
      * @param homeAccountId unique user id.
      * @param expiresOn     time when token expires.
      */
-    public synchronized void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
-        if (mStorage != null) {
-            mStorage.saveToken(authToken, homeAccountId, expiresOn);
+    public void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
+
+        /* Do not store any data for anonymous token. */
+        if (authToken == null) {
+            homeAccountId = null;
+            expiresOn = null;
         }
-        updateAuthToken(authToken, homeAccountId);
-    }
-
-    private void updateAuthToken(String authToken, String homeAccountId) {
-
-        /* Check if it's a new user before changing current home account id. */
-        boolean isNewUser = isNewUser(homeAccountId);
-        mAuthToken = authToken;
-        mHomeAccountId = homeAccountId;
+        Boolean isNewUser = addTokenHistory(authToken, homeAccountId, expiresOn);
+        if (isNewUser == null) {
+            return;
+        }
 
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
@@ -131,47 +169,234 @@ public class AuthTokenContext {
     }
 
     /**
-     * Check whether the user is new.
+     * Add token history.
      *
-     * @param newHomeAccountId account id of the logged in user.
-     * @return true if this user is not the same as previous, false otherwise.
+     * @param authToken     authorization token.
+     * @param homeAccountId unique user id.
+     * @param expiresOn     time when token expires.
+     * @return true if it is a new user.
      */
-    private synchronized boolean isNewUser(String newHomeAccountId) {
-        return mHomeAccountId == null || !mHomeAccountId.equals(newHomeAccountId);
+    private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history == null) {
+            history = new ArrayList<>();
+        }
+
+        /* Do not add the same token twice in a row. */
+        AuthTokenHistoryEntry lastEntry = history.size() > 0 ? history.get(history.size() - 1) : null;
+        if (lastEntry != null && TextUtils.equals(lastEntry.getAuthToken(), authToken)) {
+            return null;
+        }
+
+        /* Check if it's a new user before changing current home account id. */
+        boolean isNewUser = lastEntry == null || !TextUtils.equals(lastEntry.getHomeAccountId(), homeAccountId);
+        Date date = new Date();
+
+        /* If there is a gap between tokens. */
+        if (lastEntry != null && lastEntry.getExpiresOn() != null && date.after(lastEntry.getExpiresOn())) {
+
+            /* If the account is the same or becomes anonymous. */
+            if (!isNewUser || authToken == null) {
+
+                /* Apply the new token to this time. */
+                date = lastEntry.getExpiresOn();
+            } else {
+
+                /* If it's not the same account treat the gap as anonymous. */
+                history.add(new AuthTokenHistoryEntry(null, null, lastEntry.getExpiresOn(), date));
+            }
+        }
+        history.add(new AuthTokenHistoryEntry(authToken, homeAccountId, date, expiresOn));
+
+        /* Limit history size. */
+        if (history.size() > TOKEN_HISTORY_LIMIT) {
+            history.subList(0, history.size() - TOKEN_HISTORY_LIMIT).clear();
+            AppCenterLog.debug(LOG_TAG, "Size of the token history is exceeded. The oldest token has been removed.");
+        }
+
+        /* Update history and current token. */
+        setHistory(history);
+        return isNewUser;
     }
 
     /**
-     * Clears info about the token.
+     * Gets current authorization token.
+     *
+     * @return authorization token.
      */
-    public synchronized void clearAuthToken() {
-        setAuthToken(null, null, null);
+    public String getAuthToken() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getAuthToken() : null;
     }
 
     /**
-     * Cache auth token and account data to be used later on.
+     * Gets current homeAccountId value.
+     *
+     * @return unique identifier of user.
      */
-    public synchronized void cacheAuthToken() {
-        if (mStorage != null) {
-            updateAuthToken(mStorage.getToken(), mStorage.getHomeAccountId());
+    public String getHomeAccountId() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getHomeAccountId() : null;
+    }
+
+    /**
+     * Gets list of auth tokens validity info. It contains tokens and time when it was valid.
+     *
+     * @return list of auth tokens validity info.
+     * @see AuthTokenInfo
+     */
+    @NonNull
+    public synchronized List<AuthTokenInfo> getAuthTokenValidityList() {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history == null || history.size() == 0) {
+            return Collections.singletonList(new AuthTokenInfo());
+        }
+
+        /* Return history with corrected end times. */
+        List<AuthTokenInfo> result = new ArrayList<>();
+        if (history.get(0).getAuthToken() != null) {
+            result.add(new AuthTokenInfo(null, null, history.get(0).getTime()));
+        }
+        for (int i = 0; i < history.size(); i++) {
+            AuthTokenHistoryEntry storeEntity = history.get(i);
+            String token = storeEntity.getAuthToken();
+            Date startTime = storeEntity.getTime();
+            if (token == null && i == 0) {
+                startTime = null;
+            }
+            Date endTime = storeEntity.getExpiresOn();
+            Date nextChangeTime = history.size() > i + 1 ? history.get(i + 1).getTime() : null;
+            if (nextChangeTime != null && endTime != null && nextChangeTime.before(endTime)) {
+                endTime = nextChangeTime;
+            } else if (endTime == null && nextChangeTime != null) {
+                endTime = nextChangeTime;
+            }
+            result.add(new AuthTokenInfo(token, startTime, endTime));
+        }
+        return result;
+    }
+
+    /**
+     * Removes the token from history. Please note that only oldest token is
+     * allowed to remove. To reset current to anonymous, use
+     * {@link #setAuthToken(String, String, Date)} with <code>null</code> value instead.
+     *
+     * @param token auth token to remove. Despite the fact that only the oldest
+     *              token can be removed, it's required to avoid removing
+     *              the wrong one on duplicated calls etc.
+     */
+    public synchronized void removeOldestTokenIfMatching(String token) {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history == null || history.size() == 0) {
+            AppCenterLog.warn(LOG_TAG, "Couldn't remove token from history: token history is empty.");
+            return;
+        }
+        if (history.size() == 1) {
+            AppCenterLog.debug(LOG_TAG, "Couldn't remove token from history: token history contains only current one.");
+            return;
+        }
+        AuthTokenHistoryEntry storeEntity = history.get(0);
+        if (!TextUtils.equals(storeEntity.getAuthToken(), token)) {
+            AppCenterLog.debug(LOG_TAG, "Couldn't remove token from history: the token isn't oldest or is already removed.");
+            return;
+        }
+
+        /* Remove the token from history. */
+        history.remove(0);
+        setHistory(history);
+        AppCenterLog.debug(LOG_TAG, "The token has been removed from token history.");
+    }
+
+    /**
+     * Performs check on auth token and calls relevant delegate to refresh it.
+     *
+     * @param authTokenInfo auth token to check for expiration.
+     */
+    public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire()) {
+            return;
+        }
+        for (Listener listener : mListeners) {
+            listener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
     }
 
     /**
-     * Gets token storage.
+     * Gets the last entry from history.
      *
-     * @return token storage.
+     * @return the last auth token entry.
      */
-    public AuthTokenStorage getStorage() {
-        return mStorage;
+    private synchronized AuthTokenHistoryEntry getLastHistoryEntry() {
+        List<AuthTokenHistoryEntry> history = getHistory();
+        if (history != null && history.size() > 0) {
+            return history.get(history.size() - 1);
+        }
+        return null;
     }
 
-    /**
-     * Sets current authorization token.
-     *
-     * @param storage token storage.
-     */
-    public void setStorage(AuthTokenStorage storage) {
-        mStorage = storage;
+    @VisibleForTesting
+    List<AuthTokenHistoryEntry> getHistory() {
+        if (mHistory != null) {
+            return mHistory;
+        }
+        String encryptedJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
+        String json = null;
+        if (encryptedJson != null && !encryptedJson.isEmpty()) {
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedJson, false);
+            json = decryptedData.getDecryptedData();
+        }
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
+        try {
+            mHistory = deserializeHistory(json);
+        } catch (JSONException e) {
+            AppCenterLog.warn(LOG_TAG, "Failed to deserialize auth token history.", e);
+        }
+        return mHistory;
+    }
+
+    @VisibleForTesting
+    void setHistory(List<AuthTokenHistoryEntry> history) {
+        mHistory = history;
+        if (history != null) {
+            try {
+                String json = serializeHistory(history);
+                String encryptedJson = CryptoUtils.getInstance(mContext).encrypt(json);
+                SharedPreferencesManager.putString(PREFERENCE_KEY_TOKEN_HISTORY, encryptedJson);
+            } catch (JSONException e) {
+                AppCenterLog.warn(LOG_TAG, "Failed to serialize auth token history.", e);
+            }
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_TOKEN_HISTORY);
+        }
+    }
+
+    private String serializeHistory(List<AuthTokenHistoryEntry> history) throws JSONException {
+        JSONStringer writer = new JSONStringer();
+        writer.array();
+        for (AuthTokenHistoryEntry entry : history) {
+            writer.object();
+            entry.write(writer);
+            writer.endObject();
+        }
+        writer.endArray();
+        return writer.toString();
+    }
+
+    private List<AuthTokenHistoryEntry> deserializeHistory(String json) throws JSONException {
+        JSONArray jArray = new JSONArray(json);
+        List<AuthTokenHistoryEntry> array = new ArrayList<>(jArray.length());
+        for (int i = 0; i < jArray.length(); i++) {
+            JSONObject jModel = jArray.getJSONObject(i);
+            AuthTokenHistoryEntry entry = new AuthTokenHistoryEntry();
+            entry.read(jModel);
+            array.add(entry);
+        }
+        return array;
     }
 
     /**
@@ -192,5 +417,12 @@ public class AuthTokenContext {
          * @param authToken authorization token.
          */
         void onNewUser(String authToken);
+
+        /**
+         * Called whenever token needs to be refreshed.
+         *
+         * @param homeAccountId account id to call refresh with.
+         */
+        void onTokenRequiresRefresh(String homeAccountId);
     }
 }

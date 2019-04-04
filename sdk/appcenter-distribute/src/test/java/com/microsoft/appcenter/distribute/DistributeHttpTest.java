@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 public class DistributeHttpTest extends AbstractDistributeTest {

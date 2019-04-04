@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
@@ -43,12 +44,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class TokenTest extends AbstractStorageTest {
 
-    private static final String READONLY_PARTITION_NAME = "read-only";
-
-    private static final String PARTITION_NAME = "non-readonly";
+    private static final String READONLY_PARTITION_NAME = Constants.READONLY;
 
     private static final String FAKE_TOKEN = "mock";
 
@@ -132,7 +133,7 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"accountId\": \"accountId\"\n" +
                 "        }\n" +
                 "    ]\n" +
-                "}", PARTITION_NAME, FAKE_TOKEN);
+                "}", PARTITION_NAME + "-" + ACCOUNT_ID, FAKE_TOKEN);
         String authToken = "auth-token";
         AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
@@ -263,5 +264,30 @@ public class TokenTest extends AbstractStorageTest {
         TokenResult result = new TokenResult();
         assertEquals(new Date(0), result.expiresOn());
         result.withExpirationTime(null);
+    }
+
+    @Test
+    public void cachedTokenPartitionKeyDoesNotContainUserId() {
+
+        /* Create a partition and corresponding TokenResult. */
+        String partition = "partition";
+        String accountId = "accountId";
+        String partitionWithAccountId = partition + "-" + accountId;
+        Gson gson = new Gson();
+        mockStatic(Utils.class);
+        when(Utils.removeAccountIdFromPartitionName(partitionWithAccountId)).thenReturn(partition);
+        when(Utils.getGson()).thenReturn(gson);
+        TokenResult result = new TokenResult().withPartition(partitionWithAccountId).withAccountId(accountId);
+        Set<String> partitions = new HashSet<>();
+        partitions.add(partition);
+
+        /* Attempt to cache the token result. */
+        TokenManager.getInstance().setCachedToken(result);
+
+        /* Verify that the cached partition name does not contain the account ID. */
+        verifyStatic();
+        SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitions);
+        verifyStatic();
+        SharedPreferencesManager.putString(partition, gson.toJson(result));
     }
 }

@@ -25,32 +25,29 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 public class CosmosDb {
 
     /**
-     * Document DB document URL suffix.
-     * TODO use it or remove.
-     */
-    static final String DOCUMENT_DB_DOCUMENT_URL_SUFFIX = "docs/%s";
-    /**
      * Document DB base endpoint
      */
     private static final String DOCUMENT_DB_ENDPOINT = "https://%s.documents.azure.com";
+
     /**
      * Document DB database URL suffix
      */
     private static final String DOCUMENT_DB_DATABASE_URL_SUFFIX = "dbs/%s";
+
     /**
      * Document DB collection URL suffix
      */
     private static final String DOCUMENT_DB_COLLECTION_URL_SUFFIX = "colls/%s";
+
     /**
      * Document DB document URL suffix
      */
     private static final String DOCUMENT_DB_DOCUMENT_URL_PREFIX = "docs";
 
     /**
-     * Document DB authorization header format
-     * TODO : Change the "type" to be "resource" instead of "master"
+     * Cosmos DB upsert header.
      */
-    static final String DOCUMENT_DB_AUTHORIZATION_HEADER_FORMAT = "type=master&ver=1.0&sig=%s";
+    private static final String X_MS_DOCUMENTDB_IS_UPSERT = "x-ms-documentdb-is-upsert";
 
     /**
      * Returns Current Time in RFC 1123 format, e.g,
@@ -123,24 +120,24 @@ public class CosmosDb {
                 serviceCallback
         );
     }
-	
-    public static synchronized <T> ServiceCall callCosmosDbApi(
-        TokenResult tokenResult,
-        String documentId,
-        HttpClient httpClient,
-        String httpVerb,
-        final String body,
-        ServiceCallback serviceCallback) {
+
+    public static synchronized ServiceCall callCosmosDbApi(
+            TokenResult tokenResult,
+            String documentId,
+            HttpClient httpClient,
+            String httpVerb,
+            String body,
+            ServiceCallback serviceCallback) {
         return callCosmosDbApi(tokenResult, documentId, httpClient, httpVerb, body, new HashMap<String, String>(), serviceCallback);
     }
-	
+
     public static ServiceCall callCosmosDbApi(
             TokenResult tokenResult,
             String documentId,
             HttpClient httpClient,
             String httpVerb,
             String body,
-            Map<String,String> additionalHeaders,
+            Map<String, String> additionalHeaders,
             ServiceCallback serviceCallback) {
         return callApi(
                 httpVerb,
@@ -149,6 +146,12 @@ public class CosmosDb {
                 body,
                 httpClient,
                 serviceCallback);
+    }
+
+    public static HashMap<String, String> getUpsertAdditionalHeader() {
+        return new HashMap<String, String>() {{
+            put(X_MS_DOCUMENTDB_IS_UPSERT, "true");
+        }};
     }
 
     private static ServiceCall callApi(

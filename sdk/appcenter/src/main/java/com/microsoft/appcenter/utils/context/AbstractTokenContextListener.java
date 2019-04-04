@@ -17,4 +17,9 @@ public abstract class AbstractTokenContextListener implements AuthTokenContext.L
     @Override
     public void onNewUser(String authToken) {
     }
+
+    @Override
+    public void onTokenRequiresRefresh(String homeAccountId) {
+    }
+
 }
