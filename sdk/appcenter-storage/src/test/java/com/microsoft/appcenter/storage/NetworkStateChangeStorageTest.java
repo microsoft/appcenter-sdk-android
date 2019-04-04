@@ -47,7 +47,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -89,7 +89,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -128,7 +128,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         DOCUMENT_ID,
                         document,
                         BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -163,7 +163,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void unsupportedPendingOperation() {
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(new PendingOperation(
                             "Order a coffee",
@@ -202,7 +202,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -229,7 +229,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -263,7 +263,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -296,7 +296,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(Constants.USER)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});

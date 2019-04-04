@@ -312,7 +312,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
         /* If device comes back online. */
         if (connected) {
-            for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
+            for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Constants.USER)) {
                 if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
                         PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
                     instanceCreateOrUpdate(po);

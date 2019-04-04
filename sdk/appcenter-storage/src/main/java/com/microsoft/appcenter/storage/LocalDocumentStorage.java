@@ -114,6 +114,7 @@ class LocalDocumentStorage {
     }
 
     LocalDocumentStorage(Context context) {
+        // TODO: implement a multi-table listener
         this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
@@ -140,15 +141,17 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        return mDatabaseManager.replace(getTableName(document.getPartition()), values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     <T> Document<T> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
         ContentValues values;
+        String table = getTableName(partition);
         try {
             cursor = mDatabaseManager.getCursor(
+                    table,
                     getPartitionAndDocumentIdQueryBuilder(),
                     null,
                     new String[]{partition, documentId},
@@ -162,7 +165,7 @@ class LocalDocumentStorage {
         values = mDatabaseManager.nextValues(cursor);
         if (values != null) {
             if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
-                mDatabaseManager.delete(cursor.getLong(0));
+                mDatabaseManager.delete(table, cursor.getLong(0));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
@@ -225,6 +228,7 @@ class LocalDocumentStorage {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
             mDatabaseManager.delete(
+                    getTableName(partition),
                     BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
                     new String[]{partition, documentId});
         } catch (RuntimeException e) {
@@ -240,11 +244,11 @@ class LocalDocumentStorage {
         deleteOnline(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
 
-    List<PendingOperation> getPendingOperations() {
+    List<PendingOperation> getPendingOperations(String partition) {
         List<PendingOperation> result = new ArrayList<>();
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
-        Cursor cursor = mDatabaseManager.getCursor(builder, null, null, null);
+        Cursor cursor = mDatabaseManager.getCursor(getTableName(partition), builder, null, null, null);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -273,8 +277,12 @@ class LocalDocumentStorage {
         if (operation.getExpirationTime() <= now) {
             deletePendingOperation(operation);
         } else {
-            mDatabaseManager.replace(getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+            mDatabaseManager.replace(getTableName(operation.getPartition()), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
         }
+    }
+
+    private String getTableName(String partition) {
+        return TABLE;
     }
 
     private static <T> ContentValues getContentValues(
