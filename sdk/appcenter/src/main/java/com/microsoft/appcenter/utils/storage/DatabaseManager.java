@@ -95,7 +95,7 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createTable(db, mDefaultTable);
+                createTable(db, mDefaultTable, mSchema);
                 mListener.onCreate(db);
             }
 
@@ -153,10 +153,11 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Creates a new table in the database.
+     * @param schema of the table.
      * @param table name.
      */
-    public void createTable(@NonNull String table) {
-        createTable(getDatabase(), table);
+    public void createTable(ContentValues schema, @NonNull String table) {
+        createTable(getDatabase(), table, schema);
     }
 
     /**
@@ -512,13 +513,13 @@ public class DatabaseManager implements Closeable {
         mSQLiteOpenHelper = helper;
     }
 
-    private void createTable(SQLiteDatabase db, String table) {
+    private void createTable(SQLiteDatabase db, String table, ContentValues schema) {
         
         /* Generate a schema from specimen. */
         StringBuilder sql = new StringBuilder("CREATE TABLE `");
         sql.append(table);
         sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
-        for (Map.Entry<String, Object> col : mSchema.valueSet()) {
+        for (Map.Entry<String, Object> col : schema.valueSet()) {
             sql.append(", `").append(col.getKey()).append("` ");
             Object val = col.getValue();
             if (val instanceof Double || val instanceof Float) {
