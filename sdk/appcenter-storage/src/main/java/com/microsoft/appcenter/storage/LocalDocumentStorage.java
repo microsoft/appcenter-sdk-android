@@ -280,6 +280,7 @@ class LocalDocumentStorage {
         }
     }
 
+    @VisibleForTesting
     static String getTableName(String partition) {
         return TABLE;
     }
