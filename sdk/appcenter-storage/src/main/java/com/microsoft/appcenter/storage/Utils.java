@@ -19,7 +19,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Utils {
+public class Utils {
 
     private static final Gson sGson = new Gson();
 
@@ -84,6 +84,13 @@ public final class Utils {
                 AppCenterLog.error(Constants.LOG_TAG, "Exception", httpException);
             }
         }
+    }
+
+    public static String removeAccountIdFromPartitionName(String partition) {
+        if (partition.equals(Constants.READONLY)) {
+            return partition;
+        }
+        return partition.substring(0, partition.length() - Constants.PARTITION_KEY_SUFFIX_LENGTH);
     }
 
     public static Gson getGson() {

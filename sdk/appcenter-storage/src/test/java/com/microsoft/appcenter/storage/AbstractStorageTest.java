@@ -43,6 +43,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -69,7 +71,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         HttpUtils.class,
         JSONUtils.class,
         NetworkStateHelper.class,
-        LocalDocumentStorage.class
+        LocalDocumentStorage.class,
+        Utils.class
 })
 abstract public class AbstractStorageTest {
 
@@ -77,7 +80,11 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION = "custom-partition";
+    static final String PARTITION_NAME = "custom-partition";
+
+    static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
+
+    static final String PARTITION = PARTITION_NAME + "-" + ACCOUNT_ID;
 
     static final String DOCUMENT_ID = "document-id";
 
@@ -253,7 +260,8 @@ abstract public class AbstractStorageTest {
         assertNotNull(tokenExchangeServiceCallback);
 
         tokenExchangeTemplateCallbackArgumentCaptor.getValue().onBeforeCalling(null, new HashMap<String, String>());
-        tokenExchangeTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
+        String body = tokenExchangeTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
+        assertFalse(body.contains(ACCOUNT_ID));
         if (tokenExchangeSuccessResponsePayload != null) {
             tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload, new HashMap<String, String>());
         }

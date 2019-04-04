@@ -26,6 +26,8 @@ public final class Constants {
 
     public static final String TIMESTAMP_FIELD_NAME = "_ts";
 
+    public static final int PARTITION_KEY_SUFFIX_LENGTH = 37;
+
     /**
      * Pending operation CREATE value.
      */

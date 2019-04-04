@@ -388,7 +388,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    Document<T> cachedDocument = mLocalDocumentStorage.read(partition, documentId, documentType, readOptions);
+                    Document<T> cachedDocument = mLocalDocumentStorage.read(appendAccountIdToPartitionName(partition), documentId, documentType, readOptions);
                     result.complete(cachedDocument);
                 }
             }, result, null);
@@ -501,7 +501,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                         @Override
                         public void callCosmosDb(TokenResult tokenResult) {
-                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, partition, documentId, writeOptions, result);
+                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
                         }
 
                         @Override
@@ -514,7 +514,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(partition, documentId, document, documentType, writeOptions);
+                    Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(appendAccountIdToPartitionName(partition), documentId, document, documentType, writeOptions);
                     result.complete(createdOrUpdatedDocument);
                 }
             }, result, null);
@@ -529,7 +529,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized void instanceCreateOrUpdate(
             final PendingOperation pendingOperation) {
         getTokenAndCallCosmosDbApi(
-                pendingOperation.getPartition(),
+                Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
                 new TokenExchangeServiceCallback() {
 
@@ -638,7 +638,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(partition, documentId);
+                    boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(appendAccountIdToPartitionName(partition), documentId);
                     if (isWriteSucceed) {
                         Storage.this.completeFuture(new Document<Void>(), result);
                     } else {
@@ -652,7 +652,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized void instanceDelete(final PendingOperation pendingOperation) {
         getTokenAndCallCosmosDbApi(
-                pendingOperation.getPartition(),
+                Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
                 new TokenExchange.TokenExchangeServiceCallback() {
 
@@ -827,5 +827,15 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 }
             }
         });
+    }
+
+    private String appendAccountIdToPartitionName(String partitionName) {
+        TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
+        if (result == null) {
+            AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
+        } else {
+            partitionName = result.partition();
+        }
+        return partitionName;
     }
 }

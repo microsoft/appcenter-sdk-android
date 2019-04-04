@@ -87,6 +87,16 @@ import static org.powermock.api.mockito.PowerMockito.when;
 })
 public class StorageTest extends AbstractStorageTest {
 
+    private String tokenResult = String.format("{\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"db\",\n" +
+            "            \"dbCollectionName\": \"collection\",\n" +
+            "            \"token\": \"%s\",\n" +
+            "            \"status\": \"Succeed\",\n" +
+            "            \"accountId\": \"accountId\"\n" +
+            "}", PARTITION, "token");
+
     @Test
     public void singleton() {
         Assert.assertSame(Storage.getInstance(), Storage.getInstance());
@@ -318,7 +328,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void listEndToEndWhenMakeTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(PARTITION, TestDocument.class);
+        AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(PARTITION_NAME, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
@@ -339,7 +349,7 @@ public class StorageTest extends AbstractStorageTest {
     public void replaceEndToEnd() throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(PARTITION_NAME, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
 
         /* Make the call. */
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -364,7 +374,7 @@ public class StorageTest extends AbstractStorageTest {
     public void readEndToEndWithNetwork() throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
 
         /* Make cosmos db http call with exchanged token. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -387,7 +397,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
@@ -405,7 +415,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readFailTokenExchangeReturnsFailedTokenResultPayload() {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
@@ -447,7 +457,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, null, new HttpException(503, exceptionMessage));
@@ -468,7 +478,8 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Storage.read(PARTITION, DOCUMENT_ID, TestDocument.class);
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
                 eq(PARTITION),
@@ -481,7 +492,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION_NAME, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
         verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
@@ -503,7 +514,8 @@ public class StorageTest extends AbstractStorageTest {
     public void createWithNoNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         TestDocument testDocument = new TestDocument("test");
-        Storage.create(PARTITION, DOCUMENT_ID, testDocument, TestDocument.class);
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Storage.create(PARTITION_NAME, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(PARTITION),
@@ -516,7 +528,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void createTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION_NAME, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
@@ -535,7 +547,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void deleteEndToEnd() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -546,7 +558,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void deleteTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
