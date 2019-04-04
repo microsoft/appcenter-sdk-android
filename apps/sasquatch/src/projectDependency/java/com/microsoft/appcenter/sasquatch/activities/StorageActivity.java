@@ -29,8 +29,6 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
 
-import static android.os.SystemClock.sleep;
-
 class TestDocument {
 
     @SuppressWarnings("unused")
@@ -39,16 +37,10 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    private final ArrayList<String> mAppDocumentList = new ArrayList<>();
-
     private ListView mListView;
 
-    private int mStorageType;
-
-    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
-        add("Doc1-User");
-        add("Doc2-User");
-    }};
+    private ArrayAdapter<String> mAppDocumentListAdapter;
+    private StorageType mStorageType = StorageType.READONLY;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,17 +48,17 @@ public class StorageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_storage);
 
         /* List the document. */
+        mAppDocumentListAdapter = new ArrayAdapter<>(this, R.layout.item_view_app);
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
             @Override
             public void accept(PaginatedDocuments<TestDocument> documents) {
                 int listSize = documents.getCurrentPage().getItems().size();
                 for (int i = 0; i < listSize; i++) {
-                    mAppDocumentList.add(documents.getCurrentPage().getItems().get(i).getId());
+                    mAppDocumentListAdapter.add(documents.getCurrentPage().getItems().get(i).getId());
                 }
             }
         });
-        sleep(2000);
 
         /* Transmission target views init. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -90,7 +82,7 @@ public class StorageActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                intent.putExtra("documentId", mAppDocumentList.get(position));
+                intent.putExtra("documentId", mAppDocumentListAdapter.getItem(position));
                 startActivity(intent);
             }
         });
@@ -99,49 +91,57 @@ public class StorageActivity extends AppCompatActivity {
         Storage.delete("test-partition", "document-id-123");
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.add, menu);
-        return true;
-    }
+    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
+        add("Doc1-User");
+        add("Doc2-User");
+    }};
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add:
-                if (mStorageType == 1) {
-                    SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                    String accountId = preferences.getString("accountId", null);
-                    if (accountId != null) {
-                    Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
-                    startActivity(intent);
-                    }
-                } else {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
-                    builder.setIcon(R.drawable.ic_appcenter_logo);
-                    builder.setTitle(getApplicationContext().getResources().getString(R.string.storage_type_reminder));
-                    builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            builder.setCancelable(true);
+                switch (mStorageType) {
+                    case USER:
+                        SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
+                        String accountId = preferences.getString("accountId", null);
+                        if (accountId != null) {
+                            Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
+                            startActivity(intent);
                         }
-                    });
-                    builder.show();
+                        break;
+
+                    case READONLY:
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
+                        builder.setIcon(R.drawable.ic_appcenter_logo);
+                        builder.setTitle(getApplicationContext().getResources().getString(R.string.storage_type_reminder));
+                        builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                builder.setCancelable(true);
+                            }
+                        });
+                        builder.show();
+                        break;
                 }
                 break;
         }
         return true;
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.add, menu);
+        return true;
+    }
+
     private void updateStorageType(int position) {
-        switch (position) {
-            case 0:
-                mStorageType = 0;
-                mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, mAppDocumentList));
+        mStorageType = StorageType.values()[position];
+        switch (mStorageType) {
+            case READONLY:
+                mListView.setAdapter(mAppDocumentListAdapter);
                 break;
-            case 1:
-                mStorageType = 1;
+            case USER:
                 SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
                 String accountId = preferences.getString("accountId", null);
                 if (accountId != null) {
@@ -155,5 +155,10 @@ public class StorageActivity extends AppCompatActivity {
                 }
                 break;
         }
+    }
+
+    private enum StorageType {
+        READONLY,
+        USER
     }
 }
