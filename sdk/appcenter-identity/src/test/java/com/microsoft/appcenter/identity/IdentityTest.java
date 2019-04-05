@@ -343,6 +343,55 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void silentSignInWithMissingIdToken() throws Exception {
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+        final IAuthenticationResult mockResult = mockAuthResult(null, mockAccountId, mockHomeAccountId);
+        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+
+        /* Mock http and start identity service. */
+        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Download configuration. */
+        mockSuccessfulHttpCall(jsonConfig, httpClient);
+
+        /* Go foreground. */
+        identity.onActivityResumed(mock(Activity.class));
+
+        /* Silent sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Simulate success. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
+        callbackCaptor.getValue().onSuccess(mockResult);
+
+        /* Verify. */
+        assertNotNull(future);
+        assertNotNull(future.get());
+        assertNull(future.get().getException());
+        assertNotNull(future.get().getUserInformation());
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
+    }
+
+    @Test
     public void downloadConfigurationThenForegroundThenSignIn() throws Exception {
 
         /* Mock JSON. */
