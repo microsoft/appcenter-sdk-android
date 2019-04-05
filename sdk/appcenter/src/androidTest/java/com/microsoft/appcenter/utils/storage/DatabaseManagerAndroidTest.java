@@ -20,7 +20,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -168,35 +167,21 @@ public class DatabaseManagerAndroidTest {
         assertEquals(1, databaseManager.getRowCount());
         assertEquals(1, databaseManager.getCursor(null, null, null, null).getCount());
 
-        /* Put logs to delete multiple IDs. */
+        /* Put logs to delete with condition. */
         ContentValues value4 = generateContentValues();
         ContentValues value5 = generateContentValues();
+        value4.put("COL_STRING", value2.getAsString("COL_STRING"));
+        value5.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
         Long value4Id = databaseManager.put(value4, "COL_INTEGER");
         Long value5Id = databaseManager.put(value5, "COL_INTEGER");
         assertNotNull(value4Id);
         assertNotNull(value5Id);
 
-        /* Delete multiple logs. */
-        databaseManager.delete(Arrays.asList(value4Id, value5Id));
-        assertNull(get(databaseManager, value4Id));
-        assertNull(get(databaseManager, value5Id));
-        assertEquals(1, databaseManager.getRowCount());
-
-        /* Put logs to delete with condition. */
-        ContentValues value6 = generateContentValues();
-        ContentValues value7 = generateContentValues();
-        value6.put("COL_STRING", value2.getAsString("COL_STRING"));
-        value7.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        Long value6Id = databaseManager.put(value6, "COL_INTEGER");
-        Long value7Id = databaseManager.put(value7, "COL_INTEGER");
-        assertNotNull(value6Id);
-        assertNotNull(value7Id);
-
         /* Delete logs with condition. */
         databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
         assertEquals(1, databaseManager.getRowCount());
-        ContentValues value7FromDatabase = get(databaseManager, value7Id);
-        assertContentValuesEquals(value7, value7FromDatabase);
+        ContentValues value5FromDatabase = get(databaseManager, value5Id);
+        assertContentValuesEquals(value5, value5FromDatabase);
 
         /* Clear. */
         databaseManager.clear();

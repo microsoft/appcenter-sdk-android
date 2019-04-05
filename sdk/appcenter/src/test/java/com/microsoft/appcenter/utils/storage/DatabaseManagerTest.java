@@ -24,9 +24,6 @@ import org.mockito.internal.stubbing.answers.Returns;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +34,6 @@ import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -101,17 +97,6 @@ public class DatabaseManagerTest {
     public void deleteFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(0);
-        verifyStatic();
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-    }
-
-    @Test
-    public void deleteMultipleIDsFailed() {
-        DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.delete(new ArrayList<Long>());
-        verifyStatic(never());
-        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
-        databaseManagerMock.delete(Arrays.asList(0L, 1L));
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }

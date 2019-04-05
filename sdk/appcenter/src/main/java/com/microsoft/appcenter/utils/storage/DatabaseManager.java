@@ -311,32 +311,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Deletes the entries by the identifier from the database.
-     *
-     * @param idList The list of database identifiers.
-     */
-    public void delete(@NonNull List<Long> idList) {
-        delete(mDefaultTable, idList);
-    }
-
-    /**
-     * Deletes the entries by the identifier from the database.
-     *
-     * @param table  The table to perform the operation on.
-     * @param idList The list of database identifiers.
-     */
-    public void delete(@NonNull String table, @NonNull List<Long> idList) {
-        if (idList.size() <= 0) {
-            return;
-        }
-        try {
-            getDatabase().execSQL(String.format("DELETE FROM " + table + " WHERE " + PRIMARY_KEY + " IN (%s);", TextUtils.join(", ", idList)));
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete IDs (%s) from database %s.", Arrays.toString(idList.toArray()), mDatabase), e);
-        }
-    }
-
-    /**
      * Deletes the entries that matches the condition.
      *
      * @param table       The table to perform the operation on.
