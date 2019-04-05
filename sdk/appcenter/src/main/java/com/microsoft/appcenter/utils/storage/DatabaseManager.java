@@ -77,12 +77,12 @@ public class DatabaseManager implements Closeable {
     /**
      * Initializes the table in the database.
      *
-     * @param context       The application context.
-     * @param database      The database name.
-     * @param defaultTable  The default table name.
-     * @param version       The version of current schema.
-     * @param schema        The schema.
-     * @param listener      The error listener.
+     * @param context      The application context.
+     * @param database     The database name.
+     * @param defaultTable The default table name.
+     * @param version      The version of current schema.
+     * @param schema       The schema.
+     * @param listener     The error listener.
      */
     public DatabaseManager(Context context, String database, String defaultTable, int version,
                            ContentValues schema, Listener listener) {
@@ -153,15 +153,17 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Creates a new table in the database.
+     *
+     * @param table  name.
      * @param schema of the table.
-     * @param table name.
      */
-    public void createTable(ContentValues schema, @NonNull String table) {
+    public void createTable(@NonNull String table, @NonNull ContentValues schema) {
         createTable(getDatabase(), table, schema);
     }
 
     /**
      * Deletes a table in the database.
+     *
      * @param table name.
      */
     public void dropTable(@NonNull String table) {
@@ -211,7 +213,6 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
-     *
      *
      * @param table      The table to perform the operation on.
      * @param values     The entry to be stored.
@@ -313,7 +314,7 @@ public class DatabaseManager implements Closeable {
      * Deletes the entry by the identifier from the database.
      *
      * @param table The table to perform the operation on.
-     * @param id The database identifier.
+     * @param id    The database identifier.
      */
     public void delete(@NonNull String table, @IntRange(from = 0) long id) {
         delete(table, PRIMARY_KEY, id);
@@ -331,7 +332,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Deletes the entries by the identifier from the database.
      *
-     * @param table The table to perform the operation on.
+     * @param table  The table to perform the operation on.
      * @param idList The list of database identifiers.
      */
     public void delete(@NonNull String table, @NonNull List<Long> idList) {
@@ -362,7 +363,7 @@ public class DatabaseManager implements Closeable {
     /**
      * Deletes the entries that matches the condition.
      *
-     * @param table The table to perform the operation on.
+     * @param table       The table to perform the operation on.
      * @param whereClause the optional WHERE clause to apply when deleting.
      *                    Passing null will delete all rows.
      * @param whereArgs   You may include ?s in the where clause, which
@@ -392,7 +393,6 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Deletes the entries that matches key == value.
-     *
      *
      * @param table The table to perform the operation on.
      * @param key   The optional key for query.
@@ -514,7 +514,7 @@ public class DatabaseManager implements Closeable {
     }
 
     private void createTable(SQLiteDatabase db, String table, ContentValues schema) {
-        
+
         /* Generate a schema from specimen. */
         StringBuilder sql = new StringBuilder("CREATE TABLE `");
         sql.append(table);

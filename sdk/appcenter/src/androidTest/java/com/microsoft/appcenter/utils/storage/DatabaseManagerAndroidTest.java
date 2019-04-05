@@ -503,7 +503,7 @@ public class DatabaseManagerAndroidTest {
         assertTrue(checkTableExists(databaseManager, firstTable));
         assertFalse(checkTableExists(databaseManager, secondTable));
 
-        databaseManager.createTable(mSchema, secondTable);
+        databaseManager.createTable(secondTable, mSchema);
         assertTrue(checkTableExists(databaseManager, firstTable));
         assertTrue(checkTableExists(databaseManager, secondTable));
 
@@ -541,7 +541,7 @@ public class DatabaseManagerAndroidTest {
                         1,
                         schema1,
                         listener);
-        databaseManager.createTable(schema2, secondTable);
+        databaseManager.createTable(secondTable, schema2);
         assertTrue(checkTableExists(databaseManager, firstTable));
         assertTrue(checkTableExists(databaseManager, secondTable));
 
