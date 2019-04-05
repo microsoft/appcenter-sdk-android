@@ -286,7 +286,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
     }
 
-    @Test(timeout = 5000)
+    @Test
     public void signInThenDownloadValidConfigurationThenForegroundThenSilentSignIn() throws Exception {
 
         /* Mock JSON. */

@@ -599,7 +599,7 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    private void handleSignInError(final Exception exception) {
+    private void handleSignInError(final MsalException exception) {
         post(new Runnable() {
 
             @Override
