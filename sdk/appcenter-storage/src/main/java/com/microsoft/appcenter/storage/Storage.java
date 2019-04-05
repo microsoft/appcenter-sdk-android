@@ -799,9 +799,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private String appendAccountIdToPartitionName(String partitionName) {
-        if (Constants.READONLY.equals(partitionName)) {
-            return partitionName;
-        }
         TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
         if (result == null) {
             AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
