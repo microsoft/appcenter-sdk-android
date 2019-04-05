@@ -251,11 +251,11 @@ class LocalDocumentStorage {
         deleteOnline(pendingOperation.getPartition(), pendingOperation.getDocumentId());
     }
 
-    List<PendingOperation> getPendingOperations(String partition) {
+    List<PendingOperation> getPendingOperations() {
         List<PendingOperation> result = new ArrayList<>();
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
-        Cursor cursor = mDatabaseManager.getCursor(getTableName(partition), builder, null, null, null);
+        Cursor cursor = mDatabaseManager.getCursor(getTableName(Constants.USER), builder, null, null, null);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -288,16 +288,23 @@ class LocalDocumentStorage {
         }
     }
 
+    /**
+     * @param partition name.
+     * @return true if the partition is supported, false otherwise
+     */
+    public static boolean isValidPartitionName(String partition) {
+        return getTableName(partition) == null;
+    }
+
     @VisibleForTesting
     static String getTableName(String partition) {
         if (READONLY.equals(partition)) {
             return READONLY_TABLE;
         }
         else if (USER.equals(partition)) {
-            return String.format(USER_TABLE_FORMAT, AuthTokenContext.getInstance().getUserId());
+            return String.format(USER_TABLE_FORMAT, AuthTokenContext.getInstance().getAccountId());
         }
 
-        // TODO: how to handle invalid partition argument values? We only allow two pre-defined values ATM
         return null;
     }
 

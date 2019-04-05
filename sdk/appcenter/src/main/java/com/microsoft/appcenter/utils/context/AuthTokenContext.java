@@ -240,13 +240,12 @@ public class AuthTokenContext {
     }
 
     /**
-     * Gets current user ID value.
+     * Gets current account ID value.
      *
-     * @return unique identifier of the user.
+     * @return unique identifier of the account.
      */
-    public String getUserId() {
-        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
-        return lastEntry != null ? lastEntry.getUserId() : null;
+    public String getAccountId() {
+        return getHomeAccountId() == null ? null : getHomeAccountId().substring(0, 36);
     }
 
     /**

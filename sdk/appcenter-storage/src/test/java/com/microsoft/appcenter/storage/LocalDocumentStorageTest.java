@@ -116,7 +116,7 @@ public class LocalDocumentStorageTest {
         Cursor cursor = mock(Cursor.class);
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(cursor);
         when(cursor.moveToNext()).thenThrow(new RuntimeException());
-        List<PendingOperation> pendingOperations = mLocalDocumentStorage.getPendingOperations(Constants.USER);
+        List<PendingOperation> pendingOperations = mLocalDocumentStorage.getPendingOperations();
     }
 
     @Test

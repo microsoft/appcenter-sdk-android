@@ -51,8 +51,10 @@ import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
+import static com.microsoft.appcenter.storage.Constants.USER;
 
 /**
  * Storage service.
@@ -214,7 +216,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
 
         /* In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT). */
-        AppCenterLog.debug(LOG_TAG, "Replace started");
         return Storage.create(partition, documentId, document, documentType, writeOptions);
     }
 
@@ -260,21 +261,27 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @param connected true if connected, false otherwise.
      */
     @Override
-    public void onNetworkStateUpdated(boolean connected) {
+    public void onNetworkStateUpdated(final boolean connected) {
+        post(new Runnable() {
 
-        /* If device comes back online. */
-        if (connected) {
-            for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Constants.USER)) {
-                if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                        PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                    instanceCreateOrUpdate(po);
-                } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                    instanceDelete(po);
-                } else {
-                    AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+            @Override
+            public void run() {
+
+                /* If device comes back online. */
+                if (connected) {
+                    for (PendingOperation po : mLocalDocumentStorage.getPendingOperations()) {
+                        if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                                PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                            instanceCreateOrUpdate(po);
+                        } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                            instanceDelete(po);
+                        } else {
+                            AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+                        }
+                    }
                 }
             }
-        }
+        });
     }
 
     /**
@@ -319,6 +326,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+
+        // TODO: wrap into `post` and make sure it doesn't go farther if true
+        if (LocalDocumentStorage.isValidPartitionName(partition)) {
+            Storage.this.completeFuture(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
+        }
+
         if (mNetworkStateHelper.isNetworkConnected()) {
             getTokenAndCallCosmosDbApi(
                     partition,
