@@ -240,6 +240,16 @@ public class AuthTokenContext {
     }
 
     /**
+     * Gets current user ID value.
+     *
+     * @return unique identifier of the user.
+     */
+    public String getUserId() {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        return lastEntry != null ? lastEntry.getUserId() : null;
+    }
+
+    /**
      * Gets list of auth tokens validity info. It contains tokens and time when it was valid.
      *
      * @return list of auth tokens validity info.

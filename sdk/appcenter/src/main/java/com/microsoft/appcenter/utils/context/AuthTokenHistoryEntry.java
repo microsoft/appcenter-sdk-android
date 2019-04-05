@@ -55,6 +55,10 @@ final class AuthTokenHistoryEntry implements Model {
         return mHomeAccountId;
     }
 
+    public String getUserId() {
+        return mHomeAccountId == null ? null : mHomeAccountId.substring(0, mHomeAccountId.indexOf('-' ));
+    }
+
     public void setHomeAccountId(String homeAccountId) {
         mHomeAccountId = homeAccountId;
     }

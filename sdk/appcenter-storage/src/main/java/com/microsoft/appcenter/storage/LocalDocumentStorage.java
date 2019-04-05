@@ -18,6 +18,7 @@ import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
@@ -27,6 +28,8 @@ import java.util.List;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.READONLY;
+import static com.microsoft.appcenter.storage.Constants.USER;
 
 @WorkerThread
 class LocalDocumentStorage {
@@ -44,9 +47,14 @@ class LocalDocumentStorage {
     static final String FAILED_TO_READ_FROM_CACHE = "Failed to read from cache.";
 
     /**
-     * Table name.
+     * Readonly table name.
      */
-    private static final String TABLE = "cache";
+    private static final String READONLY_TABLE = "app_documents";
+
+    /**
+     * User-specific table name format.
+     */
+    private static final String USER_TABLE_FORMAT = "user_%s_documents";
 
     /**
      * Partition column.
@@ -114,7 +122,7 @@ class LocalDocumentStorage {
     }
 
     LocalDocumentStorage(Context context) {
-        this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
+        this(new DatabaseManager(context, DATABASE, READONLY_TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
     }
 
     <T> void writeOffline(Document<T> document, WriteOptions writeOptions) {
@@ -282,7 +290,15 @@ class LocalDocumentStorage {
 
     @VisibleForTesting
     static String getTableName(String partition) {
-        return TABLE;
+        if (READONLY.equals(partition)) {
+            return READONLY_TABLE;
+        }
+        else if (USER.equals(partition)) {
+            return String.format(USER_TABLE_FORMAT, AuthTokenContext.getInstance().getUserId());
+        }
+
+        // TODO: how to handle invalid partition argument values? We only allow two pre-defined values ATM
+        return null;
     }
 
     private static <T> ContentValues getContentValues(
