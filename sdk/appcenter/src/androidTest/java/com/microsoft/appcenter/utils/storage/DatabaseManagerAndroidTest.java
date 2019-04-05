@@ -494,26 +494,26 @@ public class DatabaseManagerAndroidTest {
 
     @Test
     public void testMultipleTablesCreateDelete() {
-       String firstTable = "firstTable";
-       String secondTable = "secondTable";
+        String firstTable = "firstTable";
+        String secondTable = "secondTable";
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables-read-write", firstTable, 1, mSchema, listener);
-        assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
-        assertFalse(isTableExists(databaseManager.getDatabase(), secondTable));
+        assertTrue(checkTableExists(databaseManager, firstTable));
+        assertFalse(checkTableExists(databaseManager, secondTable));
 
         databaseManager.createTable(mSchema, secondTable);
-        assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
-        assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
+        assertTrue(checkTableExists(databaseManager, firstTable));
+        assertTrue(checkTableExists(databaseManager, secondTable));
 
         databaseManager.dropTable(firstTable);
-        assertFalse(isTableExists(databaseManager.getDatabase(), firstTable));
-        assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
+        assertFalse(checkTableExists(databaseManager, firstTable));
+        assertTrue(checkTableExists(databaseManager, secondTable));
 
         databaseManager.dropTable(secondTable);
-        assertFalse(isTableExists(databaseManager.getDatabase(), firstTable));
-        assertFalse(isTableExists(databaseManager.getDatabase(), secondTable));
+        assertFalse(checkTableExists(databaseManager, firstTable));
+        assertFalse(checkTableExists(databaseManager, secondTable));
     }
 
     @Test
@@ -542,8 +542,8 @@ public class DatabaseManagerAndroidTest {
                         schema1,
                         listener);
         databaseManager.createTable(schema2, secondTable);
-        assertTrue(isTableExists(databaseManager.getDatabase(), firstTable));
-        assertTrue(isTableExists(databaseManager.getDatabase(), secondTable));
+        assertTrue(checkTableExists(databaseManager, firstTable));
+        assertTrue(checkTableExists(databaseManager, secondTable));
 
         schema1 = new ContentValues();
         schema1.put(colStr, "First Table String");
@@ -558,22 +558,24 @@ public class DatabaseManagerAndroidTest {
         cursor1.moveToNext();
         assertEquals("First Table String", cursor1.getString(cursor1.getColumnIndex(colStr)));
         assertEquals(55, cursor1.getInt(cursor1.getColumnIndex(colInt)));
+        cursor1.close();
 
         Cursor cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
         cursor2.moveToNext();
         assertEquals(0, cursor2.getInt(cursor2.getColumnIndex(colBool)));
         assertEquals(15.41, cursor2.getFloat(cursor2.getColumnIndex(colReal)), 0.1);
+        cursor2.close();
     }
 
-    private boolean isTableExists(SQLiteDatabase db, String tableName) {
-        Cursor cursor = db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name = '" + tableName + "'", null);
-        if(cursor!=null) {
-            if(cursor.getCount()>0) {
-                cursor.close();
-                return true;
-            }
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
+    private boolean checkTableExists(DatabaseManager databaseManager, String tableName) {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere("tbl_name = ?");
+        Cursor cursor = databaseManager.getCursor("sqlite_master", builder, new String[]{"tbl_name"}, new String[]{tableName}, null);
+        try {
+            return cursor.getCount() > 0;
+        } finally {
             cursor.close();
         }
-        return false;
     }
 }
