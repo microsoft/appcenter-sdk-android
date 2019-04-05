@@ -43,7 +43,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -80,7 +79,7 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION_NAME = "custom-partition";
+    static final String PARTITION_NAME = "user";
 
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 

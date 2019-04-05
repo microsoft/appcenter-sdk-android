@@ -36,7 +36,7 @@ public class UtilsTest {
 
     @Test
     public void removeAccountIdFromPartitionName() {
-        String partition = "user-partition";
+        String partition = "user";
         String partitionNameWithAccountId = partition + "-" + "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
         assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
     }
