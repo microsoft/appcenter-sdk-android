@@ -72,7 +72,7 @@ public final class Constants {
      * User partition.
      * An authenticated user can read/write documents in this partition.
      */
-    public static String USER = "user-{%s}";
+    public static String USER = "user";
 
     /**
      * Readonly partition.
