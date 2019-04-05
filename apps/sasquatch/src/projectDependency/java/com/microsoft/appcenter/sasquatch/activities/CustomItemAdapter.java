@@ -25,8 +25,8 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
     private Context mContext;
 
     CustomItemAdapter(ArrayList<String> list, Context context) {
-        this.mList = list;
-        this.mContext = context;
+        mList = list;
+        mContext = context;
     }
 
     @Override

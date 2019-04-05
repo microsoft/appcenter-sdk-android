@@ -29,7 +29,6 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         addProperty();
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add, menu);
