@@ -30,6 +30,8 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.Date;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -129,6 +131,7 @@ abstract public class AbstractIdentityTest {
         when(accountIdentifier.getIdentifier()).thenReturn(accountId);
         when(account.getAccountIdentifier()).thenReturn(accountIdentifier);
         when(mockResult.getAccount()).thenReturn(account);
+        when(mockResult.getExpiresOn()).thenReturn(new Date());
         return mockResult;
     }
 }
