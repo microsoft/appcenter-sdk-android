@@ -104,7 +104,7 @@ public class DatabaseManager implements Closeable {
 
                 /* Upgrade by destroying the old table unless managed. */
                 if (!mListener.onUpgrade(db, oldVersion, newVersion)) {
-                    db.execSQL("DROP TABLE `" + mDefaultTable + "`");
+                    dropTable(db, mDefaultTable);
                     onCreate(db);
                 }
             }
@@ -151,6 +151,10 @@ public class DatabaseManager implements Closeable {
         return values;
     }
 
+    private void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
+        db.execSQL(String.format("DROP TABLE `%s`", table));
+    }
+
     /**
      * Creates a new table in the database.
      *
@@ -169,8 +173,7 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
     public void dropTable(@NonNull String table) {
-        SQLiteDatabase db = getDatabase();
-        db.execSQL(String.format("DROP TABLE `%s`", table));
+        dropTable(getDatabase(), table);
     }
 
     /**
