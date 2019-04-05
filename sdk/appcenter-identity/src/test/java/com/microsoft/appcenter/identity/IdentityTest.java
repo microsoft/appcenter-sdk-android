@@ -286,7 +286,7 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void signInThenDownloadValidConfigurationThenForegroundThenSilentSignIn() throws Exception {
 
         /* Mock JSON. */
@@ -328,6 +328,13 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Sign in. */
         AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Simulate success. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
+        callbackCaptor.getValue().onSuccess(mockAuthResult(mockIdToken, mockAccountId, mockHomeAccountId));
+
+        /* Verify. */
         assertNotNull(future);
         assertNotNull(future.get());
         assertNull(future.get().getException());
