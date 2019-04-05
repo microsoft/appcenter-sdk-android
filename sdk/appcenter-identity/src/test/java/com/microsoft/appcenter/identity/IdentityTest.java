@@ -324,8 +324,15 @@ public class IdentityTest extends AbstractIdentityTest {
         mockSuccessfulHttpCall(jsonConfig, httpClient);
 
         /* Go foreground. */
-        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(null);
-        Identity.signIn();
+        identity.onActivityResumed(mock(Activity.class));
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+        assertNotNull(future);
+        assertNotNull(future.get());
+        assertNull(future.get().getException());
+        assertNotNull(future.get().getUserInformation());
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
     }
 
     @Test
@@ -1038,6 +1045,32 @@ public class IdentityTest extends AbstractIdentityTest {
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof IllegalStateException);
         assertNull(future.get().getUserInformation());
+    }
+
+    @Test
+    public void signInReturnsNullIdToken() throws Exception {
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Identity.signIn();
+
+        /* Simulate success but with null id token. */
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireToken(notNull(Activity.class), notNull(String[].class), callbackCaptor.capture());
+        IAuthenticationResult authenticationResult = mockAuthResult(null, "accountId", "homeAccountId");
+        when(authenticationResult.getAccessToken()).thenReturn("accessToken");
+        callbackCaptor.getValue().onSuccess(authenticationResult);
+
+        /* Verify result and behavior. */
+        assertNotNull(future.get());
+        assertNull(future.get().getException());
+        assertNotNull(future.get().getUserInformation());
+        assertEquals("accountId", future.get().getUserInformation().getAccountId());
+        verify(mAuthTokenContext).setAuthToken(eq("accessToken"), eq("homeAccountId"), notNull(Date.class));
     }
 
     @Test
