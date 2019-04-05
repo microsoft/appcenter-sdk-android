@@ -776,7 +776,7 @@ public class Crashes extends AbstractAppCenterService {
                 if (file.length() > 0) {
                     try {
                         throwable = FileManager.readObject(file);
-                    } catch (java.lang.Exception | StackOverflowError e) {
+                    } catch (IOException | ClassNotFoundException | RuntimeException | StackOverflowError e) {
                         AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
                     }
                 }
