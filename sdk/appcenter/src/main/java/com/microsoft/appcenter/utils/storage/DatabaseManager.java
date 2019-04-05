@@ -157,6 +157,7 @@ public class DatabaseManager implements Closeable {
      * @param table  name.
      * @param schema of the table.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
     public void createTable(@NonNull String table, @NonNull ContentValues schema) {
         createTable(getDatabase(), table, schema);
     }
@@ -166,6 +167,7 @@ public class DatabaseManager implements Closeable {
      *
      * @param table name.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
     public void dropTable(@NonNull String table) {
         SQLiteDatabase db = getDatabase();
         db.execSQL(String.format("DROP TABLE `%s`", table));
@@ -400,7 +402,7 @@ public class DatabaseManager implements Closeable {
      * @return the number of rows affected.
      */
     public int delete(@NonNull String table, @Nullable String key, @Nullable Object value) {
-        return delete(key + " = ?", new String[]{String.valueOf(value)});
+        return delete(table, key + " = ?", new String[]{String.valueOf(value)});
     }
 
     /**

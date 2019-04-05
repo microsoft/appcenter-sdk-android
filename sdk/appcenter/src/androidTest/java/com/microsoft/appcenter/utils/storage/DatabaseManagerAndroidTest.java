@@ -517,7 +517,7 @@ public class DatabaseManagerAndroidTest {
     }
 
     @Test
-    public void testMultipleTablesReadWrite() {
+    public void testMultipleTablesReadWriteDelete() {
         String firstTable = "firstTable";
         ContentValues schema1 = new ContentValues();
         String colStr = "colStr";
@@ -562,8 +562,17 @@ public class DatabaseManagerAndroidTest {
 
         Cursor cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
         cursor2.moveToNext();
+        int id = cursor2.getInt(cursor2.getColumnIndex(DatabaseManager.PRIMARY_KEY));
+        assertTrue(id > 0);
         assertEquals(0, cursor2.getInt(cursor2.getColumnIndex(colBool)));
         assertEquals(15.41, cursor2.getFloat(cursor2.getColumnIndex(colReal)), 0.1);
+        cursor2.close();
+
+        /* Delete entry from table 2. */
+        int deletedRows = databaseManager.delete(secondTable, DatabaseManager.PRIMARY_KEY, id);
+        assertEquals(1, deletedRows);
+        cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
+        assertEquals(0, cursor2.getCount());
         cursor2.close();
     }
 
