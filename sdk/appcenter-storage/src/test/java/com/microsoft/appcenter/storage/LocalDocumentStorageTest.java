@@ -89,7 +89,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void localStorageDoNotWriteWhenNotCache() {
         mLocalDocumentStorage.writeOffline(new Document<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE));
-        verify(mDatabaseManager, never()).replace(any(ContentValues.class));
+        verify(mDatabaseManager, never()).replace(anyString(), any(ContentValues.class));
     }
 
     @Test
@@ -149,7 +149,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void writeDeleteFails() {
-        when(mDatabaseManager.replace(any(ContentValues.class), anyString(), anyString())).thenReturn(-1L);
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class), anyString(), anyString())).thenReturn(-1L);
         boolean isSuccess = mLocalDocumentStorage.markForDeletion(PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(eq(LocalDocumentStorage.getTableName(PARTITION)), argumentCaptor.capture(), eq(LocalDocumentStorage.PARTITION_COLUMN_NAME), eq(LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME));

@@ -351,20 +351,6 @@ public class DatabaseManager implements Closeable {
     /**
      * Deletes the entries that matches the condition.
      *
-     * @param whereClause the optional WHERE clause to apply when deleting.
-     *                    Passing null will delete all rows.
-     * @param whereArgs   You may include ?s in the where clause, which
-     *                    will be replaced by the values from whereArgs. The values
-     *                    will be bound as Strings.
-     * @return the number of rows affected.
-     */
-    public int delete(String whereClause, String[] whereArgs) {
-        return delete(mDefaultTable, whereClause, whereArgs);
-    }
-
-    /**
-     * Deletes the entries that matches the condition.
-     *
      * @param table       The table to perform the operation on.
      * @param whereClause the optional WHERE clause to apply when deleting.
      *                    Passing null will delete all rows.
