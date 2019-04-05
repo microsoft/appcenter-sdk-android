@@ -326,12 +326,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-
-        // TODO: wrap into `post` and make sure it doesn't go farther if true
-        if (LocalDocumentStorage.isValidPartitionName(partition)) {
-            Storage.this.completeFuture(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
+        validatePartitionName(partition, result);
+        if (result.isDone()) {
+            return result;
         }
-
         if (mNetworkStateHelper.isNetworkConnected()) {
             getTokenAndCallCosmosDbApi(
                     partition,
@@ -406,6 +404,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition, final Class<T> documentType) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
+        validatePartitionNameWhenDocuments(partition, result);
+        if (result.isDone()) {
+            return result;
+        }
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
@@ -464,6 +466,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final Class<T> documentType,
             final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        validatePartitionName(partition, result);
+        if (result.isDone()) {
+            return result;
+        }
         if (mNetworkStateHelper.isNetworkConnected()) {
             getTokenAndCallCosmosDbApi(
                     partition,
@@ -594,6 +600,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
         final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
+        validatePartitionName(partition, result);
+        if (result.isDone()) {
+            return result;
+        }
         if (mNetworkStateHelper.isNetworkConnected()) {
             getTokenAndCallCosmosDbApi(
                     partition,
@@ -727,6 +737,30 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mPendingCalls.put(result, tokenExchangeServiceCall);
             }
         }
+    }
+
+    private <T> void validatePartitionName(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                if (LocalDocumentStorage.isValidPartitionName(partition)) {
+                    Storage.this.completeFuture(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
+                }
+            }
+        }, result, null);
+    }
+
+    private <T> void validatePartitionNameWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                if (LocalDocumentStorage.isValidPartitionName(partition)) {
+                    Storage.this.completeFutureAndRemovePendingCallWhenDocuments(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
+                }
+            }
+        }, result, null);
     }
 
     private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {

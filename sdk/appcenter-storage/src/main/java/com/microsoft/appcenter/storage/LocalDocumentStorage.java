@@ -252,10 +252,15 @@ class LocalDocumentStorage {
     }
 
     List<PendingOperation> getPendingOperations() {
+        return getPendingOperations(Constants.USER);
+    }
+
+    @VisibleForTesting
+    List<PendingOperation> getPendingOperations(String partition) {
         List<PendingOperation> result = new ArrayList<>();
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
-        Cursor cursor = mDatabaseManager.getCursor(getTableName(Constants.USER), builder, null, null, null);
+        Cursor cursor = mDatabaseManager.getCursor(getTableName(partition), builder, null, null, null);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
