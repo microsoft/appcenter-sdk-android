@@ -204,18 +204,6 @@ public class DatabaseManager implements Closeable {
     /**
      * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
      *
-     * @param values     The entry to be stored.
-     * @param properties The property to be used for filter the rows.
-     * @return If an entry was inserted or updated, the database identifier. Otherwise -1.
-     */
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long replace(@NonNull ContentValues values, String... properties) {
-        return replace(mDefaultTable, values, properties);
-    }
-
-    /**
-     * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
-     *
      * @param table      The table to perform the operation on.
      * @param values     The entry to be stored.
      * @param properties The property to be used for filter the rows.

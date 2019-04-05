@@ -74,7 +74,7 @@ public class DatabaseManagerTest {
     @Test
     public void upsertFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        long result = databaseManagerMock.replace(new ContentValues());
+        long result = databaseManagerMock.replace("table", new ContentValues());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
         assertEquals(-1L, result);
@@ -92,7 +92,7 @@ public class DatabaseManagerTest {
         DatabaseManager databaseManager = spy(new DatabaseManager(contextMock, "database", tableName, 1, null, null));
         databaseManager.setSQLiteOpenHelper(helperMock);
         ContentValues contentValues = new ContentValues();
-        long result = databaseManager.replace(contentValues);
+        long result = databaseManager.replace(tableName, contentValues);
         verify(database).replace(eq(tableName), isNull(String.class), refEq(contentValues));
         assertEquals(replaceResultId, result);
     }
@@ -275,6 +275,6 @@ public class DatabaseManagerTest {
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put an entry, it will fail to query and thus not replacing. */
-        assertEquals(-1, databaseManager.replace(mock(ContentValues.class), "someId"));
+        assertEquals(-1, databaseManager.replace("table", mock(ContentValues.class), "someId"));
     }
 }
