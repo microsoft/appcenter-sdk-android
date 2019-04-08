@@ -75,6 +75,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that storage returns the same token. */
         assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
         assertEquals(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertEquals(ACCOUNT_ID.substring(0, 36), mAuthTokenContext.getAccountId());
 
         /* Remove the token from storage. */
         mAuthTokenContext.setAuthToken(null, null, null);
@@ -82,6 +83,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that there's no token in storage. */
         assertNull(mAuthTokenContext.getAuthToken());
         assertNull(mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAccountId());
 
         /* The same token should't be in history twice in a row. */
         Calendar calendar = Calendar.getInstance();

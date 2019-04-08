@@ -187,4 +187,12 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(Constants.PENDING_OPERATION_REPLACE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test2"));
     }
+
+    @Test
+    public void getPendingUserOperations() {
+        try {
+            mLocalDocumentStorage.getPendingOperations();
+        } catch (Exception e) {
+        }
+    }
 }

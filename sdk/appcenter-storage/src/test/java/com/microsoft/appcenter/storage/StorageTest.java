@@ -541,6 +541,25 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void createCosmosDbCallFails() throws JSONException {
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION_NAME, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
+        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, null, new HttpException(503, exceptionMessage));
+
+        /*
+         *  No retries and Cosmos DB does not get called.
+         */
+        verifyNoMoreInteractions(mHttpClient);
+        assertNotNull(doc);
+        assertNotNull(doc.get());
+        assertNull(doc.get().getDocument());
+        assertNotNull(doc.get().getDocumentError());
+        assertThat(
+                doc.get().getDocumentError().getError().getMessage(),
+                CoreMatchers.containsString(exceptionMessage));
+    }
+
+    @Test
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
@@ -556,6 +575,25 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+
+        /*
+         *  No retries and Cosmos DB does not get called.
+         */
+        verifyNoMoreInteractions(mHttpClient);
+        assertNotNull(doc);
+        assertNotNull(doc.get());
+        assertNull(doc.get().getDocument());
+        assertNotNull(doc.get().getDocumentError());
+        assertThat(
+                doc.get().getDocumentError().getError().getMessage(),
+                CoreMatchers.containsString(exceptionMessage));
+    }
+
+    @Test
+    public void deleteCosmosDbCallFails() throws JSONException {
+        AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
+        String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
