@@ -744,7 +744,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
-                if (LocalDocumentStorage.isValidPartitionName(partition)) {
+                if (!LocalDocumentStorage.isValidPartitionName(partition)) {
                     Storage.this.completeFuture(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
                 }
             }
@@ -756,7 +756,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
-                if (LocalDocumentStorage.isValidPartitionName(partition)) {
+                if (!LocalDocumentStorage.isValidPartitionName(partition)) {
                     Storage.this.completeFutureAndRemovePendingCallWhenDocuments(new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition)), result);
                 }
             }

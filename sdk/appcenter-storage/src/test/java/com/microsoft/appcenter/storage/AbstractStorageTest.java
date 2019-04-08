@@ -26,6 +26,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -71,7 +72,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         JSONUtils.class,
         NetworkStateHelper.class,
         LocalDocumentStorage.class,
-        Utils.class
+        Utils.class,
+        AuthTokenContext.class
 })
 abstract public class AbstractStorageTest {
 
@@ -79,7 +81,7 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION_NAME = "user";
+    static final String PARTITION_NAME = Constants.USER;
 
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
@@ -140,6 +142,9 @@ abstract public class AbstractStorageTest {
 
     @Mock
     LocalDocumentStorage mLocalDocumentStorage;
+
+    @Mock
+    private AuthTokenContext mAuthTokenContext;
 
     @Before
     public void setUp() throws Exception {
@@ -202,6 +207,13 @@ abstract public class AbstractStorageTest {
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
         mockStatic(JSONUtils.class);
+    }
+
+    void setUpAuthContext() {
+        /* Mock auth context. */
+        mockStatic(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        when(mAuthTokenContext.getAccountId()).thenReturn("12345");
     }
 
     @NonNull

@@ -49,12 +49,14 @@ class LocalDocumentStorage {
     /**
      * Readonly table name.
      */
-    private static final String READONLY_TABLE = "app_documents";
+    @VisibleForTesting
+    static final String READONLY_TABLE = "app_documents";
 
     /**
      * User-specific table name format.
      */
-    private static final String USER_TABLE_FORMAT = "user_%s_documents";
+    @VisibleForTesting
+    static final String USER_TABLE_FORMAT = "user_%s_documents";
 
     /**
      * Partition column.
@@ -297,8 +299,8 @@ class LocalDocumentStorage {
      * @param partition name.
      * @return true if the partition is supported, false otherwise
      */
-    public static boolean isValidPartitionName(String partition) {
-        return getTableName(partition) == null;
+    static boolean isValidPartitionName(String partition) {
+        return getTableName(partition) != null;
     }
 
     @VisibleForTesting

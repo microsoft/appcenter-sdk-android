@@ -17,6 +17,7 @@ import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
@@ -26,6 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -53,12 +55,14 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         SQLiteUtils.class,
         AppCenterLog.class,
         DatabaseManager.class,
-        LocalDocumentStorage.class})
+        LocalDocumentStorage.class,
+        AuthTokenContext.class})
 public class LocalDocumentStorageTest {
 
     private static final String PARTITION = "partition";
 
     private static final String DOCUMENT_ID = "id";
+    private static final String USER_ID = "12345";
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -69,6 +73,9 @@ public class LocalDocumentStorageTest {
 
     private Cursor mCursor;
 
+    @Mock
+    private AuthTokenContext mAuthTokenContext;
+
     @Before
     public void setUp() throws Exception {
         mockStatic(AppCenterLog.class);
@@ -76,6 +83,35 @@ public class LocalDocumentStorageTest {
         mCursor = mock(Cursor.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
         mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class));
+        mockStatic(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        when(mAuthTokenContext.getAccountId()).thenReturn(USER_ID);
+    }
+
+    @Test
+    public void getTableNameWithUserPartitionName() {
+        String tableName = LocalDocumentStorage.getTableName(Constants.USER);
+        assertEquals(String.format(LocalDocumentStorage.USER_TABLE_FORMAT, USER_ID), tableName);
+    }
+
+
+    @Test
+    public void getTableNameWithReadonlyPartitionName() {
+        String tableName = LocalDocumentStorage.getTableName(Constants.READONLY);
+        assertEquals(LocalDocumentStorage.READONLY_TABLE, tableName);
+    }
+
+    @Test
+    public void getTableNameWithInvalidPartitionName() {
+        String tableName = LocalDocumentStorage.getTableName("invalid");
+        assertNull(tableName);
+    }
+
+    @Test
+    public void validPartitionName() {
+        assertTrue(LocalDocumentStorage.isValidPartitionName(Constants.USER));
+        assertTrue(LocalDocumentStorage.isValidPartitionName(Constants.READONLY));
+        assertFalse(LocalDocumentStorage.isValidPartitionName("invalid"));
     }
 
     @Test

@@ -22,12 +22,12 @@ import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
 import org.json.JSONException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -37,19 +37,15 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -65,7 +61,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -73,7 +68,6 @@ import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({
@@ -92,6 +86,11 @@ public class StorageTest extends AbstractStorageTest {
             "            \"status\": \"Succeed\",\n" +
             "            \"accountId\": \"accountId\"\n" +
             "}", PARTITION, "token");
+
+    @Before
+    public void setUpAuth() {
+        setUpAuthContext();
+    }
 
     @Test
     public void singleton() {
@@ -596,55 +595,6 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void tokenClearedOnSignOut() {
-        Set<String> partitionNames = new HashSet<>();
-        for (int i = 0; i < 10; i++) {
-            partitionNames.add("partitionName " + i);
-        }
-        partitionNames.add(Constants.READONLY);
-        when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
-        Storage.setEnabled(true);
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
-        verifyStatic(times((10)));
-        SharedPreferencesManager.remove(matches("partitionName [0-9]"));
-    }
-
-    @Test
-    public void authTokenListenerNotCalledWhenDisabled() {
-        Storage.setEnabled(false);
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
-        verifyStatic(never());
-        SharedPreferencesManager.remove(matches("partitionName[0-9]"));
-    }
-
-    @Test
-    public void authTokenListenerNotCalledWhenNewUser() {
-        AuthTokenContext.getInstance().setAuthToken("someToken", "someId", new Date(Long.MAX_VALUE));
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
-        verifyStatic(never());
-        SharedPreferencesManager.remove(matches("partitionName[0-9]"));
-    }
-
-    @Test
-    public void authTokenListenerNotRemoveTokenWhenNewUser() {
-
-        /* Setup token manager. */
-        mockStatic(TokenManager.class);
-        TokenManager mTokenManager = mock(TokenManager.class);
-        when(TokenManager.getInstance()).thenReturn(mTokenManager);
-
-        /* Mock context listener. */
-        AuthTokenContext.Listener mockListener = mock(AuthTokenContext.Listener.class);
-
-        /* Set new auth token. */
-        AuthTokenContext.getInstance().addListener(mockListener);
-        AuthTokenContext.getInstance().setAuthToken("mock-token", "mock-user", new Date(Long.MAX_VALUE));
-
-        /* Verify. */
-        verify(mTokenManager, times(0)).removeAllCachedTokens();
-    }
-
-    @Test
     public void buildAppCenterGetDbTokenBodyPayload() {
         String expectedPayload = "{\"partitions\":[\"test\"]}";
         String payload = TokenExchange.buildAppCenterGetDbTokenBodyPayload("test");
@@ -725,7 +675,7 @@ public class StorageTest extends AbstractStorageTest {
         mockStatic(TokenExchange.class);
         ServiceCall mockServiceCall = mock(ServiceCall.class);
         when(TokenExchange.getDbToken(anyString(), any(HttpClient.class), anyString(), anyString(), any(TokenExchange.TokenExchangeServiceCallback.class))).thenReturn(mockServiceCall);
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(PARTITION_NAME, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
         Storage.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
