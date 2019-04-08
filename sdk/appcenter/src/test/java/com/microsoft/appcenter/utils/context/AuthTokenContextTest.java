@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -109,7 +110,9 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called. */
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
-        verify(mockListener, times(1)).onNewUser(notNull(UserInformation.class));
+        ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
+        verify(mockListener, times(1)).onNewUser(captorArg.capture());
+        assertEquals("mock-user", captorArg.getValue().getAccountId());
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);

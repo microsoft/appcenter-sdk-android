@@ -47,6 +47,12 @@ public class AuthTokenContext {
     static final int TOKEN_HISTORY_LIMIT = 5;
 
     /**
+     * The minimum length of account Id.
+     */
+    @VisibleForTesting
+    static final int ACCOUNT_ID_LENGTH = 36;
+
+    /**
      * Unique instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -163,7 +169,8 @@ public class AuthTokenContext {
         for (Listener listener : mListeners) {
             listener.onNewAuthToken(authToken);
             if (isNewUser) {
-                UserInformation userInfo = homeAccountId == null ? null : new UserInformation(homeAccountId);
+                String accountId = homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
+                UserInformation userInfo = accountId == null ? null : new UserInformation(accountId);
                 listener.onNewUser(userInfo);
             }
         }
