@@ -1140,7 +1140,7 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
-        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedCallback.class));
     }
 
     @Test
@@ -1166,7 +1166,7 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null);
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
-        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedCallback.class));
     }
 
     @Test
@@ -1206,10 +1206,10 @@ public class IdentityTest extends AbstractIdentityTest {
 
             @Override
             public Void answer(InvocationOnMock invocationOnMock) {
-                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
+                ((PublicClientApplication.AccountsLoadedCallback) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
                 return null;
             }
-        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedCallback.class));
         Identity.signOut();
         verify(publicClientApplication).removeAccount(eq(account));
     }
@@ -1276,10 +1276,10 @@ public class IdentityTest extends AbstractIdentityTest {
 
             @Override
             public Void answer(InvocationOnMock invocationOnMock) {
-                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
+                ((PublicClientApplication.AccountsLoadedCallback) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
                 return null;
             }
-        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedCallback.class));
         Identity.signOut();
         verify(publicClientApplication, never()).removeAccount(eq(account));
     }
