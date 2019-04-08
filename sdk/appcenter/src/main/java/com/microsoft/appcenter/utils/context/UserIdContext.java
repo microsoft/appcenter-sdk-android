@@ -5,9 +5,15 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+
 import com.microsoft.appcenter.utils.AppCenterLog;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
@@ -39,6 +45,11 @@ public class UserIdContext {
     private String mUserId;
 
     /**
+     * Global listeners collection.
+     */
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -53,6 +64,24 @@ public class UserIdContext {
     @VisibleForTesting
     public static synchronized void unsetInstance() {
         sInstance = null;
+    }
+
+    /**
+     * Adds listener to user context.
+     *
+     * @param listener listener to be notified of changes.
+     */
+    public void addListener(@NonNull Listener listener) {
+        mListeners.add(listener);
+    }
+
+    /**
+     * Removes a specific listener.
+     *
+     * @param listener listener to be removed.
+     */
+    public void removeListener(@NonNull Listener listener) {
+        mListeners.remove(listener);
     }
 
     /**
@@ -126,5 +155,20 @@ public class UserIdContext {
      */
     public synchronized void setUserId(String userId) {
         mUserId = userId;
+
+        // TODO if mUserId != userId
+        // TODO move out from synchronized
+        /* Call listeners so that they can react on new token. */
+        for (Listener listener : mListeners) {
+            listener.onNewUserId(mUserId);
+        }
+    }
+
+    public interface Listener {
+
+        /**
+         *
+         */
+        void onNewUserId(String userId);
     }
 }

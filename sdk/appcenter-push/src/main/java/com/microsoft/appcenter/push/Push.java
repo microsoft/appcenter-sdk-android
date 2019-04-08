@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
@@ -115,6 +116,9 @@ public class Push extends AbstractAppCenterService {
      * Authorization listener for {@link AuthTokenContext}.
      */
     private AuthTokenContext.Listener mAuthListener;
+
+    // TODO use one object to listeners?
+    private UserIdContext.Listener mUserListener;
 
     /**
      * Init.
@@ -241,6 +245,7 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushToken the push token value
      */
+    @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
@@ -276,9 +281,11 @@ public class Push extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthListener);
+            UserIdContext.getInstance().addListener(mUserListener);
             registerPushToken();
         } else {
             AuthTokenContext.getInstance().removeListener(mAuthListener);
+            UserIdContext.getInstance().removeListener(mUserListener);
         }
     }
 
@@ -313,12 +320,24 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
+            // TODO check synchronized
+            // TODO post to background thread?
             public synchronized void onNewUser(String authToken) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }
             }
         };
+        mUserListener = new UserIdContext.Listener() {
+
+            @Override
+            public void onNewUserId(String userId) {
+                // TODO use userId
+                if (mLatestPushToken != null) {
+                    enqueuePushInstallationLog(mLatestPushToken);
+                }
+            }
+        }
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
