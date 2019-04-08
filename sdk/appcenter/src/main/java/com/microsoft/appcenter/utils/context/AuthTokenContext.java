@@ -47,7 +47,7 @@ public class AuthTokenContext {
     static final int TOKEN_HISTORY_LIMIT = 5;
 
     /**
-     * The minimum length of account Id.
+     * The Maximum length of account Id.
      */
     @VisibleForTesting
     static final int ACCOUNT_ID_LENGTH = 36;

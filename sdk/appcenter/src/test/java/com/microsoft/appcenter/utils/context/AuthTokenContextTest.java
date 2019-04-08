@@ -111,7 +111,7 @@ public class AuthTokenContextTest {
         /* Verify that listener is called. */
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
         ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
-        verify(mockListener, times(1)).onNewUser(captorArg.capture());
+        verify(mockListener).onNewUser(captorArg.capture());
         assertEquals("mock-user", captorArg.getValue().getAccountId());
 
         /* Verify that the returned token is the same. */
@@ -121,8 +121,8 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken(null, null, null);
 
         /* Verify that listener is called on empty token. */
-        verify(mockListener, times(1)).onNewAuthToken(isNull(String.class));
-        verify(mockListener, times(1)).onNewUser(isNull(UserInformation.class));
+         verify(mockListener).onNewAuthToken(isNull(String.class));
+        verify(mockListener).onNewUser(isNull(UserInformation.class));
         assertNull(mAuthTokenContext.getAuthToken());
 
         /* Remove listener. */
