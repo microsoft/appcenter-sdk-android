@@ -14,11 +14,11 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
-import com.microsoft.appcenter.storage.client.StorageHttpClientDecorator;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.exception.StorageException;
@@ -77,7 +77,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private StorageHttpClientDecorator mHttpClient;
+    private HttpClient mHttpClient;
 
     private LocalDocumentStorage mLocalDocumentStorage;
 
@@ -142,54 +142,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
-    }
-
-    /**
-     * Check whether offline mode is enabled or not.
-     *
-     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see AppCenterFuture
-     */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static boolean isOfflineModeEnabled() {
-        return getInstance().isOfflineModeEnabledInstance();
-    }
-
-    /**
-     * Enable or disable offline mode.
-     *
-     * @param offlineModeEnabled <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
-     */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
-    public static void setOfflineModeEnabled(boolean offlineModeEnabled) {
-        getInstance().setOfflineModeEnabledInstance(offlineModeEnabled);
-    }
-
-    /**
-     * Check whether offline mode is enabled or not.
-     *
-     * @return result being <code>true</code> if enabled, <code>false</code> otherwise.
-     * @see AppCenterFuture
-     */
-    private synchronized boolean isOfflineModeEnabledInstance() {
-        if (mHttpClient != null) {
-            return mHttpClient.isOfflineModeEnabled();
-        }
-        AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before checking if offline mode is enabled.");
-        return false;
-    }
-
-    /**
-     * Enable or disable offline mode.
-     *
-     * @param offlineMode <code>true</code> to simulate device being offline, <code>false</code> to go back to the original network state of the device.
-     */
-    private synchronized void setOfflineModeEnabledInstance(boolean offlineMode) {
-        if (mHttpClient != null) {
-            mHttpClient.setOfflineModeEnabled(offlineMode);
-        } else {
-            AppCenterLog.error(LOG_TAG, "AppCenter Storage must be started before setting offline mode.");
-        }
     }
 
     /**
@@ -287,7 +239,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = new StorageHttpClientDecorator(createHttpClient(context));
+        mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context);
         mAuthListener = new AbstractTokenContextListener() {
@@ -388,7 +340,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    Document<T> cachedDocument = mLocalDocumentStorage.read(appendAccountIdToPartitionName(partition), documentId, documentType, readOptions);
+                    Document<T> cachedDocument;
+                    String storedPartitionName = appendAccountIdToPartitionName(partition);
+                    if (storedPartitionName != null) {
+                        cachedDocument = mLocalDocumentStorage.read(appendAccountIdToPartitionName(partition), documentId, documentType, readOptions);
+                    } else {
+                        cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                    }
                     result.complete(cachedDocument);
                 }
             }, result, null);
@@ -514,7 +472,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    Document<T> createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(appendAccountIdToPartitionName(partition), documentId, document, documentType, writeOptions);
+                    Document<T> createdOrUpdatedDocument;
+                    String storedPartitionName = appendAccountIdToPartitionName(partition);
+                    if (storedPartitionName != null) {
+                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(appendAccountIdToPartitionName(partition), documentId, document, documentType, writeOptions);
+                    } else {
+                        createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                    }
                     result.complete(createdOrUpdatedDocument);
                 }
             }, result, null);
@@ -638,11 +602,16 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 @Override
                 public void run() {
-                    boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(appendAccountIdToPartitionName(partition), documentId);
-                    if (isWriteSucceed) {
-                        Storage.this.completeFuture(new Document<Void>(), result);
+                    String storedPartitionName = appendAccountIdToPartitionName(partition);
+                    if (storedPartitionName != null) {
+                        boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(storedPartitionName, documentId);
+                        if (isWriteSucceed) {
+                            Storage.this.completeFuture(new Document<Void>(), result);
+                        } else {
+                            Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+                        }
                     } else {
-                        Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+                        Storage.this.completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
                     }
                 }
             }, result, null);
@@ -833,9 +802,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
         if (result == null) {
             AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
+            return null;
         } else {
-            partitionName = result.partition();
+            return result.partition();
         }
-        return partitionName;
     }
 }
