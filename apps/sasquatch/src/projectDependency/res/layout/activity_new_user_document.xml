@@ -15,7 +15,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5sp"
-        android:text="@string/user_document_id"></TextView>
+        android:text="@string/user_document_id" />
 
     <EditText
         android:id="@+id/src_amount"
@@ -26,7 +26,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/user_document_content_label"></TextView>
+        android:text="@string/user_document_content_label" />
 
     <ScrollView
         android:layout_width="match_parent"

@@ -24,6 +24,7 @@ import android.widget.Spinner;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
+import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -40,6 +41,8 @@ public class StorageActivity extends AppCompatActivity {
     private ListView mListView;
 
     private ArrayAdapter<String> mAppDocumentListAdapter;
+
+    private ArrayList<String> mDocumentContents = new ArrayList<String>();
 
     private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
@@ -62,6 +65,7 @@ public class StorageActivity extends AppCompatActivity {
                 int listSize = documents.getCurrentPage().getItems().size();
                 for (int i = 0; i < listSize; i++) {
                     mAppDocumentListAdapter.add(documents.getCurrentPage().getItems().get(i).getId());
+                    mDocumentContents.add(Utils.getGson().toJson(documents.getCurrentPage().getItems().get(i).getDocument()));
                 }
             }
         });
@@ -88,9 +92,16 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                intent.putExtra("documentId", mAppDocumentListAdapter.getItem(position));
-                startActivity(intent);
+                switch (mStorageType) {
+                    case USER:
+                        break;
+                    case READONLY:
+                        Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
+                        intent.putExtra("documentId", mAppDocumentListAdapter.getItem(position));
+                        intent.putExtra("documentContent", mDocumentContents.get(position).toString());
+                        startActivity(intent);
+                        break;
+                }
             }
         });
 

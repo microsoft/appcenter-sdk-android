@@ -28,6 +28,8 @@ public class AppDocumentDetailActivity extends AppCompatActivity {
         mDocumentContents = findViewById(R.id.app_document_content);
         Intent intent = getIntent();
         String documentId = intent.getStringExtra("documentId");
+        String documentContents = intent.getStringExtra("documentContent");
         mDocumentId.setText(documentId);
+        mDocumentContents.setText(documentContents);
     }
 }
