@@ -25,6 +25,7 @@ import java.util.Random;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -501,6 +502,35 @@ public class DatabaseManagerAndroidTest {
         databaseManager.dropTable(secondTable);
         assertFalse(checkTableExists(databaseManager, firstTable));
         assertFalse(checkTableExists(databaseManager, secondTable));
+    }
+
+    @Test
+    public void testCreateWithUniquenessConstraint() {
+        String tableName = "table";
+
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-uniqueness-constraint", tableName, 1, mSchema, listener, new String[] {"COL_BOOLEAN", "COL_DOUBLE"});
+        assertTrue(checkTableExists(databaseManager, tableName));
+
+        ContentValues values1 = generateContentValues();
+        ContentValues values2 = generateContentValues();
+        values2.put("COL_BOOLEAN", values1.getAsBoolean("COL_BOOLEAN"));
+        values2.put("COL_DOUBLE", values1.getAsDouble("COL_DOUBLE"));
+
+        /* Insert new row. */
+        long result = databaseManager.replace(tableName, values1);
+        assertTrue(result > 0);
+        assertEquals(1L, databaseManager.getRowCount());
+//        Cursor cursor = databaseManager.getCursor(null, null, null, null);
+//        ContentValues row = databaseManager.nextValues(cursor);
+//        assertEquals(values1, row);
+//        assertNotEquals(values2, row);
+
+        /* Should replace first row, because they have the same values in the unique columns. */
+        result = databaseManager.replace(tableName, values2);
+        assertEquals(1L, databaseManager.getRowCount());
+        assertTrue(result > 0);
     }
 
     @Test

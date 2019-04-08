@@ -27,6 +27,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -39,6 +40,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+
+import java.util.Random;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -261,5 +264,11 @@ public class DatabaseManagerTest {
 
         /* When we put an entry, it will fail to query and thus not replacing. */
         assertEquals(-1, databaseManager.replace("table", mock(ContentValues.class), "someId"));
+    }
+
+    @Test
+    public void createTable()
+    {
+
     }
 }
