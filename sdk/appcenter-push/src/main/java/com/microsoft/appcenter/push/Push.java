@@ -246,10 +246,10 @@ public class Push extends AbstractAppCenterService {
      * @param pushToken the push token value
      */
     @WorkerThread
-    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+    private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
-        log.setUserId(UserIdContext.getInstance().getUserId());
+        log.setUserId(userId);
         mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
     }
 
@@ -266,7 +266,7 @@ public class Push extends AbstractAppCenterService {
 
                 @Override
                 public void run() {
-                    enqueuePushInstallationLog(pushToken);
+                    enqueuePushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
                 }
             });
         }
@@ -320,11 +320,9 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            // TODO check synchronized
-            // TODO post to background thread?
             public synchronized void onNewUser(String authToken) {
                 if (mLatestPushToken != null) {
-                    enqueuePushInstallationLog(mLatestPushToken);
+                    enqueuePushInstallationLog(mLatestPushToken, UserIdContext.getInstance().getUserId());
                 }
             }
         };
@@ -332,12 +330,11 @@ public class Push extends AbstractAppCenterService {
 
             @Override
             public void onNewUserId(String userId) {
-                // TODO use userId
                 if (mLatestPushToken != null) {
-                    enqueuePushInstallationLog(mLatestPushToken);
+                    enqueuePushInstallationLog(mLatestPushToken, userId);
                 }
             }
-        }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
