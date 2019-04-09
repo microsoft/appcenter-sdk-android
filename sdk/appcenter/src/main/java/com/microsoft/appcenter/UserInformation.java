@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter;
 
 /**
  * User information.
@@ -21,7 +21,7 @@ public class UserInformation {
      *
      * @param accountId User account identifier.
      */
-    UserInformation(String accountId) {
+    public UserInformation(String accountId) {
         mAccountId = accountId;
     }
 
