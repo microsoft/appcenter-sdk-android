@@ -53,7 +53,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1229,7 +1228,7 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
-        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        verify(publicClientApplication, never()).getAccount(anyString(), anyString());
     }
 
     @Test
@@ -1255,7 +1254,7 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null);
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         Identity.signOut();
-        verify(publicClientApplication, never()).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
+        verify(publicClientApplication, never()).getAccount(anyString(), anyString());
     }
 
     @Test
@@ -1284,21 +1283,11 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         start(identity);
-        final List<IAccount> accountsList = new ArrayList<>();
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
         when(accountIdentifier.getIdentifier()).thenReturn(mockHomeAccountId);
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(account);
-        accountsList.add(account);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
-                return null;
-            }
-        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
         Identity.signOut();
         verify(publicClientApplication).removeAccount(eq(account));
     }
@@ -1355,20 +1344,10 @@ public class IdentityTest extends AbstractIdentityTest {
         start(identity);
         when(mAuthTokenContext.getHomeAccountId()).thenReturn("5");
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
-        final List<IAccount> accountsList = new ArrayList<>();
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
         when(accountIdentifier.getIdentifier()).thenReturn("10");
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
-        accountsList.add(account);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-                ((PublicClientApplication.AccountsLoadedListener) invocationOnMock.getArguments()[0]).onAccountsLoaded(accountsList);
-                return null;
-            }
-        }).when(publicClientApplication).getAccounts(any(PublicClientApplication.AccountsLoadedListener.class));
         Identity.signOut();
         verify(publicClientApplication, never()).removeAccount(eq(account));
     }
