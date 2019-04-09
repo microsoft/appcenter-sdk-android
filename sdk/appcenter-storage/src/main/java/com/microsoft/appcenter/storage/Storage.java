@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -241,6 +242,24 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         return new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition));
     }
 
+    @Override
+    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
+        mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
+        mHttpClient = createHttpClient(context);
+        mAppSecret = appSecret;
+        mLocalDocumentStorage = new LocalDocumentStorage(context);
+        mAuthListener = new AbstractTokenContextListener() {
+
+            @Override
+            public void onNewUser(UserInformation userInfo) {
+                if (userInfo == null) {
+                    TokenManager.getInstance().removeAllCachedTokens();
+                }
+            }
+        };
+        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
+    }
+
     /**
      * Called whenever the network state is updated.
      *
@@ -304,25 +323,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @Override
     protected String getLoggerTag() {
         return LOG_TAG;
-    }
-
-    @Override
-    public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
-        mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = createHttpClient(context);
-        mAppSecret = appSecret;
-        mLocalDocumentStorage = new LocalDocumentStorage(context);
-        mAuthListener = new AbstractTokenContextListener() {
-
-            @Override
-            public void onNewUser(String authToken) {
-                if (authToken == null) {
-                    TokenManager.getInstance().removeAllCachedTokens();
-                }
-                mLocalDocumentStorage.createUserTable();
-            }
-        };
-        super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
     }
 
     private synchronized <T> void callCosmosDbReadApi(
@@ -756,7 +756,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @WorkerThread
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.writeOnline((Document)value, new WriteOptions());
+        mLocalDocumentStorage.writeOnline((Document) value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
