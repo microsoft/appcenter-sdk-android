@@ -26,6 +26,8 @@ import java.util.Calendar;
 import java.util.List;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Constants.DATABASE;
+import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.USER;
@@ -101,7 +103,7 @@ class LocalDocumentStorage {
     private final DatabaseManager mDatabaseManager;
 
     LocalDocumentStorage(Context context, String userTable) {
-        mDatabaseManager = new DatabaseManager(context, com.microsoft.appcenter.Constants.DATABASE, com.microsoft.appcenter.Constants.READONLY_TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener());
+        mDatabaseManager = new DatabaseManager(context, DATABASE, READONLY_TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener());
         if (userTable != null) {
             createTableIfDoesNotExist(userTable);
         }
@@ -110,7 +112,7 @@ class LocalDocumentStorage {
     /**
      * Creates a table for storing user partition documents.
      */
-    public void createTableIfDoesNotExist(String userTable) {
+    void createTableIfDoesNotExist(String userTable) {
         mDatabaseManager.createTable(userTable, SCHEMA);
     }
 

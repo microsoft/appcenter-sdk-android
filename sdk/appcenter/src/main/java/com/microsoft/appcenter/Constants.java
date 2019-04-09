@@ -7,7 +7,6 @@ package com.microsoft.appcenter;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -51,19 +50,16 @@ public class Constants {
     /**
      * Database name.
      */
-    @VisibleForTesting
     public static final String DATABASE = "com.microsoft.appcenter.documents";
 
     /**
      * Readonly table name.
      */
-    @VisibleForTesting
     public static final String READONLY_TABLE = "app_documents";
 
     /**
      * User-specific table name format.
      */
-    @VisibleForTesting
     public static final String USER_TABLE_FORMAT = "user_%s_documents";
 
     /**

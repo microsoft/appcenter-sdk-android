@@ -89,7 +89,7 @@ public class LocalDocumentStorageTest {
         mCursor = mock(Cursor.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
 
-        mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class), mUserTableName);
+        mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class), null);
     }
 
     @Test

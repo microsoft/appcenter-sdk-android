@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.storage.models.Document;
 
 import org.junit.Test;
@@ -40,15 +39,5 @@ public class UtilsTest {
         String partition = "user";
         String partitionNameWithAccountId = partition + "-" + "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
         assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
-    }
-
-    @Test
-    public void logApiCallFailureWithHttpException() {
-        Utils.logApiCallFailure(new HttpException(500, "A"));
-    }
-
-    @Test
-    public void logApiCallFailureWithNonHttpException() {
-        Utils.logApiCallFailure(new Exception("A"));
     }
 }
