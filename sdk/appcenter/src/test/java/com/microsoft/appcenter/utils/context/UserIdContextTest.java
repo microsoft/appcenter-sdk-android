@@ -131,7 +131,7 @@ public class UserIdContextTest {
     }
 
     @Test
-    public void addAndRemoveListener() {
+    public void addAndRemoveListeners() {
         String mockUserId = "userId";
         UserIdContext userIdContext = new UserIdContext();
         UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
@@ -143,7 +143,7 @@ public class UserIdContextTest {
     }
 
     @Test
-    public void removeNewListener() {
+    public void noListeners() {
         String mockUserId = "userId";
         UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
         UserIdContext userIdContext = new UserIdContext();
