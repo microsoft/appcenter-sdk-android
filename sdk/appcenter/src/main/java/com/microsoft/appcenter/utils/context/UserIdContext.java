@@ -8,7 +8,6 @@ package com.microsoft.appcenter.utils.context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.util.Collections;
@@ -24,30 +23,26 @@ import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 public class UserIdContext {
 
     /**
-     * Custom App User ID prefix for Common Schema.
-     */
-    private static final String CUSTOM_PREFIX = "c";
-
-    /**
      * Maximum allowed length for user identifier for App Center server.
      */
     @VisibleForTesting
     public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
-
+    /**
+     * Custom App User ID prefix for Common Schema.
+     */
+    private static final String CUSTOM_PREFIX = "c";
     /**
      * Unique instance.
      */
     private static UserIdContext sInstance;
-
-    /**
-     * Current user identifier.
-     */
-    private String mUserId;
-
     /**
      * Global listeners collection.
      */
     private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
+    /**
+     * Current user identifier.
+     */
+    private String mUserId;
 
     /**
      * Get unique instance.
@@ -64,24 +59,6 @@ public class UserIdContext {
     @VisibleForTesting
     public static synchronized void unsetInstance() {
         sInstance = null;
-    }
-
-    /**
-     * Adds listener to user context.
-     *
-     * @param listener listener to be notified of changes.
-     */
-    public void addListener(@NonNull Listener listener) {
-        mListeners.add(listener);
-    }
-
-    /**
-     * Removes a specific listener.
-     *
-     * @param listener listener to be removed.
-     */
-    public void removeListener(@NonNull Listener listener) {
-        mListeners.remove(listener);
     }
 
     /**
@@ -140,6 +117,24 @@ public class UserIdContext {
     }
 
     /**
+     * Adds listener to user context.
+     *
+     * @param listener listener to be notified of changes.
+     */
+    public void addListener(@NonNull Listener listener) {
+        mListeners.add(listener);
+    }
+
+    /**
+     * Removes a specific listener.
+     *
+     * @param listener listener to be removed.
+     */
+    public void removeListener(@NonNull Listener listener) {
+        mListeners.remove(listener);
+    }
+
+    /**
      * Get current identifier.
      *
      * @return user identifier.
@@ -153,21 +148,37 @@ public class UserIdContext {
      *
      * @param userId user identifier.
      */
-    public synchronized void setUserId(String userId) {
-        mUserId = userId;
+    public void setUserId(String userId) {
+        if (isUserIdChanged(userId)) {
+            return;
+        }
 
-        // TODO if mUserId != userId
-        // TODO move out from synchronized
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewUserId(mUserId);
         }
     }
 
+    /**
+     * Check user identifier.
+     *
+     * @param userId user identifier.
+     * @return true if equals.
+     */
+    private synchronized boolean isUserIdChanged(String userId) {
+        if (mUserId != null && mUserId.equals(userId)) {
+            return true;
+        }
+        mUserId = userId;
+        return false;
+    }
+
     public interface Listener {
 
         /**
+         * Send new user id.
          *
+         * @param userId user identifier.
          */
         void onNewUserId(String userId);
     }
