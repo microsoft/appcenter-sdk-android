@@ -347,7 +347,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     }
                 } else {
 
-                    /* We cannot find the the partition from local cached token, fetch from remote, also build the wrapped error in case of network disconnected. */
+                    /* We cannot find the the partition from local cached token, we will fallback to call tokenexchange service and then call cosmosdb, also build the wrapped error in case of network disconnected. */
                     cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
                     fetchRemote = true;
                 }

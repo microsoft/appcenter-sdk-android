@@ -62,6 +62,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
@@ -499,21 +500,37 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readOnLineWhenLocalStorageContainsNullOperation() {
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
         Document<String> outDatedDocument = new Document<>();
+        Document<String> expectedDocument = new Document<>("123", PARTITION, DOCUMENT_ID);
+        final String expectedResponse = new Gson().toJson(expectedDocument);
         when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
-        Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class);
+        when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
         verify(mHttpClient);
+        assertNotNull(document.getDocument());
+        assertEquals(expectedDocument.getDocument(), document.getDocument());
     }
 
     @Test
     public void readWhenLocalStorageContainsCreateOperation() {
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
-        Document<String> createdDocument = new Document<>();
+        Document<String> createdDocument = new Document<>("123", PARTITION, DOCUMENT_ID);
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
         when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
-        Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class);
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
+        assertEquals(createdDocument.getDocument(), document.getDocument());
     }
 
     @Test
