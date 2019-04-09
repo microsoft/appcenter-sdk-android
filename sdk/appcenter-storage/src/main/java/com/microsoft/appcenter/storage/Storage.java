@@ -329,6 +329,69 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     @WorkerThread
+    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
+            final String partition,
+            final String documentId,
+            final Class<T> documentType,
+            final ReadOptions readOptions) {
+        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                Document<T> cachedDocument;
+                boolean fetchRemote = false;
+                String storedPartitionName = appendAccountIdToPartitionName(partition);
+                final String table = Utils.getTableName(partition);
+                if (storedPartitionName != null) {
+                    cachedDocument = mLocalDocumentStorage.read(table, storedPartitionName, documentId, documentType, readOptions);
+
+                    /* If we found the document from local storage. check if we need to call Cosmos DB based on pending operation. */
+                    if (cachedDocument.getDocumentError() == null) {
+
+                        /* Found the document with null pending operation, trying to refresh the document based on the network connected situation. */
+                        if (cachedDocument.getPendingOperation() == null) {
+                            fetchRemote = true;
+                        } else {
+                            if (cachedDocument.getPendingOperation().equals(Constants.PENDING_OPERATION_DELETE_VALUE)) {
+                                cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
+                            }
+                        }
+                    } else {
+
+                        /* In this case the local storage may have failed with a SQLite exception or the document has expired or the document is not found, make the Cosmos DB call to get it. */
+                        fetchRemote = true;
+                    }
+                } else {
+
+                    /* We cannot find the the partition from local cached token, we will fallback to call tokenexchange service and then call cosmosdb, also build the wrapped error in case of network disconnected. */
+                    cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                    fetchRemote = true;
+                }
+                if (fetchRemote && mNetworkStateHelper.isNetworkConnected()) {
+                    getTokenAndCallCosmosDbApi(
+                            partition,
+                            result,
+                            new TokenExchangeServiceCallback() {
+
+                                @Override
+                                public void callCosmosDb(TokenResult tokenResult) {
+                                    callCosmosDbReadApi(table, tokenResult, documentId, documentType, result);
+                                }
+
+                                @Override
+                                public void completeFuture(Exception e) {
+                                    Storage.this.completeFuture(e, result);
+                                }
+                            });
+                } else {
+                    result.complete(cachedDocument);
+                }
+            }
+        }, result, null);
+        return result;
+    }
+
     private synchronized <T> void callCosmosDbReadApi(
             final String table,
             final TokenResult tokenResult,
@@ -355,51 +418,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
-    }
-
-    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
-            final String partition,
-            final String documentId,
-            final Class<T> documentType,
-            final ReadOptions readOptions) {
-        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartitionName(partition, result)) {
-            return result;
-        }
-        postAsyncGetter(new Runnable() {
-
-            @Override
-            public void run() {
-                final String table = Utils.getTableName(partition);
-                if (mNetworkStateHelper.isNetworkConnected()) {
-                    getTokenAndCallCosmosDbApi(
-                            partition,
-                            result,
-                            new TokenExchangeServiceCallback() {
-
-                                @Override
-                                public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbReadApi(table, tokenResult, documentId, documentType, result);
-                                }
-
-                                @Override
-                                public void completeFuture(Exception e) {
-                                    Storage.this.completeFuture(e, result);
-                                }
-                            });
-                } else {
-                    Document<T> cachedDocument;
-                    String storedPartitionName = appendAccountIdToPartitionName(partition);
-                    if (storedPartitionName != null) {
-                        cachedDocument = mLocalDocumentStorage.read(table, storedPartitionName, documentId, documentType, readOptions);
-                    } else {
-                        cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
-                    }
-                    result.complete(cachedDocument);
-                }
-            }
-        }, result, null);
-        return result;
     }
 
     private synchronized <T> void callCosmosDbListApi(

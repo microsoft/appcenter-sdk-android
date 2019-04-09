@@ -167,8 +167,9 @@ class LocalDocumentStorage {
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
-            write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
             document.setIsFromCache(true);
+            document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+            write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
             return document;
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");

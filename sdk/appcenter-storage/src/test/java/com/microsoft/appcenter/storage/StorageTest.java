@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
@@ -60,6 +61,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
@@ -476,6 +478,7 @@ public class StorageTest extends AbstractStorageTest {
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
         Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
@@ -484,6 +487,53 @@ public class StorageTest extends AbstractStorageTest {
                 eq(DOCUMENT_ID),
                 eq(TestDocument.class),
                 any(ReadOptions.class));
+    }
+
+    @Test
+    public void readWhenLocalStorageContainsDeletePendingOperation() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> deletedDocument = new Document<>();
+        deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
+        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
+        assertNotNull(document.getDocumentError());
+        assertTrue(document.getDocumentError().getError() instanceof StorageException);
+    }
+
+    @Test
+    public void readOnLineWhenLocalStorageContainsNullOperation() {
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> outDatedDocument = new Document<>();
+        Document<String> expectedDocument = new Document<>("123", PARTITION, DOCUMENT_ID);
+        final String expectedResponse = new Gson().toJson(expectedDocument);
+        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
+        when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
+        verify(mHttpClient);
+        assertNotNull(document.getDocument());
+        assertEquals(expectedDocument.getDocument(), document.getDocument());
+    }
+
+    @Test
+    public void readWhenLocalStorageContainsCreateOperation() {
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> createdDocument = new Document<>("123", PARTITION, DOCUMENT_ID);
+        createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
+        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
+        verifyNoMoreInteractions(mHttpClient);
+        assertEquals(createdDocument.getDocument(), document.getDocument());
     }
 
     @Test
@@ -695,6 +745,7 @@ public class StorageTest extends AbstractStorageTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
