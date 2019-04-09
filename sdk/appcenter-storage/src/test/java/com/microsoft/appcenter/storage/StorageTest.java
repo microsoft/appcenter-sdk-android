@@ -477,6 +477,7 @@ public class StorageTest extends AbstractStorageTest {
         Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
+                eq(mUserTableName),
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(TestDocument.class),
@@ -492,7 +493,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        verify(mLocalDocumentStorage, times(1)).writeOnline(refEq(testCosmosDocument), refEq(writeOptions));
+        verify(mLocalDocumentStorage, times(1)).writeOnline(eq(mUserTableName), refEq(testCosmosDocument), refEq(writeOptions));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -513,6 +514,7 @@ public class StorageTest extends AbstractStorageTest {
         Storage.create(PARTITION_NAME, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
+                eq(mUserTableName),
                 eq(PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument),
@@ -563,7 +565,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
-        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(mUserTableName), eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
@@ -611,10 +613,10 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(mLocalDocumentStorage.markForDeletion(anyString(), anyString())).thenReturn(true);
+        when(mLocalDocumentStorage.markForDeletion(eq(mUserTableName), anyString(), anyString())).thenReturn(true);
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
         AppCenterFuture<Document<Void>> result = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
-        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(mUserTableName), eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getDocumentError());
@@ -624,9 +626,9 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.markForDeletion(anyString(), anyString())).thenReturn(false);
+        when(mLocalDocumentStorage.markForDeletion(eq(mUserTableName), anyString(), anyString())).thenReturn(false);
         AppCenterFuture<Document<Void>> result = Storage.delete(PARTITION_NAME, DOCUMENT_ID);
-        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(mUserTableName), eq(PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(result.get().getDocumentError());

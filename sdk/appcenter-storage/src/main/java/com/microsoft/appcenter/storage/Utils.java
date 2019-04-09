@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -15,9 +17,14 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.microsoft.appcenter.Constants.READONLY_TABLE;
+import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
+import static com.microsoft.appcenter.storage.Constants.USER;
 
 public class Utils {
 
@@ -95,5 +102,21 @@ public class Utils {
 
     public static Gson getGson() {
         return sGson;
+    }
+
+    @NonNull
+    public static String getTableName(String partition) {
+        if (USER.equals(partition)) {
+            return getUserTableName();
+        }
+        return READONLY_TABLE;
+    }
+
+    public static String getUserTableName() {
+        return getUserTableName(AuthTokenContext.getInstance().getAccountId());
+    }
+
+    public static String getUserTableName(String accountId) {
+        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
 }

@@ -121,6 +121,8 @@ abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
+    protected static String mUserTableName = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -214,7 +216,7 @@ abstract public class AbstractStorageTest {
         /* Mock auth context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
-        when(mAuthTokenContext.getAccountId()).thenReturn("12345");
+        when(mAuthTokenContext.getAccountId()).thenReturn(AbstractStorageTest.ACCOUNT_ID);
     }
 
     @NonNull

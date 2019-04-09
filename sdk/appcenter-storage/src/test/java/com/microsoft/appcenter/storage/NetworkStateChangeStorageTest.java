@@ -13,6 +13,7 @@ import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 
 import org.json.JSONException;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -36,18 +37,24 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
 public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
+    @Before
+    public void setUpAuth() {
+        setUpAuthContext();
+    }
+
     @Mock
     private DataStoreEventListener mDataStoreEventListener;
 
     @Test
     public void pendingCreateOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -84,12 +91,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingCreateOperationSuccessWithNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 PENDING_OPERATION_CREATE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -123,12 +131,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final String document = "document";
         final PendingOperation pendingOperation =
                 new PendingOperation(
+                        mUserTableName,
                         operation,
                         PARTITION,
                         DOCUMENT_ID,
                         document,
                         BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -163,9 +172,10 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void unsupportedPendingOperation() {
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(new PendingOperation(
+                            mUserTableName,
                             "Order a coffee",
                             PARTITION,
                             DOCUMENT_ID,
@@ -197,12 +207,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     private void verifyTokenExchangeCallFails(String operation) throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 operation,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -224,12 +235,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -258,12 +270,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationWithConflict() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -291,12 +304,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationWithConflictNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
                 PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(mUserTableName)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
