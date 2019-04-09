@@ -20,6 +20,7 @@ import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -322,7 +323,7 @@ public class Push extends AbstractAppCenterService {
             @Override
             // TODO check synchronized
             // TODO post to background thread?
-            public synchronized void onNewUser(String authToken) {
+            public synchronized void onNewUser(UserInformation userInfo) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }
