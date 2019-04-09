@@ -20,13 +20,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -508,8 +506,7 @@ public class DatabaseManagerAndroidTest {
 
     @Test
     public void testCreateWithUniquenessConstraint() {
-        String tableName = "tablename";
-
+        String tableName = "myTable";
         ContentValues content1 = new ContentValues();
         ContentValues content2 = new ContentValues();
         String colStr = "colStr";
@@ -539,7 +536,7 @@ public class DatabaseManagerAndroidTest {
         assertEquals(true, row.getAsBoolean(colBoolean));
 
         /* Should replace first row because they have the same values in the unique columns. */
-        result = databaseManager.replace(tableName, content2);
+        result = databaseManager.replace(tableName, content2, colInt, colBoolean);
         assertTrue(result > 0);
         assertEquals(1L, databaseManager.getRowCount());
         cursor = databaseManager.getCursor(null, null, null, null);
