@@ -18,10 +18,13 @@
         android:text="@string/user_document_id" />
 
     <EditText
-        android:id="@+id/src_amount"
+        android:id="@+id/user_document_id"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/user_document_id_reminder" />
+        android:autofillHints="no"
+        android:hint="@string/user_document_id_reminder"
+        android:inputType="text"
+        tools:targetApi="o" />
 
     <TextView
         android:layout_width="fill_parent"
