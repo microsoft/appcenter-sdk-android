@@ -367,7 +367,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     Storage.this.completeFuture(e, result);
                                 }
                             });
-
                 } else {
                     result.complete(cachedDocument);
                 }
