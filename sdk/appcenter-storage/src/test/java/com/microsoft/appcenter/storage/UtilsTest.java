@@ -43,7 +43,12 @@ public class UtilsTest {
     }
 
     @Test
-    public void logApiCallFailure() {
+    public void logApiCallFailureWithHttpException() {
         Utils.logApiCallFailure(new HttpException(500, "A"));
+    }
+
+    @Test
+    public void logApiCallFailureWithNonHttpException() {
+        Utils.logApiCallFailure(new Exception("A"));
     }
 }
