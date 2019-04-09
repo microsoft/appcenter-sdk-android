@@ -62,6 +62,7 @@ public class LocalDocumentStorageTest {
     private static final String PARTITION = "partition";
 
     private static final String DOCUMENT_ID = "id";
+
     private static final String USER_ID = "12345";
 
     @Rule
@@ -93,7 +94,6 @@ public class LocalDocumentStorageTest {
         String tableName = LocalDocumentStorage.getTableName(Constants.USER);
         assertEquals(String.format(LocalDocumentStorage.USER_TABLE_FORMAT, USER_ID), tableName);
     }
-
 
     @Test
     public void getTableNameWithReadonlyPartitionName() {

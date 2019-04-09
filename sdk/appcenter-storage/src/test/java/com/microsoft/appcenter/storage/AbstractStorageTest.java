@@ -210,6 +210,7 @@ abstract public class AbstractStorageTest {
     }
 
     void setUpAuthContext() {
+
         /* Mock auth context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);

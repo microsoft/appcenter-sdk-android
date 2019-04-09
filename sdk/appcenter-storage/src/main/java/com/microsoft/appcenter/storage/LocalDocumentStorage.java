@@ -249,6 +249,7 @@ class LocalDocumentStorage {
 
     /**
      * Deletes the specified document from the cache.
+     *
      * @param pendingOperation Pending operation to delete.
      */
     void deletePendingOperation(PendingOperation pendingOperation) {
@@ -260,8 +261,10 @@ class LocalDocumentStorage {
     }
 
     /**
+     * Validate partition name.
+     *
      * @param partition name.
-     * @return true if the partition is supported, false otherwise
+     * @return true if the partition is supported, false otherwise.
      */
     static boolean isValidPartitionName(String partition) {
         return READONLY.equals(partition) || USER.equals(partition);
@@ -270,8 +273,8 @@ class LocalDocumentStorage {
     void updatePendingOperation(PendingOperation operation) {
 
         /*
-            Update the document in cache (if expiration_time still valid otherwise, remove the document),
-            clear the pending_operation column, update etag, download_time and document columns
+         * Update the document in cache (if expiration_time still valid otherwise, remove the document),
+         * clear the pending_operation column, update etag, download_time and document columns.
          */
         long now = Calendar.getInstance().getTimeInMillis();
         if (operation.getExpirationTime() <= now) {
