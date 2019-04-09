@@ -32,14 +32,17 @@ public class UserIdContext {
      * Custom App User ID prefix for Common Schema.
      */
     private static final String CUSTOM_PREFIX = "c";
+    
     /**
      * Unique instance.
      */
     private static UserIdContext sInstance;
+    
     /**
      * Global listeners collection.
      */
     private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
+    
     /**
      * Current user identifier.
      */
