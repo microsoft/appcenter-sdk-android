@@ -508,7 +508,7 @@ public class DatabaseManagerAndroidTest {
 
     @Test
     public void testCreateWithUniquenessConstraint() {
-        String tableName = "firstTable";
+        String tableName = "tablename";
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
@@ -527,21 +527,42 @@ public class DatabaseManagerAndroidTest {
         Cursor cursor = databaseManager.getCursor(null, null, null, null);
         ContentValues row = databaseManager.nextValues(cursor);
         assertNotNull(row);
-        assertEquals(values1.getAsString("COL_STRING"), row.getAsString("COL_STRING"));
-        assertEquals(values1.getAsByte("COL_BYTE"), row.getAsByte("COL_BYTE"));
-        assertEquals(values1.getAsShort("COL_SHORT"), row.getAsShort("COL_SHORT"));
-        assertEquals(values1.getAsInteger("COL_INTEGER"), row.getAsInteger("COL_INTEGER"));
-        assertEquals(values1.getAsLong("COL_LONG"), row.getAsLong("COL_LONG"));
-        assertEquals(values1.getAsFloat("COL_FLOAT"), row.getAsFloat("COL_FLOAT"));
-        assertEquals(values1.getAsDouble("COL_DOUBLE"), row.getAsDouble("COL_DOUBLE"));
-        assertEquals(values1.getAsBoolean("COL_BOOLEAN"), row.getAsBoolean("COL_BOOLEAN"));
-        assertTrue(Arrays.equals(values1.getAsByteArray("COL_BYTE_ARRAY"), row.getAsByteArray("COL_BYTE_ARRAY")));
-        assertNotEquals(values2, row);
+        checkRowsAreEqual(values1, row);
+        checkRowsAreDifferent(values2, row);
 
         /* Should replace first row, because they have the same values in the unique columns. */
         result = databaseManager.replace(tableName, values2);
-        assertEquals(1L, databaseManager.getRowCount());
         assertTrue(result > 0);
+        assertEquals(1L, databaseManager.getRowCount());
+        cursor = databaseManager.getCursor(null, null, null, null);
+        row = databaseManager.nextValues(cursor);
+        assertNotNull(row);
+        checkRowsAreDifferent(values1, row);
+        checkRowsAreEqual(values2, row);
+    }
+
+    private void checkRowsAreDifferent(ContentValues expected, ContentValues actual) {
+        assertNotEquals(expected.getAsString("COL_STRING"), actual.getAsString("COL_STRING"));
+        assertNotEquals(expected.getAsByte("COL_BYTE"), actual.getAsByte("COL_BYTE"));
+        assertNotEquals(expected.getAsShort("COL_SHORT"), actual.getAsShort("COL_SHORT"));
+        assertNotEquals(expected.getAsInteger("COL_INTEGER"), actual.getAsInteger("COL_INTEGER"));
+        assertNotEquals(expected.getAsLong("COL_LONG"), actual.getAsLong("COL_LONG"));
+        assertNotEquals(expected.getAsFloat("COL_FLOAT"), actual.getAsFloat("COL_FLOAT"));
+        assertEquals(expected.getAsDouble("COL_DOUBLE"), actual.getAsDouble("COL_DOUBLE"));
+        assertEquals(expected.getAsBoolean("COL_BOOLEAN"), actual.getAsBoolean("COL_BOOLEAN"));
+        assertFalse(Arrays.equals(expected.getAsByteArray("COL_BYTE_ARRAY"), actual.getAsByteArray("COL_BYTE_ARRAY")));
+    }
+
+    private void checkRowsAreEqual(ContentValues expected, ContentValues actual) {
+        assertEquals(expected.getAsString("COL_STRING"), actual.getAsString("COL_STRING"));
+        assertEquals(expected.getAsByte("COL_BYTE"), actual.getAsByte("COL_BYTE"));
+        assertEquals(expected.getAsShort("COL_SHORT"), actual.getAsShort("COL_SHORT"));
+        assertEquals(expected.getAsInteger("COL_INTEGER"), actual.getAsInteger("COL_INTEGER"));
+        assertEquals(expected.getAsLong("COL_LONG"), actual.getAsLong("COL_LONG"));
+        assertEquals(expected.getAsFloat("COL_FLOAT"), actual.getAsFloat("COL_FLOAT"));
+        assertEquals(expected.getAsDouble("COL_DOUBLE"), actual.getAsDouble("COL_DOUBLE"));
+        assertEquals(expected.getAsBoolean("COL_BOOLEAN"), actual.getAsBoolean("COL_BOOLEAN"));
+        assertTrue(Arrays.equals(expected.getAsByteArray("COL_BYTE_ARRAY"), actual.getAsByteArray("COL_BYTE_ARRAY")));
     }
 
     @Test
