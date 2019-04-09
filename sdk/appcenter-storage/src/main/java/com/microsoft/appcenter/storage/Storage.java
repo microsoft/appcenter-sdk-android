@@ -391,7 +391,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     Document<T> cachedDocument;
                     String storedPartitionName = appendAccountIdToPartitionName(partition);
                     if (storedPartitionName != null) {
-                        cachedDocument = mLocalDocumentStorage.read(table, appendAccountIdToPartitionName(partition), documentId, documentType, readOptions);
+                        cachedDocument = mLocalDocumentStorage.read(table, storedPartitionName, documentId, documentType, readOptions);
                     } else {
                         cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
                     }
@@ -723,12 +723,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         boolean isWriteSucceed =
                                 mLocalDocumentStorage.markForDeletion(table, storedPartitionName, documentId);
                         if (isWriteSucceed) {
-                            Storage.this.completeFuture(new Document<Void>(), result);
+                            completeFuture(new Document<Void>(), result);
                         } else {
-                            Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+                            completeFuture(new StorageException("Failed to write to cache."), result);
                         }
                     } else {
-                        Storage.this.completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
+                        completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
                     }
                 }
             }
@@ -739,7 +739,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private <T> boolean isInvalidPartitionName(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
-            Storage.this.completeFuture(getInvalidPartitionStorageException(partition), result);
+            completeFuture(getInvalidPartitionStorageException(partition), result);
         }
         return invalidPartitionName;
     }
@@ -773,8 +773,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
-                String etag = Utils.getEtag(cosmosDbResponsePayload);
-                pendingOperation.setEtag(etag);
+                String eTag = Utils.getEtag(cosmosDbResponsePayload);
+                pendingOperation.setEtag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
                 DataStoreEventListener eventListener = mEventListener;
                 if (eventListener != null) {
@@ -783,7 +783,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             new DocumentMetadata(
                                     pendingOperation.getPartition(),
                                     pendingOperation.getDocumentId(),
-                                    etag),
+                                    eTag),
                             null);
                 }
                 mLocalDocumentStorage.updatePendingOperation(pendingOperation);

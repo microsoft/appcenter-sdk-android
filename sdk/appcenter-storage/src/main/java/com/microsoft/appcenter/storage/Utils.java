@@ -93,7 +93,7 @@ public class Utils {
         }
     }
 
-    public static String removeAccountIdFromPartitionName(String partition) {
+    static String removeAccountIdFromPartitionName(String partition) {
         if (partition.equals(Constants.READONLY)) {
             return partition;
         }
@@ -105,18 +105,18 @@ public class Utils {
     }
 
     @NonNull
-    public static String getTableName(String partition) {
+    static String getTableName(String partition) {
         if (USER.equals(partition)) {
             return getUserTableName();
         }
         return READONLY_TABLE;
     }
 
-    public static String getUserTableName() {
+    static String getUserTableName() {
         return getUserTableName(AuthTokenContext.getInstance().getAccountId());
     }
 
-    public static String getUserTableName(String accountId) {
+    static String getUserTableName(String accountId) {
         return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
 }
