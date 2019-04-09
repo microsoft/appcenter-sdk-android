@@ -26,6 +26,8 @@ public final class Constants {
 
     public static final String TIMESTAMP_FIELD_NAME = "_ts";
 
+    public static final int PARTITION_KEY_SUFFIX_LENGTH = 37;
+
     /**
      * Pending operation CREATE value.
      */
@@ -70,7 +72,7 @@ public final class Constants {
      * User partition.
      * An authenticated user can read/write documents in this partition.
      */
-    public static String USER = "user-{%s}";
+    public static String USER = "user";
 
     /**
      * Readonly partition.

@@ -582,7 +582,17 @@ public class Identity extends AbstractAppCenterService {
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 Date expiresOn = authenticationResult.getExpiresOn();
-                AuthTokenContext.getInstance().setAuthToken(authenticationResult.getIdToken(), homeAccountId, expiresOn);
+                String token = authenticationResult.getIdToken();
+                if (token == null) {
+
+                    /*
+                     * Fallback to using an access token, as MSAL sometimes return null for this.
+                     * access token is @NonNull.
+                     */
+                    AppCenterLog.warn(LOG_TAG, "Sign-in result does not contain ID token, using access token.");
+                    token = authenticationResult.getAccessToken();
+                }
+                AuthTokenContext.getInstance().setAuthToken(token, homeAccountId, expiresOn);
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
                 completeSignIn(new UserInformation(accountId), null);
