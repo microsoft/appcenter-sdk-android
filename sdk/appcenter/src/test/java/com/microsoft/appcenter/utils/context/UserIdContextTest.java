@@ -5,14 +5,52 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import android.content.Context;
+import android.text.TextUtils;
+
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyNew;
+import static org.powermock.api.mockito.PowerMockito.when;
 
+@PrepareForTest({TextUtils.class})
+@RunWith(PowerMockRunner.class)
 public class UserIdContextTest {
+
+    @Before
+    public void setUp() {
+        mockStatic(TextUtils.class);
+        when(TextUtils.equals(any(CharSequence.class), any(CharSequence.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) {
+                CharSequence a = (CharSequence) invocation.getArguments()[0];
+                CharSequence b = (CharSequence) invocation.getArguments()[1];
+                return a == b || (a != null && a.equals(b));
+            }
+        });
+    }
 
     @Test
     public void userIdInvalidForOneCollector() {
@@ -60,57 +98,56 @@ public class UserIdContextTest {
     @Test
     public void setUserIdUserEquals() {
         String mockUserId = "userId";
-        UserIdContext uic = new UserIdContext();
-        final int[] countInvoke = {0};
-        uic.addListener(new UserIdContext.Listener() {
-            @Override
-            public void onNewUserId(String userId) {
-                countInvoke[0]++;
-            }
-        });
-        uic.setUserId(mockUserId);
-        assertEquals(countInvoke[0], 1);
-        assertEquals(uic.getUserId(), mockUserId);
-        uic.setUserId(mockUserId);
-        assertEquals(countInvoke[0], 1);
-        assertEquals(uic.getUserId(), mockUserId);
+        UserIdContext userIdContext = new UserIdContext();
+        UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
+        userIdContext.addListener(listener);
+        userIdContext.setUserId(mockUserId);
+        verify(listener).onNewUserId(mockUserId);
+        assertEquals(userIdContext.getUserId(), mockUserId);
+        userIdContext.setUserId(mockUserId);
+        verify(listener).onNewUserId(mockUserId);
+        assertEquals(userIdContext.getUserId(), mockUserId);
+        userIdContext.setUserId(null);
+        verify(listener).onNewUserId(isNull(String.class));
+        assertNull(userIdContext.getUserId());
     }
 
     @Test
     public void setUserIdUserNotEquals() {
         String mockUserId1 = "userId1";
         String mockUserId2 = "userId2";
-        UserIdContext uic = new UserIdContext();
-        final int[] countInvoke = {0};
-        uic.addListener(new UserIdContext.Listener() {
-            @Override
-            public void onNewUserId(String userId) {
-                countInvoke[0]++;
-            }
-        });
-        uic.setUserId(mockUserId1);
-        assertEquals(countInvoke[0], 1);
-        assertEquals(uic.getUserId(), mockUserId1);
-        uic.setUserId(mockUserId2);
-        assertEquals(countInvoke[0], 2);
-        assertEquals(uic.getUserId(), mockUserId2);
+        UserIdContext userIdContext = new UserIdContext();
+        UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
+        userIdContext.addListener(listener);
+        userIdContext.setUserId(mockUserId1);
+        verify(listener).onNewUserId(mockUserId1);
+        assertEquals(userIdContext.getUserId(), mockUserId1);
+        userIdContext.setUserId(mockUserId2);
+        verify(listener).onNewUserId(mockUserId2);
+        assertEquals(userIdContext.getUserId(), mockUserId2);
+        userIdContext.setUserId(null);
+        verify(listener).onNewUserId(isNull(String.class));
+        assertNull(userIdContext.getUserId());
     }
 
     @Test
-    public void setUserIdUserNull() {
-        String mockUserId = null;
-        UserIdContext uic = new UserIdContext();
-        final int[] countInvoke = {0};
-        uic.addListener(new UserIdContext.Listener() {
-            @Override
-            public void onNewUserId(String userId) {
-                countInvoke[0]++;
-            }
-        });
-        uic.setUserId(mockUserId);
-        assertEquals(countInvoke[0], 1);
-        assertEquals(uic.getUserId(), mockUserId);
-        uic.setUserId(mockUserId);
-        assertEquals(uic.getUserId(), mockUserId);
+    public void addAndRemoveListener() {
+        String mockUserId = "userId";
+        UserIdContext userIdContext = new UserIdContext();
+        UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
+        userIdContext.addListener(listener);
+        userIdContext.setUserId(mockUserId);
+        verify(listener).onNewUserId(mockUserId);
+        userIdContext.removeListener(listener);
+        verify(listener).onNewUserId(mockUserId);
+    }
+
+    @Test
+    public void removeNewListener() {
+        String mockUserId = "userId";
+        UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
+        UserIdContext userIdContext = new UserIdContext();
+        userIdContext.setUserId(mockUserId);
+        verify(listener, never()).onNewUserId(mockUserId);
     }
 }
