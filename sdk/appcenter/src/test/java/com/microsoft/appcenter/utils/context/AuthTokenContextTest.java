@@ -99,11 +99,13 @@ public class AuthTokenContextTest {
 
         /* Mock context listener. */
         AuthTokenContext.Listener mockListener = spy(AbstractTokenContextListener.class);
+        String accountId = UUIDUtils.randomUUID().toString();
+        String homeAccountId = accountId + "-other_user_information";
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
-        mAuthTokenContext.setAuthToken("42", "mock-user", mock(Date.class));
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, "mock-user", mock(Date.class));
+        mAuthTokenContext.setAuthToken("42", homeAccountId, mock(Date.class));
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, homeAccountId, mock(Date.class));
 
         /* Verify the value is stored. */
         verifyStatic(times(2));
@@ -113,7 +115,7 @@ public class AuthTokenContextTest {
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
         ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
         verify(mockListener).onNewUser(captorArg.capture());
-        assertEquals("mock-user", captorArg.getValue().getAccountId());
+        assertEquals(accountId, captorArg.getValue().getAccountId());
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);
@@ -132,7 +134,7 @@ public class AuthTokenContextTest {
         mAuthTokenContext.removeListener(mockListener);
 
         /* Update token without listener attached. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, "mock-user", mock(Date.class));
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, homeAccountId, mock(Date.class));
 
         /* Verify that listener is called only once on a new token (i.e. before we removed listener). */
         verify(mockListener, times(1)).onNewAuthToken(AUTH_TOKEN);
