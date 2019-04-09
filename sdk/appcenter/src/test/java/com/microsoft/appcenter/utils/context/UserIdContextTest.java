@@ -56,4 +56,61 @@ public class UserIdContextTest {
     public void prefixedValidUserId() {
         assertEquals("c:alice", UserIdContext.getPrefixedUserId("c:alice"));
     }
+
+    @Test
+    public void setUserIdUserEquals() {
+        String mockUserId = "userId";
+        UserIdContext uic = new UserIdContext();
+        final int[] countInvoke = {0};
+        uic.addListener(new UserIdContext.Listener() {
+            @Override
+            public void onNewUserId(String userId) {
+                countInvoke[0]++;
+            }
+        });
+        uic.setUserId(mockUserId);
+        assertEquals(countInvoke[0], 1);
+        assertEquals(uic.getUserId(), mockUserId);
+        uic.setUserId(mockUserId);
+        assertEquals(countInvoke[0], 1);
+        assertEquals(uic.getUserId(), mockUserId);
+    }
+
+    @Test
+    public void setUserIdUserNotEquals() {
+        String mockUserId1 = "userId1";
+        String mockUserId2 = "userId2";
+        UserIdContext uic = new UserIdContext();
+        final int[] countInvoke = {0};
+        uic.addListener(new UserIdContext.Listener() {
+            @Override
+            public void onNewUserId(String userId) {
+                countInvoke[0]++;
+            }
+        });
+        uic.setUserId(mockUserId1);
+        assertEquals(countInvoke[0], 1);
+        assertEquals(uic.getUserId(), mockUserId1);
+        uic.setUserId(mockUserId2);
+        assertEquals(countInvoke[0], 2);
+        assertEquals(uic.getUserId(), mockUserId2);
+    }
+
+    @Test
+    public void setUserIdUserNull() {
+        String mockUserId = null;
+        UserIdContext uic = new UserIdContext();
+        final int[] countInvoke = {0};
+        uic.addListener(new UserIdContext.Listener() {
+            @Override
+            public void onNewUserId(String userId) {
+                countInvoke[0]++;
+            }
+        });
+        uic.setUserId(mockUserId);
+        assertEquals(countInvoke[0], 1);
+        assertEquals(uic.getUserId(), mockUserId);
+        uic.setUserId(mockUserId);
+        assertEquals(uic.getUserId(), mockUserId);
+    }
 }
