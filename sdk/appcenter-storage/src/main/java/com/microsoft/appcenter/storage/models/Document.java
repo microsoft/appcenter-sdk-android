@@ -36,6 +36,8 @@ public class Document<T> {
 
     private transient boolean mFromCache;
 
+    private transient String mPendingOperation;
+
     public Document() {
     }
 
@@ -137,6 +139,22 @@ public class Document<T> {
      */
     public void setIsFromCache(boolean fromCache) {
         this.mFromCache = fromCache;
+    }
+
+    /**
+     * Get the pending operation value.
+     */
+    public String getPendingOperation() {
+        return mPendingOperation;
+    }
+
+    /**
+     * Set the pending operation value.
+     *
+     * @param pendingOperation The pending operation saved in the local storage.
+     */
+    public void setPendingOperation(String pendingOperation) {
+        this.mPendingOperation = pendingOperation;
     }
 
     /**
