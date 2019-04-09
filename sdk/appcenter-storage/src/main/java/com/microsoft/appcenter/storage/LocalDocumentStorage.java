@@ -142,7 +142,7 @@ class LocalDocumentStorage {
             return 0;
         }
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        long now = Calendar.getInstance().getTimeInMillis();
+        long now = System.currentTimeMillis();
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
@@ -324,7 +324,9 @@ class LocalDocumentStorage {
      * Creates a table for storing user partition documents.
      */
     void createUserTable() {
-        mDatabaseManager.createTable(getUserTableName(), SCHEMA);
+        if (AuthTokenContext.getInstance().getAccountId() != null) {
+            mDatabaseManager.createTable(getUserTableName(), SCHEMA);
+        }
     }
 
     private static <T> ContentValues getContentValues(

@@ -75,7 +75,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that storage returns the same token. */
         assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
         assertEquals(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
-        assertEquals(ACCOUNT_ID.substring(0, 36), mAuthTokenContext.getAccountId());
+        assertEquals(ACCOUNT_ID.substring(AuthTokenContext.ACCOUNT_ID_LENGTH, 36), mAuthTokenContext.getAccountId());
 
         /* Remove the token from storage. */
         mAuthTokenContext.setAuthToken(null, null, null);

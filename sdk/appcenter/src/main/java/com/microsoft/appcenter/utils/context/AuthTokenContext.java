@@ -47,6 +47,12 @@ public class AuthTokenContext {
     static final int TOKEN_HISTORY_LIMIT = 5;
 
     /**
+     * The Maximum length of account Id.
+     */
+    @VisibleForTesting
+    static final int ACCOUNT_ID_LENGTH = 36;
+
+    /**
      * Unique instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -245,7 +251,8 @@ public class AuthTokenContext {
      * @return unique identifier of the account.
      */
     public String getAccountId() {
-        return getHomeAccountId() == null ? null : getHomeAccountId().substring(0, 36);
+        String homeAccountId = getHomeAccountId();
+        return homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
     }
 
     /**

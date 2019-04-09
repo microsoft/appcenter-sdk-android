@@ -469,7 +469,7 @@ public class DatabaseManager implements Closeable {
     private void createTable(SQLiteDatabase db, String table, ContentValues schema) {
 
         /* Generate a schema from specimen. */
-        StringBuilder sql = new StringBuilder("CREATE TABLE `");
+        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
         sql.append(table);
         sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
         for (Map.Entry<String, Object> col : schema.valueSet()) {
