@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -85,6 +86,7 @@ public class DatabaseManagerAndroidTest {
         sContext.deleteDatabase("test-replace-by-multiple-columns");
         sContext.deleteDatabase("test-multiple-tables");
         sContext.deleteDatabase("test-multiple-tables-read-write");
+        sContext.deleteDatabase("test-uniqueness-constraint");
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -506,7 +508,7 @@ public class DatabaseManagerAndroidTest {
 
     @Test
     public void testCreateWithUniquenessConstraint() {
-        String tableName = "table";
+        String tableName = "firstTable";
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
@@ -522,10 +524,19 @@ public class DatabaseManagerAndroidTest {
         long result = databaseManager.replace(tableName, values1);
         assertTrue(result > 0);
         assertEquals(1L, databaseManager.getRowCount());
-//        Cursor cursor = databaseManager.getCursor(null, null, null, null);
-//        ContentValues row = databaseManager.nextValues(cursor);
-//        assertEquals(values1, row);
-//        assertNotEquals(values2, row);
+        Cursor cursor = databaseManager.getCursor(null, null, null, null);
+        ContentValues row = databaseManager.nextValues(cursor);
+        assertNotNull(row);
+        assertEquals(values1.getAsString("COL_STRING"), row.getAsString("COL_STRING"));
+        assertEquals(values1.getAsByte("COL_BYTE"), row.getAsByte("COL_BYTE"));
+        assertEquals(values1.getAsShort("COL_SHORT"), row.getAsShort("COL_SHORT"));
+        assertEquals(values1.getAsInteger("COL_INTEGER"), row.getAsInteger("COL_INTEGER"));
+        assertEquals(values1.getAsLong("COL_LONG"), row.getAsLong("COL_LONG"));
+        assertEquals(values1.getAsFloat("COL_FLOAT"), row.getAsFloat("COL_FLOAT"));
+        assertEquals(values1.getAsDouble("COL_DOUBLE"), row.getAsDouble("COL_DOUBLE"));
+        assertEquals(values1.getAsBoolean("COL_BOOLEAN"), row.getAsBoolean("COL_BOOLEAN"));
+        assertTrue(Arrays.equals(values1.getAsByteArray("COL_BYTE_ARRAY"), row.getAsByteArray("COL_BYTE_ARRAY")));
+        assertNotEquals(values2, row);
 
         /* Should replace first row, because they have the same values in the unique columns. */
         result = databaseManager.replace(tableName, values2);
