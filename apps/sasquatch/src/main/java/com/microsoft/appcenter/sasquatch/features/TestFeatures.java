@@ -45,9 +45,14 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
-        sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
-        sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
 
+        /* TODO Remove reflection once Storage available in jCenter. */
+        try {
+            Class.forName("com.microsoft.appcenter.storage.Storage");
+            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
+            sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
+        } catch (ClassNotFoundException ignore) {
+        }
     }
 
     public static List<TestFeatureModel> getAvailableControls() {
