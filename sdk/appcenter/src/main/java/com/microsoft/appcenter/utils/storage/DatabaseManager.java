@@ -182,18 +182,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Creates a new table in the database.
-     *
-     * @param table  name.
-     * @param schema of the table.
-     * @param uniqueColumns The name of the columns where the combination of the columns is unique.
-     */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
-    public void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumns) {
-        createTable(getDatabase(), table, schema, uniqueColumns);
-    }
-
-    /**
      * Deletes a table in the database.
      *
      * @param table name.

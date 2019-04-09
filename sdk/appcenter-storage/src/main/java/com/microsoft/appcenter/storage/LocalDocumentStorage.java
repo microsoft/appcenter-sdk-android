@@ -114,7 +114,7 @@ class LocalDocumentStorage {
     }
 
     LocalDocumentStorage(Context context) {
-        this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener()));
+        this(new DatabaseManager(context, DATABASE, TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener(), new String[]{PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME}));
     }
 
     <T> void writeOffline(Document<T> document, WriteOptions writeOptions) {
