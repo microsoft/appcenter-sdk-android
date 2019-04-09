@@ -7,6 +7,7 @@ package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -149,7 +150,7 @@ public class UserIdContext {
      * @param userId user identifier.
      */
     public void setUserId(String userId) {
-        if (isUserIdChanged(userId)) {
+        if (!updateUserId(userId)) {
             return;
         }
 
@@ -160,23 +161,23 @@ public class UserIdContext {
     }
 
     /**
-     * Check user identifier.
+     * Update user identifier.
      *
      * @param userId user identifier.
-     * @return true if equals.
+     * @return true if user identifier is updated.
      */
-    private synchronized boolean isUserIdChanged(String userId) {
-        if (mUserId != null && mUserId.equals(userId)) {
-            return true;
+    private synchronized boolean updateUserId(String userId) {
+        if (TextUtils.equals(mUserId, userId)) {
+            return false;
         }
         mUserId = userId;
-        return false;
+        return true;
     }
 
     public interface Listener {
 
         /**
-         * Send new user id.
+         * Called whenever a new user id set.
          *
          * @param userId user identifier.
          */
