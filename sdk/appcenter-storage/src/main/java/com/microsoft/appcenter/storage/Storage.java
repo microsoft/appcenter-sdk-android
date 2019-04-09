@@ -329,7 +329,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 if (storedPartitionName != null) {
                     cachedDocument = mLocalDocumentStorage.read(storedPartitionName, documentId, documentType, readOptions);
 
-                    /* If found the document from local storage. check if need to call cosmosdb based on pending operation. */
+                    /* If we found the document from local storage. check if we need to call Cosmos DB based on pending operation. */
                     if (cachedDocument.getDocumentError() == null) {
 
                         /* Found the document with null pending operation, trying to refresh the document based on the network connected situation. */
