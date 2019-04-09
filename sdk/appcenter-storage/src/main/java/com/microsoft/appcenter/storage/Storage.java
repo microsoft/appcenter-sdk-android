@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -245,8 +246,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public void onNewUser(String authToken) {
-                if (authToken == null) {
+            public void onNewUser(UserInformation userInfo) {
+                if (userInfo == null) {
                     TokenManager.getInstance().removeAllCachedTokens();
                 }
             }
@@ -724,7 +725,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @WorkerThread
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.writeOnline((Document)value, new WriteOptions());
+        mLocalDocumentStorage.writeOnline((Document) value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
