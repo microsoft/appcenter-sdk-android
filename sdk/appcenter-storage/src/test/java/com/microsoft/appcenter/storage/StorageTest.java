@@ -475,6 +475,7 @@ public class StorageTest extends AbstractStorageTest {
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
         Storage.read(PARTITION_NAME, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
@@ -482,6 +483,18 @@ public class StorageTest extends AbstractStorageTest {
                 eq(DOCUMENT_ID),
                 eq(TestDocument.class),
                 any(ReadOptions.class));
+    }
+
+    @Test
+    public void readWhenLocalStorageContainsDeletePendingOperation() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> deletedDocument = new Document<>();
+        deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
+        Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
+        assertNotNull(document.getDocumentError());
+        assertTrue(document.getDocumentError().getError().getMessage().contains("deleted"));
     }
 
     @Test
@@ -703,6 +716,7 @@ public class StorageTest extends AbstractStorageTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PARTITION)).thenReturn(tokenResult);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
