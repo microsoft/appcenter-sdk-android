@@ -224,7 +224,7 @@ public class DatabaseManager implements Closeable {
             }
             builder.appendWhere(TextUtils.join(" AND ", propertyQueryList));
             if (selectionArgs.size() > 0) {
-                Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
+                Cursor cursor = getCursor(table, builder, null, selectionArgs.toArray(new String[0]), null);
                 try {
                     ContentValues value = nextValues(cursor);
 

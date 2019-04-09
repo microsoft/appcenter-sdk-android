@@ -78,14 +78,14 @@ public class LocalDocumentStorageTest {
 
     @Before
     public void setUp() throws Exception {
+        mockStatic(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        when(mAuthTokenContext.getAccountId()).thenReturn(USER_ID);
         mockStatic(AppCenterLog.class);
         mDatabaseManager = mock(DatabaseManager.class);
         mCursor = mock(Cursor.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
         mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class));
-        mockStatic(AuthTokenContext.class);
-        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
-        when(mAuthTokenContext.getAccountId()).thenReturn(USER_ID);
     }
 
     @Test
@@ -99,12 +99,6 @@ public class LocalDocumentStorageTest {
     public void getTableNameWithReadonlyPartitionName() {
         String tableName = LocalDocumentStorage.getTableName(Constants.READONLY);
         assertEquals(LocalDocumentStorage.READONLY_TABLE, tableName);
-    }
-
-    @Test
-    public void getTableNameWithInvalidPartitionName() {
-        String tableName = LocalDocumentStorage.getTableName("invalid");
-        assertNull(tableName);
     }
 
     @Test

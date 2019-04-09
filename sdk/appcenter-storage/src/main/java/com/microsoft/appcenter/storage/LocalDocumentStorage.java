@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -121,6 +122,7 @@ class LocalDocumentStorage {
 
     private LocalDocumentStorage(DatabaseManager databaseManager) {
         mDatabaseManager = databaseManager;
+        createUserTable();
     }
 
     LocalDocumentStorage(Context context) {
@@ -257,8 +259,42 @@ class LocalDocumentStorage {
         return getPendingOperations(Constants.USER);
     }
 
+    /**
+     * @param partition name.
+     * @return true if the partition is supported, false otherwise
+     */
+    static boolean isValidPartitionName(String partition) {
+        return READONLY.equals(partition) || USER.equals(partition);
+    }
+
+    void updatePendingOperation(PendingOperation operation) {
+
+        /*
+            Update the document in cache (if expiration_time still valid otherwise, remove the document),
+            clear the pending_operation column, update etag, download_time and document columns
+         */
+        long now = Calendar.getInstance().getTimeInMillis();
+        if (operation.getExpirationTime() <= now) {
+            deletePendingOperation(operation);
+        } else {
+            mDatabaseManager.replace(getTableName(operation.getPartition()), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        }
+    }
+
     @VisibleForTesting
-    List<PendingOperation> getPendingOperations(String partition) {
+    @NonNull
+    static String getTableName(String partition) {
+        if (USER.equals(partition)) {
+            return getUserTableName();
+        }
+        return READONLY_TABLE;
+    }
+
+    private static String getUserTableName() {
+        return String.format(USER_TABLE_FORMAT, AuthTokenContext.getInstance().getAccountId()).replace("-", "");
+    }
+
+    private List<PendingOperation> getPendingOperations(String partition) {
         List<PendingOperation> result = new ArrayList<>();
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
@@ -281,38 +317,11 @@ class LocalDocumentStorage {
         return result;
     }
 
-    void updatePendingOperation(PendingOperation operation) {
-
-        /*
-            Update the document in cache (if expiration_time still valid otherwise, remove the document),
-            clear the pending_operation column, update etag, download_time and document columns
-         */
-        long now = Calendar.getInstance().getTimeInMillis();
-        if (operation.getExpirationTime() <= now) {
-            deletePendingOperation(operation);
-        } else {
-            mDatabaseManager.replace(getTableName(operation.getPartition()), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
-        }
-    }
-
     /**
-     * @param partition name.
-     * @return true if the partition is supported, false otherwise
+     * Creates a table for storing user partition documents.
      */
-    static boolean isValidPartitionName(String partition) {
-        return getTableName(partition) != null;
-    }
-
-    @VisibleForTesting
-    static String getTableName(String partition) {
-        if (READONLY.equals(partition)) {
-            return READONLY_TABLE;
-        }
-        else if (USER.equals(partition)) {
-            return String.format(USER_TABLE_FORMAT, AuthTokenContext.getInstance().getAccountId());
-        }
-
-        return null;
+    void createUserTable() {
+        mDatabaseManager.createTable(getUserTableName(), SCHEMA);
     }
 
     private static <T> ContentValues getContentValues(
