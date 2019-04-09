@@ -15,6 +15,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
@@ -495,7 +496,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         Document<String> document = Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getError().getMessage().contains("deleted"));
+        assertTrue(document.getDocumentError().getError() instanceof StorageException);
     }
 
     @Test
