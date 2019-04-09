@@ -8,6 +8,7 @@ package com.microsoft.appcenter.utils.context;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -121,8 +122,10 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken(null, null, null);
 
         /* Verify that listener is called on empty token. */
-         verify(mockListener).onNewAuthToken(isNull(String.class));
-        verify(mockListener).onNewUser(isNull(UserInformation.class));
+        verify(mockListener).onNewAuthToken(isNull(String.class));
+        ArgumentCaptor<UserInformation> captorArgNull = ArgumentCaptor.forClass(UserInformation.class);
+        verify(mockListener, times(2)).onNewUser(captorArgNull.capture());
+        assertNull(captorArgNull.getValue());
         assertNull(mAuthTokenContext.getAuthToken());
 
         /* Remove listener. */

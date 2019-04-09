@@ -19,6 +19,7 @@ import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -28,7 +29,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
-import com.microsoft.appcenter.utils.context.UserInformation;
 
 import java.util.HashMap;
 import java.util.Map;

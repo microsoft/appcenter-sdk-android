@@ -16,6 +16,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -29,7 +30,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.context.UserInformation;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;

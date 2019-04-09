@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -38,7 +39,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.context.UserInformation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -756,7 +756,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     @WorkerThread
     private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.writeOnline((Document)value, new WriteOptions());
+        mLocalDocumentStorage.writeOnline((Document) value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
