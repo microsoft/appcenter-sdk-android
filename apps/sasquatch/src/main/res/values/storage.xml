@@ -18,4 +18,5 @@
     <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
     <string name="save_button" tools:ignore="MissingTranslation">Save</string>
     <string name="app_document_detail_title" tools:ignore="MissingTranslation">App Document Detail</string>
+    <string name="user_document_wip" tools:ignore="MissingTranslation">User Documents are placeholders, work in progress…</string>
 </resources>

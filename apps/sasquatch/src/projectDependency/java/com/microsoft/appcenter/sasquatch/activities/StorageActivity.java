@@ -20,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
@@ -42,7 +43,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private ArrayAdapter<String> mAppDocumentListAdapter;
 
-    private ArrayList<String> mDocumentContents = new ArrayList<String>();
+    private ArrayList<String> mDocumentContents = new ArrayList<>();
 
     private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
         add("Doc1-User");
@@ -98,17 +99,12 @@ public class StorageActivity extends AppCompatActivity {
                     case READONLY:
                         Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
                         intent.putExtra("documentId", mAppDocumentListAdapter.getItem(position));
-                        intent.putExtra("documentContent", mDocumentContents.get(position).toString());
+                        intent.putExtra("documentContent", mDocumentContents.get(position));
                         startActivity(intent);
                         break;
                 }
             }
         });
-
-        /* Some ad-hoc calls TODO replace by a UI equivalent. */
-        Storage.create("test-partition", "document-id-123", new TestDocument(), TestDocument.class);
-        Storage.read("test-partition-other", "document-id-123", TestDocument.class);
-        Storage.delete("test-partition", "document-id-123");
     }
 
     @Override
@@ -157,6 +153,9 @@ public class StorageActivity extends AppCompatActivity {
                 mListView.setAdapter(mAppDocumentListAdapter);
                 break;
             case USER:
+
+                /* Remove the toast and string resource once implementation ready. */
+                Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
                 SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
                 String accountId = preferences.getString("accountId", null);
                 if (accountId != null) {
