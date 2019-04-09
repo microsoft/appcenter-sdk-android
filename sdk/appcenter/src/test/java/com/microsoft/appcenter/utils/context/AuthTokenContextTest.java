@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
@@ -115,6 +116,7 @@ public class AuthTokenContextTest {
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
         ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
         verify(mockListener).onNewUser(captorArg.capture());
+        assertNotNull(captorArg.getValue());
         assertEquals(accountId, captorArg.getValue().getAccountId());
 
         /* Verify that the returned token is the same. */
