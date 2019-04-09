@@ -498,6 +498,25 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void readOnLineWhenLocalStorageContainsNullOperation() {
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> outDatedDocument = new Document<>();
+        when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
+        Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class);
+        verify(mHttpClient);
+    }
+
+    @Test
+    public void readWhenLocalStorageContainsCreateOperation() {
+        when(SharedPreferencesManager.getString(PARTITION_NAME)).thenReturn(tokenResult);
+        Document<String> createdDocument = new Document<>();
+        createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
+        Storage.read(PARTITION_NAME, DOCUMENT_ID, String.class);
+        verifyNoMoreInteractions(mHttpClient);
+    }
+
+    @Test
     public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
