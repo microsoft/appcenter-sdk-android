@@ -39,7 +39,6 @@
     <string name="key" tools:ignore="MissingTranslation">Key</string>
     <string name="value" tools:ignore="MissingTranslation">Value</string>
     <string name="type" tools:ignore="MissingTranslation">Type</string>
-    <string name="storage_type" tools:ignore="MissingTranslation">Storage Type</string>
     <string-array name="typed_property_types" tools:ignore="MissingTranslation">
         <item>String</item>
         <item>Boolean</item>
