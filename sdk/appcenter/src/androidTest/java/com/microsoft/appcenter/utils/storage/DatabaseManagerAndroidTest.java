@@ -536,7 +536,7 @@ public class DatabaseManagerAndroidTest {
         assertEquals(true, row.getAsBoolean(colBoolean));
 
         /* Should replace first row because they have the same values in the unique columns. */
-        result = databaseManager.replace(tableName, content2, colInt, colBoolean);
+        result = databaseManager.replace(tableName, content2);
         assertTrue(result > 0);
         assertEquals(1L, databaseManager.getRowCount());
         cursor = databaseManager.getCursor(null, null, null, null);
