@@ -342,7 +342,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         }
                     } else {
 
-                        /* In this case the local storage may failed in sqllite exception or document expired or document not found, make the cosmosdb call to get it. */
+                        /* In this case the local storage may have failed with a SQLite exception or 
+ the document has expired or the document is not found, make the Cosmos DB call to get it. */
                         fetchRemote = true;
                     }
                 } else {
