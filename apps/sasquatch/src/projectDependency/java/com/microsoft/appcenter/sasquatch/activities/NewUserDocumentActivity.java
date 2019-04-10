@@ -64,7 +64,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
 
         /* TODO use .thenAccept and Toast message whether success or error. */
-        /* TODO replace "id" by the one from the intent. */
+        /* TODO replace "id" by the one from the text edit. */
         Storage.replace(Constants.USER, "id", document, Map.class);
     }
 }
