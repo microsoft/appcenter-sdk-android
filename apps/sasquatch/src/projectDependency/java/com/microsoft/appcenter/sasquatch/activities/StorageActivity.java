@@ -37,7 +37,7 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 class TestDocument {
 
     @SuppressWarnings("unused")
-    String test;
+    String key;
 }
 
 public class StorageActivity extends AppCompatActivity {
