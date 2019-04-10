@@ -765,23 +765,36 @@ public class PushTest {
 
     @Test
     public void verifyEnqueueCalledOnNewUserId() {
+
+        /* When we start Push and got a token. */
         String mockUserId1 = "userId1";
         String mockUserId2 = "userId2";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
+
+        /* Then we send the first log without userId. */
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), anyString(), anyInt());
+        assertNull(log.getValue().getUserId());
+
+        /* When we update userId, we send another log. */
         UserIdContext.getInstance().setUserId(mockUserId1);
         verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
         assertEquals(log.getValue().getUserId(), mockUserId1);
+
+        /* When we update to the same userId value, then no new log sent. */
         UserIdContext.getInstance().setUserId(mockUserId1);
         verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
         assertEquals(log.getValue().getUserId(), mockUserId1);
+
+        /* When we actually update the userId, a new log is sent. */
         UserIdContext.getInstance().setUserId(mockUserId2);
         verify(channel, times(3)).enqueue(log.capture(), anyString(), anyInt());
         assertEquals(log.getValue().getUserId(), mockUserId2);
+
+        /* When we remove userId, we re-send log without userId. */
         UserIdContext.getInstance().setUserId(null);
         verify(channel, times(4)).enqueue(log.capture(), anyString(), anyInt());
         assertNull(log.getValue().getUserId());
@@ -876,8 +889,8 @@ public class PushTest {
     public void verifyCalledListenerAfterStart() {
         ArgumentCaptor<UserIdContext.Listener> userIdContextArgument = ArgumentCaptor.forClass(UserIdContext.Listener.class);
         ArgumentCaptor<AuthTokenContext.Listener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        UserIdContext.Listener currentUserIdContextListener = null;
-        AuthTokenContext.Listener currentAuthTokenContextListener = null;
+        UserIdContext.Listener currentUserIdContextListener;
+        AuthTokenContext.Listener currentAuthTokenContextListener;
         UserIdContext userIdContext = mock(UserIdContext.class);
         AuthTokenContext authTokenContext = mock(AuthTokenContext.class);
         mockStatic(UserIdContext.class);
