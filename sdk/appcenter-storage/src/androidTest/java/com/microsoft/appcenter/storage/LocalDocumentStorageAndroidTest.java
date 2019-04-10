@@ -187,4 +187,12 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(Constants.PENDING_OPERATION_REPLACE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test2"));
     }
+
+    @Test
+    public void createUnExpiredDocument() {
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
+        Document<String> document = mLocalDocumentStorage.read(PARTITION, ID, String.class, null);
+        assertNull(document.getDocumentError());
+        assertEquals("Test", document.getDocument());
+    }
 }
