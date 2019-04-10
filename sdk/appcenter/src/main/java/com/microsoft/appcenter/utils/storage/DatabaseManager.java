@@ -500,7 +500,7 @@ public class DatabaseManager implements Closeable {
                 sql.append("TEXT");
             }
         }
-        if (!TextUtils.isEmpty(uniqueColumnsConstraint)) {
+        if (uniqueColumnsConstraint != null && uniqueColumnsConstraint.length > 0) {
             sql.append(", UNIQUE(`").append(TextUtils.join("`, `", uniqueColumnsConstraint)).append("`)");
         }
         sql.append(");");
