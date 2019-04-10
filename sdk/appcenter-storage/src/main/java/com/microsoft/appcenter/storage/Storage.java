@@ -52,8 +52,10 @@ import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.storage.Constants.STORAGE_GROUP;
+import static com.microsoft.appcenter.storage.Constants.USER;
 
 /**
  * Storage service.
@@ -215,7 +217,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
 
         /* In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT). */
-        AppCenterLog.debug(LOG_TAG, "Replace started");
         return Storage.create(partition, documentId, document, documentType, writeOptions);
     }
 
@@ -237,18 +238,25 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mApiUrl = apiUrl;
     }
 
+    private static StorageException getInvalidPartitionStorageException(String partition) {
+        return new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition));
+    }
+
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = createHttpClient(context);
         mAppSecret = appSecret;
-        mLocalDocumentStorage = new LocalDocumentStorage(context);
+        mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
             public void onNewUser(UserInformation userInfo) {
                 if (userInfo == null) {
                     TokenManager.getInstance().removeAllCachedTokens();
+                } else {
+                    String userTable = Utils.getUserTableName(userInfo.getAccountId());
+                    mLocalDocumentStorage.createTableIfDoesNotExist(userTable);
                 }
             }
         };
@@ -261,21 +269,27 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @param connected true if connected, false otherwise.
      */
     @Override
-    public void onNetworkStateUpdated(boolean connected) {
+    public void onNetworkStateUpdated(final boolean connected) {
+        post(new Runnable() {
 
-        /* If device comes back online. */
-        if (connected) {
-            for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Constants.USER)) {
-                if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                        PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                    instanceCreateOrUpdate(po);
-                } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                    instanceDelete(po);
-                } else {
-                    AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+            @Override
+            public void run() {
+
+                /* If device comes back online. */
+                if (connected) {
+                    for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+                        if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                                PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                            instanceCreateOrUpdate(po);
+                        } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                            instanceDelete(po);
+                        } else {
+                            AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+                        }
+                    }
                 }
             }
-        }
+        });
     }
 
     /**
@@ -314,21 +328,26 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         return LOG_TAG;
     }
 
+    @WorkerThread
     private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
             final String partition,
             final String documentId,
             final Class<T> documentType,
             final ReadOptions readOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        if (isInvalidPartition(partition, result)) {
+            return result;
+        }
         postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
                 Document<T> cachedDocument;
                 boolean fetchRemote = false;
-                String storedPartitionName = appendAccountIdToPartitionName(partition);
-                if (storedPartitionName != null) {
-                    cachedDocument = mLocalDocumentStorage.read(storedPartitionName, documentId, documentType, readOptions);
+                TokenResult cachedToken = getCachedToken(partition);
+                if (cachedToken != null) {
+                    String table = Utils.getTableName(cachedToken);
+                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, readOptions);
 
                     /* If we found the document from local storage. check if we need to call Cosmos DB based on pending operation. */
                     if (cachedDocument.getDocumentError() == null) {
@@ -389,16 +408,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 null,
                 new ServiceCallback() {
 
-                    @MainThread
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        post(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                completeFutureAndSaveToLocalStorage(Utils.parseDocument(payload, documentType), result);
-                            }
-                        });
+                        Document<T> document = Utils.parseDocument(payload, documentType);
+                        completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
                     }
 
                     @Override
@@ -407,30 +420,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
-    }
-
-    /**
-     * Create a document
-     * The document type (T) must be JSON deserializable
-     */
-    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition, final Class<T> documentType) {
-        final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchangeServiceCallback() {
-
-                    @Override
-                    public void callCosmosDb(TokenResult tokenResult) {
-                        callCosmosDbListApi(tokenResult, result, documentType);
-                    }
-
-                    @Override
-                    public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
-                    }
-                });
-        return result;
     }
 
     private synchronized <T> void callCosmosDbListApi(
@@ -463,48 +452,29 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     /**
-     * Create a document.
-     * The document type (T) must be JSON deserializable.
+     * Create a document
+     * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(
-            final String partition,
-            final String documentId,
-            final T document,
-            final Class<T> documentType,
-            final WriteOptions writeOptions) {
-        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
-        if (mNetworkStateHelper.isNetworkConnected()) {
-            getTokenAndCallCosmosDbApi(
-                    partition,
-                    result,
-                    new TokenExchangeServiceCallback() {
-
-                        @Override
-                        public void callCosmosDb(TokenResult tokenResult) {
-                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
-                        }
-
-                        @Override
-                        public void completeFuture(Exception e) {
-                            Storage.this.completeFuture(e, result);
-                        }
-                    });
-        } else {
-            postAsyncGetter(new Runnable() {
-
-                @Override
-                public void run() {
-                    Document<T> createdOrUpdatedDocument;
-                    String storedPartitionName = appendAccountIdToPartitionName(partition);
-                    if (storedPartitionName != null) {
-                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(appendAccountIdToPartitionName(partition), documentId, document, documentType, writeOptions);
-                    } else {
-                        createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
-                    }
-                    result.complete(createdOrUpdatedDocument);
-                }
-            }, result, null);
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition, final Class<T> documentType) {
+        final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
+        if (isInvalidPartitionWhenDocuments(partition, result)) {
+            return result;
         }
+        getTokenAndCallCosmosDbApi(
+                partition,
+                result,
+                new TokenExchangeServiceCallback() {
+
+                    @Override
+                    public void callCosmosDb(TokenResult tokenResult) {
+                        callCosmosDbListApi(tokenResult, result, documentType);
+                    }
+
+                    @Override
+                    public void completeFuture(Exception e) {
+                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                    }
+                });
         return result;
     }
 
@@ -534,6 +504,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 });
     }
 
+    @WorkerThread
     private synchronized <T> void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             T document,
@@ -551,18 +522,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
-                    @MainThread
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        post(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                                completeFuture(cosmosDbDocument, result);
-                                mLocalDocumentStorage.writeOnline(cosmosDbDocument, writeOptions);
-                            }
-                        });
+                        Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
+                        completeFuture(cosmosDbDocument, result);
+                        mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
                     }
 
                     @Override
@@ -601,43 +565,53 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 });
     }
 
-    private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
-        final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
-        if (mNetworkStateHelper.isNetworkConnected()) {
-            getTokenAndCallCosmosDbApi(
-                    partition,
-                    result,
-                    new TokenExchange.TokenExchangeServiceCallback() {
-
-                        @Override
-                        public void callCosmosDb(TokenResult tokenResult) {
-                            callCosmosDbDeleteApi(tokenResult, documentId, result);
-                        }
-
-                        @Override
-                        public void completeFuture(Exception e) {
-                            Storage.this.completeFuture(e, result);
-                        }
-                    });
-        } else {
-            postAsyncGetter(new Runnable() {
-
-                @Override
-                public void run() {
-                    String storedPartitionName = appendAccountIdToPartitionName(partition);
-                    if (storedPartitionName != null) {
-                        boolean isWriteSucceed = mLocalDocumentStorage.markForDeletion(storedPartitionName, documentId);
-                        if (isWriteSucceed) {
-                            Storage.this.completeFuture(new Document<Void>(), result);
-                        } else {
-                            Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
-                        }
-                    } else {
-                        Storage.this.completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
-                    }
-                }
-            }, result, null);
+    /**
+     * Create a document.
+     * The document type (T) must be JSON deserializable.
+     */
+    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(
+            final String partition,
+            final String documentId,
+            final T document,
+            final Class<T> documentType,
+            final WriteOptions writeOptions) {
+        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        if (isInvalidPartition(partition, result)) {
+            return result;
         }
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mNetworkStateHelper.isNetworkConnected()) {
+                    getTokenAndCallCosmosDbApi(
+                            partition,
+                            result,
+                            new TokenExchangeServiceCallback() {
+
+                                @Override
+                                public void callCosmosDb(TokenResult tokenResult) {
+                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
+                                }
+
+                                @Override
+                                public void completeFuture(Exception e) {
+                                    Storage.this.completeFuture(e, result);
+                                }
+                            });
+                } else {
+                    Document<T> createdOrUpdatedDocument;
+                    TokenResult cachedToken = getCachedToken(partition);
+                    if (cachedToken != null) {
+                        final String table = Utils.getTableName(cachedToken);
+                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.partition(), documentId, document, documentType, writeOptions);
+                    } else {
+                        createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                    }
+                    result.complete(createdOrUpdatedDocument);
+                }
+            }
+        }, result, null);
         return result;
     }
 
@@ -662,7 +636,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 });
     }
 
-    private synchronized void callCosmosDbDeleteApi(final TokenResult tokenResult, final String documentId, final DefaultAppCenterFuture<Document<Void>> result) {
+    @WorkerThread
+    private synchronized void callCosmosDbDeleteApi(
+            final TokenResult tokenResult,
+            final String documentId,
+            final DefaultAppCenterFuture<Document<Void>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -671,17 +649,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 null,
                 new ServiceCallback() {
 
-                    @MainThread
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        post(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                completeFuture(new Document<Void>(), result);
-                                mLocalDocumentStorage.deleteOnline(tokenResult.partition(), documentId);
-                            }
-                        });
+                        completeFuture(new Document<Void>(), result);
+                        mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.partition(), documentId);
                     }
 
                     @Override
@@ -692,10 +663,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation pendingOperation) {
+    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation operation) {
         CosmosDb.callCosmosDbApi(
                 tokenResult,
-                pendingOperation.getDocumentId(),
+                operation.getDocumentId(),
                 mHttpClient,
                 METHOD_DELETE,
                 null,
@@ -704,7 +675,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     @MainThread
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        notifyListenerAndUpdateOperationOnSuccess(payload, pendingOperation);
+                        notifyListenerAndUpdateOperationOnSuccess(payload, operation);
                     }
 
                     @MainThread
@@ -712,7 +683,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     public void onCallFailed(Exception e) {
                         notifyListenerAndUpdateOperationOnFailure(
                                 new StorageException("Failed to call Cosmos delete API", e),
-                                pendingOperation);
+                                operation);
                     }
                 });
     }
@@ -738,15 +709,68 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         }
     }
 
+    private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
+        final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
+        if (isInvalidPartition(partition, result)) {
+            return result;
+        }
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mNetworkStateHelper.isNetworkConnected()) {
+                    getTokenAndCallCosmosDbApi(
+                            partition,
+                            result,
+                            new TokenExchange.TokenExchangeServiceCallback() {
+
+                                @Override
+                                public void callCosmosDb(TokenResult tokenResult) {
+                                    callCosmosDbDeleteApi(tokenResult, documentId, result);
+                                }
+
+                                @Override
+                                public void completeFuture(Exception e) {
+                                    Storage.this.completeFuture(e, result);
+                                }
+                            });
+                } else {
+                    TokenResult cachedToken = getCachedToken(partition);
+                    if (cachedToken != null) {
+                        final String table = Utils.getTableName(cachedToken);
+                        boolean isWriteSucceed =
+                                mLocalDocumentStorage.markForDeletion(table, cachedToken.partition(), documentId);
+                        if (isWriteSucceed) {
+                            completeFuture(new Document<Void>(), result);
+                        } else {
+                            completeFuture(new StorageException("Failed to write to cache."), result);
+                        }
+                    } else {
+                        completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
+                    }
+                }
+            }
+        }, result, null);
+        return result;
+    }
+
+    private <T> boolean isInvalidPartition(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
+        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
+        if (isInvalidPartition) {
+            completeFuture(getInvalidPartitionStorageException(partition), result);
+        }
+        return isInvalidPartition;
+    }
+
     private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
         mPendingCalls.remove(future);
     }
 
     @WorkerThread
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(T value, DefaultAppCenterFuture<T> future) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
-        mLocalDocumentStorage.writeOnline((Document) value, new WriteOptions());
+        mLocalDocumentStorage.writeOnline(table, (Document) value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
@@ -767,8 +791,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
-                String etag = Utils.getEtag(cosmosDbResponsePayload);
-                pendingOperation.setEtag(etag);
+                String eTag = Utils.getEtag(cosmosDbResponsePayload);
+                pendingOperation.setEtag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
                 DataStoreEventListener eventListener = mEventListener;
                 if (eventListener != null) {
@@ -777,7 +801,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             new DocumentMetadata(
                                     pendingOperation.getPartition(),
                                     pendingOperation.getDocumentId(),
-                                    etag),
+                                    eTag),
                             null);
                 }
                 mLocalDocumentStorage.updatePendingOperation(pendingOperation);
@@ -820,13 +844,21 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         });
     }
 
-    private String appendAccountIdToPartitionName(String partitionName) {
+    private TokenResult getCachedToken(String partitionName) {
         TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
         if (result == null) {
             AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
             return null;
         } else {
-            return result.partition();
+            return result;
         }
+    }
+
+    private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+        boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
+        if (invalidPartitionName) {
+            Storage.this.completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
+        }
+        return invalidPartitionName;
     }
 }

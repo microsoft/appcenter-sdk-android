@@ -239,7 +239,7 @@ public class DatabaseManager implements Closeable {
             }
             builder.appendWhere(TextUtils.join(" AND ", propertyQueryList));
             if (selectionArgs.size() > 0) {
-                Cursor cursor = getCursor(builder, null, selectionArgs.toArray(new String[0]), null);
+                Cursor cursor = getCursor(table, builder, null, selectionArgs.toArray(new String[0]), null);
                 try {
                     ContentValues value = nextValues(cursor);
 
@@ -484,7 +484,7 @@ public class DatabaseManager implements Closeable {
     private void createTable(SQLiteDatabase db, String table, ContentValues schema, String[] uniqueColumnsConstraint) {
 
         /* Generate a schema from specimen. */
-        StringBuilder sql = new StringBuilder("CREATE TABLE `");
+        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
         sql.append(table);
         sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
         for (Map.Entry<String, Object> col : schema.valueSet()) {
