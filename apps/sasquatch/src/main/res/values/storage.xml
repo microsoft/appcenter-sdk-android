@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="sign_in_reminder" tools:ignore="MissingTranslation">Please Sign In to Identity before getting user document.</string>
+    <string name="storage_type" tools:ignore="MissingTranslation">Storage Type</string>
+    <string name="storage_type_reminder" tools:ignore="MissingTranslation">Only User document can be added.</string>
+    <string name="alert_ok" tools:ignore="MissingTranslation">OK</string>
+    <string-array name="storage_type_names" tools:ignore="InconsistentArrays,MissingTranslation">
+        <item>App</item>
+        <item>User</item>
+    </string-array>
+    <string name="new_user_document_title" tools:ignore="MissingTranslation">New User Document</string>
+    <string name="user_document_id" tools:ignore="MissingTranslation">ID:</string>
+    <string name="user_document_id_reminder" tools:ignore="MissingTranslation">Please input an user document id.</string>
+    <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
+    <string name="save_button" tools:ignore="MissingTranslation">Save</string>
+    <string name="app_document_detail_title" tools:ignore="MissingTranslation">App Document Detail</string>
+    <string name="user_document_wip" tools:ignore="MissingTranslation">User Documents are placeholders, work in progress…</string>
+</resources>
