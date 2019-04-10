@@ -891,6 +891,8 @@ public class PushTest {
 
     @Test
     public void verifyCalledListenerAfterStart() {
+
+        /* When we start push being enabled. */
         ArgumentCaptor<UserIdContext.Listener> userIdContextArgument = ArgumentCaptor.forClass(UserIdContext.Listener.class);
         ArgumentCaptor<AuthTokenContext.Listener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         UserIdContext.Listener currentUserIdContextListener;
@@ -904,18 +906,28 @@ public class PushTest {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         start(push, channel);
+
+        /* Then push set up a listener on user and auth contexts. */
         verify(userIdContext).addListener(userIdContextArgument.capture());
         verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
         currentUserIdContextListener = userIdContextArgument.getValue();
         verify(authTokenContext).addListener(authTokenArgument.capture());
         verify(authTokenContext, never()).removeListener(any(AuthTokenContext.Listener.class));
         currentAuthTokenContextListener = authTokenArgument.getValue();
+
+        /* When push is disabled. */
         push.applyEnabledState(false);
+
+        /* Then listeners are removed. (And thus not added more than once in total). */
         verify(userIdContext).addListener(any(UserIdContext.Listener.class));
         verify(userIdContext).removeListener(eq(currentUserIdContextListener));
         verify(authTokenContext).addListener(any(AuthTokenContext.Listener.class));
         verify(authTokenContext).removeListener(eq(currentAuthTokenContextListener));
+
+        /* When re-enabling push. */
         push.applyEnabledState(true);
+
+        /* Then we re-register listener (thus twice in total). And thus we didn't remove more than once total. */
         verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
         verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
         verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
