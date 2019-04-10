@@ -49,6 +49,11 @@ public class DatabaseManagerAndroidTest {
     private static final long MAX_SIZE_IN_BYTES = 20480;
 
     /**
+     * Test database name.
+     */
+    private static final String DATABASE_NAME = "test-database";
+
+    /**
      * Context instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -58,8 +63,6 @@ public class DatabaseManagerAndroidTest {
      * Database schema.
      */
     private static ContentValues mSchema;
-
-    private static String databaseName = "test-database";
 
     /**
      * Boolean value to simulate both true and false.
@@ -76,7 +79,7 @@ public class DatabaseManagerAndroidTest {
 
     @After
     public void tearDown() {
-        sContext.deleteDatabase(databaseName);
+        sContext.deleteDatabase(DATABASE_NAME);
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -218,7 +221,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManager", 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, listener);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -244,7 +247,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -265,7 +268,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
+        databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -291,7 +294,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
 
         /* Put data. */
         long id;
@@ -312,7 +315,7 @@ public class DatabaseManagerAndroidTest {
         schema.put("COL_INT", 1);
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
+        databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
@@ -354,7 +357,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -387,7 +390,7 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, table, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, table, 1, mSchema, listener);
         String documentIdProperty = "COL_STRING";
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -431,7 +434,7 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, table, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, table, 1, mSchema, listener);
         String[] documentIdProperties = new String[]{"COL_STRING", "COL_INTEGER"};
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -504,7 +507,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, tableName, 1, contentValues, listener, new String[]{"colInt", "colBoolean"});
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, tableName, 1, contentValues, listener, new String[]{"colInt", "colBoolean"});
         assertTrue(checkTableExists(databaseManager, tableName));
 
         /* Insert a new row. */
@@ -575,7 +578,7 @@ public class DatabaseManagerAndroidTest {
         DatabaseManager databaseManager =
                 new DatabaseManager(
                         sContext,
-                        databaseName,
+                        DATABASE_NAME,
                         firstTable,
                         1,
                         schema1,
