@@ -17,6 +17,7 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.telecom.Call;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -153,6 +154,18 @@ public class DatabaseManager implements Closeable {
 
     private void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
         db.execSQL(String.format("DROP TABLE `%s`", table));
+    }
+
+    /**
+     * Delete the database and then create a new, empty one.
+     */
+    public void resetDatabase() {
+        close();
+        mContext.deleteDatabase(mDatabase);
+
+
+        /* Call getDatabase to recreate database. */
+        getDatabase();
     }
 
     /**

@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.never;
@@ -31,6 +32,13 @@ public class AuthTokenTests extends AbstractStorageTest {
 
     @Test
     public void tokenClearedOnSignOut() {
+
+        /* Setup token manager. */
+        mockStatic(TokenManager.class);
+        TokenManager mTokenManager = mock(TokenManager.class);
+        when(TokenManager.getInstance()).thenReturn(mTokenManager);
+
+        /* Add partitions. */
         Set<String> partitionNames = new HashSet<>();
         for (int i = 0; i < 10; i++) {
             partitionNames.add("partitionName " + i);
@@ -39,7 +47,10 @@ public class AuthTokenTests extends AbstractStorageTest {
         when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
-        verifyStatic(times((10)));
+
+        /* Verify. */
+        verify(mTokenManager).removeAllCachedTokens();
+        verify(mLocalDocumentStorage, never()).createTableIfDoesNotExist(anyString());
         SharedPreferencesManager.remove(matches("partitionName [0-9]"));
     }
 
@@ -75,6 +86,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         AuthTokenContext.getInstance().setAuthToken("mock-token", "mock-user", new Date(Long.MAX_VALUE));
 
         /* Verify. */
-        verify(mTokenManager, times(0)).removeAllCachedTokens();
+        verify(mTokenManager, never()).removeAllCachedTokens();
+        verify(mLocalDocumentStorage).createTableIfDoesNotExist(anyString());
     }
 }

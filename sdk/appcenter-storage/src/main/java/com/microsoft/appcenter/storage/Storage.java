@@ -254,6 +254,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             public void onNewUser(UserInformation userInfo) {
                 if (userInfo == null) {
                     TokenManager.getInstance().removeAllCachedTokens();
+                    mLocalDocumentStorage.resetDatabase();
                 } else {
                     String userTable = Utils.getUserTableName(userInfo.getAccountId());
                     mLocalDocumentStorage.createTableIfDoesNotExist(userTable);

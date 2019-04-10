@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.storage.LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -50,6 +51,7 @@ public class LocalDocumentStorageAndroidTest {
     private LocalDocumentStorage mLocalDocumentStorage;
 
     private static String mUserTableName = Utils.getUserTableName("123");
+    private static String mReadOnlyTableName = Utils.getTableName(Constants.READONLY, "123");
 
     @BeforeClass
     public static void setUpClass() {
@@ -148,6 +150,34 @@ public class LocalDocumentStorageAndroidTest {
         Document<String> createdDocument = mLocalDocumentStorage.read(mUserTableName, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test", createdDocument.getDocument());
+    }
+
+    @Test
+    public void resetDatabase() {
+        mLocalDocumentStorage.createTableIfDoesNotExist(mUserTableName);
+        Document<String> userDocument = new Document<>(TEST_VALUE, Constants.USER, ID);
+        Document<String> appDocument = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        mLocalDocumentStorage.writeOffline(mUserTableName, userDocument, new WriteOptions());
+        mLocalDocumentStorage.writeOffline(mReadOnlyTableName, appDocument, new WriteOptions());
+        Document<String> cachedUserDocument = mLocalDocumentStorage.read(mUserTableName, Constants.USER, ID, String.class, new ReadOptions());
+        Document<String> cachedAppDocument = mLocalDocumentStorage.read(mReadOnlyTableName, Constants.READONLY, ID, String.class, new ReadOptions());
+        assertNotNull(cachedUserDocument);
+        assertNotNull(cachedAppDocument);
+        assertNull(cachedUserDocument.getDocumentError());
+        assertNull(cachedAppDocument.getDocumentError());
+        assertNotNull(cachedUserDocument.getDocument());
+        assertNotNull(cachedAppDocument.getDocument());
+        mLocalDocumentStorage.resetDatabase();
+        cachedUserDocument = mLocalDocumentStorage.read(mUserTableName, Constants.USER, ID, String.class, new ReadOptions());
+        cachedAppDocument = mLocalDocumentStorage.read(mReadOnlyTableName, Constants.READONLY, ID, String.class, new ReadOptions());
+        assertNotNull(cachedUserDocument);
+        assertNotNull(cachedAppDocument);
+        assertNotNull(cachedUserDocument.getDocumentError());
+        assertNotNull(cachedAppDocument.getDocumentError());
+        assertNull(cachedUserDocument.getDocument());
+        assertNull(cachedAppDocument.getDocument());
+        assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getDocumentError().getError().getMessage());
+        assertEquals("Document was not found in the cache.", cachedAppDocument.getDocumentError().getError().getMessage());
     }
 
     @Test
