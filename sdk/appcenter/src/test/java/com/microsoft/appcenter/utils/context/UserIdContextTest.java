@@ -5,12 +5,7 @@
 
 package com.microsoft.appcenter.utils.context;
 
-import android.content.Context;
 import android.text.TextUtils;
-
-import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
-import com.microsoft.appcenter.utils.crypto.CryptoUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +26,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest(TextUtils.class)
@@ -97,16 +91,24 @@ public class UserIdContextTest {
 
     @Test
     public void setUserIdUserEquals() {
+
+        /* When we add a listener then set userId. */
         String mockUserId = "userId";
         UserIdContext userIdContext = new UserIdContext();
         UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
         userIdContext.addListener(listener);
         userIdContext.setUserId(mockUserId);
+
+        /* Listener is called with a userId that is the same as current value. */
         verify(listener).onNewUserId(mockUserId);
         assertEquals(userIdContext.getUserId(), mockUserId);
+
+        /* Listener is not called again on setting the same value. */
         userIdContext.setUserId(mockUserId);
-        verify(listener).onNewUserId(mockUserId);
+        verify(listener, times(1)).onNewUserId(mockUserId);
         assertEquals(userIdContext.getUserId(), mockUserId);
+
+        /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
         verify(listener).onNewUserId(isNull(String.class));
         assertNull(userIdContext.getUserId());
@@ -114,17 +116,25 @@ public class UserIdContextTest {
 
     @Test
     public void setUserIdUserNotEquals() {
+
+        /* When we add a listener then set userId. */
         String mockUserId1 = "userId1";
         String mockUserId2 = "userId2";
         UserIdContext userIdContext = new UserIdContext();
         UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
         userIdContext.addListener(listener);
+
+        /* Listener is called with a userId that is the same as current value. */
         userIdContext.setUserId(mockUserId1);
         verify(listener).onNewUserId(mockUserId1);
         assertEquals(userIdContext.getUserId(), mockUserId1);
+
+        /* When we update userId, listener is called again and current value changes. */
         userIdContext.setUserId(mockUserId2);
         verify(listener).onNewUserId(mockUserId2);
         assertEquals(userIdContext.getUserId(), mockUserId2);
+
+        /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
         verify(listener).onNewUserId(isNull(String.class));
         assertNull(userIdContext.getUserId());
@@ -132,15 +142,33 @@ public class UserIdContextTest {
 
     @Test
     public void addAndRemoveListeners() {
+
+        /* When we add a listener then set userId. */
         String mockUserId = "userId";
         UserIdContext userIdContext = new UserIdContext();
         UserIdContext.Listener listener = mock(UserIdContext.Listener.class);
         userIdContext.addListener(listener);
         userIdContext.setUserId(mockUserId);
+
+        /* Listener is called with a userId that is the same as current value. */
         verify(listener).onNewUserId(mockUserId);
+
+        /* When we remove listener and update userId. */
         userIdContext.removeListener(listener);
-        verify(listener).onNewUserId(mockUserId);
+        String mockUserId2 = "userId2";
+        userIdContext.setUserId(mockUserId2);
+
+        /* Listener not called since remove. */
+        verify(listener, never()).onNewUserId(mockUserId2);
+
+        /* Restore listener and update to same value: listener not called (by design limitation). */
+        userIdContext.setUserId(mockUserId2);
+        verify(listener, never()).onNewUserId(mockUserId2);
+
+        /* Restore listener. */
         userIdContext.addListener(listener);
+
+        /* Verify we now get called with update, here is a null update example. */
         userIdContext.setUserId(null);
         verify(listener).onNewUserId(isNull(String.class));
         assertNull(userIdContext.getUserId());
