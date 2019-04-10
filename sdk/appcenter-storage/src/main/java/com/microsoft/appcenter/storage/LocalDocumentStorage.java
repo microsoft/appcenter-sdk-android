@@ -283,25 +283,11 @@ class LocalDocumentStorage {
         return READONLY.equals(partition) || USER.equals(partition);
     }
 
-    void updatePendingOperation(PendingOperation operation) {
-
-        /*
-         * Update the document in cache (if expiration_time still valid otherwise, remove the document),
-         * clear the pending_operation column, update etag, download_time and document columns.
-         */
-        long now = Calendar.getInstance().getTimeInMillis();
-        if (operation.getExpirationTime() <= now) {
-            deletePendingOperation(operation);
-        } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
-        }
-    }
-
-    private static <T> ContentValues getContentValues(
+    private static ContentValues getContentValues(
             String partition,
             String documentId,
             String document,
-            String etag,
+            String eTag,
             long expirationTime,
             long downloadTime,
             long operationTime,
@@ -310,12 +296,26 @@ class LocalDocumentStorage {
         values.put(PARTITION_COLUMN_NAME, partition);
         values.put(DOCUMENT_ID_COLUMN_NAME, documentId);
         values.put(DOCUMENT_COLUMN_NAME, document);
-        values.put(ETAG_COLUMN_NAME, etag);
+        values.put(ETAG_COLUMN_NAME, eTag);
         values.put(EXPIRATION_TIME_COLUMN_NAME, expirationTime);
         values.put(DOWNLOAD_TIME_COLUMN_NAME, downloadTime);
         values.put(OPERATION_TIME_COLUMN_NAME, operationTime);
         values.put(PENDING_OPERATION_COLUMN_NAME, pendingOperation);
         return values;
+    }
+
+    void updatePendingOperation(PendingOperation operation) {
+
+        /*
+         * Update the document in cache (if expiration_time still valid otherwise, remove the document),
+         * clear the pending_operation column, update eTag, download_time and document columns.
+         */
+        long now = Calendar.getInstance().getTimeInMillis();
+        if (operation.getExpirationTime() <= now) {
+            deletePendingOperation(operation);
+        } else {
+            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        }
     }
 
     private static ContentValues getContentValues(PendingOperation operation, long now) {

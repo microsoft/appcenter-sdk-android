@@ -741,12 +741,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                         boolean isWriteSucceed =
                                 mLocalDocumentStorage.markForDeletion(table, cachedToken.partition(), documentId);
                         if (isWriteSucceed) {
-                            Storage.this.completeFuture(new Document<Void>(), result);
+                            completeFuture(new Document<Void>(), result);
                         } else {
-                            Storage.this.completeFuture(new StorageException("Failed to write to cache."), result);
+                            completeFuture(new StorageException("Failed to write to cache."), result);
                         }
                     } else {
-                        Storage.this.completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
+                        completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
                     }
                 }
             }
@@ -757,7 +757,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private <T> boolean isInvalidPartition(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
-            Storage.this.completeFuture(getInvalidPartitionStorageException(partition), result);
+            completeFuture(getInvalidPartitionStorageException(partition), result);
         }
         return invalidPartitionName;
     }
@@ -791,8 +791,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
-                String etag = Utils.getEtag(cosmosDbResponsePayload);
-                pendingOperation.setEtag(etag);
+                String eTag = Utils.getEtag(cosmosDbResponsePayload);
+                pendingOperation.setEtag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
                 DataStoreEventListener eventListener = mEventListener;
                 if (eventListener != null) {
@@ -801,7 +801,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             new DocumentMetadata(
                                     pendingOperation.getPartition(),
                                     pendingOperation.getDocumentId(),
-                                    etag),
+                                    eTag),
                             null);
                 }
                 mLocalDocumentStorage.updatePendingOperation(pendingOperation);
