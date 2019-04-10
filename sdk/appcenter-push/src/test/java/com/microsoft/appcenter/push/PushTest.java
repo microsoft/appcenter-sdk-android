@@ -68,7 +68,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -754,7 +753,6 @@ public class PushTest {
     public void verifyEnqueueCalledOnNewAuthToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
@@ -806,7 +804,6 @@ public class PushTest {
         Push push = Push.getInstance();
         push.onTokenRefresh("push-token");
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel).enqueue(any(Log.class), anyString(), anyInt());
@@ -819,7 +816,6 @@ public class PushTest {
     public void verifyEnqueueCalledAnonymouslyOnClearToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
@@ -832,7 +828,6 @@ public class PushTest {
     public void verifyEnqueueNotCalledOnTheSameUser() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
@@ -846,7 +841,6 @@ public class PushTest {
     public void verifyEnqueueCalledOnNewUser() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         String mockToken = UUIDUtils.randomUUID().toString();
@@ -861,7 +855,6 @@ public class PushTest {
         String mockUserId = UUIDUtils.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
@@ -875,7 +868,6 @@ public class PushTest {
         String mockUserId = UUIDUtils.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         Push.setEnabled(false);
         String mockToken = UUIDUtils.randomUUID().toString();
@@ -899,7 +891,6 @@ public class PushTest {
         when(AuthTokenContext.getInstance()).thenReturn(authTokenContext);
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         verify(userIdContext).addListener(userIdContextArgument.capture());
         verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
