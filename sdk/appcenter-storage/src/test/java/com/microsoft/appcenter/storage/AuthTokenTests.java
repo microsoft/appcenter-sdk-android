@@ -20,7 +20,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -49,9 +48,9 @@ public class AuthTokenTests extends AbstractStorageTest {
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
 
         /* Verify. */
-        verify(mTokenManager).removeAllCachedTokens();
+        verify(mLocalDocumentStorage).resetDatabase();
         verify(mLocalDocumentStorage, never()).createTableIfDoesNotExist(anyString());
-        SharedPreferencesManager.remove(matches("partitionName [0-9]"));
+        verify(mTokenManager).removeAllCachedTokens();
     }
 
     @Test
