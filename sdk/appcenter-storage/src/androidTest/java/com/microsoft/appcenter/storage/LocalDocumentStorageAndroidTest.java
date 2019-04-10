@@ -236,4 +236,20 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(Constants.PENDING_OPERATION_REPLACE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test2"));
     }
+
+    @Test
+    public void createUnExpiredDocument() {
+        mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, Constants.USER, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
+        Document<String> document = mLocalDocumentStorage.read(mUserTableName, Constants.USER, ID, String.class, null);
+        assertNull(document.getDocumentError());
+        assertEquals("Test", document.getDocument());
+    }
+
+    @Test
+    public void createDocumentWithoutOverflowException() {
+        mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, Constants.USER, ID, "Test", String.class, new WriteOptions(999999999));
+        Document<String> document = mLocalDocumentStorage.read(mUserTableName, Constants.USER, ID, String.class, null);
+        assertNull(document.getDocumentError());
+        assertEquals("Test", document.getDocument());
+    }
 }

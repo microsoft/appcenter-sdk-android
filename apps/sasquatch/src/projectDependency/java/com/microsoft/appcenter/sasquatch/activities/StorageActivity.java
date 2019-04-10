@@ -5,10 +5,8 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -26,15 +24,20 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.Utils;
+import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
 
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
+
 class TestDocument {
 
     @SuppressWarnings("unused")
-    String test = "ABC";
+    String key;
 }
 
 public class StorageActivity extends AppCompatActivity {
@@ -63,10 +66,11 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void accept(PaginatedDocuments<TestDocument> documents) {
-                int listSize = documents.getCurrentPage().getItems().size();
-                for (int i = 0; i < listSize; i++) {
-                    mAppDocumentListAdapter.add(documents.getCurrentPage().getItems().get(i).getId());
-                    mDocumentContents.add(Utils.getGson().toJson(documents.getCurrentPage().getItems().get(i).getDocument()));
+
+                /* TODO handle multiple pages. */
+                for (Document<TestDocument> document : documents.getCurrentPage().getItems()) {
+                    mAppDocumentListAdapter.add(document.getId());
+                    mDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
                 }
             }
         });
@@ -98,8 +102,8 @@ public class StorageActivity extends AppCompatActivity {
                         break;
                     case READONLY:
                         Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                        intent.putExtra("documentId", mAppDocumentListAdapter.getItem(position));
-                        intent.putExtra("documentContent", mDocumentContents.get(position));
+                        intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getItem(position));
+                        intent.putExtra(DOCUMENT_CONTENT, mDocumentContents.get(position));
                         startActivity(intent);
                         break;
                 }
@@ -113,8 +117,7 @@ public class StorageActivity extends AppCompatActivity {
             case R.id.action_add:
                 switch (mStorageType) {
                     case USER:
-                        SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                        String accountId = preferences.getString("accountId", null);
+                        String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                         if (accountId != null) {
                             Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
                             startActivity(intent);
@@ -156,8 +159,7 @@ public class StorageActivity extends AppCompatActivity {
 
                 /* Remove the toast and string resource once implementation ready. */
                 Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
-                SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                String accountId = preferences.getString("accountId", null);
+                String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
                     CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     mListView.setAdapter(adapterUser);

@@ -480,30 +480,6 @@ public class DatabaseManagerAndroidTest {
     }
 
     @Test
-    public void testMultipleTablesCreateDelete() {
-        String firstTable = "firstTable";
-        String secondTable = "secondTable";
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables-read-write", firstTable, 1, mSchema, listener);
-        assertTrue(checkTableExists(databaseManager, firstTable));
-        assertFalse(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.createTable(secondTable, mSchema);
-        assertTrue(checkTableExists(databaseManager, firstTable));
-        assertTrue(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.dropTable(firstTable);
-        assertFalse(checkTableExists(databaseManager, firstTable));
-        assertTrue(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.dropTable(secondTable);
-        assertFalse(checkTableExists(databaseManager, firstTable));
-        assertFalse(checkTableExists(databaseManager, secondTable));
-    }
-
-    @Test
     public void testMultipleTablesReadWriteDelete() {
         String firstTable = "firstTable";
         ContentValues schema1 = new ContentValues();
