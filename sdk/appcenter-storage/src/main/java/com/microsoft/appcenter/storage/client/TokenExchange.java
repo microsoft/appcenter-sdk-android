@@ -96,6 +96,12 @@ public class TokenExchange {
      */
     public abstract static class TokenExchangeServiceCallback implements ServiceCallback {
 
+        private final TokenManager mTokenManager;
+
+        public TokenExchangeServiceCallback(TokenManager tokenManager) {
+            mTokenManager = tokenManager;
+        }
+
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
             TokenResult tokenResult = parseTokenResult(payload);
@@ -120,7 +126,7 @@ public class TokenExchange {
                     tokensResponse.tokens().size() == 1 &&
                     tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
                 TokenResult tokenResult = tokensResponse.tokens().get(0);
-                TokenManager.getInstance().setCachedToken(tokenResult);
+                mTokenManager.setCachedToken(tokenResult);
                 return tokenResult;
             }
             return null;

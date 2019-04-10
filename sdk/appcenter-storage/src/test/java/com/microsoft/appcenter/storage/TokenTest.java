@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.content.Context;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -282,7 +284,7 @@ public class TokenTest extends AbstractStorageTest {
         partitions.add(partition);
 
         /* Attempt to cache the token result. */
-        TokenManager.getInstance().setCachedToken(result);
+        TokenManager.getInstance(mock(Context.class)).setCachedToken(result);
 
         /* Verify that the cached partition name does not contain the account ID. */
         verifyStatic();

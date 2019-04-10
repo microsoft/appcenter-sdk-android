@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.content.Context;
+
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -65,7 +67,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         /* Setup token manager. */
         mockStatic(TokenManager.class);
         TokenManager mTokenManager = mock(TokenManager.class);
-        when(TokenManager.getInstance()).thenReturn(mTokenManager);
+        when(TokenManager.getInstance(mock(Context.class))).thenReturn(mTokenManager);
 
         /* Mock context listener. */
         AuthTokenContext.Listener mockListener = mock(AuthTokenContext.Listener.class);

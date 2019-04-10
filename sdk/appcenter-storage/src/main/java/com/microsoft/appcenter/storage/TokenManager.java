@@ -5,8 +5,11 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.content.Context;
+
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.Calendar;
@@ -26,7 +29,10 @@ public class TokenManager {
      */
     private static TokenManager sInstance;
 
-    private TokenManager() {
+    private final Context mContext;
+
+    private TokenManager(Context context) {
+        mContext = context;
     }
 
     /**
@@ -34,9 +40,9 @@ public class TokenManager {
      *
      * @return Shared token manager instance.
      */
-    public static TokenManager getInstance() {
+    public static TokenManager getInstance(Context context) {
         if (sInstance == null) {
-            sInstance = new TokenManager();
+            sInstance = new TokenManager(context);
         }
         return sInstance;
     }
@@ -62,7 +68,9 @@ public class TokenManager {
     }
 
     TokenResult getCachedToken(String partitionName, Boolean includeExpiredToken) {
-        TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
+        String encryptedTokenResult = SharedPreferencesManager.getString(partitionName);
+        String decryptedTokenResult = CryptoUtils.getInstance(mContext).decrypt(encryptedTokenResult, false).getDecryptedData();
+        TokenResult token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);
         if (token != null && !includeExpiredToken) {
             Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 
@@ -90,7 +98,9 @@ public class TokenManager {
             partitionNamesSet.add(removedAccountIdPartition);
             SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
+        String strTokenResult = Utils.getGson().toJson(tokenResult);
+        String encryptedTokenResult = CryptoUtils.getInstance(mContext).encrypt(strTokenResult);
+        SharedPreferencesManager.putString(removedAccountIdPartition, encryptedTokenResult);
     }
 
     /**
