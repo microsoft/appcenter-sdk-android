@@ -351,7 +351,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
 
         /* Make the call. */
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify token. */
         assertNotNull(doc);
@@ -371,21 +371,22 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readUserEndToEndWithNetwork() throws JSONException {
-        readEndToEndWithNetwork(Constants.USER);
+        readEndToEndWithNetwork(Constants.USER, tokenExchangeUserPayload);
     }
 
     @Test
     public void readReadonlyEndToEndWithNetwork() throws JSONException {
-        readEndToEndWithNetwork(Constants.READONLY);
+        readEndToEndWithNetwork(Constants.READONLY, tokenExchangeReadonlyPayload);
     }
 
-    private void readEndToEndWithNetwork(String partition) throws JSONException {
+    private void readEndToEndWithNetwork(String partition, String tokenExchangePayload) throws JSONException {
 
         /* Mock http call to get token. */
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(partition, DOCUMENT_ID, TestDocument.class);
 
         /* Make cosmos db http call with exchanged token. */
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangePayload, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify token. */
         assertNotNull(doc);
@@ -406,7 +407,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, null, new Exception("Cosmos db exception."));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -468,7 +469,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_GET, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_GET, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -550,7 +551,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
@@ -607,7 +608,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createCosmosDbCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, null, new Exception(exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, null, new Exception(exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -625,7 +626,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(mUserTableName), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
@@ -656,7 +657,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteCosmosDbCallFails() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.

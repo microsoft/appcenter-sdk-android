@@ -218,4 +218,11 @@ public class LocalDocumentStorageTest {
         ReadOptions readOptions = new ReadOptions(1);
         assertTrue(ReadOptions.isExpired(-1));
     }
+
+    @Test
+    public void getPendingOperationsOnNonUserTable() {
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(null);
+        assertNotNull(operations);
+        assertEquals(0, operations.size());
+    }
 }

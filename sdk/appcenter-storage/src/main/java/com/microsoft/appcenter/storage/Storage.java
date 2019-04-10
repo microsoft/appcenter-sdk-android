@@ -755,11 +755,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private <T> boolean isInvalidPartition(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
-        boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
-        if (invalidPartitionName) {
+        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
+        if (isInvalidPartition) {
             completeFuture(getInvalidPartitionStorageException(partition), result);
         }
-        return invalidPartitionName;
+        return isInvalidPartition;
     }
 
     private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {

@@ -22,7 +22,6 @@ import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
@@ -310,7 +309,7 @@ class LocalDocumentStorage {
          * Update the document in cache (if expiration_time still valid otherwise, remove the document),
          * clear the pending_operation column, update eTag, download_time and document columns.
          */
-        long now = Calendar.getInstance().getTimeInMillis();
+        long now = System.currentTimeMillis();
         if (operation.getExpirationTime() <= now) {
             deletePendingOperation(operation);
         } else {

@@ -105,7 +105,7 @@ abstract public class AbstractStorageTest {
     static String mUserTableName = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
-    private static String tokenExchangeResponsePayload = String.format("{\n" +
+    private static final String tokenExchangeResponseFormat = "{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
             "            \"partition\": \"%s\",\n" +
@@ -113,11 +113,15 @@ abstract public class AbstractStorageTest {
             "            \"dbName\": \"%s\",\n" +
             "            \"dbCollectionName\": \"%s\",\n" +
             "            \"token\": \"ha-ha-ha-ha\",\n" +
-            "            \"status\": \"Succeed\",\n" +
-            "            \"accountId\": \"%s\"\n" +
+            "            \"status\": \"Succeed\"\n" +
+            "            %s" +
             "        }\n" +
             "    ]\n" +
-            "}", RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, ACCOUNT_ID);
+            "}";
+    static String tokenExchangeReadonlyPayload =
+            String.format(tokenExchangeResponseFormat, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, "");
+    static String tokenExchangeUserPayload =
+            String.format(tokenExchangeResponseFormat, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -224,10 +228,15 @@ abstract public class AbstractStorageTest {
 
     void verifyTokenExchangeToCosmosDbFlow(
             String documentId,
+            String tokenExchangePayload,
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
             Exception cosmosFailureException) throws JSONException {
-        verifyTokenExchangeFlow(tokenExchangeResponsePayload, null);
+        verifyTokenExchangeFlow(tokenExchangePayload, null);
+        verifyCosmosDbFlow(documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
+    }
+
+    void verifyCosmosDbFlow(String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
