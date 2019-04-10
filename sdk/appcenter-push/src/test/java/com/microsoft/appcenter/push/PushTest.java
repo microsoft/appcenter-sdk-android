@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -79,6 +80,7 @@ import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @RunWith(PowerMockRunner.class)
 @SuppressWarnings({"unused", "MissingPermission"})
@@ -94,7 +96,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
         HandlerUtils.class,
         CryptoUtils.class,
         JSONUtils.class,
-        TextUtils.class
+        TextUtils.class,
+        UserIdContext.class,
+        AuthTokenContext.class
 })
 public class PushTest {
 
@@ -869,6 +873,34 @@ public class PushTest {
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyCalledUserIdContextListener() {
+        UserIdContext userIdContext = mock(UserIdContext.class);
+        AuthTokenContext authTokenContext = mock(AuthTokenContext.class);
+        mockStatic(UserIdContext.class);
+        mockStatic(AuthTokenContext.class);
+        when(UserIdContext.getInstance()).thenReturn(userIdContext);
+        when(AuthTokenContext.getInstance()).thenReturn(authTokenContext);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
+        start(push, channel);
+        verify(userIdContext, times(1)).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
+        verify(authTokenContext, times(1)).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext, never()).removeListener(any(AuthTokenContext.Listener.class));
+        push.applyEnabledState(false);
+        verify(userIdContext, times(1)).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext, times(1)).removeListener(any(UserIdContext.Listener.class));
+        verify(authTokenContext, times(1)).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext, times(1)).removeListener(any(AuthTokenContext.Listener.class));
+        push.applyEnabledState(true);
+        verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext, times(1)).removeListener(any(UserIdContext.Listener.class));
+        verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext, times(1)).removeListener(any(AuthTokenContext.Listener.class));
     }
 
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
