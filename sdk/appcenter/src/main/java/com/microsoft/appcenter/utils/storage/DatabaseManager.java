@@ -163,7 +163,6 @@ public class DatabaseManager implements Closeable {
         close();
         mContext.deleteDatabase(mDatabase);
 
-
         /* Call getDatabase to recreate database. */
         getDatabase();
     }
