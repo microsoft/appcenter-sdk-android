@@ -351,7 +351,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<TestDocument>> doc = Storage.replace(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
 
         /* Make the call. */
-        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify token. */
         assertNotNull(doc);
@@ -371,12 +371,12 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readUserEndToEndWithNetwork() throws JSONException {
-        readEndToEndWithNetwork(Constants.USER, tokenExchangeUserPayload);
+        readEndToEndWithNetwork(Constants.USER, TOKEN_EXCHANGE_USER_PAYLOAD);
     }
 
     @Test
     public void readReadonlyEndToEndWithNetwork() throws JSONException {
-        readEndToEndWithNetwork(Constants.READONLY, tokenExchangeReadonlyPayload);
+        readEndToEndWithNetwork(Constants.READONLY, TOKEN_EXCHANGE_READONLY_PAYLOAD);
     }
 
     private void readEndToEndWithNetwork(String partition, String tokenExchangePayload) throws JSONException {
@@ -407,7 +407,7 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_GET, null, new Exception("Cosmos db exception."));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -469,7 +469,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_GET, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -488,11 +488,11 @@ public class StorageTest extends AbstractStorageTest {
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
         Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
-                eq(mUserTableName),
+                eq(USER_TABLE_NAME),
                 eq(RESOLVED_USER_PARTITION),
                 eq(DOCUMENT_ID),
                 eq(TestDocument.class),
@@ -505,7 +505,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
         Document<String> deletedDocument = new Document<>();
         deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
-        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         Document<String> document = Storage.read(Constants.USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getError() instanceof StorageException);
@@ -540,7 +540,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
         Document<String> createdDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
-        when(mLocalDocumentStorage.read(eq(mUserTableName), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
         Document<String> document = Storage.read(Constants.USER, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
         assertEquals(createdDocument.getDocument(), document.getDocument());
@@ -551,11 +551,11 @@ public class StorageTest extends AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
-        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        verify(mLocalDocumentStorage, times(1)).writeOnline(eq(mUserTableName), refEq(testCosmosDocument), refEq(writeOptions));
+        verify(mLocalDocumentStorage, times(1)).writeOnline(eq(USER_TABLE_NAME), refEq(testCosmosDocument), refEq(writeOptions));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -576,7 +576,7 @@ public class StorageTest extends AbstractStorageTest {
         Storage.create(Constants.USER, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
-                eq(mUserTableName),
+                eq(USER_TABLE_NAME),
                 eq(RESOLVED_USER_PARTITION),
                 eq(DOCUMENT_ID),
                 eq(testDocument),
@@ -608,7 +608,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createCosmosDbCallFails() throws JSONException {
         AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(null, tokenExchangeUserPayload, METHOD_POST, null, new Exception(exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, null, new Exception(exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -626,8 +626,8 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteEndToEnd() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_DELETE, "", null);
-        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(mUserTableName), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
         assertNull(doc.get().getDocument());
@@ -657,7 +657,7 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteCosmosDbCallFails() throws JSONException {
         AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangeUserPayload, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -675,10 +675,10 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(mLocalDocumentStorage.markForDeletion(eq(mUserTableName), anyString(), anyString())).thenReturn(true);
+        when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(true);
         when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
         AppCenterFuture<Document<Void>> result = Storage.delete(Constants.USER, DOCUMENT_ID);
-        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(mUserTableName), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getDocumentError());
@@ -688,9 +688,9 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.markForDeletion(eq(mUserTableName), anyString(), anyString())).thenReturn(false);
+        when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
         AppCenterFuture<Document<Void>> result = Storage.delete(Constants.USER, DOCUMENT_ID);
-        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(mUserTableName), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(result.get().getDocumentError());

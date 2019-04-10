@@ -90,7 +90,8 @@ abstract public class AbstractStorageTest {
     static final String TEST_FIELD_VALUE = "Test Value";
 
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
-    static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
+
+    final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
             "    },\n" +
@@ -102,10 +103,12 @@ abstract public class AbstractStorageTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
-    static String mUserTableName = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
+
+    final static String USER_TABLE_NAME = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
-    private static final String tokenExchangeResponseFormat = "{\n" +
+
+    private static final String TOKEN_EXCHANGE_RESPONSE_FORMAT = "{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
             "            \"partition\": \"%s\",\n" +
@@ -118,10 +121,12 @@ abstract public class AbstractStorageTest {
             "        }\n" +
             "    ]\n" +
             "}";
-    static String tokenExchangeReadonlyPayload =
-            String.format(tokenExchangeResponseFormat, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, "");
-    static String tokenExchangeUserPayload =
-            String.format(tokenExchangeResponseFormat, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
+
+    final static String TOKEN_EXCHANGE_READONLY_PAYLOAD =
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, "");
+
+    final static String TOKEN_EXCHANGE_USER_PAYLOAD =
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -144,6 +149,7 @@ abstract public class AbstractStorageTest {
 
     @Mock
     LocalDocumentStorage mLocalDocumentStorage;
+
     @Mock
     protected AuthTokenContext mAuthTokenContext;
 
