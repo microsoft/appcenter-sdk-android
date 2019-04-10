@@ -484,10 +484,6 @@ public class DatabaseManager implements Closeable {
     private void createTable(SQLiteDatabase db, String table, ContentValues schema, String[] uniqueColumnsConstraint) {
 
         /* Generate a schema from specimen. */
-        String uniqueConstraintQuery = "";
-        if (uniqueColumnsConstraint != null && uniqueColumnsConstraint.length > 0) {
-            uniqueConstraintQuery = String.format(", UNIQUE(%s)", TextUtils.join(", ", uniqueColumnsConstraint));
-        }
         StringBuilder sql = new StringBuilder("CREATE TABLE `");
         sql.append(table);
         sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
@@ -504,7 +500,9 @@ public class DatabaseManager implements Closeable {
                 sql.append("TEXT");
             }
         }
-        sql.append(uniqueConstraintQuery);
+        if (uniqueColumnsConstraint != null && uniqueColumnsConstraint.length > 0) {
+            sql.append(", UNIQUE(`").append(TextUtils.join("`, `", uniqueColumnsConstraint)).append("`)");
+        }
         sql.append(");");
         db.execSQL(sql.toString());
     }
