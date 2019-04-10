@@ -50,7 +50,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 PENDING_OPERATION_CREATE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
@@ -74,7 +74,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
-        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertEquals(ETAG, documentMetadata.getEtag());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
@@ -89,11 +89,17 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void noPendingOperationsWhenSignedOut() {
+        when(mAuthTokenContext.getAccountId()).thenReturn(null);
+        mStorage.onNetworkStateUpdated(true);
+    }
+
+    @Test
     public void pendingCreateOperationSuccessWithNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 PENDING_OPERATION_CREATE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
@@ -133,7 +139,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 new PendingOperation(
                         mUserTableName,
                         operation,
-                        PARTITION,
+                        RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
                         BaseOptions.DEFAULT_ONE_HOUR);
@@ -177,7 +183,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                     add(new PendingOperation(
                             mUserTableName,
                             "Order a coffee",
-                            PARTITION,
+                            RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
                             BaseOptions.DEFAULT_ONE_HOUR));
@@ -209,7 +215,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 operation,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
@@ -237,7 +243,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
@@ -261,7 +267,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
-        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
 
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
@@ -272,7 +278,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
@@ -306,7 +312,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final PendingOperation pendingOperation = new PendingOperation(
                 mUserTableName,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);

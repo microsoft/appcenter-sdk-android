@@ -94,13 +94,13 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void getTableNameWithUserPartitionName() {
-        String tableName = Utils.getTableName(Constants.USER);
+        String tableName = Utils.getTableName(Constants.USER, USER_ID);
         assertEquals(String.format(com.microsoft.appcenter.Constants.USER_TABLE_FORMAT, USER_ID), tableName);
     }
 
     @Test
     public void getTableNameWithReadonlyPartitionName() {
-        String tableName = Utils.getTableName(Constants.READONLY);
+        String tableName = Utils.getTableName(Constants.READONLY, USER_ID);
         assertEquals(com.microsoft.appcenter.Constants.READONLY_TABLE, tableName);
     }
 

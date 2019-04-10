@@ -16,6 +16,7 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
@@ -93,7 +94,7 @@ public class Utils {
         }
     }
 
-    public static String removeAccountIdFromPartitionName(String partition) {
+    static String removeAccountIdFromPartitionName(String partition) {
         if (partition.equals(Constants.READONLY)) {
             return partition;
         }
@@ -105,18 +106,27 @@ public class Utils {
     }
 
     @NonNull
-    public static String getTableName(String partition) {
+    static String getTableName(String partition, String accountId) {
         if (USER.equals(partition)) {
-            return getUserTableName();
+            return getUserTableName(accountId);
         }
         return READONLY_TABLE;
     }
 
-    public static String getUserTableName() {
-        return getUserTableName(AuthTokenContext.getInstance().getAccountId());
+    static String getUserTableName() {
+        String accountId = AuthTokenContext.getInstance().getAccountId();
+        return accountId == null ? null : getUserTableName(accountId);
     }
 
-    public static String getUserTableName(String accountId) {
+    @NonNull
+    static String getTableName(@NonNull TokenResult tokenResult) {
+        if (tokenResult.partition().startsWith(Constants.USER)) {
+            return getUserTableName(tokenResult.accountId());
+        }
+        return READONLY_TABLE;
+    }
+
+    static String getUserTableName(String accountId) {
         return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
 }

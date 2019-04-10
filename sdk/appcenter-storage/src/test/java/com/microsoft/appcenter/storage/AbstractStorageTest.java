@@ -81,31 +81,15 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION_NAME = Constants.USER;
-
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
-    static final String PARTITION = PARTITION_NAME + "-" + ACCOUNT_ID;
+    static final String RESOLVED_USER_PARTITION = Constants.USER + "-" + ACCOUNT_ID;
 
     static final String DOCUMENT_ID = "document-id";
 
     static final String TEST_FIELD_VALUE = "Test Value";
 
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
-
-    private static String tokenExchangeResponsePayload = String.format("{\n" +
-            "    \"tokens\": [\n" +
-            "        {\n" +
-            "            \"partition\": \"%s\",\n" +
-            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
-            "            \"dbName\": \"%s\",\n" +
-            "            \"dbCollectionName\": \"%s\",\n" +
-            "            \"token\": \"ha-ha-ha-ha\",\n" +
-            "            \"status\": \"Succeed\"\n" +
-            "        }\n" +
-            "    ]\n" +
-            "}", PARTITION, DATABASE_NAME, COLLECTION_NAME);
-
     static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
@@ -117,11 +101,23 @@ abstract public class AbstractStorageTest {
             "    \"_etag\": \"%s\",\n" +
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
-            "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION, ETAG);
+            "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
+    static String mUserTableName = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
-
-    protected static String mUserTableName = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
+    private static String tokenExchangeResponsePayload = String.format("{\n" +
+            "    \"tokens\": [\n" +
+            "        {\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"%s\",\n" +
+            "            \"dbCollectionName\": \"%s\",\n" +
+            "            \"token\": \"ha-ha-ha-ha\",\n" +
+            "            \"status\": \"Succeed\",\n" +
+            "            \"accountId\": \"%s\"\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}", RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, ACCOUNT_ID);
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -144,9 +140,8 @@ abstract public class AbstractStorageTest {
 
     @Mock
     LocalDocumentStorage mLocalDocumentStorage;
-
     @Mock
-    private AuthTokenContext mAuthTokenContext;
+    protected AuthTokenContext mAuthTokenContext;
 
     @Before
     public void setUp() throws Exception {

@@ -239,6 +239,9 @@ class LocalDocumentStorage {
 
     List<PendingOperation> getPendingOperations(String table) {
         List<PendingOperation> result = new ArrayList<>();
+        if (table == null) {
+            return result;
+        }
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
         Cursor cursor = mDatabaseManager.getCursor(table, builder, null, null, null);
