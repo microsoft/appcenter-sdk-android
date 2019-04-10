@@ -118,7 +118,9 @@ public class Push extends AbstractAppCenterService {
      */
     private AuthTokenContext.Listener mAuthListener;
 
-    // TODO use one object to listeners?
+    /**
+     * User id context listener for {@link UserIdContext}.
+     */
     private UserIdContext.Listener mUserListener;
 
     /**
@@ -248,10 +250,33 @@ public class Push extends AbstractAppCenterService {
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
+        PushInstallationLog log = buildPushInstallationLog(pushToken, userId);
+        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Enqueue a push installation log.
+     *
+     * @param pushToken the push token value
+     */
+    @WorkerThread
+    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+        PushInstallationLog log = buildPushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
+        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Build push installation log.
+     *
+     * @param pushToken the push token value
+     * @param userId  the user identifier value
+     * @return push installation log.
+     */
+    private PushInstallationLog buildPushInstallationLog(@NonNull String pushToken, String userId) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         log.setUserId(userId);
-        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+        return log;
     }
 
     /**
@@ -267,7 +292,7 @@ public class Push extends AbstractAppCenterService {
 
                 @Override
                 public void run() {
-                    enqueuePushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
+                    enqueuePushInstallationLog(pushToken);
                 }
             });
         }
@@ -323,7 +348,7 @@ public class Push extends AbstractAppCenterService {
             @Override
             public void onNewUser(UserInformation userInfo) {
                 if (mLatestPushToken != null) {
-                    enqueuePushInstallationLog(mLatestPushToken, UserIdContext.getInstance().getUserId());
+                    enqueuePushInstallationLog(mLatestPushToken);
                 }
             }
         };
