@@ -24,27 +24,30 @@ import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
 public class UserIdContext {
 
     /**
+     * Custom App User ID prefix for Common Schema.
+     */
+    private static final String CUSTOM_PREFIX = "c";
+
+    /**
      * Maximum allowed length for user identifier for App Center server.
      */
     @VisibleForTesting
     public static final int USER_ID_APP_CENTER_MAX_LENGTH = 256;
-    /**
-     * Custom App User ID prefix for Common Schema.
-     */
-    private static final String CUSTOM_PREFIX = "c";
+
     /**
      * Unique instance.
      */
     private static UserIdContext sInstance;
-    /**
-     * Global listeners collection.
-     */
-    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
-    
+
     /**
      * Current user identifier.
      */
     private String mUserId;
+
+    /**
+     * Global listeners collection.
+     */
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
 
     /**
      * Get unique instance.

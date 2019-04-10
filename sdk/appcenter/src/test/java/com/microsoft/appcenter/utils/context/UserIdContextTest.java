@@ -34,7 +34,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest({TextUtils.class})
+@PrepareForTest(TextUtils.class)
 @RunWith(PowerMockRunner.class)
 public class UserIdContextTest {
 
@@ -140,6 +140,10 @@ public class UserIdContextTest {
         verify(listener).onNewUserId(mockUserId);
         userIdContext.removeListener(listener);
         verify(listener).onNewUserId(mockUserId);
+        userIdContext.addListener(listener);
+        userIdContext.setUserId(null);
+        verify(listener).onNewUserId(isNull(String.class));
+        assertNull(userIdContext.getUserId());
     }
 
     @Test
