@@ -246,8 +246,8 @@ public class Push extends AbstractAppCenterService {
     /**
      * Enqueue a push installation log.
      *
-     * @param pushToken the push token value
-     * @param userId the user identifier value
+     * @param pushToken the push token value.
+     * @param userId the user identifier value.
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
@@ -258,7 +258,7 @@ public class Push extends AbstractAppCenterService {
     /**
      * Enqueue a push installation log.
      *
-     * @param pushToken the push token value
+     * @param pushToken the push token value.
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
@@ -269,8 +269,8 @@ public class Push extends AbstractAppCenterService {
     /**
      * Build push installation log.
      *
-     * @param pushToken the push token value
-     * @param userId  the user identifier value
+     * @param pushToken the push token value.
+     * @param userId  the user identifier value.
      * @return push installation log.
      */
     private PushInstallationLog buildPushInstallationLog(@NonNull String pushToken, String userId) {
