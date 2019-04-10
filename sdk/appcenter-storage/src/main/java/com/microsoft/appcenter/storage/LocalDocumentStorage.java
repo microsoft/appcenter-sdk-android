@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.storage.exception.StorageException;
+import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
@@ -126,9 +127,6 @@ class LocalDocumentStorage {
     }
 
     private <T> long write(Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
-        if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
-            return 0;
-        }
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
         long now = Calendar.getInstance().getTimeInMillis();
         ContentValues values = getContentValues(
@@ -136,7 +134,8 @@ class LocalDocumentStorage {
                 document.getId(),
                 document,
                 document.getEtag(),
-                now + writeOptions.getDeviceTimeToLive() * 1000,
+                writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
+                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000,
                 now,
                 now,
                 pendingOperationValue);
@@ -171,7 +170,11 @@ class LocalDocumentStorage {
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             document.setIsFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-            write(document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+
+            // Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
+            if (readOptions != null) {
+                write(document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+            }
             return document;
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
@@ -185,7 +188,7 @@ class LocalDocumentStorage {
     }
 
     <T> Document<T> createOrUpdateOffline(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        Document<T> cachedDocument = read(partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
+        Document<T> cachedDocument = read(partition, documentId, documentType, null);
         if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }

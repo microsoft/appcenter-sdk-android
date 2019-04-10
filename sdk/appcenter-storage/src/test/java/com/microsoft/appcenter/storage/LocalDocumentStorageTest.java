@@ -182,7 +182,8 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void optionsExpirationTest() {
-        ReadOptions readOptions = new ReadOptions(1);
-        assertTrue(ReadOptions.isExpired(-1));
+        ReadOptions readOptions = new ReadOptions(2);
+        assertTrue(ReadOptions.isExpired(1));
+        assertFalse(ReadOptions.isExpired(-1));
     }
 }
