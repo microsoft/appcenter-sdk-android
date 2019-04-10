@@ -876,7 +876,11 @@ public class PushTest {
     }
 
     @Test
-    public void verifyCalledUserIdContextListener() {
+    public void verifyCalledListenerAfterStart() {
+        ArgumentCaptor<UserIdContext.Listener> userIdContextArgument = ArgumentCaptor.forClass(UserIdContext.Listener.class);
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        UserIdContext.Listener currentUserIdContextListener = null;
+        AuthTokenContext.Listener currentAuthTokenContextListener = null;
         UserIdContext userIdContext = mock(UserIdContext.class);
         AuthTokenContext authTokenContext = mock(AuthTokenContext.class);
         mockStatic(UserIdContext.class);
@@ -887,20 +891,22 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
-        verify(userIdContext, times(1)).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext).addListener(userIdContextArgument.capture());
         verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
-        verify(authTokenContext, times(1)).addListener(any(AuthTokenContext.Listener.class));
+        currentUserIdContextListener = userIdContextArgument.getValue();
+        verify(authTokenContext).addListener(authTokenArgument.capture());
         verify(authTokenContext, never()).removeListener(any(AuthTokenContext.Listener.class));
+        currentAuthTokenContextListener = authTokenArgument.getValue();
         push.applyEnabledState(false);
-        verify(userIdContext, times(1)).addListener(any(UserIdContext.Listener.class));
-        verify(userIdContext, times(1)).removeListener(any(UserIdContext.Listener.class));
-        verify(authTokenContext, times(1)).addListener(any(AuthTokenContext.Listener.class));
-        verify(authTokenContext, times(1)).removeListener(any(AuthTokenContext.Listener.class));
+        verify(userIdContext).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext).removeListener(currentUserIdContextListener);
+        verify(authTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext).removeListener(currentAuthTokenContextListener);
         push.applyEnabledState(true);
         verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
-        verify(userIdContext, times(1)).removeListener(any(UserIdContext.Listener.class));
+        verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
         verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
-        verify(authTokenContext, times(1)).removeListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext).removeListener(any(AuthTokenContext.Listener.class));
     }
 
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
