@@ -7,7 +7,7 @@ package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
-
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -67,24 +67,6 @@ public class UserIdContext {
     }
 
     /**
-     * Adds listener to user context.
-     *
-     * @param listener listener to be notified of changes.
-     */
-    public void addListener(@NonNull Listener listener) {
-        mListeners.add(listener);
-    }
-
-    /**
-     * Removes a specific listener.
-     *
-     * @param listener listener to be removed.
-     */
-    public void removeListener(@NonNull Listener listener) {
-        mListeners.remove(listener);
-    }
-
-    /**
      * Check if userId is valid for One Collector.
      *
      * @param userId userId.
@@ -140,6 +122,24 @@ public class UserIdContext {
     }
 
     /**
+     * Adds listener to user context.
+     *
+     * @param listener listener to be notified of changes.
+     */
+    public void addListener(@NonNull Listener listener) {
+        mListeners.add(listener);
+    }
+
+    /**
+     * Removes a specific listener.
+     *
+     * @param listener listener to be removed.
+     */
+    public void removeListener(@NonNull Listener listener) {
+        mListeners.remove(listener);
+    }
+
+    /**
      * Get current identifier.
      *
      * @return user identifier.
@@ -153,21 +153,37 @@ public class UserIdContext {
      *
      * @param userId user identifier.
      */
-    public synchronized void setUserId(String userId) {
-        mUserId = userId;
+    public void setUserId(String userId) {
+        if (!updateUserId(userId)) {
+            return;
+        }
 
-        // TODO if mUserId != userId
-        // TODO move out from synchronized
         /* Call listeners so that they can react on new token. */
         for (Listener listener : mListeners) {
             listener.onNewUserId(mUserId);
         }
     }
 
+    /**
+     * Update user identifier.
+     *
+     * @param userId user identifier.
+     * @return true if user identifier is updated.
+     */
+    private synchronized boolean updateUserId(String userId) {
+        if (TextUtils.equals(mUserId, userId)) {
+            return false;
+        }
+        mUserId = userId;
+        return true;
+    }
+
     public interface Listener {
 
         /**
+         * Called whenever a new user id set.
          *
+         * @param userId user identifier.
          */
         void onNewUserId(String userId);
     }

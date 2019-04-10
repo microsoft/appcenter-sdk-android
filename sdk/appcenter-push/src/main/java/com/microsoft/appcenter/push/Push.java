@@ -338,7 +338,7 @@ public class Push extends AbstractAppCenterService {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }
             }
-        }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
