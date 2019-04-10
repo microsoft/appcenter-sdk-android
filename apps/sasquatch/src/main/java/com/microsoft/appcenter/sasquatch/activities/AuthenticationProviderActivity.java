@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -26,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class AuthenticationProviderActivity extends AppCompatActivity {
@@ -80,8 +80,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                     Method getUserInformation = signInResultClass.getMethod("getUserInformation");
                                     Object userInformation = getUserInformation.invoke(signInResult);
                                     String accountId = (String) userInformation.getClass().getMethod("getAccountId").invoke(userInformation);
-                                    SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                                    SharedPreferences.Editor edit = preferences.edit();
+                                    SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                                     edit.putString("accountId", accountId);
                                     edit.apply();
                                     Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
@@ -103,9 +102,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     try {
                         identity.getMethod("signOut").invoke(null);
-                        SharedPreferences preferences = getSharedPreferences("Id", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor edit = preferences.edit();
-                        edit.putString("accountId", null);
+                        SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
+                        edit.putString(ACCOUNT_ID, null);
                         edit.apply();
                     } catch (Exception e) {
                         Log.e(LOG_TAG, "Identity.signOut failed", e);

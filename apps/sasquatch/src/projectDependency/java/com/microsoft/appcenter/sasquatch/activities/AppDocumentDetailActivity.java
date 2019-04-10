@@ -13,23 +13,19 @@ import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
 
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
+
 public class AppDocumentDetailActivity extends AppCompatActivity {
-
-    private TextView mDocumentId;
-
-    private TextView mDocumentContents;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_document_detail);
-
-        mDocumentId = findViewById(R.id.app_document_id);
-        mDocumentContents = findViewById(R.id.app_document_content);
+        TextView documentIdView = findViewById(R.id.app_document_id);
+        TextView documentContentsView = findViewById(R.id.app_document_content);
         Intent intent = getIntent();
-        String documentId = intent.getStringExtra("documentId");
-        String documentContents = intent.getStringExtra("documentContent");
-        mDocumentId.setText(documentId);
-        mDocumentContents.setText(documentContents);
+        documentIdView.setText(intent.getStringExtra(DOCUMENT_ID));
+        documentContentsView.setText(intent.getStringExtra(DOCUMENT_CONTENT));
     }
 }
