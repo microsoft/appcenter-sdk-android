@@ -247,6 +247,7 @@ public class Push extends AbstractAppCenterService {
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value
+     * @param userId the user identifier value
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
