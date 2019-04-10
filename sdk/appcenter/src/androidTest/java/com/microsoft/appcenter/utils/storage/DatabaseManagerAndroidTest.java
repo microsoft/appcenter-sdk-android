@@ -520,7 +520,7 @@ public class DatabaseManagerAndroidTest {
         String colBoolean = "colBoolean";
         content1.put(colBoolean, true);
         content2.put(colBoolean, true);
-        DatabaseManager databaseManager = insertOneRowIntoTableAndVerify(tableName, content1, colStr, colInt, colBoolean, "replace-with-uniqueness-constraint");
+        DatabaseManager databaseManager = insertOneRowIntoTableAndVerify("replace-with-uniqueness-constraint", tableName, content1, colInt, colBoolean, colStr);
 
         /* Should replace first row because they have the same values in the unique columns. */
         long result = databaseManager.replace(tableName, content2);
@@ -534,11 +534,11 @@ public class DatabaseManagerAndroidTest {
         assertEquals(true, row.getAsBoolean(colBoolean));
     }
 
-    private DatabaseManager insertOneRowIntoTableAndVerify(String tableName, ContentValues content1, String colStr, String colInt, String colBoolean, String s) {
+    private DatabaseManager insertOneRowIntoTableAndVerify(String databaseName, String tableName, ContentValues content1, String colInt, String colBoolean, String colStr) {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, s, tableName, 1, content1, listener, new String[]{colInt, colBoolean});
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, tableName, 1, content1, listener, new String[]{colInt, colBoolean});
         assertTrue(checkTableExists(databaseManager, tableName));
 
         /* Insert a new row. */
@@ -570,7 +570,7 @@ public class DatabaseManagerAndroidTest {
         content2.put(colBoolean, true);
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = insertOneRowIntoTableAndVerify(tableName, content1, colStr, colInt, colBoolean, "insert-with-uniqueness-constraint");
+        DatabaseManager databaseManager = insertOneRowIntoTableAndVerify("insert-with-uniqueness-constraint", tableName, content1, colInt, colBoolean, colStr);
 
         /* Insert another row with same unique columns constraint should throw an error. */
         boolean insertThrowsSQLiteConstraintException = false;
