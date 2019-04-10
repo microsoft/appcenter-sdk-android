@@ -799,17 +799,29 @@ public class PushTest {
     }
 
     @Test
-    public void verifyEnqueueNotCalledWhenTokenNull() {
+    public void verifyEnqueueNotCalledWhileTokenIsNull() {
+
+        /* When we start and somehow get null token. */
         String mockUserId = "userId";
         Push push = Push.getInstance();
-        push.onTokenRefresh("push-token");
         Channel channel = mock(Channel.class);
         start(push, channel);
-        UserIdContext.getInstance().setUserId(mockUserId);
-        verify(channel).enqueue(any(Log.class), anyString(), anyInt());
         push.onTokenRefresh(null);
+
+        /* Then we don't send a log. */
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+
+        /* Updating userId before we get token does not send a log. */
         UserIdContext.getInstance().setUserId(mockUserId);
-        verify(channel).enqueue(any(Log.class), anyString(), anyInt());
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+
+        /* When we get token update (after userId set). */
+        push.onTokenRefresh("push-token");
+
+        /* Then we send log with current userId. */
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(mockUserId, log.getValue().getUserId());
     }
 
     @Test
