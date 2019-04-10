@@ -136,7 +136,7 @@ class LocalDocumentStorage {
                 Utils.getGson().toJson(document),
                 document.getEtag(),
                 writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
-                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000,
+                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
                 now,
                 now,
                 pendingOperationValue);
