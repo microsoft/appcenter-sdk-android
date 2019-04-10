@@ -67,6 +67,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -763,16 +764,41 @@ public class PushTest {
 
     @Test
     public void verifyEnqueueCalledOnNewUserId() {
-        String mockUserId = "userId";
+        String mockUserId1 = "userId1";
+        String mockUserId2 = "userId2";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         push.onTokenRefresh("push-token");
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
-        UserIdContext.getInstance().setUserId(mockUserId);
+        UserIdContext.getInstance().setUserId(mockUserId1);
         verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
-        assertEquals(log.getValue().getUserId(), mockUserId);
+        assertEquals(log.getValue().getUserId(), mockUserId1);
+        UserIdContext.getInstance().setUserId(mockUserId1);
+        verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId1);
+        UserIdContext.getInstance().setUserId(mockUserId2);
+        verify(channel, times(3)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId2);
+        UserIdContext.getInstance().setUserId(null);
+        verify(channel, times(4)).enqueue(log.capture(), anyString(), anyInt());
+        assertNull(log.getValue().getUserId());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledWhenTokenNull() {
+        String mockUserId = "userId";
+        Push push = Push.getInstance();
+        push.onTokenRefresh("push-token");
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
+        start(push, channel);
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString(), anyInt());
+        push.onTokenRefresh(null);
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, times(1)).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -818,6 +844,7 @@ public class PushTest {
 
     @Test
     public void verifyEnqueueNotCalledOnNewAuthTokenBeforeRegistration() {
+        String mockUserId = UUIDUtils.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
@@ -825,11 +852,13 @@ public class PushTest {
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void verifyEnqueueNotCalledOnPushDisabled() {
+        String mockUserId = UUIDUtils.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
@@ -838,6 +867,7 @@ public class PushTest {
         String mockToken = UUIDUtils.randomUUID().toString();
         String mockHomeId = UUIDUtils.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
