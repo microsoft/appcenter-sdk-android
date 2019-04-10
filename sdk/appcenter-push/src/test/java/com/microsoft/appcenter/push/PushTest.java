@@ -40,7 +40,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -68,7 +67,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -80,7 +78,6 @@ import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @RunWith(PowerMockRunner.class)
 @SuppressWarnings({"unused", "MissingPermission"})
@@ -799,10 +796,10 @@ public class PushTest {
         doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
         start(push, channel);
         UserIdContext.getInstance().setUserId(mockUserId);
-        verify(channel, times(1)).enqueue(any(Log.class), anyString(), anyInt());
+        verify(channel).enqueue(any(Log.class), anyString(), anyInt());
         push.onTokenRefresh(null);
         UserIdContext.getInstance().setUserId(mockUserId);
-        verify(channel, times(1)).enqueue(any(Log.class), anyString(), anyInt());
+        verify(channel).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
@@ -899,9 +896,9 @@ public class PushTest {
         currentAuthTokenContextListener = authTokenArgument.getValue();
         push.applyEnabledState(false);
         verify(userIdContext).addListener(any(UserIdContext.Listener.class));
-        verify(userIdContext).removeListener(currentUserIdContextListener);
+        verify(userIdContext).removeListener(eq(currentUserIdContextListener));
         verify(authTokenContext).addListener(any(AuthTokenContext.Listener.class));
-        verify(authTokenContext).removeListener(currentAuthTokenContextListener);
+        verify(authTokenContext).removeListener(eq(currentAuthTokenContextListener));
         push.applyEnabledState(true);
         verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
         verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
