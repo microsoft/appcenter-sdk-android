@@ -133,7 +133,7 @@ public class TokenTest extends AbstractStorageTest {
                 "            \"accountId\": \"accountId\"\n" +
                 "        }\n" +
                 "    ]\n" +
-                "}", PARTITION_NAME + "-" + ACCOUNT_ID, FAKE_TOKEN);
+                "}", Constants.USER + "-" + ACCOUNT_ID, FAKE_TOKEN);
         String authToken = "auth-token";
         AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
@@ -150,7 +150,7 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, callBack);
 
         /* Get and verify token. */
         assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
@@ -159,12 +159,12 @@ public class TokenTest extends AbstractStorageTest {
         assertEquals("accountId", tokenResultCapture.getValue().accountId());
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(PARTITION_NAME)));
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(Constants.USER)));
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, callBack);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
         when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, callBack);
         verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
             assertNotNull(headers);
