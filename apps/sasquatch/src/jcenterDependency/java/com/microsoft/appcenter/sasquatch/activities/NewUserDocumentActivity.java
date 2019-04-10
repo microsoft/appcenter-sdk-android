@@ -9,4 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 
 // TODO merge NewUserDocumentActivity from projectDependency and jcenterDependency back to main java folder
 public class NewUserDocumentActivity extends AppCompatActivity {
+
+    public void save(View view) {
+    }
 }

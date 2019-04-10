@@ -11,12 +11,17 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.Storage;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NewUserDocumentActivity extends AppCompatActivity {
 
@@ -50,5 +55,16 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.add(R.id.list, fragment).commit();
         mProperties.add(fragment);
+    }
+
+    public void save(View view) {
+        Map<String, Object> document = new LinkedHashMap<>();
+        for (TypedPropertyFragment property : mProperties) {
+            property.setGenericProperty(document);
+        }
+
+        /* TODO use .thenAccept and Toast message whether success or error. */
+        /* TODO replace "id" by the one from the intent. */
+        Storage.replace(Constants.USER, "id", document, Map.class);
     }
 }
