@@ -762,6 +762,20 @@ public class PushTest {
     }
 
     @Test
+    public void verifyEnqueueCalledOnNewUserId() {
+        String mockUserId = "userId";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        doNothing().when(channel).enqueue(any(Log.class), anyString(), anyInt());
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId);
+    }
+
+    @Test
     public void verifyEnqueueCalledAnonymouslyOnClearToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
