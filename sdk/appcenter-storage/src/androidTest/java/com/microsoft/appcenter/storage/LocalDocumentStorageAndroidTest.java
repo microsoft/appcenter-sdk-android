@@ -201,8 +201,8 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void createUnExpiredDocument() {
-        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
-        Document<String> document = mLocalDocumentStorage.read(PARTITION, ID, String.class, null);
+        mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, Constants.USER, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
+        Document<String> document = mLocalDocumentStorage.read(mUserTableName, Constants.USER, ID, String.class, null);
         assertNull(document.getDocumentError());
         assertEquals("Test", document.getDocument());
     }
