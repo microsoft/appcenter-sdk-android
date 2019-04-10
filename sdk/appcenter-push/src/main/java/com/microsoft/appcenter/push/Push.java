@@ -247,11 +247,13 @@ public class Push extends AbstractAppCenterService {
      * Enqueue a push installation log.
      *
      * @param pushToken the push token value.
-     * @param userId the user identifier value.
+     * @param userId    the user identifier value.
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
-        PushInstallationLog log = buildPushInstallationLog(pushToken, userId);
+        PushInstallationLog log = new PushInstallationLog();
+        log.setPushToken(pushToken);
+        log.setUserId(userId);
         mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
     }
 
@@ -262,22 +264,7 @@ public class Push extends AbstractAppCenterService {
      */
     @WorkerThread
     private void enqueuePushInstallationLog(@NonNull String pushToken) {
-        PushInstallationLog log = buildPushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
-        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
-    }
-
-    /**
-     * Build push installation log.
-     *
-     * @param pushToken the push token value.
-     * @param userId  the user identifier value.
-     * @return push installation log.
-     */
-    private PushInstallationLog buildPushInstallationLog(@NonNull String pushToken, String userId) {
-        PushInstallationLog log = new PushInstallationLog();
-        log.setPushToken(pushToken);
-        log.setUserId(userId);
-        return log;
+        enqueuePushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
     }
 
     /**
