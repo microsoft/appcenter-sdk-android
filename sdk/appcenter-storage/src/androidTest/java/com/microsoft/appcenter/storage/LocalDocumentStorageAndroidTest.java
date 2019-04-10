@@ -195,4 +195,12 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(document.getDocumentError());
         assertEquals("Test", document.getDocument());
     }
+
+    @Test
+    public void createDocumentWithoutOverflowException() {
+        mLocalDocumentStorage.createOrUpdateOffline(PARTITION, ID, "Test", String.class, new WriteOptions(999999999));
+        Document<String> document = mLocalDocumentStorage.read(PARTITION, ID, String.class, null);
+        assertNull(document.getDocumentError());
+        assertEquals("Test", document.getDocument());
+    }
 }

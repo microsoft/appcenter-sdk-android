@@ -135,7 +135,7 @@ class LocalDocumentStorage {
                 document,
                 document.getEtag(),
                 writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
-                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000,
+                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
                 now,
                 now,
                 pendingOperationValue);
@@ -171,7 +171,7 @@ class LocalDocumentStorage {
             document.setIsFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
 
-            // Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
+            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
             if (readOptions != null) {
                 write(document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
             }
