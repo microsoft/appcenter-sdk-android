@@ -473,30 +473,6 @@ public class DatabaseManagerAndroidTest {
     }
 
     @Test
-    public void testMultipleTablesCreateDelete() {
-        String firstTable = "firstTable";
-        String secondTable = "secondTable";
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, firstTable, 1, mSchema, listener);
-        assertTrue(checkTableExists(databaseManager, firstTable));
-        assertFalse(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.createTable(secondTable, mSchema);
-        assertTrue(checkTableExists(databaseManager, firstTable));
-        assertTrue(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.dropTable(firstTable);
-        assertFalse(checkTableExists(databaseManager, firstTable));
-        assertTrue(checkTableExists(databaseManager, secondTable));
-
-        databaseManager.dropTable(secondTable);
-        assertFalse(checkTableExists(databaseManager, firstTable));
-        assertFalse(checkTableExists(databaseManager, secondTable));
-    }
-
-    @Test
     public void replaceInTableWithUniquenessConstraint() {
         String tableName = "myTable";
         ContentValues content1 = new ContentValues();
@@ -510,7 +486,7 @@ public class DatabaseManagerAndroidTest {
         String colBoolean = "colBoolean";
         content1.put(colBoolean, true);
         content2.put(colBoolean, true);
-        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted(tableName, content1, colInt, colBoolean, colStr);
+        DatabaseManager databaseManager = setupTableWithUniqueConstraint(tableName, content1);
 
         /* Should replace first row because they have the same values in the unique columns. */
         long result = databaseManager.replace(tableName, content2);
@@ -524,23 +500,23 @@ public class DatabaseManagerAndroidTest {
         assertEquals(true, row.getAsBoolean(colBoolean));
     }
 
-    private DatabaseManager insertContentValuesAndVerifyContentValuesInserted(String tableName, ContentValues content1, String colInt, String colBoolean, String colStr) {
+    private DatabaseManager setupTableWithUniqueConstraint(String tableName, ContentValues contentValues) {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, tableName, 1, content1, listener, new String[]{colInt, colBoolean});
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, tableName, 1, contentValues, listener, new String[]{"colInt", "colBoolean"});
         assertTrue(checkTableExists(databaseManager, tableName));
 
         /* Insert a new row. */
-        long result = databaseManager.getDatabase().insert(tableName, null, content1);
+        long result = databaseManager.getDatabase().insert(tableName, null, contentValues);
         assertTrue(result > 0);
         assertEquals(1L, databaseManager.getRowCount());
         Cursor cursor = databaseManager.getCursor(null, null, null, null);
         ContentValues row = databaseManager.nextValues(cursor);
         assertNotNull(row);
-        assertEquals("first string", row.getAsString(colStr));
-        assertEquals(-1, row.getAsInteger(colInt).intValue());
-        assertEquals(true, row.getAsBoolean(colBoolean));
+        assertEquals("first string", row.getAsString("colStr"));
+        assertEquals(-1, row.getAsInteger("colInt").intValue());
+        assertEquals(true, row.getAsBoolean("colBoolean"));
         return databaseManager;
     }
 
@@ -560,7 +536,7 @@ public class DatabaseManagerAndroidTest {
         content2.put(colBoolean, true);
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted(tableName, content1, colInt, colBoolean, colStr);
+        DatabaseManager databaseManager = setupTableWithUniqueConstraint(tableName, content1);
 
         /* Insert another row with same unique columns constraint should throw an error. */
         boolean insertThrowsSQLiteConstraintException = false;

@@ -193,16 +193,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Deletes a table in the database.
-     *
-     * @param table name.
-     */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
-    public void dropTable(@NonNull String table) {
-        dropTable(getDatabase(), table);
-    }
-
-    /**
      * Converts a cursor to an entry.
      *
      * @param cursor The cursor to be converted to an entry.
