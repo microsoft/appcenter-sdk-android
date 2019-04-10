@@ -99,8 +99,8 @@ public class DatabaseManager implements Closeable {
      * @param listener     The error listener.
      * @param uniqueColumns The name of the columns where the combination of the columns is unique.
      */
-    public DatabaseManager(Context context, String database, String defaultTable, int version,
-                           ContentValues schema, Listener listener, final String[] uniqueColumns) {
+    DatabaseManager(Context context, String database, String defaultTable, int version,
+                    ContentValues schema, Listener listener, final String[] uniqueColumns) {
         mContext = context;
         mDatabase = database;
         mDefaultTable = defaultTable;
@@ -179,6 +179,17 @@ public class DatabaseManager implements Closeable {
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
     public void createTable(@NonNull String table, @NonNull ContentValues schema) {
         createTable(getDatabase(), table, schema, null);
+    }
+
+    /**
+     * Creates a new table in the database.
+     *
+     * @param table                   name.
+     * @param schema                  of the table.
+     * @param uniqueColumnsConstraint The name of the columns where the combination of the columns is unique.
+     */
+    public void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumnsConstraint) {
+        createTable(getDatabase(), table, schema, uniqueColumnsConstraint);
     }
 
     /**

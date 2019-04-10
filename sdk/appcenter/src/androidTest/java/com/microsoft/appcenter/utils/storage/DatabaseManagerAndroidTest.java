@@ -16,7 +16,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,6 +59,8 @@ public class DatabaseManagerAndroidTest {
      */
     private static ContentValues mSchema;
 
+    private static String databaseName = "test-database";
+
     /**
      * Boolean value to simulate both true and false.
      */
@@ -72,21 +74,9 @@ public class DatabaseManagerAndroidTest {
         mSchema = generateContentValues();
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-
-        /* Delete database. */
-        sContext.deleteDatabase("test-databaseManager");
-        sContext.deleteDatabase("test-databaseManagerUpgrade");
-        sContext.deleteDatabase("test-databaseManagerScannerRemove");
-        sContext.deleteDatabase("test-databaseManagerScannerNext");
-        sContext.deleteDatabase("test-setMaximumSize");
-        sContext.deleteDatabase("test-replace");
-        sContext.deleteDatabase("test-replace-by-multiple-columns");
-        sContext.deleteDatabase("test-multiple-tables");
-        sContext.deleteDatabase("test-multiple-tables-read-write");
-        sContext.deleteDatabase("replace-with-uniqueness-constraint");
-        sContext.deleteDatabase("insert-with-uniqueness-constraint");
+    @After
+    public void tearDown() {
+        sContext.deleteDatabase(databaseName);
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
@@ -228,7 +218,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManager", "databaseManager", 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManager", 1, mSchema, listener);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -254,7 +244,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
         try {
 
             /* Database will always create a column for identifiers so default length of all tables is 1. */
@@ -275,7 +265,7 @@ public class DatabaseManagerAndroidTest {
         }
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
+        databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 2, mSchema, new DatabaseManager.DefaultListener());
 
         /* Verify data deleted since no handled upgrade. */
         try {
@@ -301,7 +291,7 @@ public class DatabaseManagerAndroidTest {
         oldVersionValue.put("COL_STRING", "Hello World");
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 1, schema, new DatabaseManager.DefaultListener());
 
         /* Put data. */
         long id;
@@ -322,7 +312,7 @@ public class DatabaseManagerAndroidTest {
         schema.put("COL_INT", 1);
 
         /* Get instance to access database with a newer schema without handling upgrade. */
-        databaseManager = new DatabaseManager(sContext, "test-databaseManagerUpgrade", "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
+        databaseManager = new DatabaseManager(sContext, databaseName, "databaseManagerUpgrade", 2, schema, new DatabaseManager.Listener() {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
@@ -364,7 +354,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-setMaximumSize", "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, "test.setMaximumSize", 1, mSchema, new DatabaseManager.DefaultListener());
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -397,7 +387,7 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-replace", table, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, table, 1, mSchema, listener);
         String documentIdProperty = "COL_STRING";
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -441,7 +431,7 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-replace-by-multiple-columns", table, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, table, 1, mSchema, listener);
         String[] documentIdProperties = new String[]{"COL_STRING", "COL_INTEGER"};
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
@@ -489,7 +479,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, "test-multiple-tables-read-write", firstTable, 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, databaseName, firstTable, 1, mSchema, listener);
         assertTrue(checkTableExists(databaseManager, firstTable));
         assertFalse(checkTableExists(databaseManager, secondTable));
 
@@ -520,7 +510,7 @@ public class DatabaseManagerAndroidTest {
         String colBoolean = "colBoolean";
         content1.put(colBoolean, true);
         content2.put(colBoolean, true);
-        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted("replace-with-uniqueness-constraint", tableName, content1, colInt, colBoolean, colStr);
+        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted(tableName, content1, colInt, colBoolean, colStr);
 
         /* Should replace first row because they have the same values in the unique columns. */
         long result = databaseManager.replace(tableName, content2);
@@ -534,7 +524,7 @@ public class DatabaseManagerAndroidTest {
         assertEquals(true, row.getAsBoolean(colBoolean));
     }
 
-    private DatabaseManager insertContentValuesAndVerifyContentValuesInserted(String databaseName, String tableName, ContentValues content1, String colInt, String colBoolean, String colStr) {
+    private DatabaseManager insertContentValuesAndVerifyContentValuesInserted(String tableName, ContentValues content1, String colInt, String colBoolean, String colStr) {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
@@ -570,7 +560,7 @@ public class DatabaseManagerAndroidTest {
         content2.put(colBoolean, true);
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted("insert-with-uniqueness-constraint", tableName, content1, colInt, colBoolean, colStr);
+        DatabaseManager databaseManager = insertContentValuesAndVerifyContentValuesInserted(tableName, content1, colInt, colBoolean, colStr);
 
         /* Insert another row with same unique columns constraint should throw an error. */
         boolean insertThrowsSQLiteConstraintException = false;
@@ -609,7 +599,7 @@ public class DatabaseManagerAndroidTest {
         DatabaseManager databaseManager =
                 new DatabaseManager(
                         sContext,
-                        "test-multiple-tables",
+                        databaseName,
                         firstTable,
                         1,
                         schema1,
