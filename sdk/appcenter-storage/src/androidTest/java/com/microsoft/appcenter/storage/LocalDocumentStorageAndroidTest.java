@@ -155,6 +155,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void resetDatabase() {
+        
         /* Create a user table and app table (readonly), and add a document to each. */
         mLocalDocumentStorage.createTableIfDoesNotExist(USER_TABLE_NAME);
         Document<String> userDocument = new Document<>(TEST_VALUE, Constants.USER, ID);
