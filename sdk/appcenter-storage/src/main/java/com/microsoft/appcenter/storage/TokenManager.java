@@ -9,10 +9,8 @@ import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TimeZone;
 
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
@@ -68,8 +66,7 @@ public class TokenManager {
             if (!includeExpiredToken) {
 
                 /* If the token is expired. */
-                Calendar utcCalendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-                if (utcCalendar.getTime().compareTo(token.expiresOn()) > 0) {
+                if (System.currentTimeMillis() >= token.expiresOn().getTime()) {
                     AppCenterLog.warn(LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
                     return null;
                 }
