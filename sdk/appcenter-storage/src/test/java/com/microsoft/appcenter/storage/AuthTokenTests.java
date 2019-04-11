@@ -21,6 +21,7 @@ import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAM
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,7 +69,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         /* Setup token manager. */
         mockStatic(TokenManager.class);
         TokenManager mTokenManager = mock(TokenManager.class);
-        when(TokenManager.getInstance(mock(Context.class))).thenReturn(mTokenManager);
+        when(TokenManager.getInstance(notNull(Context.class))).thenReturn(mTokenManager);
 
         /* Mock context listener. */
         AuthTokenContext.Listener mockListener = mock(AuthTokenContext.Listener.class);
