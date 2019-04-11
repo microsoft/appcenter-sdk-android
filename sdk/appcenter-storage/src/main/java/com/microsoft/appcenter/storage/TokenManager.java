@@ -5,8 +5,12 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.HashSet;
@@ -24,9 +28,13 @@ public class TokenManager {
     /**
      * Shared token manager instance.
      */
+    @SuppressLint("StaticFieldLeak")
     private static TokenManager sInstance;
 
-    private TokenManager() {
+    private final Context mContext;
+
+    private TokenManager(Context context) {
+        mContext = context;
     }
 
     /**
@@ -34,9 +42,9 @@ public class TokenManager {
      *
      * @return Shared token manager instance.
      */
-    public static TokenManager getInstance() {
+    public static TokenManager getInstance(Context context) {
         if (sInstance == null) {
-            sInstance = new TokenManager();
+            sInstance = new TokenManager(context);
         }
         return sInstance;
     }
@@ -62,7 +70,9 @@ public class TokenManager {
     }
 
     TokenResult getCachedToken(String partitionName, boolean includeExpiredToken) {
-        TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + partitionName), TokenResult.class);
+        String encryptedTokenResult = SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + partitionName);
+        String decryptedTokenResult = CryptoUtils.getInstance(mContext).decrypt(encryptedTokenResult, false).getDecryptedData();
+        TokenResult token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);
         if (token != null) {
             if (!includeExpiredToken) {
 
@@ -91,7 +101,9 @@ public class TokenManager {
             partitionNamesSet.add(removedAccountIdPartition);
             SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(PREFERENCE_PARTITION_PREFIX + removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
+        String strTokenResult = Utils.getGson().toJson(tokenResult);
+        String encryptedTokenResult = CryptoUtils.getInstance(mContext).encrypt(strTokenResult);
+        SharedPreferencesManager.putString(PREFERENCE_PARTITION_PREFIX + removedAccountIdPartition, encryptedTokenResult);
     }
 
     /**
