@@ -12,4 +12,8 @@ public class SasquatchConstants {
     public static final String DOCUMENT_ID = "documentId";
 
     public static final String DOCUMENT_CONTENT = "documentContent";
+
+    public static final String USER_DOCUMENT_LIST = "userDocumentList";
+
+    public static final String USER_DOCUMENT_CONTENTS = "userDocumnetContents";
 }

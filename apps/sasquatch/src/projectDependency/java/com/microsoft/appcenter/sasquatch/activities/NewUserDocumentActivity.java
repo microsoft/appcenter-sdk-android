@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
@@ -27,10 +28,15 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
+    private EditText mEditDocumentId;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_user_document);
+
+        mEditDocumentId = findViewById(R.id.user_document_id);
+
         addProperty();
     }
 
@@ -65,6 +71,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
         /* TODO use .thenAccept and Toast message whether success or error. */
         /* TODO replace "id" by the one from the text edit. */
-        Storage.replace(Constants.USER, "id", document, Map.class);
+        String documentId = mEditDocumentId.getText().toString();
+        Storage.replace(Constants.USER, documentId, document, Map.class);
     }
 }

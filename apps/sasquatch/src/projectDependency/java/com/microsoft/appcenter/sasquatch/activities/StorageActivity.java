@@ -5,8 +5,10 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -29,10 +31,13 @@ import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
 
 class TestDocument {
 
@@ -42,16 +47,17 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    private ListView mListView;
+    public static ListView mListView;
+
+    public static ArrayList<String> mUserDocumentList = new ArrayList<String>();
+
+    public static CustomItemAdapter adapterUser;
 
     private ArrayAdapter<String> mAppDocumentListAdapter;
 
     private ArrayList<String> mDocumentContents = new ArrayList<>();
 
-    private ArrayList<String> mUserDocumentList = new ArrayList<String>() {{
-        add("Doc1-User");
-        add("Doc2-User");
-    }};
+    private ArrayList<String> mUserDocumentContents = new ArrayList<>();
 
     private StorageType mStorageType = StorageType.READONLY;
 
@@ -74,6 +80,24 @@ public class StorageActivity extends AppCompatActivity {
                 }
             }
         });
+
+        /* List the user documents. */
+        mUserDocumentList.clear();
+        mUserDocumentContents.clear();
+        if (adapterUser == null) {
+            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+            if (accountId != null) {
+                Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
+                    @Override
+                    public void accept(PaginatedDocuments<Map> documents) {
+                        for (Document<Map> document : documents.getCurrentPage().getItems()) {
+                            mUserDocumentList.add(document.getId());
+                            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
+                        }
+                    }
+                });
+            }
+        }
 
         /* Selector for App VS User documents. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -161,8 +185,10 @@ public class StorageActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
-                    CustomItemAdapter adapterUser = new CustomItemAdapter(mUserDocumentList, this);
+                    adapterUser = new CustomItemAdapter(mUserDocumentList, this);
                     mListView.setAdapter(adapterUser);
+                    saveArray(mUserDocumentList, USER_DOCUMENT_LIST);
+                    saveArray(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                 } else {
                     ArrayList<String> signInReminder = new ArrayList<String>() {{
                         add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
@@ -170,6 +196,42 @@ public class StorageActivity extends AppCompatActivity {
                     mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));
                 }
                 break;
+        }
+    }
+
+    public boolean saveArray(ArrayList<String> list, String name) {
+        SharedPreferences sp = getSharedPreferences(name, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putInt("Status_size", list.size());
+
+        for (int i = 0; i < list.size(); i++) {
+            editor.remove("Status_" + i);
+            editor.putString("Status_" + i, list.get(i));
+        }
+        return editor.commit();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapterUser != null) {
+            mUserDocumentList.clear();
+            mUserDocumentContents.clear();
+            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+            if (accountId != null) {
+                Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
+                    @Override
+                    public void accept(PaginatedDocuments<Map> documents) {
+                        for (Document<Map> document : documents.getCurrentPage().getItems()) {
+                            mUserDocumentList.add(document.getId());
+                            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
+                        }
+                        saveArray(mUserDocumentList, USER_DOCUMENT_LIST);
+                        saveArray(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
+                        adapterUser.notifyDataSetChanged();
+                    }
+                });
+            }
         }
     }
 

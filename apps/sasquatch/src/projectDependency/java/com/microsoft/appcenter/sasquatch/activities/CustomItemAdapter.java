@@ -6,6 +6,8 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,8 +17,13 @@ import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.Storage;
 
 import java.util.ArrayList;
+
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
 
 public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
 
@@ -54,12 +61,22 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
             }
         }
         if (view != null) {
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(mContext, UserDocumentDetailActivity.class);
+                    intent.putExtra(USER_DOCUMENT_LIST, loadArray(mContext, USER_DOCUMENT_LIST).get(position));
+                    intent.putExtra(USER_DOCUMENT_CONTENTS, loadArray(mContext, USER_DOCUMENT_CONTENTS).get(position));
+                    mContext.startActivity(intent);
+                }
+            });
             TextView listItemText = view.findViewById(R.id.property);
             listItemText.setText(mList.get(position));
             ImageButton deleteBtn = view.findViewById(R.id.delete_button);
             deleteBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Storage.delete(Constants.USER, StorageActivity.mUserDocumentList.get(position));
                     mList.remove(position);
                     notifyDataSetChanged();
                 }
@@ -67,4 +84,15 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
         }
         return view;
     }
+
+    public ArrayList<String> loadArray(Context context, String name) {
+        SharedPreferences sp = mContext.getSharedPreferences(name, Context.MODE_PRIVATE);
+        ArrayList<String> list = new ArrayList<>();
+        int size = sp.getInt("Status_size", 0);
+        for (int i = 0; i < size; i++) {
+            list.add(sp.getString("Status_" + i, null));
+        }
+        return list;
+    }
+
 }
