@@ -133,7 +133,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Dump response stream to a string.
      */
-    private String readResponse(HttpURLConnection httpsURLConnection) throws IOException {
+    private String readResponse(HttpsURLConnection httpsURLConnection) throws IOException {
 
         /*
          * Though content length header value is less than actual payload length (gzip), we want to init
@@ -160,7 +160,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         }
     }
 
-    private static InputStream getInputStream(HttpURLConnection httpsURLConnection) throws IOException {
+    private static InputStream getInputStream(HttpsURLConnection httpsURLConnection) throws IOException {
         int status = httpsURLConnection.getResponseCode();
         if (status >= 200 && status < 400) {
             return httpsURLConnection.getInputStream();
