@@ -114,6 +114,13 @@ class LocalDocumentStorage {
         mDatabaseManager.createTable(userTable, SCHEMA, new String[]{PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME});
     }
 
+    /**
+     * Delete the database and create a new, empty one.
+     */
+    void resetDatabase() {
+        mDatabaseManager.resetDatabase();
+    }
+
     <T> void writeOffline(String table, Document<T> document, WriteOptions writeOptions) {
         write(table, document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
