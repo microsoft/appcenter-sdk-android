@@ -218,6 +218,7 @@ abstract public class AbstractStorageTest {
         /* Mock CryptoUtils. */
         CryptoUtils cryptoUtils = mock(CryptoUtils.class);
         when(cryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
+            
             @Override
             public String answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
@@ -225,6 +226,7 @@ abstract public class AbstractStorageTest {
             }
         });
         when(cryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+            
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
