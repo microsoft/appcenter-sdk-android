@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -104,11 +106,11 @@ public class TokenTest extends AbstractStorageTest {
         assertEquals("accountId", tokenResultCapture.getValue().accountId());
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(READONLY_PARTITION_NAME)));
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(new HashSet<>(Collections.singleton(READONLY_PARTITION_NAME)));
         TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(null);
         TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
         verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
@@ -159,11 +161,11 @@ public class TokenTest extends AbstractStorageTest {
         assertEquals("accountId", tokenResultCapture.getValue().accountId());
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(Constants.USER)));
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(new HashSet<>(Collections.singleton(Constants.USER)));
         TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, callBack);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(null);
         TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, callBack);
         verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
@@ -185,7 +187,7 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
                 .withToken(FAKE_TOKEN));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
@@ -286,8 +288,8 @@ public class TokenTest extends AbstractStorageTest {
 
         /* Verify that the cached partition name does not contain the account ID. */
         verifyStatic();
-        SharedPreferencesManager.putStringSet(Constants.PARTITION_NAMES, partitions);
+        SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitions);
         verifyStatic();
-        SharedPreferencesManager.putString(partition, gson.toJson(result));
+        SharedPreferencesManager.putString(PREFERENCE_PARTITION_PREFIX + partition, gson.toJson(result));
     }
 }

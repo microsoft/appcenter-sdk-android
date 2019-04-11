@@ -15,7 +15,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.never;
@@ -36,11 +37,11 @@ public class AuthTokenTests extends AbstractStorageTest {
             partitionNames.add("partitionName " + i);
         }
         partitionNames.add(Constants.READONLY);
-        when(SharedPreferencesManager.getStringSet(eq(PARTITION_NAMES))).thenReturn(partitionNames);
+        when(SharedPreferencesManager.getStringSet(eq(PREFERENCE_PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(times((10)));
-        SharedPreferencesManager.remove(matches("partitionName [0-9]"));
+        SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName [0-9]"));
     }
 
     @Test
@@ -48,7 +49,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         Storage.setEnabled(false);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
-        SharedPreferencesManager.remove(matches("partitionName[0-9]"));
+        SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName[0-9]"));
     }
 
     @Test
@@ -56,7 +57,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         AuthTokenContext.getInstance().setAuthToken("someToken", "someId", new Date(Long.MAX_VALUE));
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
-        SharedPreferencesManager.remove(matches("partitionName[0-9]"));
+        SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName[0-9]"));
     }
 
     @Test
