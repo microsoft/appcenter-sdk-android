@@ -51,16 +51,11 @@ public class AuthTokenTests extends AbstractStorageTest {
         when(SharedPreferencesManager.getStringSet(eq(PREFERENCE_PARTITION_NAMES))).thenReturn(partitionNames);
         Storage.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
-<<<<<<< HEAD
 
         /* Verify. */
         verify(mLocalDocumentStorage).resetDatabase();
         verify(mLocalDocumentStorage, never()).createTableIfDoesNotExist(anyString());
         verify(mTokenManager).removeAllCachedTokens();
-=======
-        verifyStatic(times((10)));
-        SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName [0-9]"));
->>>>>>> develop
     }
 
     @Test
