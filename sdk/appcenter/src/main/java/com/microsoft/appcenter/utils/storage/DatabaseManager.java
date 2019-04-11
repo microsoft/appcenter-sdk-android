@@ -86,6 +86,21 @@ public class DatabaseManager implements Closeable {
      */
     public DatabaseManager(Context context, String database, String defaultTable, int version,
                            ContentValues schema, Listener listener) {
+        this(context, database, defaultTable, version, schema, listener, null);
+    }
+
+    /**
+     * Initializes the table in the database.
+     * @param context      The application context.
+     * @param database     The database name.
+     * @param defaultTable The default table name.
+     * @param version      The version of current schema.
+     * @param schema       The schema.
+     * @param listener     The error listener.
+     * @param uniqueColumns The name of the columns where the combination of the columns is unique.
+     */
+    DatabaseManager(Context context, String database, String defaultTable, int version,
+                    ContentValues schema, Listener listener, final String[] uniqueColumns) {
         mContext = context;
         mDatabase = database;
         mDefaultTable = defaultTable;
@@ -95,7 +110,7 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createTable(db, mDefaultTable, mSchema);
+                createTable(db, mDefaultTable, mSchema, uniqueColumns);
                 mListener.onCreate(db);
             }
 
@@ -163,7 +178,18 @@ public class DatabaseManager implements Closeable {
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
     public void createTable(@NonNull String table, @NonNull ContentValues schema) {
-        createTable(getDatabase(), table, schema);
+        createTable(getDatabase(), table, schema, null);
+    }
+
+    /**
+     * Creates a new table in the database.
+     *
+     * @param table                   name.
+     * @param schema                  of the table.
+     * @param uniqueColumnsConstraint The name of the columns where the combination of the columns is unique.
+     */
+    public void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumnsConstraint) {
+        createTable(getDatabase(), table, schema, uniqueColumnsConstraint);
     }
 
     /**
@@ -456,7 +482,7 @@ public class DatabaseManager implements Closeable {
         mSQLiteOpenHelper = helper;
     }
 
-    private void createTable(SQLiteDatabase db, String table, ContentValues schema) {
+    private void createTable(SQLiteDatabase db, String table, ContentValues schema, String[] uniqueColumnsConstraint) {
 
         /* Generate a schema from specimen. */
         StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
@@ -474,6 +500,9 @@ public class DatabaseManager implements Closeable {
             } else {
                 sql.append("TEXT");
             }
+        }
+        if (uniqueColumnsConstraint != null && uniqueColumnsConstraint.length > 0) {
+            sql.append(", UNIQUE(`").append(TextUtils.join("`, `", uniqueColumnsConstraint)).append("`)");
         }
         sql.append(");");
         db.execSQL(sql.toString());
