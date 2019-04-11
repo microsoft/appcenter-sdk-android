@@ -19,9 +19,7 @@ import java.util.Set;
 
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAMES;
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
-
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.never;
@@ -31,31 +29,29 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest({TokenManager.class})
+@PrepareForTest(TokenManager.class)
 public class AuthTokenTests extends AbstractStorageTest {
 
     @Test
     public void tokenClearedOnSignOut() {
 
-        /* Setup token manager. */
-        mockStatic(TokenManager.class);
-        TokenManager mTokenManager = mock(TokenManager.class);
-        when(TokenManager.getInstance()).thenReturn(mTokenManager);
-
         /* Add partitions. */
         Set<String> partitionNames = new HashSet<>();
         for (int i = 0; i < 10; i++) {
-            partitionNames.add("partitionName " + i);
+            partitionNames.add("partitionName" + i);
         }
         partitionNames.add(Constants.READONLY);
-        when(SharedPreferencesManager.getStringSet(eq(PREFERENCE_PARTITION_NAMES))).thenReturn(partitionNames);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(partitionNames);
         Storage.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
 
         /* Verify. */
         verify(mLocalDocumentStorage).resetDatabase();
         verify(mLocalDocumentStorage, never()).createTableIfDoesNotExist(anyString());
-        verify(mTokenManager).removeAllCachedTokens();
+        for (int i = 0; i < 10; i++) {
+            verifyStatic();
+            SharedPreferencesManager.remove(PREFERENCE_PARTITION_PREFIX + "partitionName" + i);
+        }
     }
 
     @Test
