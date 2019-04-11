@@ -13,7 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Constants.PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 
 /**
  * Token cache service.
@@ -46,7 +47,7 @@ public class TokenManager {
      * @return Set of cached tokens' partition name.
      */
     private Set<String> getPartitionNames() {
-        Set<String> partitionNames = SharedPreferencesManager.getStringSet(PARTITION_NAMES);
+        Set<String> partitionNames = SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES);
         return partitionNames == null ? new HashSet<String>() : partitionNames;
     }
 
@@ -61,7 +62,7 @@ public class TokenManager {
     }
 
     TokenResult getCachedToken(String partitionName, boolean includeExpiredToken) {
-        TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(partitionName), TokenResult.class);
+        TokenResult token = Utils.getGson().fromJson(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + partitionName), TokenResult.class);
         if (token != null) {
             if (!includeExpiredToken) {
 
@@ -88,9 +89,9 @@ public class TokenManager {
         String removedAccountIdPartition = Utils.removeAccountIdFromPartitionName(tokenResult.partition());
         if (!partitionNamesSet.contains(removedAccountIdPartition)) {
             partitionNamesSet.add(removedAccountIdPartition);
-            SharedPreferencesManager.putStringSet(PARTITION_NAMES, partitionNamesSet);
+            SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitionNamesSet);
         }
-        SharedPreferencesManager.putString(removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
+        SharedPreferencesManager.putString(PREFERENCE_PARTITION_PREFIX + removedAccountIdPartition, Utils.getGson().toJson(tokenResult));
     }
 
     /**
@@ -103,10 +104,10 @@ public class TokenManager {
             if (partitionName.equals(Constants.READONLY)) {
                 continue;
             }
-            SharedPreferencesManager.remove(partitionName);
+            SharedPreferencesManager.remove(PREFERENCE_PARTITION_PREFIX + partitionName);
         }
         partitionNamesSet.clear();
-        SharedPreferencesManager.putStringSet(PARTITION_NAMES, partitionNamesSet);
+        SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitionNamesSet);
         AppCenterLog.info(LOG_TAG, "Removed all tokens in all partitions");
     }
 }
