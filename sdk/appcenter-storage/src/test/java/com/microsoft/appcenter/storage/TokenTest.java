@@ -213,7 +213,7 @@ public class TokenTest extends AbstractStorageTest {
                 .withPartition(READONLY_PARTITION_NAME)
                 .withExpirationTime(expirationDate.getTime())
                 .withToken(inValidToken));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY_PARTITION_NAME)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
 
