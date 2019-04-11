@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class LocalDocumentStorageAndroidTest {
 
     private static final String ID = "id";
 
-    private static final long NOW = Calendar.getInstance().getTimeInMillis();
+    private static final long NOW = System.currentTimeMillis();
 
     private static final String USER_TABLE_NAME = Utils.getUserTableName("123");
 
