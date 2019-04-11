@@ -108,6 +108,8 @@ abstract public class AbstractStorageTest {
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 
+    static final String TOKEN = "ha-ha-ha-ha";
+
     private static final String TOKEN_EXCHANGE_RESPONSE_FORMAT = "{\n" +
             "    \"tokens\": [\n" +
             "        {\n" +
@@ -115,7 +117,7 @@ abstract public class AbstractStorageTest {
             "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
             "            \"dbName\": \"%s\",\n" +
             "            \"dbCollectionName\": \"%s\",\n" +
-            "            \"token\": \"ha-ha-ha-ha\",\n" +
+            "            \"token\": \"%s\",\n" +
             "            \"status\": \"Succeed\"\n" +
             "            %s" +
             "        }\n" +
@@ -123,10 +125,10 @@ abstract public class AbstractStorageTest {
             "}";
 
     final static String TOKEN_EXCHANGE_READONLY_PAYLOAD =
-            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, "");
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, TOKEN, "");
 
     final static String TOKEN_EXCHANGE_USER_PAYLOAD =
-            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, TOKEN, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -206,8 +208,7 @@ abstract public class AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         whenNew(LocalDocumentStorage.class).withAnyArguments().thenReturn(mLocalDocumentStorage);
         mStorage = Storage.getInstance();
-        Storage storage = Storage.getInstance();
-        mChannel = start(storage);
+        mChannel = start(mStorage);
         Storage.setApiUrl("default");
 
         /* Mock utils. */
