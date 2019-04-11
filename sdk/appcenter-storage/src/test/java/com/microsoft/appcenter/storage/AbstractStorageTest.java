@@ -212,8 +212,25 @@ abstract public class AbstractStorageTest {
 
         /* Mock utils. */
         mockStatic(CryptoUtils.class);
-        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
         mockStatic(JSONUtils.class);
+
+        /* Mock CryptoUtils. */
+        CryptoUtils cryptoUtils = mock(CryptoUtils.class);
+        when(cryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                return (String) args[0];
+            }
+        });
+        when(cryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+            @Override
+            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                return new CryptoUtils.DecryptedData((String) args[0], "encrypted");
+            }
+        });
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(cryptoUtils);
     }
 
     void setUpAuthContext() {
