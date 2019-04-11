@@ -82,6 +82,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private HttpClient mHttpClient;
 
+    private TokenManager mTokenManager;
+
     private LocalDocumentStorage mLocalDocumentStorage;
 
     /**
@@ -246,6 +248,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
         mHttpClient = createHttpClient(context);
+        mTokenManager = TokenManager.getInstance(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
         mAuthListener = new AbstractTokenContextListener() {
@@ -376,7 +379,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     getTokenAndCallCosmosDbApi(
                             partition,
                             result,
-                            new TokenExchangeServiceCallback() {
+                            new TokenExchangeServiceCallback(mTokenManager) {
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
@@ -464,7 +467,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         getTokenAndCallCosmosDbApi(
                 partition,
                 result,
-                new TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback(mTokenManager) {
 
                     @Override
                     public void callCosmosDb(TokenResult tokenResult) {
@@ -488,7 +491,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
-                new TokenExchangeServiceCallback() {
+                new TokenExchangeServiceCallback(mTokenManager) {
 
                     @Override
                     public void callCosmosDb(final TokenResult tokenResult) {
@@ -588,7 +591,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     getTokenAndCallCosmosDbApi(
                             partition,
                             result,
-                            new TokenExchangeServiceCallback() {
+                            new TokenExchangeServiceCallback(mTokenManager) {
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
@@ -620,7 +623,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
-                new TokenExchange.TokenExchangeServiceCallback() {
+                new TokenExchange.TokenExchangeServiceCallback(mTokenManager) {
 
                     @Override
                     public void callCosmosDb(TokenResult tokenResult) {
@@ -693,7 +696,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             String partition,
             DefaultAppCenterFuture result,
             TokenExchangeServiceCallback callback) {
-        TokenResult cachedTokenResult = TokenManager.getInstance().getCachedToken(partition);
+        TokenResult cachedTokenResult = mTokenManager.getCachedToken(partition);
         if (cachedTokenResult != null) {
             callback.callCosmosDb(cachedTokenResult);
         } else {
@@ -723,7 +726,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     getTokenAndCallCosmosDbApi(
                             partition,
                             result,
-                            new TokenExchange.TokenExchangeServiceCallback() {
+                            new TokenExchange.TokenExchangeServiceCallback(mTokenManager) {
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
@@ -846,7 +849,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private TokenResult getCachedToken(String partitionName) {
-        TokenResult result = TokenManager.getInstance().getCachedToken(partitionName, true);
+        TokenResult result = mTokenManager.getCachedToken(partitionName, true);
         if (result == null) {
             AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
             return null;
