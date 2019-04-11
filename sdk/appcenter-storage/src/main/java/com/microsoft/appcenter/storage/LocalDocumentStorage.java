@@ -44,14 +44,12 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    @VisibleForTesting
-    static final String PARTITION_COLUMN_NAME = "partition";
+    private static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    @VisibleForTesting
-    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -113,7 +111,7 @@ class LocalDocumentStorage {
      * Creates a table for storing user partition documents.
      */
     void createTableIfDoesNotExist(String userTable) {
-        mDatabaseManager.createTable(userTable, SCHEMA);
+        mDatabaseManager.createTable(userTable, SCHEMA, new String[]{PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME});
     }
 
     <T> void writeOffline(String table, Document<T> document, WriteOptions writeOptions) {
@@ -140,7 +138,7 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        return mDatabaseManager.replace(table, values);
     }
 
     <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
@@ -319,7 +317,7 @@ class LocalDocumentStorage {
         if (operation.getExpirationTime() <= now) {
             deletePendingOperation(operation);
         } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now));
         }
     }
 

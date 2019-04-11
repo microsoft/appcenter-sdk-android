@@ -145,12 +145,34 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void getDatabaseFailedOnce() {
+    public void getDatabaseFailedThenCleanupFailedThenRetrySucceeded() {
 
         /* Mocking instances. */
         Context contextMock = mock(Context.class);
         SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
+        when(contextMock.deleteDatabase("database")).thenReturn(false);
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* Get database. */
+        SQLiteDatabase database = databaseManager.getDatabase();
+
+        /* Verify. */
+        assertNotNull(database);
+        verify(contextMock).deleteDatabase("database");
+    }
+
+    @Test
+    public void getDatabaseFailedThenCleanupFailedThenRetryFailed() {
+
+        /* Mocking instances. */
+        Context contextMock = mock(Context.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenReturn(mock(SQLiteDatabase.class));
+        when(contextMock.deleteDatabase("database")).thenReturn(true);
 
         /* Instantiate real instance for DatabaseManager. */
         DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
