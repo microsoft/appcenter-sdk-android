@@ -236,6 +236,25 @@ public class DatabaseManagerAndroidTest {
     }
 
     @Test
+    public void databaseManagerWithZeroUniqueConstraint() {
+
+        /* Get instance to access database. */
+        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, listener, new String[0]);
+
+        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
+        try {
+            runDatabaseManagerTest(databaseManager);
+        } finally {
+
+            /* Close. */
+            //noinspection ThrowFromFinallyBlock
+            databaseManager.close();
+        }
+        verify(listener).onCreate(any(SQLiteDatabase.class));
+    }
+
+    @Test
     public void databaseManagerUpgradeNotHandled() {
 
         /* Create a schema for v1. */
