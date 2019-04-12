@@ -10,23 +10,25 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -49,37 +51,69 @@ public class StorageActivity extends AppCompatActivity {
 
     public static ArrayList<String> sUserDocumentList = new ArrayList<String>();
 
-    private ListView mListView;
+    private RecyclerView mListView;
+
+    private MenuItem addNewDocument;
 
     private CustomItemAdapter mAdapterUser;
 
-    private ArrayAdapter<String> mAppDocumentListAdapter;
-
-    private ArrayList<String> mDocumentContents = new ArrayList<>();
+    private AppDocumentListAdapter mAppDocumentListAdapter;
 
     private ArrayList<String> mUserDocumentContents = new ArrayList<>();
 
     private StorageType mStorageType = StorageType.READONLY;
 
+    private PaginatedDocuments<TestDocument> currentDocuments;
+    private AppCenterConsumer<PaginatedDocuments<TestDocument>> upload = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+
+        @Override
+        public void accept(PaginatedDocuments<TestDocument> documents) {
+            currentDocuments = documents;
+            mAppDocumentListAdapter.upload(documents.getCurrentPage().getItems());
+            mAppDocumentListAdapter.notifyDataSetChanged();
+        }
+    };
+    private RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
+
+        @Override
+        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            if (currentDocuments.hasNextPage()) {
+                currentDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
+                    @Override
+                    public void accept(Page<TestDocument> testDocumentPage) {
+                        mAppDocumentListAdapter.upload(testDocumentPage.getItems());
+                    }
+                });
+            }
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_storage);
+        mListView = findViewById(R.id.list);
+        mListView.setLayoutManager(new LinearLayoutManager(this));
 
         /* List the app read-only documents. */
-        mAppDocumentListAdapter = new ArrayAdapter<>(this, R.layout.item_view_app);
-        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+        mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<Document<TestDocument>>());
+        mAppDocumentListAdapter.setOnItemClickListener(new AppDocumentListAdapter.OnItemClickListener() {
 
             @Override
-            public void accept(PaginatedDocuments<TestDocument> documents) {
-
-                /* TODO handle multiple pages. */
-                for (Document<TestDocument> document : documents.getCurrentPage().getItems()) {
-                    mAppDocumentListAdapter.add(document.getId());
-                    mDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
-                }
+            public void onItemClick(int position) {
+                Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
+                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getItem(position));
+                intent.putExtra(DOCUMENT_CONTENT, mAppDocumentListAdapter.getDocumentByPosition(position));
+                startActivity(intent);
             }
         });
+        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(upload);
 
         /* List the user documents. */
         sUserDocumentList.clear();
@@ -113,25 +147,6 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-
-        /* Create the list view. */
-        mListView = findViewById(R.id.list);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (mStorageType) {
-                    case USER:
-                        break;
-                    case READONLY:
-                        Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                        intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getItem(position));
-                        intent.putExtra(DOCUMENT_CONTENT, mDocumentContents.get(position));
-                        startActivity(intent);
-                        break;
-                }
             }
         });
     }
@@ -181,11 +196,11 @@ public class StorageActivity extends AppCompatActivity {
             case READONLY:
                 addNewDocument.setVisible(false);
                 mListView.setAdapter(mAppDocumentListAdapter);
+                mListView.addOnScrollListener(scrollListener);
                 break;
             case USER:
                 addNewDocument.setVisible(true);
-                /* Remove the toast and string resource once implementation ready. */
-                Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
+                mListView.removeOnScrollListener(scrollListener);
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
                     mAdapterUser = new CustomItemAdapter(sUserDocumentList, this);
@@ -193,10 +208,12 @@ public class StorageActivity extends AppCompatActivity {
                     saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
                     saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                 } else {
+
+                    // TODO add message.
                     ArrayList<String> signInReminder = new ArrayList<String>() {{
                         add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     }};
-                    mListView.setAdapter(new ArrayAdapter<>(this, R.layout.item_view_app, signInReminder));
+                    mListView.setAdapter(null);
                 }
                 break;
         }
@@ -222,6 +239,7 @@ public class StorageActivity extends AppCompatActivity {
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
             if (accountId != null) {
                 Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
+                    
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {

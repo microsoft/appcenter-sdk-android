@@ -5,14 +5,15 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageButton;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
 
-public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
+public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
 
     private ArrayList<String> mList;
 
@@ -35,53 +36,43 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
         mContext = context;
     }
 
+    @SuppressLint("InflateParams")
+    @NonNull
     @Override
-    public int getCount() {
-        return mList.size();
+    public CustomItemAdapterHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, null, false));
     }
 
     @Override
-    public Object getItem(int position) {
-        return mList.get(position);
+    public void onBindViewHolder(@NonNull CustomItemAdapterHolder holder, @SuppressLint("RecyclerView") final int position) {
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, UserDocumentDetailActivity.class);
+                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(mContext, USER_DOCUMENT_LIST).get(position));
+                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(mContext, USER_DOCUMENT_CONTENTS).get(position));
+                mContext.startActivity(intent);
+            }
+        });
+        holder.listItemText.setText(mList.get(position));
+        holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
+                mList.remove(position);
+                notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return position;
     }
 
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
-        View view = convertView;
-        if (view == null) {
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            if (inflater != null) {
-                view = inflater.inflate(R.layout.item_view_property, parent, false);
-            }
-        }
-        if (view != null) {
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(mContext, UserDocumentDetailActivity.class);
-                    intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(mContext, USER_DOCUMENT_LIST).get(position));
-                    intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(mContext, USER_DOCUMENT_CONTENTS).get(position));
-                    mContext.startActivity(intent);
-                }
-            });
-            TextView listItemText = view.findViewById(R.id.property);
-            listItemText.setText(mList.get(position));
-            ImageButton deleteBtn = view.findViewById(R.id.delete_button);
-            deleteBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
-                    mList.remove(position);
-                    notifyDataSetChanged();
-                }
-            });
-        }
-        return view;
+    public int getItemCount() {
+        return mList.size();
     }
 
     public ArrayList<String> loadArrayFromPreferences(Context context, String name) {
@@ -92,6 +83,18 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
             list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
         }
         return list;
+    }
+
+    public class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
+
+        public TextView listItemText;
+        public ImageButton deleteBtn;
+
+        public CustomItemAdapterHolder(@NonNull View itemView) {
+            super(itemView);
+            listItemText = itemView.findViewById(R.id.property);
+            deleteBtn = itemView.findViewById(R.id.delete_button);
+        }
     }
 
 }
