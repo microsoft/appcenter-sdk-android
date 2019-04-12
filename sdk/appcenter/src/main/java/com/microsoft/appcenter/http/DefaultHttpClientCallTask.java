@@ -175,7 +175,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
         /* HTTP session. */
         if (mUrl == null || !mUrl.startsWith("https"))
-            throw new IOException("App Center support only HTTPS protocol.");
+            throw new IOException("App Center support only HTTPS connection.");
 
         URL url = new URL(mUrl);
         URLConnection urlConnection = url.openConnection();
