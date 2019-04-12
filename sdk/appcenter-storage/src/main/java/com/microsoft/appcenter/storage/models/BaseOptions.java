@@ -20,12 +20,12 @@ public abstract class BaseOptions {
     /**
      * Default caching value of one day.
      */
-    public static final int DEFAULT_EXPIRATION = 60 * 60 * 24;
+    public static final int DEFAULT_EXPIRATION_IN_SECONDS = 60 * 60 * 24;
 
     private int mTtl;
 
     BaseOptions() {
-        this(DEFAULT_EXPIRATION);
+        this(DEFAULT_EXPIRATION_IN_SECONDS);
     }
 
     BaseOptions(int ttl) {
