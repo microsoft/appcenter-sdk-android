@@ -146,8 +146,8 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void createDocument() {
-        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, Constants.READONLY, ID, "Test", String.class, new WriteOptions());
-        Document<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        mLocalDocumentStorage.createOrUpdateOffline(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, "Test", String.class, new WriteOptions());
+        Document<String> createdDocument = mLocalDocumentStorage.read(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test", createdDocument.getDocument());
     }
