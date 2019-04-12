@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -490,7 +491,7 @@ public class StorageTest extends AbstractStorageTest {
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("document not set")));
         Storage.read(USER, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
@@ -507,7 +508,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         Document<String> deletedDocument = new Document<>();
         deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getError() instanceof StorageException);
@@ -522,7 +523,7 @@ public class StorageTest extends AbstractStorageTest {
         Document<String> outDatedDocument = new Document<>();
         Document<String> expectedDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         final String expectedResponse = new Gson().toJson(expectedDocument);
-        when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
+        when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
         when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -542,7 +543,7 @@ public class StorageTest extends AbstractStorageTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         Document<String> createdDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(createdDocument);
         Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
         assertEquals(createdDocument.getDocument(), document.getDocument());
@@ -757,7 +758,7 @@ public class StorageTest extends AbstractStorageTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("read error.")));
+        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override

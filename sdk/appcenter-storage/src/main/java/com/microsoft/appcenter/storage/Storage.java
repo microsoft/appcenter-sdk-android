@@ -793,9 +793,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     @WorkerThread
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, T value, DefaultAppCenterFuture<T> future) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, Document<T> value, DefaultAppCenterFuture<Document<T>> future) {
         future.complete(value);
-        mLocalDocumentStorage.writeOnline(table, (Document) value, new WriteOptions());
+        mLocalDocumentStorage.writeOnline(table, value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
