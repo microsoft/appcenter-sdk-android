@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -1172,5 +1173,52 @@ public class DefaultHttpClientTest {
                 return argument.toString().contains(payload);
             }
         }));
+    }
+
+    @Test
+    public void filedConnectWithHttpUrl() throws Exception {
+        String urlString = "http://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(any(IOException.class));
+        verifyZeroInteractions(callTemplate);
+        verifyZeroInteractions(serviceCallback);
+    }
+
+    @Test
+    public void filedConnectWithInvalidUrl() throws Exception {
+        String urlString = "bad url";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(any(IOException.class));
+        verifyZeroInteractions(callTemplate);
+        verifyZeroInteractions(serviceCallback);
+    }
+
+    @Test
+    public void filedConnectWithHttpConnect() throws Exception {
+        String urlString = "https://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withAnyArguments().thenReturn(url);
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        mockCall();
+        httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
+        verify(serviceCallback).onCallFailed(any(IOException.class));
+        verifyZeroInteractions(callTemplate);
+        verifyZeroInteractions(serviceCallback);
     }
 }
