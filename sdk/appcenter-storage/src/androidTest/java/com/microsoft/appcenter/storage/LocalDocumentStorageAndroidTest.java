@@ -72,6 +72,24 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void writeReadFail() {
+        Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        mLocalDocumentStorage.writeOnline(mUserTableName, document, new WriteOptions());
+        assertFalse(document.failed());
+
+        /* Pass incorrect class type to create a deserialization error.  */
+        Document<Integer> failedDocument = mLocalDocumentStorage.read(mUserTableName, Constants.READONLY, ID, Integer.class, new ReadOptions());
+        assertNotNull(failedDocument);
+        assertTrue(failedDocument.failed());
+
+        /* Confirm document can still be correctly retrieved from the cache. */
+        Document<String> cachedDocument = mLocalDocumentStorage.read(mUserTableName, Constants.READONLY, ID, String.class, new ReadOptions());
+        assertNotNull(cachedDocument);
+        assertFalse(cachedDocument.failed());
+        assertEquals(document.getDocument(), cachedDocument.getDocument());
+    }
+
+    @Test
     public void writeReadDelete() {
         Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOnline(mUserTableName, document, new WriteOptions());

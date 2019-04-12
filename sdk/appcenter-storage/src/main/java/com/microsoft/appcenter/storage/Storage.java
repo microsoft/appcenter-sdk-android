@@ -411,7 +411,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
                         Document<T> document = Utils.parseDocument(payload, documentType);
-                        completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                        if (document.getDocumentError() != null) {
+                            completeFutureOnDocumentError(document, result);
+                        } else {
+                            completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                        }
                     }
 
                     @Override
@@ -525,8 +529,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
                         Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                        completeFuture(cosmosDbDocument, result);
-                        mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                        if (cosmosDbDocument.failed()) {
+                            completeFutureOnDocumentError(cosmosDbDocument, result);
+                        } else {
+                            completeFuture(cosmosDbDocument, result);
+                            mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                        }
                     }
 
                     @Override
@@ -777,6 +785,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized <T> void completeFuture(Exception e, DefaultAppCenterFuture<Document<T>> future) {
         Utils.logApiCallFailure(e);
         future.complete(new Document<T>(e));
+        mPendingCalls.remove(future);
+    }
+
+    private synchronized <T> void completeFutureOnDocumentError(Document<T> doc, DefaultAppCenterFuture<Document<T>> future) {
+        AppCenterLog.error(Constants.LOG_TAG, "Failed to deserialize document: ", doc.getDocumentError().getError());
+        future.complete(doc);
         mPendingCalls.remove(future);
     }
 
