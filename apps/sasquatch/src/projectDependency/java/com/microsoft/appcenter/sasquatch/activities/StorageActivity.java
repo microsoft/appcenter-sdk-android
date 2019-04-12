@@ -88,6 +88,7 @@ public class StorageActivity extends AppCompatActivity {
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
             if (accountId != null) {
                 Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
+
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {
@@ -203,7 +204,6 @@ public class StorageActivity extends AppCompatActivity {
         MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
         editor.putInt("Status_size", list.size());
-
         for (int i = 0; i < list.size(); i++) {
             editor.remove("Status_" + i);
             editor.putString("Status_" + i, list.get(i));
