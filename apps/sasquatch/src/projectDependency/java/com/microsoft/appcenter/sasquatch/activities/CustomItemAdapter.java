@@ -7,7 +7,6 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,8 +64,8 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mContext, UserDocumentDetailActivity.class);
-                    intent.putExtra(USER_DOCUMENT_LIST, loadArray(mContext, USER_DOCUMENT_LIST).get(position));
-                    intent.putExtra(USER_DOCUMENT_CONTENTS, loadArray(mContext, USER_DOCUMENT_CONTENTS).get(position));
+                    intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(mContext, USER_DOCUMENT_LIST).get(position));
+                    intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(mContext, USER_DOCUMENT_CONTENTS).get(position));
                     mContext.startActivity(intent);
                 }
             });
@@ -85,12 +84,12 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
         return view;
     }
 
-    public ArrayList<String> loadArray(Context context, String name) {
-        SharedPreferences sp = mContext.getSharedPreferences(name, Context.MODE_PRIVATE);
+    public ArrayList<String> loadArrayFromPreferences(Context context, String name) {
+        MainActivity.sSharedPreferences = mContext.getSharedPreferences(name, Context.MODE_PRIVATE);
         ArrayList<String> list = new ArrayList<>();
-        int size = sp.getInt("Status_size", 0);
+        int size = MainActivity.sSharedPreferences.getInt("Status_size", 0);
         for (int i = 0; i < size; i++) {
-            list.add(sp.getString("Status_" + i, null));
+            list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
         }
         return list;
     }

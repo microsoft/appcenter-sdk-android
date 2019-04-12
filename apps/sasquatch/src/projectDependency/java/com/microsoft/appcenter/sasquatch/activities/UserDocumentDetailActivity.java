@@ -22,7 +22,6 @@ public class UserDocumentDetailActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_document_detail);
-
         TextView documentIdView = findViewById(R.id.user_document_id);
         TextView documentContentsView = findViewById(R.id.user_document_content);
         Intent intent = getIntent();
