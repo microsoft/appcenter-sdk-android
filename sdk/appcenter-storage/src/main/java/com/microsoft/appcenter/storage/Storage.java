@@ -412,10 +412,17 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 null,
                 new ServiceCallback() {
 
+                    @MainThread
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        Document<T> document = Utils.parseDocument(payload, documentType);
-                        completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                        post(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                Document<T> document = Utils.parseDocument(payload, documentType);
+                                completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                            }
+                        });
                     }
 
                     @Override
@@ -526,11 +533,18 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
+                    @MainThread
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
-                        Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                        completeFuture(cosmosDbDocument, result);
-                        mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                        post(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
+                                completeFuture(cosmosDbDocument, result);
+                                mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                            }
+                        });
                     }
 
                     @Override
@@ -607,7 +621,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     Document<T> createdOrUpdatedDocument;
                     TokenResult cachedToken = getCachedToken(partition);
                     if (cachedToken != null) {
-                        final String table = Utils.getTableName(cachedToken);
+                        String table = Utils.getTableName(cachedToken);
                         createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.partition(), documentId, document, documentType, writeOptions);
                     } else {
                         createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
@@ -653,10 +667,17 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 null,
                 new ServiceCallback() {
 
+                    @MainThread
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        completeFuture(new Document<Void>(), result);
-                        mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.partition(), documentId);
+                        post(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                completeFuture(new Document<Void>(), result);
+                                mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.partition(), documentId);
+                            }
+                        });
                     }
 
                     @Override
@@ -758,7 +779,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         return result;
     }
 
-    private <T> boolean isInvalidPartition(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
+    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<Document<T>> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
             completeFuture(getInvalidPartitionStorageException(partition), result);
