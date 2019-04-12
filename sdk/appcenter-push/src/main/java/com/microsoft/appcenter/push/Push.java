@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
@@ -116,6 +117,11 @@ public class Push extends AbstractAppCenterService {
      * Authorization listener for {@link AuthTokenContext}.
      */
     private AuthTokenContext.Listener mAuthListener;
+
+    /**
+     * User id context listener for {@link UserIdContext}.
+     */
+    private UserIdContext.Listener mUserListener;
 
     /**
      * Init.
@@ -240,13 +246,25 @@ public class Push extends AbstractAppCenterService {
     /**
      * Enqueue a push installation log.
      *
-     * @param pushToken the push token value
+     * @param pushToken the push token value.
+     * @param userId    the user identifier value.
      */
-    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+    @WorkerThread
+    private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
-        log.setUserId(UserIdContext.getInstance().getUserId());
+        log.setUserId(userId);
         mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Enqueue a push installation log.
+     *
+     * @param pushToken the push token value.
+     */
+    @WorkerThread
+    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+        enqueuePushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
     }
 
     /**
@@ -277,9 +295,11 @@ public class Push extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthListener);
+            UserIdContext.getInstance().addListener(mUserListener);
             registerPushToken();
         } else {
             AuthTokenContext.getInstance().removeListener(mAuthListener);
+            UserIdContext.getInstance().removeListener(mUserListener);
         }
     }
 
@@ -314,9 +334,18 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public synchronized void onNewUser(UserInformation userInfo) {
+            public void onNewUser(UserInformation userInfo) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
+                }
+            }
+        };
+        mUserListener = new UserIdContext.Listener() {
+
+            @Override
+            public void onNewUserId(String userId) {
+                if (mLatestPushToken != null) {
+                    enqueuePushInstallationLog(mLatestPushToken, userId);
                 }
             }
         };
