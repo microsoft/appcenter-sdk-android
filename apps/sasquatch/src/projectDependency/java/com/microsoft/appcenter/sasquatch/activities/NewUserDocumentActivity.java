@@ -13,11 +13,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
+import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,9 +69,17 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         for (TypedPropertyFragment property : mProperties) {
             property.setGenericProperty(document);
         }
-
-        /* TODO use .thenAccept and Toast message whether success or error. */
         String documentId = mEditDocumentId.getText().toString();
-        Storage.replace(Constants.USER, documentId, document, Map.class);
+        Storage.replace(Constants.USER, documentId, document, Map.class).thenAccept(new AppCenterConsumer<Document<Map>>() {
+            @Override
+            public void accept(Document<Map> mapDocument) {
+                if (mapDocument.failed())
+                    Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_error, Toast.LENGTH_SHORT).show();
+                else {
+                    Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_success, Toast.LENGTH_SHORT).show();
+                    NewUserDocumentActivity.this.finish();
+                }
+            }
+        });
     }
 }
