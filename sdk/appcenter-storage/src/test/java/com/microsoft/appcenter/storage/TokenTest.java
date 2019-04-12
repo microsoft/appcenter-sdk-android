@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.content.Context;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -22,14 +24,19 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_NAMES;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
+import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -43,14 +50,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class TokenTest extends AbstractStorageTest {
 
-    private static final String READONLY_PARTITION_NAME = "read-only";
+    private static final TokenExchange.TokenExchangeServiceCallback sTokenExchangeServiceCallback =
+            new TokenExchange.TokenExchangeServiceCallback(TokenManager.getInstance(PowerMockito.mock(Context.class))) {
 
-    private static final String PARTITION_NAME = "non-readonly";
+                @Override
+                public void completeFuture(Exception e) {
+                }
 
-    private static final String FAKE_TOKEN = "mock";
+                @Override
+                public void callCosmosDb(TokenResult tokenResult) {
+
+                    /* Get and verify token. */
+                    assertEquals(TOKEN, tokenResult.token());
+
+                    /* Get and verify the account id. */
+                    assertEquals(ACCOUNT_ID, tokenResult.accountId());
+                }
+            };
 
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
@@ -65,50 +86,25 @@ public class TokenTest extends AbstractStorageTest {
 
     @Test
     public void canGetAndSetTokenReadonly() {
-
-        /* Mock http call to get token. */
-        final String expectedResponse = String.format("{\n" +
-                "    \"tokens\": [\n" +
-                "        {\n" +
-                "            \"partition\": \"%s\",\n" +
-                "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
-                "            \"dbName\": \"db\",\n" +
-                "            \"dbCollectionName\": \"collection\",\n" +
-                "            \"token\": \"%s\",\n" +
-                "            \"status\": \"Succeed\",\n" +
-                "            \"accountId\": \"accountId\"\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}", READONLY_PARTITION_NAME, FAKE_TOKEN);
-        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
-        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
-        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(sTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, null);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD, null);
                 return mock(ServiceCall.class);
             }
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
-
-        /* Get and verify token. */
-        assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
-
-        /* Get and verify the account id. */
-        assertEquals("accountId", tokenResultCapture.getValue().accountId());
+        TokenExchange.getDbToken(READONLY, mHttpClient, null, null, sTokenExchangeServiceCallback);
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(READONLY_PARTITION_NAME)));
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(new HashSet<>(Collections.singleton(READONLY)));
+        TokenExchange.getDbToken(READONLY, mHttpClient, null, null, sTokenExchangeServiceCallback);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(null);
+        TokenExchange.getDbToken(READONLY, mHttpClient, null, null, sTokenExchangeServiceCallback);
         verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
             assertNotNull(headers);
@@ -120,50 +116,27 @@ public class TokenTest extends AbstractStorageTest {
     public void canGetAndSetTokenPartition() {
 
         /* Mock http call to get token. */
-        final String expectedResponse = String.format("{\n" +
-                "    \"tokens\": [\n" +
-                "        {\n" +
-                "            \"partition\": \"%s\",\n" +
-                "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
-                "            \"dbName\": \"db\",\n" +
-                "            \"dbCollectionName\": \"collection\",\n" +
-                "            \"token\": \"%s\",\n" +
-                "            \"status\": \"Succeed\",\n" +
-                "            \"accountId\": \"accountId\"\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}", PARTITION_NAME, FAKE_TOKEN);
         String authToken = "auth-token";
         AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
-        TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
-        ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
-        doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(sTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, null);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD, null);
                 return mock(ServiceCall.class);
             }
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
-
-        /* Get and verify token. */
-        assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
-
-        /* Get and verify the account id. */
-        assertEquals("accountId", tokenResultCapture.getValue().accountId());
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, sTokenExchangeServiceCallback);
 
         /* Verify, if the partition name already exists, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(new HashSet<>(Collections.singleton(PARTITION_NAME)));
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(new HashSet<>(Collections.singleton(Constants.USER)));
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, sTokenExchangeServiceCallback);
 
         /* Verify, if read the partition name list file returns null, it did not throw when set token. */
-        when(SharedPreferencesManager.getStringSet(eq(Constants.PARTITION_NAMES))).thenReturn(null);
-        TokenExchange.getDbToken(PARTITION_NAME, mHttpClient, null, null, callBack);
+        when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(null);
+        TokenExchange.getDbToken(Constants.USER, mHttpClient, null, null, sTokenExchangeServiceCallback);
         verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         for (Map<String, String> headers : mHeadersCaptor.getAllValues()) {
             assertNotNull(headers);
@@ -178,22 +151,22 @@ public class TokenTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(READONLY_PARTITION_NAME)
+                .withPartition(READONLY)
                 .withExpirationTime(expirationDate.getTime())
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
-                .withToken(FAKE_TOKEN));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
         /* Make the call. */
-        Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), callBack);
+        Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
-        assertEquals(FAKE_TOKEN, tokenResultCapture.getValue().token());
+        assertEquals(TOKEN, tokenResultCapture.getValue().token());
     }
 
     @Test
@@ -207,16 +180,16 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbAccount("lemmings-01-8f37d78902")
                 .withDbCollectionName("collection")
                 .withStatus("Succeed")
-                .withPartition(READONLY_PARTITION_NAME)
+                .withPartition(READONLY)
                 .withExpirationTime(expirationDate.getTime())
                 .withToken(inValidToken));
-        when(SharedPreferencesManager.getString(READONLY_PARTITION_NAME)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
 
         /* Make the call. */
         Storage.getInstance()
-                .getTokenAndCallCosmosDbApi(READONLY_PARTITION_NAME, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+                .getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */
         verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
@@ -250,9 +223,9 @@ public class TokenTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, nullResponseAppUrl, null, callBack);
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, emptyTokensAppUrl, null, callBack);
-        TokenExchange.getDbToken(READONLY_PARTITION_NAME, mHttpClient, multipleTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY, mHttpClient, nullResponseAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY, mHttpClient, emptyTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(READONLY, mHttpClient, multipleTokensAppUrl, null, callBack);
 
         /* Get and verify token. */
         assertEquals(3, exception.getAllValues().size());
@@ -263,5 +236,30 @@ public class TokenTest extends AbstractStorageTest {
         TokenResult result = new TokenResult();
         assertEquals(new Date(0), result.expiresOn());
         result.withExpirationTime(null);
+    }
+
+    @Test
+    public void cachedTokenPartitionKeyDoesNotContainUserId() {
+
+        /* Create a partition and corresponding TokenResult. */
+        String partition = "partition";
+        String accountId = "accountId";
+        String partitionWithAccountId = partition + "-" + accountId;
+        Gson gson = new Gson();
+        mockStatic(Utils.class);
+        when(Utils.removeAccountIdFromPartitionName(partitionWithAccountId)).thenReturn(partition);
+        when(Utils.getGson()).thenReturn(gson);
+        TokenResult result = new TokenResult().withPartition(partitionWithAccountId).withAccountId(accountId);
+        Set<String> partitions = new HashSet<>();
+        partitions.add(partition);
+
+        /* Attempt to cache the token result. */
+        TokenManager.getInstance(mock(Context.class)).setCachedToken(result);
+
+        /* Verify that the cached partition name does not contain the account ID. */
+        verifyStatic();
+        SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitions);
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_PARTITION_PREFIX + partition, gson.toJson(result));
     }
 }

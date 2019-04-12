@@ -13,6 +13,7 @@ import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 
 import org.json.JSONException;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -36,18 +37,24 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
 public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
+    @Before
+    public void setUpAuth() {
+        setUpAuthContext();
+    }
+
     @Mock
     private DataStoreEventListener mDataStoreEventListener;
 
     @Test
     public void pendingCreateOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -56,7 +63,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
 
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_CREATE_VALUE),
@@ -67,11 +74,11 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
-        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertEquals(ETAG, documentMetadata.getEtag());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updateLocalCopy(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -84,21 +91,22 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingCreateOperationSuccessWithNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
 
         mStorage.onNetworkStateUpdated(true);
-        verifyTokenExchangeToCosmosDbFlow(null, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updateLocalCopy(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -123,12 +131,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         final String document = "document";
         final PendingOperation pendingOperation =
                 new PendingOperation(
+                        USER_TABLE_NAME,
                         operation,
-                        PARTITION,
+                        RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
                         BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -138,7 +147,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         mStorage.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(500, "You failed!");
-        verifyTokenExchangeToCosmosDbFlow(documentId, cosmosDbMethod, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(operation),
@@ -151,7 +160,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updateLocalCopy(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -163,11 +172,12 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void unsupportedPendingOperation() {
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(new PendingOperation(
+                            USER_TABLE_NAME,
                             "Order a coffee",
-                            PARTITION,
+                            RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
                             BaseOptions.DEFAULT_ONE_HOUR));
@@ -197,19 +207,20 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     private void verifyTokenExchangeCallFails(String operation) throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 operation,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
-        verityTokenExchangeFlow(null, new Exception("Yeah, it failed."));
+        verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
         ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
         verify(mDataStoreEventListener).onDataStoreOperationResult(
@@ -224,12 +235,13 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     @Test
     public void pendingDeleteOperationSuccess() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -238,7 +250,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
 
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
@@ -249,21 +261,22 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
-        assertEquals(PARTITION, documentMetadata.getPartition());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
 
-        verify(mLocalDocumentStorage).updateLocalCopy(eq(pendingOperation));
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
     @Test
     public void pendingDeleteOperationWithConflict() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -273,7 +286,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         mStorage.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(pendingOperation.getOperation()),
@@ -285,18 +298,19 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
-        verify(mLocalDocumentStorage).delete(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
     }
 
     @Test
     public void pendingDeleteOperationWithConflictNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
-                PARTITION,
+                RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_ONE_HOUR);
-        when(mLocalDocumentStorage.getPendingOperations()).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -304,8 +318,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         mStorage.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, METHOD_DELETE, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
-        verify(mLocalDocumentStorage).delete(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
     }
 }

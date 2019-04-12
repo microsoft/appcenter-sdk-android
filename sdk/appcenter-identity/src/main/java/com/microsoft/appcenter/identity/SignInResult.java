@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.identity;
 
+import com.microsoft.appcenter.UserInformation;
+
 /**
  * Result for sign-in operation.
  */

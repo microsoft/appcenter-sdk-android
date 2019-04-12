@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.utils.context.AuthTokenContext.ACCOUNT_ID_LENGTH;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.TOKEN_HISTORY_LIMIT;
 import static org.junit.Assert.assertEquals;
@@ -42,6 +43,7 @@ public class AuthTokenContextAndroidTest {
         SharedPreferencesManager.initialize(context);
         AuthTokenContext.initialize(context);
         mAuthTokenContext = AuthTokenContext.getInstance();
+        mAuthTokenContext.setHistory(null);
     }
 
     @After
@@ -74,6 +76,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that storage returns the same token. */
         assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
         assertEquals(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertEquals(ACCOUNT_ID.substring(0, Math.min(ACCOUNT_ID_LENGTH, ACCOUNT_ID.length())), mAuthTokenContext.getAccountId());
 
         /* Remove the token from storage. */
         mAuthTokenContext.setAuthToken(null, null, null);
@@ -81,6 +84,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that there's no token in storage. */
         assertNull(mAuthTokenContext.getAuthToken());
         assertNull(mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAccountId());
 
         /* The same token should't be in history twice in a row. */
         Calendar calendar = Calendar.getInstance();
@@ -104,7 +108,7 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertNull(mAuthTokenContext.getHistory());
 
-        /* Check validity list.*/
+        /* Check validity list. */
         List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         AuthTokenInfo authTokenInfo = history.get(0);
@@ -130,7 +134,7 @@ public class AuthTokenContextAndroidTest {
         mAuthTokenContext.removeOldestTokenIfMatching(null);
         assertEquals(0, mAuthTokenContext.getHistory().size());
 
-        /* Check validity list.*/
+        /* Check validity list. */
         List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
         assertEquals(1, history.size());
         AuthTokenInfo authTokenInfo = history.get(0);
@@ -251,5 +255,15 @@ public class AuthTokenContextAndroidTest {
             mAuthTokenContext.setAuthToken(mockToken, mockAccountId, new Date());
         }
         assertEquals(TOKEN_HISTORY_LIMIT, mAuthTokenContext.getHistory().size());
+    }
+
+    @Test
+    public void preventResetAuthTokenAfterStart() {
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
+        List<AuthTokenHistoryEntry> listBeforeFinishInitialization = mAuthTokenContext.getHistory();
+        mAuthTokenContext.doNotResetAuthAfterStart();
+        mAuthTokenContext.finishInitialization();
+        List<AuthTokenHistoryEntry> listAfterFinishInitialization = mAuthTokenContext.getHistory();
+        assertEquals(listBeforeFinishInitialization.size(), listAfterFinishInitialization.size());
     }
 }

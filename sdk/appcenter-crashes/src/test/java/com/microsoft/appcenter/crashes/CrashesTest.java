@@ -936,10 +936,12 @@ public class CrashesTest {
         /* Mock exceptions. */
         Throwable classNotFoundException = mock(ClassNotFoundException.class);
         Throwable ioException = mock(IOException.class);
+        Throwable runtimeException = mock(RuntimeException.class);
         Throwable stackOverflowError = mock(StackOverflowError.class);
         when(FileManager.readObject(any(File.class)))
                 .thenThrow(classNotFoundException)
                 .thenThrow(ioException)
+                .thenThrow(runtimeException)
                 .thenThrow(stackOverflowError);
         Crashes crashes = Crashes.getInstance();
 
@@ -955,6 +957,13 @@ public class CrashesTest {
         assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+
+        /* Test RuntimeException. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNotNull(report);
+        verifyStatic();
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(runtimeException));
 
         /* Test StackOverflowError. */
         mErrorLog.setId(UUIDUtils.randomUUID());

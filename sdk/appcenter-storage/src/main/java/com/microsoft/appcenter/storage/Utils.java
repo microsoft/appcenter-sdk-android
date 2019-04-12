@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -14,12 +16,18 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Utils {
+import static com.microsoft.appcenter.Constants.READONLY_TABLE;
+import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
+import static com.microsoft.appcenter.storage.Constants.USER;
+
+public class Utils {
 
     private static final Gson sGson = new Gson();
 
@@ -86,7 +94,39 @@ public final class Utils {
         }
     }
 
+    static String removeAccountIdFromPartitionName(String partition) {
+        if (partition.equals(Constants.READONLY)) {
+            return partition;
+        }
+        return partition.substring(0, partition.length() - Constants.PARTITION_KEY_SUFFIX_LENGTH);
+    }
+
     public static Gson getGson() {
         return sGson;
+    }
+
+    @NonNull
+    static String getTableName(String partition, String accountId) {
+        if (USER.equals(partition)) {
+            return getUserTableName(accountId);
+        }
+        return READONLY_TABLE;
+    }
+
+    static String getUserTableName() {
+        String accountId = AuthTokenContext.getInstance().getAccountId();
+        return accountId == null ? null : getUserTableName(accountId);
+    }
+
+    @NonNull
+    static String getTableName(@NonNull TokenResult tokenResult) {
+        if (tokenResult.partition().startsWith(Constants.USER)) {
+            return getUserTableName(tokenResult.accountId());
+        }
+        return READONLY_TABLE;
+    }
+
+    static String getUserTableName(String accountId) {
+        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
 }
