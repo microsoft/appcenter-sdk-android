@@ -18,14 +18,14 @@ public abstract class BaseOptions {
     public static final int NO_CACHE = 0;
 
     /**
-     * Default caching value of one hour.
+     * Default caching value of one day.
      */
-    public static final int DEFAULT_ONE_HOUR = 60 * 60;
+    public static final int DEFAULT_EXPIRATION = 60 * 60 * 24;
 
     private int mTtl;
 
     BaseOptions() {
-        this(DEFAULT_ONE_HOUR);
+        this(DEFAULT_EXPIRATION);
     }
 
     BaseOptions(int ttl) {
@@ -36,7 +36,7 @@ public abstract class BaseOptions {
     }
 
     /**
-     * @return document time-to-live in seconds (default to 1 hour)
+     * @return document time-to-live in seconds (default to one day).
      */
     public int getDeviceTimeToLive() {
         return mTtl;
