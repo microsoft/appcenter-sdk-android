@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,9 +24,7 @@ import android.widget.Toast;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
-import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 class TestDocument {
 
@@ -62,16 +62,23 @@ public class StorageActivity extends AppCompatActivity {
 
         /* List the app read-only documents. */
         mAppDocumentListAdapter = new ArrayAdapter<>(this, R.layout.item_view_app);
-        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+//        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+//
+//            @Override
+//            public void accept(PaginatedDocuments<TestDocument> documents) {
+//
+//                /* TODO handle multiple pages. */
+//                for (Document<TestDocument> document : documents.getCurrentPage().getItems()) {
+//                    mAppDocumentListAdapter.add(document.getId());
+//                    mDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
+//                }
+//            }
+//        });
 
+        Storage.delete(Constants.USER, "id").thenAccept(new AppCenterConsumer<Document<Void>>() {
             @Override
-            public void accept(PaginatedDocuments<TestDocument> documents) {
-
-                /* TODO handle multiple pages. */
-                for (Document<TestDocument> document : documents.getCurrentPage().getItems()) {
-                    mAppDocumentListAdapter.add(document.getId());
-                    mDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
-                }
+            public void accept(Document<Void> voidDocument) {
+                Log.v(LOG_TAG, "delete=" + voidDocument.failed(), voidDocument.getDocumentError().getError());
             }
         });
 
