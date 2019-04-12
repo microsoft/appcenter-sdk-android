@@ -533,6 +533,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
+                    @MainThread
                     @Override
                     public void onCallSucceeded(final String payload, Map<String, String> headers) {
                         post(new Runnable() {
@@ -778,7 +779,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         return result;
     }
 
-    private <T> boolean isInvalidPartition(final String partition, final DefaultAppCenterFuture<Document<T>> result) {
+    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<Document<T>> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
             completeFuture(getInvalidPartitionStorageException(partition), result);
