@@ -412,7 +412,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
         List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
@@ -457,7 +457,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. Set response as empty string to force deserialization error. */
         final String expectedResponse = "";
