@@ -171,6 +171,7 @@ public class StorageActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add, menu);
+        addNewDocument = menu.findItem(R.id.action_add);
         return true;
     }
 
@@ -178,10 +179,11 @@ public class StorageActivity extends AppCompatActivity {
         mStorageType = StorageType.values()[position];
         switch (mStorageType) {
             case READONLY:
+                addNewDocument.setVisible(false);
                 mListView.setAdapter(mAppDocumentListAdapter);
                 break;
             case USER:
-
+                addNewDocument.setVisible(true);
                 /* Remove the toast and string resource once implementation ready. */
                 Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
