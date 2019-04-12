@@ -436,14 +436,17 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. Ensure deserialization error on Document by passing incorrect class type. */
-        PaginatedDocuments<String> docs = Storage.list(Constants.USER, String.class).get();
+        AppCenterFuture<PaginatedDocuments<String>> result = Storage.list(Constants.USER, String.class);
 
         verifyNoMoreInteractions(mLocalDocumentStorage);
 
         /* Verify the result is correct. */
+        assertNotNull(result);
+        PaginatedDocuments<String> docs = result.get();
         assertNotNull(docs);
         assertFalse(docs.hasNextPage());
         Page<String> page = docs.getCurrentPage();
+        assertNotNull(page);
         assertNull(page.getError());
         assertNotNull(page.getItems());
         assertEquals(1, page.getItems().size());
@@ -471,12 +474,16 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        PaginatedDocuments<TestDocument> docs = Storage.list(Constants.USER, TestDocument.class).get();
+        AppCenterFuture<PaginatedDocuments<TestDocument>> result = Storage.list(Constants.USER, TestDocument.class);
 
         /* Verify the result is correct and the cache was not touched. */
         verifyNoMoreInteractions(mLocalDocumentStorage);
+        assertNotNull(result);
+        PaginatedDocuments<TestDocument> docs = result.get();
+        assertNotNull(docs);
         assertFalse(docs.hasNextPage());
         Page<TestDocument> page = docs.getCurrentPage();
+        assertNotNull(page);
         assertNotNull(page.getError());
     }
 
