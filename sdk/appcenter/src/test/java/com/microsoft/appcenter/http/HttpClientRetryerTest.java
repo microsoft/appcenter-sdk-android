@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -181,7 +181,7 @@ public class HttpClientRetryerTest {
         long retryAfterMS = 1234;
         Map<String, String> responseHeader = new HashMap<>();
         responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
-        responseHeader.put(RETRY_AFTER_MS_KEY, Long.toString(retryAfterMS));
+        responseHeader.put(X_MS_RETRY_AFTER_MS_HEADER, Long.toString(retryAfterMS));
         final HttpException expectedException = new HttpException(429, "call hit the retry limit", responseHeader);
 
         final ServiceCallback callback = mock(ServiceCallback.class);
