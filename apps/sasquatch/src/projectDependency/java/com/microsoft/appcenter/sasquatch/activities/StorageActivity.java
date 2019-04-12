@@ -47,8 +47,10 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    public static ArrayList<String> mUserDocumentList = new ArrayList<String>();
+    public static ArrayList<String> sUserDocumentList = new ArrayList<String>();
+
     private ListView mListView;
+
     private CustomItemAdapter mAdapterUser;
 
     private ArrayAdapter<String> mAppDocumentListAdapter;
@@ -80,7 +82,7 @@ public class StorageActivity extends AppCompatActivity {
         });
 
         /* List the user documents. */
-        mUserDocumentList.clear();
+        sUserDocumentList.clear();
         mUserDocumentContents.clear();
         if (mAdapterUser == null) {
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
@@ -89,7 +91,7 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {
-                            mUserDocumentList.add(document.getId());
+                            sUserDocumentList.add(document.getId());
                             mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
                         }
                     }
@@ -183,9 +185,9 @@ public class StorageActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.user_document_wip, Toast.LENGTH_LONG).show();
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
-                    mAdapterUser = new CustomItemAdapter(mUserDocumentList, this);
+                    mAdapterUser = new CustomItemAdapter(sUserDocumentList, this);
                     mListView.setAdapter(mAdapterUser);
-                    saveArrayToPreferences(mUserDocumentList, USER_DOCUMENT_LIST);
+                    saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
                     saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                 } else {
                     ArrayList<String> signInReminder = new ArrayList<String>() {{
@@ -213,7 +215,7 @@ public class StorageActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (mAdapterUser != null) {
-            mUserDocumentList.clear();
+            sUserDocumentList.clear();
             mUserDocumentContents.clear();
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
             if (accountId != null) {
@@ -221,10 +223,10 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {
-                            mUserDocumentList.add(document.getId());
+                            sUserDocumentList.add(document.getId());
                             mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
                         }
-                        saveArrayToPreferences(mUserDocumentList, USER_DOCUMENT_LIST);
+                        saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
                         saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                         mAdapterUser.notifyDataSetChanged();
                     }

@@ -75,7 +75,7 @@ public class CustomItemAdapter extends BaseAdapter implements ListAdapter {
             deleteBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Storage.delete(Constants.USER, StorageActivity.mUserDocumentList.get(position));
+                    Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
                     mList.remove(position);
                     notifyDataSetChanged();
                 }
