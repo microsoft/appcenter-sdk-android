@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
 
 /**
  * Decorator managing retries.
@@ -100,7 +100,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
                 long delay = 0;
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
-                    String retryAfterMs = httpException.getHeaders().get(RETRY_AFTER_MS_KEY);
+                    String retryAfterMs = httpException.getHeaders().get(X_MS_RETRY_AFTER_MS_HEADER);
                     if (retryAfterMs != null) {
                         delay = Long.parseLong(retryAfterMs);
                     }
