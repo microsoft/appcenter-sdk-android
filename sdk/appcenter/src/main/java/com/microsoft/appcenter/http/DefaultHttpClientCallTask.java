@@ -117,6 +117,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         mTracker = tracker;
     }
 
+    private static InputStream getInputStream(HttpsURLConnection httpsURLConnection) throws IOException {
+        int status = httpsURLConnection.getResponseCode();
+        if (status >= 200 && status < 400) {
+            return httpsURLConnection.getInputStream();
+        } else {
+            return httpsURLConnection.getErrorStream();
+        }
+    }
+
     /**
      * Write payload to output stream.
      */
@@ -159,24 +168,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         }
     }
 
-    private static InputStream getInputStream(HttpsURLConnection httpsURLConnection) throws IOException {
-        int status = httpsURLConnection.getResponseCode();
-        if (status >= 200 && status < 400) {
-            return httpsURLConnection.getInputStream();
-        } else {
-            return httpsURLConnection.getErrorStream();
-        }
-    }
-
     /**
      * Do http call.
      */
     private Pair<String, Map<String, String>> doHttpCall() throws Exception {
 
         /* HTTP session. */
-        if (mUrl == null || !mUrl.startsWith("https"))
+        if (mUrl == null || !mUrl.startsWith("https")) {
             throw new IOException("App Center support only HTTPS connection.");
-
+        }
         URL url = new URL(mUrl);
         URLConnection urlConnection = url.openConnection();
         HttpsURLConnection httpsURLConnection;
