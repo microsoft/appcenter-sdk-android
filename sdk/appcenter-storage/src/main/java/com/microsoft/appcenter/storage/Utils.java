@@ -26,6 +26,8 @@ import java.util.List;
 
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
+import static com.microsoft.appcenter.storage.Constants.ETAG_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 import static com.microsoft.appcenter.storage.Constants.USER;
 
 public class Utils {
@@ -38,7 +40,7 @@ public class Utils {
         JsonObject body;
         try {
             body = sParser.parse(cosmosDbPayload).getAsJsonObject();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return new Document<>(e);
         }
         return parseDocument(body, documentType);
@@ -53,8 +55,8 @@ public class Utils {
             return null;
         }
         JsonObject cosmosResponseJson = parsedPayload.getAsJsonObject();
-        return cosmosResponseJson.has(Constants.ETAG_FIELD_NAME) ?
-                cosmosResponseJson.get(Constants.ETAG_FIELD_NAME).getAsString() : null;
+        return cosmosResponseJson.has(ETAG_FIELD_NAME) ?
+                cosmosResponseJson.get(ETAG_FIELD_NAME).getAsString() : null;
     }
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
@@ -64,9 +66,9 @@ public class Utils {
                     document,
                     obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
                     obj.get(Constants.ID_FIELD_NAME).getAsString(),
-                    obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
+                    obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : "",
                     obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
-        } catch (Exception exception) {
+        } catch (RuntimeException exception) {
             return new Document<>(new StorageException("Failed to deserialize document.", exception));
         }
     }
@@ -80,9 +82,9 @@ public class Utils {
         JsonArray array;
         try {
             JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
-            array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
-        } catch (Exception e) {
-            AppCenterLog.error(Constants.LOG_TAG, "Failed to deserialize Page.", e);
+            array = objects.get(Constants.DOCUMENTS_FIELD_NAME).getAsJsonArray();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to deserialize Page.", e);
             return new Page<>(new StorageException("Failed to deserialize Page.", e));
         }
         List<Document<T>> documents = new ArrayList<>();
@@ -98,11 +100,11 @@ public class Utils {
      * @param e Exception to display in the log.
      */
     public static synchronized void logApiCallFailure(Exception e) {
-        AppCenterLog.error(Constants.LOG_TAG, "Failed to call App Center APIs", e);
+        AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
         if (!HttpUtils.isRecoverableError(e)) {
             if (e instanceof HttpException) {
                 HttpException httpException = (HttpException) e;
-                AppCenterLog.error(Constants.LOG_TAG, "Exception", httpException);
+                AppCenterLog.error(LOG_TAG, "Exception", httpException);
             }
         }
     }

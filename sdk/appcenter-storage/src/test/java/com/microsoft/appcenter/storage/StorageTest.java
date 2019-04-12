@@ -31,7 +31,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -374,6 +373,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
+
         /* Mock http call to get token. */
         /* Pass incorrect document type to cause serialization failure (document is of type TestDocument). */
         AppCenterFuture<Document<String>> doc = Storage.read(Constants.USER, DOCUMENT_ID, String.class);
@@ -444,8 +444,9 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(docs);
         assertFalse(docs.hasNextPage());
         Page<String> page = docs.getCurrentPage();
-        assertEquals(1, page.getItems().size());
         assertNull(page.getError());
+        assertNotNull(page.getItems());
+        assertEquals(1, page.getItems().size());
         assertTrue(page.getItems().get(0).failed());
     }
 

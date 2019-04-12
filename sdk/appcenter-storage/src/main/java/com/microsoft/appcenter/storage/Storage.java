@@ -814,7 +814,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized <T> void completeFutureOnDocumentError(Document<T> doc, DefaultAppCenterFuture<Document<T>> future) {
-        AppCenterLog.error(Constants.LOG_TAG, "Failed to deserialize document: ", doc.getDocumentError().getError());
+        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError().getError());
         future.complete(doc);
         mPendingCalls.remove(future);
     }
@@ -886,7 +886,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private TokenResult getCachedToken(String partitionName) {
         TokenResult result = mTokenManager.getCachedToken(partitionName, true);
         if (result == null) {
-            AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
+            AppCenterLog.error(LOG_TAG, "Unable to find partition named " + partitionName + ".");
             return null;
         } else {
             return result;
