@@ -680,11 +680,12 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(new Document<Void>());
-        when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
+        Document<Void> cachedDocument = new Document<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(cachedDocument);
+        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
-        verify(mLocalDocumentStorage).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getDocumentError());
@@ -694,12 +695,37 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(new Document<Void>());
-        when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
+        Document<Void> cachedDocument = new Document<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(cachedDocument);
+        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
         AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
-        verify(mLocalDocumentStorage).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
+        assertNotNull(result.get().getDocumentError());
+    }
+
+    @Test
+    public void deleteSuccessfullyFromLocalStorageWithoutNetworkCallWhenDocumentCreatedOnlyOffline() {
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(new Document<Void>());
+        when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
+        AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
+        verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mHttpClient);
+        assertFalse(result.get().failed());
+        assertNull(result.get().getDocumentError());
+    }
+
+    @Test
+    public void failToDeleteFromLocalStorageWithoutNetworkCallWhenDocumentCreatedOnlyOffline() {
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), notNull(BaseOptions.class))).thenReturn(new Document<Void>());
+        when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(false);
+        AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
+        verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
+        verifyNoMoreInteractions(mHttpClient);
+        assertTrue(result.get().failed());
         assertNotNull(result.get().getDocumentError());
     }
 

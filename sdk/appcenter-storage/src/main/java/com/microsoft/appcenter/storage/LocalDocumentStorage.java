@@ -218,34 +218,36 @@ class LocalDocumentStorage {
     }
 
     /**
-     * Creates or overwrites specified document entry in the cache. Sets the de-serialized value of
-     * the document to null and the pending operation to DELETE.
+     * Add delete pending operation to a document.
      *
-     * @param partition  Partition key.
-     * @param documentId Document id.
-     * @return True if cache was successfully written to, false otherwise.
+     * @param table      table.
+     * @param partition  partition.
+     * @param documentId document identifier.
+     * @return true if storage update succeeded, false otherwise.
      */
-    boolean markForDeletion(String table, String partition, String documentId) {
+    boolean deleteOffline(String table, String partition, String documentId) {
         Document<Void> writeDocument = new Document<>(null, partition, documentId);
-        long rowId = write(table, writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE);
-        return rowId > 0;
+        return write(table, writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
     /**
-     * Deletes the specified document from the local cache.
+     * Remove a document from local storage.
      *
-     * @param partition  Partition key.
-     * @param documentId Document id.
+     * @param table      table.
+     * @param partition  partition.
+     * @param documentId document identifier.
+     * @return true if storage delete succeeded, false otherwise.
      */
-    void deleteOnline(String table, String partition, String documentId) {
+    boolean deleteOnline(String table, String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
-            mDatabaseManager.delete(
+            return mDatabaseManager.delete(
                     table,
                     BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
-                    new String[]{partition, documentId});
+                    new String[]{partition, documentId}) > 0;
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to delete from cache: ", e);
+            return false;
         }
     }
 

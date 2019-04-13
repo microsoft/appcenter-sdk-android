@@ -439,9 +439,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public Document<Void> doOfflineOperation(Document<Void> cachedDocument, String table, TokenResult cachedToken) {
-                boolean isWriteSucceed =
-                        mLocalDocumentStorage.markForDeletion(table, cachedToken.partition(), documentId);
-                if (isWriteSucceed) {
+                boolean success;
+                if (cachedDocument.getEtag() != null) {
+                    success =
+                            mLocalDocumentStorage.deleteOffline(table, cachedToken.partition(), documentId);
+                } else {
+                    success = mLocalDocumentStorage.deleteOnline(table, cachedToken.partition(), documentId);
+                }
+                if (success) {
                     return new Document<>();
                 } else {
                     return new Document<>(new StorageException("Failed to write to cache."));
