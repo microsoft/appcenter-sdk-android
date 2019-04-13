@@ -104,7 +104,7 @@ abstract public class AbstractStorageTest {
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
 
-    final static String USER_TABLE_NAME = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
+    static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
 

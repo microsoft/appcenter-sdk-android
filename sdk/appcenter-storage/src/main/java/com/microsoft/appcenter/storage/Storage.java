@@ -23,6 +23,7 @@ import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.exception.StorageException;
+import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.DocumentError;
@@ -332,12 +333,14 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         return LOG_TAG;
     }
 
-    @WorkerThread
-    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
-            final String partition,
-            final String documentId,
-            final Class<T> documentType,
-            final ReadOptions readOptions) {
+
+    private <T> DefaultAppCenterFuture<Document<T>> performOperation(final String partition,
+                                                                     final String documentId,
+                                                                     final Class<T> documentType,
+                                                                     final BaseOptions baseOptions,
+                                                                     final CallTemplate<T> callTemplate) {
+
+        /* Check partition is supported. */
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
             return result;
@@ -346,57 +349,110 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public void run() {
+
+                /* Get cached document. */
                 Document<T> cachedDocument;
-                boolean fetchRemote = false;
+                String table = null;
                 TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
-                    String table = Utils.getTableName(cachedToken);
-                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, readOptions);
-
-                    /* If we found the document from local storage. check if we need to call Cosmos DB based on pending operation. */
-                    if (cachedDocument.getDocumentError() == null) {
-
-                        /* Found the document with null pending operation, trying to refresh the document based on the network connected situation. */
-                        if (cachedDocument.getPendingOperation() == null) {
-                            fetchRemote = true;
-                        } else {
-                            if (cachedDocument.getPendingOperation().equals(Constants.PENDING_OPERATION_DELETE_VALUE)) {
-                                cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
-                            }
-                        }
-                    } else {
-
-                        /* In this case the local storage may have failed with a SQLite exception or the document has expired or the document is not found, make the Cosmos DB call to get it. */
-                        fetchRemote = true;
+                    table = Utils.getTableName(cachedToken);
+                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, baseOptions);
+                    if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
+                        cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
                     }
                 } else {
-
-                    /* We cannot find the the partition from local cached token, we will fallback to call tokenexchange service and then call cosmosdb, also build the wrapped error in case of network disconnected. */
                     cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
-                    fetchRemote = true;
                 }
-                if (fetchRemote && mNetworkStateHelper.isNetworkConnected()) {
-                    getTokenAndCallCosmosDbApi(
-                            partition,
-                            result,
-                            new TokenExchangeServiceCallback(mTokenManager) {
 
-                                @Override
-                                public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbReadApi(tokenResult, documentId, documentType, result);
-                                }
+                /* Call template to see if online operation is needed. */
+                if (callTemplate.needsRemoteOperation(cachedDocument)) {
+                    if (mNetworkStateHelper.isNetworkConnected()) {
+                        getTokenAndCallCosmosDbApi(
+                                partition,
+                                result,
+                                new TokenExchangeServiceCallback(mTokenManager) {
 
-                                @Override
-                                public void completeFuture(Exception e) {
-                                    Storage.this.completeFuture(e, result);
-                                }
-                            });
+                                    @Override
+                                    public void callCosmosDb(TokenResult tokenResult) {
+                                        callTemplate.callCosmosDb(tokenResult, result);
+                                    }
+
+                                    @Override
+                                    public void completeFuture(Exception e) {
+                                        Storage.this.completeFuture(e, result);
+                                    }
+                                });
+                    } else {
+                        finishOperationOffline(cachedDocument, table, cachedToken, result, callTemplate);
+                    }
                 } else {
-                    result.complete(cachedDocument);
+                    finishOperationOffline(cachedDocument, table, cachedToken, result, callTemplate);
                 }
             }
-        }, result, null);
+        }, result, null); // TODO use a document error instead of null.
         return result;
+    }
+
+    private <T> void finishOperationOffline(Document<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<Document<T>> result, CallTemplate<T> callTemplate) {
+        if (cachedToken == null) {
+
+            /* If no token and offline, return the no partition error document previously initialized with that specific error. */
+            result.complete(cachedDocument);
+        } else {
+            Document<T> documentResult = callTemplate.doOfflineOperation(cachedDocument, table, cachedToken);
+            completeFuture(documentResult, result);
+        }
+    }
+
+    @WorkerThread
+    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
+            final String partition,
+            final String documentId,
+            final Class<T> documentType,
+            final ReadOptions readOptions) {
+        return performOperation(partition, documentId, documentType, readOptions, new CallTemplate<T>() {
+
+            @Override
+            public boolean needsRemoteOperation(Document<T> cachedDocument) {
+                return cachedDocument.getPendingOperation() == null;
+            }
+
+            @Override
+            public Document<T> doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken) {
+                return cachedDocument;
+            }
+
+            @Override
+            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<T>> result) {
+                callCosmosDbReadApi(tokenResult, documentId, documentType, result);
+            }
+        });
+    }
+
+    private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
+        return performOperation(partition, documentId, Void.class, new WriteOptions(), new CallTemplate<Void>() {
+
+            @Override
+            public boolean needsRemoteOperation(Document<Void> cachedDocument) {
+                return cachedDocument.getEtag() != null || cachedDocument.getDocumentError() != null;
+            }
+
+            @Override
+            public Document<Void> doOfflineOperation(Document<Void> cachedDocument, String table, TokenResult cachedToken) {
+                boolean isWriteSucceed =
+                        mLocalDocumentStorage.markForDeletion(table, cachedToken.partition(), documentId);
+                if (isWriteSucceed) {
+                    return new Document<>();
+                } else {
+                    return new Document<>(new StorageException("Failed to write to cache."));
+                }
+            }
+
+            @Override
+            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<Void>> result) {
+                callCosmosDbDeleteApi(tokenResult, documentId, result);
+            }
+        });
     }
 
     private synchronized <T> void callCosmosDbReadApi(
@@ -734,49 +790,13 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         }
     }
 
-    private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
-        final DefaultAppCenterFuture<Document<Void>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartition(partition, result)) {
-            return result;
-        }
-        postAsyncGetter(new Runnable() {
+    private interface CallTemplate<T> {
 
-            @Override
-            public void run() {
-                if (mNetworkStateHelper.isNetworkConnected()) {
-                    getTokenAndCallCosmosDbApi(
-                            partition,
-                            result,
-                            new TokenExchange.TokenExchangeServiceCallback(mTokenManager) {
+        boolean needsRemoteOperation(Document<T> cachedDocument);
 
-                                @Override
-                                public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbDeleteApi(tokenResult, documentId, result);
-                                }
+        Document<T> doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken);
 
-                                @Override
-                                public void completeFuture(Exception e) {
-                                    Storage.this.completeFuture(e, result);
-                                }
-                            });
-                } else {
-                    TokenResult cachedToken = getCachedToken(partition);
-                    if (cachedToken != null) {
-                        final String table = Utils.getTableName(cachedToken);
-                        boolean isWriteSucceed =
-                                mLocalDocumentStorage.markForDeletion(table, cachedToken.partition(), documentId);
-                        if (isWriteSucceed) {
-                            completeFuture(new Document<Void>(), result);
-                        } else {
-                            completeFuture(new StorageException("Failed to write to cache."), result);
-                        }
-                    } else {
-                        completeFuture(new StorageException("Unable to find partition named " + partition + "."), result);
-                    }
-                }
-            }
-        }, result, null);
-        return result;
+        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<T>> result);
     }
 
     private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<Document<T>> result) {

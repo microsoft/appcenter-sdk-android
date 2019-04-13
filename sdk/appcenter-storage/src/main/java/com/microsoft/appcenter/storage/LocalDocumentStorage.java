@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -148,7 +149,8 @@ class LocalDocumentStorage {
         return mDatabaseManager.replace(table, values);
     }
 
-    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+    @NonNull
+    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, BaseOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
         ContentValues values;
