@@ -53,7 +53,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -96,7 +96,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -136,7 +136,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
-                        BaseOptions.DEFAULT_ONE_HOUR);
+                        BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -180,7 +180,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
-                            BaseOptions.DEFAULT_ONE_HOUR));
+                            BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS));
                 }});
         mStorage.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
@@ -212,7 +212,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -240,7 +240,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -275,7 +275,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -309,7 +309,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
