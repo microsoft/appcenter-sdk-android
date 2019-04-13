@@ -181,7 +181,19 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void writeDeleteFails() {
+    public void deleteOnlineSucceeds() {
+        when(mDatabaseManager.delete(anyString(), anyString(), any(String[].class))).thenReturn(1);
+        assertTrue(mLocalDocumentStorage.deleteOnline(mUserTableName, PARTITION, DOCUMENT_ID));
+    }
+
+    @Test
+    public void deleteOnlineFails() {
+        when(mDatabaseManager.delete(anyString(), anyString(), any(String[].class))).thenReturn(0);
+        assertFalse(mLocalDocumentStorage.deleteOnline(mUserTableName, PARTITION, DOCUMENT_ID));
+    }
+
+    @Test
+    public void deleteOfflineFails() {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(-1L);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
@@ -191,7 +203,7 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
-    public void writeDeleteSucceeds() {
+    public void deleteOfflineSucceeds() {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID);
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
