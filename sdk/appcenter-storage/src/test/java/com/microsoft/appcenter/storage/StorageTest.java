@@ -31,7 +31,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -370,6 +369,122 @@ public class StorageTest extends AbstractStorageTest {
         TestDocument testDocument = testCosmosDocument.getDocument();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
+    }
+
+    @Test
+    public void readFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
+
+        /* Mock http call to get token. */
+        /* Pass incorrect document type to cause serialization failure (document is of type TestDocument). */
+        AppCenterFuture<Document<String>> doc = Storage.read(Constants.USER, DOCUMENT_ID, String.class);
+
+        /* Make cosmos db http call with exchanged token. */
+        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+        verifyCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+
+        /* Get and verify document. Confirm the cache was not touched. */
+        assertNotNull(doc);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        Document<String> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertTrue(testCosmosDocument.failed());
+    }
+
+    @Test
+    public void createFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, new WriteOptions());
+
+        /* Mock for cosmos return payload that cannot be deserialized. Will fail in the `onSuccess` callback of `create`. */
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, "", null);
+
+        /* Verify document error. Confirm the cache was not touched. */
+        assertNotNull(doc);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        Document<TestDocument> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertTrue(testCosmosDocument.failed());
+    }
+
+    @Test
+    public void listFailsToDeserializeDocumentDoesNotThrow() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
+                new TestDocument("Test"),
+                RESOLVED_USER_PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(documents)
+        );
+
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. Ensure deserialization error on Document by passing incorrect class type. */
+        AppCenterFuture<PaginatedDocuments<String>> result = Storage.list(Constants.USER, String.class);
+
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+
+        /* Verify the result is correct. */
+        assertNotNull(result);
+        PaginatedDocuments<String> docs = result.get();
+        assertNotNull(docs);
+        assertFalse(docs.hasNextPage());
+        Page<String> page = docs.getCurrentPage();
+        assertNotNull(page);
+        assertNull(page.getError());
+        assertNotNull(page.getItems());
+        assertEquals(1, page.getItems().size());
+        assertTrue(page.getItems().get(0).failed());
+    }
+
+    @Test
+    public void listFailsToDeserializeListOfDocumentsDoesNotThrow() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. Set response as empty string to force deserialization error. */
+        final String expectedResponse = "";
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        AppCenterFuture<PaginatedDocuments<TestDocument>> result = Storage.list(Constants.USER, TestDocument.class);
+
+        /* Verify the result is correct and the cache was not touched. */
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        assertNotNull(result);
+        PaginatedDocuments<TestDocument> docs = result.get();
+        assertNotNull(docs);
+        assertFalse(docs.hasNextPage());
+        Page<TestDocument> page = docs.getCurrentPage();
+        assertNotNull(page);
+        assertNotNull(page.getError());
     }
 
     @Test

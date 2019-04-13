@@ -138,7 +138,7 @@ class LocalDocumentStorage {
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
-                Utils.getGson().toJson(document),
+                document.toString(),
                 document.getEtag(),
                 writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
                         BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
@@ -173,6 +173,11 @@ class LocalDocumentStorage {
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
+            if (document.failed()) {
+                Throwable error = document.getDocumentError().getError();
+                AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
+                return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
+            }
             document.setIsFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
 

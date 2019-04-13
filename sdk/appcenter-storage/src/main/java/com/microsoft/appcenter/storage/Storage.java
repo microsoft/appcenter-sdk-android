@@ -420,7 +420,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 Document<T> document = Utils.parseDocument(payload, documentType);
-                                completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                                if (document.getDocumentError() != null) {
+                                    completeFutureOnDocumentError(document, result);
+                                } else {
+                                    completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
+                                }
                             }
                         });
                     }
@@ -541,8 +545,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                                completeFuture(cosmosDbDocument, result);
-                                mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                                if (cosmosDbDocument.failed()) {
+                                    completeFutureOnDocumentError(cosmosDbDocument, result);
+                                } else {
+                                    completeFuture(cosmosDbDocument, result);
+                                    mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
+                                }
                             }
                         });
                     }
@@ -805,6 +813,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         mPendingCalls.remove(future);
     }
 
+    private synchronized <T> void completeFutureOnDocumentError(Document<T> doc, DefaultAppCenterFuture<Document<T>> future) {
+        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError().getError());
+        future.complete(doc);
+        mPendingCalls.remove(future);
+    }
+
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.logApiCallFailure(e);
         future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
@@ -872,7 +886,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private TokenResult getCachedToken(String partitionName) {
         TokenResult result = mTokenManager.getCachedToken(partitionName, true);
         if (result == null) {
-            AppCenterLog.error(Constants.LOG_TAG, "Unable to find partition named " + partitionName + ".");
+            AppCenterLog.error(LOG_TAG, "Unable to find partition named " + partitionName + ".");
             return null;
         } else {
             return result;
