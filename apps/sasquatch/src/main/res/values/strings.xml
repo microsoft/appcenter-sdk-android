@@ -99,6 +99,6 @@
         <item>Invalid</item>
     </string-array>
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
-    <string name="message_whether_success" tools:ignore="MissingTranslation">Message whether success.</string>
-    <string name="message_whether_error" tools:ignore="MissingTranslation">Message whether error.</string>
+    <string name="message_whether_success" tools:ignore="MissingTranslation">Successfully added user document.</string>
+    <string name="message_whether_error" tools:ignore="MissingTranslation">Failed to add user document.</string>
 </resources>
