@@ -123,6 +123,7 @@ public class StorageActivity extends AppCompatActivity {
         sUserDocumentList.clear();
         mUserDocumentContents.clear();
         if (mAdapterUser == null) {
+            mAdapterUser = new CustomItemAdapter(new ArrayList<String>(), this);
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
             if (accountId != null) {
                 Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
