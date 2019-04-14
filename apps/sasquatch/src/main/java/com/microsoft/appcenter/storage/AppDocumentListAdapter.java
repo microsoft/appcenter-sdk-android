@@ -61,7 +61,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         List<ListItem> cachedDocuments = new ArrayList<>();
         List<ListItem> remoteDocuments = new ArrayList<>();
         for (Document<TestDocument> doc : documentList) {
-            ChildListItem listItem = new ChildListItem();
+            ChildAppListItem listItem = new ChildAppListItem();
             listItem.setChild(doc);
             if (doc.isFromCache()) {
                 cachedDocuments.add(listItem);
@@ -111,7 +111,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     @Override
     public int getItemCount() {
-        return mList.size();
+        return mList == null ? 0 : mList.size();
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {

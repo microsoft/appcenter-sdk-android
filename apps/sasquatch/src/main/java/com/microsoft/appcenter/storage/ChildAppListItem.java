@@ -2,7 +2,7 @@ package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.storage.models.Document;
 
-public class ChildListItem implements ListItem {
+public class ChildAppListItem implements ListItem {
 
     private Document<TestDocument> mChild;
 
