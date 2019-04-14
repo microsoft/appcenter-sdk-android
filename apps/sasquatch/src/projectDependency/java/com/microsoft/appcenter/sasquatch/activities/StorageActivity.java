@@ -43,7 +43,11 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT
 
 public class StorageActivity extends AppCompatActivity {
 
-    public static ArrayList<String> sUserDocumentList = new ArrayList<String>();
+    public static String CACHED_PREFIX = "#";
+
+    public static String REMOTE_PREFIX = "!";
+
+    public static ArrayList<String> sUserDocumentList = new ArrayList<>();
 
     private RecyclerView mListView;
 
@@ -120,13 +124,24 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {
-                            sUserDocumentList.add(document.getId());
+                            sUserDocumentList.add(String.format("%s_%s", document.isFromCache() ? CACHED_PREFIX : REMOTE_PREFIX, document.getId()));
                             mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
                         }
                     }
                 });
             }
         }
+
+        mAdapterUser.setOnItemClickListener(new AppDocumentListAdapter.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(int position) {
+                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
+                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(USER_DOCUMENT_LIST).get(position));
+                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(USER_DOCUMENT_CONTENTS).get(position));
+                startActivity(intent);
+            }
+        });
 
         /* Selector for App VS User documents. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -213,17 +228,6 @@ public class StorageActivity extends AppCompatActivity {
         }
     }
 
-    public boolean saveArrayToPreferences(ArrayList<String> list, String name) {
-        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
-        editor.putInt("Status_size", list.size());
-        for (int i = 0; i < list.size(); i++) {
-            editor.remove("Status_" + i);
-            editor.putString("Status_" + i, list.get(i));
-        }
-        return editor.commit();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -233,7 +237,7 @@ public class StorageActivity extends AppCompatActivity {
             String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
             if (accountId != null) {
                 Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
-                    
+
                     @Override
                     public void accept(PaginatedDocuments<Map> documents) {
                         for (Document<Map> document : documents.getCurrentPage().getItems()) {
@@ -247,6 +251,27 @@ public class StorageActivity extends AppCompatActivity {
                 });
             }
         }
+    }
+
+    public void saveArrayToPreferences(ArrayList<String> list, String name) {
+        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
+        editor.putInt("Status_size", list.size());
+        for (int i = 0; i < list.size(); i++) {
+            editor.remove("Status_" + i);
+            editor.putString("Status_" + i, list.get(i));
+        }
+        editor.commit();
+    }
+
+    private ArrayList<String> loadArrayFromPreferences(String name) {
+        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
+        ArrayList<String> list = new ArrayList<>();
+        int size = MainActivity.sSharedPreferences.getInt("Status_size", 0);
+        for (int i = 0; i < size; i++) {
+            list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
+        }
+        return list;
     }
 
     private enum StorageType {
