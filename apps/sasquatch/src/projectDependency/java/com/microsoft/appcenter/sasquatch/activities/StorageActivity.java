@@ -41,12 +41,6 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
 
-class TestDocument {
-
-    @SuppressWarnings("unused")
-    String key;
-}
-
 public class StorageActivity extends AppCompatActivity {
 
     public static ArrayList<String> sUserDocumentList = new ArrayList<String>();
