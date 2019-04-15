@@ -22,6 +22,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
@@ -33,6 +35,7 @@ import com.microsoft.appcenter.storage.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
@@ -49,9 +52,15 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    public static ArrayList<String> sUserDocumentList = new ArrayList<String>();
+    public static String CACHED_PREFIX = "#";
+
+    public static String REMOTE_PREFIX = "!";
+
+    public static ArrayList<String> sUserDocumentList = new ArrayList<>();
 
     private RecyclerView mListView;
+
+    private Boolean isLoading = false;
 
     private MenuItem addNewDocument;
 
@@ -63,17 +72,31 @@ public class StorageActivity extends AppCompatActivity {
 
     private StorageType mStorageType = StorageType.READONLY;
 
-    private PaginatedDocuments<TestDocument> currentDocuments;
-    private AppCenterConsumer<PaginatedDocuments<TestDocument>> upload = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+    private PaginatedDocuments<TestDocument> currentAppDocuments;
+
+    private PaginatedDocuments<Map> currentUserDocuments;
+
+    private TextView mMssageText;
+
+    private AppCenterConsumer<PaginatedDocuments<TestDocument>> uploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
         @Override
         public void accept(PaginatedDocuments<TestDocument> documents) {
-            currentDocuments = documents;
-            mAppDocumentListAdapter.upload(documents.getCurrentPage().getItems());
-            mAppDocumentListAdapter.notifyDataSetChanged();
+            currentAppDocuments = documents;
+            updateAppDocument(documents.getCurrentPage().getItems());
         }
     };
-    private RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
+
+    private AppCenterConsumer<PaginatedDocuments<Map>> uploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
+
+        @Override
+        public void accept(PaginatedDocuments<Map> documents) {
+            currentUserDocuments = documents;
+            updateUserDocuments(documents.getCurrentPage().getItems());
+        }
+    };
+
+    private RecyclerView.OnScrollListener scrollAppListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -83,16 +106,60 @@ public class StorageActivity extends AppCompatActivity {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (currentDocuments.hasNextPage()) {
-                currentDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
+            if (currentAppDocuments != null && currentAppDocuments.hasNextPage() && !isLoading) {
+                isLoading = true;
+                currentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
-                        mAppDocumentListAdapter.upload(testDocumentPage.getItems());
+                        isLoading = false;
+                        updateAppDocument(testDocumentPage.getItems());
                     }
                 });
             }
         }
     };
+
+    private RecyclerView.OnScrollListener scrollUserListener = new RecyclerView.OnScrollListener() {
+
+        @Override
+        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            if (currentUserDocuments != null && currentUserDocuments.hasNextPage() && !isLoading) {
+                isLoading = true;
+                currentUserDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
+
+                    @Override
+                    public void accept(Page<Map> mapPage) {
+                        updateUserDocuments(mapPage.getItems());
+                    }
+                });
+            }
+        }
+    };
+
+    private void updateUserDocuments(List<Document<Map>> documents) {
+        if (documents == null)
+            return;
+
+        for (Document<Map> document : documents) {
+            sUserDocumentList.add(String.format("%s_%s", document.isFromCache() ? CACHED_PREFIX : REMOTE_PREFIX, document.getId()));
+            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
+        }
+        saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
+        saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
+        mAdapterUser.setList(sUserDocumentList);
+        mAdapterUser.notifyDataSetChanged();
+    }
+
+    private void updateAppDocument(List<Document<TestDocument>> list) {
+        mAppDocumentListAdapter.upload(list);
+        mAppDocumentListAdapter.notifyDataSetChanged();
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,6 +167,7 @@ public class StorageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_storage);
         mListView = findViewById(R.id.list);
         mListView.setLayoutManager(new LinearLayoutManager(this));
+        mMssageText = findViewById(R.id.storage_message);
 
         /* List the app read-only documents. */
         mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<Document<TestDocument>>());
@@ -113,26 +181,9 @@ public class StorageActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(upload);
+        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(uploadApp);
 
-        /* List the user documents. */
-        sUserDocumentList.clear();
-        mUserDocumentContents.clear();
-        if (mAdapterUser == null) {
-            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-            if (accountId != null) {
-                Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
-
-                    @Override
-                    public void accept(PaginatedDocuments<Map> documents) {
-                        for (Document<Map> document : documents.getCurrentPage().getItems()) {
-                            sUserDocumentList.add(document.getId());
-                            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
-                        }
-                    }
-                });
-            }
-        }
+        loadUserDocuments();
 
         /* Selector for App VS User documents. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -151,8 +202,54 @@ public class StorageActivity extends AppCompatActivity {
         });
     }
 
+    private void loadUserDocuments() {
+
+        /* List the user documents. */
+        sUserDocumentList.clear();
+        mUserDocumentContents.clear();
+        if (mAdapterUser == null) {
+            mAdapterUser = new CustomItemAdapter(new ArrayList<String>(), this);
+            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+            if (accountId != null) {
+                Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
+            }
+        }
+
+        mAdapterUser.setOnItemClickListener(new CustomItemAdapter.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(int position) {
+                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
+                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(USER_DOCUMENT_LIST).get(position));
+                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(USER_DOCUMENT_CONTENTS).get(position));
+                startActivity(intent);
+            }
+
+            @Override
+            public void onRemoveClick(final int position) {
+                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
+
+                    @Override
+                    public void accept(Document<Void> voidDocument) {
+                        if (voidDocument.failed()) {
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
+                        } else {
+                            mUserDocumentContents.remove(position);
+                            sUserDocumentList.remove(position);
+                            saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
+                            saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
+                            mAdapterUser.notifyDataSetChanged();
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        isLoading = false;
         switch (item.getItemId()) {
             case R.id.action_add:
                 switch (mStorageType) {
@@ -191,35 +288,35 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void updateStorageType(int position) {
+        mMssageText.setText("");
         mStorageType = StorageType.values()[position];
         switch (mStorageType) {
             case READONLY:
                 addNewDocument.setVisible(false);
                 mListView.setAdapter(mAppDocumentListAdapter);
-                mListView.addOnScrollListener(scrollListener);
+                mListView.addOnScrollListener(scrollAppListener);
                 break;
             case USER:
                 addNewDocument.setVisible(true);
-                mListView.removeOnScrollListener(scrollListener);
+                mListView.removeOnScrollListener(scrollUserListener);
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
-                    mAdapterUser = new CustomItemAdapter(sUserDocumentList, this);
                     mListView.setAdapter(mAdapterUser);
-                    saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
-                    saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                 } else {
-
-                    // TODO add message.
-                    ArrayList<String> signInReminder = new ArrayList<String>() {{
-                        add(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
-                    }};
+                    mMssageText.setText(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     mListView.setAdapter(null);
                 }
                 break;
         }
     }
 
-    public boolean saveArrayToPreferences(ArrayList<String> list, String name) {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUserDocuments();
+    }
+
+    public void saveArrayToPreferences(ArrayList<String> list, String name) {
         MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
         editor.putInt("Status_size", list.size());
@@ -227,32 +324,17 @@ public class StorageActivity extends AppCompatActivity {
             editor.remove("Status_" + i);
             editor.putString("Status_" + i, list.get(i));
         }
-        return editor.commit();
+        editor.commit();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (mAdapterUser != null) {
-            sUserDocumentList.clear();
-            mUserDocumentContents.clear();
-            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-            if (accountId != null) {
-                Storage.list(Constants.USER, Map.class).thenAccept(new AppCenterConsumer<PaginatedDocuments<Map>>() {
-                    
-                    @Override
-                    public void accept(PaginatedDocuments<Map> documents) {
-                        for (Document<Map> document : documents.getCurrentPage().getItems()) {
-                            sUserDocumentList.add(document.getId());
-                            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
-                        }
-                        saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
-                        saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
-                        mAdapterUser.notifyDataSetChanged();
-                    }
-                });
-            }
+    private ArrayList<String> loadArrayFromPreferences(String name) {
+        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
+        ArrayList<String> list = new ArrayList<>();
+        int size = MainActivity.sSharedPreferences.getInt("Status_size", 0);
+        for (int i = 0; i < size; i++) {
+            list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
         }
+        return list;
     }
 
     private enum StorageType {

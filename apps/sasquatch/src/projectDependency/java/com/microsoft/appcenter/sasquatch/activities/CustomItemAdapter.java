@@ -7,7 +7,6 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -22,17 +21,14 @@ import com.microsoft.appcenter.storage.Storage;
 
 import java.util.ArrayList;
 
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
-
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
 
     private ArrayList<String> mList;
-
     private Context mContext;
+    private CustomItemAdapter.OnItemClickListener listener;
 
     CustomItemAdapter(ArrayList<String> list, Context context) {
-        mList = list;
+        mList = new ArrayList<>(list);
         mContext = context;
     }
 
@@ -43,24 +39,27 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, null, false));
     }
 
+    void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     @Override
     public void onBindViewHolder(@NonNull CustomItemAdapterHolder holder, @SuppressLint("RecyclerView") final int position) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(mContext, UserDocumentDetailActivity.class);
-                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(mContext, USER_DOCUMENT_LIST).get(position));
-                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(mContext, USER_DOCUMENT_CONTENTS).get(position));
-                mContext.startActivity(intent);
+                if (listener != null) {
+                    listener.onItemClick(position);
+                }
             }
         });
-        holder.listItemText.setText(mList.get(position));
+        holder.listItemText.setText(mList.get(position).substring(2));
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
-                mList.remove(position);
-                notifyDataSetChanged();
+                if (listener != null) {
+                    listener.onRemoveClick(position);
+                }
             }
         });
     }
@@ -75,26 +74,25 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.size();
     }
 
-    public ArrayList<String> loadArrayFromPreferences(Context context, String name) {
-        MainActivity.sSharedPreferences = mContext.getSharedPreferences(name, Context.MODE_PRIVATE);
-        ArrayList<String> list = new ArrayList<>();
-        int size = MainActivity.sSharedPreferences.getInt("Status_size", 0);
-        for (int i = 0; i < size; i++) {
-            list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
-        }
-        return list;
+    public void setList(ArrayList<String> list) {
+        this.mList = list;
     }
 
-    public class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
+    class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
-        public TextView listItemText;
-        public ImageButton deleteBtn;
+        TextView listItemText;
+        ImageButton deleteBtn;
 
-        public CustomItemAdapterHolder(@NonNull View itemView) {
+        CustomItemAdapterHolder(@NonNull View itemView) {
             super(itemView);
             listItemText = itemView.findViewById(R.id.property);
             deleteBtn = itemView.findViewById(R.id.delete_button);
         }
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+
+        void onRemoveClick(int position);
+    }
 }

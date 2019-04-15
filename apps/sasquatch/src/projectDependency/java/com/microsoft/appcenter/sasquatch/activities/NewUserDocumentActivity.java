@@ -111,9 +111,10 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOption).thenAccept(new AppCenterConsumer<Document<Map>>() {
             @Override
             public void accept(Document<Map> mapDocument) {
-                if (mapDocument.failed())
+                if (mapDocument.failed()) {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_error, Toast.LENGTH_SHORT).show();
-                else {
+                    mProperties.clear();
+                } else {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_success, Toast.LENGTH_SHORT).show();
                     NewUserDocumentActivity.this.finish();
                 }
