@@ -26,8 +26,12 @@ import java.util.List;
 
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
+import static com.microsoft.appcenter.storage.Constants.DOCUMENT_FIELD_NAME;
 import static com.microsoft.appcenter.storage.Constants.ETAG_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.ID_FIELD_NAME;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.PARTITION_KEY_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.TIMESTAMP_FIELD_NAME;
 import static com.microsoft.appcenter.storage.Constants.USER;
 
 public class Utils {
@@ -61,13 +65,13 @@ public class Utils {
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
         try {
-            T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
+            T document = sGson.fromJson(obj.get(DOCUMENT_FIELD_NAME), documentType);
             return new Document<>(
                     document,
-                    obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
-                    obj.get(Constants.ID_FIELD_NAME).getAsString(),
-                    obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : "",
-                    obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
+                    obj.get(PARTITION_KEY_FIELD_NAME).getAsString(),
+                    obj.get(ID_FIELD_NAME).getAsString(),
+                    obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : null,
+                    obj.get(TIMESTAMP_FIELD_NAME).getAsLong());
         } catch (RuntimeException exception) {
             return new Document<>(new StorageException("Failed to deserialize document.", exception));
         }
