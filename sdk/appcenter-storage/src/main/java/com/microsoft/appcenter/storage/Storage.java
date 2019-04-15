@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -23,7 +24,6 @@ import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.storage.exception.StorageException;
-import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.DocumentError;
@@ -334,11 +334,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
 
-    private <T> DefaultAppCenterFuture<Document<T>> performOperation(final String partition,
-                                                                     final String documentId,
-                                                                     final Class<T> documentType,
-                                                                     final BaseOptions baseOptions,
-                                                                     final CallTemplate<T> callTemplate) {
+    private <T> DefaultAppCenterFuture<Document<T>> performOperation(@NonNull final String partition,
+                                                                     @NonNull final String documentId,
+                                                                     @NonNull final Class<T> documentType,
+                                                                     @Nullable final ReadOptions cacheReadOptions,
+                                                                     @NonNull final CallTemplate<T> callTemplate) {
 
         /* Check partition is supported. */
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
@@ -356,7 +356,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
                     table = Utils.getTableName(cachedToken);
-                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, baseOptions);
+                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, cacheReadOptions);
                     if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
                         cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
                     }
@@ -430,7 +430,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
-        return performOperation(partition, documentId, Void.class, new WriteOptions(), new CallTemplate<Void>() {
+        return performOperation(partition, documentId, Void.class, null, new CallTemplate<Void>() {
 
             @Override
             public boolean needsRemoteOperation(Document<Void> cachedDocument) {

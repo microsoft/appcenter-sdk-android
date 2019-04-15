@@ -150,7 +150,7 @@ class LocalDocumentStorage {
     }
 
     @NonNull
-    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, BaseOptions readOptions) {
+    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
         ContentValues values;
