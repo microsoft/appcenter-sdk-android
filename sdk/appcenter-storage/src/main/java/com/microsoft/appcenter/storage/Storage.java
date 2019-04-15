@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.storage;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
@@ -278,19 +279,30 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                 /* If device comes back online. */
                 if (connected) {
-                    for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
-                        if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                                PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                            instanceCreateOrUpdate(po);
-                        } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                            instanceDelete(po);
-                        } else {
-                            AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
-                        }
-                    }
+                    processPendingOperations();
                 }
             }
         });
+    }
+
+    @Override
+    public void onActivityResumed(Activity activity) {
+        if (mNetworkStateHelper.isNetworkConnected()) {
+            processPendingOperations();
+        }
+    }
+
+    private void processPendingOperations() {
+        for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+            if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                    PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                instanceCreateOrUpdate(po);
+            } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                instanceDelete(po);
+            } else {
+                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+            }
+        }
     }
 
     /**

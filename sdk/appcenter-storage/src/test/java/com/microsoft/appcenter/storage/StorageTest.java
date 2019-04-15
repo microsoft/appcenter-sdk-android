@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.app.Activity;
+
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -16,9 +18,14 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.exception.StorageException;
+import com.microsoft.appcenter.storage.models.BaseOptions;
+import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
+import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
@@ -31,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -49,6 +58,7 @@ import javax.net.ssl.SSLException;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -80,6 +90,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
         TokenManager.class
 })
 public class StorageTest extends AbstractStorageTest {
+
+    @Mock
+    private DataStoreEventListener mDataStoreEventListener;
 
     private String tokenResult = String.format("{\n" +
             "            \"partition\": \"%s\",\n" +
@@ -814,5 +827,72 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getDocumentError());
         assertTrue(deleteDocument.getDocumentError().getError().getMessage().contains(failedMessage));
+    }
+
+    @Test
+    public void pendingOperationProcessedWhenNetworkOnAndActivityResumed() throws JSONException {
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_ONE_HOUR);
+        Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
+        Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(pendingOperation);
+                }});
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        mStorage.onActivityResumed(new Activity());
+
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+
+        verify(mDataStoreEventListener).onDataStoreOperationResult(
+                eq(PENDING_OPERATION_DELETE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                isNull(DocumentError.class));
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        verifyNoMoreInteractions(mDataStoreEventListener);
+
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
+        assertNull(documentMetadata.getEtag());
+
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void pendingOperationNotProcessedWhenNetworkOffAndActivityResumed() {
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_ONE_HOUR);
+        Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+
+        Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(pendingOperation);
+                }});
+
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        mStorage.onActivityResumed(new Activity());
+
+        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+                anyString(),
+                any(DocumentMetadata.class),
+                any(DocumentError.class));
+        verifyNoMoreInteractions(mDataStoreEventListener);
+
+        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
     }
 }
