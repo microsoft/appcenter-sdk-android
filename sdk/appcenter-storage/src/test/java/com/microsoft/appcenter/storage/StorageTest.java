@@ -59,6 +59,8 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
+import static com.microsoft.appcenter.storage.Constants.USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -94,7 +96,7 @@ public class StorageTest extends AbstractStorageTest {
     @Mock
     private DataStoreEventListener mDataStoreEventListener;
 
-    private String tokenResult = String.format("{\n" +
+    private static final String TOKEN_RESULT = String.format("{\n" +
             "            \"partition\": \"%s\",\n" +
             "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
             "            \"dbName\": \"db\",\n" +
@@ -154,7 +156,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
         List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
@@ -177,7 +179,7 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        PaginatedDocuments<TestDocument> docs = Storage.list(Constants.USER, TestDocument.class).get();
+        PaginatedDocuments<TestDocument> docs = Storage.list(USER, TestDocument.class).get();
 
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
@@ -192,7 +194,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
         List<Document<TestDocument>> firstPartDocuments = Collections.singletonList(new Document<>(
@@ -233,7 +235,7 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        PaginatedDocuments<TestDocument> docs = Storage.list(Constants.USER, TestDocument.class).get();
+        PaginatedDocuments<TestDocument> docs = Storage.list(USER, TestDocument.class).get();
         assertTrue(docs.hasNextPage());
         assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
         Page<TestDocument> secondPage = docs.getNextPage().get();
@@ -248,7 +250,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
         List<Document<TestDocument>> firstPartDocuments = Collections.nCopies(2, new Document<>(
@@ -289,7 +291,7 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        Iterator<Document<TestDocument>> iterator = Storage.list(Constants.USER, TestDocument.class).get().iterator();
+        Iterator<Document<TestDocument>> iterator = Storage.list(USER, TestDocument.class).get().iterator();
         List<Document<TestDocument>> documents = new ArrayList<>();
         while (iterator.hasNext()) {
             documents.add(iterator.next());
@@ -308,7 +310,7 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -319,7 +321,7 @@ public class StorageTest extends AbstractStorageTest {
         });
 
         /* Make the call. */
-        PaginatedDocuments<TestDocument> docs = Storage.list(Constants.USER, TestDocument.class).get();
+        PaginatedDocuments<TestDocument> docs = Storage.list(USER, TestDocument.class).get();
 
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
@@ -340,7 +342,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void listEndToEndWhenMakeTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(Constants.USER, TestDocument.class);
+        AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Storage.list(USER, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
@@ -361,7 +363,7 @@ public class StorageTest extends AbstractStorageTest {
     public void replaceEndToEnd() throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.replace(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
 
         /* Make the call. */
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -383,8 +385,124 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void readFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
+
+        /* Mock http call to get token. */
+        /* Pass incorrect document type to cause serialization failure (document is of type TestDocument). */
+        AppCenterFuture<Document<String>> doc = Storage.read(Constants.USER, DOCUMENT_ID, String.class);
+
+        /* Make cosmos db http call with exchanged token. */
+        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+        verifyCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+
+        /* Get and verify document. Confirm the cache was not touched. */
+        assertNotNull(doc);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        Document<String> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertTrue(testCosmosDocument.failed());
+    }
+
+    @Test
+    public void createFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, new WriteOptions());
+
+        /* Mock for cosmos return payload that cannot be deserialized. Will fail in the `onSuccess` callback of `create`. */
+        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, "", null);
+
+        /* Verify document error. Confirm the cache was not touched. */
+        assertNotNull(doc);
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        Document<TestDocument> testCosmosDocument = doc.get();
+        assertNotNull(testCosmosDocument);
+        assertTrue(testCosmosDocument.failed());
+    }
+
+    @Test
+    public void listFailsToDeserializeDocumentDoesNotThrow() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
+                new TestDocument("Test"),
+                RESOLVED_USER_PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedResponse = new Gson().toJson(
+                new Page<TestDocument>().withDocuments(documents)
+        );
+
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. Ensure deserialization error on Document by passing incorrect class type. */
+        AppCenterFuture<PaginatedDocuments<String>> result = Storage.list(Constants.USER, String.class);
+
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+
+        /* Verify the result is correct. */
+        assertNotNull(result);
+        PaginatedDocuments<String> docs = result.get();
+        assertNotNull(docs);
+        assertFalse(docs.hasNextPage());
+        Page<String> page = docs.getCurrentPage();
+        assertNotNull(page);
+        assertNull(page.getError());
+        assertNotNull(page.getItems());
+        assertEquals(1, page.getItems().size());
+        assertTrue(page.getItems().get(0).failed());
+    }
+
+    @Test
+    public void listFailsToDeserializeListOfDocumentsDoesNotThrow() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. Set response as empty string to force deserialization error. */
+        final String expectedResponse = "";
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        AppCenterFuture<PaginatedDocuments<TestDocument>> result = Storage.list(Constants.USER, TestDocument.class);
+
+        /* Verify the result is correct and the cache was not touched. */
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        assertNotNull(result);
+        PaginatedDocuments<TestDocument> docs = result.get();
+        assertNotNull(docs);
+        assertFalse(docs.hasNextPage());
+        Page<TestDocument> page = docs.getCurrentPage();
+        assertNotNull(page);
+        assertNotNull(page.getError());
+    }
+
+    @Test
     public void readUserEndToEndWithNetwork() throws JSONException {
-        readEndToEndWithNetwork(Constants.USER, TOKEN_EXCHANGE_USER_PAYLOAD);
+        readEndToEndWithNetwork(USER, TOKEN_EXCHANGE_USER_PAYLOAD);
     }
 
     @Test
@@ -419,7 +537,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(USER, DOCUMENT_ID, TestDocument.class);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
@@ -437,7 +555,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readFailTokenExchangeReturnsFailedTokenResultPayload() {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(USER, DOCUMENT_ID, TestDocument.class);
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
@@ -479,7 +597,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.read(USER, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
@@ -500,9 +618,9 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("document not set")));
-        Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("document not set")));
+        Storage.read(USER, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
                 eq(USER_TABLE_NAME),
@@ -515,11 +633,11 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void readWhenLocalStorageContainsDeletePendingOperation() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         Document<String> deletedDocument = new Document<>();
         deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(deletedDocument);
-        Document<String> document = Storage.read(Constants.USER, DOCUMENT_ID, String.class).get();
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
+        Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getError() instanceof StorageException);
     }
@@ -529,11 +647,11 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         TokenResult tokenResult = new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("tokenResult");
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(new Gson().toJson(tokenResult));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(new Gson().toJson(tokenResult));
         Document<String> outDatedDocument = new Document<>();
         Document<String> expectedDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         final String expectedResponse = new Gson().toJson(expectedDocument);
-        when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
+        when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
         when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -542,7 +660,7 @@ public class StorageTest extends AbstractStorageTest {
                 return mock(ServiceCall.class);
             }
         });
-        Document<String> document = Storage.read(Constants.USER, DOCUMENT_ID, String.class).get();
+        Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         verify(mHttpClient);
         assertNotNull(document.getDocument());
         assertEquals(expectedDocument.getDocument(), document.getDocument());
@@ -550,11 +668,11 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readWhenLocalStorageContainsCreateOperation() {
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         Document<String> createdDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(createdDocument);
-        Document<String> document = Storage.read(Constants.USER, DOCUMENT_ID, String.class).get();
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(createdDocument);
+        Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
         assertEquals(createdDocument.getDocument(), document.getDocument());
     }
@@ -563,7 +681,7 @@ public class StorageTest extends AbstractStorageTest {
     public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         Document<TestDocument> testCosmosDocument = doc.get();
@@ -585,8 +703,8 @@ public class StorageTest extends AbstractStorageTest {
     public void createWithNoNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         TestDocument testDocument = new TestDocument("test");
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
-        Storage.create(Constants.USER, DOCUMENT_ID, testDocument, TestDocument.class);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
+        Storage.create(USER, DOCUMENT_ID, testDocument, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(USER_TABLE_NAME),
@@ -600,7 +718,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void createTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
@@ -619,7 +737,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void createCosmosDbCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, null, new Exception(exceptionMessage));
 
@@ -638,7 +756,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void deleteEndToEnd() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> doc = Storage.delete(USER, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage, times(1)).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -649,7 +767,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void deleteTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> doc = Storage.delete(USER, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new SSLException(exceptionMessage));
 
@@ -668,7 +786,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void deleteCosmosDbCallFails() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Storage.delete(Constants.USER, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> doc = Storage.delete(USER, DOCUMENT_ID);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
 
@@ -689,8 +807,8 @@ public class StorageTest extends AbstractStorageTest {
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(true);
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
-        AppCenterFuture<Document<Void>> result = Storage.delete(Constants.USER, DOCUMENT_ID);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
+        AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
@@ -700,9 +818,9 @@ public class StorageTest extends AbstractStorageTest {
     @Test
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(SharedPreferencesManager.getString(Constants.USER)).thenReturn(tokenResult);
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         when(mLocalDocumentStorage.markForDeletion(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
-        AppCenterFuture<Document<Void>> result = Storage.delete(Constants.USER, DOCUMENT_ID);
+        AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage, times(1)).markForDeletion(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verifyNoMoreInteractions(mHttpClient);
@@ -767,8 +885,8 @@ public class StorageTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
-        when(SharedPreferencesManager.getString(RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), any(Class.class), any(ReadOptions.class))).thenReturn(new Document(new Exception("read error.")));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
+        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -791,7 +909,7 @@ public class StorageTest extends AbstractStorageTest {
         mockStatic(TokenExchange.class);
         ServiceCall mockServiceCall = mock(ServiceCall.class);
         when(TokenExchange.getDbToken(anyString(), any(HttpClient.class), anyString(), anyString(), any(TokenExchange.TokenExchangeServiceCallback.class))).thenReturn(mockServiceCall);
-        AppCenterFuture<Document<TestDocument>> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<Document<TestDocument>> doc = Storage.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
         Storage.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
@@ -805,7 +923,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
 
         /* Make the call to create local document in local storage. */
-        Document<TestDocument> doc = Storage.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class).get();
+        Document<TestDocument> doc = Storage.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class).get();
 
         /* Local storage create document should complete with not find partition error. */
         assertNotNull(doc);
@@ -813,7 +931,7 @@ public class StorageTest extends AbstractStorageTest {
         assertTrue(doc.getDocumentError().getError().getMessage().contains(failedMessage));
 
         /* Make the call to read local document from local storage. */
-        doc = Storage.read(Constants.USER, DOCUMENT_ID, TestDocument.class).get();
+        doc = Storage.read(USER, DOCUMENT_ID, TestDocument.class).get();
 
         /* Local storage read document should complete with not find partition error. */
         assertNotNull(doc);
@@ -821,7 +939,7 @@ public class StorageTest extends AbstractStorageTest {
         assertTrue(doc.getDocumentError().getError().getMessage().contains(failedMessage));
 
         /* Make the call to delete local document from local storage. */
-        Document<Void> deleteDocument = Storage.delete(Constants.USER, DOCUMENT_ID).get();
+        Document<Void> deleteDocument = Storage.delete(USER, DOCUMENT_ID).get();
 
         /* Local storage delete document should complete with not find partition error. */
         assertNotNull(deleteDocument);

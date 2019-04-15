@@ -5,9 +5,15 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.COMMON_SCHEMA_PREFIX_SEPARATOR;
@@ -37,6 +43,11 @@ public class UserIdContext {
      * Current user identifier.
      */
     private String mUserId;
+
+    /**
+     * Global listeners collection.
+     */
+    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
 
     /**
      * Get unique instance.
@@ -111,6 +122,24 @@ public class UserIdContext {
     }
 
     /**
+     * Adds listener to user context.
+     *
+     * @param listener listener to be notified of changes.
+     */
+    public void addListener(@NonNull Listener listener) {
+        mListeners.add(listener);
+    }
+
+    /**
+     * Removes a specific listener.
+     *
+     * @param listener listener to be removed.
+     */
+    public void removeListener(@NonNull Listener listener) {
+        mListeners.remove(listener);
+    }
+
+    /**
      * Get current identifier.
      *
      * @return user identifier.
@@ -124,7 +153,38 @@ public class UserIdContext {
      *
      * @param userId user identifier.
      */
-    public synchronized void setUserId(String userId) {
+    public void setUserId(String userId) {
+        if (!updateUserId(userId)) {
+            return;
+        }
+
+        /* Call listeners so that they can react on new token. */
+        for (Listener listener : mListeners) {
+            listener.onNewUserId(mUserId);
+        }
+    }
+
+    /**
+     * Update user identifier.
+     *
+     * @param userId user identifier.
+     * @return true if user identifier is updated.
+     */
+    private synchronized boolean updateUserId(String userId) {
+        if (TextUtils.equals(mUserId, userId)) {
+            return false;
+        }
         mUserId = userId;
+        return true;
+    }
+
+    public interface Listener {
+
+        /**
+         * Called whenever a new user id set.
+         *
+         * @param userId user identifier.
+         */
+        void onNewUserId(String userId);
     }
 }

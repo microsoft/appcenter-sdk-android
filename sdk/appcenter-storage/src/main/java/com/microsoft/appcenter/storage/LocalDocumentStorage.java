@@ -13,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.storage.exception.StorageException;
+import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
@@ -43,14 +44,12 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    @VisibleForTesting
-    static final String PARTITION_COLUMN_NAME = "partition";
+    private static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    @VisibleForTesting
-    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -112,7 +111,7 @@ class LocalDocumentStorage {
      * Creates a table for storing user partition documents.
      */
     void createTableIfDoesNotExist(String userTable) {
-        mDatabaseManager.createTable(userTable, SCHEMA);
+        mDatabaseManager.createTable(userTable, SCHEMA, new String[]{PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME});
     }
 
     /**
@@ -139,13 +138,14 @@ class LocalDocumentStorage {
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
-                Utils.getGson().toJson(document),
+                document.toString(),
                 document.getEtag(),
-                now + writeOptions.getDeviceTimeToLive() * 1000,
+                writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
+                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        return mDatabaseManager.replace(table, values);
     }
 
     <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
@@ -173,9 +173,18 @@ class LocalDocumentStorage {
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
+            if (document.failed()) {
+                Throwable error = document.getDocumentError().getError();
+                AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
+                return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
+            }
             document.setIsFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-            write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+
+            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
+            if (readOptions != null) {
+                write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+            }
             return document;
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
@@ -189,7 +198,7 @@ class LocalDocumentStorage {
     }
 
     <T> Document<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        Document<T> cachedDocument = read(table, partition, documentId, documentType, new ReadOptions(ReadOptions.NO_CACHE));
+        Document<T> cachedDocument = read(table, partition, documentId, documentType, null);
         if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
@@ -320,7 +329,7 @@ class LocalDocumentStorage {
         if (operation.getExpirationTime() <= now) {
             deletePendingOperation(operation);
         } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now), PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now));
         }
     }
 
