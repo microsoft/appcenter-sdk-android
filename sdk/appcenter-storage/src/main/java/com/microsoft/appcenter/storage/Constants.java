@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final String DOCUMENT_FIELD_NAME = "document";
 
-    public static final String DOCUMENTS_FILED_NAME = "Documents";
+    public static final String DOCUMENTS_FIELD_NAME = "Documents";
 
     public static final String PARTITION_KEY_FIELD_NAME = "PartitionKey";
 
