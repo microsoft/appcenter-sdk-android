@@ -16,8 +16,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.activities.AppDocumentListAdapter;
-import com.microsoft.appcenter.sasquatch.activities.StorageActivity;
 import com.microsoft.appcenter.storage.ChildUserListItem;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.HeaderListItem;
@@ -140,6 +138,10 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     @Override
     public int getItemCount() {
         return mList == null ? 0 : mList.size();
+    }
+
+    public void upload(ArrayList<String> list) {
+        sortAndUploadDocumentList(list);
     }
 
     class UserDocumentListHolder extends RecyclerView.ViewHolder {
