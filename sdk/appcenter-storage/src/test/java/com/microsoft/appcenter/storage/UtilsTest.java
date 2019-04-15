@@ -40,4 +40,13 @@ public class UtilsTest {
         String partitionNameWithAccountId = partition + "-" + "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
         assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
     }
+
+    @Test
+    public void checkETagNullByDefault() {
+        Document<Void> document = new Document<>(null, "readonly", "id");
+        document = Utils.parseDocument(Utils.getGson().toJson(document), Void.class);
+        assertNotNull(document);
+        assertNull(document.getDocumentError());
+        assertNull(document.getEtag());
+    }
 }
