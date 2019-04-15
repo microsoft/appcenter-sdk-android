@@ -74,6 +74,10 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.size();
     }
 
+    public void upload(ArrayList<String> list) {
+        this.mList.addAll(list);
+    }
+
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
         TextView listItemText;
