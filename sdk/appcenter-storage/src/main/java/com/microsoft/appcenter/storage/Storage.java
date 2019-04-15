@@ -383,17 +383,17 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     }
                                 });
                     } else {
-                        finishOperationOffline(cachedDocument, table, cachedToken, result, callTemplate);
+                        doOfflineOperation(cachedDocument, table, cachedToken, result, callTemplate);
                     }
                 } else {
-                    finishOperationOffline(cachedDocument, table, cachedToken, result, callTemplate);
+                    doOfflineOperation(cachedDocument, table, cachedToken, result, callTemplate);
                 }
             }
         }, result, null); // TODO use a document error instead of null.
         return result;
     }
 
-    private <T> void finishOperationOffline(Document<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<Document<T>> result, CallTemplate<T> callTemplate) {
+    private <T> void doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<Document<T>> result, CallTemplate<T> callTemplate) {
         if (cachedToken == null) {
 
             /* If no token and offline, return the no partition error document previously initialized with that specific error. */
