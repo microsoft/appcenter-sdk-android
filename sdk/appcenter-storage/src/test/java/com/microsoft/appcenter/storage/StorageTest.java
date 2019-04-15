@@ -955,7 +955,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
 
         Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
@@ -993,7 +993,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_ONE_HOUR);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
 
         Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
