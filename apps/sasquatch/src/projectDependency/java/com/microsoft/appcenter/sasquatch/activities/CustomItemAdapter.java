@@ -85,6 +85,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             UserDocumentListHolder vaultItemHolder = (UserDocumentListHolder) holder;
             vaultItemHolder.listItemText.setText(mList.get(position).getName());
             vaultItemHolder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
@@ -93,6 +94,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 }
             });
             vaultItemHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                
                 @Override
                 public void onClick(View v) {
                     if (listener != null)
