@@ -25,10 +25,10 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     private ArrayList<String> mList;
     private Context mContext;
-    private AppDocumentListAdapter.OnItemClickListener listener;
+    private CustomItemAdapter.OnItemClickListener listener;
 
     CustomItemAdapter(ArrayList<String> list, Context context) {
-        mList = list;
+        mList = new ArrayList<>(list);
         mContext = context;
     }
 
@@ -39,7 +39,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, null, false));
     }
 
-    void setOnItemClickListener(AppDocumentListAdapter.OnItemClickListener listener) {
+    void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
         this.listener = listener;
     }
 
@@ -57,9 +57,9 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
-                mList.remove(position);
-                notifyDataSetChanged();
+                if (listener != null) {
+                    listener.onRemoveClick(position);
+                }
             }
         });
     }
@@ -74,8 +74,8 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.size();
     }
 
-    public void upload(ArrayList<String> list) {
-        this.mList.addAll(list);
+    public void setList(ArrayList<String> list) {
+        this.mList = list;
     }
 
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
@@ -88,5 +88,11 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
             listItemText = itemView.findViewById(R.id.property);
             deleteBtn = itemView.findViewById(R.id.delete_button);
         }
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+
+        void onRemoveClick(int position);
     }
 }

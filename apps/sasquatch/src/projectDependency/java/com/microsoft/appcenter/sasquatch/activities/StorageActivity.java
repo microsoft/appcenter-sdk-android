@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,6 +23,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
@@ -106,10 +106,9 @@ public class StorageActivity extends AppCompatActivity {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (currentAppDocuments.hasNextPage() && !isLoading) {
+            if (currentAppDocuments != null && currentAppDocuments.hasNextPage() && !isLoading) {
                 isLoading = true;
                 currentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
-
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
                         isLoading = false;
@@ -130,7 +129,7 @@ public class StorageActivity extends AppCompatActivity {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (currentUserDocuments.hasNextPage() && !isLoading) {
+            if (currentUserDocuments != null && currentUserDocuments.hasNextPage() && !isLoading) {
                 isLoading = true;
                 currentUserDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
 
@@ -144,7 +143,7 @@ public class StorageActivity extends AppCompatActivity {
     };
 
     private void updateUserDocuments(List<Document<Map>> documents) {
-        if(documents == null)
+        if (documents == null)
             return;
 
         for (Document<Map> document : documents) {
@@ -153,7 +152,7 @@ public class StorageActivity extends AppCompatActivity {
         }
         saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
         saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
-        mAdapterUser.upload(mUserDocumentContents);
+        mAdapterUser.setList(sUserDocumentList);
         mAdapterUser.notifyDataSetChanged();
     }
 
@@ -184,27 +183,7 @@ public class StorageActivity extends AppCompatActivity {
         });
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(uploadApp);
 
-        /* List the user documents. */
-        sUserDocumentList.clear();
-        mUserDocumentContents.clear();
-        if (mAdapterUser == null) {
-            mAdapterUser = new CustomItemAdapter(new ArrayList<String>(), this);
-            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-            if (accountId != null) {
-                Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
-            }
-        }
-
-        mAdapterUser.setOnItemClickListener(new AppDocumentListAdapter.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
-                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(USER_DOCUMENT_LIST).get(position));
-                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(USER_DOCUMENT_CONTENTS).get(position));
-                startActivity(intent);
-            }
-        });
+        loadUserDocuments();
 
         /* Selector for App VS User documents. */
         Spinner storageTypeSpinner = findViewById(R.id.storage_type);
@@ -219,6 +198,51 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void loadUserDocuments() {
+
+        /* List the user documents. */
+        sUserDocumentList.clear();
+        mUserDocumentContents.clear();
+        if (mAdapterUser == null) {
+            mAdapterUser = new CustomItemAdapter(new ArrayList<String>(), this);
+            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+            if (accountId != null) {
+                Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
+            }
+        }
+
+        mAdapterUser.setOnItemClickListener(new CustomItemAdapter.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(int position) {
+                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
+                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(USER_DOCUMENT_LIST).get(position));
+                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(USER_DOCUMENT_CONTENTS).get(position));
+                startActivity(intent);
+            }
+
+            @Override
+            public void onRemoveClick(final int position) {
+                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
+
+                    @Override
+                    public void accept(Document<Void> voidDocument) {
+                        if (voidDocument.failed()) {
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
+                        } else {
+                            mUserDocumentContents.remove(position);
+                            sUserDocumentList.remove(position);
+                            saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
+                            saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
+                            mAdapterUser.notifyDataSetChanged();
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
     }
@@ -277,10 +301,7 @@ public class StorageActivity extends AppCompatActivity {
                 mListView.removeOnScrollListener(scrollUserListener);
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
-                    mAdapterUser = new CustomItemAdapter(sUserDocumentList, this);
                     mListView.setAdapter(mAdapterUser);
-                    saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
-                    saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
                 } else {
                     mMssageText.setText(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     mListView.setAdapter(null);
@@ -292,14 +313,7 @@ public class StorageActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (mAdapterUser != null) {
-            sUserDocumentList.clear();
-            mUserDocumentContents.clear();
-            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-            if (accountId != null) {
-                Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
-            }
-        }
+        loadUserDocuments();
     }
 
     public void saveArrayToPreferences(ArrayList<String> list, String name) {
