@@ -17,10 +17,8 @@ import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.ChildUserListItem;
-import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.HeaderListItem;
 import com.microsoft.appcenter.storage.ListItem;
-import com.microsoft.appcenter.storage.Storage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +32,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     private ArrayList<ListItem> mList;
     private Context mContext;
-    private AppDocumentListAdapter.OnItemClickListener listener;
+    private CustomItemAdapter.OnItemClickListener listener;
 
     private int mRemotePosition = 0;
 
@@ -70,7 +68,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         return holder;
     }
 
-    public void setOnItemClickListener(AppDocumentListAdapter.OnItemClickListener listener) {
+    void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
         this.listener = listener;
     }
 
@@ -85,9 +83,9 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             vaultItemHolder.deleteBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position));
-                    mList.remove(position);
-                    notifyDataSetChanged();
+                    if (listener != null) {
+                        listener.onRemoveClick(position);
+                    }
                 }
             });
             vaultItemHolder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -140,7 +138,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         return mList == null ? 0 : mList.size();
     }
 
-    public void upload(ArrayList<String> list) {
+    public void setList(ArrayList<String> list) {
         sortAndUploadDocumentList(list);
     }
 
@@ -164,5 +162,11 @@ public class CustomItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             super(itemView);
             titleFile = itemView.findViewById(R.id.title);
         }
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+
+        void onRemoveClick(int position);
     }
 }
