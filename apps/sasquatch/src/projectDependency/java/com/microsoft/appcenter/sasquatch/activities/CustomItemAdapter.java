@@ -53,7 +53,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
                 }
             }
         });
-        holder.listItemText.setText(mList.get(position));
+        holder.listItemText.setText(mList.get(position).substring(2));
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
