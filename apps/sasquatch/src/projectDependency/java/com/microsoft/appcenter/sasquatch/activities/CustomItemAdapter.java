@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.storage;
+package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -16,7 +16,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.StorageActivity;
+import com.microsoft.appcenter.storage.ChildUserListItem;
+import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.HeaderListItem;
+import com.microsoft.appcenter.storage.ListItem;
+import com.microsoft.appcenter.storage.Storage;
 
 import java.util.ArrayList;
 import java.util.List;
