@@ -64,6 +64,9 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private void updateWriteOptions(int position) {
         switch (position) {
+            case 0:
+                mWriteOption = new WriteOptions(BaseOptions.DEFAULT_ONE_HOUR);
+                break;
             case 1:
                 mWriteOption = WriteOptions.CreateNoCacheOption();
                 break;
