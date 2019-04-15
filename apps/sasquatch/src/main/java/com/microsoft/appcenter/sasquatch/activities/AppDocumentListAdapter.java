@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.storage;
+package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,6 +10,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.storage.ChildAppListItem;
+import com.microsoft.appcenter.storage.HeaderListItem;
+import com.microsoft.appcenter.storage.ListItem;
+import com.microsoft.appcenter.storage.TestDocument;
 import com.microsoft.appcenter.storage.models.Document;
 
 import java.util.ArrayList;
