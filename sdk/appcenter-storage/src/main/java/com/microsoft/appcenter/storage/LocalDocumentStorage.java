@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -29,6 +30,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.DATABASE;
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.USER;
 
@@ -148,6 +150,7 @@ class LocalDocumentStorage {
         return mDatabaseManager.replace(table, values);
     }
 
+    @NonNull
     <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
@@ -221,34 +224,36 @@ class LocalDocumentStorage {
     }
 
     /**
-     * Creates or overwrites specified document entry in the cache. Sets the de-serialized value of
-     * the document to null and the pending operation to DELETE.
+     * Add delete pending operation to a document.
      *
-     * @param partition  Partition key.
-     * @param documentId Document id.
-     * @return True if cache was successfully written to, false otherwise.
+     * @param table      table.
+     * @param partition  partition.
+     * @param documentId document identifier.
+     * @return true if storage update succeeded, false otherwise.
      */
-    boolean markForDeletion(String table, String partition, String documentId) {
+    boolean deleteOffline(String table, String partition, String documentId) {
         Document<Void> writeDocument = new Document<>(null, partition, documentId);
-        long rowId = write(table, writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE);
-        return rowId > 0;
+        return write(table, writeDocument, new WriteOptions(), PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
     /**
-     * Deletes the specified document from the local cache.
+     * Remove a document from local storage.
      *
-     * @param partition  Partition key.
-     * @param documentId Document id.
+     * @param table      table.
+     * @param partition  partition.
+     * @param documentId document identifier.
+     * @return true if storage delete succeeded, false otherwise.
      */
-    void deleteOnline(String table, String partition, String documentId) {
+    boolean deleteOnline(String table, String partition, String documentId) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to delete %s:%s document from cache", partition, documentId));
         try {
-            mDatabaseManager.delete(
+            return mDatabaseManager.delete(
                     table,
                     BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
-                    new String[]{partition, documentId});
+                    new String[]{partition, documentId}) > 0;
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to delete from cache: ", e);
+            return false;
         }
     }
 
@@ -319,35 +324,34 @@ class LocalDocumentStorage {
         return values;
     }
 
-    private static ContentValues getContentValues(PendingOperation operation, long now, boolean cosmosDbUpdateSucceeded) {
-        ContentValues values = getContentValues(
-                operation.getPartition(),
-                operation.getDocumentId(),
-                operation.getDocument(),
-                operation.getEtag(),
-                operation.getExpirationTime(),
-                now,
-                now,
-                operation.getOperation());
-        if (cosmosDbUpdateSucceeded) {
-
-            /* Clear the pending_operation column if cosmos Db was updated successfully. */
+    /**
+     * Reset pending_operation column of the specified operation to null.
+     *
+     * @param operation Pending operation to update.
+     */
+    void resetPendingOperationColumnToNull(PendingOperation operation) {
+        ContentValues values = getContentValuesByPendingOperation(operation);
+        if (values != null) {
             values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
+            mDatabaseManager.replace(operation.getTable(), values);
         }
-        return values;
     }
 
-    void updatePendingOperation(PendingOperation operation, boolean cosmosDbUpdateSucceeded) {
-
-        /*
-         * Update the document in cache (if expiration_time still valid otherwise, remove the document),
-         * clear the pending_operation column, update eTag, download_time and document columns.
-         */
-        long now = System.currentTimeMillis();
-        if (operation.getExpirationTime() <= now) {
-            deletePendingOperation(operation);
-        } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now, cosmosDbUpdateSucceeded));
+    private ContentValues getContentValuesByPendingOperation(PendingOperation operation) {
+        Cursor cursor;
+        try {
+            cursor = mDatabaseManager.getCursor(
+                    operation.getTable(),
+                    getPartitionAndDocumentIdQueryBuilder(),
+                    null,
+                    new String[]{operation.getPartition(), operation.getDocumentId()},
+                    null);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
+            return null;
         }
+
+        /* There should be only one row per pending operation. */
+        return mDatabaseManager.nextValues(cursor);
     }
 }
