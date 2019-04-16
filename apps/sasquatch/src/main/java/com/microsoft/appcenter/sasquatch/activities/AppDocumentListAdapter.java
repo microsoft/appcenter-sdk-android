@@ -16,10 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentListAdapter.AppDocumentListHolder> {
-
     private Context mContext;
     private List<Document<TestDocument>> mList;
-    private OnItemClickListener listener;
+    private OnItemClickListener mListener;
 
     public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
         this.mContext = context;
@@ -38,8 +37,8 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (listener != null)
-                    listener.onItemClick(position);
+                if (mListener != null)
+                    mListener.onItemClick(position);
             }
         });
     }
@@ -54,15 +53,11 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
-        this.listener = listener;
+        this.mListener = listener;
     }
 
     public void upload(List<Document<TestDocument>> list) {
         mList.addAll(list);
-    }
-
-    public void addItem(Document<TestDocument> item) {
-        mList.add(item);
     }
 
     public String getDocumentByPosition(int position) {
