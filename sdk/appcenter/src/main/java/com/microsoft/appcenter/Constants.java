@@ -76,6 +76,7 @@ public class Constants {
      * Flag indicates whether the host application is debuggable or not.
      */
     public static boolean APPLICATION_DEBUGGABLE = false;
+
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
