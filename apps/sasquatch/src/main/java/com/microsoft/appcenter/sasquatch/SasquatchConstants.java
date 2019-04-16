@@ -9,7 +9,7 @@ public class SasquatchConstants {
 
     public static final String ACCOUNT_ID = "accountId";
 
-    public static final String DOCUMENT_PARTITION = "documentId";
+    public static final String DOCUMENT_PARTITION = "documentPartition";
 
-    public static final String DOCUMENT_ID = "documentContent";
+    public static final String DOCUMENT_ID = "documentId";
 }
