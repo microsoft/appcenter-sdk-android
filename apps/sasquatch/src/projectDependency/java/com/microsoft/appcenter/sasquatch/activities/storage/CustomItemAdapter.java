@@ -55,8 +55,8 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
                 }
             }
         });
-        holder.listItemText.setText(mList.get(position).getId());
-        holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+        holder.documentIdTextView.setText(mList.get(position).getId());
+        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -103,14 +103,14 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
-        TextView listItemText;
+        TextView documentIdTextView;
 
-        ImageButton deleteBtn;
+        ImageButton deleteButton;
 
         CustomItemAdapterHolder(@NonNull View itemView) {
             super(itemView);
-            listItemText = itemView.findViewById(R.id.property);
-            deleteBtn = itemView.findViewById(R.id.delete_button);
+            documentIdTextView = itemView.findViewById(R.id.property);
+            deleteButton = itemView.findViewById(R.id.delete_button);
         }
     }
 }
