@@ -40,6 +40,12 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
 
+class TestDocument {
+
+    @SuppressWarnings("unused")
+    String key;
+}
+
 public class StorageActivity extends AppCompatActivity {
 
     private RecyclerView mListView;

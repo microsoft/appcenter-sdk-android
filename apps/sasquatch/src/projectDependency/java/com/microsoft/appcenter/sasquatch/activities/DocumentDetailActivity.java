@@ -38,12 +38,6 @@ import static android.view.View.GONE;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
 
-class TestDocument {
-
-    @SuppressWarnings("unused")
-    String key;
-}
-
 public class DocumentDetailActivity extends AppCompatActivity {
 
     private String mDocumentId;
