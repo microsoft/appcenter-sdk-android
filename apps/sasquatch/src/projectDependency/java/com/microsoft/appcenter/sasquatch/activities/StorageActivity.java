@@ -109,11 +109,6 @@ public class StorageActivity extends AppCompatActivity {
     private RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
 
         @Override
-        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-            super.onScrollStateChanged(recyclerView, newState);
-        }
-
-        @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
             if (mCurrentUserDocuments != null && mCurrentUserDocuments.hasNextPage() && !mIsLoading) {
@@ -182,11 +177,11 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(Document<Void> voidDocument) {
                         if (voidDocument.failed()) {
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {
                             mAdapterUser.removeItem(position);
                             mAdapterUser.notifyDataSetChanged();
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_success, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

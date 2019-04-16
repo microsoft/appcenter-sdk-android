@@ -71,6 +71,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
         String documentId = mEditDocumentId.getText().toString();
         Storage.replace(Constants.USER, documentId, document, Map.class).thenAccept(new AppCenterConsumer<Document<Map>>() {
+
             @Override
             public void accept(Document<Map> mapDocument) {
                 if (mapDocument.failed()) {
@@ -78,7 +79,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
                     mProperties.clear();
                 } else {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_success, Toast.LENGTH_SHORT).show();
-                    NewUserDocumentActivity.this.finish();
+                    finish();
                 }
             }
         });

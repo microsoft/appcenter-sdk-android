@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities.storage;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -36,14 +40,14 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AppDocumentListHolder holder, @SuppressLint("RecyclerView") final int position) {
+    public void onBindViewHolder(@NonNull final AppDocumentListHolder holder, int position) {
         holder.titleFile.setText(mList.get(position).getId());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
-            
+
             @Override
             public void onClick(View v) {
                 if (mListener != null)
-                    mListener.onItemClick(position);
+                    mListener.onItemClick(holder.getAdapterPosition());
             }
         });
     }
@@ -58,6 +62,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public interface OnItemClickListener {
+
         void onItemClick(int position);
     }
 
