@@ -144,6 +144,14 @@ public class Identity extends AbstractAppCenterService {
         }
     };
 
+    private NetworkStateHelper.Listener mNetworkStateListener = new NetworkStateHelper.Listener() {
+
+        @Override
+        public void onNetworkStateUpdated(boolean connected) {
+            // TODO refresh token if needed
+        }
+    };
+
     /**
      * Get shared instance.
      *
@@ -233,6 +241,7 @@ public class Identity extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
+            NetworkStateHelper.getSharedInstance(mContext).addListener(mNetworkStateListener);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
@@ -241,6 +250,7 @@ public class Identity extends AbstractAppCenterService {
             downloadConfiguration();
         } else {
             AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
+            NetworkStateHelper.getSharedInstance(mContext).removeListener(mNetworkStateListener);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
