@@ -130,12 +130,16 @@ public class Identity extends AbstractAppCenterService {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
+            // TODO add network check
+            // TODO add check if there is an active sign-in operation that initiated by user
+            // TODO do not refresh the same thing multiple times/in parallel
+
             IAccount account = retrieveAccount(homeAccountId);
             if (account != null) {
                 silentSignIn(account);
             } else {
-                AppCenterLog.info(LOG_TAG, "Account is changed, reset to anonymous sending.");
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
+                AuthTokenContext.getInstance().clearAuthToken(false);
             }
         }
     };
@@ -529,12 +533,12 @@ public class Identity extends AbstractAppCenterService {
 
                 @Override
                 public void onError(MsalException exception) {
-                    handleSignInError(exception);
+                    handleSignInError(exception, false);
                 }
 
                 @Override
                 public void onCancel() {
-                    handleSignInCancellation();
+                    handleSignInCancellation(false);
                 }
             });
         } else {
@@ -554,6 +558,8 @@ public class Identity extends AbstractAppCenterService {
             @Override
             public void onError(MsalException exception) {
                 if (exception instanceof MsalUiRequiredException) {
+
+                    // TODO only if initiated by user
                     AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
                     postOnUiThread(new Runnable() {
 
@@ -563,13 +569,13 @@ public class Identity extends AbstractAppCenterService {
                         }
                     });
                 } else {
-                    handleSignInError(exception);
+                    handleSignInError(exception, true);
                 }
             }
 
             @Override
             public void onCancel() {
-                handleSignInCancellation();
+                handleSignInCancellation(true);
             }
         });
     }
@@ -600,24 +606,24 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
-    private void handleSignInError(final MsalException exception) {
+    private void handleSignInError(final MsalException exception, final boolean isSilent) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AuthTokenContext.getInstance().clearAuthToken(!isSilent);
                 AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 completeSignIn(null, exception);
             }
         });
     }
 
-    private void handleSignInCancellation() {
+    private void handleSignInCancellation(final boolean isSilent) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AuthTokenContext.getInstance().clearAuthToken(!isSilent);
                 AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 completeSignIn(null, new CancellationException("User cancelled sign-in."));
             }
