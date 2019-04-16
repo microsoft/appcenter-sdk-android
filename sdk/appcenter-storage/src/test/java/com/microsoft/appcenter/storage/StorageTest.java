@@ -1042,26 +1042,41 @@ public class StorageTest extends AbstractStorageTest {
                     add(createPendingOperation);
                     add(replacePendingOperation);
                 }});
-        ServiceCall deleteServiceCallMock = mock(ServiceCall.class);
-        ServiceCall createServiceCallMock = mock(ServiceCall.class);
-        ServiceCall replaceServiceCallMock = mock(ServiceCall.class);
-        when(mHttpClient.callAsync(contains(deletePendingOperation.getDocumentId()), anyString(),
-                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(deleteServiceCallMock);
-        when(mHttpClient.callAsync(contains(replacePendingOperation.getDocumentId()), anyString(),
-                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(replaceServiceCallMock);
-        when(mHttpClient.callAsync(contains(createPendingOperation.getDocumentId()), anyString(),
-                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(createServiceCallMock);
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        ServiceCall serviceCallMock1 = mock(ServiceCall.class);
+        ServiceCall serviceCallMock2 = mock(ServiceCall.class);
+        ServiceCall serviceCallMock3 = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(anyString(), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
+                .thenReturn(serviceCallMock1).thenReturn(serviceCallMock2).thenReturn(serviceCallMock3);
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.applyEnabledState(false);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false);
+        Storage.setEnabled(true);
+
+        /* Await the result to make sure that disabling has completed by the time we verify. */
+        Storage.setEnabled(false).get();
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
                 any(DocumentError.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
-        verify(deleteServiceCallMock, times(1)).cancel();
-        verify(createServiceCallMock, times(1)).cancel();
-        verify(replaceServiceCallMock, times(1)).cancel();
+        verify(serviceCallMock1).cancel();
+        verify(serviceCallMock2).cancel();
+        verify(serviceCallMock3).cancel();
     }
 
     @Test
@@ -1074,33 +1089,66 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                     add(pendingOperation);
                 }});
-
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
-
         mStorage.applyEnabledState(true);
-
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
-
-        verify(mDataStoreEventListener, times(1)).onDataStoreOperationResult(
+        verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DocumentError.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
-
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+    }
 
-        verify(mLocalDocumentStorage, times(1)).updatePendingOperation(eq(pendingOperation));
+    @Test
+    public void TestPartiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
+        final PendingOperation deletePendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything1",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(deletePendingOperation);
+                }});
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Return null service call to simulate a partially saved pending operation. */
+        when(mHttpClient.callAsync(anyString(), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
+                .thenReturn(null);
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false);
+        Storage.setEnabled(true);
+
+        /* Ensure that this does not throw. */
+        Storage.setEnabled(false).get();
     }
 }
