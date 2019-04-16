@@ -139,12 +139,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));
         if (document.getDocumentError() != null) {
             String message = document.getDocumentError().getError().getMessage();
-            try {
-                JSONObject docContentsJSON = new JSONObject(message);
-                mFullErrorContents = docContentsJSON.toString(4);
-            } catch (JSONException e) {
-                mFullErrorContents = message;
-            }
+            mFullErrorContents = message;
             if (message.length() > MAX_CONTENT_LENGTH) {
                 message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
             }

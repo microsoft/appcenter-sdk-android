@@ -35,6 +35,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     public void onBindViewHolder(@NonNull AppDocumentListHolder holder, @SuppressLint("RecyclerView") final int position) {
         holder.titleFile.setText(mList.get(position).getId());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 if (mListener != null)
