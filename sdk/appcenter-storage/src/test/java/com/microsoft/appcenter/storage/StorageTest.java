@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import android.app.Activity;
-
 import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
@@ -39,7 +37,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -948,7 +945,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingOperationProcessedWhenNetworkOnAndActivityResumed() throws JSONException {
+    public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -956,9 +953,8 @@ public class StorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
-        Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-
-        Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
@@ -966,7 +962,7 @@ public class StorageTest extends AbstractStorageTest {
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        mStorage.onActivityResumed(new Activity());
+        mStorage.applyEnabledState(true);
 
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
 
@@ -986,7 +982,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingOperationNotProcessedWhenNetworkOffAndActivityResumed() {
+    public void pendingOperationNotProcessedWhenNetworkOff() {
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -994,16 +990,16 @@ public class StorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
-        Mockito.when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
 
-        Mockito.when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        mStorage.onActivityResumed(new Activity());
+        mStorage.applyEnabledState(true);
 
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
@@ -1012,5 +1008,74 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
 
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(pendingOperation);
+                }});
+
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        mStorage.applyEnabledState(false);
+
+        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+                anyString(),
+                any(DocumentMetadata.class),
+                any(DocumentError.class));
+        verifyNoMoreInteractions(mDataStoreEventListener);
+
+        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void pendingOperationProcessedOnceWhenDuplicatePendingOperations() throws JSONException {
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<PendingOperation>() {{
+                    add(pendingOperation);
+                    add(pendingOperation);
+                }});
+
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+
+        mStorage.applyEnabledState(true);
+
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+
+        verify(mDataStoreEventListener, times(1)).onDataStoreOperationResult(
+                eq(PENDING_OPERATION_DELETE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                isNull(DocumentError.class));
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        verifyNoMoreInteractions(mDataStoreEventListener);
+
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
+        assertNull(documentMetadata.getEtag());
+
+        verify(mLocalDocumentStorage, times(1)).updatePendingOperation(eq(pendingOperation));
     }
 }

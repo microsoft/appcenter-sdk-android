@@ -144,4 +144,8 @@ public class Utils {
     static String getUserTableName(String accountId) {
         return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
+
+    static String getOutgoingId(String partition, String documentId, String pendingOperation) {
+        return String.format("%s_%s_%s", partition, documentId, pendingOperation);
+    }
 }

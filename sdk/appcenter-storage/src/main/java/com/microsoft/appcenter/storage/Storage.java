@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.storage;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
@@ -42,7 +41,9 @@ import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
@@ -80,6 +81,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private String mApiUrl = DEFAULT_API_URL;
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
+
+    private Set<String> mOutgoingCalls = new HashSet<>();
 
     private HttpClient mHttpClient;
 
@@ -275,28 +278,26 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @Override
     public void onNetworkStateUpdated(final boolean connected) {
-        post(new Runnable() {
 
-            @Override
-            public void run() {
+        /* If device comes back online. */
+        if (connected) {
+            post(new Runnable() {
 
-                /* If device comes back online. */
-                if (connected) {
+                @Override
+                public void run() {
                     processPendingOperations();
                 }
-            }
-        });
-    }
-
-    @Override
-    public void onActivityResumed(Activity activity) {
-        if (mNetworkStateHelper.isNetworkConnected()) {
-            processPendingOperations();
+            });
         }
     }
 
     private void processPendingOperations() {
         for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+            String outgoingId = Utils.getOutgoingId(po.getPartition(), po.getDocumentId(), po.getOperation());
+            if (mOutgoingCalls.contains(outgoingId)) {
+                continue;
+            }
+            mOutgoingCalls.add(outgoingId);
             if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
                     PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
                 instanceCreateOrUpdate(po);
@@ -318,6 +319,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthListener);
             mNetworkStateHelper.addListener(this);
+            if (mNetworkStateHelper.isNetworkConnected()) {
+                processPendingOperations();
+            }
         } else {
             for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call : mPendingCalls.entrySet()) {
                 call.getKey().complete(null);
@@ -856,6 +860,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             null);
                 }
                 mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                mOutgoingCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId(), pendingOperation.getOperation()));
             }
         });
     }
@@ -891,6 +896,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 } else {
                     mLocalDocumentStorage.updatePendingOperation(pendingOperation);
                 }
+                mOutgoingCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId(), pendingOperation.getOperation()));
             }
         });
     }
