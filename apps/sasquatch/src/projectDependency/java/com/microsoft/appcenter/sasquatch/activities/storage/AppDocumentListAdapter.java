@@ -17,8 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentListAdapter.AppDocumentListHolder> {
+
     private Context mContext;
+
     private List<Document<TestDocument>> mList;
+
     private OnItemClickListener mListener;
 
     public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {

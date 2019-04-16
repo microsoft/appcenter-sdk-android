@@ -23,8 +23,11 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
+
     private ArrayList<Document<Map>> mList;
+
     private Context mContext;
+
     private CustomItemAdapter.OnItemClickListener mListener;
 
     public CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
