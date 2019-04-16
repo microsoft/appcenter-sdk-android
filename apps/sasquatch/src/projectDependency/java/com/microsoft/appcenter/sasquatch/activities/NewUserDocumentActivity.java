@@ -37,7 +37,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     private EditText mEditDocumentId;
-    private Spinner mTtlSpinner;
+
     private WriteOptions mWriteOption = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
 
     @Override
@@ -45,10 +45,10 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_user_document);
         mEditDocumentId = findViewById(R.id.user_document_id);
-        mTtlSpinner = findViewById(R.id.ttl_spinner);
+        Spinner ttlSpinner = findViewById(R.id.ttl_spinner);
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_ttls));
-        mTtlSpinner.setAdapter(typeAdapter);
-        mTtlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        ttlSpinner.setAdapter(typeAdapter);
+        ttlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -110,6 +110,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         String documentId = mEditDocumentId.getText().toString();
         documentId = documentId.replace(" ", "-");
         Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOption).thenAccept(new AppCenterConsumer<Document<Map>>() {
+
             @Override
             public void accept(Document<Map> mapDocument) {
                 if (mapDocument.failed()) {

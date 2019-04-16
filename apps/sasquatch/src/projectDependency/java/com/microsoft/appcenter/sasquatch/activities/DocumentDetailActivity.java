@@ -20,7 +20,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.storage.TestDocument;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.Utils;
@@ -38,6 +37,12 @@ import java.util.Map;
 import static android.view.View.GONE;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
+
+class TestDocument {
+
+    @SuppressWarnings("unused")
+    String key;
+}
 
 public class DocumentDetailActivity extends AppCompatActivity {
 
@@ -112,6 +117,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
                 text2.setText(list.get(position).mValue);
                 if (list.get(position).mTitle.equals(getString(R.string.document_info_content_title))) {
                     view.setOnClickListener(new View.OnClickListener() {
+
                         @Override public void onClick(View view) {
                             text2.setText(mFullDocContents);
                         }
