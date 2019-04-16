@@ -68,11 +68,8 @@
             android:name=".activities.NewUserDocumentActivity"
             android:label="@string/new_user_document_title" />
         <activity
-            android:name=".activities.AppDocumentDetailActivity"
+            android:name=".activities.DocumentDetailActivity"
             android:label="@string/app_document_detail_title" />
-        <activity
-            android:name=".activities.UserDocumentDetailActivity"
-            android:label="@string/user_document_detail_title" />
         <activity
             android:name=".activities.MSALoginActivity"
             android:label="@string/msa_title" />

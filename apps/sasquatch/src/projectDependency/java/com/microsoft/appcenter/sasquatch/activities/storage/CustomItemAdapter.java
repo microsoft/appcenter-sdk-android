@@ -15,7 +15,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
 
 import java.util.ArrayList;
@@ -90,8 +89,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     public String getDocumentByPosition(int position) {
-        Document<Map> doc = mList.get(position);
-        return doc == null ? "{}" : Utils.getGson().toJson(doc.getDocument());
+        return mList.get(position).getId();
     }
 
     public interface OnItemClickListener {

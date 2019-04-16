@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,10 +40,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
 
 public class StorageActivity extends AppCompatActivity {
 
@@ -56,6 +55,10 @@ public class StorageActivity extends AppCompatActivity {
 
     private AppDocumentListAdapter mAppDocumentListAdapter;
 
+    private ProgressBar mProgressBar;
+
+    private Spinner mStorageTypeSpinner;
+
     private StorageType mStorageType = StorageType.READONLY;
 
     private PaginatedDocuments<TestDocument> mCurrentAppDocuments;
@@ -64,10 +67,18 @@ public class StorageActivity extends AppCompatActivity {
 
     private TextView mMessageText;
 
+    private boolean mUserDocumentsLoading;
+
+    private boolean mAppDocumentsLoading;
+
     private AppCenterConsumer<PaginatedDocuments<TestDocument>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
         @Override
-        public void accept(PaginatedDocuments<TestDocument> documents) {
+        public void accept(PaginatedDocuments<TestDocument> documents) {            
+            mAppDocumentsLoading = false;
+            if (!mUserDocumentsLoading) {
+               hideProgress();
+            }
             mCurrentAppDocuments = documents;
             updateAppDocument(documents.getCurrentPage().getItems());
         }
@@ -76,11 +87,25 @@ public class StorageActivity extends AppCompatActivity {
     private AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
-        public void accept(PaginatedDocuments<Map> documents) {
+        public void accept(PaginatedDocuments<Map> documents) {            
+            mUserDocumentsLoading = false;
+            if (!mAppDocumentsLoading) {
+                hideProgress();
+            }
             mCurrentUserDocuments = documents;
             updateUserDocuments(documents.getCurrentPage().getItems());
         }
     };
+
+    private void hideProgress() {
+        mProgressBar.setVisibility(View.GONE);
+        mStorageTypeSpinner.setEnabled(true);
+    }
+
+    private void showProgress() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mStorageTypeSpinner.setEnabled(false);
+    }
 
     private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
 
@@ -137,6 +162,8 @@ public class StorageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_storage);
         mListView = findViewById(R.id.list);
         mListView.setLayoutManager(new LinearLayoutManager(this));
+        mProgressBar = findViewById(R.id.load_progress);
+        mStorageTypeSpinner = findViewById(R.id.storage_type);
         mMessageText = findViewById(R.id.storage_message);
 
         /* List the app read-only documents. */
@@ -145,12 +172,14 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getItem(position));
-                intent.putExtra(DOCUMENT_CONTENT, mAppDocumentListAdapter.getDocumentByPosition(position));
+                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                intent.putExtra(DOCUMENT_PARTITION, Constants.READONLY);
+                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getDocumentByPosition(position));
                 startActivity(intent);
             }
         });
+        showProgress();
+        mAppDocumentsLoading = true;
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
 
         /* List the user documents. */
@@ -159,9 +188,9 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
-                intent.putExtra(USER_DOCUMENT_LIST, mAdapterUser.getItem(position));
-                intent.putExtra(USER_DOCUMENT_CONTENTS, mAdapterUser.getDocumentByPosition(position));
+                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                intent.putExtra(DOCUMENT_PARTITION, Constants.USER);
+                intent.putExtra(DOCUMENT_ID, mAdapterUser.getDocumentByPosition(position));
                 startActivity(intent);
             }
 
@@ -185,10 +214,9 @@ public class StorageActivity extends AppCompatActivity {
         loadUserDocuments();
 
         /* Selector for App VS User documents. */
-        Spinner storageTypeSpinner = findViewById(R.id.storage_type);
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_type_names));
-        storageTypeSpinner.setAdapter(typeAdapter);
-        storageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mStorageTypeSpinner.setAdapter(typeAdapter);
+        mStorageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -206,6 +234,8 @@ public class StorageActivity extends AppCompatActivity {
         /* List the user documents. */
         String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
         if (accountId != null) {
+            mUserDocumentsLoading = true;
+            showProgress();
             Storage.list(Constants.USER, Map.class).thenAccept(mUploadUser);
         }
     }

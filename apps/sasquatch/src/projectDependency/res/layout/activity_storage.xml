@@ -18,19 +18,33 @@
         android:layout_height="wrap_content"
         android:text="@string/storage_type" />
 
-    <Spinner
-        android:id="@+id/storage_type"
+    <LinearLayout
+        android:id="@+id/spinner_layout"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/storage_type_label"
-        android:background="@android:drawable/btn_dropdown"
-        android:spinnerMode="dropdown" />
+        android:orientation="horizontal">
+
+        <Spinner
+            android:id="@+id/storage_type"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="@android:drawable/btn_dropdown"
+            android:spinnerMode="dropdown" />
+
+        <ProgressBar
+            android:id="@+id/load_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+    </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/storage_type" />
+        android:layout_below="@+id/spinner_layout" />
 
     <TextView
         android:id="@+id/storage_message"
