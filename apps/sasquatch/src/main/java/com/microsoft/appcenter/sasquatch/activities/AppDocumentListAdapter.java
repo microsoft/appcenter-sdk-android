@@ -20,7 +20,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     private List<Document<TestDocument>> mList;
     private OnItemClickListener mListener;
 
-    public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
+    AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
         this.mContext = context;
         this.mList = new ArrayList<>(list);
     }
@@ -43,37 +43,37 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         });
     }
 
-    public String getItem(int position) {
-        return mList.get(position).getId();
-    }
-
     @Override
     public int getItemCount() {
         return mList.size();
-    }
-
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        this.mListener = listener;
     }
 
     public void upload(List<Document<TestDocument>> list) {
         mList.addAll(list);
     }
 
-    public String getDocumentByPosition(int position) {
-        TestDocument document = mList.get(position).getDocument();
-        return document == null ? "{}" : Utils.getGson().toJson(document);
-    }
-
     public interface OnItemClickListener {
         void onItemClick(int position);
     }
 
-    public class AppDocumentListHolder extends RecyclerView.ViewHolder {
+    void setOnItemClickListener(OnItemClickListener listener) {
+        this.mListener = listener;
+    }
 
-        public TextView titleFile;
+    String getDocumentByPosition(int position) {
+        TestDocument document = mList.get(position).getDocument();
+        return document == null ? "{}" : Utils.getGson().toJson(document);
+    }
 
-        public AppDocumentListHolder(@NonNull View itemView) {
+    String getItem(int position) {
+        return mList.get(position).getId();
+    }
+
+    class AppDocumentListHolder extends RecyclerView.ViewHolder {
+
+        TextView titleFile;
+
+        AppDocumentListHolder(@NonNull View itemView) {
             super(itemView);
             titleFile = itemView.findViewById(R.id.property_app);
         }

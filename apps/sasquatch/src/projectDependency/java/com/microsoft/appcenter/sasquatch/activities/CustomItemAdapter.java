@@ -46,6 +46,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     @Override
     public void onBindViewHolder(@NonNull CustomItemAdapterHolder holder, @SuppressLint("RecyclerView") final int position) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
@@ -55,6 +56,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         });
         holder.listItemText.setText(mList.get(position).getId());
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
@@ -78,15 +80,15 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         this.mList = list;
     }
 
-    public void removeItem(int position) {
+    void removeItem(int position) {
         this.mList.remove(position);
     }
 
-    public String getItem(int position) {
+    String getItem(int position) {
         return mList.get(position).getId();
     }
 
-    public String getDocumentByPosition(int position) {
+    String getDocumentByPosition(int position) {
         Document<Map> doc = mList.get(position);
         return doc == null ? "{}" : Utils.getGson().toJson(doc);
     }

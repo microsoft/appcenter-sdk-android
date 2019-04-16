@@ -98,6 +98,7 @@ public class StorageActivity extends AppCompatActivity {
             if (currentAppDocuments != null && currentAppDocuments.hasNextPage() && !isLoading) {
                 isLoading = true;
                 currentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
+
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
                         isLoading = false;
