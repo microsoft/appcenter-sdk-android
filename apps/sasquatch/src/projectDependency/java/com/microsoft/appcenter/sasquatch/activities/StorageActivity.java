@@ -74,11 +74,11 @@ public class StorageActivity extends AppCompatActivity {
     private AppCenterConsumer<PaginatedDocuments<TestDocument>> uploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
         @Override
-        public void accept(PaginatedDocuments<TestDocument> documents) {
+        public void accept(PaginatedDocuments<TestDocument> documents) {            
+            mAppDocumentsLoading = false;
             if (!mUserDocumentsLoading) {
                hideProgress();
             }
-            mAppDocumentsLoading = false;
             currentAppDocuments = documents;
             updateAppDocument(documents.getCurrentPage().getItems());
         }
@@ -87,11 +87,11 @@ public class StorageActivity extends AppCompatActivity {
     private AppCenterConsumer<PaginatedDocuments<Map>> uploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
-        public void accept(PaginatedDocuments<Map> documents) {
+        public void accept(PaginatedDocuments<Map> documents) {            
+            mUserDocumentsLoading = false;
             if (!mAppDocumentsLoading) {
                 hideProgress();
             }
-            mUserDocumentsLoading = false;
             currentUserDocuments = documents;
             updateUserDocuments(documents.getCurrentPage().getItems());
         }
