@@ -41,6 +41,8 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PART
 
 public class DocumentDetailActivity extends AppCompatActivity {
 
+    private static final int MAX_CONTENT_LENGTH = 50;
+
     private String mDocumentId;
 
     private String mDocumentPartition;
@@ -48,8 +50,6 @@ public class DocumentDetailActivity extends AppCompatActivity {
     private String mFullDocContents;
 
     private String mFullErrorContents;
-
-    private static final int MAX_CONTENT_LENGTH = 50;
 
     private ProgressBar mDetailProgress;
 
@@ -108,23 +108,25 @@ public class DocumentDetailActivity extends AppCompatActivity {
             @Override
             public View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView text1 = view.findViewById(R.id.info_title);
-                final TextView text2 = view.findViewById(R.id.info_content);
-                text1.setText(list.get(position).mTitle);
-                text2.setText(list.get(position).mValue);
+                TextView titleView = view.findViewById(R.id.info_title);
+                final TextView valueView = view.findViewById(R.id.info_content);
+                titleView.setText(list.get(position).mTitle);
+                valueView.setText(list.get(position).mValue);
                 if (list.get(position).mTitle.equals(getString(R.string.document_info_content_title))) {
                     view.setOnClickListener(new View.OnClickListener() {
 
-                        @Override public void onClick(View view) {
-                            text2.setText(mFullDocContents);
+                        @Override
+                        public void onClick(View view) {
+                            valueView.setText(mFullDocContents);
                         }
                     });
                 }
                 if (list.get(position).mTitle.equals(getString(R.string.document_info_error_title))) {
                     view.setOnClickListener(new View.OnClickListener() {
 
-                        @Override public void onClick(View view) {
-                            text2.setText(mFullErrorContents);
+                        @Override
+                        public void onClick(View view) {
+                            valueView.setText(mFullErrorContents);
                         }
                     });
                 }
@@ -167,12 +169,13 @@ public class DocumentDetailActivity extends AppCompatActivity {
     @VisibleForTesting
     class DocumentInfoDisplayModel {
 
+        String mTitle;
+
+        String mValue;
+
         DocumentInfoDisplayModel(String title, String value) {
             mTitle = title;
             mValue = value;
         }
-
-        String mTitle;
-        String mValue;
     }
 }

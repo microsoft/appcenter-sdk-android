@@ -4,24 +4,24 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:gravity="center_horizontal"
-              android:orientation="vertical"
-              tools:context=".activities.NewUserDocumentActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context=".activities.NewUserDocumentActivity">
 
     <TextView
         android:id="@+id/common_schema_property_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/user_document_ttl_header"/>
+        android:text="@string/user_document_ttl_header" />
 
     <Spinner
         android:id="@+id/ttl_spinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:drawable/btn_dropdown"/>
+        android:background="@android:drawable/btn_dropdown" />
 
     <EditText
         android:id="@+id/user_document_id"
@@ -30,12 +30,12 @@
         android:autofillHints="no"
         android:hint="@string/user_document_id_reminder"
         android:inputType="text"
-        tools:targetApi="o"/>
+        tools:targetApi="o" />
 
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/user_document_content_label"/>
+        android:text="@string/user_document_content_label" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -46,13 +46,13 @@
             android:id="@+id/list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:orientation="vertical" />
     </ScrollView>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="save"
-        android:text="@string/save_button"/>
+        android:text="@string/save_button" />
 
 </LinearLayout>
