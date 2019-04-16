@@ -46,13 +46,13 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CustomItemAdapterHolder holder, @SuppressLint("RecyclerView") final int position) {
+    public void onBindViewHolder(@NonNull final CustomItemAdapterHolder holder, final int position) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onItemClick(position);
+                    mListener.onItemClick(holder.getAdapterPosition());
                 }
             }
         });
@@ -62,7 +62,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
             @Override
             public void onClick(View v) {
                 if (mListener != null) {
-                    mListener.onRemoveClick(position);
+                    mListener.onRemoveClick(holder.getAdapterPosition());
                 }
             }
         });
