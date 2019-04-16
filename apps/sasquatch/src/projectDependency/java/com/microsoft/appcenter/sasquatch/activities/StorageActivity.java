@@ -240,12 +240,12 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void loadUserDocuments() {
-        showProgress();
-        mUserDocumentsLoading = true;
 
         /* List the user documents. */
         String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
         if (accountId != null) {
+            mUserDocumentsLoading = true;
+            showProgress();
             Storage.list(Constants.USER, Map.class).thenAccept(mUploadUser);
         }
     }
