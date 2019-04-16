@@ -94,6 +94,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     public interface OnItemClickListener {
+        
         void onItemClick(int position);
 
         void onRemoveClick(int position);
