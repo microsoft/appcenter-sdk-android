@@ -118,7 +118,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
                     mProperties.clear();
                 } else {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_success, Toast.LENGTH_SHORT).show();
-                    NewUserDocumentActivity.this.finish();
+                    finish();
                 }
             }
         });

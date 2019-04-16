@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities.storage;
 
 import android.content.Context;
@@ -34,10 +39,10 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final AppDocumentListHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull final AppDocumentListHolder holder, int position) {
         holder.titleFile.setText(mList.get(position).getId());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
-            
+
             @Override
             public void onClick(View v) {
                 if (mListener != null)
@@ -56,6 +61,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public interface OnItemClickListener {
+
         void onItemClick(int position);
     }
 

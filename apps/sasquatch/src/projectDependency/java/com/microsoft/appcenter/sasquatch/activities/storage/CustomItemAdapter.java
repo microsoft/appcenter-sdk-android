@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.sasquatch.activities.storage;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -34,11 +33,10 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         mContext = context;
     }
 
-    @SuppressLint("InflateParams")
     @NonNull
     @Override
     public CustomItemAdapterHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, null, false));
+        return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, viewGroup, false));
     }
 
     public void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
@@ -46,7 +44,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final CustomItemAdapterHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull final CustomItemAdapterHolder holder, int position) {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -56,8 +54,8 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
                 }
             }
         });
-        holder.listItemText.setText(mList.get(position).getId());
-        holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
+        holder.documentIdTextView.setText(mList.get(position).getId());
+        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -103,13 +101,14 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
-        TextView listItemText;
-        ImageButton deleteBtn;
+        TextView documentIdTextView;
+
+        ImageButton deleteButton;
 
         CustomItemAdapterHolder(@NonNull View itemView) {
             super(itemView);
-            listItemText = itemView.findViewById(R.id.property);
-            deleteBtn = itemView.findViewById(R.id.delete_button);
+            documentIdTextView = itemView.findViewById(R.id.property);
+            deleteButton = itemView.findViewById(R.id.delete_button);
         }
     }
 }

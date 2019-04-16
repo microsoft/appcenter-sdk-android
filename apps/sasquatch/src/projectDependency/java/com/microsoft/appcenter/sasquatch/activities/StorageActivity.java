@@ -47,7 +47,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private RecyclerView mListView;
 
-    private Boolean mIsLoading = false;
+    private boolean mLoading;
 
     private MenuItem mAddNewDocument;
 
@@ -110,20 +110,15 @@ public class StorageActivity extends AppCompatActivity {
     private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
 
         @Override
-        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-            super.onScrollStateChanged(recyclerView, newState);
-        }
-
-        @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (mCurrentAppDocuments != null && mCurrentAppDocuments.hasNextPage() && !mIsLoading) {
-                mIsLoading = true;
+            if (mCurrentAppDocuments != null && mCurrentAppDocuments.hasNextPage() && !mLoading) {
+                mLoading = true;
                 mCurrentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
 
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
-                        mIsLoading = false;
+                        mLoading = false;
                         updateAppDocument(testDocumentPage.getItems());
                     }
                 });
@@ -134,15 +129,10 @@ public class StorageActivity extends AppCompatActivity {
     private RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
 
         @Override
-        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-            super.onScrollStateChanged(recyclerView, newState);
-        }
-
-        @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (mCurrentUserDocuments != null && mCurrentUserDocuments.hasNextPage() && !mIsLoading) {
-                mIsLoading = true;
+            if (mCurrentUserDocuments != null && mCurrentUserDocuments.hasNextPage() && !mLoading) {
+                mLoading = true;
                 mCurrentUserDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
 
                     @Override
@@ -211,11 +201,11 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(Document<Void> voidDocument) {
                         if (voidDocument.failed()) {
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {
                             mAdapterUser.removeItem(position);
                             mAdapterUser.notifyDataSetChanged();
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_success, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -252,7 +242,7 @@ public class StorageActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        mIsLoading = false;
+        mLoading = false;
         switch (item.getItemId()) {
             case R.id.action_add:
                 switch (mStorageType) {
