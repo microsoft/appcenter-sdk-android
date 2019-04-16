@@ -49,20 +49,24 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         return mList.size();
     }
 
-    void setOnItemClickListener(OnItemClickListener listener) {
-        this.mListener = listener;
-    }
-
     public void upload(List<Document<TestDocument>> list) {
         mList.addAll(list);
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+    }
+
+    void setOnItemClickListener(OnItemClickListener listener) {
+        this.mListener = listener;
     }
 
     String getDocumentByPosition(int position) {
         return mList.get(position).getId();
     }
 
-    public interface OnItemClickListener {
-        void onItemClick(int position);
+    String getItem(int position) {
+        return mList.get(position).getId();
     }
 
     class AppDocumentListHolder extends RecyclerView.ViewHolder {
