@@ -98,7 +98,7 @@ public class TokenExchange {
 
         private final TokenManager mTokenManager;
 
-        public TokenExchangeServiceCallback(TokenManager tokenManager) {
+        protected TokenExchangeServiceCallback(TokenManager tokenManager) {
             mTokenManager = tokenManager;
         }
 
