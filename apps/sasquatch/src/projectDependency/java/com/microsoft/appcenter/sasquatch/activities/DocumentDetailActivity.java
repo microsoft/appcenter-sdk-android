@@ -46,6 +46,8 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private String mFullDocContents;
 
+    private String mFullErrorContents;
+
     private static final int MAX_CONTENT_LENGTH = 50;
 
     private ProgressBar mDetailProgress;
@@ -117,6 +119,14 @@ public class DocumentDetailActivity extends AppCompatActivity {
                         }
                     });
                 }
+                if (list.get(position).mTitle.equals(getString(R.string.document_info_error_title))) {
+                    view.setOnClickListener(new View.OnClickListener() {
+
+                        @Override public void onClick(View view) {
+                            text2.setText(mFullErrorContents);
+                        }
+                    });
+                }
                 return view;
             }
         };
@@ -128,7 +138,17 @@ public class DocumentDetailActivity extends AppCompatActivity {
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_id_title), mDocumentId));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));
         if (document.getDocumentError() != null) {
-            list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), document.getDocumentError().getError().getMessage()));
+            String message = document.getDocumentError().getError().getMessage();
+            try {
+                JSONObject docContentsJSON = new JSONObject(message);
+                mFullErrorContents = docContentsJSON.toString(4);
+            } catch (JSONException e) {
+                mFullErrorContents = message;
+            }
+            if (message.length() > MAX_CONTENT_LENGTH) {
+                message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
+            }
+            list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(document.getTimestamp()).toString()));
