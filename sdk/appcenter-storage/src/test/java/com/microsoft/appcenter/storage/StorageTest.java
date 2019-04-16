@@ -55,7 +55,9 @@ import javax.net.ssl.SSLException;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 import static com.microsoft.appcenter.storage.Constants.USER;
 import static org.junit.Assert.assertEquals;
@@ -1012,31 +1014,54 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
-        final PendingOperation pendingOperation = new PendingOperation(
+        final PendingOperation deletePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
-                DOCUMENT_ID,
+                "anything1",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        final PendingOperation createPendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_CREATE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything2",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        final PendingOperation replacePendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_REPLACE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything3",
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
-                    add(pendingOperation);
+                    add(deletePendingOperation);
+                    add(createPendingOperation);
+                    add(replacePendingOperation);
                 }});
-
+        ServiceCall deleteServiceCallMock = mock(ServiceCall.class);
+        ServiceCall createServiceCallMock = mock(ServiceCall.class);
+        ServiceCall replaceServiceCallMock = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(contains(deletePendingOperation.getDocumentId()), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(deleteServiceCallMock);
+        when(mHttpClient.callAsync(contains(replacePendingOperation.getDocumentId()), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(replaceServiceCallMock);
+        when(mHttpClient.callAsync(contains(createPendingOperation.getDocumentId()), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(createServiceCallMock);
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-
         mStorage.applyEnabledState(false);
-
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
                 any(DocumentError.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
-
-        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
+        verify(deleteServiceCallMock, times(1)).cancel();
+        verify(createServiceCallMock, times(1)).cancel();
+        verify(replaceServiceCallMock, times(1)).cancel();
     }
 
     @Test

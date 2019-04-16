@@ -41,9 +41,7 @@ import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
@@ -82,7 +80,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private Set<String> mOutgoingCalls = new HashSet<>();
+    private Map<String, ServiceCall> mOutgoingPendingOperations = new HashMap<>();
 
     private HttpClient mHttpClient;
 
@@ -293,11 +291,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private void processPendingOperations() {
         for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
-            String outgoingId = Utils.getOutgoingId(po.getPartition(), po.getDocumentId(), po.getOperation());
-            if (mOutgoingCalls.contains(outgoingId)) {
-                continue;
-            }
-            mOutgoingCalls.add(outgoingId);
             if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
                     PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
                 instanceCreateOrUpdate(po);
@@ -330,6 +323,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             AuthTokenContext.getInstance().removeListener(mAuthListener);
             mNetworkStateHelper.removeListener(this);
             mPendingCalls.clear();
+            mOutgoingPendingOperations.clear();
         }
     }
 
@@ -582,7 +576,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             final PendingOperation pendingOperation) {
-        CosmosDb.callCosmosDbApi(
+        ServiceCall serviceCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
                 mHttpClient,
@@ -605,6 +599,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                 pendingOperation);
                     }
                 });
+
     }
 
     /**
@@ -713,7 +708,11 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation operation) {
-        CosmosDb.callCosmosDbApi(
+        String outgoingId = Utils.getOutgoingId(operation.getPartition(), operation.getDocumentId());
+        if (mOutgoingPendingOperations.containsKey(outgoingId)) {
+            return;
+        }
+        mOutgoingPendingOperations.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 operation.getDocumentId(),
                 mHttpClient,
@@ -734,7 +733,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                 new StorageException("Failed to call Cosmos delete API", e),
                                 operation);
                     }
-                });
+                })
+        );
     }
 
     synchronized void getTokenAndCallCosmosDbApi(
@@ -860,7 +860,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             null);
                 }
                 mLocalDocumentStorage.updatePendingOperation(pendingOperation);
-                mOutgoingCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId(), pendingOperation.getOperation()));
+                mOutgoingPendingOperations.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
     }
@@ -896,7 +896,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 } else {
                     mLocalDocumentStorage.updatePendingOperation(pendingOperation);
                 }
-                mOutgoingCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId(), pendingOperation.getOperation()));
+                mOutgoingPendingOperations.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
     }
