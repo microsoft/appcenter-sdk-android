@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
 
 import java.util.ArrayList;
@@ -63,11 +62,6 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public String getDocumentByPosition(int position) {
-        TestDocument document = mList.get(position).getDocument();
-        return document == null ? "{}" : Utils.getGson().toJson(document);
-    }
-
-    public String getItem(int position) {
         return mList.get(position).getId();
     }
 
