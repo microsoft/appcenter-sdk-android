@@ -38,7 +38,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private EditText mEditDocumentId;
 
-    private WriteOptions mWriteOption = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+    private WriteOptions mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -63,18 +63,19 @@ public class NewUserDocumentActivity extends AppCompatActivity {
     }
 
     private void updateWriteOptions(int position) {
-        switch (position) {
-            case 0:
-                mWriteOption = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        StorageTtl storageTtl = StorageTtl.values()[position];
+        switch (storageTtl) {
+            case DEFAULT:
+                mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
                 break;
-            case 1:
-                mWriteOption = WriteOptions.CreateNoCacheOption();
+            case NO_CACHE:
+                mWriteOptions = WriteOptions.CreateNoCacheOption();
                 break;
-            case 2:
-                mWriteOption = new WriteOptions(2);
+            case TWO_SECONDS:
+                mWriteOptions = new WriteOptions(2);
                 break;
-            case 3:
-                mWriteOption = WriteOptions.CreateInfiniteCacheOption();
+            case INFINITE:
+                mWriteOptions = WriteOptions.CreateInfiniteCacheOption();
                 break;
         }
     }
@@ -109,7 +110,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
         String documentId = mEditDocumentId.getText().toString();
         documentId = documentId.replace(" ", "-");
-        Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOption).thenAccept(new AppCenterConsumer<Document<Map>>() {
+        Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOptions).thenAccept(new AppCenterConsumer<Document<Map>>() {
 
             @Override
             public void accept(Document<Map> mapDocument) {
@@ -122,5 +123,12 @@ public class NewUserDocumentActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private enum StorageTtl {
+        DEFAULT,
+        NO_CACHE,
+        TWO_SECONDS,
+        INFINITE
     }
 }
