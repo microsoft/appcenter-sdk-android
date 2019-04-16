@@ -22,13 +22,16 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
+
     private ArrayList<Document<Map>> mList;
+
     private Context mContext;
+
     private CustomItemAdapter.OnItemClickListener mListener;
 
     public CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
-        this.mList = new ArrayList<>(list);
-        this.mContext = context;
+        mList = new ArrayList<>(list);
+        mContext = context;
     }
 
     @SuppressLint("InflateParams")
@@ -39,7 +42,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     public void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
-        this.mListener = listener;
+        mListener = listener;
     }
 
     @Override
@@ -76,11 +79,11 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     public void setList(ArrayList<Document<Map>> list) {
-        this.mList = list;
+        mList = list;
     }
 
     public void removeItem(int position) {
-        this.mList.remove(position);
+        mList.remove(position);
     }
 
     public String getItem(int position) {
@@ -92,6 +95,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     public interface OnItemClickListener {
+
         void onItemClick(int position);
 
         void onRemoveClick(int position);
