@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,18 +52,30 @@ public class StorageActivity extends AppCompatActivity {
 
     private AppDocumentListAdapter mAppDocumentListAdapter;
 
+    private ProgressBar mProgressBar;
+
+    private Spinner mStorageTypeSpinner;
+
     private StorageType mStorageType = StorageType.READONLY;
 
     private PaginatedDocuments<TestDocument> currentAppDocuments;
 
     private PaginatedDocuments<Map> currentUserDocuments;
 
-    private TextView mMssageText;
+    private TextView mMessageText;
+
+    private boolean mUserDocumentsLoading;
+
+    private boolean mAppDocumentsLoading;
 
     private AppCenterConsumer<PaginatedDocuments<TestDocument>> uploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
         @Override
         public void accept(PaginatedDocuments<TestDocument> documents) {
+            if (!mUserDocumentsLoading) {
+               hideProgress();
+            }
+            mAppDocumentsLoading = false;
             currentAppDocuments = documents;
             updateAppDocument(documents.getCurrentPage().getItems());
         }
@@ -72,10 +85,24 @@ public class StorageActivity extends AppCompatActivity {
 
         @Override
         public void accept(PaginatedDocuments<Map> documents) {
+            if (!mAppDocumentsLoading) {
+                hideProgress();
+            }
+            mUserDocumentsLoading = false;
             currentUserDocuments = documents;
             updateUserDocuments(documents.getCurrentPage().getItems());
         }
     };
+
+    private void hideProgress() {
+        mProgressBar.setVisibility(View.GONE);
+        mStorageTypeSpinner.setEnabled(true);
+    }
+
+    private void showProgress() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mStorageTypeSpinner.setEnabled(false);
+    }
 
     private RecyclerView.OnScrollListener scrollAppListener = new RecyclerView.OnScrollListener() {
 
@@ -141,7 +168,9 @@ public class StorageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_storage);
         mListView = findViewById(R.id.list);
         mListView.setLayoutManager(new LinearLayoutManager(this));
-        mMssageText = findViewById(R.id.storage_message);
+        mProgressBar = findViewById(R.id.load_progress);
+        mStorageTypeSpinner = findViewById(R.id.storage_type);
+        mMessageText = findViewById(R.id.storage_message);
 
         /* List the app read-only documents. */
         mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<Document<TestDocument>>());
@@ -155,6 +184,8 @@ public class StorageActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        showProgress();
+        mAppDocumentsLoading = true;
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(uploadApp);
 
         /* List the user documents. */
@@ -189,10 +220,9 @@ public class StorageActivity extends AppCompatActivity {
         loadUserDocuments();
 
         /* Selector for App VS User documents. */
-        Spinner storageTypeSpinner = findViewById(R.id.storage_type);
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_type_names));
-        storageTypeSpinner.setAdapter(typeAdapter);
-        storageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mStorageTypeSpinner.setAdapter(typeAdapter);
+        mStorageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -206,6 +236,8 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void loadUserDocuments() {
+        showProgress();
+        mUserDocumentsLoading = true;
 
         /* List the user documents. */
         String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
@@ -255,7 +287,7 @@ public class StorageActivity extends AppCompatActivity {
     }
 
     private void updateStorageType(int position) {
-        mMssageText.setText("");
+        mMessageText.setText("");
         mStorageType = StorageType.values()[position];
         switch (mStorageType) {
             case READONLY:
@@ -270,7 +302,7 @@ public class StorageActivity extends AppCompatActivity {
                 if (accountId != null) {
                     mListView.setAdapter(mAdapterUser);
                 } else {
-                    mMssageText.setText(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
+                    mMessageText.setText(getApplicationContext().getResources().getString(R.string.sign_in_reminder));
                     mListView.setAdapter(null);
                 }
                 break;
