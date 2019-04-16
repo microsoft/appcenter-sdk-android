@@ -1,5 +1,6 @@
-package com.microsoft.appcenter.sasquatch.activities;
+package com.microsoft.appcenter.sasquatch.activities.storage;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -20,7 +21,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     private List<Document<TestDocument>> mList;
     private OnItemClickListener mListener;
 
-    AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
+    public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
         this.mContext = context;
         this.mList = new ArrayList<>(list);
     }
@@ -28,13 +29,14 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     @NonNull
     @Override
     public AppDocumentListHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        return new AppDocumentListHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_app, null, false));
+        return new AppDocumentListHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_app, viewGroup, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AppDocumentListHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull AppDocumentListHolder holder, @SuppressLint("RecyclerView") final int position) {
         holder.titleFile.setText(mList.get(position).getId());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
+            
             @Override
             public void onClick(View v) {
                 if (mListener != null)
@@ -56,16 +58,16 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         void onItemClick(int position);
     }
 
-    void setOnItemClickListener(OnItemClickListener listener) {
+    public void setOnItemClickListener(OnItemClickListener listener) {
         this.mListener = listener;
     }
 
-    String getDocumentByPosition(int position) {
+    public String getDocumentByPosition(int position) {
         TestDocument document = mList.get(position).getDocument();
         return document == null ? "{}" : Utils.getGson().toJson(document);
     }
 
-    String getItem(int position) {
+    public String getItem(int position) {
         return mList.get(position).getId();
     }
 

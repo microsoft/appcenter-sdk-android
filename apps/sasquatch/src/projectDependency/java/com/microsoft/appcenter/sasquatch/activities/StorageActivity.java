@@ -24,6 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.storage.AppDocumentListAdapter;
+import com.microsoft.appcenter.sasquatch.activities.storage.CustomItemAdapter;
+import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.models.Document;
@@ -40,12 +43,6 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONT
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
-
-class TestDocument {
-
-    @SuppressWarnings("unused")
-    String key;
-}
 
 public class StorageActivity extends AppCompatActivity {
 

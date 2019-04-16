@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.sasquatch.activities;
+package com.microsoft.appcenter.sasquatch.activities.storage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -27,7 +27,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     private Context mContext;
     private CustomItemAdapter.OnItemClickListener mListener;
 
-    CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
+    public CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
         this.mList = new ArrayList<>(list);
         this.mContext = context;
     }
@@ -39,7 +39,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return new CustomItemAdapterHolder(LayoutInflater.from(mContext).inflate(R.layout.item_view_property, null, false));
     }
 
-    void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
+    public void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
         this.mListener = listener;
     }
 
@@ -80,15 +80,15 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         this.mList = list;
     }
 
-    void removeItem(int position) {
+    public void removeItem(int position) {
         this.mList.remove(position);
     }
 
-    String getItem(int position) {
+    public String getItem(int position) {
         return mList.get(position).getId();
     }
 
-    String getDocumentByPosition(int position) {
+    public String getDocumentByPosition(int position) {
         Document<Map> doc = mList.get(position);
         return doc == null ? "{}" : Utils.getGson().toJson(doc);
     }
