@@ -91,7 +91,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     public String getDocumentByPosition(int position) {
         Document<Map> doc = mList.get(position);
-        return doc == null ? "{}" : Utils.getGson().toJson(doc);
+        return doc == null ? "{}" : Utils.getGson().toJson(doc.getDocument());
     }
 
     public interface OnItemClickListener {
