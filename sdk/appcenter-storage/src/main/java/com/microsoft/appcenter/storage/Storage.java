@@ -843,7 +843,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     eTag),
                             null);
                 }
-                mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                mLocalDocumentStorage.updatePendingOperation(pendingOperation, true);
             }
         });
     }
@@ -877,7 +877,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 if (deleteLocalCopy) {
                     mLocalDocumentStorage.deletePendingOperation(pendingOperation);
                 } else {
-                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                    mLocalDocumentStorage.updatePendingOperation(pendingOperation, false);
                 }
             }
         });

@@ -319,7 +319,25 @@ class LocalDocumentStorage {
         return values;
     }
 
-    void updatePendingOperation(PendingOperation operation) {
+    private static ContentValues getContentValues(PendingOperation operation, long now, boolean cosmosDbUpdateSucceeded) {
+        ContentValues values = getContentValues(
+                operation.getPartition(),
+                operation.getDocumentId(),
+                operation.getDocument(),
+                operation.getEtag(),
+                operation.getExpirationTime(),
+                now,
+                now,
+                operation.getOperation());
+        if (cosmosDbUpdateSucceeded) {
+
+            /* Clear the pending_operation column if cosmos Db was updated successfully. */
+            values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
+        }
+        return values;
+    }
+
+    void updatePendingOperation(PendingOperation operation, boolean cosmosDbUpdateSucceeded) {
 
         /*
          * Update the document in cache (if expiration_time still valid otherwise, remove the document),
@@ -329,19 +347,7 @@ class LocalDocumentStorage {
         if (operation.getExpirationTime() <= now) {
             deletePendingOperation(operation);
         } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now));
+            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now, cosmosDbUpdateSucceeded));
         }
-    }
-
-    private static ContentValues getContentValues(PendingOperation operation, long now) {
-        return getContentValues(
-                operation.getPartition(),
-                operation.getDocumentId(),
-                operation.getDocument(),
-                operation.getEtag(),
-                operation.getExpirationTime(),
-                now,
-                now,
-                operation.getOperation());
     }
 }

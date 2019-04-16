@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -142,7 +143,7 @@ public class LocalDocumentStorageAndroidTest {
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
 
-        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
+        mLocalDocumentStorage.updatePendingOperation(operations.get(0), true);
 
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(0, operations.size());
@@ -156,10 +157,29 @@ public class LocalDocumentStorageAndroidTest {
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
 
-        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
+        mLocalDocumentStorage.updatePendingOperation(operations.get(0), false);
 
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(Constants.USER, operation.getPartition());
+        assertEquals(ID, operation.getDocumentId());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+    }
+
+    @Test
+    public void updateLocalCopySetsPendingOperationToNullWhenCosmosDbUpdateSucceeded() {
+        Document<String> document = new Document<>(TEST_VALUE, Constants.USER, ID);
+        mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, document, new WriteOptions(10));
+
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(1, operations.size());
+
+        mLocalDocumentStorage.updatePendingOperation(operations.get(0), true);
+
+        /* Get pending operations where pending_operation column is not NULL. */
+        operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(0, operations.size());
     }
 
     @Test
@@ -230,7 +250,7 @@ public class LocalDocumentStorageAndroidTest {
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
         boolean updated = mLocalDocumentStorage.markForDeletion(USER_TABLE_NAME, Constants.USER, ID);
         assertTrue(updated);
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
@@ -245,7 +265,7 @@ public class LocalDocumentStorageAndroidTest {
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test"));
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, Constants.USER, ID, "Test2", String.class, new WriteOptions());
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);

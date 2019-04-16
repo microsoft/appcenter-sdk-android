@@ -78,7 +78,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(ETAG, documentMetadata.getEtag());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture(), true);
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -106,7 +106,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture(), true);
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -160,7 +160,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture(), false);
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -264,7 +264,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
 
-        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation), true);
     }
 
     @Test
