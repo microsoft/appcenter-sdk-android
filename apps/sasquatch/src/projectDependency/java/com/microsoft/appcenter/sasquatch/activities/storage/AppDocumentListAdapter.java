@@ -22,8 +22,8 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     private OnItemClickListener mListener;
 
     public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
-        this.mContext = context;
-        this.mList = new ArrayList<>(list);
+        mContext = context;
+        mList = new ArrayList<>(list);
     }
 
     @NonNull
@@ -59,7 +59,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
-        this.mListener = listener;
+        mListener = listener;
     }
 
     public String getDocumentByPosition(int position) {
