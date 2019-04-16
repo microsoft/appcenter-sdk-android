@@ -4,62 +4,23 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    tools:context=".activities.NewUserDocumentActivity">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_horizontal"
+              android:orientation="vertical"
+              tools:context=".activities.NewUserDocumentActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <ProgressBar
+        android:id="@+id/detail_progress"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:indeterminate="true"
+        android:paddingTop="20dp"/>
 
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="15sp"
-            android:layout_marginLeft="15sp"
-            android:layout_marginTop="15sp"
-            android:layout_weight="2"
-            android:text="@string/user_document_id"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/app_document_id"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="0sp"
-            android:layout_marginLeft="0sp"
-            android:layout_marginTop="15sp"
-            android:layout_weight="1"
-            android:textSize="20sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
+    <ListView
+        android:id="@+id/document_info_list_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="35sp"
-            android:layout_weight="2"
-            android:text="@string/user_document_content_label"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/app_document_content"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="0sp"
-            android:layout_marginLeft="0sp"
-            android:layout_marginTop="35sp"
-            android:layout_weight="1"
-            android:textSize="20sp" />
-
-    </LinearLayout>
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
 </LinearLayout>

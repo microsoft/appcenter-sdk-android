@@ -36,16 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_CONTENTS;
-import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_DOCUMENT_LIST;
-
-class TestDocument {
-
-    @SuppressWarnings("unused")
-    String key;
-}
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
 
 public class StorageActivity extends AppCompatActivity {
 
@@ -157,9 +149,9 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, AppDocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getItem(position));
-                intent.putExtra(DOCUMENT_CONTENT, mAppDocumentListAdapter.getDocumentByPosition(position));
+                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                intent.putExtra(DOCUMENT_PARTITION, Constants.READONLY);
+                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getDocumentByPosition(position));
                 startActivity(intent);
             }
         });
@@ -171,9 +163,9 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
-                intent.putExtra(USER_DOCUMENT_LIST, mAdapterUser.getItem(position));
-                intent.putExtra(USER_DOCUMENT_CONTENTS, mAdapterUser.getDocumentByPosition(position));
+                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                intent.putExtra(DOCUMENT_PARTITION, Constants.USER);
+                intent.putExtra(DOCUMENT_ID, mAdapterUser.getDocumentByPosition(position));
                 startActivity(intent);
             }
 

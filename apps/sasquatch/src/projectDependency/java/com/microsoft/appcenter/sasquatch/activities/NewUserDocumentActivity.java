@@ -38,7 +38,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private EditText mEditDocumentId;
     private Spinner mTtlSpinner;
-    private WriteOptions mWriteOption = new WriteOptions(BaseOptions.DEFAULT_ONE_HOUR);
+    private WriteOptions mWriteOption = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,7 +65,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
     private void updateWriteOptions(int position) {
         switch (position) {
             case 0:
-                mWriteOption = new WriteOptions(BaseOptions.DEFAULT_ONE_HOUR);
+                mWriteOption = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
                 break;
             case 1:
                 mWriteOption = WriteOptions.CreateNoCacheOption();
@@ -108,6 +108,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
             property.setGenericProperty(document);
         }
         String documentId = mEditDocumentId.getText().toString();
+        documentId = documentId.replace(" ", "-");
         Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOption).thenAccept(new AppCenterConsumer<Document<Map>>() {
             @Override
             public void accept(Document<Map> mapDocument) {
