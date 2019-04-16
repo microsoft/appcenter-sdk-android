@@ -104,6 +104,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
         TextView listItemText;
+
         ImageButton deleteBtn;
 
         CustomItemAdapterHolder(@NonNull View itemView) {
