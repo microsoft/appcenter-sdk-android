@@ -24,7 +24,7 @@
     <string name="user_document_id_reminder" tools:ignore="MissingTranslation">Please input an user document id.</string>
     <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
     <string name="save_button" tools:ignore="MissingTranslation">Save</string>
-    <string name="app_document_detail_title" tools:ignore="MissingTranslation">App Document Detail</string>
+    <string name="app_document_detail_title" tools:ignore="MissingTranslation">Document Detail</string>
     <string name="user_document_wip" tools:ignore="MissingTranslation">User Documents are placeholders, work in progress…</string>
     <string name="user_document_detail_title" tools:ignore="MissingTranslation">User Document Detail</string>
     <string name="documents_from_cache_header" tools:ignore="MissingTranslation">From cache</string>
