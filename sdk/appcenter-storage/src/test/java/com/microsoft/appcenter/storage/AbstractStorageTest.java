@@ -26,6 +26,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -71,7 +72,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         JSONUtils.class,
         NetworkStateHelper.class,
         LocalDocumentStorage.class,
-        Utils.class
+        Utils.class,
+        AuthTokenContext.class
 })
 abstract public class AbstractStorageTest {
 
@@ -79,11 +81,9 @@ abstract public class AbstractStorageTest {
 
     private static final String COLLECTION_NAME = "appcenter";
 
-    static final String PARTITION_NAME = "user";
-
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
-    static final String PARTITION = PARTITION_NAME + "-" + ACCOUNT_ID;
+    static final String RESOLVED_USER_PARTITION = Constants.USER + "-" + ACCOUNT_ID;
 
     static final String DOCUMENT_ID = "document-id";
 
@@ -91,20 +91,7 @@ abstract public class AbstractStorageTest {
 
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
 
-    private static String tokenExchangeResponsePayload = String.format("{\n" +
-            "    \"tokens\": [\n" +
-            "        {\n" +
-            "            \"partition\": \"%s\",\n" +
-            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
-            "            \"dbName\": \"%s\",\n" +
-            "            \"dbCollectionName\": \"%s\",\n" +
-            "            \"token\": \"ha-ha-ha-ha\",\n" +
-            "            \"status\": \"Succeed\"\n" +
-            "        }\n" +
-            "    ]\n" +
-            "}", PARTITION, DATABASE_NAME, COLLECTION_NAME);
-
-    static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
+    final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
             "        \"test\": \"%s\"\n" +
             "    },\n" +
@@ -115,9 +102,33 @@ abstract public class AbstractStorageTest {
             "    \"_etag\": \"%s\",\n" +
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
-            "}", TEST_FIELD_VALUE, DOCUMENT_ID, PARTITION, ETAG);
+            "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
+
+    static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
 
     static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
+
+    static final String TOKEN = "ha-ha-ha-ha";
+
+    private static final String TOKEN_EXCHANGE_RESPONSE_FORMAT = "{\n" +
+            "    \"tokens\": [\n" +
+            "        {\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"%s\",\n" +
+            "            \"dbCollectionName\": \"%s\",\n" +
+            "            \"token\": \"%s\",\n" +
+            "            \"status\": \"Succeed\"\n" +
+            "            %s" +
+            "        }\n" +
+            "    ]\n" +
+            "}";
+
+    final static String TOKEN_EXCHANGE_READONLY_PAYLOAD =
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, TOKEN, "");
+
+    final static String TOKEN_EXCHANGE_USER_PAYLOAD =
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, TOKEN, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -140,6 +151,9 @@ abstract public class AbstractStorageTest {
 
     @Mock
     LocalDocumentStorage mLocalDocumentStorage;
+
+    @Mock
+    protected AuthTokenContext mAuthTokenContext;
 
     @Before
     public void setUp() throws Exception {
@@ -194,14 +208,40 @@ abstract public class AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         whenNew(LocalDocumentStorage.class).withAnyArguments().thenReturn(mLocalDocumentStorage);
         mStorage = Storage.getInstance();
-        Storage storage = Storage.getInstance();
-        mChannel = start(storage);
+        mChannel = start(mStorage);
         Storage.setApiUrl("default");
 
         /* Mock utils. */
         mockStatic(CryptoUtils.class);
-        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
         mockStatic(JSONUtils.class);
+
+        /* Mock CryptoUtils. */
+        CryptoUtils cryptoUtils = mock(CryptoUtils.class);
+        when(cryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
+            
+            @Override
+            public String answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                return (String) args[0];
+            }
+        });
+        when(cryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+            
+            @Override
+            public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
+                Object[] args = invocation.getArguments();
+                return new CryptoUtils.DecryptedData((String) args[0], "encrypted");
+            }
+        });
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(cryptoUtils);
+    }
+
+    void setUpAuthContext() {
+
+        /* Mock auth context. */
+        mockStatic(AuthTokenContext.class);
+        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+        when(mAuthTokenContext.getAccountId()).thenReturn(AbstractStorageTest.ACCOUNT_ID);
     }
 
     @NonNull
@@ -214,10 +254,15 @@ abstract public class AbstractStorageTest {
 
     void verifyTokenExchangeToCosmosDbFlow(
             String documentId,
+            String tokenExchangePayload,
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
             Exception cosmosFailureException) throws JSONException {
-        verifyTokenExchangeFlow(tokenExchangeResponsePayload, null);
+        verifyTokenExchangeFlow(tokenExchangePayload, null);
+        verifyCosmosDbFlow(documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
+    }
+
+    void verifyCosmosDbFlow(String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =

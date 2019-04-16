@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.utils.context.AuthTokenContext.ACCOUNT_ID_LENGTH;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.TOKEN_HISTORY_LIMIT;
 import static org.junit.Assert.assertEquals;
@@ -75,6 +76,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that storage returns the same token. */
         assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
         assertEquals(ACCOUNT_ID, mAuthTokenContext.getHomeAccountId());
+        assertEquals(ACCOUNT_ID.substring(0, Math.min(ACCOUNT_ID_LENGTH, ACCOUNT_ID.length())), mAuthTokenContext.getAccountId());
 
         /* Remove the token from storage. */
         mAuthTokenContext.setAuthToken(null, null, null);
@@ -82,6 +84,7 @@ public class AuthTokenContextAndroidTest {
         /* Assert that there's no token in storage. */
         assertNull(mAuthTokenContext.getAuthToken());
         assertNull(mAuthTokenContext.getHomeAccountId());
+        assertNull(mAuthTokenContext.getAccountId());
 
         /* The same token should't be in history twice in a row. */
         Calendar calendar = Calendar.getInstance();

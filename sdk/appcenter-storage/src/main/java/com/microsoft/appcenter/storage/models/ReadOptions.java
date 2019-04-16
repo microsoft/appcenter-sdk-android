@@ -30,6 +30,9 @@ public class ReadOptions extends BaseOptions {
      * @return whether a document is expired.
      */
     public static boolean isExpired(long expiredAt) {
+        if (expiredAt == BaseOptions.INFINITE) {
+            return false;
+        }
         return Calendar.getInstance().getTimeInMillis() >= expiredAt;
     }
 }

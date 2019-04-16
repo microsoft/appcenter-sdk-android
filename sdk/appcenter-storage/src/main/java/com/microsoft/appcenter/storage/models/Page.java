@@ -15,7 +15,7 @@ public class Page<T> {
     /**
      * Documents in the page.
      */
-    @SerializedName(value = Constants.DOCUMENTS_FILED_NAME)
+    @SerializedName(value = Constants.DOCUMENTS_FIELD_NAME)
     private List<Document<T>> documents;
 
     /**

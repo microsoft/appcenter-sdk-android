@@ -48,6 +48,21 @@ public class Constants {
     public static final String AUTH_TOKEN_FORMAT = "Bearer %s";
 
     /**
+     * Database name.
+     */
+    public static final String DATABASE = "com.microsoft.appcenter.documents";
+
+    /**
+     * Readonly table name.
+     */
+    public static final String READONLY_TABLE = "app_documents";
+
+    /**
+     * User-specific table name format.
+     */
+    public static final String USER_TABLE_FORMAT = "user_%s_documents";
+
+    /**
      * Path where crash logs and temporary files are stored.
      */
     public static String FILES_PATH = null;
