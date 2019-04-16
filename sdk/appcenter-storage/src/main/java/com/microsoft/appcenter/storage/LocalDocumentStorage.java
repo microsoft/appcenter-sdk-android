@@ -30,6 +30,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.DATABASE;
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.USER;
 
@@ -232,7 +233,7 @@ class LocalDocumentStorage {
      */
     boolean deleteOffline(String table, String partition, String documentId) {
         Document<Void> writeDocument = new Document<>(null, partition, documentId);
-        return write(table, writeDocument, new WriteOptions(), Constants.PENDING_OPERATION_DELETE_VALUE) > 0;
+        return write(table, writeDocument, new WriteOptions(), PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
     /**
@@ -330,7 +331,7 @@ class LocalDocumentStorage {
          * clear the pending_operation column, update eTag, download_time and document columns.
          */
         long now = System.currentTimeMillis();
-        if (operation.getExpirationTime() <= now) {
+        if (operation.getExpirationTime() <= now || PENDING_OPERATION_DELETE_VALUE.equals(operation.getOperation())) {
             deletePendingOperation(operation);
         } else {
             mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now));

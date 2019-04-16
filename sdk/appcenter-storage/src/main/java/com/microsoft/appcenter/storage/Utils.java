@@ -12,8 +12,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
@@ -105,12 +103,6 @@ public class Utils {
      */
     public static synchronized void logApiCallFailure(Exception e) {
         AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
-        if (!HttpUtils.isRecoverableError(e)) {
-            if (e instanceof HttpException) {
-                HttpException httpException = (HttpException) e;
-                AppCenterLog.error(LOG_TAG, "Exception", httpException);
-            }
-        }
     }
 
     static String removeAccountIdFromPartitionName(String partition) {
