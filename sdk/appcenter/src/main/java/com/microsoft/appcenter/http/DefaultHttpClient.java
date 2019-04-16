@@ -39,9 +39,9 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public static final String METHOD_DELETE = "DELETE";
 
     /**
-     * Retry after milliseconds duration header key.
+     * Retry after milliseconds duration header.
      */
-    static final String RETRY_AFTER_MS_KEY = "x-ms-retry-after-ms";
+    static final String X_MS_RETRY_AFTER_MS_HEADER = "x-ms-retry-after-ms";
 
     /**
      * Content type header key.

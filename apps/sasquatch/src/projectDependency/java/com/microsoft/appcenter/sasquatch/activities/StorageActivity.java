@@ -5,10 +5,8 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,7 +26,6 @@ import android.widget.Toast;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
-import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
@@ -52,12 +49,6 @@ class TestDocument {
 
 public class StorageActivity extends AppCompatActivity {
 
-    public static String CACHED_PREFIX = "#";
-
-    public static String REMOTE_PREFIX = "!";
-
-    public static ArrayList<String> sUserDocumentList = new ArrayList<>();
-
     private RecyclerView mListView;
 
     private Boolean isLoading = false;
@@ -67,8 +58,6 @@ public class StorageActivity extends AppCompatActivity {
     private CustomItemAdapter mAdapterUser;
 
     private AppDocumentListAdapter mAppDocumentListAdapter;
-
-    private ArrayList<String> mUserDocumentContents = new ArrayList<>();
 
     private StorageType mStorageType = StorageType.READONLY;
 
@@ -145,14 +134,7 @@ public class StorageActivity extends AppCompatActivity {
     private void updateUserDocuments(List<Document<Map>> documents) {
         if (documents == null)
             return;
-
-        for (Document<Map> document : documents) {
-            sUserDocumentList.add(String.format("%s_%s", document.isFromCache() ? CACHED_PREFIX : REMOTE_PREFIX, document.getId()));
-            mUserDocumentContents.add(Utils.getGson().toJson(document.getDocument()));
-        }
-        saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
-        saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
-        mAdapterUser.setList(sUserDocumentList);
+        mAdapterUser.setList(new ArrayList<>(documents));
         mAdapterUser.notifyDataSetChanged();
     }
 
@@ -183,6 +165,35 @@ public class StorageActivity extends AppCompatActivity {
         });
         Storage.list(Constants.READONLY, TestDocument.class).thenAccept(uploadApp);
 
+        /* List the user documents. */
+        mAdapterUser = new CustomItemAdapter(new ArrayList<Document<Map>>(), this);
+        mAdapterUser.setOnItemClickListener(new CustomItemAdapter.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(int position) {
+                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
+                intent.putExtra(USER_DOCUMENT_LIST, mAdapterUser.getItem(position));
+                intent.putExtra(USER_DOCUMENT_CONTENTS, mAdapterUser.getDocumentByPosition(position));
+                startActivity(intent);
+            }
+
+            @Override
+            public void onRemoveClick(final int position) {
+                Storage.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
+
+                    @Override
+                    public void accept(Document<Void> voidDocument) {
+                        if (voidDocument.failed()) {
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
+                        } else {
+                            mAdapterUser.removeItem(position);
+                            mAdapterUser.notifyDataSetChanged();
+                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
         loadUserDocuments();
 
         /* Selector for App VS User documents. */
@@ -205,46 +216,10 @@ public class StorageActivity extends AppCompatActivity {
     private void loadUserDocuments() {
 
         /* List the user documents. */
-        sUserDocumentList.clear();
-        mUserDocumentContents.clear();
-        if (mAdapterUser == null) {
-            mAdapterUser = new CustomItemAdapter(new ArrayList<String>(), this);
-            String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-            if (accountId != null) {
-                Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
-            }
+        String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+        if (accountId != null) {
+            Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
         }
-
-        mAdapterUser.setOnItemClickListener(new CustomItemAdapter.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, UserDocumentDetailActivity.class);
-                intent.putExtra(USER_DOCUMENT_LIST, loadArrayFromPreferences(USER_DOCUMENT_LIST).get(position));
-                intent.putExtra(USER_DOCUMENT_CONTENTS, loadArrayFromPreferences(USER_DOCUMENT_CONTENTS).get(position));
-                startActivity(intent);
-            }
-
-            @Override
-            public void onRemoveClick(final int position) {
-                Storage.delete(Constants.USER, StorageActivity.sUserDocumentList.get(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
-
-                    @Override
-                    public void accept(Document<Void> voidDocument) {
-                        if (voidDocument.failed()) {
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_error), Toast.LENGTH_SHORT).show();
-                        } else {
-                            mUserDocumentContents.remove(position);
-                            sUserDocumentList.remove(position);
-                            saveArrayToPreferences(sUserDocumentList, USER_DOCUMENT_LIST);
-                            saveArrayToPreferences(mUserDocumentContents, USER_DOCUMENT_CONTENTS);
-                            mAdapterUser.notifyDataSetChanged();
-                            Toast.makeText(StorageActivity.this, getResources().getString(R.string.storage_file_remove_success), Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-        });
     }
 
     @Override
@@ -314,27 +289,6 @@ public class StorageActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadUserDocuments();
-    }
-
-    public void saveArrayToPreferences(ArrayList<String> list, String name) {
-        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = MainActivity.sSharedPreferences.edit();
-        editor.putInt("Status_size", list.size());
-        for (int i = 0; i < list.size(); i++) {
-            editor.remove("Status_" + i);
-            editor.putString("Status_" + i, list.get(i));
-        }
-        editor.commit();
-    }
-
-    private ArrayList<String> loadArrayFromPreferences(String name) {
-        MainActivity.sSharedPreferences = getSharedPreferences(name, Context.MODE_PRIVATE);
-        ArrayList<String> list = new ArrayList<>();
-        int size = MainActivity.sSharedPreferences.getInt("Status_size", 0);
-        for (int i = 0; i < size; i++) {
-            list.add(MainActivity.sSharedPreferences.getString("Status_" + i, null));
-        }
-        return list;
     }
 
     private enum StorageType {

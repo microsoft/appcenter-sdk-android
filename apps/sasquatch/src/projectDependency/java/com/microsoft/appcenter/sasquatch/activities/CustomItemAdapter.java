@@ -16,20 +16,20 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.storage.Constants;
-import com.microsoft.appcenter.storage.Storage;
+import com.microsoft.appcenter.storage.Utils;
+import com.microsoft.appcenter.storage.models.Document;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
-
-    private ArrayList<String> mList;
+    private ArrayList<Document<Map>> mList;
     private Context mContext;
-    private CustomItemAdapter.OnItemClickListener listener;
+    private CustomItemAdapter.OnItemClickListener mListener;
 
-    CustomItemAdapter(ArrayList<String> list, Context context) {
-        mList = new ArrayList<>(list);
-        mContext = context;
+    CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
+        this.mList = new ArrayList<>(list);
+        this.mContext = context;
     }
 
     @SuppressLint("InflateParams")
@@ -40,7 +40,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
     }
 
     void setOnItemClickListener(CustomItemAdapter.OnItemClickListener listener) {
-        this.listener = listener;
+        this.mListener = listener;
     }
 
     @Override
@@ -48,17 +48,17 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (listener != null) {
-                    listener.onItemClick(position);
+                if (mListener != null) {
+                    mListener.onItemClick(position);
                 }
             }
         });
-        holder.listItemText.setText(mList.get(position).substring(2));
+        holder.listItemText.setText(mList.get(position).getId());
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (listener != null) {
-                    listener.onRemoveClick(position);
+                if (mListener != null) {
+                    mListener.onRemoveClick(position);
                 }
             }
         });
@@ -74,8 +74,27 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.size();
     }
 
-    public void setList(ArrayList<String> list) {
+    public void setList(ArrayList<Document<Map>> list) {
         this.mList = list;
+    }
+
+    public void removeItem(int position) {
+        this.mList.remove(position);
+    }
+
+    public String getItem(int position) {
+        return mList.get(position).getId();
+    }
+
+    public String getDocumentByPosition(int position) {
+        Document<Map> doc = mList.get(position);
+        return doc == null ? "{}" : Utils.getGson().toJson(doc);
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+
+        void onRemoveClick(int position);
     }
 
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
@@ -88,11 +107,5 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
             listItemText = itemView.findViewById(R.id.property);
             deleteBtn = itemView.findViewById(R.id.delete_button);
         }
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(int position);
-
-        void onRemoveClick(int position);
     }
 }

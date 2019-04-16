@@ -5,19 +5,32 @@
 
 package com.microsoft.appcenter.storage;
 
+import android.support.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
+import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.microsoft.appcenter.Constants.READONLY_TABLE;
+import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
+import static com.microsoft.appcenter.storage.Constants.DOCUMENT_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.ETAG_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.ID_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
+import static com.microsoft.appcenter.storage.Constants.PARTITION_KEY_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.TIMESTAMP_FIELD_NAME;
+import static com.microsoft.appcenter.storage.Constants.USER;
 
 public class Utils {
 
@@ -26,7 +39,13 @@ public class Utils {
     private static final JsonParser sParser = new JsonParser();
 
     static <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
-        return parseDocument(sParser.parse(cosmosDbPayload).getAsJsonObject(), documentType);
+        JsonObject body;
+        try {
+            body = sParser.parse(cosmosDbPayload).getAsJsonObject();
+        } catch (RuntimeException e) {
+            return new Document<>(e);
+        }
+        return parseDocument(body, documentType);
     }
 
     static String getEtag(String cosmosDbPayload) {
@@ -38,21 +57,21 @@ public class Utils {
             return null;
         }
         JsonObject cosmosResponseJson = parsedPayload.getAsJsonObject();
-        return cosmosResponseJson.has(Constants.ETAG_FIELD_NAME) ?
-                cosmosResponseJson.get(Constants.ETAG_FIELD_NAME).getAsString() : null;
+        return cosmosResponseJson.has(ETAG_FIELD_NAME) ?
+                cosmosResponseJson.get(ETAG_FIELD_NAME).getAsString() : null;
     }
 
     private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
-        T document = sGson.fromJson(obj.get(Constants.DOCUMENT_FIELD_NAME), documentType);
         try {
+            T document = sGson.fromJson(obj.get(DOCUMENT_FIELD_NAME), documentType);
             return new Document<>(
                     document,
-                    obj.get(Constants.PARTITION_KEY_FIELD_NAME).getAsString(),
-                    obj.get(Constants.ID_FIELD_NAME).getAsString(),
-                    obj.has(Constants.ETAG_FIELD_NAME) ? obj.get(Constants.ETAG_FIELD_NAME).getAsString() : "",
-                    obj.get(Constants.TIMESTAMP_FIELD_NAME).getAsLong());
-        } catch (Exception exception) {
-            return new Document<>(exception);
+                    obj.get(PARTITION_KEY_FIELD_NAME).getAsString(),
+                    obj.get(ID_FIELD_NAME).getAsString(),
+                    obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : null,
+                    obj.get(TIMESTAMP_FIELD_NAME).getAsLong());
+        } catch (RuntimeException exception) {
+            return new Document<>(new StorageException("Failed to deserialize document.", exception));
         }
     }
 
@@ -62,8 +81,14 @@ public class Utils {
     }
 
     public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
-        JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
-        JsonArray array = objects.get(Constants.DOCUMENTS_FILED_NAME).getAsJsonArray();
+        JsonArray array;
+        try {
+            JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
+            array = objects.get(Constants.DOCUMENTS_FIELD_NAME).getAsJsonArray();
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to deserialize Page.", e);
+            return new Page<>(new StorageException("Failed to deserialize Page.", e));
+        }
         List<Document<T>> documents = new ArrayList<>();
         for (JsonElement object : array) {
             documents.add(parseDocument(object.getAsJsonObject(), documentType));
@@ -77,16 +102,10 @@ public class Utils {
      * @param e Exception to display in the log.
      */
     public static synchronized void logApiCallFailure(Exception e) {
-        AppCenterLog.error(Constants.LOG_TAG, "Failed to call App Center APIs", e);
-        if (!HttpUtils.isRecoverableError(e)) {
-            if (e instanceof HttpException) {
-                HttpException httpException = (HttpException) e;
-                AppCenterLog.error(Constants.LOG_TAG, "Exception", httpException);
-            }
-        }
+        AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
     }
 
-    public static String removeAccountIdFromPartitionName(String partition) {
+    static String removeAccountIdFromPartitionName(String partition) {
         if (partition.equals(Constants.READONLY)) {
             return partition;
         }
@@ -95,5 +114,30 @@ public class Utils {
 
     public static Gson getGson() {
         return sGson;
+    }
+
+    @NonNull
+    static String getTableName(String partition, String accountId) {
+        if (USER.equals(partition)) {
+            return getUserTableName(accountId);
+        }
+        return READONLY_TABLE;
+    }
+
+    static String getUserTableName() {
+        String accountId = AuthTokenContext.getInstance().getAccountId();
+        return accountId == null ? null : getUserTableName(accountId);
+    }
+
+    @NonNull
+    static String getTableName(@NonNull TokenResult tokenResult) {
+        if (tokenResult.partition().startsWith(Constants.USER)) {
+            return getUserTableName(tokenResult.accountId());
+        }
+        return READONLY_TABLE;
+    }
+
+    static String getUserTableName(String accountId) {
+        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
     }
 }

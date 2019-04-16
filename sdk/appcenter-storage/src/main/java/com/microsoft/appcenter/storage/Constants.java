@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final String DOCUMENT_FIELD_NAME = "document";
 
-    public static final String DOCUMENTS_FILED_NAME = "Documents";
+    public static final String DOCUMENTS_FIELD_NAME = "Documents";
 
     public static final String PARTITION_KEY_FIELD_NAME = "PartitionKey";
 
@@ -26,22 +26,22 @@ public final class Constants {
 
     public static final String TIMESTAMP_FIELD_NAME = "_ts";
 
-    public static final int PARTITION_KEY_SUFFIX_LENGTH = 37;
+    static final int PARTITION_KEY_SUFFIX_LENGTH = 37;
 
     /**
      * Pending operation CREATE value.
      */
-    public static final String PENDING_OPERATION_CREATE_VALUE = "CREATE";
+    static final String PENDING_OPERATION_CREATE_VALUE = "CREATE";
 
     /**
      * Pending operation REPLACE value.
      */
-    public static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
+    static final String PENDING_OPERATION_REPLACE_VALUE = "REPLACE";
 
     /**
      * Pending operation DELETE value.
      */
-    public static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
+    static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
 
     /**
      * Base URL to call token exchange service.
@@ -49,14 +49,24 @@ public final class Constants {
     static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.
 
     /**
-     * Cached partition names list file name.
-     */
-    static final String PARTITION_NAMES = "partitions";
-
-    /**
      * Name of the service.
      */
     static final String SERVICE_NAME = "Storage";
+
+    /**
+     * Base key for stored preferences.
+     */
+    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+
+    /**
+     * Cached partition names list file name.
+     */
+    static final String PREFERENCE_PARTITION_NAMES = PREFERENCE_PREFIX + "partitions";
+
+    /**
+     * Cached partition names list file name.
+     */
+    static final String PREFERENCE_PARTITION_PREFIX = PREFERENCE_PREFIX + "partition.";
 
     /**
      * TAG used in logging for Storage.
@@ -72,18 +82,17 @@ public final class Constants {
      * User partition.
      * An authenticated user can read/write documents in this partition.
      */
-    public static String USER = "user";
+    public static final String USER = "user";
 
     /**
      * Readonly partition.
      * Everyone can read documents in this partition.
      * Writes are not allowed via the SDK.
      */
-    @SuppressWarnings("WeakerAccess") //TODO Suppress warning once released to jcenter.
-    public static String READONLY = "readonly";
+    public static final String READONLY = "readonly";
 
     /**
      * The continuation token header used to set continuation token.
      */
-    public static String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";
+    public static final String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";
 }

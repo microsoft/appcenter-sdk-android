@@ -249,6 +249,16 @@ public class AuthTokenContext {
     }
 
     /**
+     * Gets current account ID value.
+     *
+     * @return unique identifier of the account.
+     */
+    public String getAccountId() {
+        String homeAccountId = getHomeAccountId();
+        return homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
+    }
+
+    /**
      * Gets list of auth tokens validity info. It contains tokens and time when it was valid.
      *
      * @return list of auth tokens validity info.

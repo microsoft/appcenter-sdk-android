@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.Page;
 
 import org.junit.Test;
 
@@ -17,8 +18,28 @@ import static org.junit.Assert.assertNull;
 public class UtilsTest {
 
     @Test
-    public void canParseWhenDocumentMalformed() {
+    public void parseDocumentCanHandleInvalidJson() {
         Document<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
+        assertNotNull(document.getDocumentError());
+    }
+
+    @Test
+    public void parseDocumentsCanHandleInvalidJson() {
+        Page<TestDocument> page = Utils.parseDocuments("", TestDocument.class);
+        assertNotNull(page.getError());
+    }
+
+    @Test
+    public void canParseWhenDocumentNull() {
+        Document<TestDocument> document = Utils.parseDocument(null, TestDocument.class);
+        assertNotNull(document.getDocumentError());
+    }
+
+    @Test
+    public void canParseWhenPassedWrongType() {
+        TestDocument testDoc = new TestDocument("test-value");
+        Document<TestDocument> doc = new Document<>(testDoc, "partition", "id");
+        Document<String> document = Utils.parseDocument(doc.toString(), String.class);
         assertNotNull(document.getDocumentError());
     }
 
@@ -39,5 +60,14 @@ public class UtilsTest {
         String partition = "user";
         String partitionNameWithAccountId = partition + "-" + "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
         assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
+    }
+
+    @Test
+    public void checkETagNullByDefault() {
+        Document<Void> document = new Document<>(null, "readonly", "id");
+        document = Utils.parseDocument(Utils.getGson().toJson(document), Void.class);
+        assertNotNull(document);
+        assertNull(document.getDocumentError());
+        assertNull(document.getEtag());
     }
 }

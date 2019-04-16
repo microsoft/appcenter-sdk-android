@@ -9,7 +9,9 @@ package com.microsoft.appcenter.storage.models;
  * Pending operation.
  */
 public class PendingOperation {
-    
+
+    private String table;
+
     private String operation;
 
     private String partition;
@@ -22,12 +24,20 @@ public class PendingOperation {
 
     private long expirationTime;
 
-    public PendingOperation(String operation, String partition, String documentId, String document, long expirationTime) {
+    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime) {
+        this.table = table;
         this.operation = operation;
         this.partition = partition;
         this.documentId = documentId;
         this.document = document;
         this.expirationTime = expirationTime;
+    }
+
+    /**
+     * @return table name the operation is performed on
+     */
+    public String getTable() {
+        return table;
     }
 
     /**

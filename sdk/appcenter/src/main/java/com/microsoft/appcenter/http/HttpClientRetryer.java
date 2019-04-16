@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.RETRY_AFTER_MS_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
 
 /**
  * Decorator managing retries.
@@ -49,7 +49,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
      *
      * @param decoratedApi API to decorate.
      */
-    public HttpClientRetryer(HttpClient decoratedApi) {
+    HttpClientRetryer(HttpClient decoratedApi) {
         this(decoratedApi, new Handler(Looper.getMainLooper()));
     }
 
@@ -64,7 +64,6 @@ public class HttpClientRetryer extends HttpClientDecorator {
         super(decoratedApi);
         mHandler = handler;
     }
-
 
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
@@ -99,19 +98,17 @@ public class HttpClientRetryer extends HttpClientDecorator {
         public void onCallFailed(Exception e) {
             if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
                 long delay = 0;
-
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
-                    if (httpException.getHeaders().containsKey(RETRY_AFTER_MS_KEY)) {
-                        delay = Long.parseLong(httpException.getHeaders().get(RETRY_AFTER_MS_KEY));
+                    String retryAfterMs = httpException.getHeaders().get(X_MS_RETRY_AFTER_MS_HEADER);
+                    if (retryAfterMs != null) {
+                        delay = Long.parseLong(retryAfterMs);
                     }
                 }
-
                 if (delay == 0) {
                     delay = RETRY_INTERVALS[mRetryCount++] / 2;
                     delay += mRandom.nextInt((int) delay);
                 }
-
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
                 if (e instanceof UnknownHostException) {
                     message += " (UnknownHostException)";
