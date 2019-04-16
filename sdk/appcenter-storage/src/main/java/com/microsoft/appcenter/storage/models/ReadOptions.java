@@ -17,11 +17,11 @@ public class ReadOptions extends BaseOptions {
         super(ttl);
     }
 
-    public static ReadOptions CreateInfiniteCacheOption() {
+    public static ReadOptions createInfiniteCacheOptions() {
         return new ReadOptions(BaseOptions.INFINITE);
     }
 
-    public static ReadOptions CreateNoCacheOption() {
+    public static ReadOptions createNoCacheOptions() {
         return new ReadOptions(BaseOptions.NO_CACHE);
     }
 
