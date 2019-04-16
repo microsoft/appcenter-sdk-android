@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.sasquatch.activities;
+package com.microsoft.appcenter.sasquatch.activities.storage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.storage.Utils;
 import com.microsoft.appcenter.storage.models.Document;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     private List<Document<TestDocument>> mList;
     private OnItemClickListener mListener;
 
-    AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
+    public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
         this.mContext = context;
         this.mList = new ArrayList<>(list);
     }
@@ -35,7 +36,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     public void onBindViewHolder(@NonNull AppDocumentListHolder holder, @SuppressLint("RecyclerView") final int position) {
         holder.titleFile.setText(mList.get(position).getId());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
-
+            
             @Override
             public void onClick(View v) {
                 if (mListener != null)
@@ -57,15 +58,16 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         void onItemClick(int position);
     }
 
-    void setOnItemClickListener(OnItemClickListener listener) {
+    public void setOnItemClickListener(OnItemClickListener listener) {
         this.mListener = listener;
     }
 
-    String getDocumentByPosition(int position) {
-        return mList.get(position).getId();
+    public String getDocumentByPosition(int position) {
+        TestDocument document = mList.get(position).getDocument();
+        return document == null ? "{}" : Utils.getGson().toJson(document);
     }
 
-    String getItem(int position) {
+    public String getItem(int position) {
         return mList.get(position).getId();
     }
 

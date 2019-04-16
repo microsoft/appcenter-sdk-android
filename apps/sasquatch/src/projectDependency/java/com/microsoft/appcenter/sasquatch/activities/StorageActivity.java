@@ -25,6 +25,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.storage.AppDocumentListAdapter;
+import com.microsoft.appcenter.sasquatch.activities.storage.CustomItemAdapter;
+import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Storage;
 import com.microsoft.appcenter.storage.models.Document;
@@ -39,12 +42,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
-
-class TestDocument {
-
-    @SuppressWarnings("unused")
-    String key;
-}
 
 public class StorageActivity extends AppCompatActivity {
 
