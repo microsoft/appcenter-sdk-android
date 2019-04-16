@@ -47,9 +47,9 @@ public class StorageActivity extends AppCompatActivity {
 
     private RecyclerView mListView;
 
-    private Boolean isLoading = false;
+    private Boolean mIsLoading = false;
 
-    private MenuItem addNewDocument;
+    private MenuItem mAddNewDocument;
 
     private CustomItemAdapter mAdapterUser;
 
@@ -61,9 +61,9 @@ public class StorageActivity extends AppCompatActivity {
 
     private StorageType mStorageType = StorageType.READONLY;
 
-    private PaginatedDocuments<TestDocument> currentAppDocuments;
+    private PaginatedDocuments<TestDocument> mCurrentAppDocuments;
 
-    private PaginatedDocuments<Map> currentUserDocuments;
+    private PaginatedDocuments<Map> mCurrentUserDocuments;
 
     private TextView mMessageText;
 
@@ -71,7 +71,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private boolean mAppDocumentsLoading;
 
-    private AppCenterConsumer<PaginatedDocuments<TestDocument>> uploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+    private AppCenterConsumer<PaginatedDocuments<TestDocument>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
 
         @Override
         public void accept(PaginatedDocuments<TestDocument> documents) {            
@@ -79,12 +79,12 @@ public class StorageActivity extends AppCompatActivity {
             if (!mUserDocumentsLoading) {
                hideProgress();
             }
-            currentAppDocuments = documents;
+            mCurrentAppDocuments = documents;
             updateAppDocument(documents.getCurrentPage().getItems());
         }
     };
 
-    private AppCenterConsumer<PaginatedDocuments<Map>> uploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
+    private AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
         public void accept(PaginatedDocuments<Map> documents) {            
@@ -92,7 +92,7 @@ public class StorageActivity extends AppCompatActivity {
             if (!mAppDocumentsLoading) {
                 hideProgress();
             }
-            currentUserDocuments = documents;
+            mCurrentUserDocuments = documents;
             updateUserDocuments(documents.getCurrentPage().getItems());
         }
     };
@@ -107,7 +107,7 @@ public class StorageActivity extends AppCompatActivity {
         mStorageTypeSpinner.setEnabled(false);
     }
 
-    private RecyclerView.OnScrollListener scrollAppListener = new RecyclerView.OnScrollListener() {
+    private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -117,13 +117,13 @@ public class StorageActivity extends AppCompatActivity {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (currentAppDocuments != null && currentAppDocuments.hasNextPage() && !isLoading) {
-                isLoading = true;
-                currentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
+            if (mCurrentAppDocuments != null && mCurrentAppDocuments.hasNextPage() && !mIsLoading) {
+                mIsLoading = true;
+                mCurrentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
 
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
-                        isLoading = false;
+                        mIsLoading = false;
                         updateAppDocument(testDocumentPage.getItems());
                     }
                 });
@@ -131,7 +131,7 @@ public class StorageActivity extends AppCompatActivity {
         }
     };
 
-    private RecyclerView.OnScrollListener scrollUserListener = new RecyclerView.OnScrollListener() {
+    private RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -141,9 +141,9 @@ public class StorageActivity extends AppCompatActivity {
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            if (currentUserDocuments != null && currentUserDocuments.hasNextPage() && !isLoading) {
-                isLoading = true;
-                currentUserDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
+            if (mCurrentUserDocuments != null && mCurrentUserDocuments.hasNextPage() && !mIsLoading) {
+                mIsLoading = true;
+                mCurrentUserDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
 
                     @Override
                     public void accept(Page<Map> mapPage) {
@@ -190,7 +190,7 @@ public class StorageActivity extends AppCompatActivity {
         });
         showProgress();
         mAppDocumentsLoading = true;
-        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(uploadApp);
+        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<Document<Map>>(), this);
@@ -246,13 +246,13 @@ public class StorageActivity extends AppCompatActivity {
         /* List the user documents. */
         String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
         if (accountId != null) {
-            Storage.list(Constants.USER, Map.class).thenAccept(uploadUser);
+            Storage.list(Constants.USER, Map.class).thenAccept(mUploadUser);
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        isLoading = false;
+        mIsLoading = false;
         switch (item.getItemId()) {
             case R.id.action_add:
                 switch (mStorageType) {
@@ -286,7 +286,7 @@ public class StorageActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.add, menu);
-        addNewDocument = menu.findItem(R.id.action_add);
+        mAddNewDocument = menu.findItem(R.id.action_add);
         return true;
     }
 
@@ -295,13 +295,13 @@ public class StorageActivity extends AppCompatActivity {
         mStorageType = StorageType.values()[position];
         switch (mStorageType) {
             case READONLY:
-                addNewDocument.setVisible(false);
+                mAddNewDocument.setVisible(false);
                 mListView.setAdapter(mAppDocumentListAdapter);
-                mListView.addOnScrollListener(scrollAppListener);
+                mListView.addOnScrollListener(mScrollAppListener);
                 break;
             case USER:
-                addNewDocument.setVisible(true);
-                mListView.removeOnScrollListener(scrollUserListener);
+                mAddNewDocument.setVisible(true);
+                mListView.removeOnScrollListener(mScrollUserListener);
                 String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                 if (accountId != null) {
                     mListView.setAdapter(mAdapterUser);
