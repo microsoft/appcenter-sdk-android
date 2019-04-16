@@ -27,6 +27,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class Utils {
 
     private static class DateAdapter implements JsonSerializer<Date>, JsonDeserializer<Date> {
 
-        private final SimpleDateFormat mDateFormat;
+        private final DateFormat mDateFormat;
 
         DateAdapter() {
             mDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
@@ -61,12 +62,12 @@ public class Utils {
         }
 
         @Override
-        public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+        public synchronized JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
             return new JsonPrimitive(mDateFormat.format(src));
         }
 
         @Override
-        public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public synchronized Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try {
                 return mDateFormat.parse(json.getAsString());
             } catch (ParseException e) {
