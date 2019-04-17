@@ -141,7 +141,7 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
 
         /* Reset pending operation column to null. */
-        mLocalDocumentStorage.resetPendingOperationColumnToNull(operation);
+        mLocalDocumentStorage.updatePendingOperation(operation);
 
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
 
@@ -272,7 +272,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(document.getDocumentError());
 
         /* When we delete after coming back online. */
-        mLocalDocumentStorage.resetPendingOperationColumnToNull(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE));
+        mLocalDocumentStorage.updatePendingOperation(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE, 0, 0));
 
         /* Then the entry is removed from cache. */
         document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);

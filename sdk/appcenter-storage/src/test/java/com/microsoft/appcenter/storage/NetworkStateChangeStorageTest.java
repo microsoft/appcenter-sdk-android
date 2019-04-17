@@ -53,7 +53,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -78,7 +80,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(ETAG, documentMetadata.getEtag());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).resetPendingOperationColumnToNull(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -96,7 +98,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -106,7 +110,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).resetPendingOperationColumnToNull(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -136,7 +140,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
-                        BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                        BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                        0,
+                        0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -160,7 +166,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).resetPendingOperationColumnToNull(pendingOperationCaptor.capture());
+        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
         PendingOperation capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
@@ -180,7 +186,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
-                            BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS));
+                            BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                            0,
+                            0));
                 }});
         mStorage.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
@@ -212,7 +220,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -240,7 +250,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -264,7 +276,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
 
-        verify(mLocalDocumentStorage).resetPendingOperationColumnToNull(eq(pendingOperation));
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
     @Test
@@ -275,7 +287,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -309,7 +323,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);

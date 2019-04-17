@@ -276,7 +276,9 @@ class LocalDocumentStorage {
                         values.getAsString(PARTITION_COLUMN_NAME),
                         values.getAsString(DOCUMENT_ID_COLUMN_NAME),
                         values.getAsString(DOCUMENT_COLUMN_NAME),
-                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME)));
+                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
+                        values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
             }
         } finally {
             cursor.close();
@@ -325,33 +327,20 @@ class LocalDocumentStorage {
     }
 
     /**
-     * Reset pending_operation column of the specified operation to null.
+     * Update the pending operation.
      *
      * @param operation Pending operation to update.
      */
-    void resetPendingOperationColumnToNull(PendingOperation operation) {
-        ContentValues values = getContentValuesByPendingOperation(operation);
-        if (values != null) {
-            values.put(PENDING_OPERATION_COLUMN_NAME, (String) null);
-            mDatabaseManager.replace(operation.getTable(), values);
-        }
-    }
-
-    private ContentValues getContentValuesByPendingOperation(PendingOperation operation) {
-        Cursor cursor;
-        try {
-            cursor = mDatabaseManager.getCursor(
-                    operation.getTable(),
-                    getPartitionAndDocumentIdQueryBuilder(),
-                    null,
-                    new String[]{operation.getPartition(), operation.getDocumentId()},
-                    null);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
-            return null;
-        }
-
-        /* There should be only one row per pending operation. */
-        return mDatabaseManager.nextValues(cursor);
+    void updatePendingOperation(PendingOperation operation) {
+        ContentValues values = getContentValues(
+                operation.getPartition(),
+                operation.getDocumentId(),
+                operation.getDocument(),
+                operation.getEtag(),
+                operation.getExpirationTime(),
+                operation.getDownloadTime(),
+                operation.getOperationTime(),
+                operation.getOperation());
+        mDatabaseManager.replace(operation.getTable(), values);
     }
 }

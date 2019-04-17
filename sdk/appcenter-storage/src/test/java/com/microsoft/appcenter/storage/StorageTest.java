@@ -987,7 +987,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -1022,7 +1024,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
@@ -1050,21 +1054,27 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         final PendingOperation createPendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
                 "anything2",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         final PendingOperation replacePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
                 "anything3",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME))
                 .thenReturn(Arrays.asList(deletePendingOperation, createPendingOperation, replacePendingOperation));
@@ -1117,7 +1127,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
@@ -1152,7 +1164,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                0,
+                0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(deletePendingOperation));
 

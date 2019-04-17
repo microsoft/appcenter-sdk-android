@@ -902,7 +902,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 } else {
 
                     /* Clear the pending_operation column if cosmos Db was updated successfully. */
-                    mLocalDocumentStorage.resetPendingOperationColumnToNull(pendingOperation);
+                    pendingOperation.setOperation(null);
+                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
