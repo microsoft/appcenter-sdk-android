@@ -29,7 +29,6 @@ import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Utils.logApiCallFailure;
 
 public class TokenExchange {
 
@@ -115,14 +114,12 @@ public class TokenExchange {
                 }
             } catch (JsonSyntaxException e) {
                 String message = "Token response is not valid JSON";
-                AppCenterLog.warn(LOG_TAG, message, e);
                 onCallFailed(new StorageException(message, e));
             }
         }
 
         @Override
         public void onCallFailed(Exception e) {
-            logApiCallFailure(e);
             completeFuture(e);
         }
 
