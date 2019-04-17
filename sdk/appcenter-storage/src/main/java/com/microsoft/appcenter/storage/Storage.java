@@ -936,9 +936,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             null,
                             new DocumentError(e));
                 }
-                if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
+                if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
 
-                    /* Remove the document if document was removed on the server, or expiration_time has elapsed, or it is a delete operation. */
+                    /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
                     mLocalDocumentStorage.deletePendingOperation(pendingOperation);
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));

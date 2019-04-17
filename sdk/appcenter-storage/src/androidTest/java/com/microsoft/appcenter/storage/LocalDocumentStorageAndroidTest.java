@@ -141,17 +141,12 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
 
         /* Reset pending operation column to null. */
+        operation.setOperation(null);
         mLocalDocumentStorage.updatePendingOperation(operation);
 
+        /* Retrieve the operations where pending_operation is not null. */
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
-
-        assertEquals(1, operations.size());
-        operation = operations.get(0);
-        assertEquals(Constants.USER, operation.getPartition());
-        assertEquals(ID, operation.getDocumentId());
-
-        /* Verify pending_operation column is null. */
-        assertNull(operation.getOperation());
+        assertEquals(0, operations.size());
     }
 
     @Test

@@ -21,6 +21,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -90,6 +91,10 @@ abstract public class AbstractStorageTest {
     static final String TEST_FIELD_VALUE = "Test Value";
 
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
+
+    static final long TIMESTAMP_TOMORROW = System.currentTimeMillis() + BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
+
+    static final long TIMESTAMP_YESTERDAY = System.currentTimeMillis() - BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
 
     final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +

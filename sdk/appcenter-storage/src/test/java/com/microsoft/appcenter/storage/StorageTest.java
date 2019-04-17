@@ -15,7 +15,6 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.exception.StorageException;
-import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.DocumentError;
@@ -986,7 +985,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -1010,7 +1009,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
-        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
     }
 
     @Test
@@ -1023,7 +1022,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -1053,7 +1052,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         final PendingOperation createPendingOperation = new PendingOperation(
@@ -1062,7 +1061,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything2",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         final PendingOperation replacePendingOperation = new PendingOperation(
@@ -1071,7 +1070,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything3",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -1126,7 +1125,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -1150,7 +1149,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
-        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
     }
 
     @Test
@@ -1163,7 +1162,7 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS,
+                TIMESTAMP_TOMORROW,
                 0,
                 0);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
