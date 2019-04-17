@@ -122,10 +122,10 @@ public class TokenExchange {
         private TokenResult parseTokenResult(String payload) {
             TokensResponse tokensResponse = Utils.getGson().fromJson(payload, TokensResponse.class);
             if (tokensResponse != null &&
-                    tokensResponse.tokens() != null &&
-                    tokensResponse.tokens().size() == 1 &&
-                    tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
-                TokenResult tokenResult = tokensResponse.tokens().get(0);
+                    tokensResponse.getTokens() != null &&
+                    tokensResponse.getTokens().size() == 1 &&
+                    tokensResponse.getTokens().get(0).getStatus().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
+                TokenResult tokenResult = tokensResponse.getTokens().get(0);
                 mTokenManager.setCachedToken(tokenResult);
                 return tokenResult;
             }

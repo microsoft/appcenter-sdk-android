@@ -200,7 +200,7 @@ public class StorageActivity extends AppCompatActivity {
 
                     @Override
                     public void accept(Document<Void> voidDocument) {
-                        if (voidDocument.failed()) {
+                        if (voidDocument.hasFailed()) {
                             Toast.makeText(StorageActivity.this, R.string.storage_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {
                             mAdapterUser.removeItem(position);

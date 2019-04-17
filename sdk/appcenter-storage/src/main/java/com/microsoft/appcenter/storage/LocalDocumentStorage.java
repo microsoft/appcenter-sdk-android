@@ -131,6 +131,18 @@ class LocalDocumentStorage {
         write(table, document, writeOptions, null);
     }
 
+    private static ContentValues getContentValues(PendingOperation operation, long now) {
+        return getContentValues(
+                operation.getPartition(),
+                operation.getDocumentId(),
+                operation.getDocument(),
+                operation.getETag(),
+                operation.getExpirationTime(),
+                now,
+                now,
+                operation.getOperation());
+    }
+
     private <T> long write(String table, Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
@@ -141,57 +153,13 @@ class LocalDocumentStorage {
                 document.getPartition(),
                 document.getId(),
                 document.toString(),
-                document.getEtag(),
+                document.getETag(),
                 writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
                         BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
                 now,
                 now,
                 pendingOperationValue);
         return mDatabaseManager.replace(table, values);
-    }
-
-    @NonNull
-    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
-        AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
-        Cursor cursor;
-        ContentValues values;
-        try {
-            cursor = mDatabaseManager.getCursor(
-                    table,
-                    getPartitionAndDocumentIdQueryBuilder(),
-                    null,
-                    new String[]{partition, documentId},
-                    EXPIRATION_TIME_COLUMN_NAME + " DESC");
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
-            return new Document<>(FAILED_TO_READ_FROM_CACHE, e);
-        }
-
-        /* We only expect one value as we do upserts in the `write` method */
-        values = mDatabaseManager.nextValues(cursor);
-        if (values != null) {
-            if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
-                mDatabaseManager.delete(table, cursor.getLong(0));
-                AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-                return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
-            }
-            Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
-            if (document.failed()) {
-                Throwable error = document.getDocumentError().getError();
-                AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
-                return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
-            }
-            document.setIsFromCache(true);
-            document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-
-            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
-            if (readOptions != null) {
-                write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-            }
-            return document;
-        }
-        AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-        return new Document<>(new StorageException("Document was not found in the cache."));
     }
 
     private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
@@ -338,15 +306,47 @@ class LocalDocumentStorage {
         }
     }
 
-    private static ContentValues getContentValues(PendingOperation operation, long now) {
-        return getContentValues(
-                operation.getPartition(),
-                operation.getDocumentId(),
-                operation.getDocument(),
-                operation.getEtag(),
-                operation.getExpirationTime(),
-                now,
-                now,
-                operation.getOperation());
+    @NonNull
+    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+        AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
+        Cursor cursor;
+        ContentValues values;
+        try {
+            cursor = mDatabaseManager.getCursor(
+                    table,
+                    getPartitionAndDocumentIdQueryBuilder(),
+                    null,
+                    new String[]{partition, documentId},
+                    EXPIRATION_TIME_COLUMN_NAME + " DESC");
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
+            return new Document<>(FAILED_TO_READ_FROM_CACHE, e);
+        }
+
+        /* We only expect one value as we do upserts in the `write` method */
+        values = mDatabaseManager.nextValues(cursor);
+        if (values != null) {
+            if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
+                mDatabaseManager.delete(table, cursor.getLong(0));
+                AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
+                return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
+            }
+            Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
+            if (document.hasFailed()) {
+                Throwable error = document.getDocumentError().getError();
+                AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
+                return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
+            }
+            document.setFromCache(true);
+            document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+
+            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
+            if (readOptions != null) {
+                write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+            }
+            return document;
+        }
+        AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
+        return new Document<>(new StorageException("Document was not found in the cache."));
     }
 }

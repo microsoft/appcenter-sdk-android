@@ -77,7 +77,7 @@ public class TokenManager {
             if (!includeExpiredToken) {
 
                 /* If the token is expired. */
-                if (System.currentTimeMillis() >= token.expiresOn().getTime()) {
+                if (System.currentTimeMillis() >= token.getExpirationDate().getTime()) {
                     AppCenterLog.warn(LOG_TAG, String.format("Cached token result is expired for partition '%s'", partitionName));
                     return null;
                 }
@@ -96,7 +96,7 @@ public class TokenManager {
      */
     public synchronized void setCachedToken(TokenResult tokenResult) {
         Set<String> partitionNamesSet = getPartitionNames();
-        String removedAccountIdPartition = Utils.removeAccountIdFromPartitionName(tokenResult.partition());
+        String removedAccountIdPartition = Utils.removeAccountIdFromPartitionName(tokenResult.getPartition());
         if (!partitionNamesSet.contains(removedAccountIdPartition)) {
             partitionNamesSet.add(removedAccountIdPartition);
             SharedPreferencesManager.putStringSet(PREFERENCE_PARTITION_NAMES, partitionNamesSet);

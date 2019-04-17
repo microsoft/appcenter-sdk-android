@@ -18,21 +18,21 @@ import com.microsoft.appcenter.storage.exception.StorageException;
 public class Document<T> {
 
     @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
-    private String partition;
+    private String mPartition;
 
     @SerializedName(value = Constants.ID_FIELD_NAME)
-    private String id;
+    private String mId;
 
     @SerializedName(value = Constants.ETAG_FIELD_NAME)
-    private String eTag;
+    private String mETag;
 
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
-    private long timestamp;
+    private long mTimestamp;
 
     @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
-    private T document;
+    private T mDocument;
 
-    private transient DocumentError documentError;
+    private transient DocumentError mDocumentError;
 
     private transient boolean mFromCache;
 
@@ -42,24 +42,24 @@ public class Document<T> {
     }
 
     public Document(T document, String partition, String id) {
-        this.partition = partition;
-        this.id = id;
-        this.document = document;
+        mPartition = partition;
+        mId = id;
+        mDocument = document;
     }
 
     public Document(T document, String partition, String id, String eTag, long timestamp) {
         this(document, partition, id);
-        this.eTag = eTag;
-        this.timestamp = timestamp;
-        this.document = document;
+        mETag = eTag;
+        mTimestamp = timestamp;
+        mDocument = document;
     }
 
     public Document(Throwable exception) {
-        this.documentError = new DocumentError(exception);
+        mDocumentError = new DocumentError(exception);
     }
 
     public Document(String message, Throwable exception) {
-        this.documentError = new DocumentError(new StorageException(message, exception));
+        mDocumentError = new DocumentError(new StorageException(message, exception));
     }
 
     /**
@@ -68,7 +68,7 @@ public class Document<T> {
      * @return Deserialized document.
      */
     public T getDocument() {
-        return document;
+        return mDocument;
     }
 
     /**
@@ -77,7 +77,7 @@ public class Document<T> {
      * @return Document error.
      */
     public DocumentError getDocumentError() {
-        return documentError;
+        return mDocumentError;
     }
 
     /**
@@ -86,7 +86,7 @@ public class Document<T> {
      * @return Document partition.
      */
     public String getPartition() {
-        return partition;
+        return mPartition;
     }
 
     /**
@@ -95,16 +95,16 @@ public class Document<T> {
      * @return Document id.
      */
     public String getId() {
-        return id;
+        return mId;
     }
 
     /**
-     * Get Etag.
+     * Get ETag.
      *
-     * @return Etag.
+     * @return ETag.
      */
-    public String getEtag() {
-        return eTag;
+    public String getETag() {
+        return mETag;
     }
 
     /**
@@ -113,7 +113,7 @@ public class Document<T> {
      * @return UTC unix timestamp.
      */
     public long getTimestamp() {
-        return timestamp;
+        return mTimestamp;
     }
 
     /**
@@ -137,8 +137,8 @@ public class Document<T> {
     /**
      * Set the flag indicating if data was retrieved from the local cache (for offline mode)
      */
-    public void setIsFromCache(boolean fromCache) {
-        this.mFromCache = fromCache;
+    public void setFromCache(boolean fromCache) {
+        mFromCache = fromCache;
     }
 
     /**
@@ -154,13 +154,13 @@ public class Document<T> {
      * @param pendingOperation The pending operation saved in the local storage.
      */
     public void setPendingOperation(String pendingOperation) {
-        this.mPendingOperation = pendingOperation;
+        mPendingOperation = pendingOperation;
     }
 
     /**
-     * @return whether the document has an error associated with it
+     * @return whether the document has an error associated with it.
      */
-    public boolean failed() {
-        return this.getDocumentError() != null;
+    public boolean hasFailed() {
+        return getDocumentError() != null;
     }
 }
