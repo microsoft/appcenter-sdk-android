@@ -59,7 +59,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
         @Override
         public void accept(Document<TestDocument> document) {
-            if (document.failed()) {
+            if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_success), mDocumentId), Toast.LENGTH_SHORT).show();
@@ -72,7 +72,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
         @Override
         public void accept(Document<Map> document) {
-            if (document.failed()) {
+            if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_success), mDocumentId), Toast.LENGTH_SHORT).show();

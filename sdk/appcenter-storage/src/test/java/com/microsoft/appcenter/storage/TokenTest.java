@@ -66,10 +66,10 @@ public class TokenTest extends AbstractStorageTest {
                 public void callCosmosDb(TokenResult tokenResult) {
 
                     /* Get and verify token. */
-                    assertEquals(TOKEN, tokenResult.token());
+                    assertEquals(TOKEN, tokenResult.getToken());
 
                     /* Get and verify the account id. */
-                    assertEquals(ACCOUNT_ID, tokenResult.accountId());
+                    assertEquals(ACCOUNT_ID, tokenResult.getAccountId());
                 }
             };
 
@@ -150,13 +150,13 @@ public class TokenTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(READONLY)
-                .withExpirationTime(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withToken(TOKEN));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setPartition(READONLY)
+                .setExpirationDate(expirationDate.getTime())
+                .setDbName("db")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collection")
+                .setToken(TOKEN));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
@@ -166,7 +166,7 @@ public class TokenTest extends AbstractStorageTest {
         Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
-        assertEquals(TOKEN, tokenResultCapture.getValue().token());
+        assertEquals(TOKEN, tokenResultCapture.getValue().getToken());
     }
 
     @Test
@@ -176,13 +176,13 @@ public class TokenTest extends AbstractStorageTest {
         String inValidToken = "invalid";
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, -1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withDbAccount("lemmings-01-8f37d78902")
-                .withDbCollectionName("collection")
-                .withStatus("Succeed")
-                .withPartition(READONLY)
-                .withExpirationTime(expirationDate.getTime())
-                .withToken(inValidToken));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("lemmings-01-8f37d78902")
+                .setDbCollectionName("collection")
+                .setStatus("Succeed")
+                .setPartition(READONLY)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken(inValidToken));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
@@ -232,24 +232,17 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canHandleWhenExpiresOnInvalidFormat() {
-        TokenResult result = new TokenResult();
-        assertEquals(new Date(0), result.expiresOn());
-        result.withExpirationTime(null);
-    }
-
-    @Test
     public void cachedTokenPartitionKeyDoesNotContainUserId() {
 
         /* Create a partition and corresponding TokenResult. */
         String partition = "partition";
         String accountId = "accountId";
         String partitionWithAccountId = partition + "-" + accountId;
-        Gson gson = new Gson();
+        Gson gson = Utils.getGson();
         mockStatic(Utils.class);
         when(Utils.removeAccountIdFromPartitionName(partitionWithAccountId)).thenReturn(partition);
         when(Utils.getGson()).thenReturn(gson);
-        TokenResult result = new TokenResult().withPartition(partitionWithAccountId).withAccountId(accountId);
+        TokenResult result = new TokenResult().setPartition(partitionWithAccountId).setAccountId(accountId);
         Set<String> partitions = new HashSet<>();
         partitions.add(partition);
 

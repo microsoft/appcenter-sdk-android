@@ -10,20 +10,19 @@ package com.microsoft.appcenter.storage.models;
  */
 public class DocumentError {
 
-    private Throwable exception;
+    private Throwable mException;
 
     /**
      * @param exception that occurred during the network state change.
      */
-    @SuppressWarnings("WeakerAccess")
     public DocumentError(Throwable exception) {
-        this.exception = exception;
+        mException = exception;
     }
 
     /**
      * @return underlying exception.
      */
     public Throwable getError() {
-        return exception;
+        return mException;
     }
 }

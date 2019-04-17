@@ -16,7 +16,7 @@ public class TokenResultTest {
     @Test
     public void setAccountId() {
         TokenResult result = new TokenResult();
-        result.withAccountId("someId");
-        assertEquals("someId", result.accountId());
+        result.setAccountId("someId");
+        assertEquals("someId", result.getAccountId());
     }
 }

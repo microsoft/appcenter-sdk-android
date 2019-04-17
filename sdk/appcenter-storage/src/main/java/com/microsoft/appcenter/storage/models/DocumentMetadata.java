@@ -6,28 +6,28 @@
 package com.microsoft.appcenter.storage.models;
 
 public class DocumentMetadata {
-    
-    private String partition;
-    
-    private String documentId;
-    
-    private String etag;
 
-    public DocumentMetadata(String partition, String documentId, String etag) {
-        this.partition = partition;
-        this.documentId = documentId;
-        this.etag = etag;
+    private String mPartition;
+
+    private String mDocumentId;
+
+    private String mETag;
+
+    public DocumentMetadata(String partition, String documentId, String eTag) {
+        mPartition = partition;
+        mDocumentId = documentId;
+        mETag = eTag;
     }
 
     public String getPartition() {
-        return partition;
+        return mPartition;
     }
 
     public String getDocumentId() {
-        return documentId;
+        return mDocumentId;
     }
 
-    public String getEtag() {
-        return etag;
+    public String getETag() {
+        return mETag;
     }
 }

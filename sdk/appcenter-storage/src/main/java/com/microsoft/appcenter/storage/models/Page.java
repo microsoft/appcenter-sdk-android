@@ -16,18 +16,18 @@ public class Page<T> {
      * Documents in the page.
      */
     @SerializedName(value = Constants.DOCUMENTS_FIELD_NAME)
-    private List<Document<T>> documents;
+    private List<Document<T>> mItems;
 
     /**
      * Document error.
      */
-    private DocumentError error;
+    private transient DocumentError mError;
 
     public Page() {
     }
 
     public Page(Exception exception) {
-        this.error = new DocumentError(exception);
+        mError = new DocumentError(exception);
     }
 
     /**
@@ -36,11 +36,11 @@ public class Page<T> {
      * @return Documents in current page.
      */
     public List<Document<T>> getItems() {
-        return documents;
+        return mItems;
     }
 
-    public Page<T> withDocuments(List<Document<T>> documents) {
-        this.documents = documents;
+    public Page<T> setItems(List<Document<T>> items) {
+        mItems = items;
         return this;
     }
 
@@ -50,6 +50,6 @@ public class Page<T> {
      * @return DocumentError.
      */
     public DocumentError getError() {
-        return error;
+        return mError;
     }
 }

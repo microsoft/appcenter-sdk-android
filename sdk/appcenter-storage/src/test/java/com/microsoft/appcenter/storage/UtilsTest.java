@@ -73,7 +73,7 @@ public class UtilsTest {
         document = Utils.parseDocument(Utils.getGson().toJson(document), Void.class);
         assertNotNull(document);
         assertNull(document.getDocumentError());
-        assertNull(document.getEtag());
+        assertNull(document.getETag());
     }
 
     @Test
