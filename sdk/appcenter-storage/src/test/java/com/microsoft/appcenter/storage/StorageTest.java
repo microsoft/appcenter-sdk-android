@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -718,7 +717,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
                 .setDbName("db")
@@ -771,7 +770,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
                 .setDbName("db")
@@ -813,7 +812,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
                 .setDbName("db")
@@ -854,7 +853,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
                 .setDbName("db")
