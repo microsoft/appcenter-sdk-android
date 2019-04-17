@@ -1007,7 +1007,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
-        assertNull(documentMetadata.getEtag());
+        assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
@@ -1071,9 +1071,9 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .withPartition(RESOLVED_USER_PARTITION)
-                .withExpirationTime(expirationDate.getTime())
+                .withExpirationDate(expirationDate.getTime())
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
@@ -1137,7 +1137,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
-        assertNull(documentMetadata.getEtag());
+        assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
@@ -1158,9 +1158,9 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .withPartition(RESOLVED_USER_PARTITION)
-                .withExpirationTime(expirationDate.getTime())
+                .withExpirationDate(expirationDate.getTime())
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")

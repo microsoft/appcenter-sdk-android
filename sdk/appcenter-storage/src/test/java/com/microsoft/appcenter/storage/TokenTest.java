@@ -150,7 +150,7 @@ public class TokenTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .withPartition(READONLY)
                 .withExpirationDate(expirationDate.getTime())
                 .withDbName("db")
@@ -176,7 +176,7 @@ public class TokenTest extends AbstractStorageTest {
         String inValidToken = "invalid";
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, -1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .withDbAccount("lemmings-01-8f37d78902")
                 .withDbCollectionName("collection")
                 .withStatus("Succeed")
@@ -238,7 +238,7 @@ public class TokenTest extends AbstractStorageTest {
         String partition = "partition";
         String accountId = "accountId";
         String partitionWithAccountId = partition + "-" + accountId;
-        Gson gson = new Gson();
+        Gson gson = Utils.getGson();
         mockStatic(Utils.class);
         when(Utils.removeAccountIdFromPartitionName(partitionWithAccountId)).thenReturn(partition);
         when(Utils.getGson()).thenReturn(gson);
