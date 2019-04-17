@@ -7,14 +7,8 @@ package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.json.JSONException;
 
 import java.util.Date;
-
-import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 /**
  * Token fetch result.
@@ -68,7 +62,7 @@ public class TokenResult {
      */
     @Expose
     @SerializedName(value = "expiresOn")
-    private String mExpirationDate;
+    private Date mExpirationDate;
 
     /**
      * The account id.
@@ -92,15 +86,7 @@ public class TokenResult {
      * @return The token expiration date value.
      */
     public Date getExpirationDate() {
-        try {
-            return JSONDateUtils.toDate(mExpirationDate);
-        } catch (JSONException ex) {
-            AppCenterLog.error(
-                    LOG_TAG, String.format(
-                            "Unable to convert '%s' to ISO 8601 Date format ",
-                            mExpirationDate));
-            return new Date(0);
-        }
+        return mExpirationDate;
     }
 
     /**
@@ -117,16 +103,11 @@ public class TokenResult {
     /**
      * Set the token expiration time value.
      *
-     * @param expiresOn Token expiration time value to set.
+     * @param expirationDate Token expiration time value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withExpirationDate(Date expiresOn) {
-        try {
-            mExpirationDate = JSONDateUtils.toString(expiresOn);
-        } catch (JSONException e) {
-            AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string", e);
-            mExpirationDate = null;
-        }
+    public TokenResult withExpirationDate(Date expirationDate) {
+        mExpirationDate = expirationDate;
         return this;
     }
 

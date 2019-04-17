@@ -232,13 +232,6 @@ public class TokenTest extends AbstractStorageTest {
     }
 
     @Test
-    public void canHandleWhenExpiresOnInvalidFormat() {
-        TokenResult result = new TokenResult();
-        assertEquals(new Date(0), result.getExpirationDate());
-        result.withExpirationDate(null);
-    }
-
-    @Test
     public void cachedTokenPartitionKeyDoesNotContainUserId() {
 
         /* Create a partition and corresponding TokenResult. */
