@@ -712,7 +712,6 @@ public class StorageTest extends AbstractStorageTest {
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -744,9 +743,13 @@ public class StorageTest extends AbstractStorageTest {
                     }
                 });
 
-        /* When disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Set up listener. */
+        Storage.unsetInstance();
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Verify additional headers does not contain the upsert key. */
         assertNull(headers.getValue());
@@ -765,7 +768,6 @@ public class StorageTest extends AbstractStorageTest {
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -797,9 +799,13 @@ public class StorageTest extends AbstractStorageTest {
                     }
                 });
 
-        /* When disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Set up listener. */
+        Storage.unsetInstance();
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Verify additional headers is not null so it contains upsert key. */
         assertNotNull(headers.getValue());
@@ -1178,11 +1184,14 @@ public class StorageTest extends AbstractStorageTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+
+        /* Set up listener. */
+        Storage.unsetInstance();
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        /* When disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Verify pending operation get processed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
@@ -1212,11 +1221,14 @@ public class StorageTest extends AbstractStorageTest {
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
+
+        /* Set up listener. */
+        Storage.unsetInstance();
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        /* When disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Verify pending operation is not get processed. */
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
@@ -1273,11 +1285,14 @@ public class StorageTest extends AbstractStorageTest {
         when(mHttpClient.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(serviceCallMock1).thenReturn(serviceCallMock2).thenReturn(serviceCallMock3);
+
+        /* Set up listener. */
+        Storage.unsetInstance();
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        /* Disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Await the result to make sure that disabling has completed by the time we verify. */
         Storage.setEnabled(false).get();
@@ -1307,12 +1322,15 @@ public class StorageTest extends AbstractStorageTest {
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
-        /* Disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Set up listener. */
+        Storage.unsetInstance();
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Verify only one pending operation has been executed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
@@ -1330,7 +1348,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void TestPartiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
+    public void partiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
 
         /* If we have one pending operation, and network is on. */
         final PendingOperation deletePendingOperation = new PendingOperation(
@@ -1359,11 +1377,14 @@ public class StorageTest extends AbstractStorageTest {
         when(mHttpClient.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(null);
+
+        /* Set up listener. */
+        Storage.unsetInstance();
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        /* Disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false).get();
-        Storage.setEnabled(true).get();
+        /* Start storage. */
+        mStorage = Storage.getInstance();
+        mChannel = start(mStorage);
 
         /* Ensure that this does not throw. */
         Storage.setEnabled(false).get();
