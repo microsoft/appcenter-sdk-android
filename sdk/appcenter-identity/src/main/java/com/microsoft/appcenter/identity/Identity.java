@@ -638,7 +638,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
                     /*
                      * Fallback to using an access token, as MSAL sometimes return null for this.
-                     * access token is @NonNull.
+                     * Access token is @NonNull.
                      */
                     AppCenterLog.warn(LOG_TAG, "Sign-in result does not contain ID token, using access token.");
                     token = authenticationResult.getAccessToken();

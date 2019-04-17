@@ -14,7 +14,6 @@ import android.util.Log;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
@@ -25,7 +24,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
@@ -43,8 +41,6 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mockito;
-import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -53,10 +49,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -89,12 +83,11 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({NetworkStateHelper.class})
+@PrepareForTest
 public class IdentityTest extends AbstractIdentityTest {
 
     private static final String APP_SECRET = "5c9edcf2-d8d8-426d-8c20-817eb9378b08";
@@ -132,6 +125,8 @@ public class IdentityTest extends AbstractIdentityTest {
         Channel channel = start(identity);
         verify(channel).removeGroup(eq(identity.getGroupName()));
         verify(channel).addGroup(eq(identity.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
 
         /* Now we can see the service enabled. */
         assertTrue(Identity.isEnabled().get());
@@ -139,6 +134,8 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Identity.setEnabled(false).get();
         assertFalse(Identity.isEnabled().get());
+        verify(mAuthTokenContext).removeListener(any(AuthTokenContext.Listener.class));
+        verify(mNetworkStateHelper).removeListener(any(NetworkStateHelper.Listener.class));
         verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
@@ -156,14 +153,12 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void downloadFullInvalidConfiguration() throws Exception {
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         start(Identity.getInstance());
 
         /* When we get an invalid payload. */
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
         serviceCallback.onCallSucceeded("invalid", new HashMap<String, String>());
@@ -175,9 +170,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
     private void testInvalidConfig(JSONObject jsonConfig) throws Exception {
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -188,7 +181,7 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signIn();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* We didn't attempt to even save. */
         verifyStatic();
@@ -262,9 +255,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -276,7 +267,7 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signIn();
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration is cached. */
         verifyStatic();
@@ -313,14 +304,12 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireToken(any(Activity.class), notNull(String[].class), notNull(AuthenticationCallback.class));
 
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Go foreground. */
         identity.onActivityResumed(mock(Activity.class));
@@ -361,14 +350,12 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Go foreground. */
         identity.onActivityResumed(mock(Activity.class));
@@ -413,9 +400,7 @@ public class IdentityTest extends AbstractIdentityTest {
             }
         }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -424,7 +409,7 @@ public class IdentityTest extends AbstractIdentityTest {
         FileManager.write(any(File.class), anyString());
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration caching attempted. */
         verifyStatic();
@@ -505,14 +490,12 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration caching attempted. */
         verifyStatic();
@@ -565,14 +548,12 @@ public class IdentityTest extends AbstractIdentityTest {
             }
         }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration caching attempted. */
         verifyStatic();
@@ -627,14 +608,12 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration caching attempted. */
         verifyStatic();
@@ -697,14 +676,12 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Verify configuration caching attempted. */
         verifyStatic();
@@ -768,14 +745,12 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, httpClient);
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* Go foreground. */
         identity.onActivityResumed(activity);
@@ -793,11 +768,9 @@ public class IdentityTest extends AbstractIdentityTest {
         assertTrue(signInResult.getException() instanceof MsalClientException);
     }
 
-    private void testDownloadFailed(Exception e) throws Exception {
+    private void testDownloadFailed(Exception e) {
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -806,7 +779,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Mock http call fails. */
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
         serviceCallback.onCallFailed(e);
@@ -820,12 +793,12 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void downloadConfigurationFailedHttp() throws Exception {
+    public void downloadConfigurationFailedHttp() {
         testDownloadFailed(new HttpException(404));
     }
 
     @Test
-    public void downloadConfigurationFailedNetwork() throws Exception {
+    public void downloadConfigurationFailedNetwork() {
         testDownloadFailed(new IOException());
     }
 
@@ -848,12 +821,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock no network and identity. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        mockStatic(NetworkStateHelper.class);
-        NetworkStateHelper networkStateHelper = Mockito.mock(NetworkStateHelper.class, new Returns(true));
-        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(networkStateHelper);
-        when(networkStateHelper.isNetworkConnected()).thenReturn(false);
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -885,15 +853,9 @@ public class IdentityTest extends AbstractIdentityTest {
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
 
-        /* Mock no network and identity. */
+        /* Mock identity. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        mockStatic(NetworkStateHelper.class);
-        NetworkStateHelper networkStateHelper = Mockito.mock(NetworkStateHelper.class, new Returns(true));
-        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(networkStateHelper);
-        when(networkStateHelper.isNetworkConnected()).thenReturn(true);
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -964,9 +926,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -981,7 +941,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Check http call. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(httpClient).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), mHeadersCaptor.capture(), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
 
         /* Check ETag was used. */
         Map<String, String> headers = mHeadersCaptor.getValue();
@@ -1140,7 +1100,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void testListenerCalledOnTokenRefreshAccountIsNull() throws Exception {
+    public void refreshTokenWithoutAccount() throws Exception {
         ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
@@ -1149,51 +1109,96 @@ public class IdentityTest extends AbstractIdentityTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         mockReadyToSignIn();
         verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+
+        /* Request token refresh. */
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
-        List<AuthTokenInfo> tokenInfoList = Collections.singletonList(new AuthTokenInfo("token", null, new Date()));
-        AuthTokenInfo tokenInfo = tokenInfoList.get(0);
-        when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(null);
-        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(tokenInfo);
 
         /* Check token is cleared when account is null. */
         verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
-    public void testListenerCalledOnTokenRefreshAccount() throws Exception {
+    public void refreshToken() throws Exception {
         ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
-        Identity identity = Identity.getInstance();
-
-        start(identity);
-
-        /* Download configuration. */
-        mockSuccessfulHttpCall(mockValidForAppCenterConfig(), httpClient);
-
-        /* Mock foreground. */
-        identity.onActivityResumed(mock(Activity.class));
-
+        mockReadyToSignIn();
         verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
         when(accountIdentifier.getIdentifier()).thenReturn("accountId");
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(account);
-        when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(account);
 
-        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("randomAsccountId");
-        List<AuthTokenInfo> tokenInfoList = Collections.singletonList(new AuthTokenInfo("token", null, new Date()));
-        AuthTokenInfo tokenInfo = tokenInfoList.get(0);
-        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(tokenInfo);
+        /* Request token refresh. */
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
 
-        /* Check token is cleared when account is null. */
+        /* Check that we acquire new token silently and don't clear the current one. */
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+    }
+
+    @Test
+    public void refreshTokenWithoutNetwork() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
+        doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
+
+        /* Mock no network and identity. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
+        IAccount account = mock(IAccount.class);
+        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
+        when(accountIdentifier.getIdentifier()).thenReturn("accountId");
+        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(account);
+
+        /* Request token refresh. */
+        authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we don't try to update it without network and don't clear the current one. */
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Come back online. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        networkStateListenerCaptor.getValue().onNetworkStateUpdated(true);
+
+        /* Check that we acquire new token silently. */
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+    }
+
+    @Test
+    public void refreshTokenDoesNotHaveUiFallback() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void refreshTokenTwice() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void refreshTokenDuringSignIn() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void signInDuringRefreshToken() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void disableDuringRefreshToken() throws Exception {
+        // TODO
     }
 
     @Test
@@ -1354,34 +1359,30 @@ public class IdentityTest extends AbstractIdentityTest {
 
     private void mockReadyToSignIn() throws Exception {
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
         /* Download configuration. */
-        mockSuccessfulHttpCall(mockValidForAppCenterConfig(), httpClient);
+        mockSuccessfulHttpCall(mockValidForAppCenterConfig(), mHttpClient);
 
         /* Mock foreground. */
         identity.onActivityResumed(mock(Activity.class));
     }
 
     @Test
-    public void setConfigUrl() throws Exception {
+    public void setConfigUrl() {
 
         /* Set url before start. */
         String configUrl = "https://config.contoso.com";
         Identity.setConfigUrl(configUrl);
 
-        /* Mock http and start identity service. */
-        HttpClientRetryer httpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(httpClient);
+        /* Start identity service. */
         start(Identity.getInstance());
 
         /* Check call. */
         String expectedUrl = configUrl + "/identity/" + APP_SECRET + ".json";
-        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @NonNull
@@ -1408,7 +1409,7 @@ public class IdentityTest extends AbstractIdentityTest {
         return jsonConfig;
     }
 
-    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClientRetryer httpClient) throws JSONException {
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
 
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);

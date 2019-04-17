@@ -5,14 +5,17 @@
 
 package com.microsoft.appcenter.identity;
 
+import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
+import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -51,7 +54,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppCenter.class,
         HandlerUtils.class,
         HttpUtils.class,
-        AuthTokenContext.class
+        AuthTokenContext.class,
+        NetworkStateHelper.class
 })
 abstract public class AbstractIdentityTest {
 
@@ -65,6 +69,12 @@ abstract public class AbstractIdentityTest {
 
     @Mock
     AuthTokenContext mAuthTokenContext;
+
+    @Mock
+    NetworkStateHelper mNetworkStateHelper;
+
+    @Mock
+    HttpClient mHttpClient;
 
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
@@ -92,6 +102,8 @@ abstract public class AbstractIdentityTest {
         mockStatic(HandlerUtils.class);
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
+        mockStatic(HttpUtils.class);
+        when(HttpUtils.createHttpClient(any(Context.class))).thenReturn(mHttpClient);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(SharedPreferencesManager.class);
@@ -118,6 +130,11 @@ abstract public class AbstractIdentityTest {
         /* Mock token context. */
         AuthTokenContext.unsetInstance();
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
+
+        /* Mock network state. */
+        mockStatic(NetworkStateHelper.class);
+        when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
     }
 
     IAuthenticationResult mockAuthResult(String idToken, String accountId, String homeAccountId) {
