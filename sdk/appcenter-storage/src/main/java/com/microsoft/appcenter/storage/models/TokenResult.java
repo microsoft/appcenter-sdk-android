@@ -26,79 +26,79 @@ public class TokenResult {
      */
     @Expose
     @SerializedName(value = "partition")
-    private String partition;
+    private String mPartition;
 
     /**
      * Cosmos db account name.
      */
     @Expose
     @SerializedName(value = "dbAccount")
-    private String dbAccount;
+    private String mDbAccount;
 
     /**
      * Cosmos db database name within the specified account.
      */
     @Expose
     @SerializedName(value = "dbName")
-    private String dbName;
+    private String mDbName;
 
     /**
      * Cosmos db collection name within the specified database.
      */
     @Expose
     @SerializedName(value = "dbCollectionName")
-    private String dbCollectionName;
+    private String mDbCollectionName;
 
     /**
      * The token to be used to talk to cosmos db.
      */
     @Expose
     @SerializedName(value = "token")
-    private String token;
+    private String mToken;
 
     /**
      * Possible values include: 'failed', 'unauthenticated', 'succeed'.
      */
     @Expose
     @SerializedName(value = "status")
-    private String status;
+    private String mStatus;
 
     /**
      * The UTC timestamp for a token expiration time.
      */
     @Expose
     @SerializedName(value = "expiresOn")
-    private String expiresOn;
+    private String mExpirationDate;
 
     /**
      * The account id.
      */
     @Expose
     @SerializedName(value = "accountId")
-    private String accountId;
+    private String mAccountId;
 
     /**
      * Get the partition value.
      *
      * @return The partition value.
      */
-    public String partition() {
-        return this.partition;
+    public String getPartition() {
+        return mPartition;
     }
 
     /**
-     * Get the token expiration time.
+     * Get the token expiration date.
      *
-     * @return The token expiration value.
+     * @return The token expiration date value.
      */
-    public Date expiresOn() {
+    public Date getExpirationDate() {
         try {
-            return JSONDateUtils.toDate(this.expiresOn);
+            return JSONDateUtils.toDate(mExpirationDate);
         } catch (JSONException ex) {
             AppCenterLog.error(
                     LOG_TAG, String.format(
                             "Unable to convert '%s' to ISO 8601 Date format ",
-                            expiresOn));
+                            mExpirationDate));
             return new Date(0);
         }
     }
@@ -110,7 +110,7 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withPartition(String partition) {
-        this.partition = partition;
+        mPartition = partition;
         return this;
     }
 
@@ -120,12 +120,12 @@ public class TokenResult {
      * @param expiresOn Token expiration time value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withExpirationTime(Date expiresOn) {
+    public TokenResult withExpirationDate(Date expiresOn) {
         try {
-            this.expiresOn = JSONDateUtils.toString(expiresOn);
-        } catch (JSONException ex) {
-            AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string");
-            this.expiresOn = null;
+            mExpirationDate = JSONDateUtils.toString(expiresOn);
+        } catch (JSONException e) {
+            AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string", e);
+            mExpirationDate = null;
         }
         return this;
     }
@@ -137,7 +137,7 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withAccountId(String accountId) {
-        this.accountId = accountId;
+        mAccountId = accountId;
         return this;
     }
 
@@ -146,8 +146,8 @@ public class TokenResult {
      *
      * @return The dbAccount value.
      */
-    public String dbAccount() {
-        return this.dbAccount;
+    public String getDbAccount() {
+        return mDbAccount;
     }
 
     /**
@@ -157,7 +157,7 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withDbAccount(String dbAccount) {
-        this.dbAccount = dbAccount;
+        mDbAccount = dbAccount;
         return this;
     }
 
@@ -166,8 +166,8 @@ public class TokenResult {
      *
      * @return The dbName value.
      */
-    public String dbName() {
-        return this.dbName;
+    public String getDbName() {
+        return mDbName;
     }
 
     /**
@@ -177,27 +177,27 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withDbName(String dbName) {
-        this.dbName = dbName;
+        mDbName = dbName;
         return this;
     }
 
     /**
      * Get cosmos db collection name within the specified database.
      *
-     * @return The dbCollectionName value.
+     * @return The database collection name.
      */
-    public String dbCollectionName() {
-        return this.dbCollectionName;
+    public String getDbCollectionName() {
+        return mDbCollectionName;
     }
 
     /**
      * Set cosmos db collection name within the specified database.
      *
-     * @param dbCollectionName The dbCollectionName value to set.
+     * @param dbCollectionName The database collection name value to set.
      * @return The TokenResult object itself.
      */
     public TokenResult withDbCollectionName(String dbCollectionName) {
-        this.dbCollectionName = dbCollectionName;
+        mDbCollectionName = dbCollectionName;
         return this;
     }
 
@@ -206,8 +206,8 @@ public class TokenResult {
      *
      * @return The token value.
      */
-    public String token() {
-        return this.token;
+    public String getToken() {
+        return mToken;
     }
 
     /**
@@ -217,7 +217,7 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withToken(String token) {
-        this.token = token;
+        mToken = token;
         return this;
     }
 
@@ -226,16 +226,17 @@ public class TokenResult {
      *
      * @return The status value.
      */
-    public String status() {
-        return this.status;
+    public String getStatus() {
+        return mStatus;
     }
 
     /**
      * Get account id.
+     *
      * @return The account id value.
      */
-    public String accountId() {
-        return this.accountId;
+    public String getAccountId() {
+        return mAccountId;
     }
 
     /**
@@ -245,7 +246,7 @@ public class TokenResult {
      * @return The TokenResult object itself.
      */
     public TokenResult withStatus(String status) {
-        this.status = status;
+        mStatus = status;
         return this;
     }
 }

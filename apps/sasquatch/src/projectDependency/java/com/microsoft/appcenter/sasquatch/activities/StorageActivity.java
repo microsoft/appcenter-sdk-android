@@ -80,7 +80,7 @@ public class StorageActivity extends AppCompatActivity {
                hideProgress();
             }
             mCurrentAppDocuments = documents;
-            updateAppDocument(documents.getCurrentPage().getItems());
+            updateAppDocument(documents.getCurrentPage().getDocuments());
         }
     };
 
@@ -93,7 +93,7 @@ public class StorageActivity extends AppCompatActivity {
                 hideProgress();
             }
             mCurrentUserDocuments = documents;
-            updateUserDocuments(documents.getCurrentPage().getItems());
+            updateUserDocuments(documents.getCurrentPage().getDocuments());
         }
     };
 
@@ -119,7 +119,7 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
                         mLoading = false;
-                        updateAppDocument(testDocumentPage.getItems());
+                        updateAppDocument(testDocumentPage.getDocuments());
                     }
                 });
             }
@@ -137,7 +137,7 @@ public class StorageActivity extends AppCompatActivity {
 
                     @Override
                     public void accept(Page<Map> mapPage) {
-                        updateUserDocuments(mapPage.getItems());
+                        updateUserDocuments(mapPage.getDocuments());
                     }
                 });
             }
@@ -200,7 +200,7 @@ public class StorageActivity extends AppCompatActivity {
 
                     @Override
                     public void accept(Document<Void> voidDocument) {
-                        if (voidDocument.failed()) {
+                        if (voidDocument.hasFailed()) {
                             Toast.makeText(StorageActivity.this, R.string.storage_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {
                             mAdapterUser.removeItem(position);

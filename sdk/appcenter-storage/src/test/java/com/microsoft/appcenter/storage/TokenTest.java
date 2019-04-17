@@ -66,10 +66,10 @@ public class TokenTest extends AbstractStorageTest {
                 public void callCosmosDb(TokenResult tokenResult) {
 
                     /* Get and verify token. */
-                    assertEquals(TOKEN, tokenResult.token());
+                    assertEquals(TOKEN, tokenResult.getToken());
 
                     /* Get and verify the account id. */
-                    assertEquals(ACCOUNT_ID, tokenResult.accountId());
+                    assertEquals(ACCOUNT_ID, tokenResult.getAccountId());
                 }
             };
 
@@ -152,7 +152,7 @@ public class TokenTest extends AbstractStorageTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = new Gson().toJson(new TokenResult()
                 .withPartition(READONLY)
-                .withExpirationTime(expirationDate.getTime())
+                .withExpirationDate(expirationDate.getTime())
                 .withDbName("db")
                 .withDbAccount("dbAccount")
                 .withDbCollectionName("collection")
@@ -166,7 +166,7 @@ public class TokenTest extends AbstractStorageTest {
         Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
-        assertEquals(TOKEN, tokenResultCapture.getValue().token());
+        assertEquals(TOKEN, tokenResultCapture.getValue().getToken());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class TokenTest extends AbstractStorageTest {
                 .withDbCollectionName("collection")
                 .withStatus("Succeed")
                 .withPartition(READONLY)
-                .withExpirationTime(expirationDate.getTime())
+                .withExpirationDate(expirationDate.getTime())
                 .withToken(inValidToken));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
@@ -234,8 +234,8 @@ public class TokenTest extends AbstractStorageTest {
     @Test
     public void canHandleWhenExpiresOnInvalidFormat() {
         TokenResult result = new TokenResult();
-        assertEquals(new Date(0), result.expiresOn());
-        result.withExpirationTime(null);
+        assertEquals(new Date(0), result.getExpirationDate());
+        result.withExpirationDate(null);
     }
 
     @Test

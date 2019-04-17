@@ -24,18 +24,18 @@ import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
-    private transient Page<T> currentPage;
+    private transient Page<T> mCurrentPage;
 
-    private transient TokenResult tokenResult;
+    private transient TokenResult mTokenResult;
 
-    private transient HttpClient httpClient;
+    private transient HttpClient mHttpClient;
 
-    private transient Class<T> documentType;
+    private transient Class<T> mDocumentType;
 
     /**
      * Continuation token for retrieving the next page.
      */
-    private transient String continuationToken;
+    private transient String mContinuationToken;
 
     /**
      * Set the token result.
@@ -44,7 +44,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return TokenResult.
      */
     public PaginatedDocuments<T> withTokenResult(TokenResult tokenResult) {
-        this.tokenResult = tokenResult;
+        mTokenResult = tokenResult;
         return this;
     }
 
@@ -54,7 +54,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return True if has next page.
      */
     public boolean hasNextPage() {
-        return continuationToken != null;
+        return mContinuationToken != null;
     }
 
     /**
@@ -64,7 +64,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> withCurrentPage(Page<T> currentPage) {
-        this.currentPage = currentPage;
+        mCurrentPage = currentPage;
         return this;
     }
 
@@ -74,7 +74,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return Current page.
      */
     public Page<T> getCurrentPage() {
-        return this.currentPage;
+        return mCurrentPage;
     }
 
     /**
@@ -84,7 +84,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> withHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
+        mHttpClient = httpClient;
         return this;
     }
 
@@ -95,7 +95,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> withContinuationToken(String continuationToken) {
-        this.continuationToken = continuationToken;
+        mContinuationToken = continuationToken;
         return this;
     }
 
@@ -106,7 +106,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> withDocumentType(Class<T> documentType) {
-        this.documentType = documentType;
+        mDocumentType = documentType;
         return this;
     }
 
@@ -119,16 +119,16 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
         if (hasNextPage()) {
             CosmosDb.callCosmosDbListApi(
-                    tokenResult,
-                    continuationToken,
-                    httpClient,
+                    mTokenResult,
+                    mContinuationToken,
+                    mHttpClient,
                     new ServiceCallback() {
 
                         @Override
                         public void onCallSucceeded(String payload, Map<String, String> headers) {
-                            Page<T> page = Utils.parseDocuments(payload, documentType);
-                            currentPage = page;
-                            continuationToken = headers.get(Constants.CONTINUATION_TOKEN_HEADER);
+                            Page<T> page = Utils.parseDocuments(payload, mDocumentType);
+                            mCurrentPage = page;
+                            mContinuationToken = headers.get(Constants.CONTINUATION_TOKEN_HEADER);
                             result.complete(page);
                         }
 
@@ -148,22 +148,22 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
     public Iterator<Document<T>> iterator() {
         return new Iterator<Document<T>>() {
 
-            private int currentIndex = 0;
+            private int mCurrentIndex = 0;
 
             @Override
             public boolean hasNext() {
-                return currentIndex < getCurrentPage().getItems().size() || hasNextPage();
+                return mCurrentIndex < getCurrentPage().getDocuments().size() || hasNextPage();
             }
 
             @Override
             public Document<T> next() {
                 if (!hasNext()) {
                     return new Document<>(new NoSuchElementException());
-                } else if (currentIndex >= getCurrentPage().getItems().size()) {
-                    currentPage = getNextPage().get();
-                    currentIndex = 0;
+                } else if (mCurrentIndex >= getCurrentPage().getDocuments().size()) {
+                    mCurrentPage = getNextPage().get();
+                    mCurrentIndex = 0;
                 }
-                return getCurrentPage().getItems().get(currentIndex++);
+                return getCurrentPage().getDocuments().get(mCurrentIndex++);
             }
 
             @Override

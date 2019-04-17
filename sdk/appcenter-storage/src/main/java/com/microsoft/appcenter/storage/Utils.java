@@ -169,8 +169,8 @@ public class Utils {
 
     @NonNull
     static String getTableName(@NonNull TokenResult tokenResult) {
-        if (tokenResult.partition().startsWith(Constants.USER)) {
-            return getUserTableName(tokenResult.accountId());
+        if (tokenResult.getPartition().startsWith(Constants.USER)) {
+            return getUserTableName(tokenResult.getAccountId());
         }
         return READONLY_TABLE;
     }

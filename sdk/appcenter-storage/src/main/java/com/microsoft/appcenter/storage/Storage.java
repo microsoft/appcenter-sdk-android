@@ -356,7 +356,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
                     table = Utils.getTableName(cachedToken);
-                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, cacheReadOptions);
+                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.getPartition(), documentId, documentType, cacheReadOptions);
                     if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
                         cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
                     }
@@ -434,17 +434,17 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public boolean needsRemoteOperation(Document<Void> cachedDocument) {
-                return cachedDocument.getEtag() != null || cachedDocument.getDocumentError() != null;
+                return cachedDocument.getETag() != null || cachedDocument.getDocumentError() != null;
             }
 
             @Override
             public Document<Void> doOfflineOperation(Document<Void> cachedDocument, String table, TokenResult cachedToken) {
                 boolean success;
-                if (cachedDocument.getEtag() != null) {
+                if (cachedDocument.getETag() != null) {
                     success =
-                            mLocalDocumentStorage.deleteOffline(table, cachedToken.partition(), documentId);
+                            mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId);
                 } else {
-                    success = mLocalDocumentStorage.deleteOnline(table, cachedToken.partition(), documentId);
+                    success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
                 if (success) {
                     return new Document<>();
@@ -606,7 +606,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                                if (cosmosDbDocument.failed()) {
+                                if (cosmosDbDocument.hasFailed()) {
                                     completeFutureOnDocumentError(cosmosDbDocument, result);
                                 } else {
                                     completeFuture(cosmosDbDocument, result);
@@ -678,7 +678,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
+                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.getPartition(), documentId, writeOptions, result);
                                 }
 
                                 @Override
@@ -691,7 +691,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     TokenResult cachedToken = getCachedToken(partition);
                     if (cachedToken != null) {
                         String table = Utils.getTableName(cachedToken);
-                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.partition(), documentId, document, documentType, writeOptions);
+                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.getPartition(), documentId, document, documentType, writeOptions);
                     } else {
                         createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
                     }
@@ -744,7 +744,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 completeFuture(new Document<Void>(), result);
-                                mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.partition(), documentId);
+                                mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId);
                             }
                         });
                     }
@@ -856,7 +856,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             @Override
             public void run() {
                 String eTag = Utils.getEtag(cosmosDbResponsePayload);
-                pendingOperation.setEtag(eTag);
+                pendingOperation.setETag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
                 DataStoreEventListener eventListener = mEventListener;
                 if (eventListener != null) {
@@ -921,7 +921,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
-            Storage.this.completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
+            completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
         }
         return invalidPartitionName;
     }
