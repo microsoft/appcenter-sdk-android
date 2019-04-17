@@ -183,8 +183,8 @@ public class StorageTest extends AbstractStorageTest {
 
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
-        assertEquals(1, docs.getCurrentPage().getDocuments().size());
-        assertEquals(docs.getCurrentPage().getDocuments().get(0).getDocument().test, documents.get(0).getDocument().test);
+        assertEquals(1, docs.getCurrentPage().getItems().size());
+        assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
     }
 
     @Test
@@ -237,10 +237,10 @@ public class StorageTest extends AbstractStorageTest {
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Storage.list(USER, TestDocument.class).get();
         assertTrue(docs.hasNextPage());
-        assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getDocuments().get(0).getId());
+        assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
         Page<TestDocument> secondPage = docs.getNextPage().get();
         assertFalse(docs.hasNextPage());
-        assertEquals(secondPage.getDocuments().get(0).getId(), docs.getCurrentPage().getDocuments().get(0).getId());
+        assertEquals(secondPage.getItems().get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
     }
 
     @Test
@@ -461,9 +461,9 @@ public class StorageTest extends AbstractStorageTest {
         Page<String> page = docs.getCurrentPage();
         assertNotNull(page);
         assertNull(page.getError());
-        assertNotNull(page.getDocuments());
-        assertEquals(1, page.getDocuments().size());
-        assertTrue(page.getDocuments().get(0).hasFailed());
+        assertNotNull(page.getItems());
+        assertEquals(1, page.getItems().size());
+        assertTrue(page.getItems().get(0).hasFailed());
     }
 
     @Test

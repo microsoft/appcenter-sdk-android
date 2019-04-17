@@ -80,7 +80,7 @@ public class StorageActivity extends AppCompatActivity {
                hideProgress();
             }
             mCurrentAppDocuments = documents;
-            updateAppDocument(documents.getCurrentPage().getDocuments());
+            updateAppDocument(documents.getCurrentPage().getItems());
         }
     };
 
@@ -93,7 +93,7 @@ public class StorageActivity extends AppCompatActivity {
                 hideProgress();
             }
             mCurrentUserDocuments = documents;
-            updateUserDocuments(documents.getCurrentPage().getDocuments());
+            updateUserDocuments(documents.getCurrentPage().getItems());
         }
     };
 
@@ -119,7 +119,7 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(Page<TestDocument> testDocumentPage) {
                         mLoading = false;
-                        updateAppDocument(testDocumentPage.getDocuments());
+                        updateAppDocument(testDocumentPage.getItems());
                     }
                 });
             }
@@ -137,7 +137,7 @@ public class StorageActivity extends AppCompatActivity {
 
                     @Override
                     public void accept(Page<Map> mapPage) {
-                        updateUserDocuments(mapPage.getDocuments());
+                        updateUserDocuments(mapPage.getItems());
                     }
                 });
             }

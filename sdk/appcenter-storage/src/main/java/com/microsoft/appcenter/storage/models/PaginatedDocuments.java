@@ -152,18 +152,18 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
             @Override
             public boolean hasNext() {
-                return mCurrentIndex < getCurrentPage().getDocuments().size() || hasNextPage();
+                return mCurrentIndex < getCurrentPage().getItems().size() || hasNextPage();
             }
 
             @Override
             public Document<T> next() {
                 if (!hasNext()) {
                     return new Document<>(new NoSuchElementException());
-                } else if (mCurrentIndex >= getCurrentPage().getDocuments().size()) {
+                } else if (mCurrentIndex >= getCurrentPage().getItems().size()) {
                     mCurrentPage = getNextPage().get();
                     mCurrentIndex = 0;
                 }
-                return getCurrentPage().getDocuments().get(mCurrentIndex++);
+                return getCurrentPage().getItems().get(mCurrentIndex++);
             }
 
             @Override

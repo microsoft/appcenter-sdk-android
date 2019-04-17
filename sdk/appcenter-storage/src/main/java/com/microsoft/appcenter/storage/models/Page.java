@@ -16,7 +16,7 @@ public class Page<T> {
      * Documents in the page.
      */
     @SerializedName(value = Constants.DOCUMENTS_FIELD_NAME)
-    private List<Document<T>> mDocuments;
+    private List<Document<T>> mItems;
 
     /**
      * Document error.
@@ -35,12 +35,12 @@ public class Page<T> {
      *
      * @return Documents in current page.
      */
-    public List<Document<T>> getDocuments() {
-        return mDocuments;
+    public List<Document<T>> getItems() {
+        return mItems;
     }
 
-    public Page<T> withDocuments(List<Document<T>> documents) {
-        mDocuments = documents;
+    public Page<T> withDocuments(List<Document<T>> items) {
+        mItems = items;
         return this;
     }
 
