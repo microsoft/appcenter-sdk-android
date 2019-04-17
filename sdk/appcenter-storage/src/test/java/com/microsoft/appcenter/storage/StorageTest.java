@@ -42,6 +42,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -948,6 +949,8 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
+
+        /* If we have one pending operation delete, and the network is on. */
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -956,18 +959,16 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(pendingOperation);
-                }});
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
-
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        mStorage.applyEnabledState(true);
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
 
+        /* Verify pending operation get processed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
-
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
@@ -975,16 +976,16 @@ public class StorageTest extends AbstractStorageTest {
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
-
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getEtag());
-
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
     @Test
     public void pendingOperationNotProcessedWhenNetworkOff() {
+
+        /* If we have one pending operation delete, and the network is off. */
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -993,26 +994,26 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(pendingOperation);
-                }});
-
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
-        mStorage.applyEnabledState(true);
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
 
+        /* Verify pending operation is not get processed. */
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
                 any(DocumentError.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
-
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
     }
 
     @Test
     public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
+
+        /* If we have delete, create, update pending operation, and the network is on. */
         final PendingOperation deletePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -1035,12 +1036,8 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(deletePendingOperation);
-                    add(createPendingOperation);
-                    add(replacePendingOperation);
-                }});
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME))
+                .thenReturn(Arrays.asList(deletePendingOperation, createPendingOperation, replacePendingOperation));
 
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -1062,11 +1059,13 @@ public class StorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
         /* Disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false);
-        Storage.setEnabled(true);
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
 
         /* Await the result to make sure that disabling has completed by the time we verify. */
         Storage.setEnabled(false).get();
+
+        /* Verify the service call has been canceled. */
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
@@ -1080,6 +1079,8 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void pendingOperationProcessedOnceWhenDuplicatePendingOperations() throws JSONException {
+
+        /* If we have duplicate pending operation. (Mock the situation we have call processPendingOperation at the same time.) */
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -1088,14 +1089,15 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(pendingOperation);
-                    add(pendingOperation);
-                }});
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
-        mStorage.applyEnabledState(true);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify only one pending operation has been executed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
@@ -1112,6 +1114,8 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void TestPartiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
+
+        /* If we have one pending operation, and network is on. */
         final PendingOperation deletePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -1120,10 +1124,7 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(deletePendingOperation);
-                }});
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(deletePendingOperation));
 
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -1144,8 +1145,8 @@ public class StorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
 
         /* Disable, re-enable to force process pending operations. */
-        Storage.setEnabled(false);
-        Storage.setEnabled(true);
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
 
         /* Ensure that this does not throw. */
         Storage.setEnabled(false).get();
