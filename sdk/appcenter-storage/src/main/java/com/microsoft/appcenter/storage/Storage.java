@@ -81,7 +81,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private final Map<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+    private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 
@@ -298,7 +298,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             if (mOutgoingPendingOperationCalls.containsKey(outgoingId)) {
                 continue;
             }
-            
+
             /* Put the pending document id into the map to prevent further duplicate http call. The ServiceCall will be set when the http operation executes. */
             mOutgoingPendingOperationCalls.put(outgoingId, null);
             if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
