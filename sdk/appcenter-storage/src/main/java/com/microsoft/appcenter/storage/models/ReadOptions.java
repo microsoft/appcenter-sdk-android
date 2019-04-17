@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.storage.models;
 
-import java.util.Calendar;
-
 public class ReadOptions extends BaseOptions {
 
     public ReadOptions() {
@@ -33,6 +31,6 @@ public class ReadOptions extends BaseOptions {
         if (expiredAt == BaseOptions.INFINITE) {
             return false;
         }
-        return Calendar.getInstance().getTimeInMillis() >= expiredAt;
+        return System.currentTimeMillis() >= expiredAt;
     }
 }
