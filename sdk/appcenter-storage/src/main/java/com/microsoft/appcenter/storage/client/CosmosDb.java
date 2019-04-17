@@ -62,7 +62,10 @@ public class CosmosDb {
     }
 
     private static String urlEncode(String url) {
-        return urlEncode(url, "UTF-8");
+        if(url != null) {
+            return urlEncode(url, "UTF-8");
+        }
+        return "null";
     }
 
     public static String urlEncode(String url, String enc) {
