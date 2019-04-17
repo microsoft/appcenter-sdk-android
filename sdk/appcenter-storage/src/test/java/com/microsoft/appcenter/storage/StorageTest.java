@@ -1184,7 +1184,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void corruptedCorruptedDoesNotCrash() {
+    public void corruptedTokenDoesNotCrash() {
 
         /* If we get invalid token from cache. */
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn("garbage");
