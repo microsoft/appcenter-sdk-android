@@ -136,7 +136,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void readReturnsErrorObjectOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
-        Document<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.CreateNoCacheOption());
+        Document<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
         assertNotNull(doc);
         assertNull(doc.getDocument());
         assertTrue(doc.failed());
@@ -214,10 +214,10 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void verifyOptionsConstructors() {
-        assertEquals(BaseOptions.INFINITE, ReadOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, ReadOptions.CreateNoCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.INFINITE, WriteOptions.CreateInfiniteCacheOption().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, WriteOptions.CreateNoCacheOption().getDeviceTimeToLive());
+        assertEquals(BaseOptions.INFINITE, ReadOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
+        assertEquals(BaseOptions.NO_CACHE, ReadOptions.createNoCacheOptions().getDeviceTimeToLive());
+        assertEquals(BaseOptions.INFINITE, WriteOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
+        assertEquals(BaseOptions.NO_CACHE, WriteOptions.createNoCacheOptions().getDeviceTimeToLive());
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -15,11 +15,11 @@ public class WriteOptions extends BaseOptions {
         super(ttl);
     }
 
-    public static WriteOptions CreateInfiniteCacheOption() {
+    public static WriteOptions createInfiniteCacheOptions() {
         return new WriteOptions(BaseOptions.INFINITE);
     }
 
-    public static WriteOptions CreateNoCacheOption() {
+    public static WriteOptions createNoCacheOptions() {
         return new WriteOptions(BaseOptions.NO_CACHE);
     }
 }

@@ -69,13 +69,13 @@ public class NewUserDocumentActivity extends AppCompatActivity {
                 mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
                 break;
             case NO_CACHE:
-                mWriteOptions = WriteOptions.CreateNoCacheOption();
+                mWriteOptions = WriteOptions.createNoCacheOptions();
                 break;
             case TWO_SECONDS:
                 mWriteOptions = new WriteOptions(2);
                 break;
             case INFINITE:
-                mWriteOptions = WriteOptions.CreateInfiniteCacheOption();
+                mWriteOptions = WriteOptions.createInfiniteCacheOptions();
                 break;
         }
     }
