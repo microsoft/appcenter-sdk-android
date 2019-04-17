@@ -993,7 +993,6 @@ public class StorageTest extends AbstractStorageTest {
                 "document",
                 BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
