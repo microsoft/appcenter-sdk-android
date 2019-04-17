@@ -95,7 +95,7 @@ public class TokenResult {
      * @param partition The partition value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withPartition(String partition) {
+    public TokenResult setPartition(String partition) {
         mPartition = partition;
         return this;
     }
@@ -106,7 +106,7 @@ public class TokenResult {
      * @param expirationDate Token expiration time value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withExpirationDate(Date expirationDate) {
+    public TokenResult setExpirationDate(Date expirationDate) {
         mExpirationDate = expirationDate;
         return this;
     }
@@ -117,7 +117,7 @@ public class TokenResult {
      * @param accountId Account id value to be set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withAccountId(String accountId) {
+    public TokenResult setAccountId(String accountId) {
         mAccountId = accountId;
         return this;
     }
@@ -137,7 +137,7 @@ public class TokenResult {
      * @param dbAccount The dbAccount value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbAccount(String dbAccount) {
+    public TokenResult setDbAccount(String dbAccount) {
         mDbAccount = dbAccount;
         return this;
     }
@@ -157,7 +157,7 @@ public class TokenResult {
      * @param dbName The dbName value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbName(String dbName) {
+    public TokenResult setDbName(String dbName) {
         mDbName = dbName;
         return this;
     }
@@ -177,7 +177,7 @@ public class TokenResult {
      * @param dbCollectionName The database collection name value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbCollectionName(String dbCollectionName) {
+    public TokenResult setDbCollectionName(String dbCollectionName) {
         mDbCollectionName = dbCollectionName;
         return this;
     }
@@ -197,7 +197,7 @@ public class TokenResult {
      * @param token The token value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withToken(String token) {
+    public TokenResult setToken(String token) {
         mToken = token;
         return this;
     }
@@ -226,7 +226,7 @@ public class TokenResult {
      * @param status The status value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withStatus(String status) {
+    public TokenResult setStatus(String status) {
         mStatus = status;
         return this;
     }

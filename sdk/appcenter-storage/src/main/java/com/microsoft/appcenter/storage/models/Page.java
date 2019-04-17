@@ -39,7 +39,7 @@ public class Page<T> {
         return mItems;
     }
 
-    public Page<T> withDocuments(List<Document<T>> items) {
+    public Page<T> setItems(List<Document<T>> items) {
         mItems = items;
         return this;
     }

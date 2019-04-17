@@ -43,7 +43,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @param tokenResult The token result.
      * @return TokenResult.
      */
-    public PaginatedDocuments<T> withTokenResult(TokenResult tokenResult) {
+    public PaginatedDocuments<T> setTokenResult(TokenResult tokenResult) {
         mTokenResult = tokenResult;
         return this;
     }
@@ -63,7 +63,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @param currentPage The page to be set to current page.
      * @return PaginatedDocuments.
      */
-    public PaginatedDocuments<T> withCurrentPage(Page<T> currentPage) {
+    public PaginatedDocuments<T> setCurrentPage(Page<T> currentPage) {
         mCurrentPage = currentPage;
         return this;
     }
@@ -83,7 +83,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @param httpClient The httpclient to be set.
      * @return PaginatedDocuments.
      */
-    public PaginatedDocuments<T> withHttpClient(HttpClient httpClient) {
+    public PaginatedDocuments<T> setHttpClient(HttpClient httpClient) {
         mHttpClient = httpClient;
         return this;
     }
@@ -94,7 +94,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @param continuationToken The continuation token to retrieve the next page.
      * @return PaginatedDocuments.
      */
-    public PaginatedDocuments<T> withContinuationToken(String continuationToken) {
+    public PaginatedDocuments<T> setContinuationToken(String continuationToken) {
         mContinuationToken = continuationToken;
         return this;
     }
@@ -105,7 +105,7 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
      * @param documentType The document type.
      * @return PaginatedDocuments.
      */
-    public PaginatedDocuments<T> withDocumentType(Class<T> documentType) {
+    public PaginatedDocuments<T> setDocumentType(Class<T> documentType) {
         mDocumentType = documentType;
         return this;
     }

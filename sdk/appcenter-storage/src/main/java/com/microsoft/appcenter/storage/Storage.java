@@ -536,10 +536,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Page<T> page = Utils.parseDocuments(payload, documentType);
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
-                                .withCurrentPage(page).withTokenResult(tokenResult)
-                                .withHttpClient(mHttpClient)
-                                .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
-                                .withDocumentType(documentType);
+                                .setCurrentPage(page).setTokenResult(tokenResult)
+                                .setHttpClient(mHttpClient)
+                                .setContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
+                                .setDocumentType(documentType);
                         completeFuture(paginatedDocuments, result);
                     }
 
@@ -873,7 +873,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.logApiCallFailure(e);
-        future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
+        future.complete(new PaginatedDocuments<T>().setCurrentPage(new Page<T>(e)));
         mPendingCalls.remove(future);
     }
 

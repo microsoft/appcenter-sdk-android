@@ -131,7 +131,7 @@ public class Utils {
         for (JsonElement object : array) {
             documents.add(parseDocument(object.getAsJsonObject(), documentType));
         }
-        return new Page<T>().withDocuments(documents);
+        return new Page<T>().setItems(documents);
     }
 
     /**

@@ -151,12 +151,12 @@ public class TokenTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
-                .withPartition(READONLY)
-                .withExpirationDate(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withToken(TOKEN));
+                .setPartition(READONLY)
+                .setExpirationDate(expirationDate.getTime())
+                .setDbName("db")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collection")
+                .setToken(TOKEN));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         ArgumentCaptor<TokenResult> tokenResultCapture = ArgumentCaptor.forClass(TokenResult.class);
@@ -177,12 +177,12 @@ public class TokenTest extends AbstractStorageTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, -1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
-                .withDbAccount("lemmings-01-8f37d78902")
-                .withDbCollectionName("collection")
-                .withStatus("Succeed")
-                .withPartition(READONLY)
-                .withExpirationDate(expirationDate.getTime())
-                .withToken(inValidToken));
+                .setDbAccount("lemmings-01-8f37d78902")
+                .setDbCollectionName("collection")
+                .setStatus("Succeed")
+                .setPartition(READONLY)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken(inValidToken));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn(tokenResult);
         TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
@@ -242,7 +242,7 @@ public class TokenTest extends AbstractStorageTest {
         mockStatic(Utils.class);
         when(Utils.removeAccountIdFromPartitionName(partitionWithAccountId)).thenReturn(partition);
         when(Utils.getGson()).thenReturn(gson);
-        TokenResult result = new TokenResult().withPartition(partitionWithAccountId).withAccountId(accountId);
+        TokenResult result = new TokenResult().setPartition(partitionWithAccountId).setAccountId(accountId);
         Set<String> partitions = new HashSet<>();
         partitions.add(partition);
 
