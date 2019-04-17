@@ -8,6 +8,7 @@ package com.microsoft.appcenter.storage;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -72,7 +73,12 @@ public class TokenManager {
     TokenResult getCachedToken(String partitionName, boolean includeExpiredToken) {
         String encryptedTokenResult = SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + partitionName);
         String decryptedTokenResult = CryptoUtils.getInstance(mContext).decrypt(encryptedTokenResult, false).getDecryptedData();
-        TokenResult token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);
+        TokenResult token = null;
+        try {
+            token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);
+        } catch (JsonParseException e) {
+            AppCenterLog.warn(LOG_TAG, String.format("Cached token cannot be parsed for partition '%s'", partitionName), e);
+        }
         if (token != null) {
             if (!includeExpiredToken) {
 
@@ -85,7 +91,7 @@ public class TokenManager {
             AppCenterLog.debug(LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
             return token;
         }
-        AppCenterLog.warn(LOG_TAG, String.format("Failed to retrieve token or none found in cache for partition '%s'", partitionName));
+        AppCenterLog.debug(LOG_TAG, String.format("No token found in cache for partition '%s'", partitionName));
         return null;
     }
 
