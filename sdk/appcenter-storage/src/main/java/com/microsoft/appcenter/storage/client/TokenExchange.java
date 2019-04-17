@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -104,12 +105,18 @@ public class TokenExchange {
 
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
-            TokenResult tokenResult = parseTokenResult(payload);
-            if (tokenResult == null) {
-                String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
-                onCallFailed(new StorageException(message));
-            } else {
-                callCosmosDb(tokenResult);
+            try {
+                TokenResult tokenResult = parseTokenResult(payload);
+                if (tokenResult == null) {
+                    String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
+                    onCallFailed(new StorageException(message));
+                } else {
+                    callCosmosDb(tokenResult);
+                }
+            } catch (JsonSyntaxException e) {
+                String message = "Token response is not valid JSON";
+                AppCenterLog.warn(LOG_TAG, message, e);
+                onCallFailed(new StorageException(message, e));
             }
         }
 
