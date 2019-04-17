@@ -73,7 +73,7 @@ import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
 /**
  * Identity service.
  */
-public class Identity extends AbstractAppCenterService {
+public class Identity extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
      * Shared instance.
@@ -126,29 +126,22 @@ public class Identity extends AbstractAppCenterService {
      */
     private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
 
+    /**
+     * TODO
+     */
+    private String mHomeAccountIdToRefresh;
+
+    /**
+     * TODO
+     */
+    private DefaultAppCenterFuture<SignInResult> mPendingRefreshFuture;
+
     private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
-            // TODO add network check
-            // TODO add check if there is an active sign-in operation that initiated by user
-            // TODO do not refresh the same thing multiple times/in parallel
-
-            IAccount account = retrieveAccount(homeAccountId);
-            if (account != null) {
-                silentSignIn(account);
-            } else {
-                AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
-                AuthTokenContext.getInstance().clearAuthToken(false);
-            }
-        }
-    };
-
-    private NetworkStateHelper.Listener mNetworkStateListener = new NetworkStateHelper.Listener() {
-
-        @Override
-        public void onNetworkStateUpdated(boolean connected) {
-            // TODO refresh token if needed
+            boolean networkConnected = NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected();
+            refreshToken(homeAccountId, networkConnected);
         }
     };
 
@@ -241,7 +234,7 @@ public class Identity extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
-            NetworkStateHelper.getSharedInstance(mContext).addListener(mNetworkStateListener);
+            NetworkStateHelper.getSharedInstance(mContext).addListener(this);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
@@ -250,7 +243,7 @@ public class Identity extends AbstractAppCenterService {
             downloadConfiguration();
         } else {
             AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
-            NetworkStateHelper.getSharedInstance(mContext).removeListener(mNetworkStateListener);
+            NetworkStateHelper.getSharedInstance(mContext).removeListener(this);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
@@ -286,6 +279,14 @@ public class Identity extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mActivity = null;
+    }
+
+    @Override
+    public synchronized void onNetworkStateUpdated(boolean connected) {
+        if (connected && mHomeAccountIdToRefresh != null) {
+            refreshToken(mHomeAccountIdToRefresh, true);
+            mHomeAccountIdToRefresh = null;
+        }
     }
 
     /**
@@ -590,6 +591,33 @@ public class Identity extends AbstractAppCenterService {
         });
     }
 
+    private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
+
+        if (mPendingSignInFuture != null) {
+            // TODO log
+            return;
+        }
+
+        if (!networkConnected) {
+            mHomeAccountIdToRefresh = homeAccountId;
+            // TODO log
+            return;
+        }
+
+        if (mPendingRefreshFuture != null) {
+
+        }
+        // TODO mPendingRefreshFuture = new
+
+        IAccount account = retrieveAccount(homeAccountId);
+        if (account != null) {
+            silentSignIn(account);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
+            AuthTokenContext.getInstance().clearAuthToken(false);
+        }
+    }
+
     private void handleSignInSuccess(final IAuthenticationResult authenticationResult) {
         post(new Runnable() {
 
@@ -641,6 +669,8 @@ public class Identity extends AbstractAppCenterService {
     }
 
     private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
+
+        // TODO Pass the correct future to avoid mess up sign-in and refresh operations.
         if (mPendingSignInFuture != null) {
             mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
             mPendingSignInFuture = null;
