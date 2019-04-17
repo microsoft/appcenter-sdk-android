@@ -8,7 +8,7 @@ package com.microsoft.appcenter.storage;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -76,7 +76,7 @@ public class TokenManager {
         TokenResult token = null;
         try {
             token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonParseException e) {
             AppCenterLog.warn(LOG_TAG, String.format("Cached token cannot be parsed for partition '%s'", partitionName), e);
         }
         if (token != null) {

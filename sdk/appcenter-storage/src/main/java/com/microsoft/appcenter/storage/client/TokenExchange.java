@@ -7,7 +7,7 @@ package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -112,7 +112,7 @@ public class TokenExchange {
                 } else {
                     callCosmosDb(tokenResult);
                 }
-            } catch (JsonSyntaxException e) {
+            } catch (JsonParseException e) {
                 String message = "Token response is not valid JSON";
                 onCallFailed(new StorageException(message, e));
             }
