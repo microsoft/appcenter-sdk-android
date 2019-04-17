@@ -92,9 +92,9 @@ public class CosmosDb {
 
 
     public static String getDocumentBaseUrl(String databaseName, String collectionName, String documentId) {
-        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
-                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
+        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, urlEncode(databaseName)) + "/" +
+                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, urlEncode(collectionName)) + "/" +
+                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + urlEncode(documentId));
     }
 
     private static String getDocumentUrl(TokenResult tokenResult, String documentId) {
