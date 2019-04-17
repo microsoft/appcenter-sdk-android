@@ -310,7 +310,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
-        authTokenContext.clearAuthToken(true);
+        authTokenContext.setAuthToken(null, null, null);
     }
 
     private synchronized void downloadConfiguration() {
@@ -555,12 +555,12 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
                 @Override
                 public void onError(MsalException exception) {
-                    handleSignInError(future, exception, false);
+                    handleSignInError(future, exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    handleSignInCancellation(future, false);
+                    handleSignInCancellation(future);
                 }
             });
         } else {
@@ -589,13 +589,13 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
                         }
                     });
                 } else {
-                    handleSignInError(future, exception, true);
+                    handleSignInError(future, exception);
                 }
             }
 
             @Override
             public void onCancel() {
-                handleSignInCancellation(future, true);
+                handleSignInCancellation(future);
             }
         });
     }
@@ -621,7 +621,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             silentSignIn(future, account, false);
         } else {
             AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
-            AuthTokenContext.getInstance().clearAuthToken(false);
+            AuthTokenContext.getInstance().setAuthToken(null, null, null);
         }
     }
 
@@ -651,24 +651,24 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
-    private void handleSignInError(final DefaultAppCenterFuture<SignInResult> future, final MsalException exception, final boolean isSilent) {
+    private void handleSignInError(final DefaultAppCenterFuture<SignInResult> future, final MsalException exception) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                AuthTokenContext.getInstance().clearAuthToken(!isSilent);
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 future.complete(new SignInResult(null, exception));
             }
         });
     }
 
-    private void handleSignInCancellation(final DefaultAppCenterFuture<SignInResult> future, final boolean isSilent) {
+    private void handleSignInCancellation(final DefaultAppCenterFuture<SignInResult> future) {
         post(new Runnable() {
 
             @Override
             public void run() {
-                AuthTokenContext.getInstance().clearAuthToken(!isSilent);
+                AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
             }
