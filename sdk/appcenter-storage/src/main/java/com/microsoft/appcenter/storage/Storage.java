@@ -330,7 +330,6 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             AuthTokenContext.getInstance().removeListener(mAuthListener);
             mNetworkStateHelper.removeListener(this);
             mPendingCalls.clear();
-
             for (Map.Entry<String, ServiceCall> call : mOutgoingPendingOperationCalls.entrySet()) {
                 if (call.getValue() != null) {
                     call.getValue().cancel();
