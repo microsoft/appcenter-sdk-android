@@ -81,7 +81,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private final Map<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+    private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 
@@ -194,7 +194,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, writeOptions);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, null, writeOptions);
     }
 
     /**
@@ -220,9 +220,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-
-        /* In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT). */
-        return Storage.create(partition, documentId, document, documentType, writeOptions);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, CosmosDb.getUpsertAdditionalHeader(), writeOptions);
     }
 
     /**
@@ -612,6 +610,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             String partition,
             final String documentId,
             final WriteOptions writeOptions,
+            final Map<String, String> additionalHeaders,
             final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
@@ -619,7 +618,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                CosmosDb.getUpsertAdditionalHeader(),
+                additionalHeaders,
                 new ServiceCallback() {
 
                     @MainThread
@@ -658,7 +657,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 pendingOperation.getDocument(),
-                CosmosDb.getUpsertAdditionalHeader(),
+                pendingOperation.getOperation().equals(Constants.PENDING_OPERATION_CREATE_VALUE) ? null : CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @MainThread
@@ -686,6 +685,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final String documentId,
             final T document,
             final Class<T> documentType,
+            final Map<String, String> additionalHeaders,
             final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
@@ -703,7 +703,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
+                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, additionalHeaders, result);
                                 }
 
                                 @Override

@@ -701,6 +701,194 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void createPendingOperationWithoutUpsertHeader() {
+
+        /* If we have one pending operation delete, and the network is on. */
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_CREATE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        mockStatic(CosmosDb.class);
+        when(CosmosDb.getUpsertAdditionalHeader()).thenReturn(new HashMap<String, String>() {
+            {
+                put("abc", "bcd");
+            }
+        });
+
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+        when(CosmosDb.callCosmosDbApi(any(TokenResult.class),
+                anyString(), any(HttpClient.class), anyString(), anyString(), headers.capture(), any(ServiceCallback.class))).then(
+                new Answer<ServiceCall>() {
+
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        return mock(ServiceCall.class);
+                    }
+                });
+
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify additional headers does not contain the upsert key. */
+        assertNull(headers.getValue());
+    }
+
+    @Test
+    public void replacePendingOperationWithUpsertHeader() {
+
+        /* If we have one pending operation delete, and the network is on. */
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_REPLACE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        mockStatic(CosmosDb.class);
+        when(CosmosDb.getUpsertAdditionalHeader()).thenReturn(new HashMap<String, String>() {
+            {
+                put("abc", "bcd");
+            }
+        });
+
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+        when(CosmosDb.callCosmosDbApi(any(TokenResult.class),
+                anyString(), any(HttpClient.class), anyString(), anyString(), headers.capture(), any(ServiceCallback.class))).then(
+                new Answer<ServiceCall>() {
+
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        return mock(ServiceCall.class);
+                    }
+                });
+
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify additional headers is not null so it contains upsert key. */
+        assertNotNull(headers.getValue());
+    }
+
+    @Test
+    public void createWithoutUpsertHeader() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        mockStatic(CosmosDb.class);
+        when(CosmosDb.getUpsertAdditionalHeader()).thenReturn(new HashMap<String, String>() {
+            {
+                put("abc", "bcd");
+            }
+        });
+
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+        when(CosmosDb.callCosmosDbApi(any(TokenResult.class),
+                anyString(), any(HttpClient.class), anyString(), anyString(), headers.capture(), any(ServiceCallback.class))).then(
+                new Answer<ServiceCall>() {
+
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        return mock(ServiceCall.class);
+                    }
+                });
+
+        /* Create the document. */
+        Storage.create(USER, "123", "test", String.class).get();
+
+        /* Verify the additional header does not contain upsert key. */
+        assertNull(headers.getValue());
+    }
+
+    @Test
+    public void replaceWithUpsertHeader() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        mockStatic(CosmosDb.class);
+        when(CosmosDb.getUpsertAdditionalHeader()).thenReturn(new HashMap<String, String>() {
+            {
+                put("abc", "bcd");
+            }
+        });
+
+        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
+        when(CosmosDb.callCosmosDbApi(any(TokenResult.class),
+                anyString(), any(HttpClient.class), anyString(), anyString(), headers.capture(), any(ServiceCallback.class))).then(
+                new Answer<ServiceCall>() {
+
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallSucceeded("", new HashMap<String, String>());
+                        return mock(ServiceCall.class);
+                    }
+                });
+
+        /* Replace the document. */
+        Storage.replace(USER, "123", "test", String.class).get();
+
+        /* Verify the additional header does not contain upsert key. */
+        assertNotNull(headers.getValue());
+    }
+
+    @Test
     public void createWithNoNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         TestDocument testDocument = new TestDocument("test");
