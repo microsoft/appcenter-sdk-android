@@ -132,21 +132,26 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
-    public void updatePendingOperation() {
+    public void resetPendingOperationColumnToNull() {
         Document<String> document = new Document<>(TEST_VALUE, USER, ID);
         mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, document, new WriteOptions(10));
-
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+
+        /* Reset pending operation column to null. */
         mLocalDocumentStorage.resetPendingOperationColumnToNull(operation);
 
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+
         assertEquals(1, operations.size());
         operation = operations.get(0);
         assertEquals(Constants.USER, operation.getPartition());
         assertEquals(ID, operation.getDocumentId());
-        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+
+        /* Verify pending_operation column is null. */
+        assertNull(operation.getOperation());
     }
 
     @Test

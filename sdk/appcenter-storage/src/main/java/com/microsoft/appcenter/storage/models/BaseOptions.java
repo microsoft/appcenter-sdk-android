@@ -8,12 +8,12 @@ package com.microsoft.appcenter.storage.models;
 public abstract class BaseOptions {
 
     /**
-     * Cache does not expire
+     * Cache does not expire.
      */
     public static final int INFINITE = -1;
 
     /**
-     * Do not cache documents locally
+     * Do not cache documents locally.
      */
     public static final int NO_CACHE = 0;
 

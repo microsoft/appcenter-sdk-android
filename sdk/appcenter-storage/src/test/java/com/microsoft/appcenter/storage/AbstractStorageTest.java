@@ -211,6 +211,12 @@ abstract public class AbstractStorageTest {
         mChannel = start(mStorage);
         Storage.setApiUrl("default");
 
+        /* Wait until the module has finished enabling so pending operations have already been processed. */
+        Storage.setEnabled(true).get();
+
+        /* Verify this here so it is ignored in "verify no more interactions." */
+        verify(mLocalDocumentStorage).getPendingOperations(anyString());
+
         /* Mock utils. */
         mockStatic(CryptoUtils.class);
         mockStatic(JSONUtils.class);
@@ -218,7 +224,7 @@ abstract public class AbstractStorageTest {
         /* Mock CryptoUtils. */
         CryptoUtils cryptoUtils = mock(CryptoUtils.class);
         when(cryptoUtils.encrypt(anyString())).thenAnswer(new Answer<String>() {
-            
+
             @Override
             public String answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
@@ -226,7 +232,7 @@ abstract public class AbstractStorageTest {
             }
         });
         when(cryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
-            
+
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();

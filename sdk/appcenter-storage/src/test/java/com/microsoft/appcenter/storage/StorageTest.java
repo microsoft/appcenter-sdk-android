@@ -16,9 +16,14 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.exception.StorageException;
+import com.microsoft.appcenter.storage.models.BaseOptions;
+import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.storage.models.DocumentError;
+import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.storage.models.PendingOperation;
 import com.microsoft.appcenter.storage.models.ReadOptions;
 import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.storage.models.WriteOptions;
@@ -31,11 +36,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +56,9 @@ import javax.net.ssl.SSLException;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
 import static com.microsoft.appcenter.storage.Constants.USER;
 import static org.junit.Assert.assertEquals;
@@ -83,6 +93,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
         TokenManager.class
 })
 public class StorageTest extends AbstractStorageTest {
+
+    @Mock
+    private DataStoreEventListener mDataStoreEventListener;
 
     private static final String TOKEN_RESULT = String.format("{\n" +
             "            \"partition\": \"%s\",\n" +
@@ -962,5 +975,210 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getDocumentError());
         assertTrue(deleteDocument.getDocumentError().getError().getMessage().contains(failedMessage));
+    }
+
+    @Test
+    public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
+
+        /* If we have one pending operation delete, and the network is on. */
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify pending operation get processed. */
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verify(mDataStoreEventListener).onDataStoreOperationResult(
+                eq(PENDING_OPERATION_DELETE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                isNull(DocumentError.class));
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        verifyNoMoreInteractions(mDataStoreEventListener);
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
+        assertNull(documentMetadata.getEtag());
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void pendingOperationNotProcessedWhenNetworkOff() {
+
+        /* If we have one pending operation delete, and the network is off. */
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* When disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify pending operation is not get processed. */
+        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+                anyString(),
+                any(DocumentMetadata.class),
+                any(DocumentError.class));
+        verifyNoMoreInteractions(mDataStoreEventListener);
+        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
+
+        /* If we have delete, create, update pending operation, and the network is on. */
+        final PendingOperation deletePendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything1",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        final PendingOperation createPendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_CREATE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything2",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        final PendingOperation replacePendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_REPLACE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything3",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME))
+                .thenReturn(Arrays.asList(deletePendingOperation, createPendingOperation, replacePendingOperation));
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+        ServiceCall serviceCallMock1 = mock(ServiceCall.class);
+        ServiceCall serviceCallMock2 = mock(ServiceCall.class);
+        ServiceCall serviceCallMock3 = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(anyString(), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
+                .thenReturn(serviceCallMock1).thenReturn(serviceCallMock2).thenReturn(serviceCallMock3);
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Await the result to make sure that disabling has completed by the time we verify. */
+        Storage.setEnabled(false).get();
+
+        /* Verify the service call has been canceled. */
+        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+                anyString(),
+                any(DocumentMetadata.class),
+                any(DocumentError.class));
+        verifyNoMoreInteractions(mDataStoreEventListener);
+        verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
+        verify(serviceCallMock1).cancel();
+        verify(serviceCallMock2).cancel();
+        verify(serviceCallMock3).cancel();
+    }
+
+    @Test
+    public void pendingOperationProcessedOnceWhenDuplicatePendingOperations() throws JSONException {
+
+        /* If we have duplicate pending operation. (Mock the situation we have call processPendingOperation at the same time.) */
+        final PendingOperation pendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Verify only one pending operation has been executed. */
+        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verify(mDataStoreEventListener).onDataStoreOperationResult(
+                eq(PENDING_OPERATION_DELETE_VALUE),
+                documentMetadataArgumentCaptor.capture(),
+                isNull(DocumentError.class));
+        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+        assertNotNull(documentMetadata);
+        verifyNoMoreInteractions(mDataStoreEventListener);
+        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
+        assertNull(documentMetadata.getEtag());
+        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+    }
+
+    @Test
+    public void TestPartiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
+
+        /* If we have one pending operation, and network is on. */
+        final PendingOperation deletePendingOperation = new PendingOperation(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "anything1",
+                "document",
+                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(deletePendingOperation));
+
+        /* Setup mock to get valid token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = new Gson().toJson(new TokenResult()
+                .withPartition(RESOLVED_USER_PARTITION)
+                .withExpirationTime(expirationDate.getTime())
+                .withDbName("db")
+                .withDbAccount("dbAccount")
+                .withDbCollectionName("collection")
+                .withToken(TOKEN));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
+
+        /* Return null service call to simulate a partially saved pending operation. */
+        when(mHttpClient.callAsync(anyString(), anyString(),
+                anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
+                .thenReturn(null);
+        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+
+        /* Disable, re-enable to force process pending operations. */
+        Storage.setEnabled(false).get();
+        Storage.setEnabled(true).get();
+
+        /* Ensure that this does not throw. */
+        Storage.setEnabled(false).get();
     }
 }

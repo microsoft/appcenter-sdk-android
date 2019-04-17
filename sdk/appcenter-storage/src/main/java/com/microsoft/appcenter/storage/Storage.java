@@ -81,6 +81,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
+    private final Map<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+
     private HttpClient mHttpClient;
 
     private TokenManager mTokenManager;
@@ -275,26 +277,39 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @Override
     public void onNetworkStateUpdated(final boolean connected) {
-        post(new Runnable() {
 
-            @Override
-            public void run() {
+        /* If device comes back online. */
+        if (connected) {
+            post(new Runnable() {
 
-                /* If device comes back online. */
-                if (connected) {
-                    for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
-                        if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                                PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                            instanceCreateOrUpdate(po);
-                        } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                            instanceDelete(po);
-                        } else {
-                            AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
-                        }
-                    }
+                @Override
+                public void run() {
+                    processPendingOperations();
                 }
+            });
+        }
+    }
+
+    private synchronized void processPendingOperations() {
+        for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+            String outgoingId = Utils.getOutgoingId(po.getPartition(), po.getDocumentId());
+
+            /* If the operation is already being processed, skip it. */
+            if (mOutgoingPendingOperationCalls.containsKey(outgoingId)) {
+                continue;
             }
-        });
+            
+            /* Put the pending document id into the map to prevent further duplicate http call. The ServiceCall will be set when the http operation executes. */
+            mOutgoingPendingOperationCalls.put(outgoingId, null);
+            if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
+                    PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
+                instanceCreateOrUpdate(po);
+            } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
+                instanceDelete(po);
+            } else {
+                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", po.getOperation()));
+            }
+        }
     }
 
     /**
@@ -307,6 +322,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthListener);
             mNetworkStateHelper.addListener(this);
+            if (mNetworkStateHelper.isNetworkConnected()) {
+                processPendingOperations();
+            }
         } else {
             for (Map.Entry<DefaultAppCenterFuture<?>, ServiceCall> call : mPendingCalls.entrySet()) {
                 call.getKey().complete(null);
@@ -315,6 +333,12 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             AuthTokenContext.getInstance().removeListener(mAuthListener);
             mNetworkStateHelper.removeListener(this);
             mPendingCalls.clear();
+            for (Map.Entry<String, ServiceCall> call : mOutgoingPendingOperationCalls.entrySet()) {
+                if (call.getValue() != null) {
+                    call.getValue().cancel();
+                }
+            }
+            mOutgoingPendingOperationCalls.clear();
         }
     }
 
@@ -627,7 +651,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private synchronized void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
             final PendingOperation pendingOperation) {
-        CosmosDb.callCosmosDbApi(
+        String outgoingId = Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId());
+        mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
                 mHttpClient,
@@ -649,7 +674,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                 new StorageException("Failed to call Cosmos create or replace API", e),
                                 pendingOperation);
                     }
-                });
+                }));
     }
 
     /**
@@ -758,7 +783,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation operation) {
-        CosmosDb.callCosmosDbApi(
+        String outgoingId = Utils.getOutgoingId(operation.getPartition(), operation.getDocumentId());
+        mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 operation.getDocumentId(),
                 mHttpClient,
@@ -779,7 +805,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                 new StorageException("Failed to call Cosmos delete API", e),
                                 operation);
                     }
-                });
+                })
+        );
     }
 
     synchronized void getTokenAndCallCosmosDbApi(
@@ -877,6 +904,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     /* Clear the pending_operation column if cosmos Db was updated successfully. */
                     mLocalDocumentStorage.resetPendingOperationColumnToNull(pendingOperation);
                 }
+                mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
     }
@@ -912,6 +940,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     /* Remove the document if document was removed on the server, or expiration_time has elapsed, or it is a delete operation. */
                     mLocalDocumentStorage.deletePendingOperation(pendingOperation);
                 }
+                mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
     }

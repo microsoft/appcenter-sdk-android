@@ -12,10 +12,16 @@
     tools:context=".activities.NewUserDocumentActivity">
 
     <TextView
-        android:layout_width="fill_parent"
+        android:id="@+id/common_schema_property_label"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5sp"
-        android:text="@string/user_document_id" />
+        android:text="@string/user_document_ttl_header" />
+
+    <Spinner
+        android:id="@+id/ttl_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/btn_dropdown" />
 
     <EditText
         android:id="@+id/user_document_id"
@@ -41,12 +47,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
-
     </ScrollView>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="save"
         android:text="@string/save_button" />
 
 </LinearLayout>
