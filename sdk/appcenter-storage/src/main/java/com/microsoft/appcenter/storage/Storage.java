@@ -80,7 +80,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+    private final Map<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 
