@@ -98,8 +98,8 @@ public class CosmosDb {
     }
 
     private static String getDocumentUrl(TokenResult tokenResult, String documentId) {
-        String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
-        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
+        String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.getDbName(), tokenResult.getDbCollectionName(), documentId);
+        return getDocumentDbEndpoint(tokenResult.getDbAccount(), documentResourceIdPrefix);
     }
 
     public static synchronized ServiceCall callCosmosDbListApi(
@@ -107,7 +107,7 @@ public class CosmosDb {
             String continuationToken,
             HttpClient httpClient,
             ServiceCallback serviceCallback) {
-        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.partition(), tokenResult.token());
+        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.getPartition(), tokenResult.getToken());
         if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
@@ -142,7 +142,7 @@ public class CosmosDb {
         return callApi(
                 httpVerb,
                 getDocumentUrl(tokenResult, documentId),
-                addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
+                addRequiredHeaders(additionalHeaders, tokenResult.getPartition(), tokenResult.getToken()),
                 body,
                 httpClient,
                 serviceCallback);

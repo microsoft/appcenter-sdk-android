@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.storage;
 
-import com.google.gson.Gson;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -156,7 +155,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -167,8 +166,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag",
                 0
         ));
-        final String expectedResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(documents)
+        final String expectedResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(documents)
         );
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
@@ -194,7 +193,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -205,8 +204,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag",
                 0
         ));
-        final String expectedFirstResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(firstPartDocuments)
+        final String expectedFirstResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(firstPartDocuments)
         );
         final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test2"),
@@ -215,8 +214,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag 2",
                 1
         ));
-        final String expectedSecondResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(secondPartDocuments)
+        final String expectedSecondResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
         @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
@@ -250,7 +249,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -261,8 +260,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag",
                 0
         ));
-        final String expectedFirstResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(firstPartDocuments)
+        final String expectedFirstResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(firstPartDocuments)
         );
         final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
                 new TestDocument("Test2"),
@@ -271,8 +270,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag 2",
                 1
         ));
-        final String expectedSecondResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(secondPartDocuments)
+        final String expectedSecondResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
         @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
@@ -310,7 +309,7 @@ public class StorageTest extends AbstractStorageTest {
     public void listEndToEndWhenExceptionHappened() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
@@ -335,7 +334,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(nextPage.getError());
 
         /* Set the continuation token, but the http call failed. */
-        docs.withContinuationToken("fake continuation token").withTokenResult(new Gson().fromJson(tokenResult, TokenResult.class)).withHttpClient(mHttpClient);
+        docs.setContinuationToken("fake continuation token").setTokenResult(Utils.getGson().fromJson(tokenResult, TokenResult.class)).setHttpClient(mHttpClient);
         nextPage = docs.getNextPage().get();
         assertNotNull(nextPage);
         assertNotNull(nextPage.getError());
@@ -377,7 +376,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getDocumentError());
-        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
         TestDocument testDocument = testCosmosDocument.getDocument();
@@ -401,7 +400,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mLocalDocumentStorage);
         Document<String> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        assertTrue(testCosmosDocument.failed());
+        assertTrue(testCosmosDocument.hasFailed());
     }
 
     @Test
@@ -416,7 +415,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mLocalDocumentStorage);
         Document<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
-        assertTrue(testCosmosDocument.failed());
+        assertTrue(testCosmosDocument.hasFailed());
     }
 
     @Test
@@ -425,7 +424,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -436,8 +435,8 @@ public class StorageTest extends AbstractStorageTest {
                 "e tag",
                 0
         ));
-        final String expectedResponse = new Gson().toJson(
-                new Page<TestDocument>().withDocuments(documents)
+        final String expectedResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(documents)
         );
 
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
@@ -464,7 +463,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(page.getError());
         assertNotNull(page.getItems());
         assertEquals(1, page.getItems().size());
-        assertTrue(page.getItems().get(0).failed());
+        assertTrue(page.getItems().get(0).hasFailed());
     }
 
     @Test
@@ -473,7 +472,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. Set response as empty string to force deserialization error. */
@@ -528,7 +527,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getDocumentError());
-        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
         TestDocument testDocument = testCosmosDocument.getDocument();
@@ -647,11 +646,11 @@ public class StorageTest extends AbstractStorageTest {
     public void readOnLineWhenLocalStorageContainsNullOperation() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        TokenResult tokenResult = new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("tokenResult");
-        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(new Gson().toJson(tokenResult));
+        TokenResult tokenResult = new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("tokenResult");
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(Utils.getGson().toJson(tokenResult));
         Document<String> outDatedDocument = new Document<>();
         Document<String> expectedDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
-        final String expectedResponse = new Gson().toJson(expectedDocument);
+        final String expectedResponse = Utils.getGson().toJson(expectedDocument);
         when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
         when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
@@ -692,7 +691,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getDocumentError());
-        assertNotNull(testCosmosDocument.getEtag());
+        assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
         TestDocument testDocument = testCosmosDocument.getDocument();
@@ -763,7 +762,7 @@ public class StorageTest extends AbstractStorageTest {
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         assertNotNull(doc.get());
-        assertFalse(doc.get().failed());
+        assertFalse(doc.get().hasFailed());
         assertNull(doc.get().getDocumentError());
     }
 
@@ -841,7 +840,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
-        assertFalse(result.get().failed());
+        assertFalse(result.get().hasFailed());
         assertNull(result.get().getDocumentError());
     }
 
@@ -853,7 +852,7 @@ public class StorageTest extends AbstractStorageTest {
         AppCenterFuture<Document<Void>> result = Storage.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
-        assertTrue(result.get().failed());
+        assertTrue(result.get().hasFailed());
         assertNotNull(result.get().getDocumentError());
     }
 
@@ -871,7 +870,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, d.getId());
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDocument().test);
-        assertEquals(ETAG, d.getEtag());
+        assertEquals(ETAG, d.getETag());
         assertEquals(1550881731, d.getTimestamp());
     }
 
@@ -914,7 +913,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup after get the token from cache, all the http call will fail. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult().withPartition(RESOLVED_USER_PARTITION).withExpirationTime(expirationDate.getTime()).withToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
         when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
@@ -1010,7 +1009,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
-        assertNull(documentMetadata.getEtag());
+        assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
@@ -1082,13 +1081,13 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(RESOLVED_USER_PARTITION)
-                .withExpirationTime(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withToken(TOKEN));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setDbName("db")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collection")
+                .setToken(TOKEN));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
         ServiceCall serviceCallMock1 = mock(ServiceCall.class);
         ServiceCall serviceCallMock2 = mock(ServiceCall.class);
@@ -1150,7 +1149,7 @@ public class StorageTest extends AbstractStorageTest {
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
-        assertNull(documentMetadata.getEtag());
+        assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
     }
 
@@ -1173,13 +1172,13 @@ public class StorageTest extends AbstractStorageTest {
         /* Setup mock to get valid token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = new Gson().toJson(new TokenResult()
-                .withPartition(RESOLVED_USER_PARTITION)
-                .withExpirationTime(expirationDate.getTime())
-                .withDbName("db")
-                .withDbAccount("dbAccount")
-                .withDbCollectionName("collection")
-                .withToken(TOKEN));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setDbName("db")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collection")
+                .setToken(TOKEN));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Return null service call to simulate a partially saved pending operation. */

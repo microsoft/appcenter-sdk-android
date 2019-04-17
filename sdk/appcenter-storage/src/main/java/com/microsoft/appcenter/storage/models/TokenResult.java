@@ -7,14 +7,8 @@ package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.json.JSONException;
 
 import java.util.Date;
-
-import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
 
 /**
  * Token fetch result.
@@ -26,81 +20,73 @@ public class TokenResult {
      */
     @Expose
     @SerializedName(value = "partition")
-    private String partition;
+    private String mPartition;
 
     /**
      * Cosmos db account name.
      */
     @Expose
     @SerializedName(value = "dbAccount")
-    private String dbAccount;
+    private String mDbAccount;
 
     /**
      * Cosmos db database name within the specified account.
      */
     @Expose
     @SerializedName(value = "dbName")
-    private String dbName;
+    private String mDbName;
 
     /**
      * Cosmos db collection name within the specified database.
      */
     @Expose
     @SerializedName(value = "dbCollectionName")
-    private String dbCollectionName;
+    private String mDbCollectionName;
 
     /**
      * The token to be used to talk to cosmos db.
      */
     @Expose
     @SerializedName(value = "token")
-    private String token;
+    private String mToken;
 
     /**
      * Possible values include: 'failed', 'unauthenticated', 'succeed'.
      */
     @Expose
     @SerializedName(value = "status")
-    private String status;
+    private String mStatus;
 
     /**
      * The UTC timestamp for a token expiration time.
      */
     @Expose
     @SerializedName(value = "expiresOn")
-    private String expiresOn;
+    private Date mExpirationDate;
 
     /**
      * The account id.
      */
     @Expose
     @SerializedName(value = "accountId")
-    private String accountId;
+    private String mAccountId;
 
     /**
      * Get the partition value.
      *
      * @return The partition value.
      */
-    public String partition() {
-        return this.partition;
+    public String getPartition() {
+        return mPartition;
     }
 
     /**
-     * Get the token expiration time.
+     * Get the token expiration date.
      *
-     * @return The token expiration value.
+     * @return The token expiration date value.
      */
-    public Date expiresOn() {
-        try {
-            return JSONDateUtils.toDate(this.expiresOn);
-        } catch (JSONException ex) {
-            AppCenterLog.error(
-                    LOG_TAG, String.format(
-                            "Unable to convert '%s' to ISO 8601 Date format ",
-                            expiresOn));
-            return new Date(0);
-        }
+    public Date getExpirationDate() {
+        return mExpirationDate;
     }
 
     /**
@@ -109,24 +95,19 @@ public class TokenResult {
      * @param partition The partition value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withPartition(String partition) {
-        this.partition = partition;
+    public TokenResult setPartition(String partition) {
+        mPartition = partition;
         return this;
     }
 
     /**
      * Set the token expiration time value.
      *
-     * @param expiresOn Token expiration time value to set.
+     * @param expirationDate Token expiration time value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withExpirationTime(Date expiresOn) {
-        try {
-            this.expiresOn = JSONDateUtils.toString(expiresOn);
-        } catch (JSONException ex) {
-            AppCenterLog.error(LOG_TAG, "Unable to convert null Date to ISO 8601 string");
-            this.expiresOn = null;
-        }
+    public TokenResult setExpirationDate(Date expirationDate) {
+        mExpirationDate = expirationDate;
         return this;
     }
 
@@ -136,8 +117,8 @@ public class TokenResult {
      * @param accountId Account id value to be set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withAccountId(String accountId) {
-        this.accountId = accountId;
+    public TokenResult setAccountId(String accountId) {
+        mAccountId = accountId;
         return this;
     }
 
@@ -146,8 +127,8 @@ public class TokenResult {
      *
      * @return The dbAccount value.
      */
-    public String dbAccount() {
-        return this.dbAccount;
+    public String getDbAccount() {
+        return mDbAccount;
     }
 
     /**
@@ -156,8 +137,8 @@ public class TokenResult {
      * @param dbAccount The dbAccount value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbAccount(String dbAccount) {
-        this.dbAccount = dbAccount;
+    public TokenResult setDbAccount(String dbAccount) {
+        mDbAccount = dbAccount;
         return this;
     }
 
@@ -166,8 +147,8 @@ public class TokenResult {
      *
      * @return The dbName value.
      */
-    public String dbName() {
-        return this.dbName;
+    public String getDbName() {
+        return mDbName;
     }
 
     /**
@@ -176,28 +157,28 @@ public class TokenResult {
      * @param dbName The dbName value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbName(String dbName) {
-        this.dbName = dbName;
+    public TokenResult setDbName(String dbName) {
+        mDbName = dbName;
         return this;
     }
 
     /**
      * Get cosmos db collection name within the specified database.
      *
-     * @return The dbCollectionName value.
+     * @return The database collection name.
      */
-    public String dbCollectionName() {
-        return this.dbCollectionName;
+    public String getDbCollectionName() {
+        return mDbCollectionName;
     }
 
     /**
      * Set cosmos db collection name within the specified database.
      *
-     * @param dbCollectionName The dbCollectionName value to set.
+     * @param dbCollectionName The database collection name value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withDbCollectionName(String dbCollectionName) {
-        this.dbCollectionName = dbCollectionName;
+    public TokenResult setDbCollectionName(String dbCollectionName) {
+        mDbCollectionName = dbCollectionName;
         return this;
     }
 
@@ -206,8 +187,8 @@ public class TokenResult {
      *
      * @return The token value.
      */
-    public String token() {
-        return this.token;
+    public String getToken() {
+        return mToken;
     }
 
     /**
@@ -216,8 +197,8 @@ public class TokenResult {
      * @param token The token value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withToken(String token) {
-        this.token = token;
+    public TokenResult setToken(String token) {
+        mToken = token;
         return this;
     }
 
@@ -226,16 +207,17 @@ public class TokenResult {
      *
      * @return The status value.
      */
-    public String status() {
-        return this.status;
+    public String getStatus() {
+        return mStatus;
     }
 
     /**
      * Get account id.
+     *
      * @return The account id value.
      */
-    public String accountId() {
-        return this.accountId;
+    public String getAccountId() {
+        return mAccountId;
     }
 
     /**
@@ -244,8 +226,8 @@ public class TokenResult {
      * @param status The status value to set.
      * @return The TokenResult object itself.
      */
-    public TokenResult withStatus(String status) {
-        this.status = status;
+    public TokenResult setStatus(String status) {
+        mStatus = status;
         return this;
     }
 }

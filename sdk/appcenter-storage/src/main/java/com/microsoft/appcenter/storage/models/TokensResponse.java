@@ -17,16 +17,17 @@ public class TokensResponse {
     /**
      * A list of token result for request partitions.
      */
-    @SerializedName(value = "tokens")
-    private List<TokenResult> tokens;
+    @SuppressWarnings("unused")
+    @SerializedName("tokens")
+    private List<TokenResult> mTokens;
 
     /**
      * Get a list of token result for request partitions.
      *
      * @return the tokens value
      */
-    public List<TokenResult> tokens() {
-        return this.tokens;
+    public List<TokenResult> getTokens() {
+        return mTokens;
     }
 
 }

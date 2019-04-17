@@ -131,7 +131,7 @@ public class Utils {
         for (JsonElement object : array) {
             documents.add(parseDocument(object.getAsJsonObject(), documentType));
         }
-        return new Page<T>().withDocuments(documents);
+        return new Page<T>().setItems(documents);
     }
 
     /**
@@ -169,8 +169,8 @@ public class Utils {
 
     @NonNull
     static String getTableName(@NonNull TokenResult tokenResult) {
-        if (tokenResult.partition().startsWith(Constants.USER)) {
-            return getUserTableName(tokenResult.accountId());
+        if (tokenResult.getPartition().startsWith(Constants.USER)) {
+            return getUserTableName(tokenResult.getAccountId());
         }
         return READONLY_TABLE;
     }
