@@ -8,10 +8,17 @@ package com.microsoft.appcenter.storage;
 import android.support.annotation.NonNull;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
@@ -19,8 +26,15 @@ import com.microsoft.appcenter.storage.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.Constants.USER_TABLE_FORMAT;
@@ -34,9 +48,33 @@ import static com.microsoft.appcenter.storage.Constants.USER;
 
 public class Utils {
 
-    private static final Gson sGson = new Gson();
+    private static final Gson sGson = new GsonBuilder().registerTypeAdapter(Date.class, new DateAdapter()).create();
 
     private static final JsonParser sParser = new JsonParser();
+
+    private static class DateAdapter implements JsonSerializer<Date>, JsonDeserializer<Date> {
+
+        private final DateFormat mDateFormat;
+
+        DateAdapter() {
+            mDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+            mDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        }
+
+        @Override
+        public synchronized JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(mDateFormat.format(src));
+        }
+
+        @Override
+        public synchronized Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            try {
+                return mDateFormat.parse(json.getAsString());
+            } catch (ParseException e) {
+                throw new JsonParseException(e);
+            }
+        }
+    }
 
     static <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
         JsonObject body;
