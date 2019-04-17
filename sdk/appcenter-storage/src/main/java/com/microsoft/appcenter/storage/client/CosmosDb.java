@@ -77,15 +77,12 @@ public class CosmosDb {
             Map<String, String> additionalHeaders,
             final String partition,
             final String dbToken) {
-        Map<String, String> headers = new HashMap<String, String>() {
-            {
-                put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
-                put("x-ms-version", "2018-06-18");
-                put("x-ms-date", nowAsRFC1123());
-                put("Content-Type", "application/json");
-                put("Authorization", urlEncode(dbToken));
-            }
-        };
+        Map<String, String> headers = new HashMap<>();
+        headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
+        headers.put("x-ms-version", "2018-06-18");
+        headers.put("x-ms-date", nowAsRFC1123());
+        headers.put("Content-Type", "application/json");
+        headers.put("Authorization", urlEncode(dbToken));
         if (additionalHeaders != null) {
             headers.putAll(additionalHeaders);
         }
