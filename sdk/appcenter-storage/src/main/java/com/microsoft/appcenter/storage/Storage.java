@@ -304,7 +304,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
                 instanceDelete(po);
             } else {
-                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported", po.getOperation()));
+                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", po.getOperation()));
             }
         }
     }
