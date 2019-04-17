@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.storage;
 
+import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -59,6 +60,7 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PREFERENCE_PARTITION_PREFIX;
+import static com.microsoft.appcenter.storage.Constants.READONLY;
 import static com.microsoft.appcenter.storage.Constants.USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1142,7 +1144,7 @@ public class StorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void TestPartiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
+    public void partiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
 
         /* If we have one pending operation, and network is on. */
         final PendingOperation deletePendingOperation = new PendingOperation(
@@ -1179,5 +1181,29 @@ public class StorageTest extends AbstractStorageTest {
 
         /* Ensure that this does not throw. */
         Storage.setEnabled(false).get();
+    }
+
+    @Test
+    public void corruptedTokenDoesNotCrash() {
+
+        /* If we get invalid token from cache. */
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn("garbage");
+
+        /* When we perform an operation. */
+        AppCenterFuture<Document<TestDocument>> future = Storage.read(Constants.READONLY, "docId", TestDocument.class);
+
+        /* Then we'll refresh token online. */
+        ArgumentCaptor<ServiceCallback> captor = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
+
+        /* If we also get corrupted json online for token. */
+        captor.getValue().onCallSucceeded("garbage", new HashMap<String, String>());
+
+        /* Then the call fails. */
+        future.get();
+        assertNull(future.get().getDocument());
+        assertNotNull(future.get().getDocumentError());
+        assertTrue(future.get().getDocumentError().getError() instanceof StorageException);
+        assertTrue(future.get().getDocumentError().getError().getCause() instanceof JsonSyntaxException);
     }
 }
