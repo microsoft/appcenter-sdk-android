@@ -65,8 +65,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 expirationTime,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -124,8 +124,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -166,8 +166,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         DOCUMENT_ID,
                         document,
                         TIMESTAMP_TOMORROW,
-                        0,
-                        0);
+                        TIMESTAMP_TODAY,
+                        TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -202,8 +202,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             DOCUMENT_ID,
                             "document",
                             TIMESTAMP_TOMORROW,
-                            0,
-                            0));
+                            TIMESTAMP_TODAY,
+                            TIMESTAMP_TODAY));
                 }});
         mStorage.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
@@ -236,8 +236,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -266,8 +266,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -303,8 +303,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -339,8 +339,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);

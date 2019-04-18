@@ -92,6 +92,8 @@ abstract public class AbstractStorageTest {
 
     static final String ETAG = "06000da6-0000-0000-0000-5c7093c30000";
 
+    static final long TIMESTAMP_TODAY = System.currentTimeMillis();
+
     static final long TIMESTAMP_TOMORROW = System.currentTimeMillis() + BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
 
     static final long TIMESTAMP_YESTERDAY = System.currentTimeMillis() - BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
