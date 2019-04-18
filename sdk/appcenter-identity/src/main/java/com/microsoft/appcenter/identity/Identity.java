@@ -256,7 +256,6 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             cancelPendingOperations(new IllegalStateException("Identity is disabled."));
             mLastSignInFuture = null;
             mLastRefreshFuture = null;
-            mHomeAccountIdToRefresh = null;
             clearCache();
             removeTokenAndAccount();
         }
@@ -325,6 +324,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
             mLastRefreshFuture.complete(new SignInResult(null, exception));
         }
+        mHomeAccountIdToRefresh = null;
     }
 
     private synchronized void downloadConfiguration() {

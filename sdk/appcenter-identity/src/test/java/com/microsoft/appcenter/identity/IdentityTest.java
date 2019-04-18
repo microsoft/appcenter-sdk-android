@@ -1105,6 +1105,11 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void signOutWithoutNetworkCancelsPendingRefresh() {
+        // TODO
+    }
+
+    @Test
     public void refreshTokenWithoutAccount() throws Exception {
         ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
