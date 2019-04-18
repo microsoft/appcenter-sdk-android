@@ -253,17 +253,19 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
-                mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
-                mLastSignInFuture = null;
-            }
-            if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
-                mLastRefreshFuture.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
-                mLastRefreshFuture = null;
-            }
+            completeOnDisabled(mLastSignInFuture);
+            mLastSignInFuture = null;
+            completeOnDisabled(mLastRefreshFuture);
+            mLastRefreshFuture = null;
             mHomeAccountIdToRefresh = null;
             clearCache();
             removeTokenAndAccount();
+        }
+    }
+
+    private void completeOnDisabled(DefaultAppCenterFuture<SignInResult> future) {
+        if (future != null && !future.isDone()) {
+            future.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
         }
     }
 
@@ -294,10 +296,19 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
     @Override
     public synchronized void onNetworkStateUpdated(boolean connected) {
-        if (connected && mHomeAccountIdToRefresh != null) {
-            refreshToken(mHomeAccountIdToRefresh, true);
-            mHomeAccountIdToRefresh = null;
+        if (!connected || mHomeAccountIdToRefresh == null) {
+            return;
         }
+        final String homeAccountId = mHomeAccountIdToRefresh;
+        mHomeAccountIdToRefresh = null;
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                refreshToken(homeAccountId, true);
+
+            }
+        });
     }
 
     /**
@@ -307,6 +318,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         mConfigUrl = configUrl;
     }
 
+    @WorkerThread
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
@@ -493,6 +505,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
+    @WorkerThread
     private void removeAccount(String homeAccountIdentifier) {
         if (mAuthenticationClient == null) {
             return;
@@ -600,6 +613,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
+    @WorkerThread
     private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
         if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
             AppCenterLog.debug(LOG_TAG, "Failed to refresh token: sign-in already in progress.");
