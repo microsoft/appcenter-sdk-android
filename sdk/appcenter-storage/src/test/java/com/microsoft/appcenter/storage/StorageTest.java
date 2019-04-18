@@ -710,9 +710,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
 
@@ -768,9 +768,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
 
@@ -1185,9 +1185,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -1225,9 +1225,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
 
@@ -1258,27 +1258,27 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         final PendingOperation createPendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
                 "anything2",
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         final PendingOperation replacePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
                 "anything3",
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME))
                 .thenReturn(Arrays.asList(deletePendingOperation, createPendingOperation, replacePendingOperation));
@@ -1334,9 +1334,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -1374,9 +1374,9 @@ public class StorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 "anything1",
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(deletePendingOperation));
 

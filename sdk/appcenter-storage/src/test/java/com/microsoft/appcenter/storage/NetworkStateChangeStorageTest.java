@@ -57,7 +57,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     private void verifyPendingCreateOperationsSuccess(boolean operationExpired) throws JSONException {
-        long expirationTime = operationExpired ? TIMESTAMP_YESTERDAY : TIMESTAMP_TOMORROW;
+        long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
@@ -65,8 +65,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 expirationTime,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -121,9 +121,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -163,9 +163,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
-                        TIMESTAMP_TOMORROW,
-                        TIMESTAMP_TODAY,
-                        TIMESTAMP_TODAY);
+                        FUTURE_TIMESTAMP,
+                        CURRENT_TIMESTAMP,
+                        CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -199,9 +199,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
-                            TIMESTAMP_TOMORROW,
-                            TIMESTAMP_TODAY,
-                            TIMESTAMP_TODAY));
+                            FUTURE_TIMESTAMP,
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP));
                 }});
         mStorage.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
@@ -233,9 +233,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -263,9 +263,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -308,7 +308,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     private void verifyPendingDeleteOperationWithCosmosDbError(int httpStatusCode, boolean operationExpired) throws JSONException {
-        long expirationTime = operationExpired ? TIMESTAMP_YESTERDAY : TIMESTAMP_TOMORROW;
+        long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
@@ -316,8 +316,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 expirationTime,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -351,9 +351,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
-                TIMESTAMP_TODAY,
-                TIMESTAMP_TODAY);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
