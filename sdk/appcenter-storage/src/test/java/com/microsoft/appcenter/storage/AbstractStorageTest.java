@@ -258,7 +258,7 @@ abstract public class AbstractStorageTest {
     }
 
     @NonNull
-    private Channel start(Storage storage) {
+    Channel start(Storage storage) {
         Channel channel = mock(Channel.class);
         storage.onStarting(mAppCenterHandler);
         storage.onStarted(mock(Context.class), channel, "", null, true);
