@@ -988,8 +988,8 @@ public class StorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -1025,8 +1025,8 @@ public class StorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
@@ -1055,8 +1055,8 @@ public class StorageTest extends AbstractStorageTest {
                 "anything1",
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         final PendingOperation createPendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
@@ -1064,8 +1064,8 @@ public class StorageTest extends AbstractStorageTest {
                 "anything2",
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         final PendingOperation replacePendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
@@ -1073,8 +1073,8 @@ public class StorageTest extends AbstractStorageTest {
                 "anything3",
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME))
                 .thenReturn(Arrays.asList(deletePendingOperation, createPendingOperation, replacePendingOperation));
@@ -1128,8 +1128,8 @@ public class StorageTest extends AbstractStorageTest {
                 DOCUMENT_ID,
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Arrays.asList(pendingOperation, pendingOperation));
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
@@ -1165,8 +1165,8 @@ public class StorageTest extends AbstractStorageTest {
                 "anything1",
                 "document",
                 TIMESTAMP_TOMORROW,
-                0,
-                0);
+                TIMESTAMP_TODAY,
+                TIMESTAMP_TODAY);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(Collections.singletonList(deletePendingOperation));
 
