@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.storage.models.BaseOptions;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
@@ -28,8 +27,10 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLAC
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -47,13 +48,25 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
     @Test
     public void pendingCreateOperationSuccess() throws JSONException {
+        verifyPendingCreateOperationsSuccess(false);
+    }
+
+    @Test
+    public void pendingCreateOperationSuccessDeletesExpiredOperation() throws JSONException {
+        verifyPendingCreateOperationsSuccess(true);
+    }
+
+    private void verifyPendingCreateOperationsSuccess(boolean operationExpired) throws JSONException {
+        long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                expirationTime,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -76,15 +89,27 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertEquals(ETAG, documentMetadata.getETag());
+        if (operationExpired) {
 
-        ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
-        PendingOperation capturedOperation = pendingOperationCaptor.getValue();
-        assertNotNull(capturedOperation);
-        assertEquals(pendingOperation, capturedOperation);
-        assertEquals(ETAG, capturedOperation.getETag());
-        assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
+            /* Verify operation is deleted from the cache when operation expired. */
+            ArgumentCaptor<String> tableNameCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> partitionCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> documentIdCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mLocalDocumentStorage).deleteOnline(tableNameCaptor.capture(), partitionCaptor.capture(), documentIdCaptor.capture());
+            assertEquals(USER_TABLE_NAME, tableNameCaptor.getValue());
+            assertEquals(RESOLVED_USER_PARTITION, partitionCaptor.getValue());
+            assertEquals(DOCUMENT_ID, documentIdCaptor.getValue());
+        } else {
 
+            /* Verify operation is updated in the cache when operation is not expired. */
+            ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
+            verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
+            PendingOperation capturedOperation = pendingOperationCaptor.getValue();
+            assertNotNull(capturedOperation);
+            assertEquals(ETAG, capturedOperation.getETag());
+            assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
+            assertNull(capturedOperation.getOperation());
+        }
         verifyNoMoreInteractions(mHttpClient);
     }
 
@@ -96,7 +121,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -118,12 +145,12 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
-    public void pendingReplaceOperationFailure() throws JSONException {
+    public void pendingReplaceOperationWithCosmosDb500Error() throws JSONException {
         verifyPendingOperationFailure(PENDING_OPERATION_REPLACE_VALUE, METHOD_POST, null);
     }
 
     @Test
-    public void pendingDeleteOperationFailure() throws JSONException {
+    public void pendingDeleteOperationWithCosmosDb500Error() throws JSONException {
         verifyPendingOperationFailure(PENDING_OPERATION_DELETE_VALUE, METHOD_DELETE, DOCUMENT_ID);
     }
 
@@ -136,7 +163,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                         RESOLVED_USER_PARTITION,
                         DOCUMENT_ID,
                         document,
-                        BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                        FUTURE_TIMESTAMP,
+                        CURRENT_TIMESTAMP,
+                        CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -156,18 +185,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         DocumentError documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
-
         assertEquals(cosmosFailureException, documentError.getError().getCause());
-
-        ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-        verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
-        PendingOperation capturedOperation = pendingOperationCaptor.getValue();
-        assertNotNull(capturedOperation);
-        assertEquals(pendingOperation, capturedOperation);
-        assertNull(capturedOperation.getETag());
-        assertEquals(document, capturedOperation.getDocument());
-
-        verifyNoMoreInteractions(mHttpClient);
+        verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -180,7 +199,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             RESOLVED_USER_PARTITION,
                             DOCUMENT_ID,
                             "document",
-                            BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS));
+                            FUTURE_TIMESTAMP,
+                            CURRENT_TIMESTAMP,
+                            CURRENT_TIMESTAMP));
                 }});
         mStorage.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
@@ -212,7 +233,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -240,7 +263,9 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -264,18 +289,35 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
 
-        verify(mLocalDocumentStorage).updatePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test
-    public void pendingDeleteOperationWithConflict() throws JSONException {
+    public void pendingDeleteOperationWithCosmosDb404Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(404, false);
+    }
+
+    @Test
+    public void pendingDeleteOperationWithCosmosDb409Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(409, false);
+    }
+
+    @Test
+    public void pendingDeleteOperationDeletesExpiredOperationOnCosmosDb500Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(500, true);
+    }
+
+    private void verifyPendingDeleteOperationWithCosmosDbError(int httpStatusCode, boolean operationExpired) throws JSONException {
+        long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                expirationTime,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -285,7 +327,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
 
-        HttpException cosmosFailureException = new HttpException(409, "Conflict");
+        HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
@@ -298,18 +340,20 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test
-    public void pendingDeleteOperationWithConflictNoListener() throws JSONException {
+    public void pendingDeleteOperationWithCosmosDb409ErrorNoListener() throws JSONException {
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
@@ -319,7 +363,6 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
-
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 }

@@ -131,18 +131,6 @@ class LocalDocumentStorage {
         write(table, document, writeOptions, null);
     }
 
-    private static ContentValues getContentValues(PendingOperation operation, long now) {
-        return getContentValues(
-                operation.getPartition(),
-                operation.getDocumentId(),
-                operation.getDocument(),
-                operation.getETag(),
-                operation.getExpirationTime(),
-                now,
-                now,
-                operation.getOperation());
-    }
-
     private <T> long write(String table, Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
@@ -244,21 +232,14 @@ class LocalDocumentStorage {
                         values.getAsString(PARTITION_COLUMN_NAME),
                         values.getAsString(DOCUMENT_ID_COLUMN_NAME),
                         values.getAsString(DOCUMENT_COLUMN_NAME),
-                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME)));
+                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
+                        values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
             }
         } finally {
             cursor.close();
         }
         return result;
-    }
-
-    /**
-     * Deletes the specified document from the cache.
-     *
-     * @param operation Pending operation to delete.
-     */
-    void deletePendingOperation(PendingOperation operation) {
-        deleteOnline(operation.getTable(), operation.getPartition(), operation.getDocumentId());
     }
 
     /**
@@ -292,18 +273,22 @@ class LocalDocumentStorage {
         return values;
     }
 
+    /**
+     * Update the pending operation.
+     *
+     * @param operation Pending operation to update.
+     */
     void updatePendingOperation(PendingOperation operation) {
-
-        /*
-         * Update the document in cache (if expiration_time still valid otherwise, remove the document),
-         * clear the pending_operation column, update eTag, download_time and document columns.
-         */
-        long now = System.currentTimeMillis();
-        if (operation.getExpirationTime() <= now || PENDING_OPERATION_DELETE_VALUE.equals(operation.getOperation())) {
-            deletePendingOperation(operation);
-        } else {
-            mDatabaseManager.replace(operation.getTable(), getContentValues(operation, now));
-        }
+        ContentValues values = getContentValues(
+                operation.getPartition(),
+                operation.getDocumentId(),
+                operation.getDocument(),
+                operation.getETag(),
+                operation.getExpirationTime(),
+                operation.getDownloadTime(),
+                operation.getOperationTime(),
+                operation.getOperation());
+        mDatabaseManager.replace(operation.getTable(), values);
     }
 
     @NonNull

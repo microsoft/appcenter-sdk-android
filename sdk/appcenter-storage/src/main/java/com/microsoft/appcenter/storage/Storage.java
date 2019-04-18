@@ -895,7 +895,16 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     eTag),
                             null);
                 }
-                mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                if (pendingOperation.getExpirationTime() <= System.currentTimeMillis() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
+
+                    /* Remove the document if expiration_time has elapsed or it is a delete operation. */
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
+                } else {
+
+                    /* Clear the pending_operation column if cosmos Db was updated successfully. */
+                    pendingOperation.setOperation(null);
+                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
@@ -927,10 +936,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             null,
                             new DocumentError(e));
                 }
-                if (deleteLocalCopy) {
-                    mLocalDocumentStorage.deletePendingOperation(pendingOperation);
-                } else {
-                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
+
+                    /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }

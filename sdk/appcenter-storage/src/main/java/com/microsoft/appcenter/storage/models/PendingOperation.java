@@ -24,13 +24,19 @@ public class PendingOperation {
 
     private long mExpirationTime;
 
-    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime) {
+    private long mDownloadTime;
+
+    private long mOperationTime;
+
+    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
         mTable = table;
         mOperation = operation;
         mPartition = partition;
         mDocumentId = documentId;
         mDocument = document;
         mExpirationTime = expirationTime;
+        mDownloadTime = downloadTime;
+        mOperationTime = operationTime;
     }
 
     /**
@@ -45,6 +51,13 @@ public class PendingOperation {
      */
     public String getOperation() {
         return mOperation;
+    }
+
+    /**
+     * @param operation name.
+     */
+    public void setOperation(String operation) {
+        mOperation = operation;
     }
 
     /**
@@ -94,5 +107,19 @@ public class PendingOperation {
      */
     public long getExpirationTime() {
         return mExpirationTime;
+    }
+
+    /**
+     * @return document download time.
+     */
+    public long getDownloadTime() {
+        return mDownloadTime;
+    }
+
+    /**
+     * @return operation time.
+     */
+    public long getOperationTime() {
+        return mOperationTime;
     }
 }
