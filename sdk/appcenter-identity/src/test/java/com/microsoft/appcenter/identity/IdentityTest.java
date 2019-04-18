@@ -1198,8 +1198,25 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void refreshTokenTwice() throws Exception {
-        // TODO
+    public void refreshTokenMultipleTimes() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+
+        /* Request token refresh multiple times. */
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we acquire new token only once. */
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
