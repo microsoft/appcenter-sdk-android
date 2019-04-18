@@ -1100,6 +1100,11 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void signOutCancelsSignIn() {
+        // TODO
+    }
+
+    @Test
     public void refreshTokenWithoutAccount() throws Exception {
         ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
@@ -1125,13 +1130,9 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         mockReadyToSignIn();
         verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
-        IAccount account = mock(IAccount.class);
-        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
-        when(accountIdentifier.getIdentifier()).thenReturn("accountId");
-        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
-        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(account);
 
         /* Request token refresh. */
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1151,15 +1152,11 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock no network and identity. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         mockReadyToSignIn();
         verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
         verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
-        IAccount account = mock(IAccount.class);
-        IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
-        when(accountIdentifier.getIdentifier()).thenReturn("accountId");
-        when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
-        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(account);
 
         /* Request token refresh. */
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1178,12 +1175,53 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Test
     public void refreshTokenDoesNotHaveUiFallback() throws Exception {
-        // TODO
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                ((AuthenticationCallback) invocationOnMock.getArguments()[4]).onError(new MsalUiRequiredException("error"));
+                return null;
+            }
+        }).when(publicClientApplication).acquireTokenSilentAsync(
+                notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+
+        /* Request token refresh. */
+        authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we don't try to show UI as fallback. */
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+        verify(publicClientApplication, never()).acquireToken(any(Activity.class), any(String[].class), any(AuthenticationCallback.class));
     }
 
     @Test
-    public void refreshTokenTwice() throws Exception {
-        // TODO
+    public void refreshTokenMultipleTimes() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+
+        /* Request token refresh multiple times. */
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we acquire new token only once. */
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1283,6 +1321,11 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Verify called only once. */
         verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
+    }
+
+    @Test
+    public void signOutDuringRefreshToken() throws Exception {
+        // TODO
     }
 
     @Test
