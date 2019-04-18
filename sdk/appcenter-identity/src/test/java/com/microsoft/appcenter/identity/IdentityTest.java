@@ -1100,13 +1100,84 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void signOutCancelsSignIn() {
-        // TODO
+    public void signOutCancelsSignIn() throws Exception {
+
+        /* Capture Listener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+        final IAuthenticationResult mockResult = mockAuthResult("idToken", "accountId", mockHomeAccountId);
+        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        Identity.signIn();
+
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
+
+        /* Sign out. */
+        Identity.signOut();
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Simulate success. */
+        callbackCaptor.getValue().onSuccess(mockResult);
+
+        /* Verify signIn was cancelled. */
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
-    public void signOutWithoutNetworkCancelsPendingRefresh() {
-        // TODO
+    public void signOutWithoutNetworkCancelsPendingRefresh() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
+        doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+
+        /* Mock no network and identity. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
+
+        /* Request token refresh. */
+        authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we don't try to update it without network and don't clear the current one. */
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Sign out. */
+        Identity.signOut();
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Come back online. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        networkStateListenerCaptor.getValue().onNetworkStateUpdated(true);
+
+        /* Check that signOut() canceled token refresh. */
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
