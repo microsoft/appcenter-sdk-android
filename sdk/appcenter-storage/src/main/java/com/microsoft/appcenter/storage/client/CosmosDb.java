@@ -5,12 +5,15 @@
 
 package com.microsoft.appcenter.storage.client;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.models.TokenResult;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -62,17 +65,20 @@ public class CosmosDb {
     }
 
     private static String urlEncode(String url) {
-        if(url != null) {
+
+        /* TODO validate TokenResult has all required fields non null then get rid of the if. */
+        if (url != null) {
             return urlEncode(url, "UTF-8");
         }
-        return "null";
+        return null;
     }
 
+    @VisibleForTesting
     public static String urlEncode(String url, String enc) {
         try {
             return URLEncoder.encode(url, enc);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to encode url " + url, e);
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Failed to encode url " + url, e);
         }
     }
 

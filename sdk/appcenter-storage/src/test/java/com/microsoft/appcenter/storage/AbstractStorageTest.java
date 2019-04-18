@@ -77,9 +77,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 })
 abstract public class AbstractStorageTest {
 
-    protected static final String DATABASE_NAME = "mbaas";
+    static final String DATABASE_NAME = "mbaas";
 
-    protected static final String COLLECTION_NAME = "appcenter";
+    static final String COLLECTION_NAME = "appcenter";
 
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
