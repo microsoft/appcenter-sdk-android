@@ -318,10 +318,10 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     }
 
     private synchronized void cancelPendingOperations(Exception exception) {
-        if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
+        if (isFutureInProgress(mLastSignInFuture)) {
             mLastSignInFuture.complete(new SignInResult(null, exception));
         }
-        if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
+        if (isFutureInProgress(mLastRefreshFuture)) {
             mLastRefreshFuture.complete(new SignInResult(null, exception));
         }
         mHomeAccountIdToRefresh = null;
@@ -469,11 +469,11 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
     private synchronized AppCenterFuture<SignInResult> instanceSignIn() {
         final DefaultAppCenterFuture<SignInResult> future = new DefaultAppCenterFuture<>();
-        if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
+        if (isFutureInProgress(mLastSignInFuture)) {
             future.complete(new SignInResult(null, new IllegalStateException("Sign-in already in progress.")));
             return future;
         }
-        if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
+        if (isFutureInProgress(mLastRefreshFuture)) {
             mLastRefreshFuture.complete(new SignInResult(null, new CancellationException()));
         }
         mLastSignInFuture = future;
@@ -621,11 +621,11 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
     @WorkerThread
     private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
-        if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
+        if (isFutureInProgress(mLastSignInFuture)) {
             AppCenterLog.debug(LOG_TAG, "Failed to refresh token: sign-in already in progress.");
             return;
         }
-        if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
+        if (isFutureInProgress(mLastRefreshFuture)) {
             AppCenterLog.verbose(LOG_TAG, "Token refresh already in progress. Skip this refresh request.");
             return;
         }
@@ -702,5 +702,9 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
                 future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
             }
         });
+    }
+
+    private boolean isFutureInProgress(AppCenterFuture<SignInResult> future){
+        return future != null && !future.isDone();
     }
 }
