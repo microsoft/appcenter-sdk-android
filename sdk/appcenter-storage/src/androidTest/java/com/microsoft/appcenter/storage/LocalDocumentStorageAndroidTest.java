@@ -42,8 +42,6 @@ public class LocalDocumentStorageAndroidTest {
 
     private static final String ID = "id";
 
-    private static final long NOW = System.currentTimeMillis();
-
     private static final String USER_TABLE_NAME = Utils.getUserTableName("123");
 
     private static final String READ_ONLY_TABLE_NAME = Utils.getTableName(Constants.READONLY, "123");
@@ -267,7 +265,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(document.getDocumentError());
 
         /* When we delete after coming back online. */
-        mLocalDocumentStorage.updatePendingOperation(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE, 0, 0));
+        mLocalDocumentStorage.deletePendingOperation(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE, 0, 0));
 
         /* Then the entry is removed from cache. */
         document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);
