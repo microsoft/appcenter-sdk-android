@@ -568,8 +568,6 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(expectedUri, CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID));
 
         /* Now verify that actual call was properly encoded. */
-        ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
-                ArgumentCaptor.forClass(ServiceCallback.class);
         verify(mHttpClient).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID)),
                 eq(METHOD_GET),
