@@ -277,7 +277,6 @@ public class SettingsActivity extends AppCompatActivity {
              *  }
              * });
              */
-
             try {
                 @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.identity.Identity");
                 final Method isEnabled = identity.getMethod("isEnabled");
@@ -326,7 +325,6 @@ public class SettingsActivity extends AppCompatActivity {
              *  }
              * });
              */
-
             try {
                 @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.storage.Storage");
                 final Method isEnabled = storage.getMethod("isEnabled");
