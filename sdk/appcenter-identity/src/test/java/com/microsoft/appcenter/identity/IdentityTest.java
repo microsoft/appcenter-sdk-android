@@ -1100,6 +1100,11 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void signOutCancelsSignIn() {
+        // TODO
+    }
+
+    @Test
     public void refreshTokenWithoutAccount() throws Exception {
         ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
@@ -1226,6 +1231,11 @@ public class IdentityTest extends AbstractIdentityTest {
 
     @Test
     public void signInDuringRefreshToken() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void signOutDuringRefreshToken() throws Exception {
         // TODO
     }
 

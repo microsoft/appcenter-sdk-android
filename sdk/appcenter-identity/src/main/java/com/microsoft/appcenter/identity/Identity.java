@@ -253,19 +253,12 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            completeOnDisabled(mLastSignInFuture);
+            cancelPendingOperations(new IllegalStateException("Identity is disabled."));
             mLastSignInFuture = null;
-            completeOnDisabled(mLastRefreshFuture);
             mLastRefreshFuture = null;
             mHomeAccountIdToRefresh = null;
             clearCache();
             removeTokenAndAccount();
-        }
-    }
-
-    private void completeOnDisabled(DefaultAppCenterFuture<SignInResult> future) {
-        if (future != null && !future.isDone()) {
-            future.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
         }
     }
 
@@ -323,6 +316,15 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
         authTokenContext.setAuthToken(null, null, null);
+    }
+
+    private synchronized void cancelPendingOperations(Exception exception) {
+        if (mLastSignInFuture != null && !mLastSignInFuture.isDone()) {
+            mLastSignInFuture.complete(new SignInResult(null, exception));
+        }
+        if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
+            mLastRefreshFuture.complete(new SignInResult(null, exception));
+        }
     }
 
     private synchronized void downloadConfiguration() {
@@ -471,6 +473,9 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             future.complete(new SignInResult(null, new IllegalStateException("Sign-in already in progress.")));
             return future;
         }
+        if (mLastRefreshFuture != null && !mLastRefreshFuture.isDone()) {
+            mLastRefreshFuture.complete(new SignInResult(null, new CancellationException()));
+        }
         mLastSignInFuture = future;
         Runnable disabledRunnable = new Runnable() {
 
@@ -499,6 +504,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
                     AppCenterLog.warn(LOG_TAG, "Cannot sign out because a user has not signed in.");
                     return;
                 }
+                cancelPendingOperations(new CancellationException("User cancelled sign-in."));
                 removeTokenAndAccount();
                 AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
             }
@@ -639,11 +645,14 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         }
     }
 
-    private void handleSignInSuccess(final DefaultAppCenterFuture<SignInResult> future, final IAuthenticationResult authenticationResult) {
+    private void handleSignInSuccess(@NonNull final DefaultAppCenterFuture<SignInResult> future, final IAuthenticationResult authenticationResult) {
         post(new Runnable() {
 
             @Override
             public void run() {
+                if (future.isDone()) {
+                    return;
+                }
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 Date expiresOn = authenticationResult.getExpiresOn();
@@ -665,11 +674,14 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
-    private void handleSignInError(final DefaultAppCenterFuture<SignInResult> future, final MsalException exception) {
+    private void handleSignInError(@NonNull final DefaultAppCenterFuture<SignInResult> future, final MsalException exception) {
         post(new Runnable() {
 
             @Override
             public void run() {
+                if (future.isDone()) {
+                    return;
+                }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 future.complete(new SignInResult(null, exception));
@@ -677,11 +689,14 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
-    private void handleSignInCancellation(final DefaultAppCenterFuture<SignInResult> future) {
+    private void handleSignInCancellation(@NonNull final DefaultAppCenterFuture<SignInResult> future) {
         post(new Runnable() {
 
             @Override
             public void run() {
+                if (future.isDone()) {
+                    return;
+                }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
