@@ -27,7 +27,7 @@ import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_REPLAC
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
@@ -89,21 +89,20 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertEquals(ETAG, documentMetadata.getETag());
-
-        ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
-
         if (operationExpired) {
 
             /* Verify operation is deleted from the cache when operation expired. */
-            verify(mLocalDocumentStorage).deletePendingOperation(pendingOperationCaptor.capture());
-            PendingOperation capturedOperation = pendingOperationCaptor.getValue();
-            assertNotNull(capturedOperation);
-            assertEquals(ETAG, capturedOperation.getETag());
-            assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
-            assertEquals(PENDING_OPERATION_CREATE_VALUE, capturedOperation.getOperation());
+            ArgumentCaptor<String> tableNameCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> partitionCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> documentIdCaptor = ArgumentCaptor.forClass(String.class);
+            verify(mLocalDocumentStorage).deleteOnline(tableNameCaptor.capture(), partitionCaptor.capture(), documentIdCaptor.capture());
+            assertEquals(USER_TABLE_NAME, tableNameCaptor.getValue());
+            assertEquals(RESOLVED_USER_PARTITION, partitionCaptor.getValue());
+            assertEquals(DOCUMENT_ID, documentIdCaptor.getValue());
         } else {
 
             /* Verify operation is updated in the cache when operation is not expired. */
+            ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
             verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
             PendingOperation capturedOperation = pendingOperationCaptor.getValue();
             assertNotNull(capturedOperation);
@@ -111,7 +110,6 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
             assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
             assertNull(capturedOperation.getOperation());
         }
-
         verifyNoMoreInteractions(mHttpClient);
     }
 
@@ -188,7 +186,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(cosmosFailureException, documentError.getError().getCause());
-        verify(mLocalDocumentStorage, never()).deletePendingOperation(any(PendingOperation.class));
+        verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -291,7 +289,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
 
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test
@@ -327,7 +325,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         assertEquals(cosmosFailureException, documentError.getError().getCause());
 
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test
@@ -350,7 +348,6 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
-
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 }

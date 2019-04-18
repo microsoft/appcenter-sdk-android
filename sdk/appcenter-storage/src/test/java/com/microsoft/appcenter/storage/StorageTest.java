@@ -1212,7 +1212,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test
@@ -1361,7 +1361,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
-        verify(mLocalDocumentStorage).deletePendingOperation(eq(pendingOperation));
+        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 
     @Test

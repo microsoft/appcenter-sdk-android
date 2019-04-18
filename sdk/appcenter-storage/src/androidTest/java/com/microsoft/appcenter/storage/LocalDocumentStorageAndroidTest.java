@@ -265,7 +265,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(document.getDocumentError());
 
         /* When we delete after coming back online. */
-        mLocalDocumentStorage.deletePendingOperation(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE, 0, 0));
+        mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, USER, ID);
 
         /* Then the entry is removed from cache. */
         document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);

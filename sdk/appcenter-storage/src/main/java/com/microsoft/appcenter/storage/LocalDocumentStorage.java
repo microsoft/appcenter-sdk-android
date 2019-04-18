@@ -243,15 +243,6 @@ class LocalDocumentStorage {
     }
 
     /**
-     * Deletes the specified document from the cache.
-     *
-     * @param operation Pending operation to delete.
-     */
-    void deletePendingOperation(PendingOperation operation) {
-        deleteOnline(operation.getTable(), operation.getPartition(), operation.getDocumentId());
-    }
-
-    /**
      * Validate partition name.
      *
      * @param partition name.

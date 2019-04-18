@@ -898,7 +898,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 if (pendingOperation.getExpirationTime() <= System.currentTimeMillis() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
 
                     /* Remove the document if expiration_time has elapsed or it is a delete operation. */
-                    mLocalDocumentStorage.deletePendingOperation(pendingOperation);
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
                 } else {
 
                     /* Clear the pending_operation column if cosmos Db was updated successfully. */
@@ -939,7 +939,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
 
                     /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
-                    mLocalDocumentStorage.deletePendingOperation(pendingOperation);
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
