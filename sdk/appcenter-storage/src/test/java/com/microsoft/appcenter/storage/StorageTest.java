@@ -40,6 +40,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -552,6 +554,27 @@ public class StorageTest extends AbstractStorageTest {
         assertThat(
                 doc.get().getDocumentError().getError().getMessage(),
                 CoreMatchers.containsString("Cosmos db exception."));
+    }
+
+    @Test
+    public void readCosmosDbCallEncodeDocumentId() throws JSONException, UnsupportedEncodingException {
+        String documentID = "Test Document";
+        Storage.read(USER, documentID, TestDocument.class);
+        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+
+        /* Verify that document base Uri is properly constructed by CosmosDb.getDocumentBaseUrl method. */
+        String expectedUri = String.format("dbs/%s", DATABASE_NAME) + "/" +
+                String.format("colls/%s", COLLECTION_NAME) + "/" +
+                "docs" + '/' + URLEncoder.encode(documentID, "UTF-8");
+        assertEquals(expectedUri, CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID));
+
+        /* Now verify that actual call was properly encoded. */
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID)),
+                eq(METHOD_GET),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                notNull(ServiceCallback.class));
     }
 
     @Test
