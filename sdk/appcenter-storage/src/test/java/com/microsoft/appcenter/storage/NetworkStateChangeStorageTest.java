@@ -293,14 +293,29 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
     }
 
     @Test
+    public void pendingDeleteOperationWithCosmosDb404Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(404, false);
+    }
+
+    @Test
     public void pendingDeleteOperationWithCosmosDb409Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(409, false);
+    }
+
+    @Test
+    public void pendingDeleteOperationDeletesExpiredOperationOnCosmosDb500Error() throws JSONException {
+        verifyPendingDeleteOperationWithCosmosDbError(500, true);
+    }
+
+    private void verifyPendingDeleteOperationWithCosmosDbError(int httpStatusCode, boolean operationExpired) throws JSONException {
+        long expirationTime = operationExpired ? TIMESTAMP_YESTERDAY : TIMESTAMP_TOMORROW;
         final PendingOperation pendingOperation = new PendingOperation(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",
-                TIMESTAMP_TOMORROW,
+                expirationTime,
                 TIMESTAMP_TODAY,
                 TIMESTAMP_TODAY);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
@@ -312,7 +327,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
 
-        HttpException cosmosFailureException = new HttpException(409, "Conflict");
+        HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
         verify(mDataStoreEventListener).onDataStoreOperationResult(
