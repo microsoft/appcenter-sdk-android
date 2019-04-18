@@ -1336,15 +1336,12 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Mock authentication result. */
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
-        IAccount mockAccount = mock(IAccount.class);
-        final IAuthenticationResult mockResult = mockAuthResult(null, null, null);
-        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+        final IAuthenticationResult mockResult = mockAuthResult("idToken", "accountId", "homeAccountId");
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
-        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
-        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mock(IAccount.class));
         mockReadyToSignIn();
 
         /* Request token refresh. */
@@ -1362,12 +1359,46 @@ public class IdentityTest extends AbstractIdentityTest {
         tokenRefreshCallbackCaptor.getValue().onSuccess(mockResult);
 
         /* Verify not called second time, cause sign out should cancel refreshToken(). */
-        verify(mAuthTokenContext).setAuthToken(anyString(), anyString(), any(Date.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class));
     }
 
     @Test
     public void disableDuringRefreshToken() throws Exception {
-        // TODO
+
+        /* Capture Listener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock auth token. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication result. */
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        final IAuthenticationResult mockResult = mockAuthResult("idToken", "accountId", "homeAccountId");
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mock(IAccount.class));
+        mockReadyToSignIn();
+
+        /* Request token refresh. */
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh(mockHomeAccountId);
+        ArgumentCaptor<AuthenticationCallback> tokenRefreshCallbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), tokenRefreshCallbackCaptor.capture());
+
+        /* Disable Identity. */
+        Identity.setEnabled(false);
+
+        /* Verify sign out cleared token. */
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Simulate Sign-In success. */
+        tokenRefreshCallbackCaptor.getValue().onSuccess(mockResult);
+
+        /* Verify not called second time, cause sign out should cancel refreshToken(). */
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class));
     }
 
     @Test
