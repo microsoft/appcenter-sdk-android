@@ -149,7 +149,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(document.getTimestamp()).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(document.getTimestamp() * 1000L).toString()));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
         Object doc = document.getDocument();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);

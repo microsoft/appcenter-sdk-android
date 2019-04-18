@@ -309,6 +309,55 @@ public class SettingsActivity extends AppCompatActivity {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.identity_key)));
             }
 
+            /* Storage. */
+            /*
+             * TODO: change to real implementation when released.
+             *
+             * initCheckBoxSetting(R.string.appcenter_storage_state_key, R.string.appcenter_storage_state_summary_enabled, R.string.appcenter_storage_state_summary_disabled, new HasEnabled() {
+             *
+             *  @Override
+             *  public void setEnabled(boolean enabled) {
+             *      Storage.setEnabled(enabled);
+             *  }
+             *
+             *  @Override
+             *  public boolean isEnabled() {
+             *      return Storage.isEnabled().get();
+             *  }
+             * });
+             */
+
+            try {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.storage.Storage");
+                final Method isEnabled = storage.getMethod("isEnabled");
+                final Method setEnabled = storage.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_storage_state_key, R.string.appcenter_storage_state_summary_enabled, R.string.appcenter_storage_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public boolean isEnabled() {
+                        try {
+                            AppCenterFuture<Boolean> result = (AppCenterFuture<Boolean>) isEnabled.invoke(null);
+                            return result.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.storage_key)));
+            }
+
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
