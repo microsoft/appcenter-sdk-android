@@ -74,14 +74,18 @@ public class CosmosDb {
     }
 
     public static Map<String, String> addRequiredHeaders(
-            Map<String, String> headers,
-            String partition,
-            String dbToken) {
+            Map<String, String> additionalHeaders,
+            final String partition,
+            final String dbToken) {
+        Map<String, String> headers = new HashMap<>();
         headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
         headers.put("x-ms-version", "2018-06-18");
         headers.put("x-ms-date", nowAsRFC1123());
         headers.put("Content-Type", "application/json");
         headers.put("Authorization", urlEncode(dbToken));
+        if (additionalHeaders != null) {
+            headers.putAll(additionalHeaders);
+        }
         return headers;
     }
 
@@ -107,7 +111,7 @@ public class CosmosDb {
             String continuationToken,
             HttpClient httpClient,
             ServiceCallback serviceCallback) {
-        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.getPartition(), tokenResult.getToken());
+        Map<String, String> headers = addRequiredHeaders(null, tokenResult.getPartition(), tokenResult.getToken());
         if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
@@ -139,16 +143,17 @@ public class CosmosDb {
             String body,
             Map<String, String> additionalHeaders,
             ServiceCallback serviceCallback) {
+        Map<String, String> headers = addRequiredHeaders(additionalHeaders, tokenResult.getPartition(), tokenResult.getToken());
         return callApi(
                 httpVerb,
                 getDocumentUrl(tokenResult, documentId),
-                addRequiredHeaders(additionalHeaders, tokenResult.getPartition(), tokenResult.getToken()),
+                headers,
                 body,
                 httpClient,
                 serviceCallback);
     }
 
-    public static HashMap<String, String> getUpsertAdditionalHeader() {
+    public static Map<String, String> getUpsertAdditionalHeader() {
         return new HashMap<String, String>() {{
             put(X_MS_DOCUMENTDB_IS_UPSERT, "true");
         }};
