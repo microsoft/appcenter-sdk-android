@@ -274,7 +274,6 @@ public class IdentityTest extends AbstractIdentityTest {
         verifyStatic();
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
-        verifyStatic();
     }
 
     @Test
@@ -325,6 +324,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable Identity. */
         Identity.setEnabled(false);
 
+
         /* Simulate response. */
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
@@ -332,6 +332,8 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Configuration is not cached. */
         verifyStatic(never());
+        String configPayload = jsonConfig.toString();
+        FileManager.write(notNull(File.class), eq(configPayload));
     }
 
     @Test
@@ -360,7 +362,6 @@ public class IdentityTest extends AbstractIdentityTest {
                 return null;
             }
         }).when(publicClientApplication).acquireToken(any(Activity.class), notNull(String[].class), notNull(AuthenticationCallback.class));
-
 
         /* Start identity service. */
         Identity identity = Identity.getInstance();
@@ -1258,7 +1259,6 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
-
         mockReadyToSignIn();
 
         /* Sign in. */
@@ -1462,12 +1462,10 @@ public class IdentityTest extends AbstractIdentityTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
-
         mockReadyToSignIn();
 
         /* Sign in. */
         AppCenterFuture<SignInResult> future = Identity.signIn();
-
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
 
