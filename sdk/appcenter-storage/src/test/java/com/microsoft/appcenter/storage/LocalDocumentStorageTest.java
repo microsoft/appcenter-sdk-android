@@ -136,7 +136,6 @@ public class LocalDocumentStorageTest {
     @Test
     public void readClosesDatabaseCursor() {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
-        when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
         Document<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
         assertNotNull(doc);
         assertNull(doc.getDocument());
