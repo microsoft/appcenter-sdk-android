@@ -308,11 +308,12 @@ class LocalDocumentStorage {
             return new Document<>(FAILED_TO_READ_FROM_CACHE, e);
         }
 
-        /* We only expect one value as we do upserts in the `write` method */
+        /* We only expect one value as we do upserts in the `write` method. */
         values = mDatabaseManager.nextValues(cursor);
+        cursor.close();
         if (values != null) {
             if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
-                mDatabaseManager.delete(table, cursor.getLong(0));
+                mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
                 return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
