@@ -175,12 +175,6 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity identity = Identity.getInstance();
         start(identity);
 
-        /* Make not configured the only reason signIn is delayed => mock foreground. */
-        identity.onActivityResumed(mock(Activity.class));
-
-        /* Sign in, will be delayed until configuration ready. */
-        Identity.signIn();
-
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
@@ -247,7 +241,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void signInThenDownloadValidConfiguration() throws Exception {
+    public void verifyConfigurationDownloaded() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -259,13 +253,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
-
-        /* Mock foreground then background again. */
-        identity.onActivityResumed(mock(Activity.class));
-        identity.onActivityPaused(mock(Activity.class));
-
-        /* Sign in, will be delayed until configuration ready. */
-        Identity.signIn();
 
         /* Download configuration. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
@@ -294,12 +281,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Start identity service. */
         Identity identity = Identity.getInstance();
         start(identity);
-
-        /* Mock foreground then background again. */
-        identity.onActivityResumed(mock(Activity.class));
-
-        /* Sign in, will be delayed until configuration ready. */
-        Identity.signIn();
 
         /* Download configuration. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
@@ -336,7 +317,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void signInThenDownloadValidConfigurationThenForegroundThenSilentSignIn() throws Exception {
+    public void silentSignIn() throws Exception {
 
         /* Mock JSON. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
@@ -842,11 +823,10 @@ public class IdentityTest extends AbstractIdentityTest {
         serviceCallback.onCallFailed(e);
 
         /* If we sign in. */
-        Identity.signIn();
+        AppCenterFuture<SignInResult> future = Identity.signIn();
 
-        /* Then nothing happens, we are delayed. */
-        verifyStatic();
-        AppCenterLog.error(anyString(), anyString(), any(Exception.class));
+        /* Then it fails due to configuration issue. */
+        assertTrue(future.get().getException() instanceof IllegalStateException);
     }
 
     @Test
@@ -860,7 +840,7 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
-    public void testDoNotSignInWhenNoInternet() throws Exception {
+    public void doNotSignInWhenNoInternet() throws Exception {
 
         /* Mock valid config. */
         JSONObject jsonConfig = mockValidForAppCenterConfig();
