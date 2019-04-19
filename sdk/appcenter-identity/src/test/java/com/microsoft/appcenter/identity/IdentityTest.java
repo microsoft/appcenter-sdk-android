@@ -846,7 +846,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Then nothing happens, we are delayed. */
         verifyStatic();
-        AppCenterLog.error(anyString(), anyString());
+        AppCenterLog.error(anyString(), anyString(), any(Exception.class));
     }
 
     @Test
