@@ -134,6 +134,18 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
+    public void readClosesDatabaseCursor() {
+        when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
+        when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
+        Document<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
+        assertNotNull(doc);
+        assertNull(doc.getDocument());
+        assertTrue(doc.hasFailed());
+        assertEquals(DocumentError.class, doc.getDocumentError().getClass());
+        verify(mCursor).close();
+    }
+
+    @Test
     public void readReturnsErrorObjectOnDbRuntimeException() {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
         Document<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
