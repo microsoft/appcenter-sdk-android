@@ -626,7 +626,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             return;
         }
         if (isFutureInProgress(mLastRefreshFuture)) {
-            AppCenterLog.verbose(LOG_TAG, "Token refresh already in progress. Skip this refresh request.");
+            AppCenterLog.debug(LOG_TAG, "Token refresh already in progress. Skip this refresh request.");
             return;
         }
         if (!networkConnected) {
@@ -650,7 +650,10 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
                 if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
                     return;
                 }
                 IAccount account = authenticationResult.getAccount();
@@ -679,7 +682,10 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
                 if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
                     return;
                 }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
@@ -694,7 +700,10 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
                 if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
                     return;
                 }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
@@ -704,7 +713,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         });
     }
 
-    private boolean isFutureInProgress(AppCenterFuture<SignInResult> future){
+    private boolean isFutureInProgress(AppCenterFuture<SignInResult> future) {
         return future != null && !future.isDone();
     }
 }

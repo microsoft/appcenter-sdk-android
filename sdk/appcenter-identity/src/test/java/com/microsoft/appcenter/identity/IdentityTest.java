@@ -324,7 +324,6 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable Identity. */
         Identity.setEnabled(false);
 
-
         /* Simulate response. */
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
@@ -819,7 +818,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Call signIn again to trigger silent sign-in. */
         AppCenterFuture<SignInResult> future = Identity.signIn();
-
         SignInResult signInResult = future.get();
         assertNotNull(signInResult);
         assertNull(signInResult.getUserInformation());
@@ -847,8 +845,8 @@ public class IdentityTest extends AbstractIdentityTest {
         Identity.signIn();
 
         /* Then nothing happens, we are delayed. */
-        AppCenterLog.error(anyString(), anyString());
         verifyStatic();
+        AppCenterLog.error(anyString(), anyString());
     }
 
     @Test
@@ -1182,7 +1180,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Sign in. */
         Identity.signIn();
-
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
@@ -1223,7 +1220,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Sign in. */
         Identity.signIn();
-
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
@@ -1263,7 +1259,6 @@ public class IdentityTest extends AbstractIdentityTest {
 
         /* Sign in. */
         Identity.signIn();
-
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
@@ -1641,7 +1636,6 @@ public class IdentityTest extends AbstractIdentityTest {
         when(file.exists()).thenReturn(true);
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
-
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(null);
         Identity identity = Identity.getInstance();
@@ -1667,7 +1661,6 @@ public class IdentityTest extends AbstractIdentityTest {
         when(file.exists()).thenReturn(true);
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
-
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Identity identity = Identity.getInstance();
