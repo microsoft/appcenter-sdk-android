@@ -15,6 +15,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -274,6 +275,63 @@ public class IdentityTest extends AbstractIdentityTest {
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
         verifyStatic();
+    }
+
+    @Test
+    public void disableServiceDuringDownloadingConfiguration() throws Exception {
+
+        /* Mock config call. */
+        ServiceCall getConfigCall = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class))).thenReturn(getConfigCall);
+
+        /* Mock JSON. */
+        JSONObject jsonConfig = mockValidForAppCenterConfig();
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+
+        /* Start identity service. */
+        Identity identity = Identity.getInstance();
+        start(identity);
+
+        /* Mock foreground then background again. */
+        identity.onActivityResumed(mock(Activity.class));
+
+        /* Sign in, will be delayed until configuration ready. */
+        Identity.signIn();
+
+        /* Download configuration. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        verify(mHttpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+
+        /* Verify call template. */
+        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+
+        /* Verify no logging if verbose log not enabled (default). */
+        try {
+            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
+        } catch (MalformedURLException e) {
+            fail("test url should always be valid " + e.getMessage());
+        }
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
+
+        /* Disable Identity. */
+        Identity.setEnabled(false);
+
+        /* Simulate response. */
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+
+        /* Configuration is not cached. */
+        verifyStatic(never());
     }
 
     @Test
@@ -1100,6 +1158,87 @@ public class IdentityTest extends AbstractIdentityTest {
     }
 
     @Test
+    public void signOutCancelsCanceledSignIn() throws Exception {
+
+        /* Capture Listener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+        final IAuthenticationResult mockResult = mockAuthResult("idToken", "accountId", mockHomeAccountId);
+        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        Identity.signIn();
+
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
+
+        /* Sign out. */
+        Identity.signOut();
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Simulate cancel. */
+        callbackCaptor.getValue().onCancel();
+
+        /* Verify signIn was cancelled. */
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
+    }
+
+
+    @Test
+    public void signOutCancelsFailedSignIn() throws Exception {
+
+        /* Capture Listener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+        final IAuthenticationResult mockResult = mockAuthResult("idToken", "accountId", mockHomeAccountId);
+        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+        mockReadyToSignIn();
+
+        /* Sign in. */
+        Identity.signIn();
+
+        ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
+
+        /* Sign out. */
+        Identity.signOut();
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+
+        /* Simulate error. */
+        callbackCaptor.getValue().onError(mock(MsalException.class));
+
+        /* Verify signIn was cancelled. */
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
+    }
+
+    @Test
     public void signOutCancelsSignIn() throws Exception {
 
         /* Capture Listener to call onTokenRequiresRefresh later. */
@@ -1155,10 +1294,13 @@ public class IdentityTest extends AbstractIdentityTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
-        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         mockReadyToSignIn();
         verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
         verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
+
+        /* Simulate offline. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        networkStateListenerCaptor.getValue().onNetworkStateUpdated(false);
 
         /* Request token refresh. */
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
