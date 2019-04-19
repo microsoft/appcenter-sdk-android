@@ -10,89 +10,116 @@ package com.microsoft.appcenter.storage.models;
  */
 public class PendingOperation {
 
-    private String table;
+    private String mTable;
 
-    private String operation;
+    private String mOperation;
 
-    private String partition;
+    private String mPartition;
 
-    private String documentId;
+    private String mDocumentId;
 
-    private String document;
+    private String mDocument;
 
-    private String etag;
+    private String mETag;
 
-    private long expirationTime;
+    private long mExpirationTime;
 
-    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime) {
-        this.table = table;
-        this.operation = operation;
-        this.partition = partition;
-        this.documentId = documentId;
-        this.document = document;
-        this.expirationTime = expirationTime;
+    private long mDownloadTime;
+
+    private long mOperationTime;
+
+    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
+        mTable = table;
+        mOperation = operation;
+        mPartition = partition;
+        mDocumentId = documentId;
+        mDocument = document;
+        mExpirationTime = expirationTime;
+        mDownloadTime = downloadTime;
+        mOperationTime = operationTime;
     }
 
     /**
      * @return table name the operation is performed on
      */
     public String getTable() {
-        return table;
+        return mTable;
     }
 
     /**
      * @return operation name.
      */
     public String getOperation() {
-        return operation;
+        return mOperation;
+    }
+
+    /**
+     * @param operation name.
+     */
+    public void setOperation(String operation) {
+        mOperation = operation;
     }
 
     /**
      * @return partition name.
      */
     public String getPartition() {
-        return partition;
+        return mPartition;
     }
 
     /**
      * @return document ID.
      */
     public String getDocumentId() {
-        return documentId;
+        return mDocumentId;
     }
 
     /**
      * @return document object.
      */
     public String getDocument() {
-        return document;
+        return mDocument;
     }
 
     /**
      * @param document object.
      */
     public void setDocument(String document) {
-        this.document = document;
+        mDocument = document;
     }
 
     /**
-     * @return Cosmos DB etag.
+     * @return Cosmos DB eTag.
      */
-    public String getEtag() {
-        return etag;
+    public String getETag() {
+        return mETag;
     }
 
     /**
-     * @param etag setter.
+     * @param eTag setter.
      */
-    public void setEtag(String etag) {
-        this.etag = etag;
+    public void setETag(String eTag) {
+        mETag = eTag;
     }
 
     /**
      * @return document expiration time.
      */
     public long getExpirationTime() {
-        return expirationTime;
+        return mExpirationTime;
+    }
+
+    /**
+     * @return document download time.
+     */
+    public long getDownloadTime() {
+        return mDownloadTime;
+    }
+
+    /**
+     * @return operation time.
+     */
+    public long getOperationTime() {
+        return mOperationTime;
     }
 }

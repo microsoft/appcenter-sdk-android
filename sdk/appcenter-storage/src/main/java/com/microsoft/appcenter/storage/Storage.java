@@ -81,7 +81,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private final Map<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+    private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 
@@ -194,7 +194,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, writeOptions);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, null, writeOptions);
     }
 
     /**
@@ -220,9 +220,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-
-        /* In the current version we do not support E-tag optimistic concurrency logic and `replace` will call Create (POST) operation instead of Replace (PUT). */
-        return Storage.create(partition, documentId, document, documentType, writeOptions);
+        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, CosmosDb.getUpsertAdditionalHeader(), writeOptions);
     }
 
     /**
@@ -298,7 +296,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             if (mOutgoingPendingOperationCalls.containsKey(outgoingId)) {
                 continue;
             }
-            
+
             /* Put the pending document id into the map to prevent further duplicate http call. The ServiceCall will be set when the http operation executes. */
             mOutgoingPendingOperationCalls.put(outgoingId, null);
             if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
@@ -380,7 +378,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
                     table = Utils.getTableName(cachedToken);
-                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.partition(), documentId, documentType, cacheReadOptions);
+                    cachedDocument = mLocalDocumentStorage.read(table, cachedToken.getPartition(), documentId, documentType, cacheReadOptions);
                     if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
                         cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
                     }
@@ -458,17 +456,17 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
             @Override
             public boolean needsRemoteOperation(Document<Void> cachedDocument) {
-                return cachedDocument.getEtag() != null || cachedDocument.getDocumentError() != null;
+                return cachedDocument.getETag() != null || cachedDocument.getDocumentError() != null;
             }
 
             @Override
             public Document<Void> doOfflineOperation(Document<Void> cachedDocument, String table, TokenResult cachedToken) {
                 boolean success;
-                if (cachedDocument.getEtag() != null) {
+                if (cachedDocument.getETag() != null) {
                     success =
-                            mLocalDocumentStorage.deleteOffline(table, cachedToken.partition(), documentId);
+                            mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId);
                 } else {
-                    success = mLocalDocumentStorage.deleteOnline(table, cachedToken.partition(), documentId);
+                    success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
                 if (success) {
                     return new Document<>();
@@ -536,10 +534,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Page<T> page = Utils.parseDocuments(payload, documentType);
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
-                                .withCurrentPage(page).withTokenResult(tokenResult)
-                                .withHttpClient(mHttpClient)
-                                .withContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
-                                .withDocumentType(documentType);
+                                .setCurrentPage(page).setTokenResult(tokenResult)
+                                .setHttpClient(mHttpClient)
+                                .setContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
+                                .setDocumentType(documentType);
                         completeFuture(paginatedDocuments, result);
                     }
 
@@ -612,6 +610,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             String partition,
             final String documentId,
             final WriteOptions writeOptions,
+            final Map<String, String> additionalHeaders,
             final DefaultAppCenterFuture<Document<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
@@ -619,7 +618,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 new Document<>(document, partition, documentId).toString(),
-                CosmosDb.getUpsertAdditionalHeader(),
+                additionalHeaders,
                 new ServiceCallback() {
 
                     @MainThread
@@ -630,7 +629,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                                if (cosmosDbDocument.failed()) {
+                                if (cosmosDbDocument.hasFailed()) {
                                     completeFutureOnDocumentError(cosmosDbDocument, result);
                                 } else {
                                     completeFuture(cosmosDbDocument, result);
@@ -658,7 +657,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                 mHttpClient,
                 METHOD_POST,
                 pendingOperation.getDocument(),
-                CosmosDb.getUpsertAdditionalHeader(),
+                pendingOperation.getOperation().equals(Constants.PENDING_OPERATION_CREATE_VALUE) ? null : CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
                     @MainThread
@@ -686,6 +685,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             final String documentId,
             final T document,
             final Class<T> documentType,
+            final Map<String, String> additionalHeaders,
             final WriteOptions writeOptions) {
         final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
@@ -703,7 +703,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
-                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.partition(), documentId, writeOptions, result);
+                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.getPartition(), documentId, writeOptions, additionalHeaders, result);
                                 }
 
                                 @Override
@@ -716,7 +716,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     TokenResult cachedToken = getCachedToken(partition);
                     if (cachedToken != null) {
                         String table = Utils.getTableName(cachedToken);
-                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.partition(), documentId, document, documentType, writeOptions);
+                        createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.getPartition(), documentId, document, documentType, writeOptions);
                     } else {
                         createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
                     }
@@ -769,7 +769,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             @Override
                             public void run() {
                                 completeFuture(new Document<Void>(), result);
-                                mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.partition(), documentId);
+                                mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId);
                             }
                         });
                     }
@@ -873,7 +873,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
     private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
         Utils.logApiCallFailure(e);
-        future.complete(new PaginatedDocuments<T>().withCurrentPage(new Page<T>(e)));
+        future.complete(new PaginatedDocuments<T>().setCurrentPage(new Page<T>(e)));
         mPendingCalls.remove(future);
     }
 
@@ -883,7 +883,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             @Override
             public void run() {
                 String eTag = Utils.getEtag(cosmosDbResponsePayload);
-                pendingOperation.setEtag(eTag);
+                pendingOperation.setETag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
                 DataStoreEventListener eventListener = mEventListener;
                 if (eventListener != null) {
@@ -895,7 +895,16 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                                     eTag),
                             null);
                 }
-                mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                if (pendingOperation.getExpirationTime() <= System.currentTimeMillis() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
+
+                    /* Remove the document if expiration_time has elapsed or it is a delete operation. */
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
+                } else {
+
+                    /* Clear the pending_operation column if cosmos Db was updated successfully. */
+                    pendingOperation.setOperation(null);
+                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
         });
@@ -927,10 +936,10 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                             null,
                             new DocumentError(e));
                 }
-                if (deleteLocalCopy) {
-                    mLocalDocumentStorage.deletePendingOperation(pendingOperation);
-                } else {
-                    mLocalDocumentStorage.updatePendingOperation(pendingOperation);
+                if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
+
+                    /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
+                    mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));
             }
@@ -950,7 +959,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
-            Storage.this.completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
+            completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
         }
         return invalidPartitionName;
     }

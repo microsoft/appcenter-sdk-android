@@ -114,7 +114,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
             @Override
             public void accept(Document<Map> mapDocument) {
-                if (mapDocument.failed()) {
+                if (mapDocument.hasFailed()) {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_error, Toast.LENGTH_SHORT).show();
                     mProperties.clear();
                 } else {

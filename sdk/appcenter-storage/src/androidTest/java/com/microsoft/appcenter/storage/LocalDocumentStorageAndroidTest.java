@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.util.Date;
 import java.util.List;
 
+import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.storage.Constants.USER;
 import static com.microsoft.appcenter.storage.LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE;
@@ -40,8 +41,6 @@ public class LocalDocumentStorageAndroidTest {
     private static final String TEST_VALUE = "Test value";
 
     private static final String ID = "id";
-
-    private static final long NOW = System.currentTimeMillis();
 
     private static final String USER_TABLE_NAME = Utils.getUserTableName("123");
 
@@ -79,17 +78,17 @@ public class LocalDocumentStorageAndroidTest {
     public void writeReadFail() {
         Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
-        assertFalse(document.failed());
+        assertFalse(document.hasFailed());
 
         /* Pass incorrect class type to create a deserialization error.  */
         Document<Integer> failedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, Integer.class, new ReadOptions());
         assertNotNull(failedDocument);
-        assertTrue(failedDocument.failed());
+        assertTrue(failedDocument.hasFailed());
 
         /* Confirm document can still be correctly retrieved from the cache. */
         Document<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
-        assertFalse(cachedDocument.failed());
+        assertFalse(cachedDocument.hasFailed());
         assertEquals(document.getDocument(), cachedDocument.getDocument());
     }
 
@@ -100,7 +99,7 @@ public class LocalDocumentStorageAndroidTest {
         Document<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertEquals(document.getDocument(), cachedDocument.getDocument());
-        assertFalse(document.failed());
+        assertFalse(document.hasFailed());
         assertFalse(document.isFromCache());
         assertTrue(cachedDocument.isFromCache());
         mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, Constants.READONLY, ID);
@@ -131,37 +130,21 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
-    public void updateLocalCopyDeletesExpiredOperation() {
-        Document<String> document = new Document<>(TEST_VALUE, USER, ID);
-        mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, document, new WriteOptions() {
-
-            @Override
-            public int getDeviceTimeToLive() {
-                return -10;
-            }
-        });
-
-        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
-        assertEquals(1, operations.size());
-
-        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
-
-        operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
-        assertEquals(0, operations.size());
-    }
-
-    @Test
-    public void updateLocalCopyReplacesNotExpiredOperation() {
+    public void resetPendingOperationColumnToNull() {
         Document<String> document = new Document<>(TEST_VALUE, USER, ID);
         mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, document, new WriteOptions(10));
-
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
 
-        mLocalDocumentStorage.updatePendingOperation(operations.get(0));
+        /* Reset pending operation column to null. */
+        operation.setOperation(null);
+        mLocalDocumentStorage.updatePendingOperation(operation);
 
+        /* Retrieve the operations where pending_operation is not null. */
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
-        assertEquals(1, operations.size());
+        assertEquals(0, operations.size());
     }
 
     @Test
@@ -247,7 +230,7 @@ public class LocalDocumentStorageAndroidTest {
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test"));
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test2", String.class, new WriteOptions());
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
@@ -282,7 +265,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(document.getDocumentError());
 
         /* When we delete after coming back online. */
-        mLocalDocumentStorage.updatePendingOperation(new PendingOperation(USER_TABLE_NAME, PENDING_OPERATION_DELETE_VALUE, USER, ID, null, Long.MAX_VALUE));
+        mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, USER, ID);
 
         /* Then the entry is removed from cache. */
         document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);

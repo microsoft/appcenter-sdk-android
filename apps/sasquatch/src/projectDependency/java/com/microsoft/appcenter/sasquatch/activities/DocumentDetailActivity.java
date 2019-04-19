@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static android.view.View.GONE;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
@@ -59,7 +60,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
         @Override
         public void accept(Document<TestDocument> document) {
-            if (document.failed()) {
+            if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_success), mDocumentId), Toast.LENGTH_SHORT).show();
@@ -72,7 +73,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
         @Override
         public void accept(Document<Map> document) {
-            if (document.failed()) {
+            if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_success), mDocumentId), Toast.LENGTH_SHORT).show();
@@ -149,7 +150,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(document.getTimestamp()).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(document.getTimestamp(), TimeUnit.SECONDS)).toString()));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
         Object doc = document.getDocument();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);

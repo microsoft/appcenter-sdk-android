@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -28,7 +29,6 @@ import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.storage.Constants.LOG_TAG;
-import static com.microsoft.appcenter.storage.Utils.logApiCallFailure;
 
 public class TokenExchange {
 
@@ -104,28 +104,32 @@ public class TokenExchange {
 
         @Override
         public void onCallSucceeded(String payload, Map<String, String> headers) {
-            TokenResult tokenResult = parseTokenResult(payload);
-            if (tokenResult == null) {
-                String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
-                onCallFailed(new StorageException(message));
-            } else {
-                callCosmosDb(tokenResult);
+            try {
+                TokenResult tokenResult = parseTokenResult(payload);
+                if (tokenResult == null) {
+                    String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
+                    onCallFailed(new StorageException(message));
+                } else {
+                    callCosmosDb(tokenResult);
+                }
+            } catch (JsonParseException e) {
+                String message = "Token response is not valid JSON";
+                onCallFailed(new StorageException(message, e));
             }
         }
 
         @Override
         public void onCallFailed(Exception e) {
-            logApiCallFailure(e);
             completeFuture(e);
         }
 
         private TokenResult parseTokenResult(String payload) {
             TokensResponse tokensResponse = Utils.getGson().fromJson(payload, TokensResponse.class);
             if (tokensResponse != null &&
-                    tokensResponse.tokens() != null &&
-                    tokensResponse.tokens().size() == 1 &&
-                    tokensResponse.tokens().get(0).status().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
-                TokenResult tokenResult = tokensResponse.tokens().get(0);
+                    tokensResponse.getTokens() != null &&
+                    tokensResponse.getTokens().size() == 1 &&
+                    tokensResponse.getTokens().get(0).getStatus().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
+                TokenResult tokenResult = tokensResponse.getTokens().get(0);
                 mTokenManager.setCachedToken(tokenResult);
                 return tokenResult;
             }

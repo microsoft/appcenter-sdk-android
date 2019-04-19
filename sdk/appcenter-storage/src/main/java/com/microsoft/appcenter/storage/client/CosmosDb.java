@@ -5,12 +5,15 @@
 
 package com.microsoft.appcenter.storage.client;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.models.TokenResult;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -62,26 +65,36 @@ public class CosmosDb {
     }
 
     private static String urlEncode(String url) {
-        return urlEncode(url, "UTF-8");
+
+        /* TODO validate TokenResult has all required fields non null then get rid of the if. */
+        if (url != null) {
+            return urlEncode(url, "UTF-8");
+        }
+        return null;
     }
 
+    @VisibleForTesting
     public static String urlEncode(String url, String enc) {
         try {
             return URLEncoder.encode(url, enc);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to encode url " + url, e);
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Failed to encode url " + url, e);
         }
     }
 
     public static Map<String, String> addRequiredHeaders(
-            Map<String, String> headers,
-            String partition,
-            String dbToken) {
+            Map<String, String> additionalHeaders,
+            final String partition,
+            final String dbToken) {
+        Map<String, String> headers = new HashMap<>();
         headers.put("x-ms-documentdb-partitionkey", String.format("[\"%s\"]", partition));
         headers.put("x-ms-version", "2018-06-18");
         headers.put("x-ms-date", nowAsRFC1123());
         headers.put("Content-Type", "application/json");
         headers.put("Authorization", urlEncode(dbToken));
+        if (additionalHeaders != null) {
+            headers.putAll(additionalHeaders);
+        }
         return headers;
     }
 
@@ -92,14 +105,14 @@ public class CosmosDb {
 
 
     public static String getDocumentBaseUrl(String databaseName, String collectionName, String documentId) {
-        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, databaseName) + "/" +
-                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, collectionName) + "/" +
-                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + documentId);
+        return String.format(DOCUMENT_DB_DATABASE_URL_SUFFIX, urlEncode(databaseName)) + "/" +
+                String.format(DOCUMENT_DB_COLLECTION_URL_SUFFIX, urlEncode(collectionName)) + "/" +
+                DOCUMENT_DB_DOCUMENT_URL_PREFIX + (documentId == null ? "" : '/' + urlEncode(documentId));
     }
 
     private static String getDocumentUrl(TokenResult tokenResult, String documentId) {
-        String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.dbName(), tokenResult.dbCollectionName(), documentId);
-        return getDocumentDbEndpoint(tokenResult.dbAccount(), documentResourceIdPrefix);
+        String documentResourceIdPrefix = getDocumentBaseUrl(tokenResult.getDbName(), tokenResult.getDbCollectionName(), documentId);
+        return getDocumentDbEndpoint(tokenResult.getDbAccount(), documentResourceIdPrefix);
     }
 
     public static synchronized ServiceCall callCosmosDbListApi(
@@ -107,7 +120,7 @@ public class CosmosDb {
             String continuationToken,
             HttpClient httpClient,
             ServiceCallback serviceCallback) {
-        Map<String, String> headers = addRequiredHeaders(new HashMap<String, String>(), tokenResult.partition(), tokenResult.token());
+        Map<String, String> headers = addRequiredHeaders(null, tokenResult.getPartition(), tokenResult.getToken());
         if (continuationToken != null) {
             headers.put(Constants.CONTINUATION_TOKEN_HEADER, continuationToken);
         }
@@ -139,16 +152,17 @@ public class CosmosDb {
             String body,
             Map<String, String> additionalHeaders,
             ServiceCallback serviceCallback) {
+        Map<String, String> headers = addRequiredHeaders(additionalHeaders, tokenResult.getPartition(), tokenResult.getToken());
         return callApi(
                 httpVerb,
                 getDocumentUrl(tokenResult, documentId),
-                addRequiredHeaders(additionalHeaders, tokenResult.partition(), tokenResult.token()),
+                headers,
                 body,
                 httpClient,
                 serviceCallback);
     }
 
-    public static HashMap<String, String> getUpsertAdditionalHeader() {
+    public static Map<String, String> getUpsertAdditionalHeader() {
         return new HashMap<String, String>() {{
             put(X_MS_DOCUMENTDB_IS_UPSERT, "true");
         }};
