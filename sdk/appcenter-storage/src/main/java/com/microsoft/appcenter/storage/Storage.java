@@ -369,8 +369,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         }
         postAsyncGetter(new Runnable() {
 
-            @Override
-            public void run() {
+                @Override
+                public void run() {
 
                 /* Get cached document. */
                 Document<T> cachedDocument;
@@ -558,21 +558,28 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         if (isInvalidPartitionWhenDocuments(partition, result)) {
             return result;
         }
-        getTokenAndCallCosmosDbApi(
-                partition,
-                result,
-                new TokenExchangeServiceCallback(mTokenManager) {
 
-                    @Override
-                    public void callCosmosDb(TokenResult tokenResult) {
-                        callCosmosDbListApi(tokenResult, result, documentType);
-                    }
+        postAsyncGetter(new Runnable() {
 
-                    @Override
-                    public void completeFuture(Exception e) {
-                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
-                    }
-                });
+            @Override
+            public void run() {
+                getTokenAndCallCosmosDbApi(
+                        partition,
+                        result,
+                        new TokenExchangeServiceCallback(mTokenManager) {
+
+                            @Override
+                            public void callCosmosDb(TokenResult tokenResult) {
+                                callCosmosDbListApi(tokenResult, result, documentType);
+                            }
+
+                            @Override
+                            public void completeFuture(Exception e) {
+                                completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                            }
+                        });
+            }
+        }, result, null);
         return result;
     }
 
