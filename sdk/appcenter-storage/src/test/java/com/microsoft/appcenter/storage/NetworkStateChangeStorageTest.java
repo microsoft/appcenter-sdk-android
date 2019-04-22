@@ -6,8 +6,8 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
-import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 
@@ -185,7 +185,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         DocumentError documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
-        assertEquals(cosmosFailureException, documentError.getError().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause().getCause());
         verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
 
@@ -338,7 +338,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
-        assertEquals(cosmosFailureException, documentError.getError().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause().getCause());
 
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }

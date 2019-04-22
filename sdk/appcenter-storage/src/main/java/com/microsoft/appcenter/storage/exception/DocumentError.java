@@ -3,26 +3,18 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.storage.models;
+package com.microsoft.appcenter.storage.exception;
 
 /**
  * Details of the remote operation execution failures.
  */
-public class DocumentError {
-
-    private Throwable mException;
+public class DocumentError extends Exception {
 
     /**
      * @param exception that occurred during the network state change.
      */
     public DocumentError(Throwable exception) {
-        mException = exception;
+        super(exception);
     }
 
-    /**
-     * @return underlying exception.
-     */
-    public Throwable getError() {
-        return mException;
-    }
 }

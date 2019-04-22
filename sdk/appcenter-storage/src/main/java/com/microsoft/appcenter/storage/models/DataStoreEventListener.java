@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.storage.models;
 
+import com.microsoft.appcenter.storage.exception.DocumentError;
+
 /**
  * A listener that is going to be notified about remote operations completion status.
  */

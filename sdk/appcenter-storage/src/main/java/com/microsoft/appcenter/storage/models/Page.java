@@ -7,6 +7,7 @@ package com.microsoft.appcenter.storage.models;
 
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Constants;
+import com.microsoft.appcenter.storage.exception.DocumentError;
 
 import java.util.List;
 

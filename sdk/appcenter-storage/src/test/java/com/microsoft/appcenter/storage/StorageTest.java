@@ -15,10 +15,10 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
+import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
@@ -358,7 +358,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNotNull(documents.get());
         assertNotNull(documents.get().getCurrentPage().getError());
         assertThat(
-                documents.get().getCurrentPage().getError().getError().getMessage(),
+                documents.get().getCurrentPage().getError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -552,7 +552,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString("Cosmos db exception."));
     }
 
@@ -615,7 +615,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(tokenExchangeFailedResponsePayload));
     }
 
@@ -635,7 +635,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -663,7 +663,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getError() instanceof StorageException);
+        assertTrue(document.getDocumentError().getCause() instanceof StorageException);
     }
 
     @Test
@@ -953,7 +953,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -972,7 +972,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -1003,7 +1003,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -1022,7 +1022,7 @@ public class StorageTest extends AbstractStorageTest {
         assertNull(doc.get().getDocument());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
-                doc.get().getDocumentError().getError().getMessage(),
+                doc.get().getDocumentError().getMessage(),
                 CoreMatchers.containsString(exceptionMessage));
     }
 
@@ -1179,7 +1179,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Local storage create document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getDocumentError());
-        assertTrue(doc.getDocumentError().getError().getMessage().contains(failedMessage));
+        assertTrue(doc.getDocumentError().getMessage().contains(failedMessage));
 
         /* Make the call to read local document from local storage. */
         doc = Storage.read(USER, DOCUMENT_ID, TestDocument.class).get();
@@ -1187,7 +1187,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Local storage read document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getDocumentError());
-        assertTrue(doc.getDocumentError().getError().getMessage().contains(failedMessage));
+        assertTrue(doc.getDocumentError().getMessage().contains(failedMessage));
 
         /* Make the call to delete local document from local storage. */
         Document<Void> deleteDocument = Storage.delete(USER, DOCUMENT_ID).get();
@@ -1195,7 +1195,7 @@ public class StorageTest extends AbstractStorageTest {
         /* Local storage delete document should complete with not find partition error. */
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getDocumentError());
-        assertTrue(deleteDocument.getDocumentError().getError().getMessage().contains(failedMessage));
+        assertTrue(deleteDocument.getDocumentError().getMessage().contains(failedMessage));
     }
 
     @Test
@@ -1452,7 +1452,7 @@ public class StorageTest extends AbstractStorageTest {
         future.get();
         assertNull(future.get().getDocument());
         assertNotNull(future.get().getDocumentError());
-        assertTrue(future.get().getDocumentError().getError() instanceof StorageException);
-        assertTrue(future.get().getDocumentError().getError().getCause() instanceof JsonSyntaxException);
+        assertTrue(future.get().getDocumentError().getCause() instanceof StorageException);
+        assertTrue(future.get().getDocumentError().getCause().getCause() instanceof JsonSyntaxException);
     }
 }

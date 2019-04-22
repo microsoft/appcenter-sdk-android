@@ -111,8 +111,8 @@ public class UtilsTest {
         /* Check parsing error. */
         Document<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getError() instanceof StorageException);
-        assertTrue(document.getDocumentError().getError().getCause() instanceof JsonParseException);
+        assertTrue(document.getDocumentError().getCause() instanceof StorageException);
+        assertTrue(document.getDocumentError().getCause().getCause() instanceof JsonParseException);
         assertNull(document.getDocument());
     }
 

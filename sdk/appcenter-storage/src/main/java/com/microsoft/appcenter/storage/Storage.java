@@ -23,10 +23,10 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
+import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.Page;
 import com.microsoft.appcenter.storage.models.PaginatedDocuments;
@@ -866,7 +866,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     private synchronized <T> void completeFutureOnDocumentError(Document<T> doc, DefaultAppCenterFuture<Document<T>> future) {
-        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError().getError());
+        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError());
         future.complete(doc);
         mPendingCalls.remove(future);
     }

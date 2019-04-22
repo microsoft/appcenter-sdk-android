@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
+import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 
 /**
