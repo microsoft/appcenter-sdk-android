@@ -158,7 +158,7 @@ class LocalDocumentStorage {
 
     <T> Document<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(table, partition, documentId, documentType, null);
-        if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getCause().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
+        if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
 

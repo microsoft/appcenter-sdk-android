@@ -23,7 +23,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
 import com.microsoft.appcenter.storage.client.TokenExchange.TokenExchangeServiceCallback;
-import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
@@ -934,7 +933,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     eventListener.onDataStoreOperationResult(
                             pendingOperation.getOperation(),
                             null,
-                            new DocumentError(e));
+                            new StorageException(e));
                 }
                 if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
 

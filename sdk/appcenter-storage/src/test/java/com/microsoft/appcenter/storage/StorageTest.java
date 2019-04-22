@@ -15,7 +15,6 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.storage.client.CosmosDb;
 import com.microsoft.appcenter.storage.client.TokenExchange;
-import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
 import com.microsoft.appcenter.storage.models.Document;
@@ -656,6 +655,7 @@ public class StorageTest extends AbstractStorageTest {
 
     @Test
     public void readWhenLocalStorageContainsDeletePendingOperation() {
+        String failedMessage = "The document is found in local storage but marked as state deleted.";
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
         Document<String> deletedDocument = new Document<>();
@@ -663,7 +663,7 @@ public class StorageTest extends AbstractStorageTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         Document<String> document = Storage.read(USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getCause() instanceof StorageException);
+        assertTrue(document.getDocumentError().getMessage().contains(failedMessage));
     }
 
     @Test
@@ -1228,7 +1228,7 @@ public class StorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(DocumentError.class));
+                isNull(StorageException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -1266,7 +1266,7 @@ public class StorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
-                any(DocumentError.class));
+                any(StorageException.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
     }
@@ -1339,7 +1339,7 @@ public class StorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
-                any(DocumentError.class));
+                any(StorageException.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
         verify(serviceCallMock1).cancel();
@@ -1377,7 +1377,7 @@ public class StorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(DocumentError.class));
+                isNull(StorageException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);

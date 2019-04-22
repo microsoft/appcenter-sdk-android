@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.storage.Constants;
 import com.microsoft.appcenter.storage.Utils;
-import com.microsoft.appcenter.storage.exception.DocumentError;
 import com.microsoft.appcenter.storage.exception.StorageException;
 
 /**
@@ -33,7 +32,7 @@ public class Document<T> {
     @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T mDocument;
 
-    private transient DocumentError mDocumentError;
+    private transient StorageException mDocumentError;
 
     private transient boolean mFromCache;
 
@@ -56,11 +55,15 @@ public class Document<T> {
     }
 
     public Document(Throwable exception) {
-        mDocumentError = new DocumentError(exception);
+        mDocumentError = new StorageException(exception);
     }
 
     public Document(String message, Throwable exception) {
-        mDocumentError = new DocumentError(new StorageException(message, exception));
+        mDocumentError = new StorageException(message, exception);
+    }
+
+    public Document(StorageException exception) {
+        mDocumentError = exception;
     }
 
     /**
@@ -77,7 +80,7 @@ public class Document<T> {
      *
      * @return Document error.
      */
-    public DocumentError getDocumentError() {
+    public StorageException getDocumentError() {
         return mDocumentError;
     }
 
