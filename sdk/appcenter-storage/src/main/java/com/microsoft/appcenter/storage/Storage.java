@@ -558,6 +558,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             return result;
         }
         postAsyncGetter(new Runnable() {
+
             @Override
             public void run() {
                 getTokenAndCallCosmosDbApi(
