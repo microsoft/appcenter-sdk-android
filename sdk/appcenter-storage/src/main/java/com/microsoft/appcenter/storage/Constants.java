@@ -46,7 +46,7 @@ public final class Constants {
     /**
      * Base URL to call token exchange service.
      */
-    static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1"; //TODO This is not the right url.
+    static final String DEFAULT_API_URL = "https://tokens.appcenter.ms/v0.1";
 
     /**
      * Name of the service.

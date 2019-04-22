@@ -107,7 +107,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void onBeforeCallingWithAnotherLogLevel() throws Exception {
+    public void onBeforeCallingWithAnotherLogLevel() {
 
         /* Mock instances. */
         String appSecret = UUID.randomUUID().toString();
@@ -137,7 +137,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         Assert.assertNull(callTemplate.buildRequestBody());
     }
 
-    private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) throws Exception {
+    private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         Distribute.getInstance().onStarting(mAppCenterHandler);

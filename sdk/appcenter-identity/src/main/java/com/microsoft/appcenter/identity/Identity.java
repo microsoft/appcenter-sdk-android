@@ -73,7 +73,7 @@ import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
 /**
  * Identity service.
  */
-public class Identity extends AbstractAppCenterService {
+public class Identity extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
      * Shared instance.
@@ -122,21 +122,29 @@ public class Identity extends AbstractAppCenterService {
     private Activity mActivity;
 
     /**
-     * Not null if sign-in is pending.
+     * Last sign-in future. It's used to prevent concurrent requests.
      */
-    private DefaultAppCenterFuture<SignInResult> mPendingSignInFuture;
+    private DefaultAppCenterFuture<SignInResult> mLastSignInFuture;
 
+    /**
+     * Last refresh future. It's used to prevent concurrent requests.
+     */
+    private DefaultAppCenterFuture<SignInResult> mLastRefreshFuture;
+
+    /**
+     * The home account id that should be used for refreshing token after coming back online.
+     */
+    private String mHomeAccountIdToRefresh;
+
+    /**
+     * The listener to catch if a token needs to be refreshed.
+     */
     private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
-            IAccount account = retrieveAccount(homeAccountId);
-            if (account != null) {
-                silentSignIn(account);
-            } else {
-                AppCenterLog.info(LOG_TAG, "Account is changed, reset to anonymous sending.");
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
-            }
+            boolean networkConnected = NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected();
+            refreshToken(homeAccountId, networkConnected);
         }
     };
 
@@ -229,6 +237,7 @@ public class Identity extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
             AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
+            NetworkStateHelper.getSharedInstance(mContext).addListener(this);
 
             /* Load cached configuration in case APIs are called early. */
             loadConfigurationFromCache();
@@ -237,13 +246,16 @@ public class Identity extends AbstractAppCenterService {
             downloadConfiguration();
         } else {
             AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
+            NetworkStateHelper.getSharedInstance(mContext).removeListener(this);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
                 mGetConfigCall = null;
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            completeSignIn(null, new IllegalStateException("Identity is disabled."));
+            cancelPendingOperations(new IllegalStateException("Identity is disabled."));
+            mLastSignInFuture = null;
+            mLastRefreshFuture = null;
             clearCache();
             removeTokenAndAccount();
         }
@@ -274,6 +286,23 @@ public class Identity extends AbstractAppCenterService {
         mActivity = null;
     }
 
+    @Override
+    public synchronized void onNetworkStateUpdated(boolean connected) {
+        if (!connected || mHomeAccountIdToRefresh == null) {
+            return;
+        }
+        final String homeAccountId = mHomeAccountIdToRefresh;
+        mHomeAccountIdToRefresh = null;
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                refreshToken(homeAccountId, true);
+
+            }
+        });
+    }
+
     /**
      * Implements {@link #setConfigUrl(String)} at instance level.
      */
@@ -281,10 +310,21 @@ public class Identity extends AbstractAppCenterService {
         mConfigUrl = configUrl;
     }
 
+    @WorkerThread
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
         authTokenContext.setAuthToken(null, null, null);
+    }
+
+    private synchronized void cancelPendingOperations(Exception exception) {
+        if (isFutureInProgress(mLastSignInFuture)) {
+            mLastSignInFuture.complete(new SignInResult(null, exception));
+        }
+        if (isFutureInProgress(mLastRefreshFuture)) {
+            mLastRefreshFuture.complete(new SignInResult(null, exception));
+        }
+        mHomeAccountIdToRefresh = null;
     }
 
     private synchronized void downloadConfiguration() {
@@ -429,23 +469,26 @@ public class Identity extends AbstractAppCenterService {
 
     private synchronized AppCenterFuture<SignInResult> instanceSignIn() {
         final DefaultAppCenterFuture<SignInResult> future = new DefaultAppCenterFuture<>();
-        if (mPendingSignInFuture != null) {
-            future.complete(new SignInResult(null, new IllegalStateException("signIn already in progress.")));
+        if (isFutureInProgress(mLastSignInFuture)) {
+            future.complete(new SignInResult(null, new IllegalStateException("Sign-in already in progress.")));
             return future;
         }
-        mPendingSignInFuture = future;
+        if (isFutureInProgress(mLastRefreshFuture)) {
+            mLastRefreshFuture.complete(new SignInResult(null, new CancellationException()));
+        }
+        mLastSignInFuture = future;
         Runnable disabledRunnable = new Runnable() {
 
             @Override
             public void run() {
-                completeSignIn(null, new IllegalStateException("Identity is disabled."));
+                future.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
             }
         };
         post(new Runnable() {
 
             @Override
             public void run() {
-                selectSignInTypeAndSignIn();
+                selectSignInTypeAndSignIn(future);
             }
         }, disabledRunnable, disabledRunnable);
         return future;
@@ -461,12 +504,14 @@ public class Identity extends AbstractAppCenterService {
                     AppCenterLog.warn(LOG_TAG, "Cannot sign out because a user has not signed in.");
                     return;
                 }
+                cancelPendingOperations(new CancellationException("User cancelled sign-in."));
                 removeTokenAndAccount();
                 AppCenterLog.info(LOG_TAG, "User sign-out succeeded.");
             }
         });
     }
 
+    @WorkerThread
     private void removeAccount(String homeAccountIdentifier) {
         if (mAuthenticationClient == null) {
             return;
@@ -492,93 +537,125 @@ public class Identity extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private synchronized void selectSignInTypeAndSignIn() {
+    private synchronized void selectSignInTypeAndSignIn(final DefaultAppCenterFuture<SignInResult> future) {
         if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
-            completeSignIn(null, new NetworkErrorException("Sign-in failed. No internet connection."));
+            future.complete(new SignInResult(null, new NetworkErrorException("Sign-in failed. No internet connection.")));
             return;
         }
         if (mAuthenticationClient == null) {
-            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured."));
+            future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
             return;
         }
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         IAccount account = retrieveAccount(authTokenContext.getHomeAccountId());
         if (account != null) {
-            silentSignIn(account);
+            silentSignIn(future, account, true);
         } else {
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    signInInteractively();
+                    signInInteractively(future);
                 }
             });
         }
     }
 
     @UiThread
-    private synchronized void signInInteractively() {
+    private synchronized void signInInteractively(final DefaultAppCenterFuture<SignInResult> future) {
         if (mAuthenticationClient != null && mActivity != null) {
             AppCenterLog.info(LOG_TAG, "Signing in using browser.");
             mAuthenticationClient.acquireToken(mActivity, new String[]{mIdentityScope}, new AuthenticationCallback() {
 
                 @Override
                 public void onSuccess(IAuthenticationResult authenticationResult) {
-                    handleSignInSuccess(authenticationResult);
+                    handleSignInSuccess(future, authenticationResult);
                 }
 
                 @Override
                 public void onError(MsalException exception) {
-                    handleSignInError(exception);
+                    handleSignInError(future, exception);
                 }
 
                 @Override
                 public void onCancel() {
-                    handleSignInCancellation();
+                    handleSignInCancellation(future);
                 }
             });
         } else {
-            completeSignIn(null, new IllegalStateException("signIn is called while it's not configured or not in the foreground."));
+            future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured or not in the foreground.")));
         }
     }
 
-    private synchronized void silentSignIn(@NonNull IAccount account) {
+    private synchronized void silentSignIn(final DefaultAppCenterFuture<SignInResult> future, @NonNull IAccount account, final boolean withUIFallback) {
         AppCenterLog.info(LOG_TAG, "Sign in silently in the background.");
         mAuthenticationClient.acquireTokenSilentAsync(new String[]{mIdentityScope}, account, null, true, new AuthenticationCallback() {
 
             @Override
             public void onSuccess(IAuthenticationResult authenticationResult) {
-                handleSignInSuccess(authenticationResult);
+                handleSignInSuccess(future, authenticationResult);
             }
 
             @Override
             public void onError(MsalException exception) {
-                if (exception instanceof MsalUiRequiredException) {
+                if (withUIFallback && exception instanceof MsalUiRequiredException) {
                     AppCenterLog.info(LOG_TAG, "No token in cache, proceed with interactive sign-in experience.");
                     postOnUiThread(new Runnable() {
 
                         @Override
                         public void run() {
-                            signInInteractively();
+                            signInInteractively(future);
                         }
                     });
                 } else {
-                    handleSignInError(exception);
+                    handleSignInError(future, exception);
                 }
             }
 
             @Override
             public void onCancel() {
-                handleSignInCancellation();
+                handleSignInCancellation(future);
             }
         });
     }
 
-    private void handleSignInSuccess(final IAuthenticationResult authenticationResult) {
+    @WorkerThread
+    private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
+        if (isFutureInProgress(mLastSignInFuture)) {
+            AppCenterLog.debug(LOG_TAG, "Failed to refresh token: sign-in already in progress.");
+            return;
+        }
+        if (isFutureInProgress(mLastRefreshFuture)) {
+            AppCenterLog.debug(LOG_TAG, "Token refresh already in progress. Skip this refresh request.");
+            return;
+        }
+        if (!networkConnected) {
+            mHomeAccountIdToRefresh = homeAccountId;
+            AppCenterLog.debug(LOG_TAG, "Network not connected. The token will be refreshed after coming back online.");
+            return;
+        }
+        final DefaultAppCenterFuture<SignInResult> future = new DefaultAppCenterFuture<>();
+        mLastRefreshFuture = future;
+        IAccount account = retrieveAccount(homeAccountId);
+        if (account != null) {
+            silentSignIn(future, account, false);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
+            AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        }
+    }
+
+    private void handleSignInSuccess(@NonNull final DefaultAppCenterFuture<SignInResult> future, final IAuthenticationResult authenticationResult) {
         post(new Runnable() {
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
+                if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
+                    return;
+                }
                 IAccount account = authenticationResult.getAccount();
                 String homeAccountId = account.getHomeAccountIdentifier().getIdentifier();
                 Date expiresOn = authenticationResult.getExpiresOn();
@@ -587,7 +664,7 @@ public class Identity extends AbstractAppCenterService {
 
                     /*
                      * Fallback to using an access token, as MSAL sometimes return null for this.
-                     * access token is @NonNull.
+                     * Access token is @NonNull.
                      */
                     AppCenterLog.warn(LOG_TAG, "Sign-in result does not contain ID token, using access token.");
                     token = authenticationResult.getAccessToken();
@@ -595,39 +672,48 @@ public class Identity extends AbstractAppCenterService {
                 AuthTokenContext.getInstance().setAuthToken(token, homeAccountId, expiresOn);
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                completeSignIn(new UserInformation(accountId), null);
+                future.complete(new SignInResult(new UserInformation(accountId), null));
             }
         });
     }
 
-    private void handleSignInError(final MsalException exception) {
+    private void handleSignInError(@NonNull final DefaultAppCenterFuture<SignInResult> future, final MsalException exception) {
         post(new Runnable() {
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
+                if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
+                    return;
+                }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
-                completeSignIn(null, exception);
+                future.complete(new SignInResult(null, exception));
             }
         });
     }
 
-    private void handleSignInCancellation() {
+    private void handleSignInCancellation(@NonNull final DefaultAppCenterFuture<SignInResult> future) {
         post(new Runnable() {
 
             @Override
             public void run() {
+
+                /* The operation can be canceled by sign-out or other operations. The result has to be ignored in this case. */
+                if (future.isDone()) {
+                    AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
+                    return;
+                }
                 AuthTokenContext.getInstance().setAuthToken(null, null, null);
                 AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
-                completeSignIn(null, new CancellationException("User cancelled sign-in."));
+                future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
             }
         });
     }
 
-    private synchronized void completeSignIn(UserInformation userInformation, Exception exception) {
-        if (mPendingSignInFuture != null) {
-            mPendingSignInFuture.complete(new SignInResult(userInformation, exception));
-            mPendingSignInFuture = null;
-        }
+    private boolean isFutureInProgress(AppCenterFuture<SignInResult> future) {
+        return future != null && !future.isDone();
     }
 }
