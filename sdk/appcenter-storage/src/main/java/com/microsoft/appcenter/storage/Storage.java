@@ -368,8 +368,8 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
             return result;
         }
         postAsyncGetter(new Runnable() {
-                @Override
-                public void run() {
+            @Override
+            public void run() {
 
                 /* Get cached document. */
                 Document<T> cachedDocument;
@@ -557,9 +557,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
         if (isInvalidPartitionWhenDocuments(partition, result)) {
             return result;
         }
-
         postAsyncGetter(new Runnable() {
-
             @Override
             public void run() {
                 getTokenAndCallCosmosDbApi(

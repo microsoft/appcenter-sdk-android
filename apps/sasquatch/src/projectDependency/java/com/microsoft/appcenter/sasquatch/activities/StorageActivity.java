@@ -80,8 +80,7 @@ public class StorageActivity extends AppCompatActivity {
                 hideProgress();
             }
             mCurrentAppDocuments = documents;
-
-            if(documents != null && documents.getCurrentPage() != null){
+            if (documents != null && documents.getCurrentPage() != null) {
                 updateAppDocument(documents.getCurrentPage().getItems());
             }
         }
@@ -96,8 +95,7 @@ public class StorageActivity extends AppCompatActivity {
                 hideProgress();
             }
             mCurrentUserDocuments = documents;
-
-            if(documents != null && documents.getCurrentPage() != null){
+            if (documents != null && documents.getCurrentPage() != null) {
                 updateUserDocuments(documents.getCurrentPage().getItems());
             }
         }
