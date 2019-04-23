@@ -17,7 +17,6 @@ import com.microsoft.appcenter.data.exception.DataException;
  */
 public class DocumentWrapper<T> extends DocumentMetadata {
 
-
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long mLastUpdatedDate;
 
