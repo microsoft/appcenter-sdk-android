@@ -146,7 +146,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void disablePersisted() {
-        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(DATA_ENABLED_KEY, true)).thenReturn(false);
         verify(mChannel, never()).removeListener(any(Channel.Listener.class));
         verify(mChannel, never()).addListener(any(Channel.Listener.class));
     }

@@ -54,7 +54,7 @@ import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VA
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.data.Constants.READONLY;
 import static com.microsoft.appcenter.data.Constants.SERVICE_NAME;
-import static com.microsoft.appcenter.data.Constants.STORAGE_GROUP;
+import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
 import static com.microsoft.appcenter.data.Constants.USER;
 
 /**
@@ -341,7 +341,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     @Override
     protected String getGroupName() {
-        return STORAGE_GROUP;
+        return DATA_GROUP;
     }
 
     @Override

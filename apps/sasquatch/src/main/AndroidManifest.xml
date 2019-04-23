@@ -62,8 +62,8 @@
             android:name=".activities.AuthenticationProviderActivity"
             android:label="@string/title_auth" />
         <activity
-            android:name=".activities.StorageActivity"
-            android:label="@string/title_storage" />
+            android:name=".activities.DataActivity"
+            android:label="@string/title_data" />
         <activity
             android:name=".activities.NewUserDocumentActivity"
             android:label="@string/new_user_document_title" />

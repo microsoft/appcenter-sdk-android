@@ -13,7 +13,7 @@ import com.microsoft.appcenter.data.exception.StorageException;
 public interface DataStoreEventListener {
 
     /**
-     * Will be called on device network status changing from offline to online as storage operations are attempted to be sent to Cosmos DB
+     * Will be called on device network status changing from offline to online as data operations are attempted to be sent to Cosmos DB
      *
      * @param operation name
      * @param document  metadata

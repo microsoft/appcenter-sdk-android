@@ -43,7 +43,7 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
 
-public class StorageActivity extends AppCompatActivity {
+public class DataActivity extends AppCompatActivity {
 
     private RecyclerView mListView;
 
@@ -59,7 +59,7 @@ public class StorageActivity extends AppCompatActivity {
 
     private Spinner mStorageTypeSpinner;
 
-    private StorageType mStorageType = StorageType.READONLY;
+    private DocumentType mDocumentType = DocumentType.READONLY;
 
     private PaginatedDocuments<TestDocument> mCurrentAppDocuments;
 
@@ -163,12 +163,12 @@ public class StorageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_storage);
+        setContentView(R.layout.activity_data);
         mListView = findViewById(R.id.list);
         mListView.setLayoutManager(new LinearLayoutManager(this));
         mProgressBar = findViewById(R.id.load_progress);
-        mStorageTypeSpinner = findViewById(R.id.storage_type);
-        mMessageText = findViewById(R.id.storage_message);
+        mStorageTypeSpinner = findViewById(R.id.data_type);
+        mMessageText = findViewById(R.id.data_message);
 
         /* List the app read-only documents. */
         mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<Document<TestDocument>>());
@@ -176,7 +176,7 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
                 intent.putExtra(DOCUMENT_PARTITION, Constants.READONLY);
                 intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getDocumentByPosition(position));
                 startActivity(intent);
@@ -192,7 +192,7 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(int position) {
-                Intent intent = new Intent(StorageActivity.this, DocumentDetailActivity.class);
+                Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
                 intent.putExtra(DOCUMENT_PARTITION, Constants.USER);
                 intent.putExtra(DOCUMENT_ID, mAdapterUser.getDocumentByPosition(position));
                 startActivity(intent);
@@ -205,11 +205,11 @@ public class StorageActivity extends AppCompatActivity {
                     @Override
                     public void accept(Document<Void> voidDocument) {
                         if (voidDocument.hasFailed()) {
-                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_error, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(DataActivity.this, R.string.data_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {
                             mAdapterUser.removeItem(position);
                             mAdapterUser.notifyDataSetChanged();
-                            Toast.makeText(StorageActivity.this, R.string.storage_file_remove_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(DataActivity.this, R.string.data_file_remove_success, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -218,7 +218,7 @@ public class StorageActivity extends AppCompatActivity {
         loadUserDocuments();
 
         /* Selector for App VS User documents. */
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_type_names));
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.document_type_names));
         mStorageTypeSpinner.setAdapter(typeAdapter);
         mStorageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -249,19 +249,19 @@ public class StorageActivity extends AppCompatActivity {
         mLoading = false;
         switch (item.getItemId()) {
             case R.id.action_add:
-                switch (mStorageType) {
+                switch (mDocumentType) {
                     case USER:
                         String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                         if (accountId != null) {
-                            Intent intent = new Intent(StorageActivity.this, NewUserDocumentActivity.class);
+                            Intent intent = new Intent(DataActivity.this, NewUserDocumentActivity.class);
                             startActivity(intent);
                         }
                         break;
 
                     case READONLY:
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(StorageActivity.this);
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(DataActivity.this);
                         builder.setIcon(R.drawable.ic_appcenter_logo);
-                        builder.setTitle(getApplicationContext().getResources().getString(R.string.storage_type_reminder));
+                        builder.setTitle(getApplicationContext().getResources().getString(R.string.document_type_reminder));
                         builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
 
                             @Override
@@ -286,8 +286,8 @@ public class StorageActivity extends AppCompatActivity {
 
     private void updateStorageType(int position) {
         mMessageText.setText("");
-        mStorageType = StorageType.values()[position];
-        switch (mStorageType) {
+        mDocumentType = DocumentType.values()[position];
+        switch (mDocumentType) {
             case READONLY:
                 mAddNewDocument.setVisible(false);
                 mListView.setAdapter(mAppDocumentListAdapter);
@@ -313,7 +313,7 @@ public class StorageActivity extends AppCompatActivity {
         loadUserDocuments();
     }
 
-    private enum StorageType {
+    private enum DocumentType {
         READONLY,
         USER
     }

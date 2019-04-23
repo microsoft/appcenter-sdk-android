@@ -113,7 +113,7 @@ abstract public class AbstractDataTest {
 
     static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractDataTest.ACCOUNT_ID);
 
-    static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Data.getInstance().getServiceName();
+    static final String DATA_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Data.getInstance().getServiceName();
 
     static final String TOKEN = "ha-ha-ha-ha";
 
@@ -209,7 +209,7 @@ abstract public class AbstractDataTest {
         mockStatic(FileManager.class);
         mHttpClient = mock(HttpClientRetryer.class);
         whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
-        when(SharedPreferencesManager.getBoolean(STORAGE_ENABLED_KEY, true)).thenReturn(true);
+        when(SharedPreferencesManager.getBoolean(DATA_ENABLED_KEY, true)).thenReturn(true);
         mockStatic(NetworkStateHelper.class);
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);

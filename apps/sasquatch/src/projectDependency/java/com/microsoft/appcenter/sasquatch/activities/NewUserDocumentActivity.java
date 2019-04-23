@@ -46,7 +46,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_new_user_document);
         mEditDocumentId = findViewById(R.id.user_document_id);
         Spinner ttlSpinner = findViewById(R.id.ttl_spinner);
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_ttls));
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.data_ttls));
         ttlSpinner.setAdapter(typeAdapter);
         ttlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 

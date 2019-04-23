@@ -76,7 +76,7 @@ public final class Constants {
     /**
      * Constant marking event of the data group.
      */
-    static final String STORAGE_GROUP = "group_storage";
+    static final String DATA_GROUP = "group_data";
 
     /**
      * User partition.
