@@ -15,16 +15,8 @@ import com.microsoft.appcenter.data.exception.DataException;
 /**
  * A document coming back from CosmosDB.
  */
-public class DocumentWrapper<T> {
+public class DocumentWrapper<T> extends DocumentMetadata {
 
-    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
-    private String mPartition;
-
-    @SerializedName(value = Constants.ID_FIELD_NAME)
-    private String mId;
-
-    @SerializedName(value = Constants.ETAG_FIELD_NAME)
-    private String mETag;
 
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long mLastUpdatedDate;
@@ -42,16 +34,14 @@ public class DocumentWrapper<T> {
     }
 
     public DocumentWrapper(T document, String partition, String id) {
-        mPartition = partition;
-        mId = id;
+        super(partition, id, null);
         mDocument = document;
     }
 
-    public DocumentWrapper(T document, String partition, String id, String eTag, long timestamp) {
+    public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate) {
         this(document, partition, id);
         mETag = eTag;
-        mLastUpdatedDate = timestamp;
-        mDocument = document;
+        mLastUpdatedDate = lastUpdatedDate;
     }
 
     public DocumentWrapper(Throwable exception) {
@@ -82,33 +72,6 @@ public class DocumentWrapper<T> {
      */
     public DataException getError() {
         return mError;
-    }
-
-    /**
-     * Get document partition.
-     *
-     * @return Document partition.
-     */
-    public String getPartition() {
-        return mPartition;
-    }
-
-    /**
-     * Get document id.
-     *
-     * @return Document id.
-     */
-    public String getId() {
-        return mId;
-    }
-
-    /**
-     * Get ETag.
-     *
-     * @return ETag.
-     */
-    public String getETag() {
-        return mETag;
     }
 
     /**

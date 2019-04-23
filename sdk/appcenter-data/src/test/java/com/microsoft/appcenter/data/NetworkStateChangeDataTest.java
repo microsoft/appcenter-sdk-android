@@ -86,7 +86,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
-        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertEquals(ETAG, documentMetadata.getETag());
         if (operationExpired) {
@@ -285,7 +285,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
-        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
 

@@ -57,7 +57,7 @@ public class DataActivity extends AppCompatActivity {
 
     private ProgressBar mProgressBar;
 
-    private Spinner mStorageTypeSpinner;
+    private Spinner mDocumentTypeSpinner;
 
     private DocumentType mDocumentType = DocumentType.READONLY;
 
@@ -103,12 +103,12 @@ public class DataActivity extends AppCompatActivity {
 
     private void hideProgress() {
         mProgressBar.setVisibility(View.GONE);
-        mStorageTypeSpinner.setEnabled(true);
+        mDocumentTypeSpinner.setEnabled(true);
     }
 
     private void showProgress() {
         mProgressBar.setVisibility(View.VISIBLE);
-        mStorageTypeSpinner.setEnabled(false);
+        mDocumentTypeSpinner.setEnabled(false);
     }
 
     private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
@@ -167,7 +167,7 @@ public class DataActivity extends AppCompatActivity {
         mListView = findViewById(R.id.list);
         mListView.setLayoutManager(new LinearLayoutManager(this));
         mProgressBar = findViewById(R.id.load_progress);
-        mStorageTypeSpinner = findViewById(R.id.data_type);
+        mDocumentTypeSpinner = findViewById(R.id.data_type);
         mMessageText = findViewById(R.id.data_message);
 
         /* List the app read-only documents. */
@@ -219,8 +219,8 @@ public class DataActivity extends AppCompatActivity {
 
         /* Selector for App VS User documents. */
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.document_type_names));
-        mStorageTypeSpinner.setAdapter(typeAdapter);
-        mStorageTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mDocumentTypeSpinner.setAdapter(typeAdapter);
+        mDocumentTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {

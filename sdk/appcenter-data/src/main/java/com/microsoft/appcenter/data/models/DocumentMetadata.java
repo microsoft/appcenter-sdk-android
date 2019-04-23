@@ -5,28 +5,52 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.google.gson.annotations.SerializedName;
+import com.microsoft.appcenter.data.Constants;
+
 public class DocumentMetadata {
 
-    private String mPartition;
+    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
+    protected String mPartition;
 
-    private String mDocumentId;
+    @SerializedName(value = Constants.ID_FIELD_NAME)
+    protected String mId;
 
-    private String mETag;
+    @SerializedName(value = Constants.ETAG_FIELD_NAME)
+    protected String mETag;
 
-    public DocumentMetadata(String partition, String documentId, String eTag) {
+    public DocumentMetadata() {
+    }
+
+    public DocumentMetadata(String partition, String Id, String eTag) {
         mPartition = partition;
-        mDocumentId = documentId;
+        mId = Id;
         mETag = eTag;
     }
 
+    /**
+     * Get document partition.
+     *
+     * @return Document partition.
+     */
     public String getPartition() {
         return mPartition;
     }
 
-    public String getDocumentId() {
-        return mDocumentId;
+    /**
+     * Get document id.
+     *
+     * @return Document id.
+     */
+    public String getId() {
+        return mId;
     }
 
+    /**
+     * Get ETag.
+     *
+     * @return ETag.
+     */
     public String getETag() {
         return mETag;
     }

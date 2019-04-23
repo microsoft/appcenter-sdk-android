@@ -1239,7 +1239,7 @@ public class DataTest extends AbstractDataTest {
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
-        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
@@ -1388,7 +1388,7 @@ public class DataTest extends AbstractDataTest {
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
-        assertEquals(DOCUMENT_ID, documentMetadata.getDocumentId());
+        assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
