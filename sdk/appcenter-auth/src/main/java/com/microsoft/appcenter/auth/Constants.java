@@ -8,17 +8,17 @@ package com.microsoft.appcenter.auth;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
- * Constants for Identity module.
+ * Constants for Auth module.
  */
 final class Constants {
 
     /**
      * Name of the service.
      */
-    static final String SERVICE_NAME = "Identity";
+    static final String SERVICE_NAME = "Auth";
 
     /**
-     * TAG used in logging for Identity.
+     * TAG used in logging for Auth.
      */
     static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
