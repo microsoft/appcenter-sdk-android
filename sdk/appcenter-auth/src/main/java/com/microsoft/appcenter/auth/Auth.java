@@ -64,7 +64,7 @@ import static com.microsoft.appcenter.auth.Constants.DEFAULT_CONFIG_URL;
 import static com.microsoft.appcenter.auth.Constants.FILE_PATH;
 import static com.microsoft.appcenter.auth.Constants.HEADER_E_TAG;
 import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
-import static com.microsoft.appcenter.auth.Constants.IDENTITY_GROUP;
+import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
 import static com.microsoft.appcenter.auth.Constants.IDENTITY_SCOPE;
 import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
 import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
@@ -263,7 +263,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @Override
     protected String getGroupName() {
-        return IDENTITY_GROUP;
+        return AUTH_GROUP;
     }
 
     @Override

@@ -59,7 +59,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 })
 abstract public class AbstractAuthTest {
 
-    static final String IDENTITY_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Auth.getInstance().getServiceName();
+    static final String AUTH_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Auth.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();

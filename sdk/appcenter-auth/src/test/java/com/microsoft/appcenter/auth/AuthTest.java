@@ -142,7 +142,7 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void disablePersisted() {
-        when(SharedPreferencesManager.getBoolean(IDENTITY_ENABLED_KEY, true)).thenReturn(false);
+        when(SharedPreferencesManager.getBoolean(AUTH_ENABLED_KEY, true)).thenReturn(false);
         Auth auth = Auth.getInstance();
 
         /* Start. */

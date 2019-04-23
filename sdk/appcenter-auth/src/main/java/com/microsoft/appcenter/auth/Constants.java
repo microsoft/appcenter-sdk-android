@@ -25,7 +25,7 @@ final class Constants {
     /**
      * Constant marking event of the auth group.
      */
-    static final String IDENTITY_GROUP = "group_identity";
+    static final String AUTH_GROUP = "group_auth";
 
     /**
      * Base URL for remote configuration.
