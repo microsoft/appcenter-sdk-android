@@ -7,7 +7,7 @@ package com.microsoft.appcenter.data.models;
 
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 
 import java.util.List;
 
@@ -22,16 +22,16 @@ public class Page<T> {
     /**
      * Document error.
      */
-    private transient StorageException mError;
+    private transient DataException mError;
 
     public Page() {
     }
 
     public Page(Exception exception) {
-        mError = new StorageException(exception);
+        mError = new DataException(exception);
     }
 
-    public Page(StorageException exception) {
+    public Page(DataException exception) {
         mError = exception;
     }
 
@@ -54,7 +54,7 @@ public class Page<T> {
      *
      * @return Error.
      */
-    public StorageException getError() {
+    public DataException getError() {
         return mError;
     }
 }

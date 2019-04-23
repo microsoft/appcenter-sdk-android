@@ -16,7 +16,7 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.Page;
@@ -985,7 +985,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void deleteEndToEnd() throws JSONException {
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(Void.class), notNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>(new StorageException("not found")));
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(Void.class), notNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>(new DataException("not found")));
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(USER_DOCUMENTS, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
@@ -1235,7 +1235,7 @@ public class DataTest extends AbstractDataTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(StorageException.class));
+                isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -1273,7 +1273,7 @@ public class DataTest extends AbstractDataTest {
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
-                any(StorageException.class));
+                any(DataException.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
     }
@@ -1346,7 +1346,7 @@ public class DataTest extends AbstractDataTest {
         verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
                 anyString(),
                 any(DocumentMetadata.class),
-                any(StorageException.class));
+                any(DataException.class));
         verifyNoMoreInteractions(mDataStoreEventListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
         verify(serviceCallMock1).cancel();
@@ -1384,7 +1384,7 @@ public class DataTest extends AbstractDataTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(StorageException.class));
+                isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -1459,7 +1459,7 @@ public class DataTest extends AbstractDataTest {
         future.get();
         assertNull(future.get().getDeserializedValue());
         assertNotNull(future.get().getError());
-        assertTrue(future.get().getError().getCause() instanceof StorageException);
+        assertTrue(future.get().getError().getCause() instanceof DataException);
         assertTrue(future.get().getError().getCause().getCause() instanceof JsonSyntaxException);
     }
 }

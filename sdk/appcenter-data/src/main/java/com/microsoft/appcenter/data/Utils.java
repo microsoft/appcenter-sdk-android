@@ -19,7 +19,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -109,7 +109,7 @@ public class Utils {
                     obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : null,
                     obj.get(TIMESTAMP_FIELD_NAME).getAsLong());
         } catch (RuntimeException exception) {
-            return new DocumentWrapper<>(new StorageException("Failed to deserialize document.", exception));
+            return new DocumentWrapper<>(new DataException("Failed to deserialize document.", exception));
         }
     }
 
@@ -125,7 +125,7 @@ public class Utils {
             array = objects.get(Constants.DOCUMENTS_FIELD_NAME).getAsJsonArray();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to deserialize Page.", e);
-            return new Page<>(new StorageException("Failed to deserialize Page.", e));
+            return new Page<>(new DataException("Failed to deserialize Page.", e));
         }
         List<DocumentWrapper<T>> documents = new ArrayList<>();
         for (JsonElement object : array) {

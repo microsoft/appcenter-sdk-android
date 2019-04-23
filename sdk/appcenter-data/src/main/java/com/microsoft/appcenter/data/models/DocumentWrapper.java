@@ -10,7 +10,7 @@ import android.support.annotation.NonNull;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.Utils;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 
 /**
  * A document coming back from CosmosDB.
@@ -32,7 +32,7 @@ public class DocumentWrapper<T> {
     @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T mDocument;
 
-    private transient StorageException mError;
+    private transient DataException mError;
 
     private transient boolean mFromDeviceCache;
 
@@ -55,14 +55,14 @@ public class DocumentWrapper<T> {
     }
 
     public DocumentWrapper(Throwable exception) {
-        mError = new StorageException(exception);
+        mError = new DataException(exception);
     }
 
     public DocumentWrapper(String message, Throwable exception) {
-        mError = new StorageException(message, exception);
+        mError = new DataException(message, exception);
     }
 
-    public DocumentWrapper(StorageException exception) {
+    public DocumentWrapper(DataException exception) {
         mError = exception;
     }
 
@@ -80,7 +80,7 @@ public class DocumentWrapper<T> {
      *
      * @return Document error.
      */
-    public StorageException getError() {
+    public DataException getError() {
         return mError;
     }
 

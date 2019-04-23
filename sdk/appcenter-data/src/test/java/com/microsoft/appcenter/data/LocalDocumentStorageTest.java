@@ -10,7 +10,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
@@ -139,7 +139,7 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getError().getClass());
+        assertEquals(DataException.class, doc.getError().getClass());
         verify(mCursor).close();
     }
 
@@ -150,7 +150,7 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getError().getClass());
+        assertEquals(DataException.class, doc.getError().getClass());
         assertThat(doc.getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
@@ -169,7 +169,7 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getError().getClass());
+        assertEquals(DataException.class, doc.getError().getClass());
         assertThat(doc.getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 

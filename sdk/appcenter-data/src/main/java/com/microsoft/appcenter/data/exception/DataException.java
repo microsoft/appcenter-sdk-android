@@ -5,17 +5,17 @@
 
 package com.microsoft.appcenter.data.exception;
 
-public class StorageException extends Exception {
+public class DataException extends Exception {
 
-    public StorageException(String message, Throwable cause) {
+    public DataException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public StorageException(String message) {
+    public DataException(String message) {
         super(message);
     }
 
-    public StorageException(Throwable cause) {
+    public DataException(Throwable cause) {
         super(cause);
     }
 }

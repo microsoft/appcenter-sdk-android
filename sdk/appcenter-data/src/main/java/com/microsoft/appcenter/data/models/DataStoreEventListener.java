@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.data.models;
 
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 
 /**
  * A listener that is going to be notified about remote operations completion status.
@@ -19,6 +19,6 @@ public interface DataStoreEventListener {
      * @param document  metadata
      * @param error     details. If null, then the operation was successful.
      */
-    void onDataStoreOperationResult(String operation, DocumentMetadata document, StorageException error);
+    void onDataStoreOperationResult(String operation, DocumentMetadata document, DataException error);
 
 }

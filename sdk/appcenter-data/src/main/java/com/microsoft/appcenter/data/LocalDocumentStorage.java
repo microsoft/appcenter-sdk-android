@@ -13,7 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
@@ -167,7 +167,7 @@ class LocalDocumentStorage {
                 cachedDocument.getError() != null ?
                         createOffline(table, writeDocument, writeOptions) :
                         updateOffline(table, writeDocument, writeOptions);
-        return rowId >= 0 ? writeDocument : new DocumentWrapper<T>(new StorageException("Failed to write document into cache."));
+        return rowId >= 0 ? writeDocument : new DocumentWrapper<T>(new DataException("Failed to write document into cache."));
     }
 
     private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
@@ -314,13 +314,13 @@ class LocalDocumentStorage {
             if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
                 mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-                return new DocumentWrapper<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
+                return new DocumentWrapper<>(new DataException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
             DocumentWrapper<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             if (document.hasFailed()) {
                 Throwable error = document.getError();
                 AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
-                return new DocumentWrapper<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
+                return new DocumentWrapper<>(new DataException(FAILED_TO_READ_FROM_CACHE, error));
             }
             document.setFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
@@ -332,6 +332,6 @@ class LocalDocumentStorage {
             return document;
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-        return new DocumentWrapper<>(new StorageException("Document was not found in the cache."));
+        return new DocumentWrapper<>(new DataException("Document was not found in the cache."));
     }
 }

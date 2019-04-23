@@ -15,7 +15,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.TokenManager;
 import com.microsoft.appcenter.data.Utils;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.TokensResponse;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -108,13 +108,13 @@ public class TokenExchange {
                 TokenResult tokenResult = parseTokenResult(payload);
                 if (tokenResult == null) {
                     String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
-                    onCallFailed(new StorageException(message));
+                    onCallFailed(new DataException(message));
                 } else {
                     callCosmosDb(tokenResult);
                 }
             } catch (JsonParseException e) {
                 String message = "Token response is not valid JSON";
-                onCallFailed(new StorageException(message, e));
+                onCallFailed(new DataException(message, e));
             }
         }
 

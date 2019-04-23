@@ -24,7 +24,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.Page;
@@ -240,8 +240,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mTokenExchangeUrl = tokenExchangeUrl;
     }
 
-    private static StorageException getInvalidPartitionStorageException(String partition) {
-        return new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
+    private static DataException getInvalidPartitionDataException(String partition) {
+        return new DataException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
     }
 
     @Override
@@ -378,10 +378,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     table = Utils.getTableName(cachedToken);
                     cachedDocument = mLocalDocumentStorage.read(table, cachedToken.getPartition(), documentId, documentType, cacheReadOptions);
                     if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
-                        cachedDocument = new DocumentWrapper<>(new StorageException("The document is found in local storage but marked as state deleted."));
+                        cachedDocument = new DocumentWrapper<>(new DataException("The document is found in local storage but marked as state deleted."));
                     }
                 } else {
-                    cachedDocument = new DocumentWrapper<>(new StorageException("Unable to find partition named " + partition + "."));
+                    cachedDocument = new DocumentWrapper<>(new DataException("Unable to find partition named " + partition + "."));
                 }
 
                 /* Call template to see if online operation is needed. */
@@ -469,7 +469,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 if (success) {
                     return new DocumentWrapper<>();
                 } else {
-                    return new DocumentWrapper<>(new StorageException("Failed to write to cache."));
+                    return new DocumentWrapper<>(new DataException("Failed to write to cache."));
                 }
             }
 
@@ -600,7 +600,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void completeFuture(Exception e) {
                         notifyListenerAndUpdateOperationOnFailure(
-                                new StorageException("Failed to get Cosmos DB token for performing a create or update operation.", e),
+                                new DataException("Failed to get Cosmos DB token for performing a create or update operation.", e),
                                 pendingOperation);
                     }
                 });
@@ -674,7 +674,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void onCallFailed(Exception e) {
                         notifyListenerAndUpdateOperationOnFailure(
-                                new StorageException("Failed to call Cosmos create or replace API", e),
+                                new DataException("Failed to call Cosmos create or replace API", e),
                                 pendingOperation);
                     }
                 }));
@@ -722,7 +722,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                         String table = Utils.getTableName(cachedToken);
                         createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.getPartition(), documentId, document, documentType, writeOptions);
                     } else {
-                        createdOrUpdatedDocument = new DocumentWrapper<>(new StorageException("Unable to find partition named " + partition + "."));
+                        createdOrUpdatedDocument = new DocumentWrapper<>(new DataException("Unable to find partition named " + partition + "."));
                     }
                     result.complete(createdOrUpdatedDocument);
                 }
@@ -746,7 +746,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void completeFuture(Exception e) {
                         notifyListenerAndUpdateOperationOnFailure(
-                                new StorageException("Failed to get Cosmos DB token for performing a delete operation.", e),
+                                new DataException("Failed to get Cosmos DB token for performing a delete operation.", e),
                                 pendingOperation);
                     }
                 });
@@ -806,7 +806,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void onCallFailed(Exception e) {
                         notifyListenerAndUpdateOperationOnFailure(
-                                new StorageException("Failed to call Cosmos delete API", e),
+                                new DataException("Failed to call Cosmos delete API", e),
                                 operation);
                     }
                 })
@@ -846,7 +846,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
-            completeFuture(getInvalidPartitionStorageException(partition), result);
+            completeFuture(getInvalidPartitionDataException(partition), result);
         }
         return isInvalidPartition;
     }
@@ -914,7 +914,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         });
     }
 
-    private void notifyListenerAndUpdateOperationOnFailure(final StorageException e, final PendingOperation pendingOperation) {
+    private void notifyListenerAndUpdateOperationOnFailure(final DataException e, final PendingOperation pendingOperation) {
         post(new Runnable() {
 
             @Override
@@ -963,7 +963,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
-            completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionStorageException(partition), result);
+            completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionDataException(partition), result);
         }
         return invalidPartitionName;
     }

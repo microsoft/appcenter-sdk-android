@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.data.exception.StorageException;
+import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.PendingOperation;
@@ -81,7 +81,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_CREATE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(StorageException.class));
+                isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -170,7 +170,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
-        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
+        ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
 
         Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mData.onNetworkStateUpdated(true);
@@ -182,7 +182,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        StorageException documentError = documentErrorArgumentCaptor.getValue();
+        DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
         assertEquals(cosmosFailureException, documentError.getCause());
@@ -245,12 +245,12 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         mData.onNetworkStateUpdated(true);
         verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
-        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
+        ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        StorageException documentError = documentErrorArgumentCaptor.getValue();
+        DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
     }
@@ -280,7 +280,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(StorageException.class));
+                isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -322,7 +322,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
-        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
+        ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
 
         Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mData.onNetworkStateUpdated(true);
@@ -334,7 +334,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 eq(pendingOperation.getOperation()),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        StorageException documentError = documentErrorArgumentCaptor.getValue();
+        DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
