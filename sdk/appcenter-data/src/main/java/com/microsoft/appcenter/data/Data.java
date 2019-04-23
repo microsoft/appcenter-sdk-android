@@ -454,7 +454,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
             @Override
             public boolean needsRemoteOperation(DocumentWrapper<Void> cachedDocument) {
-                return cachedDocument.getETag() != null || cachedDocument.getDocumentError() != null;
+                return cachedDocument.getETag() != null || cachedDocument.getError() != null;
             }
 
             @Override
@@ -501,7 +501,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             @Override
                             public void run() {
                                 DocumentWrapper<T> document = Utils.parseDocument(payload, documentType);
-                                if (document.getDocumentError() != null) {
+                                if (document.getError() != null) {
                                     completeFutureOnDocumentError(document, result);
                                 } else {
                                     completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
@@ -870,7 +870,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private synchronized <T> void completeFutureOnDocumentError(DocumentWrapper<T> doc, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
-        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError());
+        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getError());
         future.complete(doc);
         mPendingCalls.remove(future);
     }

@@ -140,7 +140,7 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getDocumentError().getClass());
+        assertEquals(StorageException.class, doc.getError().getClass());
         verify(mCursor).close();
     }
 
@@ -151,8 +151,8 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getDocumentError().getClass());
-        assertThat(doc.getDocumentError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
+        assertEquals(StorageException.class, doc.getError().getClass());
+        assertThat(doc.getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test(expected = RuntimeException.class)
@@ -170,8 +170,8 @@ public class LocalDocumentStorageTest {
         assertNotNull(doc);
         assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
-        assertEquals(StorageException.class, doc.getDocumentError().getClass());
-        assertThat(doc.getDocumentError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
+        assertEquals(StorageException.class, doc.getError().getClass());
+        assertThat(doc.getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
     }
 
     @Test
@@ -181,7 +181,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(-1L);
         DocumentWrapper<String> doc = mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
-        assertNotNull(doc.getDocumentError());
+        assertNotNull(doc.getError());
     }
 
     @Test

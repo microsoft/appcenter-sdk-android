@@ -52,7 +52,7 @@ public class Page<T> {
     /**
      * Get the error if failed to retrieve the page from document db.
      *
-     * @return DocumentError.
+     * @return Error.
      */
     public StorageException getError() {
         return mError;

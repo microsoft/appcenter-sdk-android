@@ -32,7 +32,7 @@ public class DocumentWrapper<T> {
     @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T mDocument;
 
-    private transient StorageException mDocumentError;
+    private transient StorageException mError;
 
     private transient boolean mFromCache;
 
@@ -55,15 +55,15 @@ public class DocumentWrapper<T> {
     }
 
     public DocumentWrapper(Throwable exception) {
-        mDocumentError = new StorageException(exception);
+        mError = new StorageException(exception);
     }
 
     public DocumentWrapper(String message, Throwable exception) {
-        mDocumentError = new StorageException(message, exception);
+        mError = new StorageException(message, exception);
     }
 
     public DocumentWrapper(StorageException exception) {
-        mDocumentError = exception;
+        mError = exception;
     }
 
     /**
@@ -76,12 +76,12 @@ public class DocumentWrapper<T> {
     }
 
     /**
-     * Get document error.
+     * Get the error if the document is in this state.
      *
      * @return Document error.
      */
-    public StorageException getDocumentError() {
-        return mDocumentError;
+    public StorageException getError() {
+        return mError;
     }
 
     /**
@@ -174,6 +174,6 @@ public class DocumentWrapper<T> {
      * @return whether the document has an error associated with it.
      */
     public boolean hasFailed() {
-        return getDocumentError() != null;
+        return getError() != null;
     }
 }

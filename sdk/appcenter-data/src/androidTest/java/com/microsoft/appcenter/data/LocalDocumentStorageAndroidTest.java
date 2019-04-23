@@ -106,7 +106,7 @@ public class LocalDocumentStorageAndroidTest {
         DocumentWrapper<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDeserializedValue());
-        assertNotNull(deletedDocument.getDocumentError());
+        assertNotNull(deletedDocument.getError());
     }
 
     @Test
@@ -126,7 +126,7 @@ public class LocalDocumentStorageAndroidTest {
         DocumentWrapper<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions(1));
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDeserializedValue());
-        assertNotNull(deletedDocument.getDocumentError());
+        assertNotNull(deletedDocument.getError());
     }
 
     @Test
@@ -170,8 +170,8 @@ public class LocalDocumentStorageAndroidTest {
         /* Verify to documents were added to the tables and there were no errors. */
         assertNotNull(cachedUserDocument);
         assertNotNull(cachedAppDocument);
-        assertNull(cachedUserDocument.getDocumentError());
-        assertNull(cachedAppDocument.getDocumentError());
+        assertNull(cachedUserDocument.getError());
+        assertNull(cachedAppDocument.getError());
         assertNotNull(cachedUserDocument.getDeserializedValue());
         assertNotNull(cachedAppDocument.getDeserializedValue());
 
@@ -183,12 +183,12 @@ public class LocalDocumentStorageAndroidTest {
         /* Verify that reading the documents gives an error and their contents are null. */
         assertNotNull(cachedUserDocument);
         assertNotNull(cachedAppDocument);
-        assertNotNull(cachedUserDocument.getDocumentError());
-        assertNotNull(cachedAppDocument.getDocumentError());
+        assertNotNull(cachedUserDocument.getError());
+        assertNotNull(cachedAppDocument.getError());
         assertNull(cachedUserDocument.getDeserializedValue());
         assertNull(cachedAppDocument.getDeserializedValue());
-        assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getDocumentError().getMessage());
-        assertEquals("DocumentWrapper was not found in the cache.", cachedAppDocument.getDocumentError().getMessage());
+        assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getError().getMessage());
+        assertEquals("DocumentWrapper was not found in the cache.", cachedAppDocument.getError().getMessage());
     }
 
     @Test
@@ -244,7 +244,7 @@ public class LocalDocumentStorageAndroidTest {
     public void createUnExpiredDocument() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
         DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
-        assertNull(document.getDocumentError());
+        assertNull(document.getError());
         assertEquals("Test", document.getDeserializedValue());
     }
 
@@ -252,7 +252,7 @@ public class LocalDocumentStorageAndroidTest {
     public void createDocumentWithoutOverflowException() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(999999999));
         DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
-        assertNull(document.getDocumentError());
+        assertNull(document.getError());
         assertEquals("Test", document.getDeserializedValue());
     }
 
@@ -262,13 +262,13 @@ public class LocalDocumentStorageAndroidTest {
         /* If a document is marked for deletion. */
         mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER, ID);
         DocumentWrapper<Void> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);
-        assertNull(document.getDocumentError());
+        assertNull(document.getError());
 
         /* When we delete after coming back online. */
         mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, USER, ID);
 
         /* Then the entry is removed from cache. */
         document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);
-        assertNotNull(document.getDocumentError());
+        assertNotNull(document.getError());
     }
 }

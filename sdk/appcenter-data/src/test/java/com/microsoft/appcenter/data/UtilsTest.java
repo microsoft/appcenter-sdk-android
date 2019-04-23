@@ -24,7 +24,7 @@ public class UtilsTest {
     @Test
     public void parseDocumentCanHandleInvalidJson() {
         DocumentWrapper<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
-        assertNotNull(document.getDocumentError());
+        assertNotNull(document.getError());
     }
 
     @Test
@@ -36,7 +36,7 @@ public class UtilsTest {
     @Test
     public void canParseWhenDocumentNull() {
         DocumentWrapper<TestDocument> document = Utils.parseDocument(null, TestDocument.class);
-        assertNotNull(document.getDocumentError());
+        assertNotNull(document.getError());
     }
 
     @Test
@@ -44,7 +44,7 @@ public class UtilsTest {
         TestDocument testDoc = new TestDocument("test-value");
         DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
         DocumentWrapper<String> document = Utils.parseDocument(doc.getJsonValue(), String.class);
-        assertNotNull(document.getDocumentError());
+        assertNotNull(document.getError());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class UtilsTest {
         DocumentWrapper<Void> document = new DocumentWrapper<>(null, "readonly", "id");
         document = Utils.parseDocument(Utils.getGson().toJson(document), Void.class);
         assertNotNull(document);
-        assertNull(document.getDocumentError());
+        assertNull(document.getError());
         assertNull(document.getETag());
     }
 
@@ -98,7 +98,7 @@ public class UtilsTest {
 
         /* Check we can parse back. */
         DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
-        assertNull(document.getDocumentError());
+        assertNull(document.getError());
         assertNotNull(document.getDeserializedValue());
         assertEquals(dateDocument.date, document.getDeserializedValue().date);
     }
@@ -117,8 +117,8 @@ public class UtilsTest {
 
         /* Check parsing error. */
         DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
-        assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getCause() instanceof JsonParseException);
+        assertNotNull(document.getError());
+        assertTrue(document.getError().getCause() instanceof JsonParseException);
         assertNull(document.getDeserializedValue());
     }
 
