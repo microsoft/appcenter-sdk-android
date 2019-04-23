@@ -142,7 +142,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_id_title), mDocumentId));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));
         if (document.getDocumentError() != null) {
-            String message = document.getDocumentError().getError().getMessage();
+            String message = document.getDocumentError().getMessage();
             mFullErrorContents = message;
             if (message.length() > MAX_CONTENT_LENGTH) {
                 message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
