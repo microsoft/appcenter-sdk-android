@@ -185,7 +185,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         StorageException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
-        assertEquals(cosmosFailureException, documentError.getCause().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause());
         verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
 
@@ -338,7 +338,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
-        assertEquals(cosmosFailureException, documentError.getCause().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause());
 
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
