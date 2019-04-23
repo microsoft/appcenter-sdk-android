@@ -28,11 +28,11 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.storage.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.storage.CustomItemAdapter;
 import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
-import com.microsoft.appcenter.storage.Constants;
-import com.microsoft.appcenter.storage.Storage;
-import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.Page;
-import com.microsoft.appcenter.storage.models.PaginatedDocuments;
+import com.microsoft.appcenter.data.Constants;
+import com.microsoft.appcenter.data.Storage;
+import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;

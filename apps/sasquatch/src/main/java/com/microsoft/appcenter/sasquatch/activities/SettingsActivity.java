@@ -326,7 +326,7 @@ public class SettingsActivity extends AppCompatActivity {
              * });
              */
             try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.storage.Storage");
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.data.Storage");
                 final Method isEnabled = storage.getMethod("isEnabled");
                 final Method setEnabled = storage.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.appcenter_storage_state_key, R.string.appcenter_storage_state_summary_enabled, R.string.appcenter_storage_state_summary_disabled, new HasEnabled() {

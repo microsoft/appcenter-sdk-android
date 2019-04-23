@@ -157,13 +157,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /* Set storage api url. */
+        /* Set data api url. */
         String storageApiUrl = getString(R.string.storage_api_url);
         if (!TextUtils.isEmpty(storageApiUrl)) {
 
             /* TODO once Storage released to jCenter, use Storage.setApiUrl directly. */
             try {
-                Class<?> storage = Class.forName("com.microsoft.appcenter.storage.Storage");
+                Class<?> storage = Class.forName("com.microsoft.appcenter.data.Storage");
                 storage.getMethod("setApiUrl", String.class).invoke(null, storageApiUrl);
             } catch (ClassNotFoundException ignored) {
             } catch (NoSuchMethodException ignored) {
@@ -365,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* TODO once Storage released to jCenter, use Storage.class directly. */
         try {
-            String className = "com.microsoft.appcenter.storage.Storage";
+            String className = "com.microsoft.appcenter.data.Storage";
 
             //noinspection unchecked
             services.add(Class.forName(className));

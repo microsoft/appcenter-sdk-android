@@ -48,7 +48,7 @@ public final class TestFeatures {
 
         /* TODO Remove reflection once Storage available in jCenter. */
         try {
-            Class.forName("com.microsoft.appcenter.storage.Storage");
+            Class.forName("com.microsoft.appcenter.data.Storage");
             sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
             sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
         } catch (ClassNotFoundException ignore) {
