@@ -31,6 +31,10 @@ public class Page<T> {
         mError = new StorageException(exception);
     }
 
+    public Page(StorageException exception) {
+        mError = exception;
+    }
+
     /**
      * Return the documents in the page.
      *

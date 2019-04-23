@@ -933,7 +933,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
                     eventListener.onDataStoreOperationResult(
                             pendingOperation.getOperation(),
                             null,
-                            new StorageException(e));
+                            e);
                 }
                 if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
 
