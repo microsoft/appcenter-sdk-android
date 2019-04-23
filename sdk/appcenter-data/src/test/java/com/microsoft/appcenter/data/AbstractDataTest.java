@@ -216,7 +216,7 @@ abstract public class AbstractDataTest {
         whenNew(LocalDocumentStorage.class).withAnyArguments().thenReturn(mLocalDocumentStorage);
         mData = Data.getInstance();
         mChannel = start(mData);
-        Data.setApiUrl("default");
+        Data.setTokenExchangeUrl("default");
 
         /* Wait until the module has finished enabling so pending operations have already been processed. */
         Data.setEnabled(true).get();

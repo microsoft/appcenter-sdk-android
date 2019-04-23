@@ -76,7 +76,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * Current API base URL.
      */
-    private String mApiUrl = DEFAULT_API_URL;
+    private String mTokenExchangeUrl = DEFAULT_API_URL;
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
@@ -119,14 +119,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     /**
-     * Change the base URL used to make API calls.
+     * Change the URL used to retrieve CosmosDB resource tokens.
      *
-     * @param apiUrl API base URL.
+     * @param tokenExchangeUrl Token Exchange service URL.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess", "unused"})
     // TODO Remove suppress warnings after reflection removed in test app
-    public static void setApiUrl(String apiUrl) {
-        getInstance().setInstanceApiUrl(apiUrl);
+    public static void setTokenExchangeUrl(String tokenExchangeUrl) {
+        getInstance().setInstanceTokenExchangeUrl(tokenExchangeUrl);
     }
 
     /**
@@ -234,10 +234,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     /**
-     * Implements {@link #setApiUrl(String)}}.
+     * Implements {@link #setTokenExchangeUrl(String)}}.
      */
-    private synchronized void setInstanceApiUrl(String apiUrl) {
-        mApiUrl = apiUrl;
+    private synchronized void setInstanceTokenExchangeUrl(String tokenExchangeUrl) {
+        mTokenExchangeUrl = tokenExchangeUrl;
     }
 
     private static StorageException getInvalidPartitionStorageException(String partition) {
@@ -825,7 +825,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     TokenExchange.getDbToken(
                             partition,
                             mHttpClient,
-                            mApiUrl,
+                            mTokenExchangeUrl,
                             mAppSecret,
                             callback);
             if (result != null) {

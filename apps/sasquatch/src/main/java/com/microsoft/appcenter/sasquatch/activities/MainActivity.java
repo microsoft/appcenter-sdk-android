@@ -161,10 +161,10 @@ public class MainActivity extends AppCompatActivity {
         String storageApiUrl = getString(R.string.data_api_url);
         if (!TextUtils.isEmpty(storageApiUrl)) {
 
-            /* TODO once Data released to jCenter, use Data.setApiUrl directly. */
+            /* TODO once Data released to jCenter, use Data.setTokenExchangeUrl directly. */
             try {
                 Class<?> storage = Class.forName("com.microsoft.appcenter.data.Data");
-                storage.getMethod("setApiUrl", String.class).invoke(null, storageApiUrl);
+                storage.getMethod("setTokenExchangeUrl", String.class).invoke(null, storageApiUrl);
             } catch (ClassNotFoundException ignored) {
             } catch (NoSuchMethodException ignored) {
             } catch (Exception e) {

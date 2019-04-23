@@ -54,21 +54,21 @@ public class TokenExchange {
     /**
      * Get the token access to specific partition.
      *
-     * @param partition       The partition names.
-     * @param httpClient      Httpclient used to make the call.
-     * @param apiUrl          Api endpoint.
-     * @param appSecret       App secret.
-     * @param serviceCallback The callback to execute when get the token successfully.
+     * @param partition        The partition names.
+     * @param httpClient       Httpclient used to make the call.
+     * @param tokenExchangeUrl URL to Token Exchange endpoint.
+     * @param appSecret        App secret.
+     * @param serviceCallback  The callback to execute when get the token successfully.
      * @return The service call to get the token.
      */
     public static synchronized ServiceCall getDbToken(
             final String partition,
             HttpClient httpClient,
-            String apiUrl,
+            String tokenExchangeUrl,
             final String appSecret,
             TokenExchangeServiceCallback serviceCallback) {
         AppCenterLog.debug(LOG_TAG, "Getting a resource token from App Center...");
-        String url = apiUrl + GET_TOKEN_PATH_FORMAT;
+        String url = tokenExchangeUrl + GET_TOKEN_PATH_FORMAT;
         final String userToken = AuthTokenContext.getInstance().getAuthToken();
         return httpClient.callAsync(
                 url,
