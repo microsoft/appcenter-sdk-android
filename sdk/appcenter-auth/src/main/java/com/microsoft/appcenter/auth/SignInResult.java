@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import com.microsoft.appcenter.UserInformation;
 

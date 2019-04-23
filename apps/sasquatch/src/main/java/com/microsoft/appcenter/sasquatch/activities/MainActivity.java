@@ -142,14 +142,14 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
-        /* Set identity config url. */
-        String configUrl = getString(R.string.identity_config_url);
+        /* Set auth config url. */
+        String configUrl = getString(R.string.auth_config_url);
         if (!TextUtils.isEmpty(configUrl)) {
 
-            /* TODO once Identity released to jCenter, use Identity.setConfigUrl directly. */
+            /* TODO once Auth released to jCenter, use Auth.setConfigUrl directly. */
             try {
-                Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
-                identity.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
+                Class<?> auth = Class.forName("com.microsoft.appcenter.auth.Auth");
+                auth.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
             } catch (ClassNotFoundException ignored) {
             } catch (NoSuchMethodException ignored) {
             } catch (Exception e) {
@@ -354,9 +354,9 @@ public class MainActivity extends AppCompatActivity {
             add(Push.class);
         }};
 
-        /* TODO once Identity released to jCenter, use Identity.class directly. */
+        /* TODO once Auth released to jCenter, use Auth.class directly. */
         try {
-            String className = "com.microsoft.appcenter.identity.Identity";
+            String className = "com.microsoft.appcenter.auth.Auth";
 
             //noinspection unchecked
             services.add(Class.forName(className));

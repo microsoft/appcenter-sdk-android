@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import android.accounts.NetworkErrorException;
 import android.annotation.SuppressLint;
@@ -54,32 +54,32 @@ import java.util.concurrent.CancellationException;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITIES;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
-import static com.microsoft.appcenter.identity.Constants.CONFIG_URL_FORMAT;
-import static com.microsoft.appcenter.identity.Constants.DEFAULT_CONFIG_URL;
-import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
-import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
-import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
-import static com.microsoft.appcenter.identity.Constants.IDENTITY_GROUP;
-import static com.microsoft.appcenter.identity.Constants.IDENTITY_SCOPE;
-import static com.microsoft.appcenter.identity.Constants.LOG_TAG;
-import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
-import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITIES;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_DEFAULT;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
+import static com.microsoft.appcenter.auth.Constants.CONFIG_URL_FORMAT;
+import static com.microsoft.appcenter.auth.Constants.DEFAULT_CONFIG_URL;
+import static com.microsoft.appcenter.auth.Constants.FILE_PATH;
+import static com.microsoft.appcenter.auth.Constants.HEADER_E_TAG;
+import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
+import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
+import static com.microsoft.appcenter.auth.Constants.IDENTITY_SCOPE;
+import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
+import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
+import static com.microsoft.appcenter.auth.Constants.SERVICE_NAME;
 
 /**
- * Identity service.
+ * Auth service.
  */
-public class Identity extends AbstractAppCenterService implements NetworkStateHelper.Listener {
+public class Auth extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static Identity sInstance;
+    private static Auth sInstance;
 
     /**
      * Current config base URL.
@@ -154,9 +154,9 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
      * @return shared instance.
      */
     @SuppressWarnings("WeakerAccess")
-    public static synchronized Identity getInstance() {
+    public static synchronized Auth getInstance() {
         if (sInstance == null) {
-            sInstance = new Identity();
+            sInstance = new Auth();
         }
         return sInstance;
     }
@@ -178,7 +178,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     }
 
     /**
-     * Check whether Identity service is enabled or not.
+     * Check whether Auth service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
@@ -189,7 +189,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     }
 
     /**
-     * Enable or disable Identity service.
+     * Enable or disable Auth service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
@@ -253,7 +253,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             }
             mAuthenticationClient = null;
             mIdentityScope = null;
-            cancelPendingOperations(new IllegalStateException("Identity is disabled."));
+            cancelPendingOperations(new IllegalStateException("Auth is disabled."));
             mLastSignInFuture = null;
             mLastRefreshFuture = null;
             clearCache();
@@ -263,7 +263,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
     @Override
     protected String getGroupName() {
-        return IDENTITY_GROUP;
+        return AUTH_GROUP;
     }
 
     @Override
@@ -386,28 +386,28 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     private synchronized void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
-        AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
+        AppCenterLog.info(LOG_TAG, "Configure auth from downloaded configuration.");
         initAuthenticationClient(payload);
     }
 
 
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
-        AppCenterLog.info(LOG_TAG, "Identity configuration didn't change.");
+        AppCenterLog.info(LOG_TAG, "Auth configuration didn't change.");
     }
 
     @WorkerThread
     private void loadConfigurationFromCache() {
         File configFile = getConfigFile();
         if (configFile.exists()) {
-            AppCenterLog.info(LOG_TAG, "Configure identity from cached configuration.");
+            AppCenterLog.info(LOG_TAG, "Configure auth from cached configuration.");
             initAuthenticationClient(FileManager.read(configFile));
         }
     }
 
     private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
-        AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+        AppCenterLog.error(LOG_TAG, "Cannot load auth configuration from the server.", e);
     }
 
     @WorkerThread
@@ -432,7 +432,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
                 mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
                 mAuthorityUrl = authorityUrl;
                 mIdentityScope = identityScope;
-                AppCenterLog.info(LOG_TAG, "Identity service configured successfully.");
+                AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
             } else {
                 throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
             }
@@ -454,9 +454,9 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
         try {
             FileManager.write(file, payload);
             SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, eTag);
-            AppCenterLog.debug(LOG_TAG, "Identity configuration saved in cache.");
+            AppCenterLog.debug(LOG_TAG, "Auth configuration saved in cache.");
         } catch (IOException e) {
-            AppCenterLog.warn(LOG_TAG, "Failed to cache identity configuration.", e);
+            AppCenterLog.warn(LOG_TAG, "Failed to cache auth configuration.", e);
         }
     }
 
@@ -464,7 +464,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     private void clearCache() {
         SharedPreferencesManager.remove(PREFERENCE_E_TAG_KEY);
         FileManager.delete(getConfigFile());
-        AppCenterLog.debug(LOG_TAG, "Identity configuration cache cleared.");
+        AppCenterLog.debug(LOG_TAG, "Auth configuration cache cleared.");
     }
 
     private synchronized AppCenterFuture<SignInResult> instanceSignIn() {
@@ -481,7 +481,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
 
             @Override
             public void run() {
-                future.complete(new SignInResult(null, new IllegalStateException("Identity is disabled.")));
+                future.complete(new SignInResult(null, new IllegalStateException("Auth is disabled.")));
             }
         };
         post(new Runnable() {

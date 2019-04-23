@@ -55,17 +55,17 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }
         }));
 
-        /* TODO remove reflection once Identity published to jCenter. */
+        /* TODO remove reflection once Auth published to jCenter. */
         try {
-            final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
+            final Class<?> auth = Class.forName("com.microsoft.appcenter.auth.Auth");
             featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
 
-                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
+                /* TODO remove reflection once Auth published to jCenter. Remove this annotation too. */
                 @SuppressWarnings("unchecked")
                 @Override
                 public void onClick(View v) {
                     try {
-                        AppCenterFuture<Object> future = (AppCenterFuture<Object>) identity.getMethod("signIn").invoke(null);
+                        AppCenterFuture<Object> future = (AppCenterFuture<Object>) auth.getMethod("signIn").invoke(null);
                         future.thenAccept(new AppCenterConsumer<Object>() {
 
                             @Override
@@ -83,30 +83,30 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                     SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                                     edit.putString("accountId", accountId);
                                     edit.apply();
-                                    Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
+                                    Log.i(LOG_TAG, "Auth.signIn succeeded, accountId=" + accountId);
                                 } catch (Exception e) {
-                                    Log.e(LOG_TAG, "Identity.signIn failed", e);
+                                    Log.e(LOG_TAG, "Auth.signIn failed", e);
                                 }
                             }
                         });
                     } catch (Exception e) {
-                        Log.e(LOG_TAG, "Identity.signIn failed", e);
+                        Log.e(LOG_TAG, "Auth.signIn failed", e);
                     }
                 }
             }));
             featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
 
-                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
+                /* TODO remove reflection once Auth published to jCenter. Remove this annotation too. */
                 @SuppressWarnings("unchecked")
                 @Override
                 public void onClick(View v) {
                     try {
-                        identity.getMethod("signOut").invoke(null);
+                        auth.getMethod("signOut").invoke(null);
                         SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                         edit.putString(ACCOUNT_ID, null);
                         edit.apply();
                     } catch (Exception e) {
-                        Log.e(LOG_TAG, "Identity.signOut failed", e);
+                        Log.e(LOG_TAG, "Auth.signOut failed", e);
                     }
                 }
             }));

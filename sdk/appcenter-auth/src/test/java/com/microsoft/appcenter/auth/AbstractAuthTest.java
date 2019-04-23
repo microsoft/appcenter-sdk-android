@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import android.content.Context;
 import android.os.SystemClock;
@@ -46,7 +46,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
-        Identity.class,
+        Auth.class,
         SystemClock.class,
         SharedPreferencesManager.class,
         FileManager.class,
@@ -57,9 +57,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AuthTokenContext.class,
         NetworkStateHelper.class
 })
-abstract public class AbstractIdentityTest {
+abstract public class AbstractAuthTest {
 
-    static final String IDENTITY_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Identity.getInstance().getServiceName();
+    static final String AUTH_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Auth.getInstance().getServiceName();
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -81,7 +81,7 @@ abstract public class AbstractIdentityTest {
 
     @Before
     public void setUp() throws Exception {
-        Identity.unsetInstance();
+        Auth.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
