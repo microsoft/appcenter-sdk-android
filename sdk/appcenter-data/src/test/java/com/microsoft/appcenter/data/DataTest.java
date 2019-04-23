@@ -93,7 +93,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
         TokenExchange.class,
         TokenManager.class
 })
-public class StorageTest extends AbstractDataTest {
+public class DataTest extends AbstractDataTest {
 
     @Mock
     private DataStoreEventListener mDataStoreEventListener;
