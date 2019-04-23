@@ -19,11 +19,11 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.TimeToLive;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.models.BaseOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -38,7 +38,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private EditText mEditDocumentId;
 
-    private WriteOptions mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+    private WriteOptions mWriteOptions = new WriteOptions(TimeToLive.DEFAULT);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,7 +66,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         DocumentDeviceTtl documentDeviceTtl = DocumentDeviceTtl.values()[position];
         switch (documentDeviceTtl) {
             case DEFAULT:
-                mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                mWriteOptions = new WriteOptions(TimeToLive.DEFAULT);
                 break;
             case NO_CACHE:
                 mWriteOptions = WriteOptions.createNoCacheOptions();

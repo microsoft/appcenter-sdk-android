@@ -5,27 +5,14 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.microsoft.appcenter.data.TimeToLive;
+
 public abstract class BaseOptions {
-
-    /**
-     * Cache does not expire.
-     */
-    public static final int INFINITE = -1;
-
-    /**
-     * Do not cache documents locally.
-     */
-    public static final int NO_CACHE = 0;
-
-    /**
-     * Default caching value of one day.
-     */
-    public static final int DEFAULT_EXPIRATION_IN_SECONDS = 60 * 60 * 24;
 
     private int mTtl;
 
     BaseOptions() {
-        this(DEFAULT_EXPIRATION_IN_SECONDS);
+        this(TimeToLive.DEFAULT);
     }
 
     BaseOptions(int ttl) {

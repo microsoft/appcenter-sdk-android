@@ -21,7 +21,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
-import com.microsoft.appcenter.data.models.BaseOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -94,9 +93,9 @@ abstract public class AbstractDataTest {
 
     static final long CURRENT_TIMESTAMP = System.currentTimeMillis();
 
-    static final long FUTURE_TIMESTAMP = System.currentTimeMillis() + BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
+    static final long FUTURE_TIMESTAMP = System.currentTimeMillis() + TimeToLive.DEFAULT;
 
-    static final long PAST_TIMESTAMP = System.currentTimeMillis() - BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS;
+    static final long PAST_TIMESTAMP = System.currentTimeMillis() - TimeToLive.DEFAULT;
 
     final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +

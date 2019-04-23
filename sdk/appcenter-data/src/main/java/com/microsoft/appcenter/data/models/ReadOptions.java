@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.microsoft.appcenter.data.TimeToLive;
+
 public class ReadOptions extends BaseOptions {
 
     public ReadOptions() {
@@ -16,11 +18,11 @@ public class ReadOptions extends BaseOptions {
     }
 
     public static ReadOptions createInfiniteCacheOptions() {
-        return new ReadOptions(BaseOptions.INFINITE);
+        return new ReadOptions(TimeToLive.INFINITE);
     }
 
     public static ReadOptions createNoCacheOptions() {
-        return new ReadOptions(BaseOptions.NO_CACHE);
+        return new ReadOptions(TimeToLive.NO_CACHE);
     }
 
     /**
@@ -28,7 +30,7 @@ public class ReadOptions extends BaseOptions {
      * @return whether a document is expired.
      */
     public static boolean isExpired(long expiredAt) {
-        if (expiredAt == BaseOptions.INFINITE) {
+        if (expiredAt == TimeToLive.INFINITE) {
             return false;
         }
         return System.currentTimeMillis() >= expiredAt;

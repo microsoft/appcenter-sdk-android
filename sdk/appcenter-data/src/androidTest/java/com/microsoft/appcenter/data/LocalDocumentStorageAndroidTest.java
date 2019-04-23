@@ -242,7 +242,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void createUnExpiredDocument() {
-        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(TimeToLive.INFINITE));
         DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
         assertNull(document.getError());
         assertEquals("Test", document.getDeserializedValue());

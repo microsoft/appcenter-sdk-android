@@ -14,7 +14,6 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.data.exception.StorageException;
-import com.microsoft.appcenter.data.models.BaseOptions;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
@@ -132,7 +131,7 @@ class LocalDocumentStorage {
     }
 
     private <T> long write(String table, DocumentWrapper<T> document, WriteOptions writeOptions, String pendingOperationValue) {
-        if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
+        if (writeOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
             return 0;
         }
         AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
@@ -142,8 +141,8 @@ class LocalDocumentStorage {
                 document.getId(),
                 document.getJsonValue(),
                 document.getETag(),
-                writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
-                        BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
+                writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
+                        TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
                 now,
                 now,
                 pendingOperationValue);

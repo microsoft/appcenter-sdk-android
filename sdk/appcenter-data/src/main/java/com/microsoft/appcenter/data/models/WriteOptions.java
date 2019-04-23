@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.microsoft.appcenter.data.TimeToLive;
+
 public class WriteOptions extends BaseOptions {
 
     public WriteOptions() {
@@ -16,10 +18,10 @@ public class WriteOptions extends BaseOptions {
     }
 
     public static WriteOptions createInfiniteCacheOptions() {
-        return new WriteOptions(BaseOptions.INFINITE);
+        return new WriteOptions(TimeToLive.INFINITE);
     }
 
     public static WriteOptions createNoCacheOptions() {
-        return new WriteOptions(BaseOptions.NO_CACHE);
+        return new WriteOptions(TimeToLive.NO_CACHE);
     }
 }

@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.data.exception.StorageException;
-import com.microsoft.appcenter.data.models.BaseOptions;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
@@ -121,7 +120,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void localStorageDoNotWriteWhenNotCache() {
-        mLocalDocumentStorage.writeOffline(mUserTableName, new DocumentWrapper<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(WriteOptions.NO_CACHE));
+        mLocalDocumentStorage.writeOffline(mUserTableName, new DocumentWrapper<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(TimeToLive.NO_CACHE));
         verify(mDatabaseManager, never()).replace(anyString(), any(ContentValues.class));
     }
 
@@ -225,10 +224,10 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void verifyOptionsConstructors() {
-        assertEquals(BaseOptions.INFINITE, ReadOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, ReadOptions.createNoCacheOptions().getDeviceTimeToLive());
-        assertEquals(BaseOptions.INFINITE, WriteOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
-        assertEquals(BaseOptions.NO_CACHE, WriteOptions.createNoCacheOptions().getDeviceTimeToLive());
+        assertEquals(TimeToLive.INFINITE, ReadOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
+        assertEquals(TimeToLive.NO_CACHE, ReadOptions.createNoCacheOptions().getDeviceTimeToLive());
+        assertEquals(TimeToLive.INFINITE, WriteOptions.createInfiniteCacheOptions().getDeviceTimeToLive());
+        assertEquals(TimeToLive.NO_CACHE, WriteOptions.createNoCacheOptions().getDeviceTimeToLive());
     }
 
     @Test(expected = IllegalArgumentException.class)
