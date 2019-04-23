@@ -140,7 +140,7 @@ class LocalDocumentStorage {
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
-                document.toString(),
+                document.getJsonValue(),
                 document.getETag(),
                 writeOptions.getDeviceTimeToLive() == BaseOptions.INFINITE ?
                         BaseOptions.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,

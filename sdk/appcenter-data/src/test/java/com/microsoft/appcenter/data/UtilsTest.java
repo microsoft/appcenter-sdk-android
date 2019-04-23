@@ -43,8 +43,16 @@ public class UtilsTest {
     public void canParseWhenPassedWrongType() {
         TestDocument testDoc = new TestDocument("test-value");
         DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
-        DocumentWrapper<String> document = Utils.parseDocument(doc.toString(), String.class);
+        DocumentWrapper<String> document = Utils.parseDocument(doc.getJsonValue(), String.class);
         assertNotNull(document.getDocumentError());
+    }
+
+    @Test
+    public void toStringAndGetJsonValueAreEquivalents() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
+        assertNotNull(doc.getJsonValue());
+        assertEquals(doc.getJsonValue(), doc.toString());
     }
 
     @Test

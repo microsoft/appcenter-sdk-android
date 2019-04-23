@@ -121,6 +121,15 @@ public class DocumentWrapper<T> {
     }
 
     /**
+     * Get the document in its JSON form.
+     *
+     * @return The document in its JSON form.
+     */
+    public String getJsonValue() {
+        return toString();
+    }
+
+    /**
      * Get the document in string.
      *
      * @return Serialized document.

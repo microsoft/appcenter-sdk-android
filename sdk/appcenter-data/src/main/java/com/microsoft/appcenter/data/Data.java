@@ -621,7 +621,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 null,
                 mHttpClient,
                 METHOD_POST,
-                new DocumentWrapper<>(document, partition, documentId).toString(),
+                new DocumentWrapper<>(document, partition, documentId).getJsonValue(),
                 additionalHeaders,
                 new ServiceCallback() {
 
