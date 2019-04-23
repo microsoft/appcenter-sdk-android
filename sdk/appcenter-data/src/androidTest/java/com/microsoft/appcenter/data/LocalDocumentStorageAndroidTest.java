@@ -100,8 +100,8 @@ public class LocalDocumentStorageAndroidTest {
         assertNotNull(cachedDocument);
         assertEquals(document.getDeserializedValue(), cachedDocument.getDeserializedValue());
         assertFalse(document.hasFailed());
-        assertFalse(document.isFromCache());
-        assertTrue(cachedDocument.isFromCache());
+        assertFalse(document.isFromDeviceCache());
+        assertTrue(cachedDocument.isFromDeviceCache());
         mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, Constants.READONLY, ID);
         DocumentWrapper<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);

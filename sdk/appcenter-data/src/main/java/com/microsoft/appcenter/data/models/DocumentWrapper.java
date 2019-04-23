@@ -34,7 +34,7 @@ public class DocumentWrapper<T> {
 
     private transient StorageException mError;
 
-    private transient boolean mFromCache;
+    private transient boolean mFromDeviceCache;
 
     private transient String mPendingOperation;
 
@@ -143,15 +143,15 @@ public class DocumentWrapper<T> {
     /**
      * Get the flag indicating if data was retrieved from the local cache (for offline mode)
      */
-    public boolean isFromCache() {
-        return mFromCache;
+    public boolean isFromDeviceCache() {
+        return mFromDeviceCache;
     }
 
     /**
      * Set the flag indicating if data was retrieved from the local cache (for offline mode)
      */
     public void setFromCache(boolean fromCache) {
-        mFromCache = fromCache;
+        mFromDeviceCache = fromCache;
     }
 
     /**
