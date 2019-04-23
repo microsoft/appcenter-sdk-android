@@ -40,7 +40,7 @@ public class AuthTokenTests extends AbstractDataTest {
         for (int i = 0; i < 10; i++) {
             partitionNames.add("partitionName" + i);
         }
-        partitionNames.add(Constants.READONLY);
+        partitionNames.add(DefaultPartitions.APP_DOCUMENTS);
         when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(partitionNames);
         Data.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);

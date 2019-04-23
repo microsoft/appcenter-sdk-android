@@ -79,19 +79,6 @@ public final class Constants {
     static final String DATA_GROUP = "group_data";
 
     /**
-     * User partition.
-     * An authenticated user can read/write documents in this partition.
-     */
-    public static final String USER = "user";
-
-    /**
-     * Readonly partition.
-     * Everyone can read documents in this partition.
-     * Writes are not allowed via the SDK.
-     */
-    public static final String READONLY = "readonly";
-
-    /**
      * The continuation token header used to set continuation token.
      */
     public static final String CONTINUATION_TOKEN_HEADER = "x-ms-continuation";

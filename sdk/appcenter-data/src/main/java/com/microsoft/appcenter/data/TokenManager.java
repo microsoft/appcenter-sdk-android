@@ -119,7 +119,7 @@ public class TokenManager {
     public synchronized void removeAllCachedTokens() {
         Set<String> partitionNamesSet = getPartitionNames();
         for (String partitionName : partitionNamesSet) {
-            if (partitionName.equals(Constants.READONLY)) {
+            if (partitionName.equals(DefaultPartitions.APP_DOCUMENTS)) {
                 continue;
             }
             SharedPreferencesManager.remove(PREFERENCE_PARTITION_PREFIX + partitionName);

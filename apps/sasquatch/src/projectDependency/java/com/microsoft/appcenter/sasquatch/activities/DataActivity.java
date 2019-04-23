@@ -25,12 +25,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.CustomItemAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
-import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -177,14 +177,14 @@ public class DataActivity extends AppCompatActivity {
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_PARTITION, Constants.READONLY);
+                intent.putExtra(DOCUMENT_PARTITION, DefaultPartitions.APP_DOCUMENTS);
                 intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getDocumentByPosition(position));
                 startActivity(intent);
             }
         });
         showProgress();
         mAppDocumentsLoading = true;
-        Data.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
+        Data.list(DefaultPartitions.APP_DOCUMENTS, TestDocument.class).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<DocumentWrapper<Map>>(), this);
@@ -193,14 +193,14 @@ public class DataActivity extends AppCompatActivity {
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_PARTITION, Constants.USER);
+                intent.putExtra(DOCUMENT_PARTITION, DefaultPartitions.USER_DOCUMENTS);
                 intent.putExtra(DOCUMENT_ID, mAdapterUser.getDocumentByPosition(position));
                 startActivity(intent);
             }
 
             @Override
             public void onRemoveClick(final int position) {
-                Data.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<DocumentWrapper<Void>>() {
+                Data.delete(DefaultPartitions.USER_DOCUMENTS, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<DocumentWrapper<Void>>() {
 
                     @Override
                     public void accept(DocumentWrapper<Void> voidDocument) {
@@ -240,7 +240,7 @@ public class DataActivity extends AppCompatActivity {
         if (accountId != null) {
             mUserDocumentsLoading = true;
             showProgress();
-            Data.list(Constants.USER, Map.class).thenAccept(mUploadUser);
+            Data.list(DefaultPartitions.USER_DOCUMENTS, Map.class).thenAccept(mUploadUser);
         }
     }
 

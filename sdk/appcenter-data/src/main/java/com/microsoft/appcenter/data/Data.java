@@ -52,10 +52,10 @@ import static com.microsoft.appcenter.data.Constants.LOG_TAG;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
-import static com.microsoft.appcenter.data.Constants.READONLY;
+import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.Constants.SERVICE_NAME;
 import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
-import static com.microsoft.appcenter.data.Constants.USER;
+import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 
 /**
  * Data service.
@@ -241,7 +241,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private static StorageException getInvalidPartitionStorageException(String partition) {
-        return new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", READONLY, USER, partition));
+        return new StorageException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
     }
 
     @Override

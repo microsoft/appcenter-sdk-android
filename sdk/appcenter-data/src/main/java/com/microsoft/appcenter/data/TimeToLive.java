@@ -1,7 +1,7 @@
 package com.microsoft.appcenter.data;
 
 /**
- * Constant around time-to-live.
+ * Constants defining time-to-live in seconds.
  */
 public final class TimeToLive {
 
@@ -16,7 +16,7 @@ public final class TimeToLive {
     public static final int NO_CACHE = 0;
 
     /**
-     * Default caching value of one day.
+     * Default caching value of one day (in seconds).
      */
     public static final int DEFAULT = 60 * 60 * 24;
 }

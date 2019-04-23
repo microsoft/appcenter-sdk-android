@@ -93,20 +93,20 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void getTableNameWithUserPartitionName() {
-        String tableName = Utils.getTableName(Constants.USER, USER_ID);
+        String tableName = Utils.getTableName(DefaultPartitions.USER_DOCUMENTS, USER_ID);
         assertEquals(String.format(com.microsoft.appcenter.Constants.USER_TABLE_FORMAT, USER_ID), tableName);
     }
 
     @Test
     public void getTableNameWithReadonlyPartitionName() {
-        String tableName = Utils.getTableName(Constants.READONLY, USER_ID);
+        String tableName = Utils.getTableName(DefaultPartitions.APP_DOCUMENTS, USER_ID);
         assertEquals(com.microsoft.appcenter.Constants.READONLY_TABLE, tableName);
     }
 
     @Test
     public void validPartitionName() {
-        assertTrue(LocalDocumentStorage.isValidPartitionName(Constants.USER));
-        assertTrue(LocalDocumentStorage.isValidPartitionName(Constants.READONLY));
+        assertTrue(LocalDocumentStorage.isValidPartitionName(DefaultPartitions.USER_DOCUMENTS));
+        assertTrue(LocalDocumentStorage.isValidPartitionName(DefaultPartitions.APP_DOCUMENTS));
         assertFalse(LocalDocumentStorage.isValidPartitionName("invalid"));
     }
 

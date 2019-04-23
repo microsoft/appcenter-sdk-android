@@ -19,11 +19,11 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.TimeToLive;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
-import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -110,7 +110,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
         String documentId = mEditDocumentId.getText().toString();
         documentId = documentId.replace(" ", "-");
-        Data.replace(Constants.USER, documentId, document, Map.class, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
+        Data.replace(DefaultPartitions.USER_DOCUMENTS, documentId, document, Map.class, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
 
             @Override
             public void accept(DocumentWrapper<Map> mapDocument) {

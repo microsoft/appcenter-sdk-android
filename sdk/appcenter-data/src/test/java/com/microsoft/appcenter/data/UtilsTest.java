@@ -64,7 +64,7 @@ public class UtilsTest {
 
     @Test
     public void doesNotAlterReadOnlyPartitionName() {
-        assertEquals(Constants.READONLY, Utils.removeAccountIdFromPartitionName(Constants.READONLY));
+        assertEquals(DefaultPartitions.APP_DOCUMENTS, Utils.removeAccountIdFromPartitionName(DefaultPartitions.APP_DOCUMENTS));
     }
 
     @Test

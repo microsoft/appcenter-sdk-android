@@ -30,8 +30,8 @@ import static com.microsoft.appcenter.Constants.DATABASE;
 import static com.microsoft.appcenter.Constants.READONLY_TABLE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
-import static com.microsoft.appcenter.data.Constants.READONLY;
-import static com.microsoft.appcenter.data.Constants.USER;
+import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
+import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 
 @WorkerThread
 class LocalDocumentStorage {
@@ -248,7 +248,7 @@ class LocalDocumentStorage {
      * @return true if the partition is supported, false otherwise.
      */
     static boolean isValidPartitionName(String partition) {
-        return READONLY.equals(partition) || USER.equals(partition);
+        return APP_DOCUMENTS.equals(partition) || USER_DOCUMENTS.equals(partition);
     }
 
     private static ContentValues getContentValues(

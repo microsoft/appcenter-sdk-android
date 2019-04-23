@@ -44,7 +44,7 @@ import static com.microsoft.appcenter.data.Constants.ID_FIELD_NAME;
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
 import static com.microsoft.appcenter.data.Constants.PARTITION_KEY_FIELD_NAME;
 import static com.microsoft.appcenter.data.Constants.TIMESTAMP_FIELD_NAME;
-import static com.microsoft.appcenter.data.Constants.USER;
+import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 
 public class Utils {
 
@@ -144,7 +144,7 @@ public class Utils {
     }
 
     static String removeAccountIdFromPartitionName(String partition) {
-        if (partition.equals(Constants.READONLY)) {
+        if (partition.equals(DefaultPartitions.APP_DOCUMENTS)) {
             return partition;
         }
         return partition.substring(0, partition.length() - Constants.PARTITION_KEY_SUFFIX_LENGTH);
@@ -156,7 +156,7 @@ public class Utils {
 
     @NonNull
     static String getTableName(String partition, String accountId) {
-        if (USER.equals(partition)) {
+        if (USER_DOCUMENTS.equals(partition)) {
             return getUserTableName(accountId);
         }
         return READONLY_TABLE;
@@ -169,7 +169,7 @@ public class Utils {
 
     @NonNull
     static String getTableName(@NonNull TokenResult tokenResult) {
-        if (tokenResult.getPartition().startsWith(Constants.USER)) {
+        if (tokenResult.getPartition().startsWith(DefaultPartitions.USER_DOCUMENTS)) {
             return getUserTableName(tokenResult.getAccountId());
         }
         return READONLY_TABLE;

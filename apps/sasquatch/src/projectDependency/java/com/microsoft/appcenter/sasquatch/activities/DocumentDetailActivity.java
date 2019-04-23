@@ -20,10 +20,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
-import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -92,7 +92,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mDetailProgress.setVisibility(View.VISIBLE);
         mDocumentPartition = intent.getStringExtra(DOCUMENT_PARTITION);
         mDocumentId = intent.getStringExtra(DOCUMENT_ID);
-        if (mDocumentPartition.equals(Constants.USER)) {
+        if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
             Data.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
         } else {
             Data.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);

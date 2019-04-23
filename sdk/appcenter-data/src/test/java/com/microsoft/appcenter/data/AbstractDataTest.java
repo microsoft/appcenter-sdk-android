@@ -83,7 +83,7 @@ abstract public class AbstractDataTest {
 
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
-    static final String RESOLVED_USER_PARTITION = Constants.USER + "-" + ACCOUNT_ID;
+    static final String RESOLVED_USER_PARTITION = DefaultPartitions.USER_DOCUMENTS + "-" + ACCOUNT_ID;
 
     static final String DOCUMENT_ID = "document-id";
 
@@ -131,7 +131,7 @@ abstract public class AbstractDataTest {
             "}";
 
     final static String TOKEN_EXCHANGE_READONLY_PAYLOAD =
-            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, Constants.READONLY, DATABASE_NAME, COLLECTION_NAME, TOKEN, "");
+            String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, DefaultPartitions.APP_DOCUMENTS, DATABASE_NAME, COLLECTION_NAME, TOKEN, "");
 
     final static String TOKEN_EXCHANGE_USER_PAYLOAD =
             String.format(TOKEN_EXCHANGE_RESPONSE_FORMAT, RESOLVED_USER_PARTITION, DATABASE_NAME, COLLECTION_NAME, TOKEN, String.format(",\"accountId\": \"%s\"\n", ACCOUNT_ID));
