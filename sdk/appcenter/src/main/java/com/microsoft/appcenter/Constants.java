@@ -68,7 +68,7 @@ public class Constants {
     public static String FILES_PATH = null;
 
     /**
-     * Constant used to add NDK auth to native crash logs.
+     * Constant used to add NDK identity to native crash logs.
      */
     public static final String WRAPPER_SDK_NAME_NDK = "appcenter.ndk";
 
