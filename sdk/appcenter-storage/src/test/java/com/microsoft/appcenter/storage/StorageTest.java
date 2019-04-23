@@ -189,7 +189,7 @@ public class StorageTest extends AbstractStorageTest {
         assertEquals(1, docs.getCurrentPage().getItems().size());
         assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
 
-        /* Disable the Storage module */
+        /* Disable the Storage module. */
         Storage.setEnabled(false).get();
 
         /* Make the list call again. */
