@@ -27,7 +27,7 @@ public class DocumentWrapper<T> {
     private String mETag;
 
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
-    private long mTimestamp;
+    private long mLastUpdatedDate;
 
     @SerializedName(value = Constants.DOCUMENT_FIELD_NAME)
     private T mDocument;
@@ -50,7 +50,7 @@ public class DocumentWrapper<T> {
     public DocumentWrapper(T document, String partition, String id, String eTag, long timestamp) {
         this(document, partition, id);
         mETag = eTag;
-        mTimestamp = timestamp;
+        mLastUpdatedDate = timestamp;
         mDocument = document;
     }
 
@@ -112,12 +112,12 @@ public class DocumentWrapper<T> {
     }
 
     /**
-     * Get document generated in UTC unix epoch.
+     * Get last time the document was updated in CosmosDB in UTC unix epoch.
      *
      * @return UTC unix timestamp.
      */
-    public long getTimestamp() {
-        return mTimestamp;
+    public long getLastUpdatedDate() {
+        return mLastUpdatedDate;
     }
 
     /**

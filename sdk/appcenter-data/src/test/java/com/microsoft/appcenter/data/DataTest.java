@@ -386,7 +386,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
         assertNotNull(testCosmosDocument.getETag());
-        assertNotEquals(0L, testCosmosDocument.getTimestamp());
+        assertNotEquals(0L, testCosmosDocument.getLastUpdatedDate());
 
         TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
@@ -537,7 +537,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
         assertNotNull(testCosmosDocument.getETag());
-        assertNotEquals(0L, testCosmosDocument.getTimestamp());
+        assertNotEquals(0L, testCosmosDocument.getLastUpdatedDate());
 
         TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
@@ -723,7 +723,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
         assertNotNull(testCosmosDocument.getETag());
-        assertNotEquals(0L, testCosmosDocument.getTimestamp());
+        assertNotEquals(0L, testCosmosDocument.getLastUpdatedDate());
 
         TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
@@ -1100,7 +1100,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDeserializedValue().test);
         assertEquals(ETAG, d.getETag());
-        assertEquals(1550881731, d.getTimestamp());
+        assertEquals(1550881731, d.getLastUpdatedDate());
     }
 
     @Test
