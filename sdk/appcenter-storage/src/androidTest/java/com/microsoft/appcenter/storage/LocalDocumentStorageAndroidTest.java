@@ -187,8 +187,8 @@ public class LocalDocumentStorageAndroidTest {
         assertNotNull(cachedAppDocument.getDocumentError());
         assertNull(cachedUserDocument.getDocument());
         assertNull(cachedAppDocument.getDocument());
-        assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getDocumentError().getError().getMessage());
-        assertEquals("Document was not found in the cache.", cachedAppDocument.getDocumentError().getError().getMessage());
+        assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getDocumentError().getMessage());
+        assertEquals("Document was not found in the cache.", cachedAppDocument.getDocumentError().getMessage());
     }
 
     @Test

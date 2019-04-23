@@ -6,8 +6,8 @@
 package com.microsoft.appcenter.storage;
 
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.DataStoreEventListener;
-import com.microsoft.appcenter.storage.models.DocumentError;
 import com.microsoft.appcenter.storage.models.DocumentMetadata;
 import com.microsoft.appcenter.storage.models.PendingOperation;
 
@@ -81,7 +81,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_CREATE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(DocumentError.class));
+                isNull(StorageException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -170,7 +170,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
-        ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
+        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
@@ -182,10 +182,10 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        DocumentError documentError = documentErrorArgumentCaptor.getValue();
+        StorageException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
-        assertEquals(cosmosFailureException, documentError.getError().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause());
         verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
 
@@ -245,12 +245,12 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         mStorage.onNetworkStateUpdated(true);
         verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
-        ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
+        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        DocumentError documentError = documentErrorArgumentCaptor.getValue();
+        StorageException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
     }
@@ -280,7 +280,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
         verify(mDataStoreEventListener).onDataStoreOperationResult(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
-                isNull(DocumentError.class));
+                isNull(StorageException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
         verifyNoMoreInteractions(mDataStoreEventListener);
@@ -322,7 +322,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 new ArrayList<PendingOperation>() {{
                     add(pendingOperation);
                 }});
-        ArgumentCaptor<DocumentError> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DocumentError.class);
+        ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
 
         Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
         mStorage.onNetworkStateUpdated(true);
@@ -334,11 +334,11 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 eq(pendingOperation.getOperation()),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
-        DocumentError documentError = documentErrorArgumentCaptor.getValue();
+        StorageException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
         verifyNoMoreInteractions(mDataStoreEventListener);
 
-        assertEquals(cosmosFailureException, documentError.getError().getCause());
+        assertEquals(cosmosFailureException, documentError.getCause());
 
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }

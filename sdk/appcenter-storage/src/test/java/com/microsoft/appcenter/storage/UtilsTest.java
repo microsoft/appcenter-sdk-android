@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.storage;
 
 import com.google.gson.JsonParseException;
-import com.microsoft.appcenter.storage.exception.StorageException;
 import com.microsoft.appcenter.storage.models.Document;
 import com.microsoft.appcenter.storage.models.Page;
 
@@ -111,8 +110,7 @@ public class UtilsTest {
         /* Check parsing error. */
         Document<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNotNull(document.getDocumentError());
-        assertTrue(document.getDocumentError().getError() instanceof StorageException);
-        assertTrue(document.getDocumentError().getError().getCause() instanceof JsonParseException);
+        assertTrue(document.getDocumentError().getCause() instanceof JsonParseException);
         assertNull(document.getDocument());
     }
 

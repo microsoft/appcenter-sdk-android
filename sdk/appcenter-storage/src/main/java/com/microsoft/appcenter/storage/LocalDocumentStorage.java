@@ -158,7 +158,7 @@ class LocalDocumentStorage {
 
     <T> Document<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         Document<T> cachedDocument = read(table, partition, documentId, documentType, null);
-        if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
+        if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
 
@@ -319,7 +319,7 @@ class LocalDocumentStorage {
             }
             Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             if (document.hasFailed()) {
-                Throwable error = document.getDocumentError().getError();
+                Throwable error = document.getDocumentError();
                 AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
                 return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
             }
