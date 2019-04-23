@@ -320,12 +320,12 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    /* TODO remove this method once Identity published to jCenter. */
+                    /* TODO remove this method once Auth published to jCenter. */
                     public void onCallSucceeded(String payload) {
                         onCallSucceeded(payload, null);
                     }
 
-                    /* TODO add @Override once Identity published to jCenter. Remove also suppress warnings. */
+                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
                     @SuppressWarnings("WeakerAccess")
                     public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
@@ -370,12 +370,12 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    /* TODO remove this method once Identity published to jCenter. */
+                    /* TODO remove this method once Auth published to jCenter. */
                     public void onCallSucceeded(String payload) {
                         onCallSucceeded(payload, null);
                     }
 
-                    /* TODO add @Override once Identity published to jCenter. Remove also suppress warnings. */
+                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
                     @SuppressWarnings("WeakerAccess")
                     public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {

@@ -65,8 +65,8 @@
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>
 
-    <string name="identity_key" tools:ignore="MissingTranslation">appcenter_identity</string>
-    <string name="identity_title" tools:ignore="MissingTranslation">Identity</string>
+    <string name="auth_key" tools:ignore="MissingTranslation">appcenter_auth</string>
+    <string name="identity_title" tools:ignore="MissingTranslation">Auth</string>
 
     <string name="storage_key" tools:ignore="MissingTranslation">appcenter_storage</string>
     <string name="storage_title" tools:ignore="MissingTranslation">Storage</string>
@@ -80,10 +80,10 @@
     <string name="appcenter_push_state_summary_enabled" tools:ignore="MissingTranslation">Push is enabled</string>
     <string name="appcenter_push_state_summary_disabled" tools:ignore="MissingTranslation">Push is disabled</string>
 
-    <string name="appcenter_identity_state_key" tools:ignore="MissingTranslation">appcenter_identity_state_key</string>
-    <string name="appcenter_identity_state_title" tools:ignore="MissingTranslation">Identity state</string>
-    <string name="appcenter_identity_state_summary_enabled" tools:ignore="MissingTranslation">Identity is enabled</string>
-    <string name="appcenter_identity_state_summary_disabled" tools:ignore="MissingTranslation">Identity is disabled</string>
+    <string name="appcenter_auth_state_key" tools:ignore="MissingTranslation">appcenter_auth_state_key</string>
+    <string name="appcenter_identity_state_title" tools:ignore="MissingTranslation">Auth state</string>
+    <string name="appcenter_auth_state_summary_enabled" tools:ignore="MissingTranslation">Auth is enabled</string>
+    <string name="appcenter_auth_state_summary_disabled" tools:ignore="MissingTranslation">Auth is disabled</string>
 
     <string name="appcenter_storage_state_key" tools:ignore="MissingTranslation">appcenter_storage_state_key</string>
     <string name="appcenter_storage_state_title" tools:ignore="MissingTranslation">Storage state</string>

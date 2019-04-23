@@ -260,28 +260,28 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            /* Identity. */
+            /* Auth. */
             /*
              * TODO: change to real implementation when released.
              *
-             * initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+             * initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
              *
              *  @Override
              *  public void setEnabled(boolean enabled) {
-             *      Identity.setEnabled(enabled);
+             *      Auth.setEnabled(enabled);
              *  }
              *
              *  @Override
              *  public boolean isEnabled() {
-             *      return Identity.isEnabled().get();
+             *      return Auth.isEnabled().get();
              *  }
              * });
              */
             try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.auth.Identity");
-                final Method isEnabled = identity.getMethod("isEnabled");
-                final Method setEnabled = identity.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> auth = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.auth.Auth");
+                final Method isEnabled = auth.getMethod("isEnabled");
+                final Method setEnabled = auth.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
 
                     @Override
                     @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
@@ -305,7 +305,7 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                 });
             } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.identity_key)));
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.auth_key)));
             }
 
             /* Storage. */

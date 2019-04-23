@@ -72,11 +72,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="@string/identity_key"
+        android:key="@string/auth_key"
         android:title="@string/identity_title">
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_identity_state_key"
+            android:key="@string/appcenter_auth_state_key"
             android:title="@string/appcenter_identity_state_title" />
     </PreferenceCategory>
 
