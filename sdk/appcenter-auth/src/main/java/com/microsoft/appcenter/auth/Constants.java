@@ -35,7 +35,7 @@ final class Constants {
     /**
      * Config url format. Variables are base url then appSecret.
      */
-    static final String CONFIG_URL_FORMAT = "%s/identity/%s.json";
+    static final String CONFIG_URL_FORMAT = "%s/auth/%s.json";
 
     /**
      * File path to store cached configuration in application files.
