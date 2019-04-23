@@ -74,7 +74,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private String mAppSecret;
 
     /**
-     * Current API base URL.
+      * Current token exchange base URL.
      */
     private String mTokenExchangeUrl = DEFAULT_API_URL;
 
