@@ -26,9 +26,9 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.activities.storage.AppDocumentListAdapter;
-import com.microsoft.appcenter.sasquatch.activities.storage.CustomItemAdapter;
-import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
+import com.microsoft.appcenter.sasquatch.activities.data.AppDocumentListAdapter;
+import com.microsoft.appcenter.sasquatch.activities.data.CustomItemAdapter;
+import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
 import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.data.models.Page;

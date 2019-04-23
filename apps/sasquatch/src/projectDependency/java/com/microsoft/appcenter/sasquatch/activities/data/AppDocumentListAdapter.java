@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.sasquatch.activities.storage;
+package com.microsoft.appcenter.sasquatch.activities.data;
 
 import android.content.Context;
 import android.support.annotation.NonNull;

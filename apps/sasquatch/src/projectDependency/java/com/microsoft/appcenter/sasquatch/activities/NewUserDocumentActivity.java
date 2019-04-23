@@ -63,8 +63,8 @@ public class NewUserDocumentActivity extends AppCompatActivity {
     }
 
     private void updateWriteOptions(int position) {
-        StorageTtl storageTtl = StorageTtl.values()[position];
-        switch (storageTtl) {
+        DocumentDeviceTtl documentDeviceTtl = DocumentDeviceTtl.values()[position];
+        switch (documentDeviceTtl) {
             case DEFAULT:
                 mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
                 break;
@@ -125,7 +125,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         });
     }
 
-    private enum StorageTtl {
+    private enum DocumentDeviceTtl {
         DEFAULT,
         NO_CACHE,
         TWO_SECONDS,
