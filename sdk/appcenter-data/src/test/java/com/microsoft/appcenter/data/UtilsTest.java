@@ -91,8 +91,8 @@ public class UtilsTest {
         /* Check we can parse back. */
         DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNull(document.getDocumentError());
-        assertNotNull(document.getDocument());
-        assertEquals(dateDocument.date, document.getDocument().date);
+        assertNotNull(document.getDeserializedValue());
+        assertEquals(dateDocument.date, document.getDeserializedValue().date);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class UtilsTest {
         DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getCause() instanceof JsonParseException);
-        assertNull(document.getDocument());
+        assertNull(document.getDeserializedValue());
     }
 
     private class DateDocument {

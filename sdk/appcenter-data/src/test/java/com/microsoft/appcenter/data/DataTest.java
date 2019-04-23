@@ -186,7 +186,7 @@ public class DataTest extends AbstractDataTest {
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
         assertEquals(1, docs.getCurrentPage().getItems().size());
-        assertEquals(docs.getCurrentPage().getItems().get(0).getDocument().test, documents.get(0).getDocument().test);
+        assertEquals(docs.getCurrentPage().getItems().get(0).getDeserializedValue().test, documents.get(0).getDeserializedValue().test);
 
         /* Disable the Data module. */
         Data.setEnabled(false).get();
@@ -388,7 +388,7 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
-        TestDocument testDocument = testCosmosDocument.getDocument();
+        TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
@@ -539,7 +539,7 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
-        TestDocument testDocument = testCosmosDocument.getDocument();
+        TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
@@ -555,7 +555,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -618,7 +618,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -638,7 +638,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -693,8 +693,8 @@ public class DataTest extends AbstractDataTest {
         });
         DocumentWrapper<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
         verify(mHttpClient);
-        assertNotNull(document.getDocument());
-        assertEquals(expectedDocument.getDocument(), document.getDocument());
+        assertNotNull(document.getDeserializedValue());
+        assertEquals(expectedDocument.getDeserializedValue(), document.getDeserializedValue());
     }
 
     @Test
@@ -705,7 +705,7 @@ public class DataTest extends AbstractDataTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(createdDocument);
         DocumentWrapper<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
-        assertEquals(createdDocument.getDocument(), document.getDocument());
+        assertEquals(createdDocument.getDeserializedValue(), document.getDeserializedValue());
     }
 
     @Test
@@ -725,7 +725,7 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(testCosmosDocument.getETag());
         assertNotEquals(0L, testCosmosDocument.getTimestamp());
 
-        TestDocument testDocument = testCosmosDocument.getDocument();
+        TestDocument testDocument = testCosmosDocument.getDeserializedValue();
         assertNotNull(testDocument);
         assertEquals(TEST_FIELD_VALUE, testDocument.test);
     }
@@ -957,7 +957,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -976,7 +976,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -1007,7 +1007,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -1026,7 +1026,7 @@ public class DataTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(doc);
         assertNotNull(doc.get());
-        assertNull(doc.get().getDocument());
+        assertNull(doc.get().getDeserializedValue());
         assertNotNull(doc.get().getDocumentError());
         assertThat(
                 doc.get().getDocumentError().getMessage(),
@@ -1098,7 +1098,7 @@ public class DataTest extends AbstractDataTest {
                 Utils.parseDocument(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, TestDocument.class);
         assertEquals(DOCUMENT_ID, d.getId());
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
-        assertEquals(TEST_FIELD_VALUE, d.getDocument().test);
+        assertEquals(TEST_FIELD_VALUE, d.getDeserializedValue().test);
         assertEquals(ETAG, d.getETag());
         assertEquals(1550881731, d.getTimestamp());
     }
@@ -1457,7 +1457,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Then the call fails. */
         future.get();
-        assertNull(future.get().getDocument());
+        assertNull(future.get().getDeserializedValue());
         assertNotNull(future.get().getDocumentError());
         assertTrue(future.get().getDocumentError().getCause() instanceof StorageException);
         assertTrue(future.get().getDocumentError().getCause().getCause() instanceof JsonSyntaxException);

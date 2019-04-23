@@ -152,7 +152,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         }
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(document.getTimestamp(), TimeUnit.SECONDS)).toString()));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
-        Object doc = document.getDocument();
+        Object doc = document.getDeserializedValue();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
         try {
             JSONObject docContentsJSON = new JSONObject(docContents);

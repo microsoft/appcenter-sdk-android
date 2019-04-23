@@ -138,7 +138,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
         assertNotNull(doc);
-        assertNull(doc.getDocument());
+        assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
         assertEquals(StorageException.class, doc.getDocumentError().getClass());
         verify(mCursor).close();
@@ -149,7 +149,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
         DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
         assertNotNull(doc);
-        assertNull(doc.getDocument());
+        assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
         assertEquals(StorageException.class, doc.getDocumentError().getClass());
         assertThat(doc.getDocumentError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
@@ -168,7 +168,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
         DocumentWrapper<String> doc = mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
-        assertNull(doc.getDocument());
+        assertNull(doc.getDeserializedValue());
         assertTrue(doc.hasFailed());
         assertEquals(StorageException.class, doc.getDocumentError().getClass());
         assertThat(doc.getDocumentError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));

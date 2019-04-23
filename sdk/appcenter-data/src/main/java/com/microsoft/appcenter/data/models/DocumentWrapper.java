@@ -67,11 +67,11 @@ public class DocumentWrapper<T> {
     }
 
     /**
-     * Get document.
+     * Get the deserialized document value.
      *
      * @return Deserialized document.
      */
-    public T getDocument() {
+    public T getDeserializedValue() {
         return mDocument;
     }
 
