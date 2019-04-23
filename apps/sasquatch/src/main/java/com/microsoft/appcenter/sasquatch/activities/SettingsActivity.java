@@ -278,7 +278,7 @@ public class SettingsActivity extends AppCompatActivity {
              * });
              */
             try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.identity.Identity");
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.auth.Identity");
                 final Method isEnabled = identity.getMethod("isEnabled");
                 final Method setEnabled = identity.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {

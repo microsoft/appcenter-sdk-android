@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import android.accounts.NetworkErrorException;
 import android.annotation.SuppressLint;
@@ -54,21 +54,21 @@ import java.util.concurrent.CancellationException;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITIES;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_DEFAULT;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_TYPE_B2C;
-import static com.microsoft.appcenter.identity.Constants.AUTHORITY_URL;
-import static com.microsoft.appcenter.identity.Constants.CONFIG_URL_FORMAT;
-import static com.microsoft.appcenter.identity.Constants.DEFAULT_CONFIG_URL;
-import static com.microsoft.appcenter.identity.Constants.FILE_PATH;
-import static com.microsoft.appcenter.identity.Constants.HEADER_E_TAG;
-import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
-import static com.microsoft.appcenter.identity.Constants.IDENTITY_GROUP;
-import static com.microsoft.appcenter.identity.Constants.IDENTITY_SCOPE;
-import static com.microsoft.appcenter.identity.Constants.LOG_TAG;
-import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
-import static com.microsoft.appcenter.identity.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITIES;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_DEFAULT;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
+import static com.microsoft.appcenter.auth.Constants.CONFIG_URL_FORMAT;
+import static com.microsoft.appcenter.auth.Constants.DEFAULT_CONFIG_URL;
+import static com.microsoft.appcenter.auth.Constants.FILE_PATH;
+import static com.microsoft.appcenter.auth.Constants.HEADER_E_TAG;
+import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
+import static com.microsoft.appcenter.auth.Constants.IDENTITY_GROUP;
+import static com.microsoft.appcenter.auth.Constants.IDENTITY_SCOPE;
+import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
+import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
+import static com.microsoft.appcenter.auth.Constants.SERVICE_NAME;
 
 /**
  * Identity service.
@@ -386,7 +386,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     private synchronized void processDownloadedConfig(String payload, String eTag) {
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
-        AppCenterLog.info(LOG_TAG, "Configure identity from downloaded configuration.");
+        AppCenterLog.info(LOG_TAG, "Configure auth from downloaded configuration.");
         initAuthenticationClient(payload);
     }
 
@@ -400,14 +400,14 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
     private void loadConfigurationFromCache() {
         File configFile = getConfigFile();
         if (configFile.exists()) {
-            AppCenterLog.info(LOG_TAG, "Configure identity from cached configuration.");
+            AppCenterLog.info(LOG_TAG, "Configure auth from cached configuration.");
             initAuthenticationClient(FileManager.read(configFile));
         }
     }
 
     private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
-        AppCenterLog.error(LOG_TAG, "Cannot load identity configuration from the server.", e);
+        AppCenterLog.error(LOG_TAG, "Cannot load auth configuration from the server.", e);
     }
 
     @WorkerThread
@@ -456,7 +456,7 @@ public class Identity extends AbstractAppCenterService implements NetworkStateHe
             SharedPreferencesManager.putString(PREFERENCE_E_TAG_KEY, eTag);
             AppCenterLog.debug(LOG_TAG, "Identity configuration saved in cache.");
         } catch (IOException e) {
-            AppCenterLog.warn(LOG_TAG, "Failed to cache identity configuration.", e);
+            AppCenterLog.warn(LOG_TAG, "Failed to cache auth configuration.", e);
         }
     }
 

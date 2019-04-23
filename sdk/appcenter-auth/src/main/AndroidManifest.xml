@@ -3,4 +3,4 @@
   ~ Licensed under the MIT License.
   -->
 
-<manifest package="com.microsoft.appcenter.identity" />
+<manifest package="com.microsoft.appcenter.auth" />

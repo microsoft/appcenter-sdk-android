@@ -4,7 +4,7 @@
 }
 
 # TODO: Below config is temporary. Please remove this once we have binaries ready in jcenter.
--keep public class com.microsoft.appcenter.identity.Identity {
+-keep public class com.microsoft.appcenter.auth.Identity {
    *;
 }
 

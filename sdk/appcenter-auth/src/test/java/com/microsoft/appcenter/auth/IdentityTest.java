@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import android.accounts.NetworkErrorException;
 import android.app.Activity;
@@ -55,8 +55,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
-import static com.microsoft.appcenter.identity.Constants.HEADER_IF_NONE_MATCH;
-import static com.microsoft.appcenter.identity.Constants.PREFERENCE_E_TAG_KEY;
+import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
+import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -154,7 +154,7 @@ public class IdentityTest extends AbstractIdentityTest {
     @Test
     public void downloadFullInvalidConfiguration() throws Exception {
 
-        /* Start identity service. */
+        /* Start auth service. */
         start(Identity.getInstance());
 
         /* When we get an invalid payload. */
@@ -171,7 +171,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
     private void testInvalidConfig(JSONObject jsonConfig) throws Exception {
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -250,7 +250,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -278,7 +278,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -343,7 +343,7 @@ public class IdentityTest extends AbstractIdentityTest {
             }
         }).when(publicClientApplication).acquireToken(any(Activity.class), notNull(String[].class), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -389,7 +389,7 @@ public class IdentityTest extends AbstractIdentityTest {
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -439,7 +439,7 @@ public class IdentityTest extends AbstractIdentityTest {
             }
         }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -479,7 +479,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Disable Identity. */
         Identity.setEnabled(false).get();
 
-        /* Sign in with identity disabled. */
+        /* Sign in with auth disabled. */
         future = Identity.signIn();
 
         /* Verify operation failed after disabling. */
@@ -529,7 +529,7 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -587,7 +587,7 @@ public class IdentityTest extends AbstractIdentityTest {
             }
         }).when(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -647,7 +647,7 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -715,7 +715,7 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -784,7 +784,7 @@ public class IdentityTest extends AbstractIdentityTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -808,7 +808,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
     private void testDownloadFailed(Exception e) {
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -855,7 +855,7 @@ public class IdentityTest extends AbstractIdentityTest {
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
 
-        /* Mock no network and identity. */
+        /* Mock no network and auth. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -890,7 +890,7 @@ public class IdentityTest extends AbstractIdentityTest {
         String config = jsonConfig.toString();
         when(FileManager.read(file)).thenReturn(config);
 
-        /* Mock identity. */
+        /* Mock auth. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Identity identity = Identity.getInstance();
@@ -963,7 +963,7 @@ public class IdentityTest extends AbstractIdentityTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -1264,7 +1264,7 @@ public class IdentityTest extends AbstractIdentityTest {
         /* Mock authentication result. */
         String mockAccessToken = UUIDUtils.randomUUID().toString();
 
-        /* Mock no network and identity. */
+        /* Mock no network and auth. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
@@ -1342,7 +1342,7 @@ public class IdentityTest extends AbstractIdentityTest {
         ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
         doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
 
-        /* Mock no network and identity. */
+        /* Mock no network and auth. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
@@ -1748,7 +1748,7 @@ public class IdentityTest extends AbstractIdentityTest {
 
     private void mockReadyToSignIn() throws Exception {
 
-        /* Start identity service. */
+        /* Start auth service. */
         Identity identity = Identity.getInstance();
         start(identity);
 
@@ -1766,7 +1766,7 @@ public class IdentityTest extends AbstractIdentityTest {
         String configUrl = "https://config.contoso.com";
         Identity.setConfigUrl(configUrl);
 
-        /* Start identity service. */
+        /* Start auth service. */
         start(Identity.getInstance());
 
         /* Check call. */

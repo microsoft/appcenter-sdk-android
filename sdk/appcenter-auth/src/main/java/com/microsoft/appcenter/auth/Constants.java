@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.identity;
+package com.microsoft.appcenter.auth;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -23,7 +23,7 @@ final class Constants {
     static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
-     * Constant marking event of the identity group.
+     * Constant marking event of the auth group.
      */
     static final String IDENTITY_GROUP = "group_identity";
 
