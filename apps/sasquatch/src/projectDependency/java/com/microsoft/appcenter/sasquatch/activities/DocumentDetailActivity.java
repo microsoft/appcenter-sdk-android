@@ -19,10 +19,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
 import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.Storage;
 import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -93,9 +93,9 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mDocumentPartition = intent.getStringExtra(DOCUMENT_PARTITION);
         mDocumentId = intent.getStringExtra(DOCUMENT_ID);
         if (mDocumentPartition.equals(Constants.USER)) {
-            Storage.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
+            Data.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
         } else {
-            Storage.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);
+            Data.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);
         }
     }
 

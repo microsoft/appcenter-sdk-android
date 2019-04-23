@@ -58,15 +58,15 @@ import static com.microsoft.appcenter.data.Constants.STORAGE_GROUP;
 import static com.microsoft.appcenter.data.Constants.USER;
 
 /**
- * Storage service.
+ * Data service.
  */
-public class Storage extends AbstractAppCenterService implements NetworkStateHelper.Listener {
+public class Data extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
-    private static Storage sInstance;
+    private static Data sInstance;
 
     /**
      * Application secret.
@@ -106,9 +106,9 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
      * @return shared instance.
      */
     @SuppressWarnings("WeakerAccess")
-    public static synchronized Storage getInstance() {
+    public static synchronized Data getInstance() {
         if (sInstance == null) {
-            sInstance = new Storage();
+            sInstance = new Data();
         }
         return sInstance;
     }
@@ -130,7 +130,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     /**
-     * Check whether Storage service is enabled or not.
+     * Check whether Data service is enabled or not.
      *
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
@@ -141,7 +141,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
     }
 
     /**
-     * Enable or disable Storage service.
+     * Enable or disable Data service.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
@@ -399,7 +399,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                                     @Override
                                     public void completeFuture(Exception e) {
-                                        Storage.this.completeFuture(e, result);
+                                        Data.this.completeFuture(e, result);
                                     }
                                 });
                     } else {
@@ -712,7 +712,7 @@ public class Storage extends AbstractAppCenterService implements NetworkStateHel
 
                                 @Override
                                 public void completeFuture(Exception e) {
-                                    Storage.this.completeFuture(e, result);
+                                    Data.this.completeFuture(e, result);
                                 }
                             });
                 } else {

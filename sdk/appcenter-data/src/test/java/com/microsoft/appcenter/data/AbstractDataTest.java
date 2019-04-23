@@ -61,7 +61,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
-        Storage.class,
+        Data.class,
         SystemClock.class,
         SharedPreferencesManager.class,
         FileManager.class,
@@ -76,7 +76,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         Utils.class,
         AuthTokenContext.class
 })
-abstract public class AbstractStorageTest {
+abstract public class AbstractDataTest {
 
     static final String DATABASE_NAME = "mbaas";
 
@@ -111,9 +111,9 @@ abstract public class AbstractStorageTest {
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
 
-    static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractStorageTest.ACCOUNT_ID);
+    static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractDataTest.ACCOUNT_ID);
 
-    static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Storage.getInstance().getServiceName();
+    static final String STORAGE_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Data.getInstance().getServiceName();
 
     static final String TOKEN = "ha-ha-ha-ha";
 
@@ -148,7 +148,7 @@ abstract public class AbstractStorageTest {
 
     Channel mChannel;
 
-    Storage mStorage;
+    Data mData;
 
     @Mock
     private AppCenterFuture<Boolean> mCoreEnabledFuture;
@@ -164,7 +164,7 @@ abstract public class AbstractStorageTest {
 
     @Before
     public void setUp() throws Exception {
-        Storage.unsetInstance();
+        Data.unsetInstance();
         mockStatic(SystemClock.class);
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
@@ -214,12 +214,12 @@ abstract public class AbstractStorageTest {
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         whenNew(LocalDocumentStorage.class).withAnyArguments().thenReturn(mLocalDocumentStorage);
-        mStorage = Storage.getInstance();
-        mChannel = start(mStorage);
-        Storage.setApiUrl("default");
+        mData = Data.getInstance();
+        mChannel = start(mData);
+        Data.setApiUrl("default");
 
         /* Wait until the module has finished enabling so pending operations have already been processed. */
-        Storage.setEnabled(true).get();
+        Data.setEnabled(true).get();
 
         /* Verify this here so it is ignored in "verify no more interactions." */
         verify(mLocalDocumentStorage).getPendingOperations(anyString());
@@ -254,14 +254,14 @@ abstract public class AbstractStorageTest {
         /* Mock auth context. */
         mockStatic(AuthTokenContext.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
-        when(mAuthTokenContext.getAccountId()).thenReturn(AbstractStorageTest.ACCOUNT_ID);
+        when(mAuthTokenContext.getAccountId()).thenReturn(AbstractDataTest.ACCOUNT_ID);
     }
 
     @NonNull
-    Channel start(Storage storage) {
+    Channel start(Data data) {
         Channel channel = mock(Channel.class);
-        storage.onStarting(mAppCenterHandler);
-        storage.onStarted(mock(Context.class), channel, "", null, true);
+        data.onStarting(mAppCenterHandler);
+        data.onStarted(mock(Context.class), channel, "", null, true);
         return channel;
     }
 

@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
-public class NetworkStateChangeStorageTest extends AbstractStorageTest {
+public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     @Before
     public void setUpAuth() {
@@ -73,8 +73,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.onNetworkStateUpdated(true);
+        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        mData.onNetworkStateUpdated(true);
 
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
@@ -129,7 +129,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                     add(pendingOperation);
                 }});
 
-        mStorage.onNetworkStateUpdated(true);
+        mData.onNetworkStateUpdated(true);
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
@@ -172,8 +172,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 }});
         ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
 
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.onNetworkStateUpdated(true);
+        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(500, "You failed!");
         verifyTokenExchangeToCosmosDbFlow(documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
@@ -203,14 +203,14 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                             CURRENT_TIMESTAMP,
                             CURRENT_TIMESTAMP));
                 }});
-        mStorage.onNetworkStateUpdated(true);
+        mData.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mDataStoreEventListener);
     }
 
     @Test
     public void networkGoesOfflineDoesNothing() {
-        mStorage.onNetworkStateUpdated(false);
+        mData.onNetworkStateUpdated(false);
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mLocalDocumentStorage);
         verifyZeroInteractions(mDataStoreEventListener);
@@ -241,8 +241,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                     add(pendingOperation);
                 }});
 
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.onNetworkStateUpdated(true);
+        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        mData.onNetworkStateUpdated(true);
         verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
         ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
@@ -272,8 +272,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.onNetworkStateUpdated(true);
+        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        mData.onNetworkStateUpdated(true);
 
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
 
@@ -324,8 +324,8 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                 }});
         ArgumentCaptor<StorageException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(StorageException.class);
 
-        Storage.setDataStoreRemoteOperationListener(mDataStoreEventListener);
-        mStorage.onNetworkStateUpdated(true);
+        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
@@ -359,7 +359,7 @@ public class NetworkStateChangeStorageTest extends AbstractStorageTest {
                     add(pendingOperation);
                 }});
 
-        mStorage.onNetworkStateUpdated(true);
+        mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);

@@ -30,7 +30,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest(TokenManager.class)
-public class AuthTokenTests extends AbstractStorageTest {
+public class AuthTokenTests extends AbstractDataTest {
 
     @Test
     public void tokenClearedOnSignOut() {
@@ -42,7 +42,7 @@ public class AuthTokenTests extends AbstractStorageTest {
         }
         partitionNames.add(Constants.READONLY);
         when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(partitionNames);
-        Storage.setEnabled(true);
+        Data.setEnabled(true);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
 
         /* Verify. */
@@ -56,7 +56,7 @@ public class AuthTokenTests extends AbstractStorageTest {
 
     @Test
     public void authTokenListenerNotCalledWhenDisabled() {
-        Storage.setEnabled(false);
+        Data.setEnabled(false);
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName[0-9]"));

@@ -8,7 +8,7 @@ package com.microsoft.appcenter.data;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 /**
- * Constants for Storage module.
+ * Constants for Data module.
  */
 public final class Constants {
 
@@ -51,7 +51,7 @@ public final class Constants {
     /**
      * Name of the service.
      */
-    static final String SERVICE_NAME = "Storage";
+    static final String SERVICE_NAME = "Data";
 
     /**
      * Base key for stored preferences.
@@ -69,7 +69,7 @@ public final class Constants {
     static final String PREFERENCE_PARTITION_PREFIX = PREFERENCE_PREFIX + "partition.";
 
     /**
-     * TAG used in logging for Storage.
+     * TAG used in logging for Data.
      */
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 

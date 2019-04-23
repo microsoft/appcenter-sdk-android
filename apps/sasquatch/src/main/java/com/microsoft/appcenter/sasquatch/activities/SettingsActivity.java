@@ -308,7 +308,7 @@ public class SettingsActivity extends AppCompatActivity {
                 getPreferenceScreen().removePreference(findPreference(getString(R.string.auth_key)));
             }
 
-            /* Storage. */
+            /* Data. */
             /*
              * TODO: change to real implementation when released.
              *
@@ -316,17 +316,17 @@ public class SettingsActivity extends AppCompatActivity {
              *
              *  @Override
              *  public void setEnabled(boolean enabled) {
-             *      Storage.setEnabled(enabled);
+             *      Data.setEnabled(enabled);
              *  }
              *
              *  @Override
              *  public boolean isEnabled() {
-             *      return Storage.isEnabled().get();
+             *      return Data.isEnabled().get();
              *  }
              * });
              */
             try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.data.Storage");
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.data.Data");
                 final Method isEnabled = storage.getMethod("isEnabled");
                 final Method setEnabled = storage.getMethod("setEnabled", boolean.class);
                 initCheckBoxSetting(R.string.appcenter_storage_state_key, R.string.appcenter_storage_state_summary_enabled, R.string.appcenter_storage_state_summary_disabled, new HasEnabled() {

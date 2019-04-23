@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-public class TokenTest extends AbstractStorageTest {
+public class TokenTest extends AbstractDataTest {
 
     private static final TokenExchange.TokenExchangeServiceCallback sTokenExchangeServiceCallback =
             new TokenExchange.TokenExchangeServiceCallback(TokenManager.getInstance(PowerMockito.mock(Context.class))) {
@@ -163,7 +163,7 @@ public class TokenTest extends AbstractStorageTest {
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
         /* Make the call. */
-        Storage.getInstance().getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), callBack);
+        Data.getInstance().getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
         assertEquals(TOKEN, tokenResultCapture.getValue().getToken());
@@ -188,7 +188,7 @@ public class TokenTest extends AbstractStorageTest {
         doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
 
         /* Make the call. */
-        Storage.getInstance()
+        Data.getInstance()
                 .getTokenAndCallCosmosDbApi(READONLY, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */

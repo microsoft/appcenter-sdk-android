@@ -24,12 +24,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.storage.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.storage.CustomItemAdapter;
 import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
 import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.Storage;
 import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
@@ -184,7 +184,7 @@ public class StorageActivity extends AppCompatActivity {
         });
         showProgress();
         mAppDocumentsLoading = true;
-        Storage.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
+        Data.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<Document<Map>>(), this);
@@ -200,7 +200,7 @@ public class StorageActivity extends AppCompatActivity {
 
             @Override
             public void onRemoveClick(final int position) {
-                Storage.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
+                Data.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
 
                     @Override
                     public void accept(Document<Void> voidDocument) {
@@ -240,7 +240,7 @@ public class StorageActivity extends AppCompatActivity {
         if (accountId != null) {
             mUserDocumentsLoading = true;
             showProgress();
-            Storage.list(Constants.USER, Map.class).thenAccept(mUploadUser);
+            Data.list(Constants.USER, Map.class).thenAccept(mUploadUser);
         }
     }
 

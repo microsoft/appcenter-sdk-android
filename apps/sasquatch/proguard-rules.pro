@@ -8,6 +8,6 @@
    *;
 }
 
--keep public class com.microsoft.appcenter.data.Storage {
+-keep public class com.microsoft.appcenter.data.Data {
    *;
 }
