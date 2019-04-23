@@ -40,7 +40,7 @@ final class Constants {
     /**
      * File path to store cached configuration in application files.
      */
-    static final String FILE_PATH = "appcenter/identity/config.json";
+    static final String FILE_PATH = "appcenter/auth/config.json";
 
     /**
      * ETag preference storage key.
