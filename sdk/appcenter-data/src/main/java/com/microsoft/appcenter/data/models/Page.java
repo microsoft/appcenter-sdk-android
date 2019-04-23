@@ -17,7 +17,7 @@ public class Page<T> {
      * Documents in the page.
      */
     @SerializedName(value = Constants.DOCUMENTS_FIELD_NAME)
-    private List<Document<T>> mItems;
+    private List<DocumentWrapper<T>> mItems;
 
     /**
      * Document error.
@@ -40,11 +40,11 @@ public class Page<T> {
      *
      * @return Documents in current page.
      */
-    public List<Document<T>> getItems() {
+    public List<DocumentWrapper<T>> getItems() {
         return mItems;
     }
 
-    public Page<T> setItems(List<Document<T>> items) {
+    public Page<T> setItems(List<DocumentWrapper<T>> items) {
         mItems = items;
         return this;
     }

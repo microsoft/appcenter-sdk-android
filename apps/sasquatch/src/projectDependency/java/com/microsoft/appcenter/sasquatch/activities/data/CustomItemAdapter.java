@@ -14,21 +14,21 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.data.models.Document;
 
 import java.util.ArrayList;
 import java.util.Map;
 
 public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.CustomItemAdapterHolder> {
 
-    private ArrayList<Document<Map>> mList;
+    private ArrayList<DocumentWrapper<Map>> mList;
 
     private Context mContext;
 
     private CustomItemAdapter.OnItemClickListener mListener;
 
-    public CustomItemAdapter(ArrayList<Document<Map>> list, Context context) {
+    public CustomItemAdapter(ArrayList<DocumentWrapper<Map>> list, Context context) {
         mList = new ArrayList<>(list);
         mContext = context;
     }
@@ -76,7 +76,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.size();
     }
 
-    public void setList(ArrayList<Document<Map>> list) {
+    public void setList(ArrayList<DocumentWrapper<Map>> list) {
         mList = list;
     }
 

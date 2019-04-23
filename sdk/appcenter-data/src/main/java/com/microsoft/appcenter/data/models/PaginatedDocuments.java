@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
 
-public class PaginatedDocuments<T> implements Iterable<Document<T>> {
+public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
 
     private transient Page<T> mCurrentPage;
 
@@ -145,8 +145,8 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
 
     @NonNull
     @Override
-    public Iterator<Document<T>> iterator() {
-        return new Iterator<Document<T>>() {
+    public Iterator<DocumentWrapper<T>> iterator() {
+        return new Iterator<DocumentWrapper<T>>() {
 
             private int mCurrentIndex = 0;
 
@@ -156,9 +156,9 @@ public class PaginatedDocuments<T> implements Iterable<Document<T>> {
             }
 
             @Override
-            public Document<T> next() {
+            public DocumentWrapper<T> next() {
                 if (!hasNext()) {
-                    return new Document<>(new NoSuchElementException());
+                    return new DocumentWrapper<>(new NoSuchElementException());
                 } else if (mCurrentIndex >= getCurrentPage().getItems().size()) {
                     mCurrentPage = getNextPage().get();
                     mCurrentIndex = 0;

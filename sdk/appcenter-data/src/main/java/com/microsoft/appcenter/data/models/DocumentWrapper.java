@@ -15,7 +15,7 @@ import com.microsoft.appcenter.data.exception.StorageException;
 /**
  * A document coming back from CosmosDB.
  */
-public class Document<T> {
+public class DocumentWrapper<T> {
 
     @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
     private String mPartition;
@@ -38,31 +38,31 @@ public class Document<T> {
 
     private transient String mPendingOperation;
 
-    public Document() {
+    public DocumentWrapper() {
     }
 
-    public Document(T document, String partition, String id) {
+    public DocumentWrapper(T document, String partition, String id) {
         mPartition = partition;
         mId = id;
         mDocument = document;
     }
 
-    public Document(T document, String partition, String id, String eTag, long timestamp) {
+    public DocumentWrapper(T document, String partition, String id, String eTag, long timestamp) {
         this(document, partition, id);
         mETag = eTag;
         mTimestamp = timestamp;
         mDocument = document;
     }
 
-    public Document(Throwable exception) {
+    public DocumentWrapper(Throwable exception) {
         mDocumentError = new StorageException(exception);
     }
 
-    public Document(String message, Throwable exception) {
+    public DocumentWrapper(String message, Throwable exception) {
         mDocumentError = new StorageException(message, exception);
     }
 
-    public Document(StorageException exception) {
+    public DocumentWrapper(StorageException exception) {
         mDocumentError = exception;
     }
 

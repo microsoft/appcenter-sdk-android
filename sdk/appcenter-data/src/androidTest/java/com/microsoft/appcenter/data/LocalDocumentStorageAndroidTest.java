@@ -9,7 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
@@ -76,17 +76,17 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void writeReadFail() {
-        Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
         assertFalse(document.hasFailed());
 
         /* Pass incorrect class type to create a deserialization error.  */
-        Document<Integer> failedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, Integer.class, new ReadOptions());
+        DocumentWrapper<Integer> failedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, Integer.class, new ReadOptions());
         assertNotNull(failedDocument);
         assertTrue(failedDocument.hasFailed());
 
         /* Confirm document can still be correctly retrieved from the cache. */
-        Document<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertFalse(cachedDocument.hasFailed());
         assertEquals(document.getDocument(), cachedDocument.getDocument());
@@ -94,16 +94,16 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void writeReadDelete() {
-        Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
-        Document<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> cachedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(cachedDocument);
         assertEquals(document.getDocument(), cachedDocument.getDocument());
         assertFalse(document.hasFailed());
         assertFalse(document.isFromCache());
         assertTrue(cachedDocument.isFromCache());
         mLocalDocumentStorage.deleteOnline(USER_TABLE_NAME, Constants.READONLY, ID);
-        Document<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getDocumentError());
@@ -113,7 +113,7 @@ public class LocalDocumentStorageAndroidTest {
     public void readExpiredDocument() {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */
-        Document<String> document = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions() {
 
             @Override
@@ -123,7 +123,7 @@ public class LocalDocumentStorageAndroidTest {
         });
 
         /* Read with a TTL of 1 second: already expired. */
-        Document<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions(1));
+        DocumentWrapper<String> deletedDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions(1));
         assertNotNull(deletedDocument);
         assertNull(deletedDocument.getDocument());
         assertNotNull(deletedDocument.getDocumentError());
@@ -131,7 +131,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void resetPendingOperationColumnToNull() {
-        Document<String> document = new Document<>(TEST_VALUE, USER, ID);
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, USER, ID);
         mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, document, new WriteOptions(10));
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
@@ -150,7 +150,7 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void createDocument() {
         mLocalDocumentStorage.createOrUpdateOffline(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, "Test", String.class, new WriteOptions());
-        Document<String> createdDocument = mLocalDocumentStorage.read(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test", createdDocument.getDocument());
     }
@@ -160,12 +160,12 @@ public class LocalDocumentStorageAndroidTest {
 
         /* Create a user table and app table (readonly), and add a document to each. */
         mLocalDocumentStorage.createTableIfDoesNotExist(USER_TABLE_NAME);
-        Document<String> userDocument = new Document<>(TEST_VALUE, USER, ID);
-        Document<String> appDocument = new Document<>(TEST_VALUE, Constants.READONLY, ID);
+        DocumentWrapper<String> userDocument = new DocumentWrapper<>(TEST_VALUE, USER, ID);
+        DocumentWrapper<String> appDocument = new DocumentWrapper<>(TEST_VALUE, Constants.READONLY, ID);
         mLocalDocumentStorage.writeOffline(USER_TABLE_NAME, userDocument, new WriteOptions());
         mLocalDocumentStorage.writeOffline(READ_ONLY_TABLE_NAME, appDocument, new WriteOptions());
-        Document<String> cachedUserDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, new ReadOptions());
-        Document<String> cachedAppDocument = mLocalDocumentStorage.read(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> cachedUserDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> cachedAppDocument = mLocalDocumentStorage.read(READ_ONLY_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
 
         /* Verify to documents were added to the tables and there were no errors. */
         assertNotNull(cachedUserDocument);
@@ -188,14 +188,14 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(cachedUserDocument.getDocument());
         assertNull(cachedAppDocument.getDocument());
         assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getDocumentError().getMessage());
-        assertEquals("Document was not found in the cache.", cachedAppDocument.getDocumentError().getMessage());
+        assertEquals("DocumentWrapper was not found in the cache.", cachedAppDocument.getDocumentError().getMessage());
     }
 
     @Test
     public void updateDocument() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, Constants.READONLY, ID, "Test", String.class, new WriteOptions());
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, Constants.READONLY, ID, "Test1", String.class, new WriteOptions());
-        Document<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, Constants.READONLY, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
         assertEquals("Test1", createdDocument.getDocument());
     }
@@ -243,7 +243,7 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void createUnExpiredDocument() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(WriteOptions.INFINITE));
-        Document<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
+        DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
         assertNull(document.getDocumentError());
         assertEquals("Test", document.getDocument());
     }
@@ -251,7 +251,7 @@ public class LocalDocumentStorageAndroidTest {
     @Test
     public void createDocumentWithoutOverflowException() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER, ID, "Test", String.class, new WriteOptions(999999999));
-        Document<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
+        DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, String.class, null);
         assertNull(document.getDocumentError());
         assertEquals("Test", document.getDocument());
     }
@@ -261,7 +261,7 @@ public class LocalDocumentStorageAndroidTest {
 
         /* If a document is marked for deletion. */
         mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER, ID);
-        Document<Void> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);
+        DocumentWrapper<Void> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER, ID, Void.class, null);
         assertNull(document.getDocumentError());
 
         /* When we delete after coming back online. */

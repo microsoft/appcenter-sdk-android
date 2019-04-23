@@ -16,6 +16,7 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -25,7 +26,6 @@ import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.data.exception.StorageException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
-import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
@@ -156,7 +156,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String partition, String documentId, Class<T> documentType) {
         return read(partition, documentId, documentType, new ReadOptions());
     }
 
@@ -165,7 +165,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         return getInstance().instanceRead(partition, documentId, documentType, readOptions);
     }
 
@@ -183,7 +183,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String partition, String documentId, T document, Class<T> documentType) {
         return create(partition, documentId, document, documentType, new WriteOptions());
     }
 
@@ -192,7 +192,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, null, writeOptions);
     }
 
@@ -200,7 +200,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Delete a document.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static AppCenterFuture<Document<Void>> delete(String partition, String documentId) {
+    public static AppCenterFuture<DocumentWrapper<Void>> delete(String partition, String documentId) {
         return getInstance().instanceDelete(partition, documentId);
     }
 
@@ -209,7 +209,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
         return replace(partition, documentId, document, documentType, new WriteOptions());
     }
 
@@ -218,7 +218,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<Document<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, CosmosDb.getUpsertAdditionalHeader(), writeOptions);
     }
 
@@ -355,14 +355,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
 
-    private <T> DefaultAppCenterFuture<Document<T>> performOperation(@NonNull final String partition,
-                                                                     @NonNull final String documentId,
-                                                                     @NonNull final Class<T> documentType,
-                                                                     @Nullable final ReadOptions cacheReadOptions,
-                                                                     @NonNull final CallTemplate<T> callTemplate) {
+    private <T> DefaultAppCenterFuture<DocumentWrapper<T>> performOperation(@NonNull final String partition,
+                                                                            @NonNull final String documentId,
+                                                                            @NonNull final Class<T> documentType,
+                                                                            @Nullable final ReadOptions cacheReadOptions,
+                                                                            @NonNull final CallTemplate<T> callTemplate) {
 
         /* Check partition is supported. */
-        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
             return result;
         }
@@ -371,17 +371,17 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             public void run() {
 
                 /* Get cached document. */
-                Document<T> cachedDocument;
+                DocumentWrapper<T> cachedDocument;
                 String table = null;
                 TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
                     table = Utils.getTableName(cachedToken);
                     cachedDocument = mLocalDocumentStorage.read(table, cachedToken.getPartition(), documentId, documentType, cacheReadOptions);
                     if (Constants.PENDING_OPERATION_DELETE_VALUE.equals(cachedDocument.getPendingOperation())) {
-                        cachedDocument = new Document<>(new StorageException("The document is found in local storage but marked as state deleted."));
+                        cachedDocument = new DocumentWrapper<>(new StorageException("The document is found in local storage but marked as state deleted."));
                     }
                 } else {
-                    cachedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                    cachedDocument = new DocumentWrapper<>(new StorageException("Unable to find partition named " + partition + "."));
                 }
 
                 /* Call template to see if online operation is needed. */
@@ -413,19 +413,19 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return result;
     }
 
-    private <T> void doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<Document<T>> result, CallTemplate<T> callTemplate) {
+    private <T> void doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<DocumentWrapper<T>> result, CallTemplate<T> callTemplate) {
         if (cachedToken == null) {
 
             /* If no token and offline, return the no partition error document previously initialized with that specific error. */
             result.complete(cachedDocument);
         } else {
-            Document<T> documentResult = callTemplate.doOfflineOperation(cachedDocument, table, cachedToken);
+            DocumentWrapper<T> documentResult = callTemplate.doOfflineOperation(cachedDocument, table, cachedToken);
             completeFuture(documentResult, result);
         }
     }
 
     @WorkerThread
-    private synchronized <T> AppCenterFuture<Document<T>> instanceRead(
+    private synchronized <T> AppCenterFuture<DocumentWrapper<T>> instanceRead(
             final String partition,
             final String documentId,
             final Class<T> documentType,
@@ -433,32 +433,32 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return performOperation(partition, documentId, documentType, readOptions, new CallTemplate<T>() {
 
             @Override
-            public boolean needsRemoteOperation(Document<T> cachedDocument) {
+            public boolean needsRemoteOperation(DocumentWrapper<T> cachedDocument) {
                 return cachedDocument.getPendingOperation() == null;
             }
 
             @Override
-            public Document<T> doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken) {
+            public DocumentWrapper<T> doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken) {
                 return cachedDocument;
             }
 
             @Override
-            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<T>> result) {
+            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
                 callCosmosDbReadApi(tokenResult, documentId, documentType, result);
             }
         });
     }
 
-    private synchronized AppCenterFuture<Document<Void>> instanceDelete(final String partition, final String documentId) {
+    private synchronized AppCenterFuture<DocumentWrapper<Void>> instanceDelete(final String partition, final String documentId) {
         return performOperation(partition, documentId, Void.class, null, new CallTemplate<Void>() {
 
             @Override
-            public boolean needsRemoteOperation(Document<Void> cachedDocument) {
+            public boolean needsRemoteOperation(DocumentWrapper<Void> cachedDocument) {
                 return cachedDocument.getETag() != null || cachedDocument.getDocumentError() != null;
             }
 
             @Override
-            public Document<Void> doOfflineOperation(Document<Void> cachedDocument, String table, TokenResult cachedToken) {
+            public DocumentWrapper<Void> doOfflineOperation(DocumentWrapper<Void> cachedDocument, String table, TokenResult cachedToken) {
                 boolean success;
                 if (cachedDocument.getETag() != null) {
                     success =
@@ -467,14 +467,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
                 if (success) {
-                    return new Document<>();
+                    return new DocumentWrapper<>();
                 } else {
-                    return new Document<>(new StorageException("Failed to write to cache."));
+                    return new DocumentWrapper<>(new StorageException("Failed to write to cache."));
                 }
             }
 
             @Override
-            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<Void>> result) {
+            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
                 callCosmosDbDeleteApi(tokenResult, documentId, result);
             }
         });
@@ -484,7 +484,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final TokenResult tokenResult,
             final String documentId,
             final Class<T> documentType,
-            final DefaultAppCenterFuture<Document<T>> result) {
+            final DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -500,7 +500,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void run() {
-                                Document<T> document = Utils.parseDocument(payload, documentType);
+                                DocumentWrapper<T> document = Utils.parseDocument(payload, documentType);
                                 if (document.getDocumentError() != null) {
                                     completeFutureOnDocumentError(document, result);
                                 } else {
@@ -615,13 +615,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String documentId,
             final WriteOptions writeOptions,
             final Map<String, String> additionalHeaders,
-            final DefaultAppCenterFuture<Document<T>> result) {
+            final DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
                 mHttpClient,
                 METHOD_POST,
-                new Document<>(document, partition, documentId).toString(),
+                new DocumentWrapper<>(document, partition, documentId).toString(),
                 additionalHeaders,
                 new ServiceCallback() {
 
@@ -632,7 +632,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void run() {
-                                Document<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
+                                DocumentWrapper<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
                                 if (cosmosDbDocument.hasFailed()) {
                                     completeFutureOnDocumentError(cosmosDbDocument, result);
                                 } else {
@@ -684,14 +684,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Create a document.
      * The document type (T) must be JSON deserializable.
      */
-    private synchronized <T> AppCenterFuture<Document<T>> instanceCreateOrUpdate(
+    private synchronized <T> AppCenterFuture<DocumentWrapper<T>> instanceCreateOrUpdate(
             final String partition,
             final String documentId,
             final T document,
             final Class<T> documentType,
             final Map<String, String> additionalHeaders,
             final WriteOptions writeOptions) {
-        final DefaultAppCenterFuture<Document<T>> result = new DefaultAppCenterFuture<>();
+        final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
             return result;
         }
@@ -716,13 +716,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                 }
                             });
                 } else {
-                    Document<T> createdOrUpdatedDocument;
+                    DocumentWrapper<T> createdOrUpdatedDocument;
                     TokenResult cachedToken = getCachedToken(partition);
                     if (cachedToken != null) {
                         String table = Utils.getTableName(cachedToken);
                         createdOrUpdatedDocument = mLocalDocumentStorage.createOrUpdateOffline(table, cachedToken.getPartition(), documentId, document, documentType, writeOptions);
                     } else {
-                        createdOrUpdatedDocument = new Document<>(new StorageException("Unable to find partition named " + partition + "."));
+                        createdOrUpdatedDocument = new DocumentWrapper<>(new StorageException("Unable to find partition named " + partition + "."));
                     }
                     result.complete(createdOrUpdatedDocument);
                 }
@@ -756,7 +756,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void callCosmosDbDeleteApi(
             final TokenResult tokenResult,
             final String documentId,
-            final DefaultAppCenterFuture<Document<Void>> result) {
+            final DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -772,7 +772,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void run() {
-                                completeFuture(new Document<Void>(), result);
+                                completeFuture(new DocumentWrapper<Void>(), result);
                                 mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId);
                             }
                         });
@@ -836,14 +836,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private interface CallTemplate<T> {
 
-        boolean needsRemoteOperation(Document<T> cachedDocument);
+        boolean needsRemoteOperation(DocumentWrapper<T> cachedDocument);
 
-        Document<T> doOfflineOperation(Document<T> cachedDocument, String table, TokenResult cachedToken);
+        DocumentWrapper<T> doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken);
 
-        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<Document<T>> result);
+        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result);
     }
 
-    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<Document<T>> result) {
+    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
             completeFuture(getInvalidPartitionStorageException(partition), result);
@@ -857,19 +857,19 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     @WorkerThread
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, Document<T> value, DefaultAppCenterFuture<Document<T>> future) {
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, DocumentWrapper<T> value, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
         future.complete(value);
         mLocalDocumentStorage.writeOnline(table, value, new WriteOptions());
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFuture(Exception e, DefaultAppCenterFuture<Document<T>> future) {
+    private synchronized <T> void completeFuture(Exception e, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
         Utils.logApiCallFailure(e);
-        future.complete(new Document<T>(e));
+        future.complete(new DocumentWrapper<T>(e));
         mPendingCalls.remove(future);
     }
 
-    private synchronized <T> void completeFutureOnDocumentError(Document<T> doc, DefaultAppCenterFuture<Document<T>> future) {
+    private synchronized <T> void completeFutureOnDocumentError(DocumentWrapper<T> doc, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
         AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getDocumentError());
         future.complete(doc);
         mPendingCalls.remove(future);

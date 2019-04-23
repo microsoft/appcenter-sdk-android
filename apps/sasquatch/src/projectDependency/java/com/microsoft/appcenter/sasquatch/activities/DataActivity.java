@@ -25,12 +25,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.CustomItemAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
 import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -148,14 +148,14 @@ public class DataActivity extends AppCompatActivity {
         }
     };
 
-    private void updateUserDocuments(List<Document<Map>> documents) {
+    private void updateUserDocuments(List<DocumentWrapper<Map>> documents) {
         if (documents == null)
             return;
         mAdapterUser.setList(new ArrayList<>(documents));
         mAdapterUser.notifyDataSetChanged();
     }
 
-    private void updateAppDocument(List<Document<TestDocument>> list) {
+    private void updateAppDocument(List<DocumentWrapper<TestDocument>> list) {
         mAppDocumentListAdapter.upload(list);
         mAppDocumentListAdapter.notifyDataSetChanged();
     }
@@ -171,7 +171,7 @@ public class DataActivity extends AppCompatActivity {
         mMessageText = findViewById(R.id.data_message);
 
         /* List the app read-only documents. */
-        mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<Document<TestDocument>>());
+        mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<DocumentWrapper<TestDocument>>());
         mAppDocumentListAdapter.setOnItemClickListener(new AppDocumentListAdapter.OnItemClickListener() {
 
             @Override
@@ -187,7 +187,7 @@ public class DataActivity extends AppCompatActivity {
         Data.list(Constants.READONLY, TestDocument.class).thenAccept(mUploadApp);
 
         /* List the user documents. */
-        mAdapterUser = new CustomItemAdapter(new ArrayList<Document<Map>>(), this);
+        mAdapterUser = new CustomItemAdapter(new ArrayList<DocumentWrapper<Map>>(), this);
         mAdapterUser.setOnItemClickListener(new CustomItemAdapter.OnItemClickListener() {
 
             @Override
@@ -200,10 +200,10 @@ public class DataActivity extends AppCompatActivity {
 
             @Override
             public void onRemoveClick(final int position) {
-                Data.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<Document<Void>>() {
+                Data.delete(Constants.USER, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<DocumentWrapper<Void>>() {
 
                     @Override
-                    public void accept(Document<Void> voidDocument) {
+                    public void accept(DocumentWrapper<Void> voidDocument) {
                         if (voidDocument.hasFailed()) {
                             Toast.makeText(DataActivity.this, R.string.data_file_remove_error, Toast.LENGTH_SHORT).show();
                         } else {

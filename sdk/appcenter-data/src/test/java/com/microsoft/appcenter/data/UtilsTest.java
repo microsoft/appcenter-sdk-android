@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.data;
 
 import com.google.gson.JsonParseException;
-import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 
 import org.junit.Test;
@@ -23,7 +23,7 @@ public class UtilsTest {
 
     @Test
     public void parseDocumentCanHandleInvalidJson() {
-        Document<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
+        DocumentWrapper<TestDocument> document = Utils.parseDocument("{}", TestDocument.class);
         assertNotNull(document.getDocumentError());
     }
 
@@ -35,15 +35,15 @@ public class UtilsTest {
 
     @Test
     public void canParseWhenDocumentNull() {
-        Document<TestDocument> document = Utils.parseDocument(null, TestDocument.class);
+        DocumentWrapper<TestDocument> document = Utils.parseDocument(null, TestDocument.class);
         assertNotNull(document.getDocumentError());
     }
 
     @Test
     public void canParseWhenPassedWrongType() {
         TestDocument testDoc = new TestDocument("test-value");
-        Document<TestDocument> doc = new Document<>(testDoc, "partition", "id");
-        Document<String> document = Utils.parseDocument(doc.toString(), String.class);
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
+        DocumentWrapper<String> document = Utils.parseDocument(doc.toString(), String.class);
         assertNotNull(document.getDocumentError());
     }
 
@@ -68,7 +68,7 @@ public class UtilsTest {
 
     @Test
     public void checkETagNullByDefault() {
-        Document<Void> document = new Document<>(null, "readonly", "id");
+        DocumentWrapper<Void> document = new DocumentWrapper<>(null, "readonly", "id");
         document = Utils.parseDocument(Utils.getGson().toJson(document), Void.class);
         assertNotNull(document);
         assertNull(document.getDocumentError());
@@ -81,7 +81,7 @@ public class UtilsTest {
         /* Serialize a document with a date. */
         DateDocument dateDocument = new DateDocument();
         dateDocument.date = new Date(123153214234L);
-        Document<DateDocument> doc = new Document<>(dateDocument, "partition", "id");
+        DocumentWrapper<DateDocument> doc = new DocumentWrapper<>(dateDocument, "partition", "id");
         String payload = Utils.getGson().toJson(doc);
 
         /* Check ISO format. */
@@ -89,7 +89,7 @@ public class UtilsTest {
         assertTrue(payload.contains(expectedDate));
 
         /* Check we can parse back. */
-        Document<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
+        DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNull(document.getDocumentError());
         assertNotNull(document.getDocument());
         assertEquals(dateDocument.date, document.getDocument().date);
@@ -102,13 +102,13 @@ public class UtilsTest {
         DateDocument dateDocument = new DateDocument();
         dateDocument.date = new Date(123153214234L);
         String expectedDate = "1973-11-26T09:13:34.234Z";
-        Document<DateDocument> doc = new Document<>(dateDocument, "partition", "id");
+        DocumentWrapper<DateDocument> doc = new DocumentWrapper<>(dateDocument, "partition", "id");
         String payload = Utils.getGson().toJson(doc);
         assertTrue(payload.contains(expectedDate));
         payload = payload.replace(expectedDate, "1973/11/26 09:13:34");
 
         /* Check parsing error. */
-        Document<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
+        DocumentWrapper<DateDocument> document = Utils.parseDocument(payload, DateDocument.class);
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getCause() instanceof JsonParseException);
         assertNull(document.getDocument());

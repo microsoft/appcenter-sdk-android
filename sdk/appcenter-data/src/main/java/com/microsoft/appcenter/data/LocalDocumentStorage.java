@@ -15,7 +15,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.data.exception.StorageException;
 import com.microsoft.appcenter.data.models.BaseOptions;
-import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
@@ -123,15 +123,15 @@ class LocalDocumentStorage {
         mDatabaseManager.resetDatabase();
     }
 
-    <T> void writeOffline(String table, Document<T> document, WriteOptions writeOptions) {
+    <T> void writeOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
         write(table, document, writeOptions, PENDING_OPERATION_CREATE_VALUE);
     }
 
-    <T> void writeOnline(String table, Document<T> document, WriteOptions writeOptions) {
+    <T> void writeOnline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
         write(table, document, writeOptions, null);
     }
 
-    private <T> long write(String table, Document<T> document, WriteOptions writeOptions, String pendingOperationValue) {
+    private <T> long write(String table, DocumentWrapper<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == WriteOptions.NO_CACHE) {
             return 0;
         }
@@ -156,26 +156,26 @@ class LocalDocumentStorage {
         return builder;
     }
 
-    <T> Document<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        Document<T> cachedDocument = read(table, partition, documentId, documentType, null);
+    <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+        DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
         if (cachedDocument.getDocumentError() != null && cachedDocument.getDocumentError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
 
         /* The document cache has been expired, or the document did not exists, create it. */
-        Document<T> writeDocument = new Document<>(document, partition, documentId);
+        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId);
         long rowId =
                 cachedDocument.getDocumentError() != null ?
                         createOffline(table, writeDocument, writeOptions) :
                         updateOffline(table, writeDocument, writeOptions);
-        return rowId >= 0 ? writeDocument : new Document<T>(new StorageException("Failed to write document into cache."));
+        return rowId >= 0 ? writeDocument : new DocumentWrapper<T>(new StorageException("Failed to write document into cache."));
     }
 
-    private <T> long createOffline(String table, Document<T> document, WriteOptions writeOptions) {
+    private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
         return write(table, document, writeOptions, Constants.PENDING_OPERATION_CREATE_VALUE);
     }
 
-    private <T> long updateOffline(String table, Document<T> document, WriteOptions writeOptions) {
+    private <T> long updateOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
         return write(table, document, writeOptions, Constants.PENDING_OPERATION_REPLACE_VALUE);
     }
 
@@ -188,7 +188,7 @@ class LocalDocumentStorage {
      * @return true if storage update succeeded, false otherwise.
      */
     boolean deleteOffline(String table, String partition, String documentId) {
-        Document<Void> writeDocument = new Document<>(null, partition, documentId);
+        DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId);
         return write(table, writeDocument, new WriteOptions(), PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
@@ -292,7 +292,7 @@ class LocalDocumentStorage {
     }
 
     @NonNull
-    <T> Document<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
+    <T> DocumentWrapper<T> read(String table, String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
         AppCenterLog.debug(LOG_TAG, String.format("Trying to read %s:%s document from cache", partition, documentId));
         Cursor cursor;
         ContentValues values;
@@ -305,7 +305,7 @@ class LocalDocumentStorage {
                     EXPIRATION_TIME_COLUMN_NAME + " DESC");
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to read from cache: ", e);
-            return new Document<>(FAILED_TO_READ_FROM_CACHE, e);
+            return new DocumentWrapper<>(FAILED_TO_READ_FROM_CACHE, e);
         }
 
         /* We only expect one value as we do upserts in the `write` method. */
@@ -315,13 +315,13 @@ class LocalDocumentStorage {
             if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
                 mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-                return new Document<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
+                return new DocumentWrapper<>(new StorageException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
             }
-            Document<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
+            DocumentWrapper<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             if (document.hasFailed()) {
                 Throwable error = document.getDocumentError();
                 AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
-                return new Document<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
+                return new DocumentWrapper<>(new StorageException(FAILED_TO_READ_FROM_CACHE, error));
             }
             document.setFromCache(true);
             document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
@@ -333,6 +333,6 @@ class LocalDocumentStorage {
             return document;
         }
         AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-        return new Document<>(new StorageException("Document was not found in the cache."));
+        return new DocumentWrapper<>(new StorageException("Document was not found in the cache."));
     }
 }

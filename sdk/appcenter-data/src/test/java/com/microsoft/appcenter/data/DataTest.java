@@ -7,6 +7,7 @@ package com.microsoft.appcenter.data;
 
 import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -17,7 +18,6 @@ import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.StorageException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
-import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
@@ -161,7 +161,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
+        List<DocumentWrapper<TestDocument>> documents = Collections.singletonList(new DocumentWrapper<>(
                 new TestDocument("Test"),
                 RESOLVED_USER_PARTITION,
                 "document id",
@@ -206,7 +206,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> firstPartDocuments = Collections.singletonList(new Document<>(
+        List<DocumentWrapper<TestDocument>> firstPartDocuments = Collections.singletonList(new DocumentWrapper<>(
                 new TestDocument("Test"),
                 RESOLVED_USER_PARTITION,
                 "document id",
@@ -216,7 +216,7 @@ public class DataTest extends AbstractDataTest {
         final String expectedFirstResponse = Utils.getGson().toJson(
                 new Page<TestDocument>().setItems(firstPartDocuments)
         );
-        final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
+        final List<DocumentWrapper<TestDocument>> secondPartDocuments = Collections.singletonList(new DocumentWrapper<>(
                 new TestDocument("Test2"),
                 RESOLVED_USER_PARTITION,
                 "document id 2",
@@ -262,7 +262,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> firstPartDocuments = Collections.nCopies(2, new Document<>(
+        List<DocumentWrapper<TestDocument>> firstPartDocuments = Collections.nCopies(2, new DocumentWrapper<>(
                 new TestDocument("Test"),
                 RESOLVED_USER_PARTITION,
                 "document id",
@@ -272,7 +272,7 @@ public class DataTest extends AbstractDataTest {
         final String expectedFirstResponse = Utils.getGson().toJson(
                 new Page<TestDocument>().setItems(firstPartDocuments)
         );
-        final List<Document<TestDocument>> secondPartDocuments = Collections.singletonList(new Document<>(
+        final List<DocumentWrapper<TestDocument>> secondPartDocuments = Collections.singletonList(new DocumentWrapper<>(
                 new TestDocument("Test2"),
                 RESOLVED_USER_PARTITION,
                 "document id 2",
@@ -300,8 +300,8 @@ public class DataTest extends AbstractDataTest {
         });
 
         /* Make the call. */
-        Iterator<Document<TestDocument>> iterator = Data.list(USER, TestDocument.class).get().iterator();
-        List<Document<TestDocument>> documents = new ArrayList<>();
+        Iterator<DocumentWrapper<TestDocument>> iterator = Data.list(USER, TestDocument.class).get().iterator();
+        List<DocumentWrapper<TestDocument>> documents = new ArrayList<>();
         while (iterator.hasNext()) {
             documents.add(iterator.next());
         }
@@ -372,7 +372,7 @@ public class DataTest extends AbstractDataTest {
     public void replaceEndToEnd() throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<Document<TestDocument>> doc = Data.replace(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.replace(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
 
         /* Make the call. */
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -380,7 +380,7 @@ public class DataTest extends AbstractDataTest {
         /* Get and verify token. */
         assertNotNull(doc);
 
-        Document<TestDocument> testCosmosDocument = doc.get();
+        DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -398,7 +398,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Mock http call to get token. */
         /* Pass incorrect document type to cause serialization failure (document is of type TestDocument). */
-        AppCenterFuture<Document<String>> doc = Data.read(Constants.USER, DOCUMENT_ID, String.class);
+        AppCenterFuture<DocumentWrapper<String>> doc = Data.read(Constants.USER, DOCUMENT_ID, String.class);
 
         /* Make cosmos db http call with exchanged token. */
         verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
@@ -407,14 +407,14 @@ public class DataTest extends AbstractDataTest {
         /* Get and verify document. Confirm the cache was not touched. */
         assertNotNull(doc);
         verifyNoMoreInteractions(mLocalDocumentStorage);
-        Document<String> testCosmosDocument = doc.get();
+        DocumentWrapper<String> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         assertTrue(testCosmosDocument.hasFailed());
     }
 
     @Test
     public void createFailsToDeserializeDocumentDoesNotThrow() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Data.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, new WriteOptions());
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(Constants.USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, new WriteOptions());
 
         /* Mock for cosmos return payload that cannot be deserialized. Will fail in the `onSuccess` callback of `create`. */
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, "", null);
@@ -422,7 +422,7 @@ public class DataTest extends AbstractDataTest {
         /* Verify document error. Confirm the cache was not touched. */
         assertNotNull(doc);
         verifyNoMoreInteractions(mLocalDocumentStorage);
-        Document<TestDocument> testCosmosDocument = doc.get();
+        DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         assertTrue(testCosmosDocument.hasFailed());
     }
@@ -437,7 +437,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
-        List<Document<TestDocument>> documents = Collections.singletonList(new Document<>(
+        List<DocumentWrapper<TestDocument>> documents = Collections.singletonList(new DocumentWrapper<>(
                 new TestDocument("Test"),
                 RESOLVED_USER_PARTITION,
                 "document id",
@@ -457,7 +457,7 @@ public class DataTest extends AbstractDataTest {
             }
         });
 
-        /* Make the call. Ensure deserialization error on Document by passing incorrect class type. */
+        /* Make the call. Ensure deserialization error on document by passing incorrect class type. */
         AppCenterFuture<PaginatedDocuments<String>> result = Data.list(Constants.USER, String.class);
 
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -522,7 +522,7 @@ public class DataTest extends AbstractDataTest {
     private void readEndToEndWithNetwork(String partition, String tokenExchangePayload) throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<Document<TestDocument>> doc = Data.read(partition, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(partition, DOCUMENT_ID, TestDocument.class);
 
         /* Make cosmos db http call with exchanged token. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangePayload, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -531,7 +531,7 @@ public class DataTest extends AbstractDataTest {
         /* Get and verify token. */
         assertNotNull(doc);
 
-        Document<TestDocument> testCosmosDocument = doc.get();
+        DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
@@ -546,7 +546,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
@@ -585,7 +585,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readFailTokenExchangeReturnsFailedTokenResultPayload() {
-        AppCenterFuture<Document<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
 
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
@@ -627,7 +627,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(USER, DOCUMENT_ID, TestDocument.class);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
@@ -649,7 +649,7 @@ public class DataTest extends AbstractDataTest {
     public void readWithoutNetwork() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("document not set")));
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new DocumentWrapper<TestDocument>(new Exception("document not set")));
         Data.read(USER, DOCUMENT_ID, TestDocument.class);
         verifyNoMoreInteractions(mHttpClient);
         verify(mLocalDocumentStorage).read(
@@ -665,10 +665,10 @@ public class DataTest extends AbstractDataTest {
         String failedMessage = "The document is found in local storage but marked as state deleted.";
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        Document<String> deletedDocument = new Document<>();
+        DocumentWrapper<String> deletedDocument = new DocumentWrapper<>();
         deletedDocument.setPendingOperation(Constants.PENDING_OPERATION_DELETE_VALUE);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
-        Document<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
+        DocumentWrapper<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
         assertNotNull(document.getDocumentError());
         assertTrue(document.getDocumentError().getMessage().contains(failedMessage));
     }
@@ -679,8 +679,8 @@ public class DataTest extends AbstractDataTest {
         expirationDate.add(Calendar.SECOND, 1000);
         TokenResult tokenResult = new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("tokenResult");
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(Utils.getGson().toJson(tokenResult));
-        Document<String> outDatedDocument = new Document<>();
-        Document<String> expectedDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
+        DocumentWrapper<String> outDatedDocument = new DocumentWrapper<>();
+        DocumentWrapper<String> expectedDocument = new DocumentWrapper<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         final String expectedResponse = Utils.getGson().toJson(expectedDocument);
         when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
         when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
@@ -691,7 +691,7 @@ public class DataTest extends AbstractDataTest {
                 return mock(ServiceCall.class);
             }
         });
-        Document<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
+        DocumentWrapper<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
         verify(mHttpClient);
         assertNotNull(document.getDocument());
         assertEquals(expectedDocument.getDocument(), document.getDocument());
@@ -700,10 +700,10 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void readWhenLocalStorageContainsCreateOperation() {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        Document<String> createdDocument = new Document<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
+        DocumentWrapper<String> createdDocument = new DocumentWrapper<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(createdDocument);
-        Document<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
+        DocumentWrapper<String> document = Data.read(USER, DOCUMENT_ID, String.class).get();
         verifyNoMoreInteractions(mHttpClient);
         assertEquals(createdDocument.getDocument(), document.getDocument());
     }
@@ -712,10 +712,10 @@ public class DataTest extends AbstractDataTest {
     public void createEndToEndWithNetwork() throws JSONException {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
-        AppCenterFuture<Document<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, writeOptions);
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
-        Document<TestDocument> testCosmosDocument = doc.get();
+        DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         verify(mLocalDocumentStorage, times(1)).writeOnline(eq(USER_TABLE_NAME), refEq(testCosmosDocument), refEq(writeOptions));
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -947,7 +947,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void createTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
 
@@ -966,7 +966,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void createCosmosDbCallFails() throws JSONException {
-        AppCenterFuture<Document<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument("test"), TestDocument.class);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, null, new Exception(exceptionMessage));
 
@@ -985,8 +985,8 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void deleteEndToEnd() throws JSONException {
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(Void.class), notNull(ReadOptions.class))).thenReturn(new Document<Void>(new StorageException("not found")));
-        AppCenterFuture<Document<Void>> doc = Data.delete(USER, DOCUMENT_ID);
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(Void.class), notNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>(new StorageException("not found")));
+        AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(USER, DOCUMENT_ID);
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -997,7 +997,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void deleteTokenExchangeCallFails() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(USER, DOCUMENT_ID);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
         verifyTokenExchangeFlow(null, new SSLException(exceptionMessage));
 
@@ -1016,7 +1016,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void deleteCosmosDbCallFails() throws JSONException {
-        AppCenterFuture<Document<Void>> doc = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(USER, DOCUMENT_ID);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
 
@@ -1036,11 +1036,11 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
-        Document<Void> cachedDocument = new Document<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
+        DocumentWrapper<Void> cachedDocument = new DocumentWrapper<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
         when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        AppCenterFuture<Document<Void>> result = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
@@ -1051,10 +1051,10 @@ public class DataTest extends AbstractDataTest {
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        Document<Void> cachedDocument = new Document<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
+        DocumentWrapper<Void> cachedDocument = new DocumentWrapper<>(null, Constants.USER, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
         when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
-        AppCenterFuture<Document<Void>> result = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
@@ -1064,9 +1064,9 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void deleteSuccessfullyFromLocalStorageWithoutNetworkCallWhenDocumentCreatedOnlyOffline() {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(new Document<Void>());
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>());
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
-        AppCenterFuture<Document<Void>> result = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertFalse(result.get().hasFailed());
@@ -1076,9 +1076,9 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void failToDeleteFromLocalStorageWithoutNetworkCallWhenDocumentCreatedOnlyOffline() {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER)).thenReturn(TOKEN_RESULT);
-        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(new Document<Void>());
+        when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>());
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(false);
-        AppCenterFuture<Document<Void>> result = Data.delete(USER, DOCUMENT_ID);
+        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER, DOCUMENT_ID);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertTrue(result.get().hasFailed());
@@ -1094,7 +1094,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void documentDeserialization() {
-        Document<TestDocument> d =
+        DocumentWrapper<TestDocument> d =
                 Utils.parseDocument(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, TestDocument.class);
         assertEquals(DOCUMENT_ID, d.getId());
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
@@ -1144,7 +1144,7 @@ public class DataTest extends AbstractDataTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
-        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new Document<TestDocument>(new Exception("read error.")));
+        when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new DocumentWrapper<TestDocument>(new Exception("read error.")));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -1167,7 +1167,7 @@ public class DataTest extends AbstractDataTest {
         mockStatic(TokenExchange.class);
         ServiceCall mockServiceCall = mock(ServiceCall.class);
         when(TokenExchange.getDbToken(anyString(), any(HttpClient.class), anyString(), anyString(), any(TokenExchange.TokenExchangeServiceCallback.class))).thenReturn(mockServiceCall);
-        AppCenterFuture<Document<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class);
         Data.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
@@ -1181,7 +1181,7 @@ public class DataTest extends AbstractDataTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
 
         /* Make the call to create local document in local storage. */
-        Document<TestDocument> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class).get();
+        DocumentWrapper<TestDocument> doc = Data.create(USER, DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class).get();
 
         /* Local storage create document should complete with not find partition error. */
         assertNotNull(doc);
@@ -1197,7 +1197,7 @@ public class DataTest extends AbstractDataTest {
         assertTrue(doc.getDocumentError().getMessage().contains(failedMessage));
 
         /* Make the call to delete local document from local storage. */
-        Document<Void> deleteDocument = Data.delete(USER, DOCUMENT_ID).get();
+        DocumentWrapper<Void> deleteDocument = Data.delete(USER, DOCUMENT_ID).get();
 
         /* Local storage delete document should complete with not find partition error. */
         assertNotNull(deleteDocument);
@@ -1446,7 +1446,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + READONLY)).thenReturn("garbage");
 
         /* When we perform an operation. */
-        AppCenterFuture<Document<TestDocument>> future = Data.read(Constants.READONLY, "docId", TestDocument.class);
+        AppCenterFuture<DocumentWrapper<TestDocument>> future = Data.read(Constants.READONLY, "docId", TestDocument.class);
 
         /* Then we'll refresh token online. */
         ArgumentCaptor<ServiceCallback> captor = ArgumentCaptor.forClass(ServiceCallback.class);

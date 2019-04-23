@@ -20,11 +20,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
 import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.Utils;
-import com.microsoft.appcenter.data.models.Document;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import org.json.JSONException;
@@ -56,10 +56,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private ListView mListView;
 
-    private AppCenterConsumer<Document<TestDocument>> getAppDocument = new AppCenterConsumer<Document<TestDocument>>() {
+    private AppCenterConsumer<DocumentWrapper<TestDocument>> getAppDocument = new AppCenterConsumer<DocumentWrapper<TestDocument>>() {
 
         @Override
-        public void accept(Document<TestDocument> document) {
+        public void accept(DocumentWrapper<TestDocument> document) {
             if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
@@ -69,10 +69,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
         }
     };
 
-    private AppCenterConsumer<Document<Map>> getUserDocument = new AppCenterConsumer<Document<Map>>() {
+    private AppCenterConsumer<DocumentWrapper<Map>> getUserDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
-        public void accept(Document<Map> document) {
+        public void accept(DocumentWrapper<Map> document) {
             if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
@@ -99,7 +99,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void fillInfo(Document document) {
+    private void fillInfo(DocumentWrapper document) {
         mDetailProgress.setVisibility(GONE);
         mListView.setVisibility(View.VISIBLE);
         final List<DocumentInfoDisplayModel> list = getDocumentInfoDisplayModelList(document);
@@ -137,7 +137,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
     }
 
-    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(Document document) {
+    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(DocumentWrapper document) {
         List<DocumentInfoDisplayModel> list = new ArrayList<>();
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_id_title), mDocumentId));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));

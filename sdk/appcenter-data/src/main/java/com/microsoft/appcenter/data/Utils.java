@@ -20,7 +20,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.microsoft.appcenter.data.exception.StorageException;
-import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -76,12 +76,12 @@ public class Utils {
         }
     }
 
-    static <T> Document<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
+    static <T> DocumentWrapper<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
         JsonObject body;
         try {
             body = sParser.parse(cosmosDbPayload).getAsJsonObject();
         } catch (RuntimeException e) {
-            return new Document<>(e);
+            return new DocumentWrapper<>(e);
         }
         return parseDocument(body, documentType);
     }
@@ -99,17 +99,17 @@ public class Utils {
                 cosmosResponseJson.get(ETAG_FIELD_NAME).getAsString() : null;
     }
 
-    private static <T> Document<T> parseDocument(JsonObject obj, Class<T> documentType) {
+    private static <T> DocumentWrapper<T> parseDocument(JsonObject obj, Class<T> documentType) {
         try {
             T document = sGson.fromJson(obj.get(DOCUMENT_FIELD_NAME), documentType);
-            return new Document<>(
+            return new DocumentWrapper<>(
                     document,
                     obj.get(PARTITION_KEY_FIELD_NAME).getAsString(),
                     obj.get(ID_FIELD_NAME).getAsString(),
                     obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : null,
                     obj.get(TIMESTAMP_FIELD_NAME).getAsLong());
         } catch (RuntimeException exception) {
-            return new Document<>(new StorageException("Failed to deserialize document.", exception));
+            return new DocumentWrapper<>(new StorageException("Failed to deserialize document.", exception));
         }
     }
 
@@ -127,7 +127,7 @@ public class Utils {
             AppCenterLog.error(LOG_TAG, "Failed to deserialize Page.", e);
             return new Page<>(new StorageException("Failed to deserialize Page.", e));
         }
-        List<Document<T>> documents = new ArrayList<>();
+        List<DocumentWrapper<T>> documents = new ArrayList<>();
         for (JsonElement object : array) {
             documents.add(parseDocument(object.getAsJsonObject(), documentType));
         }

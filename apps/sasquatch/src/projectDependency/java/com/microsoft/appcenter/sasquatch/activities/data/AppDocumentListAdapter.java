@@ -14,7 +14,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.data.models.Document;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +23,11 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
 
     private Context mContext;
 
-    private List<Document<TestDocument>> mList;
+    private List<DocumentWrapper<TestDocument>> mList;
 
     private OnItemClickListener mListener;
 
-    public AppDocumentListAdapter(Context context, List<Document<TestDocument>> list) {
+    public AppDocumentListAdapter(Context context, List<DocumentWrapper<TestDocument>> list) {
         mContext = context;
         mList = new ArrayList<>(list);
     }
@@ -56,7 +56,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         return mList.size();
     }
 
-    public void upload(List<Document<TestDocument>> list) {
+    public void upload(List<DocumentWrapper<TestDocument>> list) {
         mList.addAll(list);
     }
 
