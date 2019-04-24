@@ -83,6 +83,7 @@ import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -149,6 +150,25 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getBoolean(DATA_ENABLED_KEY, true)).thenReturn(false);
         verify(mChannel, never()).removeListener(any(Channel.Listener.class));
         verify(mChannel, never()).addListener(any(Channel.Listener.class));
+    }
+
+    @Test
+    public void listWhenOffline() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> docs = Data.list(USER_DOCUMENTS, TestDocument.class).get();
+
+        /* Verify the result correct. */
+        assertFalse(docs.hasNextPage());
+        Page<TestDocument> page = docs.getCurrentPage();
+        assertNull(page.getItems());
+        assertNotNull(page.getError());
+        assertEquals(DataException.class, page.getError().getClass());
+        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mLocalDocumentStorage);
+        verifyZeroInteractions(mAuthTokenContext);
     }
 
     @Test

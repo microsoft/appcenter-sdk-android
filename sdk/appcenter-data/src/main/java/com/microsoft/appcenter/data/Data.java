@@ -565,6 +565,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         if (isInvalidPartitionWhenDocuments(partition, result)) {
             return result;
         }
+        if (!mNetworkStateHelper.isNetworkConnected()) {
+            completeFutureAndRemovePendingCallWhenDocuments(new DataException("No network detected. List operation is not supported offline."), result);
+            return result;
+        }
         postAsyncGetter(new Runnable() {
 
             @Override
