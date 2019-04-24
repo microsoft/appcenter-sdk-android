@@ -16,23 +16,23 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -40,22 +40,25 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
 import static com.microsoft.appcenter.data.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
-import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.Constants.SERVICE_NAME;
-import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
+import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 /**
  * Data service.
@@ -188,6 +191,58 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     /**
+     * Create a document from a JSON String.
+     *
+     * @param jsonDocument must be serializable JSON value.
+     */
+    static AppCenterFuture<DocumentWrapper<JSONObject>> create(String partition, String documentId, String jsonDocument) {
+        JSONObject jsonObject = convertToJSONObject(jsonDocument);
+        if (jsonObject == null){
+            return createFutureDataException("Document string can not be converted to JSONObject.");
+        }
+        return create(partition, documentId, jsonObject, JSONObject.class);
+    }
+
+    /**
+     * Create a document from a JSON String.
+     *
+     * @param jsonDocument must be serializable JSON value.
+     */
+    static AppCenterFuture<DocumentWrapper<JSONObject>> create(String partition, String documentId, String jsonDocument, WriteOptions writeOptions) {
+        JSONObject jsonObject = convertToJSONObject(jsonDocument);
+        if (jsonObject == null){
+            return createFutureDataException("Document string can not be converted to JSONObject.");
+        }
+        return create(partition, documentId, jsonObject, JSONObject.class, writeOptions);
+    }
+
+    /**
+     * Replace a document.
+     *
+     * @param jsonDocument must be serializable JSON value.
+     */
+    static AppCenterFuture<DocumentWrapper<JSONObject>> replace(String partition, String documentId, String jsonDocument) {
+        JSONObject jsonObject = convertToJSONObject(jsonDocument);
+        if (jsonObject == null){
+            return createFutureDataException("Document string can not be converted to JSONObject.");
+        }
+        return replace(partition, documentId, jsonObject, JSONObject.class, new WriteOptions());
+    }
+
+    /**
+     * Replace a document.
+     *
+     * @param jsonDocument must be serializable JSON value.
+     */
+    static AppCenterFuture<DocumentWrapper<JSONObject>> replace(String partition, String documentId, String jsonDocument, WriteOptions writeOptions) {
+        JSONObject jsonObject = convertToJSONObject(jsonDocument);
+        if (jsonObject == null){
+            return createFutureDataException("Document string can not be converted to JSONObject.");
+        }
+        return replace(partition, documentId, jsonObject, JSONObject.class, writeOptions);
+    }
+
+    /**
      * Create a document.
      * The document instance (T) must be JSON serializable.
      */
@@ -231,6 +286,23 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
         getInstance().mEventListener = listener;
+    }
+
+    @Nullable
+    private static JSONObject convertToJSONObject(String document){
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = new JSONObject(document);
+        } catch (JSONException e) {
+            AppCenterLog.debug(LOG_TAG, "Can not convert to JSONObject");
+        }
+        return jsonObject;
+    }
+
+    private static AppCenterFuture<DocumentWrapper<JSONObject>> createFutureDataException(String message){
+        DefaultAppCenterFuture<DocumentWrapper<JSONObject>> result = new DefaultAppCenterFuture<>();
+        result.complete(new DocumentWrapper<JSONObject>(new DataException(message)));
+        return result;
     }
 
     /**
