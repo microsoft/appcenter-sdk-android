@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Set data api url. */
-        String storageApiUrl = getString(R.string.data_api_url);
+        String storageApiUrl = getString(R.string.token_exchange_url);
         if (!TextUtils.isEmpty(storageApiUrl)) {
 
             /* TODO once Data released to jCenter, use Data.setTokenExchangeUrl directly. */
