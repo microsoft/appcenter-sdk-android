@@ -181,14 +181,15 @@ class LocalDocumentStorage {
     /**
      * Add delete pending operation to a document.
      *
-     * @param table      table.
-     * @param partition  partition.
-     * @param documentId document identifier.
+     * @param table         table.
+     * @param partition     partition.
+     * @param documentId    document identifier.
+     * @param writeOptions  captures the timeToLive on the cached delete operation
      * @return true if storage update succeeded, false otherwise.
      */
-    boolean deleteOffline(String table, String partition, String documentId) {
+    boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
         DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId);
-        return write(table, writeDocument, new WriteOptions(), PENDING_OPERATION_DELETE_VALUE) > 0;
+        return write(table, writeDocument, writeOptions, PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
     /**
