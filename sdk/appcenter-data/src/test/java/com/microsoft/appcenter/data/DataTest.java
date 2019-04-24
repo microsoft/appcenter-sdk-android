@@ -152,6 +152,21 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
+    public void listWhenOffline() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> docs = Data.list(USER_DOCUMENTS, TestDocument.class).get();
+
+        /* Verify the result correct. */
+        assertFalse(docs.hasNextPage());
+        Page<TestDocument> page = docs.getCurrentPage();
+        assertNull(page.getItems());
+        assertNotNull(page.getError());
+        assertEquals(DataException.class, page.getError().getClass());
+    }
+
+    @Test
     public void listEndToEndWhenSinglePage() {
 
         /* Setup mock to get expiration token from cache. */
