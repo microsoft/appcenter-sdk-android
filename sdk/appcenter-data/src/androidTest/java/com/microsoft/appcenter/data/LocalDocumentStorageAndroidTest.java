@@ -202,7 +202,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void deleteOfflineAddsOnePendingOperation() {
-        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID);
+        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, new WriteOptions());
         List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
     }
@@ -216,7 +216,7 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(1, operations.size());
         PendingOperation operation = operations.get(0);
         assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
-        boolean updated = mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID);
+        boolean updated = mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, new WriteOptions());
         assertTrue(updated);
         operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
         assertEquals(1, operations.size());
@@ -260,7 +260,7 @@ public class LocalDocumentStorageAndroidTest {
     public void syncDeleteOperationMustRemoveFromCache() {
 
         /* If a document is marked for deletion. */
-        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID);
+        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, new WriteOptions());
         DocumentWrapper<Void> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER_DOCUMENTS, ID, Void.class, null);
         assertNull(document.getError());
 
