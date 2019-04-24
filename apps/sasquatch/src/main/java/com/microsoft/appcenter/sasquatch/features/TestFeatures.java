@@ -14,12 +14,12 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
 import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
+import com.microsoft.appcenter.sasquatch.activities.DataActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
-import com.microsoft.appcenter.sasquatch.activities.StorageActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -46,11 +46,11 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
 
-        /* TODO Remove reflection once Storage available in jCenter. */
+        /* TODO Remove reflection once Data available in jCenter. */
         try {
-            Class.forName("com.microsoft.appcenter.storage.Storage");
-            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_storage));
-            sTestFeatureModels.add(new TestFeature(R.string.title_storage, R.string.description_storage, StorageActivity.class));
+            Class.forName("com.microsoft.appcenter.data.Data");
+            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
+            sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
         } catch (ClassNotFoundException ignore) {
         }
     }

@@ -19,12 +19,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.DefaultPartitions;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.activities.storage.TestDocument;
-import com.microsoft.appcenter.storage.Constants;
-import com.microsoft.appcenter.storage.Storage;
-import com.microsoft.appcenter.storage.Utils;
-import com.microsoft.appcenter.storage.models.Document;
+import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
+import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import org.json.JSONException;
@@ -56,10 +56,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private ListView mListView;
 
-    private AppCenterConsumer<Document<TestDocument>> getAppDocument = new AppCenterConsumer<Document<TestDocument>>() {
+    private AppCenterConsumer<DocumentWrapper<TestDocument>> getAppDocument = new AppCenterConsumer<DocumentWrapper<TestDocument>>() {
 
         @Override
-        public void accept(Document<TestDocument> document) {
+        public void accept(DocumentWrapper<TestDocument> document) {
             if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
@@ -69,10 +69,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
         }
     };
 
-    private AppCenterConsumer<Document<Map>> getUserDocument = new AppCenterConsumer<Document<Map>>() {
+    private AppCenterConsumer<DocumentWrapper<Map>> getUserDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
-        public void accept(Document<Map> document) {
+        public void accept(DocumentWrapper<Map> document) {
             if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
@@ -92,14 +92,14 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mDetailProgress.setVisibility(View.VISIBLE);
         mDocumentPartition = intent.getStringExtra(DOCUMENT_PARTITION);
         mDocumentId = intent.getStringExtra(DOCUMENT_ID);
-        if (mDocumentPartition.equals(Constants.USER)) {
-            Storage.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
+        if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
+            Data.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
         } else {
-            Storage.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);
+            Data.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);
         }
     }
 
-    private void fillInfo(Document document) {
+    private void fillInfo(DocumentWrapper document) {
         mDetailProgress.setVisibility(GONE);
         mListView.setVisibility(View.VISIBLE);
         final List<DocumentInfoDisplayModel> list = getDocumentInfoDisplayModelList(document);
@@ -137,12 +137,12 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
     }
 
-    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(Document document) {
+    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(DocumentWrapper document) {
         List<DocumentInfoDisplayModel> list = new ArrayList<>();
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_id_title), mDocumentId));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));
-        if (document.getDocumentError() != null) {
-            String message = document.getDocumentError().getMessage();
+        if (document.getError() != null) {
+            String message = document.getError().getMessage();
             mFullErrorContents = message;
             if (message.length() > MAX_CONTENT_LENGTH) {
                 message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
@@ -150,9 +150,9 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(document.getTimestamp(), TimeUnit.SECONDS)).toString()));
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
-        Object doc = document.getDocument();
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(document.getLastUpdatedDate(), TimeUnit.SECONDS)).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromDeviceCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
+        Object doc = document.getDeserializedValue();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
         try {
             JSONObject docContentsJSON = new JSONObject(docContents);
