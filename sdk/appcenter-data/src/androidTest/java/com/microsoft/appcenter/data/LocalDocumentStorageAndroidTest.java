@@ -188,7 +188,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNull(cachedUserDocument.getDeserializedValue());
         assertNull(cachedAppDocument.getDeserializedValue());
         assertEquals(FAILED_TO_READ_FROM_CACHE, cachedUserDocument.getError().getMessage());
-        assertEquals("DocumentWrapper was not found in the cache.", cachedAppDocument.getError().getMessage());
+        assertEquals("Document was not found in the cache.", cachedAppDocument.getError().getMessage());
     }
 
     @Test

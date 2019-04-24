@@ -5,13 +5,14 @@
 
 package com.microsoft.appcenter.data;
 
-import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.http.HttpException;
 
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,11 +20,11 @@ import org.mockito.Mock;
 
 import java.util.ArrayList;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -41,6 +42,11 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
     @Before
     public void setUpAuth() {
         setUpAuthContext();
+    }
+
+    @After
+    public void tearDown() {
+        Data.unsetInstance();
     }
 
     @Mock

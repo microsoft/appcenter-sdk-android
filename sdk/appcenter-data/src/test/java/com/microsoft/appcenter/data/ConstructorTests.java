@@ -21,5 +21,7 @@ public class ConstructorTests {
         new TokenExchange();
         new CosmosDb();
         new Utils();
+        new TimeToLive();
+        new DefaultPartitions();
     }
 }
