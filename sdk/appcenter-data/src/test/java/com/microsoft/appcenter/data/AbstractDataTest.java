@@ -13,14 +13,14 @@ import android.util.Log;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.data.client.CosmosDb;
+import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
-import com.microsoft.appcenter.data.client.CosmosDb;
-import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -93,9 +93,9 @@ abstract public class AbstractDataTest {
 
     static final long CURRENT_TIMESTAMP = System.currentTimeMillis();
 
-    static final long FUTURE_TIMESTAMP = System.currentTimeMillis() + TimeToLive.DEFAULT;
+    static final long FUTURE_TIMESTAMP = CURRENT_TIMESTAMP + 2 * TimeToLive.DEFAULT * 1000L;
 
-    static final long PAST_TIMESTAMP = System.currentTimeMillis() - TimeToLive.DEFAULT;
+    static final long PAST_TIMESTAMP = CURRENT_TIMESTAMP - 2 * TimeToLive.DEFAULT * 1000L;
 
     final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
