@@ -157,14 +157,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        /* Set data api url. */
-        String storageApiUrl = getString(R.string.token_exchange_url);
-        if (!TextUtils.isEmpty(storageApiUrl)) {
+        /* Set token exchange url. */
+        String tokenExchangeUrl = getString(R.string.token_exchange_url);
+        if (!TextUtils.isEmpty(tokenExchangeUrl)) {
 
             /* TODO once Data released to jCenter, use Data.setTokenExchangeUrl directly. */
             try {
                 Class<?> storage = Class.forName("com.microsoft.appcenter.data.Data");
-                storage.getMethod("setTokenExchangeUrl", String.class).invoke(null, storageApiUrl);
+                storage.getMethod("setTokenExchangeUrl", String.class).invoke(null, tokenExchangeUrl);
             } catch (ClassNotFoundException ignored) {
             } catch (NoSuchMethodException ignored) {
             } catch (Exception e) {
