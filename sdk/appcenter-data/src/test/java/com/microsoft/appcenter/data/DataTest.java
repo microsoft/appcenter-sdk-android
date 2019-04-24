@@ -7,24 +7,24 @@ package com.microsoft.appcenter.data;
 
 import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.ingestion.Ingestion;
-import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -53,15 +53,15 @@ import java.util.TimeZone;
 
 import javax.net.ssl.SSLException;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PREFERENCE_PARTITION_PREFIX;
 import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1037,11 +1037,12 @@ public class DataTest extends AbstractDataTest {
     public void deleteWithoutNetworkSucceeds() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         DocumentWrapper<Void> cachedDocument = new DocumentWrapper<>(null, DefaultPartitions.USER_DOCUMENTS, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
+        WriteOptions writeOptions = new WriteOptions();
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
-        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
+        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), refEq(writeOptions))).thenReturn(true);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER_DOCUMENTS, DOCUMENT_ID);
-        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), refEq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getError());
@@ -1051,11 +1052,12 @@ public class DataTest extends AbstractDataTest {
     public void deleteWithoutNetworkFails() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
+        WriteOptions writeOptions = new WriteOptions(1234);
         DocumentWrapper<Void> cachedDocument = new DocumentWrapper<>(null, DefaultPartitions.USER_DOCUMENTS, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
-        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), anyString(), anyString())).thenReturn(false);
-        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER_DOCUMENTS, DOCUMENT_ID);
-        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
+        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), anyString(), anyString(), eq(writeOptions))).thenReturn(false);
+        AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(USER_DOCUMENTS, DOCUMENT_ID, writeOptions);
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(result.get().getError());

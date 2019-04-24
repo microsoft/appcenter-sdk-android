@@ -16,23 +16,23 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -43,19 +43,19 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
 import static com.microsoft.appcenter.data.Constants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
-import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.Constants.SERVICE_NAME;
-import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
+import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 /**
  * Data service.
@@ -201,7 +201,15 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String partition, String documentId) {
-        return getInstance().instanceDelete(partition, documentId);
+        return delete(partition, documentId, new WriteOptions());
+    }
+
+    /**
+     * Delete a document.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
+    public static AppCenterFuture<DocumentWrapper<Void>> delete(String partition, String documentId, WriteOptions writeOptions) {
+        return getInstance().instanceDelete(partition, documentId, writeOptions);
     }
 
     /**
@@ -449,7 +457,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         });
     }
 
-    private synchronized AppCenterFuture<DocumentWrapper<Void>> instanceDelete(final String partition, final String documentId) {
+
+    private synchronized AppCenterFuture<DocumentWrapper<Void>> instanceDelete(final String partition, final String documentId, final WriteOptions writeOptions) {
         return performOperation(partition, documentId, Void.class, null, new CallTemplate<Void>() {
 
             @Override
@@ -462,7 +471,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 boolean success;
                 if (cachedDocument.getETag() != null) {
                     success =
-                            mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId);
+                            mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId, writeOptions);
                 } else {
                     success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
