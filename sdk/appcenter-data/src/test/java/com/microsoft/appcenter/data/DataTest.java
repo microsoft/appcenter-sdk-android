@@ -7,24 +7,24 @@ package com.microsoft.appcenter.data;
 
 import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.ingestion.Ingestion;
-import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -53,15 +53,15 @@ import java.util.TimeZone;
 
 import javax.net.ssl.SSLException;
 
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PREFERENCE_PARTITION_PREFIX;
 import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -83,6 +83,7 @@ import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -164,6 +165,10 @@ public class DataTest extends AbstractDataTest {
         assertNull(page.getItems());
         assertNotNull(page.getError());
         assertEquals(DataException.class, page.getError().getClass());
+        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mLocalDocumentStorage);
+        verifyZeroInteractions(mAuthTokenContext);
     }
 
     @Test
