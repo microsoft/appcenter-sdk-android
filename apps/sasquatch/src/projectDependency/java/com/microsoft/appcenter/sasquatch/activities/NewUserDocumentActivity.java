@@ -110,7 +110,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
         String documentId = mEditDocumentId.getText().toString();
         documentId = documentId.replace(" ", "-");
-        Data.replace(DefaultPartitions.USER_DOCUMENTS, documentId, document, Map.class, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
+        Data.replace(documentId, document, Map.class, DefaultPartitions.USER_DOCUMENTS, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
 
             @Override
             public void accept(DocumentWrapper<Map> mapDocument) {
