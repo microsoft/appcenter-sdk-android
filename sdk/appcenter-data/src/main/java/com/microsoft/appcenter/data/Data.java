@@ -469,14 +469,15 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             @Override
             public DocumentWrapper<Void> doOfflineOperation(DocumentWrapper<Void> cachedDocument, String table, TokenResult cachedToken) {
                 boolean success;
+                DocumentWrapper<Void> documentWrapper = new DocumentWrapper<>();
                 if (cachedDocument.getETag() != null) {
-                    success =
-                            mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId, writeOptions);
+                    success = mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId, writeOptions);
+                    documentWrapper.setFromCache(true);
                 } else {
                     success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
                 if (success) {
-                    return new DocumentWrapper<>();
+                    return documentWrapper;
                 } else {
                     return new DocumentWrapper<>(new DataException("Failed to write to cache."));
                 }
