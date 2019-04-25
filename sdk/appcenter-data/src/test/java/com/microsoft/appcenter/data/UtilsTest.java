@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -43,16 +44,17 @@ public class UtilsTest {
     public void canParseWhenPassedWrongType() {
         TestDocument testDoc = new TestDocument("test-value");
         DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
-        DocumentWrapper<String> document = Utils.parseDocument(doc.getJsonValue(), String.class);
+        DocumentWrapper<String> document = Utils.parseDocument(doc.toString(), String.class);
         assertNotNull(document.getError());
     }
 
     @Test
-    public void toStringAndGetJsonValueAreEquivalents() {
+    public void jsonValueIsUserDocument() {
         TestDocument testDoc = new TestDocument("test-value");
         DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
         assertNotNull(doc.getJsonValue());
-        assertEquals(doc.getJsonValue(), doc.toString());
+        assertEquals(doc.getJsonValue(), Utils.getGson().toJson(testDoc));
+        assertNotEquals(doc.getJsonValue(), doc.toString());
     }
 
     @Test

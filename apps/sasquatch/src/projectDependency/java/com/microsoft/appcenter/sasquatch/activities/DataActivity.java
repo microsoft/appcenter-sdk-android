@@ -27,12 +27,12 @@ import android.widget.Toast;
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.CustomItemAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
-import com.microsoft.appcenter.data.models.Page;
-import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -200,7 +200,7 @@ public class DataActivity extends AppCompatActivity {
 
             @Override
             public void onRemoveClick(final int position) {
-                Data.delete(DefaultPartitions.USER_DOCUMENTS, mAdapterUser.getItem(position)).thenAccept(new AppCenterConsumer<DocumentWrapper<Void>>() {
+                Data.delete(mAdapterUser.getItem(position), DefaultPartitions.USER_DOCUMENTS).thenAccept(new AppCenterConsumer<DocumentWrapper<Void>>() {
 
                     @Override
                     public void accept(DocumentWrapper<Void> voidDocument) {
