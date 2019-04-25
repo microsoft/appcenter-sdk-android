@@ -93,9 +93,9 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mDocumentPartition = intent.getStringExtra(DOCUMENT_PARTITION);
         mDocumentId = intent.getStringExtra(DOCUMENT_ID);
         if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
-            Data.read(mDocumentPartition, mDocumentId, Map.class).thenAccept(getUserDocument);
+            Data.read(mDocumentId, Map.class, mDocumentPartition).thenAccept(getUserDocument);
         } else {
-            Data.read(mDocumentPartition, mDocumentId, TestDocument.class).thenAccept(getAppDocument);
+            Data.read(mDocumentId, TestDocument.class, mDocumentPartition).thenAccept(getAppDocument);
         }
     }
 

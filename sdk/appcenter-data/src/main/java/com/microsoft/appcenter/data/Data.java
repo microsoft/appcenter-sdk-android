@@ -74,7 +74,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private String mAppSecret;
 
     /**
-      * Current token exchange base URL.
+     * Current token exchange base URL.
      */
     private String mTokenExchangeUrl = DEFAULT_API_URL;
 
@@ -156,8 +156,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String partition, String documentId, Class<T> documentType) {
-        return read(partition, documentId, documentType, new ReadOptions());
+    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition) {
+        return read(documentId, documentType, partition, new ReadOptions());
     }
 
     /**
@@ -165,8 +165,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String partition, String documentId, Class<T> documentType, ReadOptions readOptions) {
-        return getInstance().instanceRead(partition, documentId, documentType, readOptions);
+    public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition, ReadOptions readOptions) {
+        return getInstance().instanceRead(documentId, documentType, partition, readOptions);
     }
 
     /**
@@ -174,8 +174,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<PaginatedDocuments<T>> list(String partition, Class<T> documentType) {
-        return getInstance().instanceList(partition, documentType);
+    public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
+        return getInstance().instanceList(documentType, partition);
     }
 
     /**
@@ -183,8 +183,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String partition, String documentId, T document, Class<T> documentType) {
-        return create(partition, documentId, document, documentType, new WriteOptions());
+    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition) {
+        return create(documentId, document, documentType, partition, new WriteOptions());
     }
 
     /**
@@ -192,24 +192,24 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, null, writeOptions);
+    public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
+        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, null);
     }
 
     /**
      * Delete a document.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static AppCenterFuture<DocumentWrapper<Void>> delete(String partition, String documentId) {
-        return delete(partition, documentId, new WriteOptions());
+    public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition) {
+        return delete(documentId, partition, new WriteOptions());
     }
 
     /**
      * Delete a document.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static AppCenterFuture<DocumentWrapper<Void>> delete(String partition, String documentId, WriteOptions writeOptions) {
-        return getInstance().instanceDelete(partition, documentId, writeOptions);
+    public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition, WriteOptions writeOptions) {
+        return getInstance().instanceDelete(documentId, partition, writeOptions);
     }
 
     /**
@@ -217,8 +217,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String partition, String documentId, T document, Class<T> documentType) {
-        return replace(partition, documentId, document, documentType, new WriteOptions());
+    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition) {
+        return replace(documentId, document, documentType, partition, new WriteOptions());
     }
 
     /**
@@ -226,8 +226,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document instance (T) must be JSON serializable.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(partition, documentId, document, documentType, CosmosDb.getUpsertAdditionalHeader(), writeOptions);
+    public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
+        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, CosmosDb.getUpsertAdditionalHeader());
     }
 
     /**
@@ -434,9 +434,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized <T> AppCenterFuture<DocumentWrapper<T>> instanceRead(
-            final String partition,
-            final String documentId,
-            final Class<T> documentType,
+            final String documentId, final Class<T> documentType, final String partition,
             final ReadOptions readOptions) {
         return performOperation(partition, documentId, documentType, readOptions, new CallTemplate<T>() {
 
@@ -458,7 +456,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
 
-    private synchronized AppCenterFuture<DocumentWrapper<Void>> instanceDelete(final String partition, final String documentId, final WriteOptions writeOptions) {
+    private synchronized AppCenterFuture<DocumentWrapper<Void>> instanceDelete(final String documentId, final String partition, final WriteOptions writeOptions) {
         return performOperation(partition, documentId, Void.class, null, new CallTemplate<Void>() {
 
             @Override
@@ -561,7 +559,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Create a document
      * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final String partition, final Class<T> documentType) {
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartitionWhenDocuments(partition, result)) {
             return result;
@@ -699,12 +697,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     private synchronized <T> AppCenterFuture<DocumentWrapper<T>> instanceCreateOrUpdate(
-            final String partition,
-            final String documentId,
-            final T document,
-            final Class<T> documentType,
-            final Map<String, String> additionalHeaders,
-            final WriteOptions writeOptions) {
+            final String documentId, final T document, final Class<T> documentType, final String partition,
+            final WriteOptions writeOptions, final Map<String, String> additionalHeaders) {
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidPartition(partition, result)) {
             return result;

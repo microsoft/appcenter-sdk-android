@@ -184,7 +184,7 @@ public class DataActivity extends AppCompatActivity {
         });
         showProgress();
         mAppDocumentsLoading = true;
-        Data.list(DefaultPartitions.APP_DOCUMENTS, TestDocument.class).thenAccept(mUploadApp);
+        Data.list(TestDocument.class, DefaultPartitions.APP_DOCUMENTS).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<DocumentWrapper<Map>>(), this);
@@ -240,7 +240,7 @@ public class DataActivity extends AppCompatActivity {
         if (accountId != null) {
             mUserDocumentsLoading = true;
             showProgress();
-            Data.list(DefaultPartitions.USER_DOCUMENTS, Map.class).thenAccept(mUploadUser);
+            Data.list(Map.class, DefaultPartitions.USER_DOCUMENTS).thenAccept(mUploadUser);
         }
     }
 
