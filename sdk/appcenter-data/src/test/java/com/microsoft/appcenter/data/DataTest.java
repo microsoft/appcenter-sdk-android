@@ -1066,6 +1066,7 @@ public class DataTest extends AbstractDataTest {
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getError());
+        assertTrue(result.get().isFromDeviceCache());
     }
 
     @Test
@@ -1081,6 +1082,7 @@ public class DataTest extends AbstractDataTest {
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(result.get().getError());
+        assertFalse(result.get().isFromDeviceCache());
     }
 
     @Test
