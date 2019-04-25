@@ -52,23 +52,23 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITIES;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_DEFAULT;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
+import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
 import static com.microsoft.appcenter.auth.Constants.CONFIG_URL_FORMAT;
 import static com.microsoft.appcenter.auth.Constants.DEFAULT_CONFIG_URL;
 import static com.microsoft.appcenter.auth.Constants.FILE_PATH;
 import static com.microsoft.appcenter.auth.Constants.HEADER_E_TAG;
 import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
-import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
 import static com.microsoft.appcenter.auth.Constants.IDENTITY_SCOPE;
 import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
 import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
 import static com.microsoft.appcenter.auth.Constants.SERVICE_NAME;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 /**
  * Auth service.
@@ -518,8 +518,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         }
         IAccount account = retrieveAccount(homeAccountIdentifier);
         if (account != null) {
-            boolean result = mAuthenticationClient.removeAccount(account);
-            AppCenterLog.debug(LOG_TAG, String.format("Remove account success=%s", result));
+            mAuthenticationClient.removeAccount(account, new PublicClientApplication.AccountsRemovedCallback() {
+
+                @Override
+                public void onAccountsRemoved(Boolean isSuccess) {
+                    AppCenterLog.debug(LOG_TAG, String.format("Remove account isSuccess=%s", isSuccess));
+                }
+            });
         }
     }
 
