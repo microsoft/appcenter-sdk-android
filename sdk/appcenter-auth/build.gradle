@@ -10,5 +10,5 @@ dependencies {
     api project(':sdk:appcenter')
 
     //noinspection GradleDependency
-    api 'com.microsoft.identity.client:msal:0.3.1-RC2'
+    api 'com.microsoft.identity.client:msal:0.3.1-alpha'
 }
