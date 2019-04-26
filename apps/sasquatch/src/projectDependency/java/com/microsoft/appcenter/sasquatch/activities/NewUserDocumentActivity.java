@@ -18,13 +18,13 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.DefaultPartitions;
+import com.microsoft.appcenter.data.TimeToLive;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
-import com.microsoft.appcenter.storage.Constants;
-import com.microsoft.appcenter.storage.Storage;
-import com.microsoft.appcenter.storage.models.BaseOptions;
-import com.microsoft.appcenter.storage.models.Document;
-import com.microsoft.appcenter.storage.models.WriteOptions;
+import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     private EditText mEditDocumentId;
 
-    private WriteOptions mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+    private WriteOptions mWriteOptions = new WriteOptions(TimeToLive.DEFAULT);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +46,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_new_user_document);
         mEditDocumentId = findViewById(R.id.user_document_id);
         Spinner ttlSpinner = findViewById(R.id.ttl_spinner);
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.storage_ttls));
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.data_ttls));
         ttlSpinner.setAdapter(typeAdapter);
         ttlSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -63,10 +63,10 @@ public class NewUserDocumentActivity extends AppCompatActivity {
     }
 
     private void updateWriteOptions(int position) {
-        StorageTtl storageTtl = StorageTtl.values()[position];
-        switch (storageTtl) {
+        DocumentDeviceTtl documentDeviceTtl = DocumentDeviceTtl.values()[position];
+        switch (documentDeviceTtl) {
             case DEFAULT:
-                mWriteOptions = new WriteOptions(BaseOptions.DEFAULT_EXPIRATION_IN_SECONDS);
+                mWriteOptions = new WriteOptions(TimeToLive.DEFAULT);
                 break;
             case NO_CACHE:
                 mWriteOptions = WriteOptions.createNoCacheOptions();
@@ -110,10 +110,10 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         }
         String documentId = mEditDocumentId.getText().toString();
         documentId = documentId.replace(" ", "-");
-        Storage.replace(Constants.USER, documentId, document, Map.class, mWriteOptions).thenAccept(new AppCenterConsumer<Document<Map>>() {
+        Data.replace(documentId, document, Map.class, DefaultPartitions.USER_DOCUMENTS, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
 
             @Override
-            public void accept(Document<Map> mapDocument) {
+            public void accept(DocumentWrapper<Map> mapDocument) {
                 if (mapDocument.hasFailed()) {
                     Toast.makeText(NewUserDocumentActivity.this, R.string.message_whether_error, Toast.LENGTH_SHORT).show();
                     mProperties.clear();
@@ -125,7 +125,7 @@ public class NewUserDocumentActivity extends AppCompatActivity {
         });
     }
 
-    private enum StorageTtl {
+    private enum DocumentDeviceTtl {
         DEFAULT,
         NO_CACHE,
         TWO_SECONDS,

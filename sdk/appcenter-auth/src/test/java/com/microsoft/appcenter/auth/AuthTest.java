@@ -1683,7 +1683,12 @@ public class AuthTest extends AbstractAuthTest {
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(account);
         Auth.signOut();
-        verify(publicClientApplication).removeAccount(eq(account));
+        ArgumentCaptor<PublicClientApplication.AccountsRemovedCallback> accountsRemovedCallbackArgumentCaptor = ArgumentCaptor.forClass(PublicClientApplication.AccountsRemovedCallback.class);
+        verify(publicClientApplication).removeAccount(eq(account), accountsRemovedCallbackArgumentCaptor.capture());
+        assertNotNull(accountsRemovedCallbackArgumentCaptor.getValue());
+
+        /* Invoke the removed account callback, it just logs so we just need to test it does not crash. */
+        accountsRemovedCallbackArgumentCaptor.getValue().onAccountsRemoved(true);
     }
 
     @Test
@@ -1712,7 +1717,7 @@ public class AuthTest extends AbstractAuthTest {
         when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
         start(auth);
         Auth.signOut();
-        verify(publicClientApplication, never()).removeAccount(eq(account));
+        verify(publicClientApplication, never()).removeAccount(eq(account), any(PublicClientApplication.AccountsRemovedCallback.class));
     }
 
     @Test
@@ -1743,7 +1748,7 @@ public class AuthTest extends AbstractAuthTest {
         when(accountIdentifier.getIdentifier()).thenReturn("10");
         when(account.getHomeAccountIdentifier()).thenReturn(accountIdentifier);
         Auth.signOut();
-        verify(publicClientApplication, never()).removeAccount(eq(account));
+        verify(publicClientApplication, never()).removeAccount(eq(account), any(PublicClientApplication.AccountsRemovedCallback.class));
     }
 
     private void mockReadyToSignIn() throws Exception {

@@ -81,12 +81,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="@string/storage_key"
-        android:title="@string/storage_title">
+        android:key="@string/data_key"
+        android:title="@string/data_title">
         <CheckBoxPreference
             android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_storage_state_key"
-            android:title="@string/appcenter_storage_state_title" />
+            android:key="@string/appcenter_data_state_key"
+            android:title="@string/appcenter_data_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
