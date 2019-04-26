@@ -328,7 +328,13 @@ class LocalDocumentStorage {
 
             /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
             if (readOptions != null) {
-                write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+                if(readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
+                 // delete the document since no cache was requested
+                    mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
+                }
+                else {
+                    write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+                }
             }
             return document;
         }

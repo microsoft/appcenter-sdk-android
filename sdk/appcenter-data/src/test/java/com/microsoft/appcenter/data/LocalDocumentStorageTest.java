@@ -27,9 +27,12 @@ import org.junit.Test;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -75,6 +78,8 @@ public class LocalDocumentStorageTest {
 
     private Cursor mCursor;
 
+    private ContentValues mCurrentValue;
+
     @Mock
     private AuthTokenContext mAuthTokenContext;
 
@@ -86,6 +91,7 @@ public class LocalDocumentStorageTest {
         mockStatic(AppCenterLog.class);
         mDatabaseManager = mock(DatabaseManager.class);
         mCursor = mock(Cursor.class);
+        mCurrentValue = mock(ContentValues.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
 
         mLocalDocumentStorage = new LocalDocumentStorage(mock(Context.class), null);
@@ -130,6 +136,22 @@ public class LocalDocumentStorageTest {
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
         assertNotNull(argumentCaptor.getValue());
+    }
+
+    @Test
+    public void readWithNoCacheDiscardsPreviousWriteWithCache() {
+        when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
+        when(mDatabaseManager.nextValues(mCursor)).thenReturn(mCurrentValue);
+        when(mCurrentValue.getAsLong(anyString())).thenReturn(-1L);
+        when(mCurrentValue.getAsString(anyString())).thenReturn("{\"_ts\":0,\"document\":\"Test value\",\"PartitionKey\":\"partition\",\"id\":\"id\"}");
+        DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
+        // Verify that we delete the written document because readOptions are set to NoCache.
+        verify(mDatabaseManager).delete(anyString(), any(ContentValues.class));
+        assertNotNull(doc);
+        assertNotNull(doc.getDeserializedValue());
+        assertFalse(doc.hasFailed());
+        assertTrue(doc.isFromDeviceCache());
+        verify(mCursor).close();
     }
 
     @Test
