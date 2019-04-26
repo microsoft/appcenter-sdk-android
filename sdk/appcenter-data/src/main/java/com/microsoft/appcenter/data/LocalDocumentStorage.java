@@ -181,10 +181,10 @@ class LocalDocumentStorage {
     /**
      * Add delete pending operation to a document.
      *
-     * @param table         table.
-     * @param partition     partition.
-     * @param documentId    document identifier.
-     * @param writeOptions  captures the timeToLive on the cached delete operation
+     * @param table        table.
+     * @param partition    partition.
+     * @param documentId   document identifier.
+     * @param writeOptions captures the timeToLive on the cached delete operation
      * @return true if storage update succeeded, false otherwise.
      */
     boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
@@ -328,11 +328,11 @@ class LocalDocumentStorage {
 
             /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
             if (readOptions != null) {
-                if(readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
-                 // delete the document since no cache was requested
+                if (readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
+
+                    /* Delete the document since no cache was requested. */
                     mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
-                }
-                else {
+                } else {
                     write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
                 }
             }
