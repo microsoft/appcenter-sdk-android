@@ -10,13 +10,13 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
-import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
@@ -96,9 +96,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 })
 public class DataTest extends AbstractDataTest {
 
-    @Mock
-    private DataStoreEventListener mDataStoreEventListener;
-
     private static final String TOKEN_RESULT = String.format("{\n" +
             "            \"partition\": \"%s\",\n" +
             "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
@@ -108,6 +105,9 @@ public class DataTest extends AbstractDataTest {
             "            \"status\": \"Succeed\",\n" +
             "            \"accountId\": \"%s\"\n" +
             "}", RESOLVED_USER_PARTITION, "token", ACCOUNT_ID);
+
+    @Mock
+    private RemoteOperationListener mRemoteOperationListener;
 
     @Before
     public void setUpAuth() {
@@ -166,7 +166,7 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(page.getError());
         assertEquals(DataException.class, page.getError().getClass());
         verifyZeroInteractions(mHttpClient);
-        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mRemoteOperationListener);
         verifyZeroInteractions(mLocalDocumentStorage);
         verifyZeroInteractions(mAuthTokenContext);
     }
@@ -798,7 +798,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
@@ -856,7 +856,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
@@ -1248,7 +1248,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
@@ -1256,13 +1256,13 @@ public class DataTest extends AbstractDataTest {
 
         /* Verify pending operation get processed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
@@ -1287,18 +1287,18 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
         mChannel = start(mData);
 
         /* Verify pending operation is not get processed. */
-        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+        verify(mRemoteOperationListener, never()).onRemoteOperationCompleted(
                 anyString(),
                 any(DocumentMetadata.class),
                 any(DataException.class));
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(pendingOperation));
     }
 
@@ -1357,7 +1357,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
@@ -1367,11 +1367,11 @@ public class DataTest extends AbstractDataTest {
         Data.setEnabled(false).get();
 
         /* Verify the service call has been canceled. */
-        verify(mDataStoreEventListener, never()).onDataStoreOperationResult(
+        verify(mRemoteOperationListener, never()).onRemoteOperationCompleted(
                 anyString(),
                 any(DocumentMetadata.class),
                 any(DataException.class));
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
         verify(mLocalDocumentStorage, never()).updatePendingOperation(eq(deletePendingOperation));
         verify(serviceCallMock1).cancel();
         verify(serviceCallMock2).cancel();
@@ -1397,7 +1397,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();
@@ -1405,13 +1405,13 @@ public class DataTest extends AbstractDataTest {
 
         /* Verify only one pending operation has been executed. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
         assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
         assertNull(documentMetadata.getETag());
@@ -1453,7 +1453,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Set up listener. */
         Data.unsetInstance();
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
 
         /* Start data. */
         mData = Data.getInstance();

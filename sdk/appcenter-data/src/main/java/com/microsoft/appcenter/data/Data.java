@@ -20,13 +20,13 @@ import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.data.exception.DataException;
-import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
@@ -68,6 +68,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @SuppressLint("StaticFieldLeak")
     private static Data sInstance;
 
+    private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
+
     /**
      * Application secret.
      */
@@ -80,8 +82,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
-
     private HttpClient mHttpClient;
 
     private TokenManager mTokenManager;
@@ -89,9 +89,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private LocalDocumentStorage mLocalDocumentStorage;
 
     /**
-     * Current event listener.
+     * Current remote operation listener.
      */
-    private volatile DataStoreEventListener mEventListener;
+    private volatile RemoteOperationListener mRemoteOperationListener;
 
     /**
      * Authorization listener for {@link AuthTokenContext}.
@@ -234,11 +234,15 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Sets a listener that will be invoked on network status change to notify of pending operations execution status.
      * Pass null to unregister.
      *
-     * @param listener to notify on remote operations or null to unregister the previous listener.
+     * @param listener listener to register or null to unregister a previous listener.
      */
     @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
-    public static void setDataStoreRemoteOperationListener(DataStoreEventListener listener) {
-        getInstance().mEventListener = listener;
+    public static void setRemoteOperationListener(RemoteOperationListener listener) {
+        getInstance().mRemoteOperationListener = listener;
+    }
+
+    private static DataException getInvalidPartitionDataException(String partition) {
+        return new DataException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
     }
 
     /**
@@ -246,10 +250,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     private synchronized void setInstanceTokenExchangeUrl(String tokenExchangeUrl) {
         mTokenExchangeUrl = tokenExchangeUrl;
-    }
-
-    private static DataException getInvalidPartitionDataException(String partition) {
-        return new DataException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
     }
 
     @Override
@@ -842,15 +842,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private interface CallTemplate<T> {
-
-        boolean needsRemoteOperation(DocumentWrapper<T> cachedDocument);
-
-        DocumentWrapper<T> doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken);
-
-        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result);
-    }
-
     private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
@@ -897,9 +888,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 String eTag = Utils.getEtag(cosmosDbResponsePayload);
                 pendingOperation.setETag(eTag);
                 pendingOperation.setDocument(cosmosDbResponsePayload);
-                DataStoreEventListener eventListener = mEventListener;
+                RemoteOperationListener eventListener = mRemoteOperationListener;
                 if (eventListener != null) {
-                    eventListener.onDataStoreOperationResult(
+                    eventListener.onRemoteOperationCompleted(
                             pendingOperation.getOperation(),
                             new DocumentMetadata(
                                     pendingOperation.getPartition(),
@@ -941,9 +932,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             break;
                     }
                 }
-                DataStoreEventListener eventListener = mEventListener;
+                RemoteOperationListener eventListener = mRemoteOperationListener;
                 if (eventListener != null) {
-                    eventListener.onDataStoreOperationResult(
+                    eventListener.onRemoteOperationCompleted(
                             pendingOperation.getOperation(),
                             null,
                             e);
@@ -974,5 +965,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionDataException(partition), result);
         }
         return invalidPartitionName;
+    }
+
+    private interface CallTemplate<T> {
+
+        boolean needsRemoteOperation(DocumentWrapper<T> cachedDocument);
+
+        DocumentWrapper<T> doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken);
+
+        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result);
     }
 }
