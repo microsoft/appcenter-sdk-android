@@ -105,6 +105,7 @@ public class DataTest extends AbstractDataTest {
             "            \"status\": \"Succeed\",\n" +
             "            \"accountId\": \"%s\"\n" +
             "}", RESOLVED_USER_PARTITION, "token", ACCOUNT_ID);
+
     @Mock
     private RemoteOperationListener mRemoteOperationListener;
 

@@ -68,7 +68,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @SuppressLint("StaticFieldLeak")
     private static Data sInstance;
     private final HashMap<String, ServiceCall> mOutgoingPendingOperationCalls = new HashMap<>();
-    /**
+
+     /**
      * Application secret.
      */
     private String mAppSecret;
@@ -76,7 +77,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Current token exchange base URL.
      */
     private String mTokenExchangeUrl = DEFAULT_API_URL;
-    private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
+     private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
+
     private HttpClient mHttpClient;
 
     private TokenManager mTokenManager;
