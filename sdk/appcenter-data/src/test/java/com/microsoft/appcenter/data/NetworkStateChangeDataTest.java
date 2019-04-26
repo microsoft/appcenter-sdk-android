@@ -6,9 +6,9 @@
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.exception.DataException;
-import com.microsoft.appcenter.data.models.DataStoreEventListener;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.HttpException;
 
 import org.json.JSONException;
@@ -39,6 +39,9 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 
 public class NetworkStateChangeDataTest extends AbstractDataTest {
 
+    @Mock
+    private RemoteOperationListener mRemoteOperationListener;
+
     @Before
     public void setUpAuth() {
         setUpAuthContext();
@@ -48,9 +51,6 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
     public void tearDown() {
         Data.unsetInstance();
     }
-
-    @Mock
-    private DataStoreEventListener mDataStoreEventListener;
 
     @Test
     public void pendingCreateOperationSuccess() throws JSONException {
@@ -79,18 +79,18 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_CREATE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
@@ -147,7 +147,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
 
         verifyNoMoreInteractions(mHttpClient);
-        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mRemoteOperationListener);
     }
 
     @Test
@@ -178,19 +178,19 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
 
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(500, "You failed!");
         verifyTokenExchangeToCosmosDbFlow(documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
 
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
         DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
         assertEquals(cosmosFailureException, documentError.getCause());
         verify(mLocalDocumentStorage, never()).deleteOnline(anyString(), anyString(), anyString());
     }
@@ -211,7 +211,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         mData.onNetworkStateUpdated(true);
         verifyZeroInteractions(mHttpClient);
-        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mRemoteOperationListener);
     }
 
     @Test
@@ -219,7 +219,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         mData.onNetworkStateUpdated(false);
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mLocalDocumentStorage);
-        verifyZeroInteractions(mDataStoreEventListener);
+        verifyZeroInteractions(mRemoteOperationListener);
     }
 
     @Test
@@ -247,18 +247,18 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                     add(pendingOperation);
                 }});
 
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
         verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
 
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(operation),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
         DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
     }
 
     @Test
@@ -278,18 +278,18 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
 
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
                 isNull(DataException.class));
         DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
         assertNotNull(documentMetadata);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
 
         assertEquals(DOCUMENT_ID, documentMetadata.getId());
         assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
@@ -330,19 +330,19 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
 
-        Data.setDataStoreRemoteOperationListener(mDataStoreEventListener);
+        Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
-        verify(mDataStoreEventListener).onDataStoreOperationResult(
+        verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(pendingOperation.getOperation()),
                 isNull(DocumentMetadata.class),
                 documentErrorArgumentCaptor.capture());
         DataException documentError = documentErrorArgumentCaptor.getValue();
         assertNotNull(documentError);
-        verifyNoMoreInteractions(mDataStoreEventListener);
+        verifyNoMoreInteractions(mRemoteOperationListener);
 
         assertEquals(cosmosFailureException, documentError.getCause());
 
