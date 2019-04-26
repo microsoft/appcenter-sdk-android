@@ -255,7 +255,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = createHttpClient(context);
+        mHttpClient = createHttpClient(context, false);
         mTokenManager = TokenManager.getInstance(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
@@ -361,7 +361,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     protected String getLoggerTag() {
         return LOG_TAG;
     }
-
 
     private <T> DefaultAppCenterFuture<DocumentWrapper<T>> performOperation(@NonNull final String partition,
                                                                             @NonNull final String documentId,
