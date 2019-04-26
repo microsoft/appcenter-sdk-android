@@ -143,7 +143,7 @@ public class HttpUtils {
             lastEnd = matcher.end();
         }
         if (lastEnd < apiKeys.length()) {
-            buffer.append(apiKeys.substring(lastEnd, apiKeys.length()));
+            buffer.append(apiKeys.substring(lastEnd));
         }
         return buffer.toString();
     }
@@ -170,6 +170,10 @@ public class HttpUtils {
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {
+        return createHttpClient(context, true);
+    }
+
+    public static HttpClient createHttpClient(@NonNull Context context, boolean compressionEnabled) {
         HttpClient httpClient = new DefaultHttpClient();
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);

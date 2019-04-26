@@ -115,7 +115,8 @@ public class DefaultHttpClientTest {
                         (Map<String, String>) invocation.getArguments()[2],
                         (HttpClient.CallTemplate) invocation.getArguments()[3],
                         (ServiceCallback) invocation.getArguments()[4],
-                        (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5]));
+                        (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5],
+                        (boolean) invocation.getArguments()[6]));
                 when(call.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
 
                     @Override
@@ -1020,6 +1021,71 @@ public class DefaultHttpClientTest {
 
         /* Check no payload logging since log level not enabled. */
         verifyStatic(never());
+        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains(payload);
+            }
+        }));
+    }
+
+    @Test
+    public void sendNoGzipWhenCompressionDisabled() throws Exception {
+
+        /* Mock verbose logging. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+
+        /* Configure mock HTTP. */
+        String urlString = "http://mock";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        when(urlConnection.getInputStream()).thenReturn(new ByteArrayInputStream("OK".getBytes()));
+
+        /* Long mock payload. */
+        StringBuilder payloadBuilder = new StringBuilder();
+        for (int i = 0; i < 1400; i++) {
+            payloadBuilder.append('a');
+        }
+        final String payload = payloadBuilder.toString();
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        when(callTemplate.buildRequestBody()).thenReturn(payload);
+        DefaultHttpClient httpClient = new DefaultHttpClient(false);
+
+        /* Test calling code. */
+        String appSecret = UUIDUtils.randomUUID().toString();
+        UUID installId = UUIDUtils.randomUUID();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "custom");
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_POST, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded("OK", Collections.<String, String>emptyMap());
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestProperty("Content-Type", "custom");
+
+        /* Also verify content type was set only once, json not applied. */
+        verify(urlConnection).setRequestProperty(eq("Content-Type"), anyString());
+        verify(urlConnection, never()).setRequestProperty("Content-Encoding", "gzip");
+        verify(urlConnection).setRequestMethod("POST");
+        verify(urlConnection).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).buildRequestBody();
+        httpClient.close();
+
+        /* Verify payload not compressed. */
+        assertEquals(payload, buffer.toString());
+
+        /* Check payload logged but not as JSON since different content type. */
+        verifyStatic();
         AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
             @Override
             public boolean matches(Object argument) {

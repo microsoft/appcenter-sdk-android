@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.data;
 
+import android.content.Context;
+
 import com.google.gson.JsonSyntaxException;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
@@ -21,6 +23,7 @@ import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
@@ -87,6 +90,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({
@@ -1485,5 +1489,18 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(future.get().getError());
         assertTrue(future.get().getError().getCause() instanceof DataException);
         assertTrue(future.get().getError().getCause().getCause() instanceof JsonSyntaxException);
+    }
+
+    @Test
+    public void httpClientCreatedWithoutCompression() {
+        mockStatic(HttpUtils.class);
+
+        /* When Data class is initialized. */
+        Data.unsetInstance();
+        start(Data.getInstance());
+
+        /* Http Client must be created without compression. */
+        verifyStatic();
+        HttpUtils.createHttpClient(any(Context.class), eq(false));
     }
 }

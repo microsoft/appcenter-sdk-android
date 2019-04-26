@@ -73,6 +73,19 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
      */
     private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
 
+    /**
+     * Indicates whether compression is enabled.
+     */
+    private boolean mCompressionEnabled;
+
+    public DefaultHttpClient() {
+        this(true);
+    }
+
+    public DefaultHttpClient(boolean compressionEnabled) {
+        mCompressionEnabled = compressionEnabled;
+    }
+
     @VisibleForTesting
     Set<DefaultHttpClientCallTask> getTasks() {
         return mTasks;
@@ -80,7 +93,7 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
-        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this);
+        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this, mCompressionEnabled);
         try {
             task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (final RejectedExecutionException e) {
