@@ -335,6 +335,19 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
+    public void listWithEmptyIterator() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> paginatedDocuments = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        Iterator<DocumentWrapper<TestDocument>> iterator = paginatedDocuments.iterator();
+        assertFalse(iterator.hasNext());
+
+        /* Verify not throws exception. */
+        iterator.remove();
+    }
+
+    @Test
     public void listEndToEndWhenExceptionHappened() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);

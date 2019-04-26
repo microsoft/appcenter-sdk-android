@@ -17,6 +17,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -152,7 +153,8 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
 
             @Override
             public boolean hasNext() {
-                return mCurrentIndex < getCurrentPage().getItems().size() || hasNextPage();
+               List<DocumentWrapper<T>> items = getCurrentPage().getItems();
+               return (items != null && mCurrentIndex < items.size()) || hasNextPage();
             }
 
             @Override
