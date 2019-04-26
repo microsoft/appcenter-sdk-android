@@ -27,12 +27,9 @@ import org.junit.Test;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -145,7 +142,8 @@ public class LocalDocumentStorageTest {
         when(mCurrentValue.getAsLong(anyString())).thenReturn(-1L);
         when(mCurrentValue.getAsString(anyString())).thenReturn("{\"_ts\":0,\"document\":\"Test value\",\"PartitionKey\":\"partition\",\"id\":\"id\"}");
         DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
-        // Verify that we delete the written document because readOptions are set to NoCache.
+
+        /* Verify that we delete the written document because readOptions are set to NoCache. */
         verify(mDatabaseManager).delete(anyString(), any(ContentValues.class));
         assertNotNull(doc);
         assertNotNull(doc.getDeserializedValue());
