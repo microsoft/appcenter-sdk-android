@@ -285,7 +285,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Download configuration. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/auth/" + APP_SECRET + ".json";
         verify(mHttpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
@@ -1775,7 +1775,7 @@ public class AuthTest extends AbstractAuthTest {
         start(Auth.getInstance());
 
         /* Check call. */
-        String expectedUrl = configUrl + "/identity/" + APP_SECRET + ".json";
+        String expectedUrl = configUrl + "/auth/" + APP_SECRET + ".json";
         verify(mHttpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -1808,7 +1808,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/identity/" + APP_SECRET + ".json";
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/auth/" + APP_SECRET + ".json";
         verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
