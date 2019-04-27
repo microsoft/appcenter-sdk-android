@@ -103,14 +103,18 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * Get the flag indicating if data was retrieved from the local cache (for offline mode)
+     * Get the flag indicating if data was retrieved from the local cache (for offline mode).
+     *
+     * @return true if the document was retrieved from the local cache, false otherwise.
      */
     public boolean isFromDeviceCache() {
         return mFromDeviceCache;
     }
 
     /**
-     * Set the flag indicating if data was retrieved from the local cache (for offline mode)
+     * Set the flag indicating if data was retrieved from the local cache (for offline mode).
+     *
+     * @param fromCache true to indicate this data is from the local cache, false otherwise.
      */
     public void setFromCache(boolean fromCache) {
         mFromDeviceCache = fromCache;
@@ -118,6 +122,8 @@ public class DocumentWrapper<T> extends DocumentMetadata {
 
     /**
      * Get the pending operation value.
+     *
+     * @return the pending operation value.
      */
     public String getPendingOperation() {
         return mPendingOperation;

@@ -360,11 +360,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
         /**
          * Called before the http call operation.
+         *
+         * @param task The http call.
          */
         void onStart(DefaultHttpClientCallTask task);
 
         /**
          * Called after the http call operation.
+         *
+         * @param task The http call.
          */
         void onFinish(DefaultHttpClientCallTask task);
     }
