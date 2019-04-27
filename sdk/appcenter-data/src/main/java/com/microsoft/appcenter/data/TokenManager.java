@@ -41,6 +41,7 @@ public class TokenManager {
     /**
      * Get token manager instance.
      *
+     * @param context application context.
      * @return Shared token manager instance.
      */
     public static TokenManager getInstance(Context context) {

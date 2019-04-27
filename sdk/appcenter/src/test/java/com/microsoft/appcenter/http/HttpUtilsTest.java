@@ -105,8 +105,7 @@ public class HttpUtilsTest {
         assertFalse(defaultHttpClient.isCompressionEnabled());
     }
 
-    private DefaultHttpClient getDefaultHttpClient(HttpClientDecorator httpClient) {
-        HttpClientDecorator httpClientDecorator = httpClient;
+    private DefaultHttpClient getDefaultHttpClient(HttpClientDecorator httpClientDecorator) {
         httpClientDecorator = (HttpClientDecorator) httpClientDecorator.getDecoratedApi();
         return (DefaultHttpClient) httpClientDecorator.getDecoratedApi();
     }
