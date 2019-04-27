@@ -149,4 +149,9 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
         /* Nothing to do. */
     }
+
+    @VisibleForTesting
+    boolean isCompressionEnabled() {
+        return mCompressionEnabled;
+    }
 }
