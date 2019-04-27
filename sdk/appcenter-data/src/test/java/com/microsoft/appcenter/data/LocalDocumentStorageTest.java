@@ -191,6 +191,7 @@ public class LocalDocumentStorageTest {
         assertTrue(doc.hasFailed());
         assertEquals(DataException.class, doc.getError().getClass());
         assertThat(doc.getError().getMessage(), CoreMatchers.containsString(LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE));
+        assertTrue(doc.isFromDeviceCache());
     }
 
     @Test
@@ -201,6 +202,7 @@ public class LocalDocumentStorageTest {
         DocumentWrapper<String> doc = mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNotNull(doc.getError());
+        assertTrue(doc.isFromDeviceCache());
     }
 
     @Test
@@ -208,6 +210,14 @@ public class LocalDocumentStorageTest {
         doThrow(new RuntimeException()).when(mDatabaseManager).delete(anyString(), anyString(), any(String[].class));
         mLocalDocumentStorage.deleteOnline(mUserTableName, PARTITION, DOCUMENT_ID);
         verify(mDatabaseManager).delete(eq(mUserTableName), anyString(), AdditionalMatchers.aryEq(new String[]{PARTITION, DOCUMENT_ID}));
+    }
+
+    @Test
+    public void deleteDocumentOfflineSucceeds() {
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
+        DocumentWrapper<Void> wrapper = new DocumentWrapper<>(null, PARTITION, DOCUMENT_ID);
+        assertTrue(mLocalDocumentStorage.deleteOffline(mUserTableName, wrapper, new WriteOptions()));
+        assertTrue(wrapper.isFromDeviceCache());
     }
 
     @Test

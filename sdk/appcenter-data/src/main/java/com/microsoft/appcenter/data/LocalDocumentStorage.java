@@ -157,6 +157,7 @@ class LocalDocumentStorage {
 
     <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
         DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
+        cachedDocument.setFromCache(true);
         if (cachedDocument.getError() != null && cachedDocument.getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
             return cachedDocument;
         }
@@ -167,7 +168,11 @@ class LocalDocumentStorage {
                 cachedDocument.getError() != null ?
                         createOffline(table, writeDocument, writeOptions) :
                         updateOffline(table, writeDocument, writeOptions);
-        return rowId >= 0 ? writeDocument : new DocumentWrapper<T>(new DataException("Failed to write document into cache."));
+        if (rowId < 0) {
+            writeDocument = new DocumentWrapper<T>(new DataException("Failed to write document into cache."));
+        }
+        writeDocument.setFromCache(true);
+        return writeDocument;
     }
 
     private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
@@ -182,12 +187,25 @@ class LocalDocumentStorage {
      * Add delete pending operation to a document.
      *
      * @param table        table.
+     * @param documentWrapper   document wrapper.
+     * @param writeOptions captures the timeToLive on the cached delete operation
+     * @return true if storage update succeeded, false otherwise.
+     */
+    boolean deleteOffline(String table, DocumentWrapper<Void> documentWrapper, WriteOptions writeOptions) {
+        documentWrapper.setFromCache(true);
+        return deleteOffline(table, documentWrapper.getPartition(), documentWrapper.getId(), writeOptions);
+    }
+
+    /**
+     * Add delete pending operation to a document.
+     *
+     * @param table        table.
      * @param partition    partition.
      * @param documentId   document identifier.
      * @param writeOptions captures the timeToLive on the cached delete operation
      * @return true if storage update succeeded, false otherwise.
      */
-    boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
+     boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
         DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId);
         return write(table, writeDocument, writeOptions, PENDING_OPERATION_DELETE_VALUE) > 0;
     }

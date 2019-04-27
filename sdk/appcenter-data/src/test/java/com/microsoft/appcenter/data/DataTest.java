@@ -1027,9 +1027,12 @@ public class DataTest extends AbstractDataTest {
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
-        assertNotNull(doc.get());
-        assertFalse(doc.get().hasFailed());
-        assertNull(doc.get().getError());
+        DocumentWrapper<Void> wrapper = doc.get();
+        assertNotNull(wrapper);
+        assertEquals(USER_DOCUMENTS, wrapper.getPartition());
+        assertEquals(DOCUMENT_ID, wrapper.getId());
+        assertFalse(wrapper.hasFailed());
+        assertNull(wrapper.getError());
     }
 
     @Test
@@ -1076,14 +1079,13 @@ public class DataTest extends AbstractDataTest {
         DocumentWrapper<Void> cachedDocument = new DocumentWrapper<>(null, DefaultPartitions.USER_DOCUMENTS, DOCUMENT_ID, "someETag", System.currentTimeMillis() + 6000);
         WriteOptions writeOptions = new WriteOptions();
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
-        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), refEq(writeOptions))).thenReturn(true);
+        when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), eq(cachedDocument), refEq(writeOptions))).thenReturn(true);
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
-        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), refEq(writeOptions));
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(cachedDocument), refEq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNull(result.get().getError());
-        assertTrue(result.get().isFromDeviceCache());
     }
 
     @Test
@@ -1095,11 +1097,10 @@ public class DataTest extends AbstractDataTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID), eq(Void.class), isNull(ReadOptions.class))).thenReturn(cachedDocument);
         when(mLocalDocumentStorage.deleteOffline(eq(USER_TABLE_NAME), anyString(), anyString(), eq(writeOptions))).thenReturn(false);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS, writeOptions);
-        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(writeOptions));
+        verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), refEq(cachedDocument), eq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mHttpClient);
         assertNotNull(result.get().getError());
-        assertFalse(result.get().isFromDeviceCache());
     }
 
     @Test
