@@ -153,7 +153,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized Auth getInstance() {
         if (sInstance == null) {
             sInstance = new Auth();
@@ -171,7 +170,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @param configUrl configuration base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    @SuppressWarnings({"SameParameterValue"})
     // TODO Remove warning suppress after release.
     public static void setConfigUrl(String configUrl) {
         getInstance().setInstanceConfigUrl(configUrl);
@@ -204,7 +203,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @return future with the result of the asynchronous sign-in operation.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning when JCenter published and demo updated
     public static AppCenterFuture<SignInResult> signIn() {
         return getInstance().instanceSignIn();
     }
@@ -212,8 +210,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * Sign out user and invalidate a user's token.
      */
-    @SuppressWarnings("WeakerAccess")
-    // TODO remove warning once jCenter published and reflection removed in test app
     public static void signOut() {
         getInstance().instanceSignOut();
     }
