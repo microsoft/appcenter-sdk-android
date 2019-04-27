@@ -123,8 +123,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @param tokenExchangeUrl Token Exchange service URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess", "unused"})
-    // TODO Remove suppress warnings after reflection removed in test app
     public static void setTokenExchangeUrl(String tokenExchangeUrl) {
         getInstance().setInstanceTokenExchangeUrl(tokenExchangeUrl);
     }
@@ -135,7 +133,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -146,86 +144,136 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"}) // TODO Remove warning suppress after release.
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
 
     /**
      * Read a document.
-     * The document type (T) must be JSON deserializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition) {
         return read(documentId, documentType, partition, new ReadOptions());
     }
 
     /**
      * Read a document.
-     * The document type (T) must be JSON deserializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param readOptions  Cache read options when the operation is done offline.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition, ReadOptions readOptions) {
         return getInstance().instanceRead(documentId, documentType, partition, readOptions);
     }
 
     /**
-     * List (need optional signature to configure page size).
-     * The document type (T) must be JSON deserializable.
+     * Retrieve a paginated list of the documents in a partition.
+     *
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document list.
+     * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
         return getInstance().instanceList(documentType, partition);
     }
 
     /**
      * Create a document.
-     * The document instance (T) must be JSON serializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param document     The document.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition) {
         return create(documentId, document, documentType, partition, new WriteOptions());
     }
 
     /**
      * Create a document.
-     * The document instance (T) must be JSON serializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param document     The document.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param writeOptions Cache write options when the operation is done offline.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, null);
     }
 
     /**
      * Delete a document.
+     *
+     * @param documentId The CosmosDB document id.
+     * @param partition  The CosmosDB partition key.
+     * @return Future asynchronous operation with result being the document metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition) {
         return delete(documentId, partition, new WriteOptions());
     }
 
     /**
      * Delete a document.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param partition    The CosmosDB partition key.
+     * @param writeOptions Cache write options when the operation is done offline.
+     * @return Future asynchronous operation with result being the document metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition, WriteOptions writeOptions) {
         return getInstance().instanceDelete(documentId, partition, writeOptions);
     }
 
     /**
      * Replace a document.
-     * The document instance (T) must be JSON serializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param document     The document.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition) {
         return replace(documentId, document, documentType, partition, new WriteOptions());
     }
 
     /**
      * Replace a document.
-     * The document instance (T) must be JSON serializable.
+     *
+     * @param documentId   The CosmosDB document id.
+     * @param document     The document.
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param writeOptions Cache write options when the operation is done offline.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document with metadata.
+     * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, CosmosDb.getUpsertAdditionalHeader());
     }
