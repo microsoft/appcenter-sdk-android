@@ -20,6 +20,9 @@ import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCallback;
 import com.microsoft.appcenter.data.exception.DataException;
+import com.microsoft.appcenter.data.future.DefaultDataFuture;
+import com.microsoft.appcenter.data.future.DocumentWrapperFuture;
+import com.microsoft.appcenter.data.future.PaginatedDocumentsFuture;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
@@ -369,7 +372,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                                                             @NonNull final CallTemplate<T> callTemplate) {
 
         /* Check partition is supported. */
-        final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
+        final DocumentWrapperFuture<T> result = new DocumentWrapperFuture<>();
         if (isInvalidPartition(partition, result)) {
             return result;
         }
@@ -420,7 +423,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return result;
     }
 
-    private <T> void doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken, DefaultAppCenterFuture<DocumentWrapper<T>> result, CallTemplate<T> callTemplate) {
+    private <T> void doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken, DocumentWrapperFuture<T> result, CallTemplate<T> callTemplate) {
         if (cachedToken == null) {
 
             /* If no token and offline, return the no partition error document previously initialized with that specific error. */
@@ -448,7 +451,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             }
 
             @Override
-            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+            public void callCosmosDb(TokenResult tokenResult, DocumentWrapperFuture<T> result) {
                 callCosmosDbReadApi(tokenResult, documentId, documentType, result);
             }
         });
@@ -481,7 +484,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             }
 
             @Override
-            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
+            public void callCosmosDb(TokenResult tokenResult, DocumentWrapperFuture<Void> result) {
                 callCosmosDbDeleteApi(tokenResult, documentId, result);
             }
         });
@@ -491,7 +494,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final TokenResult tokenResult,
             final String documentId,
             final Class<T> documentType,
-            final DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+            final DocumentWrapperFuture<T> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -509,7 +512,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             public void run() {
                                 DocumentWrapper<T> document = Utils.parseDocument(payload, documentType);
                                 if (document.getError() != null) {
-                                    completeFutureOnDocumentError(document, result);
+                                    completeFuture(document, result);
                                 } else {
                                     completeFutureAndSaveToLocalStorage(Utils.getTableName(tokenResult), document, result);
                                 }
@@ -527,7 +530,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private synchronized <T> void callCosmosDbListApi(
             final TokenResult tokenResult,
-            final DefaultAppCenterFuture<PaginatedDocuments<T>> result,
+            final PaginatedDocumentsFuture<T> result,
             final Class<T> documentType) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbListApi(
                 tokenResult,
@@ -548,7 +551,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                        completeFuture(e, result);
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
@@ -559,12 +562,12 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable
      */
     private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition) {
-        final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartitionWhenDocuments(partition, result)) {
+        final PaginatedDocumentsFuture<T> result = new PaginatedDocumentsFuture<>();
+        if (isInvalidPartition(partition, result)) {
             return result;
         }
         if (!mNetworkStateHelper.isNetworkConnected()) {
-            completeFutureAndRemovePendingCallWhenDocuments(new DataException("No network detected. List operation is not supported offline."), result);
+            completeFuture(new DataException("No network detected. List operation is not supported offline."), result);
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -583,7 +586,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void completeFuture(Exception e) {
-                                completeFutureAndRemovePendingCallWhenDocuments(e, result);
+                                Data.this.completeFuture(e, result);
                             }
                         });
             }
@@ -626,7 +629,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String documentId,
             final WriteOptions writeOptions,
             final Map<String, String> additionalHeaders,
-            final DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+            final DocumentWrapperFuture<T> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
@@ -644,10 +647,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             @Override
                             public void run() {
                                 DocumentWrapper<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
-                                if (cosmosDbDocument.hasFailed()) {
-                                    completeFutureOnDocumentError(cosmosDbDocument, result);
-                                } else {
-                                    completeFuture(cosmosDbDocument, result);
+                                completeFuture(cosmosDbDocument, result);
+                                if (!cosmosDbDocument.hasFailed()) {
                                     mLocalDocumentStorage.writeOnline(Utils.getTableName(tokenResult), cosmosDbDocument, writeOptions);
                                 }
                             }
@@ -695,10 +696,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Create a document.
      * The document type (T) must be JSON deserializable.
      */
-    private synchronized <T> AppCenterFuture<DocumentWrapper<T>> instanceCreateOrUpdate(
+    private synchronized <T> DocumentWrapperFuture<T> instanceCreateOrUpdate(
             final String documentId, final T document, final Class<T> documentType, final String partition,
             final WriteOptions writeOptions, final Map<String, String> additionalHeaders) {
-        final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
+        final DocumentWrapperFuture<T> result = new DocumentWrapperFuture();
         if (isInvalidPartition(partition, result)) {
             return result;
         }
@@ -763,7 +764,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void callCosmosDbDeleteApi(
             final TokenResult tokenResult,
             final String documentId,
-            final DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
+            final DocumentWrapperFuture<Void> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
@@ -787,7 +788,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        completeFuture(e, result);
+                        Data.this.completeFuture(e, result);
                     }
                 });
         mPendingCalls.put(result, cosmosDbCall);
@@ -841,7 +842,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+    private <T> boolean isInvalidPartition(String partition, DefaultDataFuture<T> result) {
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
             completeFuture(getInvalidPartitionDataException(partition), result);
@@ -849,33 +850,20 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return isInvalidPartition;
     }
 
-    private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {
+    private synchronized <T> void completeFuture(T value, DefaultDataFuture<T> future) {
         future.complete(value);
         mPendingCalls.remove(future);
     }
 
     @WorkerThread
-    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, DocumentWrapper<T> value, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
-        future.complete(value);
+    private synchronized <T> void completeFutureAndSaveToLocalStorage(String table, DocumentWrapper<T> value, DocumentWrapperFuture<T> future) {
         mLocalDocumentStorage.writeOnline(table, value, new WriteOptions());
-        mPendingCalls.remove(future);
+        completeFuture(value, future);
     }
 
-    private synchronized <T> void completeFuture(Exception e, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
+    private synchronized <T> void completeFuture(Exception e, DefaultDataFuture<T> future) {
         Utils.logApiCallFailure(e);
-        future.complete(new DocumentWrapper<T>(e));
-        mPendingCalls.remove(future);
-    }
-
-    private synchronized <T> void completeFutureOnDocumentError(DocumentWrapper<T> doc, DefaultAppCenterFuture<DocumentWrapper<T>> future) {
-        AppCenterLog.error(LOG_TAG, "Failed to deserialize document.", doc.getError());
-        future.complete(doc);
-        mPendingCalls.remove(future);
-    }
-
-    private synchronized <T> void completeFutureAndRemovePendingCallWhenDocuments(Exception e, DefaultAppCenterFuture<PaginatedDocuments<T>> future) {
-        Utils.logApiCallFailure(e);
-        future.complete(new PaginatedDocuments<T>().setCurrentPage(new Page<T>(e)));
+        future.completeWithException(e);
         mPendingCalls.remove(future);
     }
 
@@ -958,20 +946,12 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
-        boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
-        if (invalidPartitionName) {
-            completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionDataException(partition), result);
-        }
-        return invalidPartitionName;
-    }
-
     private interface CallTemplate<T> {
 
         boolean needsRemoteOperation(DocumentWrapper<T> cachedDocument);
 
         DocumentWrapper<T> doOfflineOperation(DocumentWrapper<T> cachedDocument, String table, TokenResult cachedToken);
 
-        void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<T>> result);
+        void callCosmosDb(TokenResult tokenResult, DocumentWrapperFuture<T> result);
     }
 }

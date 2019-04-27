@@ -6,8 +6,11 @@
 package com.microsoft.appcenter.data;
 
 import com.google.gson.JsonParseException;
+import com.microsoft.appcenter.data.client.CosmosDb;
+import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.TokenResult;
 
 import org.junit.Test;
 
@@ -122,6 +125,24 @@ public class UtilsTest {
         assertNotNull(document.getError());
         assertTrue(document.getError().getCause() instanceof JsonParseException);
         assertNull(document.getDeserializedValue());
+    }
+
+
+    @Test
+    public void setAccountId() {
+        TokenResult result = new TokenResult();
+        result.setAccountId("someId");
+        assertEquals("someId", result.getAccountId());
+    }
+
+    @Test
+    public void constructors() {
+        new Constants();
+        new TokenExchange();
+        new CosmosDb();
+        new Utils();
+        new TimeToLive();
+        new DefaultPartitions();
     }
 
     private class DateDocument {
