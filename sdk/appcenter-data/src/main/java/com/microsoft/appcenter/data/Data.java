@@ -466,15 +466,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             @Override
             public DocumentWrapper<Void> doOfflineOperation(DocumentWrapper<Void> cachedDocument, String table, TokenResult cachedToken) {
                 boolean success;
-                DocumentWrapper<Void> documentWrapper = new DocumentWrapper<>();
                 if (cachedDocument.getETag() != null) {
-                    success = mLocalDocumentStorage.deleteOffline(table, cachedToken.getPartition(), documentId, writeOptions);
-                    documentWrapper.setFromCache(true);
+                    success = mLocalDocumentStorage.deleteOffline(table, cachedDocument, writeOptions);
                 } else {
                     success = mLocalDocumentStorage.deleteOnline(table, cachedToken.getPartition(), documentId);
                 }
                 if (success) {
-                    return documentWrapper;
+                    return cachedDocument;
                 } else {
                     return new DocumentWrapper<>(new DataException("Failed to write to cache."));
                 }
@@ -482,7 +480,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
             @Override
             public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
-                callCosmosDbDeleteApi(tokenResult, documentId, result);
+                callCosmosDbDeleteApi(tokenResult, partition, documentId, result);
             }
         });
     }
@@ -762,6 +760,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @WorkerThread
     private synchronized void callCosmosDbDeleteApi(
             final TokenResult tokenResult,
+            final String partition,
             final String documentId,
             final DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
@@ -779,7 +778,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void run() {
-                                completeFuture(new DocumentWrapper<Void>(), result);
+                                DocumentWrapper<Void> wrapper = new DocumentWrapper<>(null, partition, documentId);
+                                completeFuture(wrapper, result);
                                 mLocalDocumentStorage.deleteOnline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId);
                             }
                         });
