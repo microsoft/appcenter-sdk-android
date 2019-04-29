@@ -1820,6 +1820,43 @@ public class AuthTest extends AbstractAuthTest {
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
     }
 
+    @Test
+    public void signInFailedAfterConfigDownloadingFailed() throws Exception {
+
+        /* Mock config call. */
+        ServiceCall getConfigCall = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class))).thenReturn(getConfigCall);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* Start config downloading. */
+        ServiceCallback serviceCallback = mockHttpCallStarted(mHttpClient);
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Auth.signIn();
+
+        /* Verify that future is not completed, while config is being downloaded. */
+        assertNotNull(future);
+        assertFalse(future.isDone());
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), any(AuthenticationCallback.class));
+
+        /* Simulate download configuration response. */
+        serviceCallback.onCallFailed(new IOException());
+
+        /* Verify that sign in failed, cause config downloading failed. */
+        assertNotNull(future);
+        assertTrue(future.isDone());
+        assertNotNull(future.get().getException());
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), any(AuthenticationCallback.class));
+    }
+
     private void mockReadyToSignIn() throws Exception {
 
         /* Start auth service. */
