@@ -7,15 +7,15 @@ package com.microsoft.appcenter.data.exception;
 
 public class DataException extends Exception {
 
-    public DataException(String message, Throwable cause) {
-        super(message, cause);
+    public DataException(String message, Exception exception) {
+        super(message, exception);
     }
 
     public DataException(String message) {
         super(message);
     }
 
-    public DataException(Throwable cause) {
-        super(cause);
+    public DataException(Exception exception) {
+        super(exception);
     }
 }
