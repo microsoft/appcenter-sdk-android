@@ -393,6 +393,11 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Auth configuration didn't change.");
+
+        /*
+         * We should never be in the case where we don't have a config file and we get 304,
+         * if that ever happens we are stuck and thus signIn fails.
+         */
         if (isPendingSignInWaitingForConfiguration()) {
             mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
         }
