@@ -1801,7 +1801,16 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     @Test
-    public void signInFailedAfterConfigDownloadingFailed() throws Exception {
+    public void signInFailedAfterConfigDownloadingFailedNoNetwork() throws Exception {
+        signInFailedAfterConfigDownloadingFailed(new IOException());
+    }
+
+    @Test
+    public void signInFailedAfterConfigDownloadingHttpFailed() throws Exception {
+        signInFailedAfterConfigDownloadingFailed(new HttpException(304));
+    }
+
+    private void signInFailedAfterConfigDownloadingFailed(Exception e) throws Exception {
 
         /* Mock config call. */
         ServiceCall getConfigCall = mock(ServiceCall.class);
@@ -1828,7 +1837,7 @@ public class AuthTest extends AbstractAuthTest {
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), any(AuthenticationCallback.class));
 
         /* Simulate download configuration response. */
-        serviceCallback.onCallFailed(new IOException());
+        serviceCallback.onCallFailed(e);
 
         /* Verify that sign in failed, cause config downloading failed. */
         assertNotNull(future);
@@ -1836,6 +1845,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get().getException());
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), any(AuthenticationCallback.class));
     }
+
 
     private void mockReadyToSignIn() throws Exception {
 
