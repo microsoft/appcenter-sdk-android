@@ -337,7 +337,7 @@ class LocalDocumentStorage {
             }
             DocumentWrapper<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
             if (document.hasFailed()) {
-                Throwable error = document.getError();
+                Exception error = document.getError();
                 AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
                 return new DocumentWrapper<>(new DataException(FAILED_TO_READ_FROM_CACHE, error));
             }

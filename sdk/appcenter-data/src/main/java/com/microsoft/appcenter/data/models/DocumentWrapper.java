@@ -43,11 +43,11 @@ public class DocumentWrapper<T> extends DocumentMetadata {
         mLastUpdatedDate = lastUpdatedDate;
     }
 
-    public DocumentWrapper(Throwable exception) {
+    public DocumentWrapper(Exception exception) {
         mError = new DataException(exception);
     }
 
-    public DocumentWrapper(String message, Throwable exception) {
+    public DocumentWrapper(String message, Exception exception) {
         mError = new DataException(message, exception);
     }
 
