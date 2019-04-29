@@ -1517,4 +1517,39 @@ public class DataTest extends AbstractDataTest {
         verifyStatic();
         HttpUtils.createHttpClient(any(Context.class), eq(false));
     }
+
+    @Test
+    public void moduleHasNotStartedDoesNotThrow() {
+        Data.unsetInstance();
+
+        /* Test `create` before module started */
+        DocumentWrapper<TestDocument> createDoc = Data.create("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
+        assertNull(createDoc.getDeserializedValue());
+        assertNotNull(createDoc.getError());
+        assertEquals(IllegalStateException.class, createDoc.getError().getCause().getClass());
+
+        /* Test `replace` before module started */
+        DocumentWrapper<TestDocument> replaceDoc = Data.replace("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
+        assertNull(replaceDoc.getDeserializedValue());
+        assertNotNull(replaceDoc.getError());
+        assertEquals(IllegalStateException.class, replaceDoc.getError().getCause().getClass());
+
+        /* Test `read` before module started */
+        DocumentWrapper<TestDocument> readDoc = Data.read("id", TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
+        assertNull(readDoc.getDeserializedValue());
+        assertNotNull(readDoc.getError());
+        assertEquals(IllegalStateException.class, readDoc.getError().getCause().getClass());
+
+        /* Test `list` before module started */
+        PaginatedDocuments<TestDocument> listDoc = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS).get();
+        assertNull(listDoc.getCurrentPage().getItems());
+        assertNotNull(listDoc.getCurrentPage().getError());
+        assertEquals(IllegalStateException.class, listDoc.getCurrentPage().getError().getCause().getClass());
+
+        /* Test `delete` before module started */
+        DocumentWrapper<Void> deleteDoc = Data.delete("id", DefaultPartitions.USER_DOCUMENTS).get();
+        assertNull(deleteDoc.getDeserializedValue());
+        assertNotNull(deleteDoc.getError());
+        assertEquals(IllegalStateException.class, deleteDoc.getError().getCause().getClass());
+    }
 }
