@@ -380,11 +380,12 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized void processDownloadedConfig(String payload, String eTag) {
+        boolean continueSignIn = isPendingSignInWaitingForConfiguration();
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure auth from downloaded configuration.");
         initAuthenticationClient(payload);
-        if (isFirstSignInPending()) {
+        if (continueSignIn) {
             selectSignInTypeAndSignIn(mLastSignInFuture);
         }
     }
@@ -392,7 +393,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Auth configuration didn't change.");
-        if (isFirstSignInPending()) {
+        if (isPendingSignInWaitingForConfiguration()) {
             mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
         }
     }
@@ -409,7 +410,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
         AppCenterLog.error(LOG_TAG, "Cannot load auth configuration from the server.", e);
-        if (isFirstSignInPending()) {
+        if (isPendingSignInWaitingForConfiguration()) {
             mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
         }
     }
@@ -728,8 +729,8 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         });
     }
 
-    private boolean isFirstSignInPending() {
-        return mAuthenticationClient == null && mLastSignInFuture != null;
+    private boolean isPendingSignInWaitingForConfiguration() {
+        return mAuthenticationClient == null && isFutureInProgress(mLastSignInFuture);
     }
 
     private boolean isFutureInProgress(AppCenterFuture<SignInResult> future) {
