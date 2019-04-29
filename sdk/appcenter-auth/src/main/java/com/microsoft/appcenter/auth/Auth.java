@@ -380,16 +380,27 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized void processDownloadedConfig(String payload, String eTag) {
+        boolean continueSignIn = isPendingSignInWaitingForConfiguration();
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure auth from downloaded configuration.");
         initAuthenticationClient(payload);
+        if (continueSignIn) {
+            selectSignInTypeAndSignIn(mLastSignInFuture);
+        }
     }
-
 
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Auth configuration didn't change.");
+
+        /*
+         * We should never be in the case where we don't have a config file and we get 304,
+         * if that ever happens we are stuck and thus signIn fails.
+         */
+        if (isPendingSignInWaitingForConfiguration()) {
+            mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
+        }
     }
 
     @WorkerThread
@@ -404,6 +415,9 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
         AppCenterLog.error(LOG_TAG, "Cannot load auth configuration from the server.", e);
+        if (isPendingSignInWaitingForConfiguration()) {
+            mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
+        }
     }
 
     @WorkerThread
@@ -544,7 +558,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             return;
         }
         if (mAuthenticationClient == null) {
-            future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
+
+            /* Check if getting the config in process. */
+            if (mGetConfigCall != null) {
+                AppCenterLog.info(LOG_TAG, "Downloading configuration in process. Waiting for it before sign-in.");
+            } else {
+                future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
+            }
             return;
         }
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
@@ -712,6 +732,10 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
             }
         });
+    }
+
+    private boolean isPendingSignInWaitingForConfiguration() {
+        return mAuthenticationClient == null && isFutureInProgress(mLastSignInFuture);
     }
 
     private boolean isFutureInProgress(AppCenterFuture<SignInResult> future) {
