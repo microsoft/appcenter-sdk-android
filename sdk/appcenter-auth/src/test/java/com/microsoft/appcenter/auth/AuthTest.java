@@ -283,32 +283,13 @@ public class AuthTest extends AbstractAuthTest {
         start(auth);
 
         /* Download configuration. */
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/auth/" + APP_SECRET + ".json";
-        verify(mHttpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
-        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
-        assertNotNull(serviceCallback);
-
-        /* Verify call template. */
-        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
-
-        /* Verify no logging if verbose log not enabled (default). */
-        try {
-            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
-        } catch (MalformedURLException e) {
-            fail("test url should always be valid " + e.getMessage());
-        }
-        verifyStatic(never());
-        AppCenterLog.verbose(anyString(), anyString());
+        ServiceCallback serviceCallback = mockHttpCallStarted(mHttpClient);
 
         /* Disable Auth. */
         Auth.setEnabled(false);
 
         /* Simulate response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+        mockHttpCallSuccess(jsonConfig, serviceCallback);
 
         /* Configuration is not cached. */
         verifyStatic(never());
@@ -1804,9 +1785,8 @@ public class AuthTest extends AbstractAuthTest {
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
 
         /* Simulate download configuration response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(mockValidForAppCenterConfig().toString(), headers);
+        mockHttpCallSuccess(mockValidForAppCenterConfig(), serviceCallback);
+
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
 
         /* Simulate Sign-In success. */
@@ -1911,11 +1891,7 @@ public class AuthTest extends AbstractAuthTest {
 
     private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
         ServiceCallback serviceCallback = mockHttpCallStarted(httpClient);
-
-        /* Simulate response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+        mockHttpCallSuccess(jsonConfig, serviceCallback);
     }
 
     private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
@@ -1940,5 +1916,11 @@ public class AuthTest extends AbstractAuthTest {
         verifyStatic(never());
         AppCenterLog.verbose(anyString(), anyString());
         return serviceCallback;
+    }
+
+    private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
     }
 }
