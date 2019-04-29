@@ -1786,7 +1786,6 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Simulate download configuration response. */
         mockHttpCallSuccess(mockValidForAppCenterConfig(), serviceCallback);
-
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
 
         /* Simulate Sign-In success. */
