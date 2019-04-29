@@ -1751,6 +1751,75 @@ public class AuthTest extends AbstractAuthTest {
         verify(publicClientApplication, never()).removeAccount(eq(account), any(PublicClientApplication.AccountsRemovedCallback.class));
     }
 
+    @Test
+    public void signInWithoutConfigBeingCalled() {
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Auth.signIn();
+        assertNotNull(future);
+        assertNotNull(future.get().getException());
+    }
+
+    @Test
+    public void signInContinuesAfterConfigDownloaded() throws Exception {
+        ArgumentCaptor<AuthenticationCallback> signInCallbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
+
+        /* Mock config call. */
+        ServiceCall getConfigCall = mock(ServiceCall.class);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class))).thenReturn(getConfigCall);
+
+        /* Mock authentication result. */
+        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        IAccount mockAccount = mock(IAccount.class);
+        final IAuthenticationResult mockResult = mockAuthResult(null, mockAccountId, mockHomeAccountId);
+        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
+        when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* Start config downloading. */
+        ServiceCallback serviceCallback = mockHttpCallStarted(mHttpClient);
+
+        /* Sign in. */
+        AppCenterFuture<SignInResult> future = Auth.signIn();
+
+        /* Verify that future is not completed, while config is being downloaded. */
+        assertNotNull(future);
+        assertFalse(future.isDone());
+        verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
+
+        /* Simulate download configuration response. */
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(mockValidForAppCenterConfig().toString(), headers);
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
+
+        /* Simulate Sign-In success. */
+        signInCallbackCaptor.getValue().onSuccess(mockResult);
+
+        /* Verify Sign-in success. */
+        assertNotNull(future);
+        assertNotNull(future.get());
+        assertNull(future.get().getException());
+        assertNotNull(future.get().getUserInformation());
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+    }
+
     private void mockReadyToSignIn() throws Exception {
 
         /* Start auth service. */
@@ -1804,6 +1873,15 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
+        ServiceCallback serviceCallback = mockHttpCallStarted(httpClient);
+
+        /* Simulate response. */
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+    }
+
+    private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
 
         /* Intercept parameters. */
         ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
@@ -1824,10 +1902,6 @@ public class AuthTest extends AbstractAuthTest {
         }
         verifyStatic(never());
         AppCenterLog.verbose(anyString(), anyString());
-
-        /* Simulate response. */
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+        return serviceCallback;
     }
 }
