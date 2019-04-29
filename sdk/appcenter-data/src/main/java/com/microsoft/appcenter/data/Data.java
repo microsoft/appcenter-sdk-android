@@ -303,8 +303,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return new DataException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
     }
 
-    private static Exception getModuleNotStartedException() {
-        return new Exception("Data module has not been started. Add `Data.class` to the `AppCenter.start(...)` call.");
+    private static IllegalStateException getModuleNotStartedException() {
+        return new IllegalStateException("Data module has not been started. Add `Data.class` to the `AppCenter.start(...)` call.");
     }
 
     /**
