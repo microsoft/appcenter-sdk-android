@@ -556,7 +556,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
             /* Check if getting the config in process. */
             if (mGetConfigCall != null) {
-                AppCenterLog.debug(LOG_TAG, "Downloading configuration in process. Waiting for it before sign-in.");
+                AppCenterLog.info(LOG_TAG, "Downloading configuration in process. Waiting for it before sign-in.");
             } else {
                 future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
             }
