@@ -123,6 +123,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @param tokenExchangeUrl Token Exchange service URL.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setTokenExchangeUrl(String tokenExchangeUrl) {
         getInstance().setInstanceTokenExchangeUrl(tokenExchangeUrl);
     }
@@ -159,6 +160,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition) {
         return read(documentId, documentType, partition, new ReadOptions());
     }
@@ -174,6 +176,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition, ReadOptions readOptions) {
         return getInstance().instanceRead(documentId, documentType, partition, readOptions);
     }
@@ -187,6 +190,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document list.
      * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
         return getInstance().instanceList(documentType, partition);
     }
@@ -202,6 +206,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition) {
         return create(documentId, document, documentType, partition, new WriteOptions());
     }
@@ -218,6 +223,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, null);
     }
@@ -230,6 +236,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition) {
         return delete(documentId, partition, new WriteOptions());
     }
@@ -243,6 +250,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition, WriteOptions writeOptions) {
         return getInstance().instanceDelete(documentId, partition, writeOptions);
     }
@@ -258,6 +266,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition) {
         return replace(documentId, document, documentType, partition, new WriteOptions());
     }
@@ -274,6 +283,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, CosmosDb.getUpsertAdditionalHeader());
     }
@@ -291,6 +301,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private static DataException getInvalidPartitionDataException(String partition) {
         return new DataException(String.format("Partition name can be either '%s' or '%s' but not '%s'.", APP_DOCUMENTS, USER_DOCUMENTS, partition));
+    }
+
+    private static Exception getModuleNotStartedException() {
+        return new Exception("Data module has not been started. Add `Data.class` to the `AppCenter.start(...)` call.");
     }
 
     /**
@@ -418,7 +432,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
         /* Check partition is supported. */
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartition(partition, result)) {
+        if (isInvalidStateOrParameters(partition, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -606,7 +620,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartitionWhenDocuments(partition, result)) {
+        if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;
         }
         if (!mNetworkStateHelper.isNetworkConnected()) {
@@ -745,7 +759,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String documentId, final T document, final Class<T> documentType, final String partition,
             final WriteOptions writeOptions, final Map<String, String> additionalHeaders) {
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidPartition(partition, result)) {
+        if (isInvalidStateOrParameters(partition, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -889,14 +903,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidPartition(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
-        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
-        if (isInvalidPartition) {
-            completeFuture(getInvalidPartitionDataException(partition), result);
-        }
-        return isInvalidPartition;
-    }
-
     private synchronized <T> void completeFuture(T value, DefaultAppCenterFuture<T> future) {
         future.complete(value);
         mPendingCalls.remove(future);
@@ -1006,12 +1012,32 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidPartitionWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+    private <T> boolean isInvalidStateOrParameters(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+        boolean isNotStarted = mAppSecret == null;
+        if (isNotStarted) {
+            completeFuture(getModuleNotStartedException(), result);
+            return true;
+        }
+        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
+        if (isInvalidPartition) {
+            completeFuture(getInvalidPartitionDataException(partition), result);
+            return true;
+        }
+        return false;
+    }
+
+    private <T> boolean isInvalidStateOrParametersWhenDocuments(final String partition, final DefaultAppCenterFuture<PaginatedDocuments<T>> result) {
+        boolean isNotStarted = mAppSecret == null;
+        if (isNotStarted) {
+            completeFutureAndRemovePendingCallWhenDocuments(getModuleNotStartedException(), result);
+            return true;
+        }
         boolean invalidPartitionName = !LocalDocumentStorage.isValidPartitionName(partition);
         if (invalidPartitionName) {
             completeFutureAndRemovePendingCallWhenDocuments(getInvalidPartitionDataException(partition), result);
+            return true;
         }
-        return invalidPartitionName;
+        return false;
     }
 
     private interface CallTemplate<T> {

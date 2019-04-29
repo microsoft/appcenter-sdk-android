@@ -124,6 +124,15 @@ public class UtilsTest {
         assertNull(document.getDeserializedValue());
     }
 
+    @Test
+    public void moduleHasNotStartedDoesNotThrow() {
+        Data.create("id", new DateDocument(), DateDocument.class, DefaultPartitions.APP_DOCUMENTS);
+        Data.replace("id", new DateDocument(), DateDocument.class, DefaultPartitions.APP_DOCUMENTS);
+        Data.read("id", DateDocument.class, DefaultPartitions.APP_DOCUMENTS);
+        Data.list(DateDocument.class, DefaultPartitions.USER_DOCUMENTS);
+        Data.delete("id", DefaultPartitions.USER_DOCUMENTS);
+    }
+
     private class DateDocument {
 
         Date date;
