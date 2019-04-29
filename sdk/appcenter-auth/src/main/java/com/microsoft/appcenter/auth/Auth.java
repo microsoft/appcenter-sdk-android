@@ -380,16 +380,22 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized void processDownloadedConfig(String payload, String eTag) {
+        boolean continueSignIn = mAuthenticationClient == null && mLastSignInFuture != null;
         mGetConfigCall = null;
         saveConfigFile(payload, eTag);
         AppCenterLog.info(LOG_TAG, "Configure auth from downloaded configuration.");
         initAuthenticationClient(payload);
+        if (continueSignIn) {
+            selectSignInTypeAndSignIn(mLastSignInFuture);
+        }
     }
-
 
     private synchronized void processDownloadNotModified() {
         mGetConfigCall = null;
         AppCenterLog.info(LOG_TAG, "Auth configuration didn't change.");
+        if (mAuthenticationClient == null && mLastSignInFuture != null) {
+            mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
+        }
     }
 
     @WorkerThread
@@ -404,6 +410,9 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processDownloadError(Exception e) {
         mGetConfigCall = null;
         AppCenterLog.error(LOG_TAG, "Cannot load auth configuration from the server.", e);
+        if (mAuthenticationClient == null && mLastSignInFuture != null) {
+            mLastSignInFuture.complete(new SignInResult(null, new IllegalStateException("Cannot load auth configuration from the server.")));
+        }
     }
 
     @WorkerThread
@@ -544,7 +553,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             return;
         }
         if (mAuthenticationClient == null) {
-            future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
+
+            /* Check if getting the config in process. */
+            if (mGetConfigCall != null) {
+                AppCenterLog.debug(LOG_TAG, "Downloading configuration in process. Waiting it before sign-in.");
+            } else {
+                future.complete(new SignInResult(null, new IllegalStateException("signIn is called while it's not configured.")));
+            }
             return;
         }
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
