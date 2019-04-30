@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.data;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
@@ -137,6 +138,51 @@ public class UtilsTest {
         assertNull(document.getJsonValue());
         assertEquals("partition", document.getPartition());
         assertEquals("id", document.getId());
+    }
+
+    @Test
+    public void missingPartition() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, null, "id");
+        doc = Utils.parseDocument(Utils.getGson().toJson(doc), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB or SQLite, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getId());
+    }
+
+    @Test
+    public void missingDocumentId() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", null);
+        doc = Utils.parseDocument(Utils.getGson().toJson(doc), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB or SQLite, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getPartition());
+    }
+
+    @Test
+    public void missingTimestamp() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
+        JsonObject corruptedPayload = Utils.getGson().toJsonTree(doc).getAsJsonObject();
+        corruptedPayload.remove("_ts");
+        doc = Utils.parseDocument(Utils.getGson().toJson(corruptedPayload), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getPartition());
+        assertNull(doc.getId());
     }
 
     private class DateDocument {
