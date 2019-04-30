@@ -115,28 +115,29 @@ public class Utils {
         }
         return parseDocument(
                 document,
-                    partition.getAsString(),
-                    documentId.getAsString(),
-                    eTag != null ? eTag.getAsString() : null,
-                    timestamp.getAsLong(),
-                    documentType);
+                partition.getAsString(),
+                documentId.getAsString(),
+                eTag != null ? eTag.getAsString() : null,
+                timestamp.getAsLong(),
+                documentType);
     }
 
     private static <T> DocumentWrapper<T> parseDocument(JsonElement documentObject, String partition, String documentId, String eTag, long lastUpdatedTime, Class<T> documentType) {
-        if (documentObject == null) {
-
+        T document = null;
+        DataException error = null;
+        if (documentObject != null) {
+            try {
+                document = sGson.fromJson(documentObject, documentType);
+            } catch (JsonParseException exception) {
+                error = new DataException("Failed to deserialize document.", exception);
+            }
         }
-        try {
-            T document = sGson.fromJson(documentObject, documentType);
-            return new DocumentWrapper<>(
-                    document,
-                    partition,
-                    documentId,
-                    eTag,
-                    lastUpdatedTime);
-        } catch (RuntimeException exception) {
-            return new DocumentWrapper<>(new DataException("Failed to deserialize document.", exception));
-        }
+        return new DocumentWrapper<>(
+                document,
+                partition,
+                documentId,
+                eTag,
+                lastUpdatedTime, error);
     }
 
     public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
