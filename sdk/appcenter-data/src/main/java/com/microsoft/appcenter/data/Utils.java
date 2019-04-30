@@ -118,7 +118,7 @@ public class Utils {
                 partition.getAsString(),
                 documentId.getAsString(),
                 eTag != null ? eTag.getAsString() : null,
-                timestamp.getAsLong(),
+                timestamp.getAsLong() * 1000L,
                 documentType);
     }
 
