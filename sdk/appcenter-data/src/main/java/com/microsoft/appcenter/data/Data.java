@@ -304,7 +304,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private static IllegalStateException getModuleNotStartedException() {
-        return new IllegalStateException("Data module has not been started. Add `Data.class` to the `AppCenter.start(...)` call.");
+        return new IllegalStateException("Data module is either disabled or has not been started. Add `Data.class` to the `AppCenter.start(...)` call.");
     }
 
     /**
@@ -478,7 +478,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     doOfflineOperation(cachedDocument, table, cachedToken, result, callTemplate);
                 }
             }
-        }, result, null); // TODO use a document error instead of null.
+        }, result, new DocumentWrapper<T>(getModuleNotStartedException()));
         return result;
     }
 
@@ -647,7 +647,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             }
                         });
             }
-        }, result, null);
+        }, result, new PaginatedDocuments<T>().setCurrentPage(new Page<T>(getModuleNotStartedException())));
         return result;
     }
 
@@ -794,7 +794,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     result.complete(createdOrUpdatedDocument);
                 }
             }
-        }, result, null);
+        }, result, new DocumentWrapper<T>(getModuleNotStartedException()));
         return result;
     }
 
