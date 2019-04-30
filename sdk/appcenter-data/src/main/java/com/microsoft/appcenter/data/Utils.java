@@ -87,7 +87,7 @@ public class Utils {
     }
 
     static <T> DocumentWrapper<T> parseDocument(String documentJson, String partition, String documentId, String eTag, long lastUpdatedTime, Class<T> documentType) {
-        JsonElement documentElement = sParser.parse(documentJson);
+        JsonElement documentElement = documentJson == null ? null : sParser.parse(documentJson);
         return parseDocument(documentElement, partition, documentId, eTag, lastUpdatedTime, documentType);
     }
 

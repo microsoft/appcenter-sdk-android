@@ -343,8 +343,12 @@ class LocalDocumentStorage {
             documentWrapper.setFromCache(true);
             documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
 
-            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
-            if (readOptions != null) {
+            /*
+             * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
+             * We also do not update the cache if we could not parse the JSON document as this would corrupt
+             * the cache by doing the update.
+             */
+            if (readOptions != null && !documentWrapper.hasFailed()) {
                 if (readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
 
                     /* Delete the document since no cache was requested. */
