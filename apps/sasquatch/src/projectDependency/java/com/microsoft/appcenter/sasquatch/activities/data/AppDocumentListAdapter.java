@@ -13,8 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,9 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public void upload(List<DocumentWrapper<TestDocument>> list) {
-        mList.addAll(list);
+        if (list != null) {
+            mList.addAll(list);
+        }
     }
 
     public interface OnItemClickListener {
