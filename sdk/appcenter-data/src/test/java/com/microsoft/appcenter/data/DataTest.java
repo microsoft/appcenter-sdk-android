@@ -217,7 +217,10 @@ public class DataTest extends AbstractDataTest {
 
         /* Make the list call again. */
         PaginatedDocuments<TestDocument> docCancel = Data.list(TestDocument.class, USER_DOCUMENTS).get();
-        assertNull(docCancel);
+        assertNotNull(docCancel);
+        assertNull(docCancel.getCurrentPage().getItems());
+        assertNotNull(docCancel.getCurrentPage().getError());
+        assertEquals(IllegalStateException.class, docCancel.getCurrentPage().getError().getCause().getClass());
     }
 
     @Test
@@ -1521,6 +1524,16 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void moduleHasNotStartedDoesNotThrow() {
         Data.unsetInstance();
+        verifyIllegalStateResult();
+    }
+
+    @Test
+    public void moduleStartedButDisabled() {
+        Data.setEnabled(false);
+        verifyIllegalStateResult();
+    }
+
+    private void verifyIllegalStateResult() {
 
         /* Test `create` before module started */
         DocumentWrapper<TestDocument> createDoc = Data.create("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
