@@ -1521,6 +1521,16 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void moduleHasNotStartedDoesNotThrow() {
         Data.unsetInstance();
+        verifyIllegalStateResult();
+    }
+
+    @Test
+    public void moduleStartedButDisabled() {
+        Data.setEnabled(false);
+        verifyIllegalStateResult();
+    }
+
+    private void verifyIllegalStateResult() {
 
         /* Test `create` before module started */
         DocumentWrapper<TestDocument> createDoc = Data.create("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
