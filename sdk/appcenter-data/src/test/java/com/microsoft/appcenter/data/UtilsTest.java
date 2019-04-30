@@ -58,6 +58,13 @@ public class UtilsTest {
     }
 
     @Test
+    public void jsonValueForNullDocument() {
+        Void deletedDocument = null;
+        DocumentWrapper<Void> doc = new DocumentWrapper<>(deletedDocument, "partition", "id");
+        assertNull(doc.getJsonValue());
+    }
+
+    @Test
     public void getETag() {
         assertNull(Utils.getEtag(null));
         assertNull(Utils.getEtag(""));

@@ -88,7 +88,7 @@ public class DocumentWrapper<T> extends DocumentMetadata {
      * @return The document in its JSON form.
      */
     public String getJsonValue() {
-        return Utils.getGson().toJson(mDocument);
+        return mDocument == null ? null : Utils.getGson().toJson(mDocument);
     }
 
     /**
