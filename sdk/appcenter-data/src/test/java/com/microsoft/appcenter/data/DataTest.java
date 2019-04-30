@@ -1142,7 +1142,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDeserializedValue().test);
         assertEquals(ETAG, d.getETag());
-        assertEquals(1550881731, d.getLastUpdatedDate());
+        assertEquals(1550881731000L, d.getLastUpdatedDate());
     }
 
     @Test
