@@ -1146,13 +1146,6 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
-    public void documentSerialization() {
-        String jsonDocument = String.format("{\"test\": \"%s\"\n" + "}", TEST_FIELD_VALUE);
-        TestDocument deserializedDocument = Utils.fromJson(jsonDocument, TestDocument.class);
-        assertEquals(TEST_FIELD_VALUE, deserializedDocument.test);
-    }
-
-    @Test
     public void generateHeaders() {
         Map<String, String> headers = CosmosDb.addRequiredHeaders(new HashMap<String, String>(), RESOLVED_USER_PARTITION, "token");
         assertEquals(5, headers.size());
