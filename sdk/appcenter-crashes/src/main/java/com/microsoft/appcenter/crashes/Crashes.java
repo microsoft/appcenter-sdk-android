@@ -838,10 +838,12 @@ public class Crashes extends AbstractAppCenterService {
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         if (errorLogReport.report.getThrowable() instanceof NativeException) {
                             Exception exception = errorLogReport.log.getException();
-                            dumpFile = new File(exception.getStackTrace());
-                            exception.setStackTrace(null);
-                            byte[] logfileContents = FileManager.readBytes(dumpFile);
-                            dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                            if (exception.getStackTrace() != null) {
+                                dumpFile = new File(exception.getStackTrace());
+                                exception.setStackTrace(null);
+                                byte[] logfileContents = FileManager.readBytes(dumpFile);
+                                dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                            }
                         }
 
                         /* Send report. */
