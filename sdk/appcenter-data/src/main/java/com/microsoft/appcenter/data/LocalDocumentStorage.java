@@ -345,15 +345,15 @@ class LocalDocumentStorage {
 
             /*
              * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
-             * We also do not update the cache if we could not parse the JSON document as this would corrupt
-             * the cache by doing the update.
              */
-            if (readOptions != null && !documentWrapper.hasFailed()) {
+            if (readOptions != null) {
                 if (readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
 
                     /* Delete the document since no cache was requested. */
                     mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
-                } else {
+                } else if (!documentWrapper.hasFailed()) {
+
+                    /* We update cache timestamp only if no serialization issue, otherwise that would corrupt cache in payload. */
                     write(table, documentWrapper, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
                 }
             }
