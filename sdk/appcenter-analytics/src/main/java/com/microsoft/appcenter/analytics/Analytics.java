@@ -27,15 +27,19 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.UserIdContext;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -47,6 +51,21 @@ import java.util.Map;
  * Analytics service.
  */
 public class Analytics extends AbstractAppCenterService {
+
+    /**
+     * Number of metrics queue items which will trigger synchronization.
+     */
+    static final int DEFAULT_TRIGGER_COUNT = 50;
+
+    /**
+     * Maximum number of requests being sent for the group.
+     */
+    static final int DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS = 3;
+
+    /**
+     * Redirect selected traffic to One Collector.
+     */
+    private static OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
      * Name of the service.
@@ -98,7 +117,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Application context, if not null it means onStart was called.
      */
-    private Context mContext;
+    private static Context mContext;
 
     /**
      * True if started from app, false if started only from a library or not yet started at all.
@@ -537,6 +556,20 @@ public class Analytics extends AbstractAppCenterService {
             }
         });
         return transmissionTarget;
+    }
+
+    /**
+     * Change the transmission interval of normal events.
+     */
+    public static void setTransmissionInterval(final long interal){
+        /* Get enabled state. */
+        boolean enabled = SharedPreferencesManager.getBoolean(PrefStorageConstants.KEY_ENABLED, true);
+        mChannel.removeGroup(ANALYTICS_GROUP);
+        mChannel.setEnabled(enabled);
+        mChannel.addGroup(ANALYTICS_GROUP, DEFAULT_TRIGGER_COUNT, interal, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
+        mOneCollectorChannelListener = new OneCollectorChannelListener(mContext, mChannel, null, IdHelper.getInstallId());
+        mOneCollectorChannelListener.setOneCollectorInterval(ANALYTICS_GROUP, interal);
+        mChannel.addListener(mOneCollectorChannelListener);
     }
 
     @Override

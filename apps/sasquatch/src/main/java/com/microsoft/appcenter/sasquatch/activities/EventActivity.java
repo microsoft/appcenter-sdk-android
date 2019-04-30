@@ -36,9 +36,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 
 public class EventActivity extends AppCompatActivity {
 
+    /**
+     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
+     */
+    public static final int MINUTE_TRIGGER_INTERVAL_10 = 10 * 60 * 1000;
+
+    public static final int HOUR_TRIGGER_INTERVAL_1 = 1 * 60 * 60 * 1000;
+
+    public static final int HOUR_TRIGGER_INTERVAL_8 = 8 * 60 * 60 * 1000;
+
+    public static final int DAY_TRIGGER_INTERVAL_1 = 24 * 60 * 60 * 1000;
     /**
      * Remember for what targets the device id was enabled.
      * It shouldn't be lost on recreate activity.
@@ -65,11 +76,15 @@ public class EventActivity extends AppCompatActivity {
 
     private Spinner mPersistenceFlagSpinner;
 
+    private Spinner mEventLatencySpinner;
+
     private TextView mNumberOfLogsLabel;
 
     private SeekBar mNumberOfLogs;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
+
+    private EventLatency mEventLatency = EventLatency.DEFAULT;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -159,6 +174,34 @@ public class EventActivity extends AppCompatActivity {
         mPersistenceFlagSpinner = findViewById(R.id.event_priority_spinner);
         ArrayAdapter<String> persistenceFlagAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.event_priority_values));
         mPersistenceFlagSpinner.setAdapter(persistenceFlagAdapter);
+        mPersistenceFlagSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                PersistenceFlag storageTtl = PersistenceFlag.values()[position];
+                getFlags(storageTtl);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        /* Event Latency views init. */
+        mEventLatencySpinner = findViewById(R.id.event_latency_spinner);
+        final ArrayAdapter<String> eventLatencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.event_latency_values));
+        mEventLatencySpinner.setAdapter(eventLatencyAdapter);
+        mEventLatencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                setLatency(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
         /* Number of logs. */
         mNumberOfLogsLabel = findViewById(R.id.number_of_logs_label);
@@ -281,18 +324,47 @@ public class EventActivity extends AppCompatActivity {
     private int getFlags(PersistenceFlag persistenceFlag) {
         switch (persistenceFlag) {
             case DEFAULT:
+                mEventLatencySpinner.setEnabled(true);
                 return Flags.getPersistenceFlag(Flags.DEFAULTS, true);
 
             case NORMAL:
+                mEventLatencySpinner.setEnabled(true);
                 return Flags.PERSISTENCE_NORMAL;
 
             case CRITICAL:
+                mEventLatencySpinner.setEnabled(false);
                 return Flags.PERSISTENCE_CRITICAL;
 
             case INVALID:
+                mEventLatencySpinner.setEnabled(false);
                 return 42;
         }
         throw new IllegalArgumentException();
+    }
+
+    private void setLatency(int position) {
+        mEventLatency = EventLatency.values()[position];
+        switch (mEventLatency) {
+            case DEFAULT:
+                Analytics.setTransmissionInterval(DEFAULT_TRIGGER_INTERVAL);
+                break;
+
+            case MINUTE10:
+                Analytics.setTransmissionInterval(MINUTE_TRIGGER_INTERVAL_10);
+                break;
+
+            case HOUR1:
+                Analytics.setTransmissionInterval(HOUR_TRIGGER_INTERVAL_1);
+                break;
+
+            case HOUR8:
+                Analytics.setTransmissionInterval(HOUR_TRIGGER_INTERVAL_8);
+                break;
+
+            case DAY1:
+                Analytics.setTransmissionInterval(DAY_TRIGGER_INTERVAL_1);
+                break;
+        }
     }
 
     private AnalyticsTransmissionTarget getSelectedTarget() {
@@ -350,5 +422,13 @@ public class EventActivity extends AppCompatActivity {
         NORMAL,
         CRITICAL,
         INVALID
+    }
+
+    private enum EventLatency {
+        DEFAULT,
+        MINUTE10,
+        HOUR1,
+        HOUR8,
+        DAY1
     }
 }

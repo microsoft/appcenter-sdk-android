@@ -108,6 +108,13 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
         mIngestion.setLogUrl(logUrl);
     }
 
+    public void setOneCollectorInterval(String groupName, long interval)
+    {
+        String oneCollectorGroupName = getOneCollectorGroupName(groupName);
+        mChannel.removeGroup(oneCollectorGroupName);
+        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, interval, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, mIngestion, null);
+    }
+
     @Override
     public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener) {
         if (isOneCollectorGroup(groupName)) {

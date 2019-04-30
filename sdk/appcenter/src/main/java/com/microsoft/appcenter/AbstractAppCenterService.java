@@ -36,7 +36,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     /**
      * Channel instance.
      */
-    protected Channel mChannel;
+    protected static Channel mChannel;
 
     /**
      * Background thread handler.
