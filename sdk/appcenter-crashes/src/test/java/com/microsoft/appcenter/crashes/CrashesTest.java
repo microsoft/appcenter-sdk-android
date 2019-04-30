@@ -27,6 +27,7 @@ import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -64,6 +65,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,6 +88,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyByte;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -1487,6 +1490,47 @@ public class CrashesTest {
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    public void stacktraceNull() throws Exception {
+        long appStartTime = 99L;
+        long crashTime = 123L;
+
+        final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
+        mock(ErrorAttachmentLog.class);
+        mockStatic(ErrorLogHelper.class);
+        ErrorReport errorReport = new ErrorReport();
+        errorReport.setThrowable(new NativeException());
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
+        whenNew(DefaultLogSerializer.class).withAnyArguments().thenReturn(defaultLogSerializer);
+        whenNew(com.microsoft.appcenter.crashes.ingestion.models.Exception.class).withAnyArguments().thenReturn(exception);
+        when(exception.getStackTrace()).thenReturn(null);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(FileManager.read(any(File.class))).thenReturn("");
+        String jsonCrash = "{}";
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+            @Override
+            public ManagedErrorLog answer(InvocationOnMock invocation) {
+                ManagedErrorLog log = mock(ManagedErrorLog.class);
+                when(log.getId()).thenReturn(UUID.randomUUID());
+                when(log.getException()).thenReturn(exception);
+                return log;
+            }
+        });
+        when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mock(Channel.class), "secret-app-mock", null, true);
+        ErrorAttachmentLog errorAttachmentLog = mock(ErrorAttachmentLog.class);
+        whenNew(ErrorAttachmentLog.class).withAnyArguments().thenReturn(errorAttachmentLog);
+        verify(errorAttachmentLog, never()).attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
     }
 
     @Test
