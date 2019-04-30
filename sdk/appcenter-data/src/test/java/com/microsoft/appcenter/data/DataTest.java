@@ -217,7 +217,10 @@ public class DataTest extends AbstractDataTest {
 
         /* Make the list call again. */
         PaginatedDocuments<TestDocument> docCancel = Data.list(TestDocument.class, USER_DOCUMENTS).get();
-        assertNull(docCancel);
+        assertNotNull(docCancel);
+        assertNull(docCancel.getCurrentPage().getItems());
+        assertNotNull(docCancel.getCurrentPage().getError());
+        assertEquals(IllegalStateException.class, docCancel.getCurrentPage().getError().getCause().getClass());
     }
 
     @Test
