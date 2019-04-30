@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -55,6 +56,7 @@ public class UtilsTest {
         assertNotNull(doc.getJsonValue());
         assertEquals(doc.getJsonValue(), Utils.getGson().toJson(testDoc));
         assertNotEquals(doc.getJsonValue(), doc.toString());
+        assertFalse(doc.hasFailed());
     }
 
     @Test
@@ -62,6 +64,9 @@ public class UtilsTest {
         Void deletedDocument = null;
         DocumentWrapper<Void> doc = new DocumentWrapper<>(deletedDocument, "partition", "id");
         assertNull(doc.getJsonValue());
+        assertEquals("partition", doc.getPartition());
+        assertEquals("id", doc.getId());
+        assertFalse(doc.hasFailed());
     }
 
     @Test
@@ -129,6 +134,9 @@ public class UtilsTest {
         assertNotNull(document.getError());
         assertTrue(document.getError().getCause() instanceof JsonParseException);
         assertNull(document.getDeserializedValue());
+        assertNull(document.getJsonValue());
+        assertEquals("partition", document.getPartition());
+        assertEquals("id", document.getId());
     }
 
     private class DateDocument {
