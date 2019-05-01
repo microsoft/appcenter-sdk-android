@@ -6,7 +6,7 @@ Version 2 of the App Center SDK includes two new modules: Auth and Data.
 
 ### AppCenterAuth
 
-App Center Auth is an identity management service that allows you to customize and control how your users interact with your app. App Center provides an out of the box UI that allows app developers to authenticate their users to an app. In addition, app developers may use and track the user's identity across App Center services.
+App Center Auth is a cloud-based identity management service that enables you to authenticate users and manage their identities. You can also leverage user identities in other App Center services.
 
 ### AppCenterData
 
