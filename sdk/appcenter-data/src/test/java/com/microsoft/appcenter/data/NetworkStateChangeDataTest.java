@@ -113,7 +113,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
             PendingOperation capturedOperation = pendingOperationCaptor.getValue();
             assertNotNull(capturedOperation);
             assertEquals(ETAG, capturedOperation.getETag());
-            assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
+            assertEquals("document", capturedOperation.getDocument());
             assertNull(capturedOperation.getOperation());
         }
         verifyNoMoreInteractions(mHttpClient);
@@ -144,7 +144,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
         assertEquals(ETAG, capturedOperation.getETag());
-        assertEquals(COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, capturedOperation.getDocument());
+        assertEquals("document", capturedOperation.getDocument());
 
         verifyNoMoreInteractions(mHttpClient);
         verifyZeroInteractions(mRemoteOperationListener);
