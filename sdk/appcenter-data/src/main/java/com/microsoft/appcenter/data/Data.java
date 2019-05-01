@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
+import com.google.gson.JsonElement;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
@@ -425,6 +426,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             return result;
         }
         postAsyncGetter(new Runnable() {
+
             @Override
             public void run() {
 
@@ -715,12 +717,16 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final TokenResult tokenResult,
             final PendingOperation pendingOperation) {
         String outgoingId = Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId());
+
+        /* Build payload. */
+        JsonElement documentPayload = Utils.getGson().fromJson(pendingOperation.getDocument(), JsonElement.class);
+        DocumentWrapper<JsonElement> documentWrapper = new DocumentWrapper<>(documentPayload, pendingOperation.getPartition(), pendingOperation.getDocumentId(), pendingOperation.getETag(), 0);
         mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
                 mHttpClient,
                 METHOD_POST,
-                pendingOperation.getDocument(),
+                documentWrapper.toString(),
                 pendingOperation.getOperation().equals(Constants.PENDING_OPERATION_CREATE_VALUE) ? null : CosmosDb.getUpsertAdditionalHeader(),
                 new ServiceCallback() {
 
@@ -929,7 +935,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             public void run() {
                 String eTag = Utils.getETag(cosmosDbResponsePayload);
                 pendingOperation.setETag(eTag);
-                pendingOperation.setDocument(cosmosDbResponsePayload);
                 RemoteOperationListener eventListener = mRemoteOperationListener;
                 if (eventListener != null) {
                     eventListener.onRemoteOperationCompleted(

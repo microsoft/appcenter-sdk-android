@@ -10,16 +10,14 @@ import com.microsoft.appcenter.data.Constants;
 
 public class DocumentMetadata {
 
-    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
-    protected String mPartition;
-
-    @SerializedName(value = Constants.ID_FIELD_NAME)
-    protected String mId;
-
     @SerializedName(value = Constants.ETAG_FIELD_NAME)
-    protected String mETag;
+    String mETag;
+    @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
+    private String mPartition;
+    @SerializedName(value = Constants.ID_FIELD_NAME)
+    private String mId;
 
-    public DocumentMetadata() {
+    DocumentMetadata() {
     }
 
     public DocumentMetadata(String partition, String Id, String eTag) {
