@@ -31,7 +31,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -149,7 +148,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(document.getLastUpdatedDate()).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), document.getLastUpdatedDate().toString()));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromDeviceCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
         Object doc = document.getDeserializedValue();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
