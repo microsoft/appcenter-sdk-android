@@ -133,7 +133,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -144,7 +143,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -284,7 +282,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @param listener listener to register or null to unregister a previous listener.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress after release.
     public static void setRemoteOperationListener(RemoteOperationListener listener) {
         getInstance().mRemoteOperationListener = listener;
     }
