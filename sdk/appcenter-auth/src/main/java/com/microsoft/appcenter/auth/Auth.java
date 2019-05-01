@@ -170,8 +170,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      *
      * @param configUrl configuration base URL.
      */
-    @SuppressWarnings({"SameParameterValue"})
-    // TODO Remove warning suppress after release.
     public static void setConfigUrl(String configUrl) {
         getInstance().setInstanceConfigUrl(configUrl);
     }
@@ -182,7 +180,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -193,7 +190,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess") // TODO Remove warning suppress after release.
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
