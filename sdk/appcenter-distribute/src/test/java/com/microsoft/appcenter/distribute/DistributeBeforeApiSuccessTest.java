@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
@@ -13,7 +18,6 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
@@ -24,6 +28,7 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -159,25 +164,25 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfDebug() throws Exception {
+    public void doNothingIfDebug() {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfInstallComesFromStore() throws Exception {
+    public void doNothingIfInstallComesFromStore() {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfUpdateSetupFailedMessageExist() throws Exception {
+    public void doNothingIfUpdateSetupFailedMessageExist() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws Exception {
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
@@ -1144,18 +1149,17 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkReleaseFailsRecoverable503() throws Exception {
+    public void checkReleaseFailsRecoverable503() {
         checkReleaseFailure(new HttpException(503), never());
     }
 
     @Test
-    public void checkReleaseFailsWith403() throws Exception {
+    public void checkReleaseFailsWith403() {
         checkReleaseFailure(new HttpException(403), times(1));
-
     }
 
     @Test
-    public void checkReleaseFailsWithSomeSSL() throws Exception {
+    public void checkReleaseFailsWithSomeSSL() {
         checkReleaseFailure(new SSLPeerUnverifiedException("unsecured connection"), times(1));
     }
 
@@ -1192,7 +1196,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -1281,7 +1285,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                     @Override
                     public void run() {
                         beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                         afterSemaphore.release();
                     }
                 }.start();

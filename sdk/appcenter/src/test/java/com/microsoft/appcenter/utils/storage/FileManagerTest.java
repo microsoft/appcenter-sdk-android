@@ -1,9 +1,13 @@
-package com.microsoft.appcenter;
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+package com.microsoft.appcenter.utils.storage;
 
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.Rule;
 import org.junit.Test;

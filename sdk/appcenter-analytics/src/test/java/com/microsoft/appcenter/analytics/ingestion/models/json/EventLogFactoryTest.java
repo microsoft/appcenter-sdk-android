@@ -1,10 +1,15 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.analytics.ingestion.models.json;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
+import com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
-import com.microsoft.appcenter.ingestion.models.one.CommonSchemaDataUtils;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.http;
 
 import android.content.Context;
@@ -8,7 +13,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.io.EOFException;
 import java.io.InterruptedIOException;
-import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -139,7 +143,7 @@ public class HttpUtils {
             lastEnd = matcher.end();
         }
         if (lastEnd < apiKeys.length()) {
-            buffer.append(apiKeys.substring(lastEnd, apiKeys.length()));
+            buffer.append(apiKeys.substring(lastEnd));
         }
         return buffer.toString();
     }
@@ -154,8 +158,23 @@ public class HttpUtils {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
     }
 
+    /**
+     * Hide JWT token value in Authorization header string.
+     *
+     * @param token string header value.
+     * @return obfuscated token string header value.
+     */
+    static String hideAuthToken(@NonNull String token) {
+        String prefix = token.split("\\s+")[0];
+        return prefix + " ***";
+    }
+
     public static HttpClient createHttpClient(@NonNull Context context) {
-        HttpClient httpClient = new DefaultHttpClient();
+        return createHttpClient(context, true);
+    }
+
+    public static HttpClient createHttpClient(@NonNull Context context, boolean compressionEnabled) {
+        HttpClient httpClient = new DefaultHttpClient(compressionEnabled);
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
 

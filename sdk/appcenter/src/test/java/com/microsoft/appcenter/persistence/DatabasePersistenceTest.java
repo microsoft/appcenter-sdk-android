@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.persistence;
 
 import android.content.ContentValues;
@@ -24,6 +29,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
@@ -31,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -49,6 +56,32 @@ public class DatabasePersistenceTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Test
+    public void countLogsForDate() throws Exception {
+
+        /* Expected values. */
+        int expectedCount = 1;
+        Date expectedDate = new Date();
+        String[] expectedColumns = new String[]{"COUNT(*)"};
+        String[] expectedWhereArgs = new String[]{String.valueOf(expectedDate.getTime())};
+
+        /* Mock instances. */
+        mockStatic(AppCenterLog.class);
+        DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
+        Cursor mockCursor = mock(Cursor.class);
+        when(mockCursor.getInt(anyInt())).thenReturn(expectedCount);
+        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
+
+        /* Get count. */
+        int actualCount = persistence.countLogs(expectedDate);
+
+        /* Verify. */
+        assertEquals(expectedCount, actualCount);
+        verify(mockDatabaseManager).getCursor(any(SQLiteQueryBuilder.class), eq(expectedColumns), eq(expectedWhereArgs), anyString());
+    }
 
     @Test
     public void countLogsWithGetCountException() throws Exception {
@@ -119,7 +152,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>(), null, null);
         }
 
         /* Verify there are 4 pending groups. */
@@ -145,7 +178,7 @@ public class DatabasePersistenceTest {
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -168,7 +201,7 @@ public class DatabasePersistenceTest {
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -207,7 +240,7 @@ public class DatabasePersistenceTest {
         /* Get logs and verify we get only non corrupted logs. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
@@ -281,7 +314,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs and verify we get only non corrupted logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(logCount - 1, outLogs.size());
         assertEquals("first", outLogs.get(0).getType());
         assertEquals("last", outLogs.get(1).getType());
@@ -291,7 +324,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is empty logs as they are pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(0, outLogs.size());
 
         /*
@@ -362,7 +395,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs, null, null);
         assertEquals(1, outLogs.size());
         assertEquals("true last", outLogs.get(0).getType());
 

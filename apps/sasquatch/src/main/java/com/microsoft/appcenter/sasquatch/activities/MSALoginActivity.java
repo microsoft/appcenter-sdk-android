@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
@@ -23,13 +28,10 @@ import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -318,8 +320,14 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    @Override
+                    /* TODO remove this method once Auth published to jCenter. */
                     public void onCallSucceeded(String payload) {
+                        onCallSucceeded(payload, null);
+                    }
+
+                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
+                    @SuppressWarnings("WeakerAccess")
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString(USER_ID);
@@ -362,8 +370,14 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    @Override
+                    /* TODO remove this method once Auth published to jCenter. */
                     public void onCallSucceeded(String payload) {
+                        onCallSucceeded(payload, null);
+                    }
+
+                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
+                    @SuppressWarnings("WeakerAccess")
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");

@@ -1,10 +1,19 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.http;
+
+import android.content.Context;
 
 import org.junit.Test;
 
 import static com.microsoft.appcenter.http.HttpUtils.MAX_CHARACTERS_DISPLAYED_FOR_SECRET;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @SuppressWarnings("unused")
 public class HttpUtilsTest {
@@ -66,5 +75,38 @@ public class HttpUtilsTest {
     @Test
     public void hideInvalidTicket() {
         assertEquals("asIs", HttpUtils.hideTickets("asIs"));
+    }
+
+    @Test
+    public void hideAuthToken() {
+        String token = "Bearer jwt-token-string";
+        String hiddenToken = HttpUtils.hideAuthToken(token);
+        assertEquals(hiddenToken, "Bearer ***");
+    }
+
+    @Test
+    public void defaultCompressionSettings() {
+        HttpClient httpClient = HttpUtils.createHttpClient(mock(Context.class));
+        DefaultHttpClient defaultHttpClient = getDefaultHttpClient((HttpClientDecorator) httpClient);
+        assertTrue(defaultHttpClient.isCompressionEnabled());
+    }
+
+    @Test
+    public void enabledCompressionSettings() {
+        HttpClient httpClient = HttpUtils.createHttpClient(mock(Context.class), true);
+        DefaultHttpClient defaultHttpClient = getDefaultHttpClient((HttpClientDecorator) httpClient);
+        assertTrue(defaultHttpClient.isCompressionEnabled());
+    }
+
+    @Test
+    public void disabledCompressionSettings() {
+        HttpClient httpClient = HttpUtils.createHttpClient(mock(Context.class), false);
+        DefaultHttpClient defaultHttpClient = getDefaultHttpClient((HttpClientDecorator) httpClient);
+        assertFalse(defaultHttpClient.isCompressionEnabled());
+    }
+
+    private DefaultHttpClient getDefaultHttpClient(HttpClientDecorator httpClientDecorator) {
+        httpClientDecorator = (HttpClientDecorator) httpClientDecorator.getDecoratedApi();
+        return (DefaultHttpClient) httpClientDecorator.getDecoratedApi();
     }
 }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.annotation.SuppressLint;
@@ -174,7 +179,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
@@ -37,7 +42,6 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest(DistributeUtils.class)
@@ -407,7 +411,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });

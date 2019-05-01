@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
@@ -38,7 +43,8 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -134,6 +140,36 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
+        }
+
+        /* Set auth config url. */
+        String configUrl = getString(R.string.auth_config_url);
+        if (!TextUtils.isEmpty(configUrl)) {
+
+            /* TODO once Auth released to jCenter, use Auth.setConfigUrl directly. */
+            try {
+                Class<?> auth = Class.forName("com.microsoft.appcenter.auth.Auth");
+                auth.getMethod("setConfigUrl", String.class).invoke(null, configUrl);
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /* Set token exchange url. */
+        String tokenExchangeUrl = getString(R.string.token_exchange_url);
+        if (!TextUtils.isEmpty(tokenExchangeUrl)) {
+
+            /* TODO once Data released to jCenter, use Data.setTokenExchangeUrl directly. */
+            try {
+                Class<?> storage = Class.forName("com.microsoft.appcenter.data.Data");
+                storage.getMethod("setTokenExchangeUrl", String.class).invoke(null, tokenExchangeUrl);
+            } catch (ClassNotFoundException ignored) {
+            } catch (NoSuchMethodException ignored) {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */
@@ -309,6 +345,32 @@ public class MainActivity extends AppCompatActivity {
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
+
+        /* TODO once all modules released to jCenter, use varags syntax directly with `Module.class`. */
+        List<Class> services = new ArrayList<Class>() {{
+            add(Analytics.class);
+            add(Crashes.class);
+            add(Distribute.class);
+            add(Push.class);
+        }};
+
+        /* TODO once Auth released to jCenter, use Auth.class directly. */
+        try {
+            String className = "com.microsoft.appcenter.auth.Auth";
+
+            //noinspection unchecked
+            services.add(Class.forName(className));
+        } catch (ClassNotFoundException ignored) {
+        }
+
+        /* TODO once Data released to jCenter, use Data.class directly. */
+        try {
+            String className = "com.microsoft.appcenter.data.Data";
+
+            //noinspection unchecked
+            services.add(Class.forName(className));
+        } catch (ClassNotFoundException ignored) {
+        }
         switch (startType) {
             case APP_SECRET:
                 appIdArg = appId;
@@ -320,10 +382,12 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
+                //noinspection unchecked
+                AppCenter.start(application, services.toArray(new Class[0]));
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+        //noinspection unchecked
+        AppCenter.start(application, appIdArg, services.toArray(new Class[0]));
     }
 
     public enum StartType {

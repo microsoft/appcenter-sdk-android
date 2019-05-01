@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.channel;
 
 import android.content.Context;
@@ -9,9 +14,12 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -27,18 +35,25 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({DeviceInfoHelper.class, IdHelper.class})
+@PrepareForTest({DeviceInfoHelper.class, IdHelper.class, AuthTokenContext.class})
 public class ChannelLogDecorateTest {
 
     @Test
-    public void checkLogAttributes() throws DeviceInfoHelper.DeviceInfoException {
+    public void checkLogAttributes() throws Exception {
         mockStatic(DeviceInfoHelper.class);
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
         mockStatic(IdHelper.class);
+        mockStatic(AuthTokenContext.class);
+        AuthTokenContext tokenContext = mock(AuthTokenContext.class);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        Mockito.when(tokenContext.getAuthToken()).thenReturn(mockToken);
+        Mockito.when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
+        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);
         Channel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mock(Handler.class));
         channel.addGroup("", 0, 0, 0, null, null);
 

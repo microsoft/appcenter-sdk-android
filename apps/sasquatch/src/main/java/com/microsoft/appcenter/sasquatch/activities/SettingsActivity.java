@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -12,7 +18,6 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
-import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -31,7 +36,6 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
-import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -255,6 +259,103 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled().get();
                 }
             });
+
+            /* Auth. */
+            /*
+             * TODO: change to real implementation when released.
+             *
+             * initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
+             *
+             *  @Override
+             *  public void setEnabled(boolean enabled) {
+             *      Auth.setEnabled(enabled);
+             *  }
+             *
+             *  @Override
+             *  public boolean isEnabled() {
+             *      return Auth.isEnabled().get();
+             *  }
+             * });
+             */
+            try {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> auth = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.auth.Auth");
+                final Method isEnabled = auth.getMethod("isEnabled");
+                final Method setEnabled = auth.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public boolean isEnabled() {
+                        try {
+                            AppCenterFuture<Boolean> result = (AppCenterFuture<Boolean>) isEnabled.invoke(null);
+                            return result.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.auth_key)));
+            }
+
+            /* Data. */
+            /*
+             * TODO: change to real implementation when released.
+             *
+             * initCheckBoxSetting(R.string.appcenter_storage_state_key, R.string.appcenter_storage_state_summary_enabled, R.string.appcenter_storage_state_summary_disabled, new HasEnabled() {
+             *
+             *  @Override
+             *  public void setEnabled(boolean enabled) {
+             *      Data.setEnabled(enabled);
+             *  }
+             *
+             *  @Override
+             *  public boolean isEnabled() {
+             *      return Data.isEnabled().get();
+             *  }
+             * });
+             */
+            try {
+                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> storage = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.data.Data");
+                final Method isEnabled = storage.getMethod("isEnabled");
+                final Method setEnabled = storage.getMethod("setEnabled", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_data_state_key, R.string.appcenter_data_state_summary_enabled, R.string.appcenter_data_state_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public void setEnabled(boolean enabled) {
+                        try {
+                            setEnabled.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                    public boolean isEnabled() {
+                        try {
+                            AppCenterFuture<Boolean> result = (AppCenterFuture<Boolean>) isEnabled.invoke(null);
+                            return result.get();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.data_key)));
+            }
+
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
@@ -473,6 +574,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
+                @SuppressLint("VisibleForTests")
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     SharedPreferences appCenterPreferences = getActivity().getSharedPreferences("AppCenter", Context.MODE_PRIVATE);
@@ -500,6 +602,9 @@ public class SettingsActivity extends AppCompatActivity {
                                     if (Patterns.WEB_URL.matcher(input.getText().toString()).matches()) {
                                         String url = input.getText().toString();
                                         setKeyValue(LOG_URL_KEY, url);
+                                        if (!TextUtils.isEmpty(url)) {
+                                            AppCenter.setLogUrl(url);
+                                        }
                                         toastUrlChange(url);
                                     } else if (input.getText().toString().isEmpty()) {
                                         setDefaultUrl();
@@ -514,6 +619,9 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     setDefaultUrl();
+                                    if (!TextUtils.isEmpty(getString(R.string.log_url))) {
+                                        AppCenter.setLogUrl(getString(R.string.log_url));
+                                    }
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
                             })

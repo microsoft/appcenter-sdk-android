@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.analytics;
 
 import android.content.Context;
@@ -25,8 +30,8 @@ import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;

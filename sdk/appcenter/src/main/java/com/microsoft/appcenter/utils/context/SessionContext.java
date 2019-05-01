@@ -1,4 +1,9 @@
-package com.microsoft.appcenter;
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+package com.microsoft.appcenter.utils.context;
 
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;

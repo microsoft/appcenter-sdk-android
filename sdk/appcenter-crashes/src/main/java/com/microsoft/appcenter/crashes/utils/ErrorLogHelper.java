@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.crashes.utils;
 
 import android.annotation.TargetApi;
@@ -9,7 +14,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -20,7 +24,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;

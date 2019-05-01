@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.analytics;
 
 import android.annotation.SuppressLint;
@@ -11,7 +16,7 @@ import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.DeviceExtension;
 import com.microsoft.appcenter.ingestion.models.one.UserExtension;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.util.Date;
 import java.util.Map;

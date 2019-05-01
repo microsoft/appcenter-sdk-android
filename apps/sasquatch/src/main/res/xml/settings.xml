@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
         android:key="@string/appcenter_state_key"
@@ -64,6 +69,24 @@
         <CheckBoxPreference
             android:key="@string/appcenter_push_firebase_state_key"
             android:title="@string/appcenter_push_firebase_state_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/auth_key"
+        android:title="@string/auth_title">
+        <CheckBoxPreference
+            android:dependency="@string/appcenter_state_key"
+            android:key="@string/appcenter_auth_state_key"
+            android:title="@string/appcenter_auth_state_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="@string/data_key"
+        android:title="@string/data_title">
+        <CheckBoxPreference
+            android:dependency="@string/appcenter_state_key"
+            android:key="@string/appcenter_data_state_key"
+            android:title="@string/appcenter_data_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory

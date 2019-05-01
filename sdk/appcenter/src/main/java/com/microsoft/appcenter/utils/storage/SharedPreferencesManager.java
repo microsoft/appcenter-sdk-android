@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.utils.storage;
 
 import android.annotation.SuppressLint;
@@ -9,7 +14,7 @@ import android.support.annotation.Nullable;
 import java.util.Set;
 
 /**
- * Shared preferences manager
+ * Shared preferences manager.
  */
 public class SharedPreferencesManager {
 

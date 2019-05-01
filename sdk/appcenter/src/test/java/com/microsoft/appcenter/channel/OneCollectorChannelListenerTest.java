@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.channel;
 
 import android.content.Context;
@@ -298,5 +303,16 @@ public class OneCollectorChannelListenerTest {
         verify(channel).resumeGroup(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, "token");
         listener.onResumed(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, null);
         verifyNoMoreInteractions(channel);
+    }
+
+    @Test
+    public void setLogUrl() {
+        OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+        OneCollectorChannelListener listener = new OneCollectorChannelListener(ingestion, mock(Channel.class), mock(LogSerializer.class), UUIDUtils.randomUUID());
+
+        /* Set the log url. */
+        String logUrl = "http://mock";
+        listener.setLogUrl(logUrl);
+        verify(ingestion).setLogUrl(logUrl);
     }
 }

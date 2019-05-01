@@ -1,14 +1,19 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.analytics.channel;
 
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
+import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.crashes;
 
 import android.content.Context;
@@ -7,7 +12,6 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.Constants;
-import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
@@ -30,9 +34,10 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -931,10 +936,12 @@ public class CrashesTest {
         /* Mock exceptions. */
         Throwable classNotFoundException = mock(ClassNotFoundException.class);
         Throwable ioException = mock(IOException.class);
+        Throwable runtimeException = mock(RuntimeException.class);
         Throwable stackOverflowError = mock(StackOverflowError.class);
         when(FileManager.readObject(any(File.class)))
                 .thenThrow(classNotFoundException)
                 .thenThrow(ioException)
+                .thenThrow(runtimeException)
                 .thenThrow(stackOverflowError);
         Crashes crashes = Crashes.getInstance();
 
@@ -950,6 +957,13 @@ public class CrashesTest {
         assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
+
+        /* Test RuntimeException. */
+        mErrorLog.setId(UUIDUtils.randomUUID());
+        report = crashes.buildErrorReport(mErrorLog);
+        assertNotNull(report);
+        verifyStatic();
+        AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(runtimeException));
 
         /* Test StackOverflowError. */
         mErrorLog.setId(UUIDUtils.randomUUID());

@@ -1,8 +1,14 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter;
 
 import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Test;
@@ -23,9 +29,11 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
@@ -373,5 +381,38 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
         /* It should work now. */
         verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+    }
+
+    @Test
+    public void setLogUrlFromLibraryThenApp() throws Exception {
+        OneCollectorChannelListener listener = mock(OneCollectorChannelListener.class);
+        whenNew(OneCollectorChannelListener.class).withAnyArguments().thenReturn(listener);
+
+        /* Change log URL before start. */
+        String logUrl = "http://mock";
+        AppCenter.setLogUrl(logUrl);
+
+        /* No effect for now. */
+        verify(listener, never()).setLogUrl(logUrl);
+
+        /* Start should propagate the log URL without App Secret. */
+        AppCenter.startFromLibrary(mApplication, DummyService.class);
+        verify(listener).setLogUrl(logUrl);
+
+        /* Change it after, should work immediately. */
+        logUrl = "http://mock2";
+        AppCenter.setLogUrl(logUrl);
+        verify(listener).setLogUrl(logUrl);
+        verify(mChannel, never()).setLogUrl(anyString());
+
+        /* Start from application with app secret. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+        verify(mChannel, never()).setLogUrl(anyString());
+
+        /* If we set log url now, it will apply to AppCenter from now on. */
+        logUrl = "http://mock3";
+        AppCenter.setLogUrl(logUrl);
+        verify(listener, never()).setLogUrl(logUrl);
+        verify(mChannel).setLogUrl(logUrl);
     }
 }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter;
 
 import android.annotation.SuppressLint;
@@ -27,9 +32,11 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -189,6 +196,11 @@ public class AppCenter {
      * AppCenterFuture of set maximum storage size.
      */
     private DefaultAppCenterFuture<Boolean> mSetMaxStorageSizeFuture;
+
+    /**
+     * Redirect selected traffic to One Collector.
+     */
+    private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
      * Get unique instance.
@@ -494,7 +506,13 @@ public class AppCenter {
 
                 @Override
                 public void run() {
-                    mChannel.setLogUrl(logUrl);
+                    if (mAppSecret != null) {
+                        AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + logUrl);
+                        mChannel.setLogUrl(logUrl);
+                    } else {
+                        AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint has been changed to " + logUrl);
+                        mOneCollectorChannelListener.setLogUrl(logUrl);
+                    }
                 }
             });
         }
@@ -733,6 +751,7 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
+        AuthTokenContext.initialize(mApplication);
 
         /* Initialize session storage. */
         SessionContext.getInstance();
@@ -756,10 +775,15 @@ public class AppCenter {
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
+        mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
         if (mLogUrl != null) {
-            mChannel.setLogUrl(mLogUrl);
+            if (mAppSecret != null) {
+                mChannel.setLogUrl(mLogUrl);
+            } else {
+                mOneCollectorChannelListener.setLogUrl(mLogUrl);
+            }
         }
-        mChannel.addListener(new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId()));
+        mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */
         if (!enabled) {
@@ -905,6 +929,11 @@ public class AppCenter {
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
+
+            /* Finish auth token context initialization. */
+            AuthTokenContext.getInstance().finishInitialization();
+
+            /* Send start service log. */
             for (AppCenterService service : updatedServices) {
                 mStartedServicesNamesToLog.add(service.getServiceName());
             }
@@ -1100,9 +1129,6 @@ public class AppCenter {
     /**
      * Set the user identifier for logs sent for the default target token when the secret
      * passed in {@link AppCenter#start(Application, String, Class[])} contains "target={targetToken}".
-     * <p>
-     * The App Center servers currently do not yet use the user identifier so this API has not yet a use case
-     * when the secret passed to AppCenter.start contains a App Center application secret.
      * <p>
      * For App Center servers the user identifier maximum length is 256 characters.
      * <p>

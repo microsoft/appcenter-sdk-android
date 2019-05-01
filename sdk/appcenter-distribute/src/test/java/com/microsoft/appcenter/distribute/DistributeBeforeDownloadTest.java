@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
@@ -82,7 +87,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -122,7 +127,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -164,7 +169,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -202,7 +207,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -260,7 +265,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -306,7 +311,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                     @Override
                     public void run() {
                         beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                         afterSemaphore.release();
                     }
                 }.start();
@@ -370,7 +375,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -471,7 +476,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -523,7 +528,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -600,7 +605,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         assertNotNull(serviceCallbackRef.get());
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
         serviceCallbackRef.set(null);
 
         /* Verify release notes persisted. */
@@ -624,7 +629,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Simulate network back and get same release again, should do nothing particular. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
 
         /* Check we didn't change state, e.g. happened only once. */
         verifyStatic();
@@ -645,7 +650,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getVersion()).thenReturn(8);
         when(releaseDetails.isMandatoryUpdate()).thenReturn(false);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
 
         /* Check state updated again when we detect it. */
         verifyStatic(times(2));
@@ -663,7 +668,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Unblock call with network up. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
 
         /* If we restart SDK online, its an optional update so dialog will not be restored until new call made. */
         restartProcessAndSdk();
@@ -673,7 +678,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* Dialog shown only after new call made in that scenario. */
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder, times(5)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
         verify(mDialogBuilder, times(2)).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
@@ -717,7 +722,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog. */
-        serviceCallbackRef.get().onCallSucceeded("mock");
+        serviceCallbackRef.get().onCallSucceeded("mock", null);
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
 
         /* Restart offline. */
@@ -746,7 +751,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -840,7 +845,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -879,7 +884,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });

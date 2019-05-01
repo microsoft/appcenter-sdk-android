@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.features;
 
 import android.app.Activity;
@@ -9,6 +14,7 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
 import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
+import com.microsoft.appcenter.sasquatch.activities.DataActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
@@ -39,6 +45,14 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+
+        /* TODO Remove reflection once Data available in jCenter. */
+        try {
+            Class.forName("com.microsoft.appcenter.data.Data");
+            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
+            sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
+        } catch (ClassNotFoundException ignore) {
+        }
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

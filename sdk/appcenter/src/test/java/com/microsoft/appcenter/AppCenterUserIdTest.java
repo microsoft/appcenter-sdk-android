@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter;
 
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import org.junit.After;
 import org.junit.Test;

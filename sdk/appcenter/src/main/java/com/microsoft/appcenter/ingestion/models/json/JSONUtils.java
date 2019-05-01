@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.ingestion.models.json;
 
 import android.support.annotation.VisibleForTesting;
@@ -15,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public final class JSONUtils {
+public class JSONUtils {
 
     @VisibleForTesting
     JSONUtils() {

@@ -1,31 +1,31 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.ingestion;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.http.DefaultHttpClient;
+import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
-import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.Constants.APP_SECRET;
+import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
@@ -48,12 +48,6 @@ public class AppCenterIngestion implements Ingestion {
      */
     @VisibleForTesting
     static final String INSTALL_ID = "Install-ID";
-
-    /**
-     * Application secret HTTP Header.
-     */
-    @VisibleForTesting
-    static final String APP_SECRET = "App-Secret";
 
     /**
      * Log serializer.
@@ -94,10 +88,13 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
+        if (authToken != null) {
+            headers.put(AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
+        }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
@@ -115,7 +112,7 @@ public class AppCenterIngestion implements Ingestion {
     /**
      * Inner class is used to be able to mock System.currentTimeMillis, does not work if using anonymous inner class...
      */
-    private static class IngestionCallTemplate implements HttpClient.CallTemplate {
+    private static class IngestionCallTemplate extends AbstractAppCallTemplate {
 
         private final LogSerializer mLogSerializer;
 
@@ -131,23 +128,6 @@ public class AppCenterIngestion implements Ingestion {
 
             /* Serialize payload. */
             return mLogSerializer.serializeContainer(mLogContainer);
-        }
-
-        @Override
-        public void onBeforeCalling(URL url, Map<String, String> headers) {
-            if (AppCenterLog.getLogLevel() <= VERBOSE) {
-
-                /* Log url. */
-                AppCenterLog.verbose(LOG_TAG, "Calling " + url + "...");
-
-                /* Log headers. */
-                Map<String, String> logHeaders = new HashMap<>(headers);
-                String appSecret = logHeaders.get(APP_SECRET);
-                if (appSecret != null) {
-                    logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
-                }
-                AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
-            }
         }
     }
 }

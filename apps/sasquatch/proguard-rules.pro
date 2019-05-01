@@ -2,3 +2,12 @@
 -keepclasseswithmembers class com.microsoft.appcenter.ingestion.models.Device {
    public ** get*();
 }
+
+# TODO: Below config is temporary. Please remove this once we have binaries ready in jcenter.
+-keep public class com.microsoft.appcenter.auth.Auth {
+   *;
+}
+
+-keep public class com.microsoft.appcenter.data.Data {
+   *;
+}

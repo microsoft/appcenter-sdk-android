@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.http;
 
 import java.util.Map;
@@ -50,8 +55,8 @@ abstract class HttpClientCallDecorator implements Runnable, ServiceCall, Service
     }
 
     @Override
-    public void onCallSucceeded(String payload) {
-        mServiceCallback.onCallSucceeded(payload);
+    public void onCallSucceeded(String payload, Map<String, String> headers) {
+        mServiceCallback.onCallSucceeded(payload, headers);
     }
 
     @Override
