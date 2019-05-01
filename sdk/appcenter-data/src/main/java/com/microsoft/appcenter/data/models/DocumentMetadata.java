@@ -12,8 +12,10 @@ public class DocumentMetadata {
 
     @SerializedName(value = Constants.ETAG_FIELD_NAME)
     String mETag;
+
     @SerializedName(value = Constants.PARTITION_KEY_FIELD_NAME)
     private String mPartition;
+
     @SerializedName(value = Constants.ID_FIELD_NAME)
     private String mId;
 
