@@ -10,9 +10,7 @@ App Center Auth is an identity management service that allows you to customize a
 
 ### AppCenterData
 
-The App Center Data Storage service provides functionality enabling developers to persist app data in the cloud in both online and offline scenarios. This enables you to store and manage both user-specific data as well as data shared between users on multiple platforms. 
-
-The App Center Data SDK enables you to create, read, update, and delete private documents and read public documents. In addition, this package allows you to configure offline document persistence, enabling offline access for data in your app.
+The App Center Data service provides functionality enabling developers to persist app data in the cloud in both online and offline scenarios. This enables you to store and manage both user-specific data as well as data shared between users and across platforms.
 
 ### AppCenterDistribute
 
