@@ -82,13 +82,6 @@ public class PendingOperation {
     }
 
     /**
-     * @param document object.
-     */
-    public void setDocument(String document) {
-        mDocument = document;
-    }
-
-    /**
      * @return Cosmos DB eTag.
      */
     public String getETag() {
