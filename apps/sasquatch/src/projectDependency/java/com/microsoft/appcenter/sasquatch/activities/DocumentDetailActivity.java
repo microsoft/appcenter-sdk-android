@@ -21,20 +21,18 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.data.DefaultPartitions;
+import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
-import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static android.view.View.GONE;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
@@ -150,7 +148,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), message));
             return list;
         }
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(document.getLastUpdatedDate(), TimeUnit.SECONDS)).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), document.getLastUpdatedDate().toString()));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromDeviceCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
         Object doc = document.getDeserializedValue();
         String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);

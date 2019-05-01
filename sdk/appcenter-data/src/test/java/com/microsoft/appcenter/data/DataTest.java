@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -1145,14 +1146,7 @@ public class DataTest extends AbstractDataTest {
         assertEquals(RESOLVED_USER_PARTITION, d.getPartition());
         assertEquals(TEST_FIELD_VALUE, d.getDeserializedValue().test);
         assertEquals(ETAG, d.getETag());
-        assertEquals(1550881731, d.getLastUpdatedDate());
-    }
-
-    @Test
-    public void documentSerialization() {
-        String jsonDocument = String.format("{\"test\": \"%s\"\n" + "}", TEST_FIELD_VALUE);
-        TestDocument deserializedDocument = Utils.fromJson(jsonDocument, TestDocument.class);
-        assertEquals(TEST_FIELD_VALUE, deserializedDocument.test);
+        assertEquals(new Date(1550881731000L), d.getLastUpdatedDate());
     }
 
     @Test
