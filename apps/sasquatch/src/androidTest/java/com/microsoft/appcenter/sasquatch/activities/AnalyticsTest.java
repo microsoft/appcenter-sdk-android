@@ -9,7 +9,6 @@ package com.microsoft.appcenter.sasquatch.activities;
 import android.support.test.espresso.IdlingRegistry;
 import android.support.test.rule.ActivityTestRule;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 
@@ -39,6 +38,11 @@ import static org.hamcrest.Matchers.anyOf;
 @SuppressWarnings("unused")
 public class AnalyticsTest {
 
+    /**
+     * The same setting as SDK that is package private. Module default batching interval.
+     */
+    private static final int DEFAULT_TRIGGER_INTERVAL = 3000;
+
     @Rule
     public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
 
@@ -65,7 +69,7 @@ public class AnalyticsTest {
 
         /* Check toasts. */
         waitFor(onToast(mActivityTestRule.getActivity(),
-                withText(R.string.event_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
+                withText(R.string.event_before_sending)), DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
                 .check(matches(isDisplayed()));
         onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
@@ -86,7 +90,7 @@ public class AnalyticsTest {
         onView(withText(R.string.send)).perform(click());
 
         /* Check toasts. */
-        waitFor(onToast(mActivityTestRule.getActivity(), withText(R.string.page_before_sending)), Constants.DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
+        waitFor(onToast(mActivityTestRule.getActivity(), withText(R.string.page_before_sending)), 3000 + CHECK_DELAY)
                 .check(matches(isDisplayed()));
         onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
