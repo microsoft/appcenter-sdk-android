@@ -33,6 +33,9 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.exception.DataException;
+import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -224,6 +227,16 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
+    private RemoteOperationListener getDataRemoteOperationListener() {
+        return new RemoteOperationListener() {
+
+            @Override
+            public void onRemoteOperationCompleted(String operation, DocumentMetadata documentMetadata, DataException error) {
+                Log.i(LOG_TAG, String.format("Remote operation completed operation=%s partition=%s documentId=%s eTag=%s", operation, documentMetadata.getPartition(), documentMetadata.getId(), documentMetadata.getETag()), error);
+            }
+        };
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -244,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
+        Data.setRemoteOperationListener(getDataRemoteOperationListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
