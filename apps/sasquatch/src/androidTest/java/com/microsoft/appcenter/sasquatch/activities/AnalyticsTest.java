@@ -90,7 +90,7 @@ public class AnalyticsTest {
         onView(withText(R.string.send)).perform(click());
 
         /* Check toasts. */
-        waitFor(onToast(mActivityTestRule.getActivity(), withText(R.string.page_before_sending)), 3000 + CHECK_DELAY)
+        waitFor(onToast(mActivityTestRule.getActivity(), withText(R.string.page_before_sending)), DEFAULT_TRIGGER_INTERVAL + CHECK_DELAY)
                 .check(matches(isDisplayed()));
         onView(isRoot()).perform(waitFor(TOAST_DELAY));
         waitFor(onToast(mActivityTestRule.getActivity(), anyOf(
