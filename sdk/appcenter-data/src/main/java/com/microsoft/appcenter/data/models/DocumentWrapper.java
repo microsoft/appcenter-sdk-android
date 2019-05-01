@@ -12,6 +12,8 @@ import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.exception.DataException;
 
+import java.util.Date;
+
 /**
  * A document coming back from CosmosDB.
  */
@@ -83,8 +85,10 @@ public class DocumentWrapper<T> extends DocumentMetadata {
      *
      * @return UTC unix timestamp.
      */
-    public long getLastUpdatedDate() {
-        return mLastUpdatedDate;
+    public Date getLastUpdatedDate() {
+
+        /* Since we use Gson, we need to keep mLastUpdatedDate in seconds for serialization. */
+        return new Date(mLastUpdatedDate * 1000L);
     }
 
     /**

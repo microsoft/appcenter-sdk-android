@@ -339,7 +339,7 @@ class LocalDocumentStorage {
             String document = values.getAsString(DOCUMENT_COLUMN_NAME);
             String eTag = values.getAsString(ETAG_COLUMN_NAME);
             long operationTime = values.getAsLong(OPERATION_TIME_COLUMN_NAME);
-            DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime, documentType);
+            DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime / 1000L, documentType);
             documentWrapper.setFromCache(true);
             documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
 

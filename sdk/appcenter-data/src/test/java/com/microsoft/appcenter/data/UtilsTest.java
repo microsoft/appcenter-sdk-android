@@ -72,9 +72,9 @@ public class UtilsTest {
 
     @Test
     public void getETag() {
-        assertNull(Utils.getEtag(null));
-        assertNull(Utils.getEtag(""));
-        assertNull(Utils.getEtag("{a:1}"));
+        assertNull(Utils.getETag(null));
+        assertNull(Utils.getETag(""));
+        assertNull(Utils.getETag("{a:1}"));
     }
 
     @Test

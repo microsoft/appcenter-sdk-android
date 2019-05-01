@@ -91,7 +91,7 @@ public class Utils {
         return parseDocument(documentElement, partition, documentId, eTag, lastUpdatedTime, documentType);
     }
 
-    static String getEtag(String cosmosDbPayload) {
+    static String getETag(String cosmosDbPayload) {
         if (cosmosDbPayload == null) {
             return null;
         }
@@ -118,7 +118,7 @@ public class Utils {
                 partition.getAsString(),
                 documentId.getAsString(),
                 eTag != null ? eTag.getAsString() : null,
-                timestamp.getAsLong() * 1000L,
+                timestamp.getAsLong(),
                 documentType);
     }
 
