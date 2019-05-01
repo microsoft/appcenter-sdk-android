@@ -7,6 +7,7 @@ package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.HttpException;
@@ -82,7 +83,12 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        String requestBody = verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+
+        DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
+        assertEquals(DOCUMENT_ID, requestPayload.getId());
+        assertEquals(RESOLVED_USER_PARTITION, requestPayload.getPartition());
+        assertEquals("document", requestPayload.getDeserializedValue());
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_CREATE_VALUE),
@@ -136,7 +142,12 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
 
         mData.onNetworkStateUpdated(true);
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        String requestBody = verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+
+        DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
+        assertEquals(DOCUMENT_ID, requestPayload.getId());
+        assertEquals(RESOLVED_USER_PARTITION, requestPayload.getPartition());
+        assertEquals("document", requestPayload.getDeserializedValue());
 
         ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
         verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
