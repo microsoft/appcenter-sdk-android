@@ -108,13 +108,16 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
     private final Tracker mTracker;
 
-    DefaultHttpClientCallTask(String url, String method, Map<String, String> headers, HttpClient.CallTemplate callTemplate, ServiceCallback serviceCallback, Tracker tracker) {
+    private final boolean mCompressionEnabled;
+
+    DefaultHttpClientCallTask(String url, String method, Map<String, String> headers, HttpClient.CallTemplate callTemplate, ServiceCallback serviceCallback, Tracker tracker, boolean compressionEnabled) {
         mUrl = url;
         mMethod = method;
         mHeaders = headers;
         mCallTemplate = callTemplate;
         mServiceCallback = serviceCallback;
         mTracker = tracker;
+        mCompressionEnabled = compressionEnabled;
     }
 
     private static InputStream getInputStream(HttpsURLConnection httpsURLConnection) throws IOException {
@@ -219,7 +222,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 /* Get bytes, check if large enough to compress. */
                 payload = mCallTemplate.buildRequestBody();
                 binaryPayload = payload.getBytes(CHARSET_NAME);
-                shouldCompress = binaryPayload.length >= MIN_GZIP_LENGTH;
+                shouldCompress = mCompressionEnabled && binaryPayload.length >= MIN_GZIP_LENGTH;
 
                 /* If no content type specified, assume json. */
                 if (!mHeaders.containsKey(CONTENT_TYPE_KEY)) {
@@ -366,11 +369,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
 
         /**
          * Called before the http call operation.
+         *
+         * @param task The http call.
          */
         void onStart(DefaultHttpClientCallTask task);
 
         /**
          * Called after the http call operation.
+         *
+         * @param task The http call.
          */
         void onFinish(DefaultHttpClientCallTask task);
     }

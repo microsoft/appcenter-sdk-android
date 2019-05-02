@@ -28,22 +28,8 @@ buildscript {
     }
 }
 
-def localProperties = new Properties()
-def file = rootProject.file('local.properties')
-if (file.exists()) {
-    localProperties.load(file.newDataInputStream())
-}
-def azureArtifactsGradleAccessToken = localProperties['azure.artifacts.gradle.access.token']
-
 allprojects {
     repositories {
-        maven {
-            url 'https://identitydivision.pkgs.visualstudio.com/_packaging/AndroidADAL/maven/v1'
-            credentials {
-                username "AZURE_ARTIFACTS"
-                password System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") ?: "${azureArtifactsGradleAccessToken}"
-            }
-        }
         google()
         jcenter()
     }

@@ -188,7 +188,7 @@ public class DatabaseManager implements Closeable {
      * @param table  name.
      * @param schema of the table.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in storage
+    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in data
     public void createTable(@NonNull String table, @NonNull ContentValues schema) {
         createTable(getDatabase(), table, schema, null);
     }

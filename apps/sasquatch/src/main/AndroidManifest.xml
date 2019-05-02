@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -62,14 +61,14 @@
         <activity
             android:name=".activities.AuthenticationProviderActivity"
             android:label="@string/title_auth" />
-            <activity
-            android:name=".activities.StorageActivity"
-            android:label="@string/title_storage" />
+        <activity
+            android:name=".activities.DataActivity"
+            android:label="@string/title_data" />
         <activity
             android:name=".activities.NewUserDocumentActivity"
             android:label="@string/new_user_document_title" />
         <activity
-            android:name=".activities.AppDocumentDetailActivity"
+            android:name=".activities.DocumentDetailActivity"
             android:label="@string/app_document_detail_title" />
         <activity
             android:name=".activities.MSALoginActivity"
@@ -83,7 +82,7 @@
 
                 <data
                     android:host="auth"
-                    android:scheme="msal9e0d97c1-7838-46d0-9dab-1a0ef66aec6e" />
+                    android:scheme="@string/msal_redirect_scheme" />
             </intent-filter>
         </activity>
 

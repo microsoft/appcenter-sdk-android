@@ -39,9 +39,9 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public static final String METHOD_DELETE = "DELETE";
 
     /**
-     * Retry after milliseconds duration header key.
+     * Retry after milliseconds duration header.
      */
-    static final String RETRY_AFTER_MS_KEY = "x-ms-retry-after-ms";
+    static final String X_MS_RETRY_AFTER_MS_HEADER = "x-ms-retry-after-ms";
 
     /**
      * Content type header key.
@@ -73,6 +73,19 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
      */
     private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
 
+    /**
+     * Indicates whether compression is enabled.
+     */
+    private boolean mCompressionEnabled;
+
+    public DefaultHttpClient() {
+        this(true);
+    }
+
+    public DefaultHttpClient(boolean compressionEnabled) {
+        mCompressionEnabled = compressionEnabled;
+    }
+
     @VisibleForTesting
     Set<DefaultHttpClientCallTask> getTasks() {
         return mTasks;
@@ -80,7 +93,7 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
-        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this);
+        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this, mCompressionEnabled);
         try {
             task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (final RejectedExecutionException e) {
@@ -135,5 +148,10 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public void reopen() {
 
         /* Nothing to do. */
+    }
+
+    @VisibleForTesting
+    boolean isCompressionEnabled() {
+        return mCompressionEnabled;
     }
 }

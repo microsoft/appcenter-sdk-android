@@ -164,25 +164,25 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfDebug() throws Exception {
+    public void doNothingIfDebug() {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfInstallComesFromStore() throws Exception {
+    public void doNothingIfInstallComesFromStore() {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfUpdateSetupFailedMessageExist() throws Exception {
+    public void doNothingIfUpdateSetupFailedMessageExist() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
         testDistributeInactive();
     }
 
     @Test
-    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws Exception {
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
@@ -1149,18 +1149,17 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkReleaseFailsRecoverable503() throws Exception {
+    public void checkReleaseFailsRecoverable503() {
         checkReleaseFailure(new HttpException(503), never());
     }
 
     @Test
-    public void checkReleaseFailsWith403() throws Exception {
+    public void checkReleaseFailsWith403() {
         checkReleaseFailure(new HttpException(403), times(1));
-
     }
 
     @Test
-    public void checkReleaseFailsWithSomeSSL() throws Exception {
+    public void checkReleaseFailsWithSomeSSL() {
         checkReleaseFailure(new SSLPeerUnverifiedException("unsecured connection"), times(1));
     }
 

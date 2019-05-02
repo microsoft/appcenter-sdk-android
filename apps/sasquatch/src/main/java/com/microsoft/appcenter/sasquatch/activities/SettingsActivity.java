@@ -33,7 +33,9 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
+import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
@@ -72,7 +74,6 @@ public class SettingsActivity extends AppCompatActivity {
     private static boolean sAnalyticsPaused;
 
     @Override
-    @SuppressWarnings("deprecation")
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.SKIP_START.toString());
@@ -81,7 +82,6 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
-    @SuppressWarnings("deprecation")
     public static class SettingsFragment extends android.preference.PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
@@ -260,64 +260,50 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            /* Identity. */
-            /*
-             * TODO: change to real implementation when released.
-             *
-             * initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
-             *
-             *  @Override
-             *  public void setEnabled(boolean enabled) {
-             *      Identity.setEnabled(enabled);
-             *  }
-             *
-             *  @Override
-             *  public boolean isEnabled() {
-             *      return Identity.isEnabled().get();
-             *  }
-             * });
-             */
+            /* Auth. */
+            initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
 
-            try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> identity = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.identity.Identity");
-                final Method isEnabled = identity.getMethod("isEnabled");
-                final Method setEnabled = identity.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.appcenter_identity_state_key, R.string.appcenter_identity_state_summary_enabled, R.string.appcenter_identity_state_summary_disabled, new HasEnabled() {
+                @Override
+                public boolean isEnabled() {
+                    return Auth.isEnabled().get();
+                }
 
-                    @Override
-                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
-                    public void setEnabled(boolean enabled) {
-                        try {
-                            setEnabled.invoke(null, enabled);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Auth.setEnabled(enabled);
+                }
 
-                    @Override
-                    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
-                    public boolean isEnabled() {
-                        try {
-                            AppCenterFuture<Boolean> result = (AppCenterFuture<Boolean>) isEnabled.invoke(null);
-                            return result.get();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.identity_key)));
-            }
 
+            });
+
+            /* Data. */
+            initCheckBoxSetting(R.string.appcenter_data_state_key, R.string.appcenter_data_state_summary_enabled, R.string.appcenter_data_state_summary_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return Data.isEnabled().get();
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Data.setEnabled(enabled);
+                }
+
+
+            });
+
+            /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
-                @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                @SuppressWarnings("unchecked")
                 public void setEnabled(boolean enabled) {
                     try {
                         if (enabled) {
                             Push.enableFirebaseAnalytics(getActivity());
                         } else {
+
+                            /* TODO remove reflection once vanilla build variant is removed and merged with firebase build variant. */
                             try {
                                 Class firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
                                 Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, getActivity());
@@ -387,7 +373,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 @Override
-                @SuppressWarnings("unchecked")
                 public boolean isEnabled() {
                     return sEventFilterStarted && EventFilter.isEnabled().get();
                 }

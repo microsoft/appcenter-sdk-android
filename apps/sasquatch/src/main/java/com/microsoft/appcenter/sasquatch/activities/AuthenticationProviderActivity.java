@@ -15,13 +15,13 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
+import com.microsoft.appcenter.auth.Auth;
+import com.microsoft.appcenter.auth.SignInResult;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,64 +54,45 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_DELEGATE);
             }
         }));
+        featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
 
-        /* TODO remove reflection once Identity published to jCenter. */
-        try {
-            final Class<?> identity = Class.forName("com.microsoft.appcenter.identity.Identity");
-            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Auth.signIn().thenAccept(new AppCenterConsumer<SignInResult>() {
 
-                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
-                @SuppressWarnings("unchecked")
-                @Override
-                public void onClick(View v) {
-                    try {
-                        AppCenterFuture<Object> future = (AppCenterFuture<Object>) identity.getMethod("signIn").invoke(null);
-                        future.thenAccept(new AppCenterConsumer<Object>() {
-
-                            @Override
-                            public void accept(Object signInResult) {
-                                try {
-                                    Class<?> signInResultClass = signInResult.getClass();
-                                    Method getException = signInResultClass.getMethod("getException");
-                                    Exception exception = (Exception) getException.invoke(signInResult);
-                                    if (exception != null) {
-                                        throw exception;
-                                    }
-                                    Method getUserInformation = signInResultClass.getMethod("getUserInformation");
-                                    Object userInformation = getUserInformation.invoke(signInResult);
-                                    String accountId = (String) userInformation.getClass().getMethod("getAccountId").invoke(userInformation);
-                                    SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
-                                    edit.putString("accountId", accountId);
-                                    edit.apply();
-                                    Log.i(LOG_TAG, "Identity.signIn succeeded, accountId=" + accountId);
-                                } catch (Exception e) {
-                                    Log.e(LOG_TAG, "Identity.signIn failed", e);
-                                }
+                    @Override
+                    public void accept(SignInResult signInResult) {
+                        try {
+                            Exception exception = signInResult.getException();
+                            if (exception != null) {
+                                throw exception;
                             }
-                        });
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, "Identity.signIn failed", e);
+                            String accountId = signInResult.getUserInformation().getAccountId();
+                            SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
+                            edit.putString("accountId", accountId);
+                            edit.apply();
+                            Log.i(LOG_TAG, "Auth.signIn succeeded, accountId=" + accountId);
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, "Auth.signIn failed", e);
+                        }
                     }
-                }
-            }));
-            featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
+                });
+            }
+        }));
+        featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
 
-                /* TODO remove reflection once Identity published to jCenter. Remove this annotation too. */
-                @SuppressWarnings("unchecked")
-                @Override
-                public void onClick(View v) {
-                    try {
-                        identity.getMethod("signOut").invoke(null);
-                        SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
-                        edit.putString(ACCOUNT_ID, null);
-                        edit.apply();
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, "Identity.signOut failed", e);
-                    }
+            @Override
+            public void onClick(View v) {
+                try {
+                    Auth.signOut();
+                    SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
+                    edit.putString(ACCOUNT_ID, null);
+                    edit.apply();
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "Auth.signOut failed", e);
                 }
-            }));
-        } catch (ClassNotFoundException ignore) {
-        }
+            }
+        }));
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(featureList));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());

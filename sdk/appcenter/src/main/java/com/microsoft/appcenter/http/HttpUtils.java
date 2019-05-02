@@ -143,7 +143,7 @@ public class HttpUtils {
             lastEnd = matcher.end();
         }
         if (lastEnd < apiKeys.length()) {
-            buffer.append(apiKeys.substring(lastEnd, apiKeys.length()));
+            buffer.append(apiKeys.substring(lastEnd));
         }
         return buffer.toString();
     }
@@ -164,13 +164,17 @@ public class HttpUtils {
      * @param token string header value.
      * @return obfuscated token string header value.
      */
-    public static String hideAuthToken(@NonNull String token) {
+    static String hideAuthToken(@NonNull String token) {
         String prefix = token.split("\\s+")[0];
         return prefix + " ***";
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {
-        HttpClient httpClient = new DefaultHttpClient();
+        return createHttpClient(context, true);
+    }
+
+    public static HttpClient createHttpClient(@NonNull Context context, boolean compressionEnabled) {
+        HttpClient httpClient = new DefaultHttpClient(compressionEnabled);
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
 

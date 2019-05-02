@@ -65,8 +65,11 @@
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>
 
-    <string name="identity_key" tools:ignore="MissingTranslation">appcenter_identity</string>
-    <string name="identity_title" tools:ignore="MissingTranslation">Identity</string>
+    <string name="auth_key" tools:ignore="MissingTranslation">appcenter_auth</string>
+    <string name="auth_title" tools:ignore="MissingTranslation">Auth</string>
+
+    <string name="data_key" tools:ignore="MissingTranslation">appcenter_data</string>
+    <string name="data_title" tools:ignore="MissingTranslation">Data</string>
 
     <string name="appcenter_push_firebase_state_key" tools:ignore="MissingTranslation">appcenter_push_firebase_state_key</string>
     <string name="appcenter_push_firebase_state_title" tools:ignore="MissingTranslation">Firebase analytics state</string>
@@ -77,10 +80,15 @@
     <string name="appcenter_push_state_summary_enabled" tools:ignore="MissingTranslation">Push is enabled</string>
     <string name="appcenter_push_state_summary_disabled" tools:ignore="MissingTranslation">Push is disabled</string>
 
-    <string name="appcenter_identity_state_key" tools:ignore="MissingTranslation">appcenter_identity_state_key</string>
-    <string name="appcenter_identity_state_title" tools:ignore="MissingTranslation">Identity state</string>
-    <string name="appcenter_identity_state_summary_enabled" tools:ignore="MissingTranslation">Identity is enabled</string>
-    <string name="appcenter_identity_state_summary_disabled" tools:ignore="MissingTranslation">Identity is disabled</string>
+    <string name="appcenter_auth_state_key" tools:ignore="MissingTranslation">appcenter_auth_state_key</string>
+    <string name="appcenter_auth_state_title" tools:ignore="MissingTranslation">Auth state</string>
+    <string name="appcenter_auth_state_summary_enabled" tools:ignore="MissingTranslation">Auth is enabled</string>
+    <string name="appcenter_auth_state_summary_disabled" tools:ignore="MissingTranslation">Auth is disabled</string>
+
+    <string name="appcenter_data_state_key" tools:ignore="MissingTranslation">appcenter_data_state_key</string>
+    <string name="appcenter_data_state_title" tools:ignore="MissingTranslation">Data state</string>
+    <string name="appcenter_data_state_summary_enabled" tools:ignore="MissingTranslation">Data is enabled</string>
+    <string name="appcenter_data_state_summary_disabled" tools:ignore="MissingTranslation">Data is disabled</string>
 
     <string name="real_user_measurements_key" tools:ignore="MissingTranslation">appcenter_rum</string>
     <string name="real_user_measurements_title" tools:ignore="MissingTranslation">Real User Measurements</string>

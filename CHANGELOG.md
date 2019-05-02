@@ -1,10 +1,29 @@
 # App Center SDK for Android Change Log
 
-## Version 1.11.5
+## Version 2.0.0
+
+Version 2 of the App Center SDK includes two new modules: Auth and Data.
+
+### AppCenterAuth
+
+App Center Auth is a cloud-based identity management service that enables you to authenticate users and manage their identities. You can also leverage user identities in other App Center services.
+
+### AppCenterData
+
+The App Center Data service provides functionality enabling developers to persist app data in the cloud in both online and offline scenarios. This enables you to store and manage both user-specific data as well as data shared between users and across platforms.
+
+### AppCenterCrashes
+
+* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
 
 ### AppCenterDistribute
 
 * **[Fix]** Fix in-app updates not working on new Samsung devices.
+
+### AppCenterPush
+
+* **[Feature]** After calling `Auth.signIn`, the push installation is associated to the signed in user with an `accountId` and can be pushed by using the `accountId` audience. This is a different field than the `userId` set by `AppCenter.setUserId`. The push installation is also updated on calling `Auth.signOut` to stop the association.
+* **[Fix]** Fix updating push installation when setting or unsetting the user identifier by calling `AppCenter.setUserId`.
 
 ## Version 1.11.4
 
