@@ -1047,7 +1047,7 @@ public class DefaultHttpClientTest {
         when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
 
         /* Configure mock HTTP. */
-        String urlString = "http://mock";
+        String urlString = "https://mock";
         URL url = mock(URL.class);
         whenNew(URL.class).withArguments(urlString).thenReturn(url);
         HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
