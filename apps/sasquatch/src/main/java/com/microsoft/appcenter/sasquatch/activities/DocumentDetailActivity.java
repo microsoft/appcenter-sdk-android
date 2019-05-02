@@ -26,7 +26,6 @@ import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import org.json.JSONException;
@@ -73,10 +72,10 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private MenuItem mRefreshDocument;
 
-    private AppCenterConsumer<DocumentWrapper<TestDocument>> getAppDocument = new AppCenterConsumer<DocumentWrapper<TestDocument>>() {
+    private AppCenterConsumer<DocumentWrapper<Map>> getAppDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
-        public void accept(DocumentWrapper<TestDocument> document) {
+        public void accept(DocumentWrapper<Map> document) {
             if (document.hasFailed()) {
                 Toast.makeText(DocumentDetailActivity.this, String.format(getResources().getString(R.string.get_document_failed), mDocumentId), Toast.LENGTH_SHORT).show();
             } else {
@@ -203,7 +202,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
             if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
                 Data.read(mDocumentId, Map.class, mDocumentPartition).thenAccept(getUserDocument);
             } else {
-                Data.read(mDocumentId, TestDocument.class, mDocumentPartition).thenAccept(getAppDocument);
+                Data.read(mDocumentId, Map.class, mDocumentPartition).thenAccept(getAppDocument);
             }
         }
         return true;
