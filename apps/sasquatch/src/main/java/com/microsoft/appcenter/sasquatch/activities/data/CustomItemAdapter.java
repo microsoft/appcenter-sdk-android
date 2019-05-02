@@ -88,7 +88,9 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
         return mList.get(position).getId();
     }
 
-    public DocumentWrapper<Map> getDocument(int position) {return mList.get(position);}
+    public DocumentWrapper<Map> getDocument(int position) {
+        return mList.get(position);
+    }
 
     public interface OnItemClickListener {
 

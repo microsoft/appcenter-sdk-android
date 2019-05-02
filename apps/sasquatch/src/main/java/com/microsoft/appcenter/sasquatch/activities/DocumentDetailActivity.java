@@ -5,20 +5,17 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -62,7 +59,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private String mDocumentContent;
 
-    private long mDocumentDate;
+    private String mDocumentDate;
 
     private boolean mDocumentState;
 
@@ -113,17 +110,17 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mDocumentPartition = intent.getStringExtra(DOCUMENT_PARTITION);
         mDocumentId = intent.getStringExtra(DOCUMENT_ID);
         mDocumentContent = intent.getStringExtra(DOCUMENT_CONTENT);
-        mDocumentDate = intent.getLongExtra(DOCUMENT_DATE,0);
-        mDocumentState = intent.getBooleanExtra(DOCUMENT_STATE,false);
+        mDocumentDate = intent.getStringExtra(DOCUMENT_DATE);
+        mDocumentState = intent.getBooleanExtra(DOCUMENT_STATE, false);
         mDocumentError = intent.getStringExtra(DOCUMENT_ERROR);
-        mDocumentNullStatus = intent.getBooleanExtra(DOCUMENT_ERROR_NULL_STATUS,false);
-        fillInfo(mDocumentNullStatus,mDocumentError,mDocumentDate,mDocumentState,mDocumentContent);
+        mDocumentNullStatus = intent.getBooleanExtra(DOCUMENT_ERROR_NULL_STATUS, false);
+        fillInfo(mDocumentNullStatus, mDocumentError, mDocumentDate, mDocumentState, mDocumentContent);
     }
 
-    private void fillInfo(boolean documentErrorNullStatus, String errorMessage, long date, boolean documentState, String docContents) {
+    private void fillInfo(boolean documentErrorNullStatus, String errorMessage, String date, boolean documentState, String docContents) {
         mDetailProgress.setVisibility(GONE);
         mListView.setVisibility(View.VISIBLE);
-        final List<DocumentInfoDisplayModel> list = getDocumentInfoDisplayModelList(documentErrorNullStatus,errorMessage,date,documentState,docContents);
+        final List<DocumentInfoDisplayModel> list = getDocumentInfoDisplayModelList(documentErrorNullStatus, errorMessage, date, documentState, docContents);
         ArrayAdapter<DocumentInfoDisplayModel> adapter = new ArrayAdapter<DocumentInfoDisplayModel>(this, R.layout.info_list_item, R.id.info_title, list) {
 
             @NonNull
@@ -158,7 +155,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
     }
 
-    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(boolean documentErrorNullStatus, String errorMessage, long date, boolean documentState, String docContents) {
+    private List<DocumentInfoDisplayModel> getDocumentInfoDisplayModelList(boolean documentErrorNullStatus, String errorMessage, String date, boolean documentState, String docContents) {
         List<DocumentInfoDisplayModel> list = new ArrayList<>();
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_id_title), mDocumentId));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_partition_title), mDocumentPartition));
@@ -167,15 +164,8 @@ public class DocumentDetailActivity extends AppCompatActivity {
             list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_error_title), errorMessage));
             return list;
         }
-<<<<<<< Updated upstream:apps/sasquatch/src/main/java/com/microsoft/appcenter/sasquatch/activities/DocumentDetailActivity.java
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), document.getLastUpdatedDate().toString()));
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), document.isFromDeviceCache() ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
-        Object doc = document.getDeserializedValue();
-        String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
-=======
-        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), new Date(TimeUnit.MILLISECONDS.convert(date, TimeUnit.SECONDS)).toString()));
+        list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_date_title), date));
         list.add(new DocumentInfoDisplayModel(getString(R.string.document_info_state_title), documentState ? getString(R.string.document_info_cached_state) : getString(R.string.document_info_remote_state)));
->>>>>>> Stashed changes:apps/sasquatch/src/projectDependency/java/com/microsoft/appcenter/sasquatch/activities/DocumentDetailActivity.java
         try {
             JSONObject docContentsJSON = new JSONObject(docContents);
             mFullDocContents = docContentsJSON.toString(4);
@@ -189,21 +179,19 @@ public class DocumentDetailActivity extends AppCompatActivity {
         return list;
     }
 
-    private void refreshDocumentWithRead(DocumentWrapper document){
+    private void refreshDocumentWithRead(DocumentWrapper document) {
         if (document.getError() != null) {
             String message = document.getError().getMessage();
             if (message.length() > MAX_CONTENT_LENGTH) {
                 message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
-                mDocumentError =  message;
+                mDocumentError = message;
                 mDocumentNullStatus = true;
             }
-        }
-        else{
-            mDocumentDate =  document.getLastUpdatedDate();
+        } else {
+            mDocumentDate = document.getLastUpdatedDate().toString();
             mDocumentState = document.isFromDeviceCache();
             Object doc = document.getDeserializedValue();
-            String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
-            mDocumentContent = docContents;
+            mDocumentContent = doc == null ? "{}" : Utils.getGson().toJson(doc);
             mDocumentNullStatus = false;
         }
         fillInfo(mDocumentNullStatus, mDocumentError, mDocumentDate, mDocumentState, mDocumentContent);
@@ -211,13 +199,12 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_refresh:
-                if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
-                    Data.read(mDocumentId, Map.class, mDocumentPartition).thenAccept(getUserDocument);
-                } else {
-                    Data.read(mDocumentId, TestDocument.class, mDocumentPartition).thenAccept(getAppDocument);
-                }
+        if (item.getItemId() == R.id.action_refresh) {
+            if (mDocumentPartition.equals(DefaultPartitions.USER_DOCUMENTS)) {
+                Data.read(mDocumentId, Map.class, mDocumentPartition).thenAccept(getUserDocument);
+            } else {
+                Data.read(mDocumentId, TestDocument.class, mDocumentPartition).thenAccept(getAppDocument);
+            }
         }
         return true;
     }
