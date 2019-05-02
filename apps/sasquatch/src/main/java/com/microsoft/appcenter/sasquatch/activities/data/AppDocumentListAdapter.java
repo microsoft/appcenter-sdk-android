@@ -58,7 +58,9 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
     }
 
     public void upload(List<DocumentWrapper<Map>> list) {
-        mList.addAll(list);
+        if (list != null) {
+            mList.addAll(list);
+        }
     }
 
     public interface OnItemClickListener {

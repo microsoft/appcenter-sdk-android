@@ -187,12 +187,14 @@ public class DocumentDetailActivity extends AppCompatActivity {
                 mDocumentNullStatus = true;
             }
         } else {
-            mDocumentDate = document.getLastUpdatedDate().toString();
-            mDocumentState = document.isFromDeviceCache();
             Object doc = document.getDeserializedValue();
             mDocumentContent = doc == null ? "{}" : Utils.getGson().toJson(doc);
             mDocumentNullStatus = false;
         }
+        if (document.getLastUpdatedDate() != null) {
+            mDocumentDate = document.getLastUpdatedDate().toString();
+        }
+        mDocumentState = document.isFromDeviceCache();
         fillInfo(mDocumentNullStatus, mDocumentError, mDocumentDate, mDocumentState, mDocumentContent);
     }
 

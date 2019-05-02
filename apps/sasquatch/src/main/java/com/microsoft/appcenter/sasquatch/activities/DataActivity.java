@@ -251,13 +251,15 @@ public class DataActivity extends AppCompatActivity {
                 intent.putExtra(DOCUMENT_ERROR_NULL_STATUS, true);
             }
         } else {
-            intent.putExtra(DOCUMENT_DATE, document.getLastUpdatedDate().toString());
-            intent.putExtra(DOCUMENT_STATE, document.isFromDeviceCache());
             Object doc = document.getDeserializedValue();
             String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
             intent.putExtra(DOCUMENT_CONTENT, docContents);
             intent.putExtra(DOCUMENT_ERROR_NULL_STATUS, false);
         }
+        if (document.getLastUpdatedDate() != null) {
+            intent.putExtra(DOCUMENT_DATE, document.getLastUpdatedDate().toString());
+        }
+        intent.putExtra(DOCUMENT_STATE, document.isFromDeviceCache());
     }
 
     private void loadUserDocuments() {
