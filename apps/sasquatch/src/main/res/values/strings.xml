@@ -98,5 +98,4 @@
         <item>Invalid</item>
     </string-array>
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
-    <string name="refresh" tools:ignore="MissingTranslation">Refresh</string>
 </resources>
