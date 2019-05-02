@@ -1014,7 +1014,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             completeFuture(getInvalidPartitionDataException(partition), result);
             return true;
         }
-        if (documentId.isEmpty()) {
+        if (documentId == null || documentId.isEmpty() || documentId.contains("#")) {
             completeFuture(new DataException("Invalid document ID."), result);
             return true;
         }

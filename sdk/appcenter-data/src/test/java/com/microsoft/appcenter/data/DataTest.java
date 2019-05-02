@@ -1214,7 +1214,7 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
-    public void failFastForEmptyDocumentId() {
+    public void failFastForInvalidDocumentId() {
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
@@ -1223,11 +1223,11 @@ public class DataTest extends AbstractDataTest {
                 return null;
             }
         });
-        
+
         /* Execute each operation that uses a document ID. */
         DocumentWrapper<TestDocument> createDoc = Data.create("", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
-        DocumentWrapper<TestDocument> readDoc = Data.read("", TestDocument.class, USER_DOCUMENTS).get();
-        DocumentWrapper<TestDocument> replaceDoc = Data.replace("", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+        DocumentWrapper<TestDocument> readDoc = Data.read(null, TestDocument.class, USER_DOCUMENTS).get();
+        DocumentWrapper<TestDocument> replaceDoc = Data.replace(" # ", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
 
         /* All results must have errors. */
         assertNotNull(createDoc.getError());
