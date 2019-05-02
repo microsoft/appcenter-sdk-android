@@ -1234,7 +1234,7 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(readDoc.getError());
         assertNotNull(replaceDoc.getError());
 
-        /* Ensure that local storage has not been accessed. */
+        /* Ensure that local document storage has not been accessed. */
         verifyNoMoreInteractions(mLocalDocumentStorage);
     }
 
