@@ -16,7 +16,7 @@ The App Center Data SDK enables you to create, read, update, and delete private 
 
 ### AppCenterCrashes
 
-* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed-in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
+* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
 
 ### AppCenterDistribute
 
@@ -24,7 +24,7 @@ The App Center Data SDK enables you to create, read, update, and delete private 
 
 ### AppCenterPush
 
-* **[Feature]** After calling `Auth.signIn`, the push installation is associated to the signed-in user with an `accountId` and can be pushed by using the `accountId` audience. This is a different field than the `userId` set by `AppCenter.setUserId`. The push installation is also updated on calling `Auth.signOut` to stop the association.
+* **[Feature]** After calling `Auth.signIn`, the push installation is associated to the signed in user with an `accountId` and can be pushed by using the `accountId` audience. This is a different field than the `userId` set by `AppCenter.setUserId`. The push installation is also updated on calling `Auth.signOut` to stop the association.
 * **[Fix]** Fix updating push installation when setting or unsetting the user identifier by calling `AppCenter.setUserId`.
 
 ## Version 1.11.4
