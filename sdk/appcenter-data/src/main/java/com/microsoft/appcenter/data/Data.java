@@ -419,7 +419,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
         /* Check partition is supported. */
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidStateOrParameters(partition, result)) {
+        if (isInvalidStateOrParameters(partition, documentId, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -751,7 +751,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String documentId, final T document, final Class<T> documentType, final String partition,
             final WriteOptions writeOptions, final Map<String, String> additionalHeaders) {
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidStateOrParameters(partition, result)) {
+        if (isInvalidStateOrParameters(partition, documentId, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -1003,7 +1003,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidStateOrParameters(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+    private <T> boolean isInvalidStateOrParameters(String partition, String documentId, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         boolean isNotStarted = mAppSecret == null;
         if (isNotStarted) {
             completeFuture(getModuleNotStartedException(), result);
@@ -1012,6 +1012,10 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
         if (isInvalidPartition) {
             completeFuture(getInvalidPartitionDataException(partition), result);
+            return true;
+        }
+        if (documentId.isEmpty()) {
+            completeFuture(new DataException("Invalid document ID."), result);
             return true;
         }
         return false;

@@ -73,6 +73,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -1210,6 +1211,31 @@ public class DataTest extends AbstractDataTest {
         Data.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
+    }
+
+    @Test
+    public void failFastForEmptyDocumentId() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                fail("Http Client should not have been accessed.");
+                return null;
+            }
+        });
+        
+        /* Execute each operation that uses a document ID. */
+        DocumentWrapper<TestDocument> createDoc = Data.create("", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+        DocumentWrapper<TestDocument> readDoc = Data.read("", TestDocument.class, USER_DOCUMENTS).get();
+        DocumentWrapper<TestDocument> replaceDoc = Data.replace("", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+
+        /* All results must have errors. */
+        assertNotNull(createDoc.getError());
+        assertNotNull(readDoc.getError());
+        assertNotNull(replaceDoc.getError());
+
+        /* Ensure that local storage has not been accessed. */
+        verifyNoMoreInteractions(mLocalDocumentStorage);
     }
 
     @Test
