@@ -18,16 +18,17 @@ import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentListAdapter.AppDocumentListHolder> {
 
     private Context mContext;
 
-    private List<DocumentWrapper<TestDocument>> mList;
+    private List<DocumentWrapper<Map>> mList;
 
     private OnItemClickListener mListener;
 
-    public AppDocumentListAdapter(Context context, List<DocumentWrapper<TestDocument>> list) {
+    public AppDocumentListAdapter(Context context, List<DocumentWrapper<Map>> list) {
         mContext = context;
         mList = new ArrayList<>(list);
     }
@@ -56,10 +57,15 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         return mList.size();
     }
 
+<<<<<<< Updated upstream:apps/sasquatch/src/main/java/com/microsoft/appcenter/sasquatch/activities/data/AppDocumentListAdapter.java
     public void upload(List<DocumentWrapper<TestDocument>> list) {
         if (list != null) {
             mList.addAll(list);
         }
+=======
+    public void upload(List<DocumentWrapper<Map>> list) {
+        mList.addAll(list);
+>>>>>>> Stashed changes:apps/sasquatch/src/projectDependency/java/com/microsoft/appcenter/sasquatch/activities/data/AppDocumentListAdapter.java
     }
 
     public interface OnItemClickListener {
@@ -71,9 +77,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
         mListener = listener;
     }
 
-    public String getDocumentByPosition(int position) {
-        return mList.get(position).getId();
-    }
+    public DocumentWrapper<Map> getDocument(int position) {return mList.get(position);}
 
     class AppDocumentListHolder extends RecyclerView.ViewHolder {
 
