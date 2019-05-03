@@ -1,5 +1,10 @@
 # App Center SDK for Android Change Log
 
+## Version 2.0.1 (under  development)
+
+### App Center Auth
+* **[Fix]** Fix an issue where certain invalid characters in the document ID would be accepted. The characters are `#`, `\`, `/`, `?`, and `space`.
+
 ## Version 2.0.0
 
 Version 2 of the App Center SDK includes two new modules: Auth and Data.
