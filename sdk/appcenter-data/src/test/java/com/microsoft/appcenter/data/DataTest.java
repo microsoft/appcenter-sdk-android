@@ -1224,15 +1224,37 @@ public class DataTest extends AbstractDataTest {
             }
         });
 
-        /* Execute each operation that uses a document ID. */
-        DocumentWrapper<TestDocument> createDoc = Data.create("", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
-        DocumentWrapper<TestDocument> readDoc = Data.read(null, TestDocument.class, USER_DOCUMENTS).get();
-        DocumentWrapper<TestDocument> replaceDoc = Data.replace(" # ", new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+        /* Document IDs cannot be null or empty, or contain '#', '/', or '\'. */
+        ArrayList<String> invalidDocumentIds = new ArrayList<String>() {
+            {
+                add(null);
+                add("");
+                add("#");
+                add("abc#");
+                add("#abc");
+                add("ab#c");
+                add("/");
+                add("abc/");
+                add("/abc");
+                add("ab/c");
+                add("\\");
+                add("abc\\");
+                add("\\abc");
+                add("ab\\c");
+            }
+        };
+        for (String invalidId : invalidDocumentIds) {
 
-        /* All results must have errors. */
-        assertNotNull(createDoc.getError());
-        assertNotNull(readDoc.getError());
-        assertNotNull(replaceDoc.getError());
+            /* Execute each operation that uses a document ID. */
+            DocumentWrapper<TestDocument> createDoc = Data.create(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> readDoc = Data.read(invalidId, TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> replaceDoc = Data.replace(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+
+            /* All results must have errors. */
+            assertNotNull(createDoc.getError());
+            assertNotNull(readDoc.getError());
+            assertNotNull(replaceDoc.getError());
+        }
 
         /* Ensure that local document storage has not been accessed. */
         verifyNoMoreInteractions(mLocalDocumentStorage);

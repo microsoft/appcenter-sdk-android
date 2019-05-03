@@ -43,6 +43,8 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
 import static com.microsoft.appcenter.data.Constants.DEFAULT_API_URL;
@@ -100,6 +102,11 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private AuthTokenContext.Listener mAuthListener;
 
     private NetworkStateHelper mNetworkStateHelper;
+
+    /**
+     * Document ID validation pattern.
+     */
+    private Pattern sDocumentIdPattern = Pattern.compile("^[^/\\\\#]+$");
 
     /**
      * Get shared instance.
@@ -1009,12 +1016,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             completeFuture(getModuleNotStartedException(), result);
             return true;
         }
-        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
-        if (isInvalidPartition) {
+        boolean isValidPartition = LocalDocumentStorage.isValidPartitionName(partition);
+        if (!isValidPartition) {
             completeFuture(getInvalidPartitionDataException(partition), result);
             return true;
         }
-        if (documentId == null || documentId.isEmpty() || documentId.contains("#")) {
+        boolean isValidDocumentId = isValidDocumentId(documentId);
+        if (!isValidDocumentId) {
             completeFuture(new DataException("Invalid document ID."), result);
             return true;
         }
@@ -1033,6 +1041,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             return true;
         }
         return false;
+    }
+
+    private boolean isValidDocumentId(String documentId) {
+        if (documentId == null) {
+            return false;
+        }
+        Matcher matcher = sDocumentIdPattern.matcher(documentId);
+        return matcher.matches();
     }
 
     private interface CallTemplate<T> {
