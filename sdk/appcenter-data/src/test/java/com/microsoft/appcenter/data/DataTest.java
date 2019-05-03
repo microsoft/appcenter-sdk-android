@@ -1241,6 +1241,14 @@ public class DataTest extends AbstractDataTest {
                 add("abc\\");
                 add("\\abc");
                 add("ab\\c");
+                add(" ");
+                add("abc ");
+                add(" abc");
+                add("ab c");
+                add("?");
+                add("abc?");
+                add("?abc");
+                add("ab?c");
             }
         };
         for (String invalidId : invalidDocumentIds) {
