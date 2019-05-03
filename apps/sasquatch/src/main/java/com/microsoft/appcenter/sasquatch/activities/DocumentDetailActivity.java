@@ -70,8 +70,6 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private ListView mListView;
 
-    private MenuItem mRefreshDocument;
-
     private AppCenterConsumer<DocumentWrapper<Map>> getAppDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
@@ -213,7 +211,6 @@ public class DocumentDetailActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.refresh, menu);
-        mRefreshDocument = menu.findItem(R.id.action_refresh);
         return true;
     }
 
