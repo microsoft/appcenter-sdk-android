@@ -1224,6 +1224,7 @@ public class DataTest extends AbstractDataTest {
             }
         });
 
+
         /* Document IDs cannot be null or empty, or contain '#', '/', or '\'. */
         ArrayList<String> invalidDocumentIds = new ArrayList<String>() {
             {
@@ -1249,6 +1250,14 @@ public class DataTest extends AbstractDataTest {
                 add("abc?");
                 add("?abc");
                 add("ab?c");
+                add("\t");
+                add("abc\t");
+                add("\tabc");
+                add("ab\tc");
+                add("\n");
+                add("abc\n");
+                add("\nabc");
+                add("ab\nc");
             }
         };
         for (String invalidId : invalidDocumentIds) {
