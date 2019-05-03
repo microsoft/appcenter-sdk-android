@@ -606,7 +606,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readCosmosDbCallEncodeDocumentId() throws JSONException, UnsupportedEncodingException {
-        String documentID = "Test Document";
+        String documentID = "TestDocument";
         Data.read(documentID, TestDocument.class, USER_DOCUMENTS);
         verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
 
