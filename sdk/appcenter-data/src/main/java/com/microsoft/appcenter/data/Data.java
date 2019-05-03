@@ -106,7 +106,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * Document ID validation pattern.
      */
-    private Pattern sDocumentIdPattern = Pattern.compile("^[^/\\\\# ?]+$");
+    private final Pattern sDocumentIdPattern = Pattern.compile("^[^/\\\\# ?]+$");
 
     /**
      * Get shared instance.
