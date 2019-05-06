@@ -65,12 +65,7 @@ public class CosmosDb {
     }
 
     private static String urlEncode(String url) {
-
-        /* TODO validate TokenResult has all required fields non null then get rid of the if. */
-        if (url != null) {
-            return urlEncode(url, "UTF-8");
-        }
-        return null;
+        return urlEncode(url, "UTF-8");
     }
 
     @VisibleForTesting
