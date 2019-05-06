@@ -73,6 +73,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -605,7 +606,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readCosmosDbCallEncodeDocumentId() throws JSONException, UnsupportedEncodingException {
-        String documentID = "Test Document";
+        String documentID = "TestDocument";
         Data.read(documentID, TestDocument.class, USER_DOCUMENTS);
         verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
 
@@ -1210,6 +1211,70 @@ public class DataTest extends AbstractDataTest {
         Data.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
+    }
+
+    @Test
+    public void failFastForInvalidDocumentId() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                fail("Http Client should not have been accessed.");
+                return null;
+            }
+        });
+
+
+        /* Document IDs cannot be null or empty, or contain '#', '/', or '\'. */
+        ArrayList<String> invalidDocumentIds = new ArrayList<String>() {
+            {
+                add(null);
+                add("");
+                add("#");
+                add("abc#");
+                add("#abc");
+                add("ab#c");
+                add("/");
+                add("abc/");
+                add("/abc");
+                add("ab/c");
+                add("\\");
+                add("abc\\");
+                add("\\abc");
+                add("ab\\c");
+                add(" ");
+                add("abc ");
+                add(" abc");
+                add("ab c");
+                add("?");
+                add("abc?");
+                add("?abc");
+                add("ab?c");
+                add("\t");
+                add("abc\t");
+                add("\tabc");
+                add("ab\tc");
+                add("\n");
+                add("abc\n");
+                add("\nabc");
+                add("ab\nc");
+            }
+        };
+        for (String invalidId : invalidDocumentIds) {
+
+            /* Execute each operation that uses a document ID. */
+            DocumentWrapper<TestDocument> createDoc = Data.create(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> readDoc = Data.read(invalidId, TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> replaceDoc = Data.replace(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+
+            /* All results must have errors. */
+            assertNotNull(createDoc.getError());
+            assertNotNull(readDoc.getError());
+            assertNotNull(replaceDoc.getError());
+        }
+
+        /* Ensure that local document storage has not been accessed. */
+        verifyNoMoreInteractions(mLocalDocumentStorage);
     }
 
     @Test
