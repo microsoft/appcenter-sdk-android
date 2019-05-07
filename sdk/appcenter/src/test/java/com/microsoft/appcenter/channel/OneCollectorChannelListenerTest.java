@@ -58,11 +58,12 @@ public class OneCollectorChannelListenerTest {
         OneCollectorChannelListener listener = new OneCollectorChannelListener(mock(Context.class), channel, mock(LogSerializer.class), UUIDUtils.randomUUID());
 
         /* Mock group added. */
+        long batchTimeInterval = 3000;
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
-        listener.onGroupAdded(TEST_GROUP, groupListener);
+        listener.onGroupAdded(TEST_GROUP, groupListener, batchTimeInterval);
 
         /* Verify one collector group added. */
-        verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), anyInt(), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
+        verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), eq(batchTimeInterval), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
 
             @Override
             public boolean matches(Object argument) {
@@ -71,7 +72,7 @@ public class OneCollectorChannelListenerTest {
         }), same(groupListener));
 
         /* Mock one collector group added callback, should not loop indefinitely. */
-        listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, groupListener);
+        listener.onGroupAdded(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX, groupListener, batchTimeInterval);
         verifyNoMoreInteractions(channel);
     }
 
