@@ -50,19 +50,26 @@ import java.util.Map;
  */
 public class Analytics extends AbstractAppCenterService {
 
-    public static final String ANALYTICS_CRITICAL_GROUP = "group_critical";
     /**
      * Constant marking event of the analytics group.
      */
     static final String ANALYTICS_GROUP = "group_analytics";
+
+    /**
+     * Constant marking event of the analytics critical group.
+     */
+    static final String ANALYTICS_CRITICAL_GROUP = ANALYTICS_GROUP + "_critical";
+
     /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Analytics";
+
     /**
      * TAG used in logging for Analytics.
      */
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
+
     /**
      * Activity suffix to exclude from generated page names.
      */
@@ -656,7 +663,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* If we enabled the service. */
         if (enabled) {
-            mChannel.addGroup(criticalAnalyticsGroupName("Critical"), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
+            mChannel.addGroup(ANALYTICS_CRITICAL_GROUP, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
 
             /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();
@@ -664,7 +671,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* On disabling service. */
         else {
-            mChannel.removeGroup(criticalAnalyticsGroupName("Critical"));
+            mChannel.removeGroup(ANALYTICS_CRITICAL_GROUP);
 
             /* Cleanup resources. */
             if (mAnalyticsValidator != null) {
@@ -793,11 +800,7 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     private boolean isCritical(int flag) {
-        return flag == Flags.PERSISTENCE_CRITICAL;
-    }
-
-    private String criticalAnalyticsGroupName(String groupName) {
-        return SERVICE_NAME + groupName;
+        return (flag & Flags.PERSISTENCE_CRITICAL) != 0;
     }
 
     /**
