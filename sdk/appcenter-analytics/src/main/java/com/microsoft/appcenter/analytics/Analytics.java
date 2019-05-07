@@ -75,6 +75,12 @@ public class Analytics extends AbstractAppCenterService {
     private static Analytics sInstance;
 
     /**
+     * Transmission interval range values
+     */
+    private static final int TRANSMISSIONINTERVAL_MINMAL = 3;
+    private static final int TRANSMISSIONINTERVAL_MAXMIUM = 24*60;
+
+    /**
      * Log factories managed by this service.
      */
     private final Map<String, LogFactory> mFactories;
@@ -129,7 +135,7 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission Interval
      * valid value range from 3 seconds to 1 day
      */
-    private int transmissionInterval = 3;
+    private static int transmissionInterval = TRANSMISSIONINTERVAL_MINMAL;
 
     /**
      * Automatic page tracking flag.
@@ -196,9 +202,9 @@ public class Analytics extends AbstractAppCenterService {
      */
     public static boolean setTransmissionInterval(int seconds)
     {
-        if (seconds < 3 || seconds > 24*60)
+        if (seconds < TRANSMISSIONINTERVAL_MINMAL || seconds > TRANSMISSIONINTERVAL_MAXMIUM)
         {
-            AppCenterLog.error(LOG_TAG, "Valid Transmission Interval value should be a int represent seconds ranger 3 to 1 day (24*60)");
+            AppCenterLog.error(LOG_TAG, "Valid Transmission Interval value should be a int represented by seconds ranger 3 to 1 day (24*60)");
             return false;
         }
         transmissionInterval = seconds;
@@ -603,6 +609,11 @@ public class Analytics extends AbstractAppCenterService {
                 processOnResume(activity);
             }
         }, updateCurrentActivityRunnable, updateCurrentActivityRunnable);
+    }
+
+    @Override
+    protected int getTriggerInterval() {
+        return transmissionInterval;
     }
 
     /**
