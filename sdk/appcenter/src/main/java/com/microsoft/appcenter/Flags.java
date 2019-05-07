@@ -31,9 +31,9 @@ public final class Flags {
     /**
      * Default combination of flags.
      */
-    public static final int DEFAULTS_FLAGS = NORMAL;
+    public static final int DEFAULT_FLAGS = NORMAL;
     
-    public static final int DEFAULTS = DEFAULTS_FLAGS;
+    public static final int DEFAULTS = DEFAULT_FLAGS;
 
     /**
      * Mask for persistence within flags.
