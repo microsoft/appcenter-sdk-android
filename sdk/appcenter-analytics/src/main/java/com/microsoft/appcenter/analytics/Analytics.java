@@ -794,13 +794,9 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, isCritical(filteredFlags) ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.PERSISTENCE_CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
-    }
-
-    private boolean isCritical(int flag) {
-        return (flag & Flags.PERSISTENCE_CRITICAL) != 0;
     }
 
     /**
