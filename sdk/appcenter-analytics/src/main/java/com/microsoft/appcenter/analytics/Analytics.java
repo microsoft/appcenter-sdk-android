@@ -140,7 +140,7 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission interval.
      * Valid value ranges from 3 seconds to 1 day.
      */
-    private int mTransmissionInterval = TRANSMISSION_INTERVAL_MINIMAL;
+    private int mTransmissionInterval = TRANSMISSION_INTERVAL_MINIMUM;
 
     /**
      * Automatic page tracking flag.
@@ -202,6 +202,7 @@ public class Analytics extends AbstractAppCenterService {
 
     /**
      * Set transmission interval. The transmission interval should be between 3 seconds and 1 day.
+     * Should be called before the service is started.
      *
      * @param seconds Set latency of sending events to Analytics.
      * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise.
@@ -901,12 +902,17 @@ public class Analytics extends AbstractAppCenterService {
 
     /**
      * Set trigger interval. The interval should be between 3 seconds and 1 day.
+     * Should be called before the service is started.
      *
      * @param seconds Set latency of sending events to Analytics.
      * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise.
      */
     private boolean setTriggerInterval(int seconds) {
-        if (seconds < TRANSMISSION_INTERVAL_MINIMAL || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
+            return false;
+        }
+        if (seconds < TRANSMISSION_INTERVAL_MINIMUM || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
             AppCenterLog.error(LOG_TAG, "The transmission interval is invalid. The value should be between 3 seconds and 1 day");
             return false;
         }
