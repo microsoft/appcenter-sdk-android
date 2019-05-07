@@ -17,22 +17,19 @@ public final class Flags {
     /**
      * An event can be lost due to low bandwidth or disk space constraints.
      */
-    public static final int NORMAL = 0x01;
-
-    public static final int PERSISTENCE_NORMAL = NORMAL;
+    public static final int PERSISTENCE_NORMAL = 0x01;
+    public static final int NORMAL = PERSISTENCE_NORMAL;
 
     /**
      * Used for events that should be prioritized over non-critical events.
      */
-    public static final int CRITICAL = 0x02;
-
-    public static final int PERSISTENCE_CRITICAL = CRITICAL;
+    public static final int PERSISTENCE_CRITICAL = 0x02;
+    public static final int CRITICAL = PERSISTENCE_CRITICAL;
 
     /**
      * Default combination of flags.
      */
     public static final int DEFAULT_FLAGS = NORMAL;
-    
     public static final int DEFAULTS = DEFAULT_FLAGS;
 
     /**
