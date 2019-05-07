@@ -91,12 +91,13 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Initializes the table in the database.
-     * @param context      The application context.
-     * @param database     The database name.
-     * @param defaultTable The default table name.
-     * @param version      The version of current schema.
-     * @param schema       The schema.
-     * @param listener     The error listener.
+     *
+     * @param context       The application context.
+     * @param database      The database name.
+     * @param defaultTable  The default table name.
+     * @param version       The version of current schema.
+     * @param schema        The schema.
+     * @param listener      The error listener.
      * @param uniqueColumns The name of the columns where the combination of the columns is unique.
      */
     DatabaseManager(Context context, String database, String defaultTable, int version,
@@ -179,17 +180,6 @@ public class DatabaseManager implements Closeable {
 
         /* Call getDatabase to recreate database. */
         getDatabase();
-    }
-
-    /**
-     * Creates a new table in the database.
-     *
-     * @param table  name.
-     * @param schema of the table.
-     */
-    @SuppressWarnings("WeakerAccess") // TODO remove warning suppress once used in data
-    public void createTable(@NonNull String table, @NonNull ContentValues schema) {
-        createTable(getDatabase(), table, schema, null);
     }
 
     /**
