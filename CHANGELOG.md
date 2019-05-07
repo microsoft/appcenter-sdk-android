@@ -2,9 +2,13 @@
 
 ## Version 2.0.1 (Under development)
 
-### App Center Data
+### AppCenterData
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
+
+### AppCenterDistribute
+
+* **[Fix]** Fix a rare crash on downloading the update.
 
 ## Version 2.0.0
 
@@ -20,7 +24,7 @@ The App Center Data service provides functionality enabling developers to persis
 
 ### AppCenterCrashes
 
-* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
+* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes.
 
 ### AppCenterDistribute
 
