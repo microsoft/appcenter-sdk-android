@@ -786,4 +786,17 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         /* Verify new release checked (for example what we installed was something else than the upgrade. */
         verify(mDialog, times(2)).show();
     }
+
+    @Test
+    public void completeWorkflowOnStartDownloading() {
+
+        /* Complete workflow. */
+        Distribute.getInstance().completeWorkflow();
+
+        /* Unblock download. */
+        waitDownloadTask();
+
+        /* Verify cancellation. */
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+    }
 }
