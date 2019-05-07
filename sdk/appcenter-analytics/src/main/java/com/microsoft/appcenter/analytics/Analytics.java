@@ -78,7 +78,7 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Transmission interval minimal value.
      */
-    private static final int TRANSMISSION_INTERVAL_MINIMAL = 3;
+    private static final int TRANSMISSION_INTERVAL_MINIMUM = 3;
 
     /**
      * Transmission interval maximum value.
