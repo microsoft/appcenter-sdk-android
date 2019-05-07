@@ -54,6 +54,8 @@ import java.util.concurrent.TimeUnit;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
 import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -79,16 +81,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
-
-    /**
-     * Constant marking event of the analytics group.
-     */
-    static final String ANALYTICS_GROUP = "group_analytics";
-
-    /**
-     * Constant marking event of the analytics critical group.
-     */
-    static final String ANALYTICS_CRITICAL_GROUP = ANALYTICS_GROUP + "_critical";
 
     @After
     public void resetUserId() {
