@@ -27,6 +27,8 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.Ingestion;
+import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
@@ -48,21 +50,19 @@ import java.util.Map;
  */
 public class Analytics extends AbstractAppCenterService {
 
-    /**
-     * Name of the service.
-     */
-    private static final String SERVICE_NAME = "Analytics";
-
-    /**
-     * TAG used in logging for Analytics.
-     */
-    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
-
+    public static final String ANALYTICS_CRITICAL_GROUP = "group_critical";
     /**
      * Constant marking event of the analytics group.
      */
     static final String ANALYTICS_GROUP = "group_analytics";
-
+    /**
+     * Name of the service.
+     */
+    private static final String SERVICE_NAME = "Analytics";
+    /**
+     * TAG used in logging for Analytics.
+     */
+    public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
     /**
      * Activity suffix to exclude from generated page names.
      */
@@ -656,6 +656,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* If we enabled the service. */
         if (enabled) {
+            mChannel.addGroup(criticalAnalyticsGroupName("Critical"), getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
 
             /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();
@@ -663,6 +664,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* On disabling service. */
         else {
+            mChannel.removeGroup(criticalAnalyticsGroupName("Critical"));
 
             /* Cleanup resources. */
             if (mAnalyticsValidator != null) {
@@ -785,9 +787,17 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, isCritical(filteredFlags) ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
+    }
+
+    private boolean isCritical(int flag) {
+        return flag == Flags.PERSISTENCE_CRITICAL;
+    }
+
+    private String criticalAnalyticsGroupName(String groupName) {
+        return SERVICE_NAME + groupName;
     }
 
     /**
