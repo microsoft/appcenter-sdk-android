@@ -126,6 +126,12 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
+     * Transmission Interval
+     * valid value range from 3 seconds to 1 day
+     */
+    private int transmissionInterval = 3;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -181,6 +187,22 @@ public class Analytics extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * set Transmission interval
+     * @param seconds Set latency of sending events to Analytics
+     * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise;
+     */
+    public static boolean setTransmissionInterval(int seconds)
+    {
+        if (seconds < 3 || seconds > 24*60)
+        {
+            AppCenterLog.error(LOG_TAG, "Valid Transmission Interval value should be a int represent seconds ranger 3 to 1 day (24*60)");
+            return false;
+        }
+        transmissionInterval = seconds;
+        return true;
     }
 
     /**
