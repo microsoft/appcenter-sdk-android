@@ -131,7 +131,7 @@ public class TokenExchange {
                     tokensResponse.getTokens().get(0).getStatus().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
                 TokenResult tokenResult = tokensResponse.getTokens().get(0);
                 if (!Utils.isValidTokenResult(tokenResult)) {
-                    AppCenterLog.debug(LOG_TAG, "Getting an invalid token from token exchange service.");
+                    AppCenterLog.warn(LOG_TAG, "Getting an invalid token from token exchange service.");
                     return null;
                 }
                 mTokenManager.setCachedToken(tokenResult);
