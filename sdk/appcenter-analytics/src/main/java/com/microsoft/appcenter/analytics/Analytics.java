@@ -14,6 +14,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
@@ -27,8 +28,6 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.ingestion.Ingestion;
-import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
@@ -663,7 +662,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* If we enabled the service. */
         if (enabled) {
-            mChannel.addGroup(ANALYTICS_CRITICAL_GROUP, getTriggerCount(), getTriggerInterval(), getTriggerMaxParallelRequests(), null, getChannelListener());
+            mChannel.addGroup(ANALYTICS_CRITICAL_GROUP, getTriggerCount(), Constants.DEFAULT_TRIGGER_INTERVAL, getTriggerMaxParallelRequests(), null, getChannelListener());
 
             /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();

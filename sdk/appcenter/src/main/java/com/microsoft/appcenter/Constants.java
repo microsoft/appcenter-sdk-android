@@ -80,7 +80,7 @@ public class Constants {
     /**
      * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
      */
-    static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
+    public static final int DEFAULT_TRIGGER_INTERVAL = 3 * 1000;
 
     /**
      * Initializes constants from the given context. The context is used to set
