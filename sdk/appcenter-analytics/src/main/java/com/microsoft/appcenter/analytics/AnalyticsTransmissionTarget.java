@@ -93,7 +93,7 @@ public class AnalyticsTransmissionTarget {
     {
         if (seconds < TRANSMISSIONINTERVAL_MINIMAL || seconds > TRANSMISSIONINTERVAL_MAXMIUM)
         {
-            AppCenterLog.error(LOG_TAG, "Valid transmission Interval value should be between 3 and 24*60*60");
+            AppCenterLog.error(LOG_TAG, "Valid transmission interval value should be between 3 and 24*60*60");
             return false;
         }
         transmissionInterval = seconds;
