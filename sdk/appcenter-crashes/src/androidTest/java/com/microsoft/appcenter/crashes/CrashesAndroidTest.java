@@ -45,8 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -378,7 +378,7 @@ public class CrashesAndroidTest {
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
         assertTrue(Crashes.isEnabled().get());
         ArgumentCaptor<ManagedErrorLog> log = ArgumentCaptor.forClass(ManagedErrorLog.class);
-        verify(mChannel).enqueue(log.capture(), anyString(), eq(PERSISTENCE_CRITICAL));
+        verify(mChannel).enqueue(log.capture(), anyString(), eq(CRITICAL));
         assertNotNull(log.getValue());
         assertEquals(mUserId, log.getValue().getUserId());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
@@ -463,7 +463,7 @@ public class CrashesAndroidTest {
         Crashes.notifyUserConfirmation(Crashes.SEND);
         assertTrue(Crashes.isEnabled().get());
         ArgumentCaptor<ManagedErrorLog> managedErrorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
-        verify(mChannel).enqueue(managedErrorLog.capture(), anyString(), eq(PERSISTENCE_CRITICAL));
+        verify(mChannel).enqueue(managedErrorLog.capture(), anyString(), eq(CRITICAL));
         assertNotNull(managedErrorLog.getValue());
         assertEquals(mUserId, managedErrorLog.getValue().getUserId());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
@@ -481,10 +481,10 @@ public class CrashesAndroidTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULTS));
+        }), anyString(), eq(DEFAULT_FLAGS));
 
         /* Verify custom text attachment. */
-        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULTS));
+        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULT_FLAGS));
     }
 
     @Test

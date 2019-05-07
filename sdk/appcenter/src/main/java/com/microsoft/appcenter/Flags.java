@@ -17,17 +17,23 @@ public final class Flags {
     /**
      * An event can be lost due to low bandwidth or disk space constraints.
      */
-    public static final int PERSISTENCE_NORMAL = 0x01;
+    public static final int NORMAL = 0x01;
+
+    public static final int PERSISTENCE_NORMAL = NORMAL;
 
     /**
      * Used for events that should be prioritized over non-critical events.
      */
-    public static final int PERSISTENCE_CRITICAL = 0x02;
+    public static final int CRITICAL = 0x02;
+
+    public static final int PERSISTENCE_CRITICAL = CRITICAL;
 
     /**
      * Default combination of flags.
      */
-    public static final int DEFAULTS = PERSISTENCE_NORMAL;
+    public static final int DEFAULTS_FLAGS = NORMAL;
+    
+    public static final int DEFAULTS = DEFAULTS_FLAGS;
 
     /**
      * Mask for persistence within flags.
@@ -43,11 +49,11 @@ public final class Flags {
      */
     public static int getPersistenceFlag(int flags, boolean warnFallback) {
         int persistencePriority = flags & PERSISTENCE_MASK;
-        if (persistencePriority != PERSISTENCE_NORMAL && persistencePriority != PERSISTENCE_CRITICAL) {
+        if (persistencePriority != NORMAL && persistencePriority != CRITICAL) {
             if (persistencePriority != 0 && warnFallback) {
                 AppCenterLog.warn(LOG_TAG, "Invalid value=" + persistencePriority + " for persistence flag, using NORMAL as a default.");
             }
-            persistencePriority = PERSISTENCE_NORMAL;
+            persistencePriority = NORMAL;
         }
         return persistencePriority;
     }

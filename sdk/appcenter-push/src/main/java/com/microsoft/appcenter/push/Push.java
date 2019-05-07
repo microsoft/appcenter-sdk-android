@@ -254,7 +254,7 @@ public class Push extends AbstractAppCenterService {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
         log.setUserId(userId);
-        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+        mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULT_FLAGS);
     }
 
     /**

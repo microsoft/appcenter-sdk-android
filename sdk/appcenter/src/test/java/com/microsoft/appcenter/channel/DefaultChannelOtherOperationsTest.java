@@ -60,9 +60,9 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
         /* Check enqueue. */
         Log log = mock(Log.class);
-        channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
+        channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(listener).onPreparingLog(log, TEST_GROUP);
-        verify(listener).onPreparedLog(log, TEST_GROUP, Flags.DEFAULTS);
+        verify(listener).onPreparedLog(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(listener).shouldFilter(log);
         verifyNoMoreInteractions(listener);
 
@@ -74,7 +74,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         /* Check no more calls after removing listener. */
         log = mock(Log.class);
         channel.removeListener(listener);
-        channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
+        channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
         verifyNoMoreInteractions(listener);
     }
 
@@ -105,7 +105,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Enqueuing 1 event. */
-        channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
+        channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULT_FLAGS);
         verify(mockListener).onBeforeSending(notNull(Log.class));
 
         channel.shutdown();
@@ -136,7 +136,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             when(listener2.shouldFilter(log)).thenReturn(true);
 
             /* When we enqueue that log. */
-            channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
+            channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
 
             /* Then except the following. behaviors. */
             verify(listener1).onPreparingLog(log, TEST_GROUP);
@@ -154,7 +154,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             when(listener2.shouldFilter(log)).thenReturn(false);
 
             /* When we enqueue that log. */
-            channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
+            channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
 
             /* Then except the following. behaviors. */
             verify(listener1).onPreparingLog(log, TEST_GROUP);
@@ -174,14 +174,14 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             when(listener2.shouldFilter(log)).thenReturn(false);
 
             /* When we enqueue that log. */
-            channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
+            channel.enqueue(log, TEST_GROUP, Flags.DEFAULT_FLAGS);
 
             /* Then except the following. behaviors. */
             verify(listener1).onPreparingLog(log, TEST_GROUP);
             verify(listener1).shouldFilter(log);
             verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
-            verify(persistence).putLog(log, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+            verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         }
     }
 

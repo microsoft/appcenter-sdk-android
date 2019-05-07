@@ -954,7 +954,7 @@ public class AppCenter {
             mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(allServiceNamesToStart);
-            mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULTS);
+            mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULT_FLAGS);
         }
     }
 
@@ -988,7 +988,7 @@ public class AppCenter {
     private void queueCustomProperties(@NonNull Map<String, Object> properties) {
         CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
         customPropertiesLog.setProperties(properties);
-        mChannel.enqueue(customPropertiesLog, CORE_GROUP, Flags.DEFAULTS);
+        mChannel.enqueue(customPropertiesLog, CORE_GROUP, Flags.DEFAULT_FLAGS);
     }
 
     /**

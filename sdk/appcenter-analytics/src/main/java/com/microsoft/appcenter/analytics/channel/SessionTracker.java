@@ -137,7 +137,7 @@ public class SessionTracker extends AbstractChannelListener {
             /* Enqueue a start session log. */
             StartSessionLog startSessionLog = new StartSessionLog();
             startSessionLog.setSid(mSid);
-            mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULTS);
+            mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULT_FLAGS);
         }
     }
 

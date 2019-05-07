@@ -286,7 +286,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param name An event name.
      */
     public static void trackEvent(String name) {
-        trackEvent(name, null, null, Flags.DEFAULTS);
+        trackEvent(name, null, null, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -317,7 +317,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, Map<String, String> properties) {
-        getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULTS);
+        getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -346,11 +346,11 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     * @param flags      Optional flags. Events tracked with the {@link Flags#CRITICAL}
      *                   flag will take precedence over all other events in storage.
      *                   An event tracked with this option will only be dropped
      *                   if storage must make room for a newer event that is also marked with the
-     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     *                   {@link Flags#CRITICAL} flag.
      */
     public static void trackEvent(String name, Map<String, String> properties, int flags) {
         getInstance().trackEventAsync(name, convertProperties(properties), null, flags);
@@ -386,7 +386,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, EventProperties properties) {
-        trackEvent(name, properties, Flags.DEFAULTS);
+        trackEvent(name, properties, Flags.DEFAULT_FLAGS);
     }
 
     /**
@@ -417,11 +417,11 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     * @param flags      Optional flags. Events tracked with the {@link Flags#CRITICAL}
      *                   flag will take precedence over all other events in storage.
      *                   An event tracked with this option will only be dropped
      *                   if storage must make room for a newer event that is also marked with the
-     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     *                   {@link Flags#CRITICAL} flag.
      */
     public static void trackEvent(String name, EventProperties properties, int flags) {
         trackEvent(name, properties, null, flags);
@@ -745,7 +745,7 @@ public class Analytics extends AbstractAppCenterService {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULT_FLAGS);
     }
 
     /**

@@ -281,13 +281,13 @@ public class EventActivity extends AppCompatActivity {
     private int getFlags(PersistenceFlag persistenceFlag) {
         switch (persistenceFlag) {
             case DEFAULT:
-                return Flags.getPersistenceFlag(Flags.DEFAULTS, true);
+                return Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, true);
 
             case NORMAL:
-                return Flags.PERSISTENCE_NORMAL;
+                return Flags.NORMAL;
 
             case CRITICAL:
-                return Flags.PERSISTENCE_CRITICAL;
+                return Flags.CRITICAL;
 
             case INVALID:
                 return 42;
