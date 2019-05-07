@@ -1242,7 +1242,7 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    public void filedConnectWithHttpUrl() throws Exception {
+    public void failedToConnectWithHttpUrl() throws Exception {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
@@ -1257,7 +1257,7 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    public void filedConnectWithInvalidUrl() throws Exception {
+    public void failedToConnectWithInvalidUrl() throws Exception {
         String urlString = "bad url";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
@@ -1272,7 +1272,7 @@ public class DefaultHttpClientTest {
     }
 
     @Test
-    public void filedConnectWithHttpConnect() throws Exception {
+    public void failedToConnectWithHttpConnect() throws Exception {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
