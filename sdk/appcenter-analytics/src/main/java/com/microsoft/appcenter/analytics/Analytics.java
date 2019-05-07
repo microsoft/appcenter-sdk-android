@@ -137,8 +137,8 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
-     * Transmission Interval
-     * valid value range from 3 seconds to 1 day
+     * Transmission interval.
+     * Valid value ranges from 3 seconds to 1 day.
      */
     private int mTransmissionInterval = TRANSMISSION_INTERVAL_MINIMAL;
 
@@ -201,18 +201,13 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * set Transmission interval
+     * Set transmission interval. The transmission interval should be between 3 seconds and 1 day.
      *
      * @param seconds Set latency of sending events to Analytics
      * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise;
      */
     public static boolean setTransmissionInterval(int seconds) {
-        if (seconds < TRANSMISSION_INTERVAL_MINIMAL || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
-            AppCenterLog.error(LOG_TAG, "Valid transmission interval value should be between 3 and 24*60*60");
-            return false;
-        }
-        getInstance().mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(seconds);
-        return true;
+        return getInstance().setTriggerInterval(seconds);
     }
 
     /**
@@ -902,6 +897,21 @@ public class Analytics extends AbstractAppCenterService {
         if (transmissionTargetToken != null) {
             mDefaultTransmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
         }
+    }
+
+    /**
+     * Set trigger interval. The interval should be between 3 seconds and 1 day.
+     *
+     * @param seconds Set latency of sending events to Analytics.
+     * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise.
+     */
+    private boolean setTriggerInterval(int seconds) {
+        if (seconds < TRANSMISSION_INTERVAL_MINIMAL || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
+            AppCenterLog.error(LOG_TAG, "The transmission interval is invalid. The value should be between 3 seconds and 1 day");
+            return false;
+        }
+        mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(seconds);
+        return true;
     }
 
     /**

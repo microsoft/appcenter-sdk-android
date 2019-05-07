@@ -31,12 +31,6 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class OneCollectorChannelListener extends AbstractChannelListener {
 
     /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    @VisibleForTesting
-    static final long ONE_COLLECTOR_TRIGGER_INTERVAL = 3 * 1000;
-
-    /**
      * Number of metrics queue items which will trigger synchronization.
      */
     @VisibleForTesting

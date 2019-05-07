@@ -31,7 +31,6 @@ import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
 import static com.microsoft.appcenter.channel.AbstractDefaultChannelTest.TEST_GROUP;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_GROUP_NAME_SUFFIX;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_COUNT;
-import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.channel.OneCollectorChannelListener.ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,7 +62,7 @@ public class OneCollectorChannelListenerTest {
         listener.onGroupAdded(TEST_GROUP, groupListener);
 
         /* Verify one collector group added. */
-        verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), eq(ONE_COLLECTOR_TRIGGER_INTERVAL), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
+        verify(channel).addGroup(eq(TEST_GROUP + ONE_COLLECTOR_GROUP_NAME_SUFFIX), eq(ONE_COLLECTOR_TRIGGER_COUNT), anyInt(), eq(ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS), argThat(new ArgumentMatcher<Ingestion>() {
 
             @Override
             public boolean matches(Object argument) {
