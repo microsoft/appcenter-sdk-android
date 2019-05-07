@@ -1601,7 +1601,7 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task) {
+        if (mDownloadTask == task && mReleaseDetails != null) {
 
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();
