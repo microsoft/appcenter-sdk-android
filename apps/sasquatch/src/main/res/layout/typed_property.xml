@@ -23,7 +23,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/key"
-        android:inputType="text" />
+        android:importantForAutofill="no"
+        android:inputType="text"
+        tools:targetApi="o" />
 
     <TextView
         android:layout_width="match_parent"
@@ -65,7 +67,9 @@
                 android:layout_weight="1"
                 android:focusable="false"
                 android:inputType="date"
-                tools:ignore="LabelFor" />
+                android:importantForAutofill="no"
+                tools:ignore="LabelFor"
+                tools:targetApi="o" />
 
             <EditText
                 android:id="@+id/time"
@@ -74,7 +78,9 @@
                 android:layout_weight="1"
                 android:focusable="false"
                 android:inputType="time"
-                tools:ignore="LabelFor" />
+                android:importantForAutofill="no"
+                tools:ignore="LabelFor"
+                tools:targetApi="o" />
 
         </LinearLayout>
 
@@ -83,21 +89,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/value"
-            android:inputType="number|numberSigned|numberDecimal" />
+            android:importantForAutofill="no"
+            android:inputType="number|numberSigned|numberDecimal"
+            tools:targetApi="o" />
 
         <EditText
             android:id="@+id/number_long"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/value"
-            android:inputType="number|numberSigned" />
+            android:importantForAutofill="no"
+            android:inputType="number|numberSigned"
+            tools:targetApi="o" />
 
         <EditText
             android:id="@+id/string"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/value"
-            android:inputType="text" />
+            android:importantForAutofill="no"
+            android:inputType="text"
+            tools:targetApi="o" />
 
     </FrameLayout>
 

@@ -22,9 +22,9 @@ import java.util.Map;
 
 public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentListAdapter.AppDocumentListHolder> {
 
-    private Context mContext;
+    private final Context mContext;
 
-    private List<DocumentWrapper<Map>> mList;
+    private final List<DocumentWrapper<Map>> mList;
 
     private OnItemClickListener mListener;
 
@@ -78,7 +78,7 @@ public class AppDocumentListAdapter extends RecyclerView.Adapter<AppDocumentList
 
     class AppDocumentListHolder extends RecyclerView.ViewHolder {
 
-        TextView titleFile;
+        final TextView titleFile;
 
         AppDocumentListHolder(@NonNull View itemView) {
             super(itemView);

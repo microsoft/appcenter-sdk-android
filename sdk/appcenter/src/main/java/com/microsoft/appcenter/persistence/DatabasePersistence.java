@@ -204,7 +204,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();

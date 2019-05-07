@@ -29,12 +29,12 @@ public abstract class EditDateTimeFragment extends Fragment
 
     private EditText mEditTime;
 
-    protected View mDateTime;
+    View mDateTime;
 
     /**
      * Date value, with default being current time.
      */
-    protected Date mDate = new Date();
+    Date mDate = new Date();
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -90,7 +90,7 @@ public abstract class EditDateTimeFragment extends Fragment
         fragment.show(getActivity().getSupportFragmentManager(), "timePicker");
     }
 
-    protected void setDate(Date date) {
+    void setDate(Date date) {
         mDate = date;
 
         /* If UI ready update now, otherwise do it in onCreateView. */

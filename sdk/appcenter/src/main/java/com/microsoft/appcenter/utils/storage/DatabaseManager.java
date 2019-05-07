@@ -17,7 +17,6 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.telecom.Call;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -280,7 +279,6 @@ public class DatabaseManager implements Closeable {
      * @param priorityColumn When storage full and deleting data, use this column to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
         Long id = null;
         Cursor cursor = null;
@@ -337,7 +335,7 @@ public class DatabaseManager implements Closeable {
      * @param table The table to perform the operation on.
      * @param id    The database identifier.
      */
-    public void delete(@NonNull String table, @IntRange(from = 0) long id) {
+    private void delete(@NonNull String table, @IntRange(from = 0) long id) {
         delete(table, PRIMARY_KEY, id);
     }
 
@@ -593,7 +591,6 @@ public class DatabaseManager implements Closeable {
          * @param newVersion new version of the schema.
          * @return true if upgrade was managed, false to drop/create table.
          */
-        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
     }
 

@@ -20,7 +20,7 @@ public class DatePickerFragment extends DialogFragment {
 
     private DatePickerDialog.OnDateSetListener mListener;
 
-    public Date getInitialDate() {
+    private Date getInitialDate() {
         Bundle arguments = getArguments();
         if (arguments != null) {
             return (Date) arguments.getSerializable(INITIAL_DATE);

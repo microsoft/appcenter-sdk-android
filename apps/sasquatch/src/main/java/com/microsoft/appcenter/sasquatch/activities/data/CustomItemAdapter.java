@@ -24,7 +24,7 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     private ArrayList<DocumentWrapper<Map>> mList;
 
-    private Context mContext;
+    private final Context mContext;
 
     private CustomItemAdapter.OnItemClickListener mListener;
 
@@ -101,9 +101,9 @@ public class CustomItemAdapter extends RecyclerView.Adapter<CustomItemAdapter.Cu
 
     class CustomItemAdapterHolder extends RecyclerView.ViewHolder {
 
-        TextView documentIdTextView;
+        final TextView documentIdTextView;
 
-        ImageButton deleteButton;
+        final ImageButton deleteButton;
 
         CustomItemAdapterHolder(@NonNull View itemView) {
             super(itemView);

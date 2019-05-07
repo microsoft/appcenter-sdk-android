@@ -70,7 +70,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
 
     private ListView mListView;
 
-    private AppCenterConsumer<DocumentWrapper<Map>> getAppDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
+    private final AppCenterConsumer<DocumentWrapper<Map>> getAppDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
         public void accept(DocumentWrapper<Map> document) {
@@ -83,7 +83,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
         }
     };
 
-    private AppCenterConsumer<DocumentWrapper<Map>> getUserDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
+    private final AppCenterConsumer<DocumentWrapper<Map>> getUserDocument = new AppCenterConsumer<DocumentWrapper<Map>>() {
 
         @Override
         public void accept(DocumentWrapper<Map> document) {
@@ -217,9 +217,9 @@ public class DocumentDetailActivity extends AppCompatActivity {
     @VisibleForTesting
     class DocumentInfoDisplayModel {
 
-        String mTitle;
+        final String mTitle;
 
-        String mValue;
+        final String mValue;
 
         DocumentInfoDisplayModel(String title, String value) {
             mTitle = title;
