@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 public class EventActivity extends AppCompatActivity {
@@ -66,6 +67,8 @@ public class EventActivity extends AppCompatActivity {
     private Spinner mPersistenceFlagSpinner;
 
     private TextView mNumberOfLogsLabel;
+
+    private Spinner mLatencySpinner;
 
     private SeekBar mNumberOfLogs;
 
@@ -179,6 +182,42 @@ public class EventActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
+
+        /* Init latency table columns */
+        mLatencySpinner = findViewById(R.id.latency_spinner);
+        ArrayAdapter<String> latencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.latency_values));
+        mLatencySpinner.setAdapter(latencyAdapter);
+        mLatencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                long latency = 0;
+                switch (position) {
+                    case (0):
+                        latency = TimeUnit.SECONDS.toSeconds(3);
+                    case (1):
+                        latency = TimeUnit.MINUTES.toSeconds(10);
+                        break;
+                    case (2):
+                        latency = TimeUnit.HOURS.toSeconds(1);
+                        break;
+                    case (3):
+                        latency = TimeUnit.HOURS.toSeconds(8);
+                        break;
+                    case (4):
+                        latency = TimeUnit.DAYS.toSeconds(1);
+                        break;
+                }
+
+                // TODO: use SetTransmissionInterval with latency here
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
     }
 
     @Override
