@@ -63,18 +63,6 @@ public class AnalyticsTransmissionTarget {
     private final PropertyConfigurator mPropertyConfigurator;
 
     /**
-     * Transmission interval range values
-     */
-    private static final int TRANSMISSIONINTERVAL_MINIMAL = 3;
-    private static final int TRANSMISSIONINTERVAL_MAXMIUM = 24*60*60;
-
-    /**
-     * Transmission Interval
-     * valid value range from 3 seconds to 1 day
-     */
-    private int transmissionInterval = TRANSMISSIONINTERVAL_MINIMAL;
-
-    /**
      * App context.
      */
     Context mContext;
@@ -83,26 +71,6 @@ public class AnalyticsTransmissionTarget {
      * Channel used for Property Configurator.
      */
     private Channel mChannel;
-
-    /**
-     * set Transmission interval
-     * @param seconds Set latency of sending events to Analytics
-     * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise;
-     */
-    public boolean setTransmissionInterval(int seconds)
-    {
-        if (seconds < TRANSMISSIONINTERVAL_MINIMAL || seconds > TRANSMISSIONINTERVAL_MAXMIUM)
-        {
-            AppCenterLog.error(LOG_TAG, "Valid transmission interval value should be between 3 and 24*60*60");
-            return false;
-        }
-        transmissionInterval = seconds;
-        for (AnalyticsTransmissionTarget childTarget: mChildrenTargets.values()
-             ) {
-            childTarget.setTransmissionInterval(seconds);
-        }
-        return true;
-    }
 
     /**
      * Create a new instance.

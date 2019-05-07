@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Analytics service.
@@ -75,10 +76,14 @@ public class Analytics extends AbstractAppCenterService {
     private static Analytics sInstance;
 
     /**
-     * Transmission interval range values
+     * Transmission interval minimal value.
      */
-    private static final int TRANSMISSIONINTERVAL_MINIMAL = 3;
-    private static final int TRANSMISSIONINTERVAL_MAXMIUM = 24*60*60;
+    private static final int TRANSMISSION_INTERVAL_MINIMAL = 3;
+
+    /**
+     * Transmission interval maximum value.
+     */
+    private static final int TRANSMISSION_INTERVAL_MAXIMUM = 24 * 60 * 60;
 
     /**
      * Log factories managed by this service.
@@ -135,7 +140,7 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission Interval
      * valid value range from 3 seconds to 1 day
      */
-    private static int transmissionInterval = TRANSMISSIONINTERVAL_MINIMAL;
+    private int mTransmissionInterval = TRANSMISSION_INTERVAL_MINIMAL;
 
     /**
      * Automatic page tracking flag.
@@ -197,17 +202,16 @@ public class Analytics extends AbstractAppCenterService {
 
     /**
      * set Transmission interval
+     *
      * @param seconds Set latency of sending events to Analytics
      * @return succeed <code>true</code> if set succeed, <code>false</code> otherwise;
      */
-    public static boolean setTransmissionInterval(int seconds)
-    {
-        if (seconds < TRANSMISSIONINTERVAL_MINIMAL || seconds > TRANSMISSIONINTERVAL_MAXMIUM)
-        {
+    public static boolean setTransmissionInterval(int seconds) {
+        if (seconds < TRANSMISSION_INTERVAL_MINIMAL || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
             AppCenterLog.error(LOG_TAG, "Valid transmission interval value should be between 3 and 24*60*60");
             return false;
         }
-        transmissionInterval = seconds;
+        getInstance().mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(seconds);
         return true;
     }
 
@@ -613,7 +617,7 @@ public class Analytics extends AbstractAppCenterService {
 
     @Override
     protected int getTriggerInterval() {
-        return transmissionInterval;
+        return mTransmissionInterval;
     }
 
     /**
