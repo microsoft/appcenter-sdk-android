@@ -204,7 +204,7 @@ public class Analytics extends AbstractAppCenterService {
     {
         if (seconds < TRANSMISSIONINTERVAL_MINIMAL || seconds > TRANSMISSIONINTERVAL_MAXMIUM)
         {
-            AppCenterLog.error(LOG_TAG, "Valid Transmission Interval value should be a int represented by seconds ranger 3 to 1 day (24*60)");
+            AppCenterLog.error(LOG_TAG, "Valid transmission interval value should be between 3 and 24*60*60");
             return false;
         }
         transmissionInterval = seconds;
