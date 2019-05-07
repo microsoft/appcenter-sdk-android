@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.TokenResult;
 
 import org.junit.Test;
 
@@ -183,6 +184,22 @@ public class UtilsTest {
          */
         assertNull(doc.getPartition());
         assertNull(doc.getId());
+    }
+
+    @Test
+    public void isValidTokenResult() {
+        TokenResult result = new TokenResult();
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbAccount("dbAccount");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbName("dbName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbAccount("accountName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbCollectionName("collectionName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setToken("token");
+        assertTrue(Utils.isValidTokenResult(result));
     }
 
     private class DateDocument {

@@ -8,16 +8,16 @@ package com.microsoft.appcenter.data.client;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.microsoft.appcenter.http.AbstractAppCallTemplate;
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.Constants;
 import com.microsoft.appcenter.data.TokenManager;
 import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.TokensResponse;
+import com.microsoft.appcenter.http.AbstractAppCallTemplate;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
@@ -27,8 +27,8 @@ import java.util.Map;
 import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.Constants.AUTH_TOKEN_FORMAT;
-import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 public class TokenExchange {
 
@@ -130,6 +130,10 @@ public class TokenExchange {
                     tokensResponse.getTokens().size() == 1 &&
                     tokensResponse.getTokens().get(0).getStatus().equalsIgnoreCase(Constants.TOKEN_RESULT_SUCCEED)) {
                 TokenResult tokenResult = tokensResponse.getTokens().get(0);
+                if (!Utils.isValidTokenResult(tokenResult)) {
+                    AppCenterLog.debug(LOG_TAG, "Getting an invalid token from token exchange service.");
+                    return null;
+                }
                 mTokenManager.setCachedToken(tokenResult);
                 return tokenResult;
             }

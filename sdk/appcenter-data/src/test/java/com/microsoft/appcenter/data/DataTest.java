@@ -183,6 +183,7 @@ public class DataTest extends AbstractDataTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -237,6 +238,7 @@ public class DataTest extends AbstractDataTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setDbName("dbName")
+                .setDbAccount("accountName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
@@ -297,6 +299,7 @@ public class DataTest extends AbstractDataTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -375,6 +378,7 @@ public class DataTest extends AbstractDataTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -495,6 +499,7 @@ public class DataTest extends AbstractDataTest {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -551,7 +556,9 @@ public class DataTest extends AbstractDataTest {
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
                 .setToken("fakeToken")
+                .setDbAccount("accountName")
                 .setDbName("dbName")
+                .setDbAccount("dbAccount")
                 .setDbCollectionName("collectionName"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
