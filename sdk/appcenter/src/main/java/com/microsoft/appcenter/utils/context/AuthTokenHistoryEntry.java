@@ -47,15 +47,15 @@ final class AuthTokenHistoryEntry implements Model {
         return mAuthToken;
     }
 
-    public void setAuthToken(String authToken) {
+    private void setAuthToken(String authToken) {
         mAuthToken = authToken;
     }
 
-    public String getHomeAccountId() {
+    String getHomeAccountId() {
         return mHomeAccountId;
     }
 
-    public void setHomeAccountId(String homeAccountId) {
+    private void setHomeAccountId(String homeAccountId) {
         mHomeAccountId = homeAccountId;
     }
 
@@ -63,15 +63,15 @@ final class AuthTokenHistoryEntry implements Model {
         return mTime;
     }
 
-    public void setTime(Date time) {
+    private void setTime(Date time) {
         mTime = time;
     }
 
-    public Date getExpiresOn() {
+    Date getExpiresOn() {
         return mExpiresOn;
     }
 
-    public void setExpiresOn(Date expiresOn) {
+    private void setExpiresOn(Date expiresOn) {
         mExpiresOn = expiresOn;
     }
 

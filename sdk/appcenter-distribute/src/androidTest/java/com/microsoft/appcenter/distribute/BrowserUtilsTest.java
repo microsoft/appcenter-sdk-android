@@ -38,6 +38,15 @@ public class BrowserUtilsTest {
 
     private static final String TEST_URL = "https://www.contoso.com?a=b";
 
+    private final ArgumentMatcher<Intent> mBrowserArgumentMatcher = new ArgumentMatcher<Intent>() {
+
+        @Override
+        public boolean matches(Object o) {
+            Intent intent = (Intent) o;
+            return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent() != null && intent.getComponent().getClassName().equals("browser");
+        }
+    };
+
     @Test
     public void init() {
         new BrowserUtils();
@@ -94,14 +103,7 @@ public class BrowserUtilsTest {
         /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
-            }
-        }));
+        order.verify(activity).startActivity(argThat(mBrowserArgumentMatcher));
         order.verifyNoMoreInteractions();
     }
 
@@ -132,14 +134,7 @@ public class BrowserUtilsTest {
         /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
-            }
-        }));
+        order.verify(activity).startActivity(argThat(mBrowserArgumentMatcher));
         order.verifyNoMoreInteractions();
     }
 
@@ -170,14 +165,7 @@ public class BrowserUtilsTest {
         /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
-            }
-        }));
+        order.verify(activity).startActivity(argThat(mBrowserArgumentMatcher));
         order.verifyNoMoreInteractions();
     }
 
@@ -213,14 +201,7 @@ public class BrowserUtilsTest {
         /* Open browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);
         InOrder order = inOrder(activity);
-        order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
-
-            @Override
-            public boolean matches(Object o) {
-                Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("browser");
-            }
-        }));
+        order.verify(activity).startActivity(argThat(mBrowserArgumentMatcher));
         order.verifyNoMoreInteractions();
     }
 
@@ -261,7 +242,7 @@ public class BrowserUtilsTest {
             @Override
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
-                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent().getClassName().equals("firefox");
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent() != null && intent.getComponent().getClassName().equals("firefox");
             }
         }));
         order.verifyNoMoreInteractions();

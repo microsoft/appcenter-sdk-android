@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 @SuppressWarnings("WeakerAccess")
 public class TestDocument {
 
+    @SuppressWarnings("CanBeFinal")
     public String test;
 
     public TestDocument(String test) {
