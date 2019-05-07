@@ -8,11 +8,11 @@ package com.microsoft.appcenter.data;
 import android.content.Context;
 
 import com.google.gson.Gson;
+import com.microsoft.appcenter.data.client.TokenExchange;
+import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.data.client.TokenExchange;
-import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -170,7 +170,7 @@ public class TokenTest extends AbstractDataTest {
     }
 
     @Test
-    public void canGetTokenWhenCacheInvalid() {
+    public void canGetTokenWhenCacheExpired() {
 
         /* Setup mock to get expiration token from cache with expired value. */
         String inValidToken = "invalid";
@@ -196,12 +196,38 @@ public class TokenTest extends AbstractDataTest {
     }
 
     @Test
+    public void callTokenExchangeServiceWhenCacheInvalid() {
+
+        /* Setup mock, create an invalid token result which the collection name is missing. */
+        String inValidToken = "invalid";
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 10000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("lemmings-01-8f37d78902")
+                .setStatus("Succeed")
+                .setPartition(APP_DOCUMENTS)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken(inValidToken));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + APP_DOCUMENTS)).thenReturn(tokenResult);
+        TokenExchange.TokenExchangeServiceCallback mTokenExchangeServiceCallback = mock(TokenExchange.TokenExchangeServiceCallback.class);
+        doNothing().when(mTokenExchangeServiceCallback).callCosmosDb(mock(TokenResult.class));
+
+        /* Make the call. */
+        Data.getInstance()
+                .getTokenAndCallCosmosDbApi(APP_DOCUMENTS, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+
+        /* Verify. */
+        verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
+    }
+
+    @Test
     public void getTokenExceptionWhenResponseInvalid() {
 
         /* Setup the call. */
         final String nullResponseAppUrl = "nullAppUrl";
         final String emptyTokensAppUrl = "emptyTokensAppUrl";
         final String multipleTokensAppUrl = "multipleTokensUrl";
+        final String malFormedTokenUrl = "malformedTokensUrl";
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         final ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<Exception> exception = ArgumentCaptor.forClass(Exception.class);
@@ -217,6 +243,8 @@ public class TokenTest extends AbstractDataTest {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}", null);
                 } else if (url.getValue().contains(multipleTokensAppUrl)) {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}", null);
+                } else if (url.getValue().contains(malFormedTokenUrl)) {
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{\"status\": \"succeed\"}]}", null);
                 }
                 return mock(ServiceCall.class);
             }
@@ -226,9 +254,10 @@ public class TokenTest extends AbstractDataTest {
         TokenExchange.getDbToken(APP_DOCUMENTS, mHttpClient, nullResponseAppUrl, null, callBack);
         TokenExchange.getDbToken(APP_DOCUMENTS, mHttpClient, emptyTokensAppUrl, null, callBack);
         TokenExchange.getDbToken(APP_DOCUMENTS, mHttpClient, multipleTokensAppUrl, null, callBack);
+        TokenExchange.getDbToken(APP_DOCUMENTS, mHttpClient, malFormedTokenUrl, null, callBack);
 
         /* Get and verify token. */
-        assertEquals(3, exception.getAllValues().size());
+        assertEquals(4, exception.getAllValues().size());
     }
 
     @Test
