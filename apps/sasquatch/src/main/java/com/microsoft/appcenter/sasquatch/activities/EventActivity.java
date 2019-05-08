@@ -208,9 +208,8 @@ public class EventActivity extends AppCompatActivity {
                         latency = TimeUnit.DAYS.toSeconds(1);
                         break;
                 }
-
-                // TODO: use SetTransmissionInterval with latency here
-
+                
+//                Analytics.setTransmissionInterval(latency);
             }
 
             @Override

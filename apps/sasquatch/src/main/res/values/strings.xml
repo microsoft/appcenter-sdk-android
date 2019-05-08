@@ -99,7 +99,7 @@
     <string name="latency" tools:ignore="MissingTranslation">Latency</string>
     <string-array name="latency_values" tools:ignore="MissingTranslation">
         <item>Default</item>
-        <item>10 Min</item>
+        <item>10 Minutes</item>
         <item>1 Hour</item>
         <item>8 Hour</item>
         <item>1 Day</item>
