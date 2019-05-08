@@ -2,9 +2,13 @@
 
 ## Version 2.0.1 (Under development)
 
-### App Center Data
+### AppCenterData
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
+
+### AppCenterCrashes
+
+* **[Fix]** Fix possible crash on parsing invalid native crash reports.
 
 ## Version 2.0.0
 
