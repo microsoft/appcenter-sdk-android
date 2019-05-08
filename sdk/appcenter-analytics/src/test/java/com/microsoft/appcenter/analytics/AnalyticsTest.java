@@ -859,6 +859,24 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         AppCenterLog.error(anyString(), contains("AppCenter is not configured"));
     }
 
+    @Test
+    public void triggerIntervalReturnFalse() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(1);
+        assertFalse(result);
+        result = Analytics.setTransmissionInterval(24 * 60 * 60 + 1);
+        assertFalse(result);
+        result = Analytics.setTransmissionInterval(4);
+        assertTrue(result);
+        result = Analytics.setTransmissionInterval(24 * 60 * 60 - 1);
+        assertTrue(result);
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
+        result = Analytics.setTransmissionInterval(1);
+        assertFalse(result);
+    }
+
     /**
      * Activity with page name automatically resolving to "My" (no "Activity" suffix).
      */
