@@ -29,6 +29,7 @@ import com.microsoft.appcenter.analytics.EventProperties;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONObject;
 
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
 
 
 public class EventActivity extends AppCompatActivity {
@@ -76,7 +79,7 @@ public class EventActivity extends AppCompatActivity {
 
     private SeekBar mNumberOfLogs;
 
-    private int currentPosition = 0;
+    private int mCurrentPosition = 0;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
@@ -196,46 +199,48 @@ public class EventActivity extends AppCompatActivity {
         try {
             String json = MainActivity.sSharedPreferences.getString(LATENCY_SECONDS_KEY, "");
             JSONObject jsonObject = new JSONObject(json);
-            mLatencySpinner.setOnItemSelectedListener(null);
-            currentPosition = jsonObject.getInt("position");
-            mLatencySpinner.setSelection(currentPosition);
+            mCurrentPosition = jsonObject.getInt("position");
+            mLatencySpinner.setSelection(mCurrentPosition);
         } catch (Exception exc) {
-            exc.printStackTrace();
+            AppCenterLog.error(LOG_TAG, "Cannot deserialize latency info.");
         }
         mLatencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                long latency = 0;
-                if (currentPosition == position)
-                    return;
-                switch (position) {
-                    case (0):
-                        latency = TimeUnit.SECONDS.toSeconds(3);
-                    case (1):
-                        latency = TimeUnit.MINUTES.toSeconds(10);
-                        break;
-                    case (2):
-                        latency = TimeUnit.HOURS.toSeconds(1);
-                        break;
-                    case (3):
-                        latency = TimeUnit.HOURS.toSeconds(8);
-                        break;
-                    case (4):
-                        latency = TimeUnit.DAYS.toSeconds(1);
-                        break;
-                }
-                MainActivity.sSharedPreferences.edit().putString(LATENCY_SECONDS_KEY, "{\"latency\": " + latency + ", \"position\": " + position + "}").apply();
-                Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
-
-//                Analytics.setTransmissionInterval(latency);
+                onLatencyChanged(position);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+    }
 
+    private void onLatencyChanged(int position) {
+        long latency = 0;
+        if (mCurrentPosition == position)
+            return;
+        switch (position) {
+            case (0):
+                latency = TimeUnit.SECONDS.toSeconds(3);
+            case (1):
+                latency = TimeUnit.MINUTES.toSeconds(10);
+                break;
+            case (2):
+                latency = TimeUnit.HOURS.toSeconds(1);
+                break;
+            case (3):
+                latency = TimeUnit.HOURS.toSeconds(8);
+                break;
+            case (4):
+                latency = TimeUnit.DAYS.toSeconds(1);
+                break;
+        }
+        MainActivity.sSharedPreferences.edit().putString(LATENCY_SECONDS_KEY, "{\"latency\": " + latency + ", \"position\": " + position + "}").apply();
+        Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
+
+//                Analytics.setTransmissionInterval(latency);
     }
 
     @Override
