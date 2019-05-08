@@ -99,7 +99,7 @@
     <string name="latency" tools:ignore="MissingTranslation">Latency</string>
     <string name="latency_changed_message">This setting will take effect only after the app restart.</string>
     <string-array name="latency_values" tools:ignore="MissingTranslation">
-        <item>Default</item>
+        <item>Default (3 seconds)</item>
         <item>10 Minutes</item>
         <item>1 Hour</item>
         <item>8 Hour</item>
