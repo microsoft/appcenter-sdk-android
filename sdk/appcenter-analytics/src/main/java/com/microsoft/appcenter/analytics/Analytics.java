@@ -42,6 +42,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -85,13 +86,13 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission interval minimal value.
      */
     @VisibleForTesting
-    static final int TRANSMISSION_INTERVAL_MINIMUM = 3;
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
 
     /**
      * Transmission interval maximum value.
      */
     @VisibleForTesting
-    static final int TRANSMISSION_INTERVAL_MAXIMUM = 24 * 60 * 60;
+    static final int MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 24 * 60 * 60;
 
     /**
      * Log factories managed by this service.
@@ -166,7 +167,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(EventLog.TYPE, new EventLogFactory());
         mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
-        mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(TRANSMISSION_INTERVAL_MINIMUM);
+        mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
     }
 
     /**
@@ -923,8 +924,12 @@ public class Analytics extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
             return false;
         }
-        if (seconds < TRANSMISSION_INTERVAL_MINIMUM || seconds > TRANSMISSION_INTERVAL_MAXIMUM) {
-            AppCenterLog.error(LOG_TAG, "The transmission interval is invalid. The value should be between 3 seconds and 1 day");
+        if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+            AppCenterLog.error(LOG_TAG, String.format(Locale.getDefault(),
+                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day)",
+                    MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS, 
+                    MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    (int) TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
             return false;
         }
         mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(seconds);
