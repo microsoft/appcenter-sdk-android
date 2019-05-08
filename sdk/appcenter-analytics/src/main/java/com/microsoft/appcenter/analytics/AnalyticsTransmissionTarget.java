@@ -371,6 +371,7 @@ public class AnalyticsTransmissionTarget {
             @Override
             public void run() {
                 mChannel.pauseGroup(Analytics.ANALYTICS_GROUP, mTransmissionTargetToken);
+                mChannel.pauseGroup(Analytics.ANALYTICS_CRITICAL_GROUP, mTransmissionTargetToken);
             }
         });
     }
@@ -385,6 +386,7 @@ public class AnalyticsTransmissionTarget {
             @Override
             public void run() {
                 mChannel.resumeGroup(Analytics.ANALYTICS_GROUP, mTransmissionTargetToken);
+                mChannel.resumeGroup(Analytics.ANALYTICS_CRITICAL_GROUP, mTransmissionTargetToken);
             }
         });
     }
