@@ -139,7 +139,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * The listener to catch if a token needs to be refreshed.
      */
-    private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
+    private final AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {

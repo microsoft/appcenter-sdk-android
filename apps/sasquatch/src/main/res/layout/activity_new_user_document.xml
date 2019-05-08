@@ -12,7 +12,6 @@
     tools:context=".activities.NewUserDocumentActivity">
 
     <TextView
-        android:id="@+id/common_schema_property_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/user_document_ttl_header" />

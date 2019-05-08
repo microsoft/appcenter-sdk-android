@@ -5,23 +5,20 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,9 +30,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("unused")
-@SmallTest
-@RunWith(AndroidJUnit4.class)
 public class FileManagerAndroidTest {
 
     /**
@@ -44,21 +38,15 @@ public class FileManagerAndroidTest {
     private static final String FILE_STORAGE_TEST_FILE_EXTENSION = ".stacktrace";
 
     /**
-     * Context instance.
-     */
-    @SuppressLint("StaticFieldLeak")
-    private static Context sContext;
-
-    /**
      * Root path for private files.
      */
     private static String sAndroidFilesPath;
 
     @BeforeClass
     public static void setUpClass() {
-        sContext = InstrumentationRegistry.getTargetContext();
-        FileManager.initialize(sContext);
-        sAndroidFilesPath = sContext.getFilesDir().getAbsolutePath() + "/test/";
+        Context context = InstrumentationRegistry.getTargetContext();
+        FileManager.initialize(context);
+        sAndroidFilesPath = context.getFilesDir().getAbsolutePath() + "/test/";
 
         /* Create a test directory. */
         FileManager.mkdir(sAndroidFilesPath);
@@ -178,7 +166,8 @@ public class FileManagerAndroidTest {
         /* Read with class cast exception. */
         Exception readCastException = null;
         try {
-            @SuppressWarnings("UnusedAssignment")
+
+            @SuppressWarnings("unused")
             String wrongType = FileManager.readObject(file);
         } catch (Exception e) {
             readCastException = e;
@@ -208,7 +197,7 @@ public class FileManagerAndroidTest {
 
         /* Check. */
         assertNotNull(helloBytes);
-        assertEquals(hello, new String(helloBytes, "UTF-8"));
+        assertEquals(hello, new String(helloBytes, StandardCharsets.UTF_8));
 
         /* Delete the files to clean up. */
         FileManager.delete(file);
