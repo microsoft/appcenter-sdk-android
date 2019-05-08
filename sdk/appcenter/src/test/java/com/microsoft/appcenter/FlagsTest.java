@@ -54,8 +54,8 @@ public class FlagsTest {
 
     @Test
     public void persistenceDefaults() {
-        assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, false));
-        assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULT_FLAGS, true));
+        assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULTS, false));
+        assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULTS, true));
         verifyStatic(never());
         AppCenterLog.warn(anyString(), anyString());
     }

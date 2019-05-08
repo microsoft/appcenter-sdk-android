@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
@@ -151,7 +151,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                     }
                     return false;
                 }
-            }), anyString(), eq(DEFAULT_FLAGS));
+            }), anyString(), eq(DEFAULTS));
         } else {
             verify(mChannel, never()).enqueue(isA(EventLog.class), anyString(), anyInt());
         }
@@ -172,7 +172,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Track event via another transmission target method with properties. */
@@ -197,7 +197,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Create a child transmission target and track event. */
@@ -216,7 +216,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
         reset(mChannel);
 
         /* Another child transmission target with the same token should be the same instance. */
@@ -240,7 +240,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
 
         /* Set enabled to false and assert that it cannot track event. */
         transmissionTarget.setEnabledAsync(false).get();
@@ -296,7 +296,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
     }
 
     @Test
@@ -631,7 +631,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("token");
         target.trackEvent("eventName1", (Map<String, String>) null, 0x03);
         target.trackEvent("eventName2", (EventProperties) null, 0x03);
-        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULT_FLAGS));
+        verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
         verifyStatic(times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }

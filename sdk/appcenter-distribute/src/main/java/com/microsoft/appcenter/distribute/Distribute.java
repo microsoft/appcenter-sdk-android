@@ -1903,7 +1903,7 @@ public class Distribute extends AbstractAppCenterService {
             @Override
             public void run() {
                 DistributionStartSessionLog log = new DistributionStartSessionLog();
-                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULT_FLAGS);
+                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULTS);
             }
         });
     }

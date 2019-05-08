@@ -286,7 +286,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param name An event name.
      */
     public static void trackEvent(String name) {
-        trackEvent(name, null, null, Flags.DEFAULT_FLAGS);
+        trackEvent(name, null, null, Flags.DEFAULTS);
     }
 
     /**
@@ -317,7 +317,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, Map<String, String> properties) {
-        getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULT_FLAGS);
+        getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULTS);
     }
 
     /**
@@ -386,7 +386,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param properties Optional properties.
      */
     public static void trackEvent(String name, EventProperties properties) {
-        trackEvent(name, properties, Flags.DEFAULT_FLAGS);
+        trackEvent(name, properties, Flags.DEFAULTS);
     }
 
     /**
@@ -745,7 +745,7 @@ public class Analytics extends AbstractAppCenterService {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULT_FLAGS);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
     }
 
     /**

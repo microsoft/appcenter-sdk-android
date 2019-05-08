@@ -53,7 +53,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -235,7 +235,7 @@ public class PushTest {
         assertTrue(Push.isEnabled().get());
         verify(mFirebaseInstanceId).getToken();
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
-        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
         assertEquals(testToken, log.getValue().getPushToken());
         verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
                 eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
@@ -246,7 +246,7 @@ public class PushTest {
 
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Disable. */
         Push.setEnabled(false).get();
@@ -270,7 +270,7 @@ public class PushTest {
 
         /* Verify behavior happened only once. */
         verify(mFirebaseInstanceId).getToken();
-        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Make sure no logging when posting check activity intent commands. */
         Activity activity = mock(Activity.class);
@@ -328,7 +328,7 @@ public class PushTest {
         /* Refresh. */
         push.onTokenRefresh(testToken);
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
-        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULT_FLAGS));
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
         assertEquals(testToken, log.getValue().getPushToken());
         assertEquals("alice", log.getValue().getUserId());
 
@@ -681,7 +681,7 @@ public class PushTest {
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         when(mContext.getPackageName()).thenReturn("com.contoso");
         Resources resources = mock(Resources.class);
-        when(resources.getIdentifier("gcm_DEFAULT_FLAGSenderId", "string", "com.contoso")).thenReturn(42);
+        when(resources.getIdentifier("gcm_DEFAULTSenderId", "string", "com.contoso")).thenReturn(42);
         when(mContext.getString(42)).thenReturn("4567");
         when(mContext.getResources()).thenReturn(resources);
         start(Push.getInstance(), mock(Channel.class));

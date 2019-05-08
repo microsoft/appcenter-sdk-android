@@ -45,7 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.appcenter.Flags.DEFAULT_FLAGS;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
@@ -481,10 +481,10 @@ public class CrashesAndroidTest {
                 }
                 return false;
             }
-        }), anyString(), eq(DEFAULT_FLAGS));
+        }), anyString(), eq(DEFAULTS));
 
         /* Verify custom text attachment. */
-        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULT_FLAGS));
+        verify(mChannel).enqueue(eq(textAttachment), anyString(), eq(DEFAULTS));
     }
 
     @Test

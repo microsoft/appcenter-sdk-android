@@ -159,7 +159,7 @@ public class AnalyticsTransmissionTarget {
      * @param name An event name.
      */
     public void trackEvent(String name) {
-        trackEvent(name, (EventProperties) null, Flags.DEFAULT_FLAGS);
+        trackEvent(name, (EventProperties) null, Flags.DEFAULTS);
     }
 
     /**
@@ -177,7 +177,7 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, Map<String, String> properties) {
-        trackEvent(name, properties, Flags.DEFAULT_FLAGS);
+        trackEvent(name, properties, Flags.DEFAULTS);
     }
 
     /**
@@ -226,7 +226,7 @@ public class AnalyticsTransmissionTarget {
      * @param properties Optional properties.
      */
     public void trackEvent(String name, EventProperties properties) {
-        trackEvent(name, properties, Flags.DEFAULT_FLAGS);
+        trackEvent(name, properties, Flags.DEFAULTS);
     }
 
     /**
