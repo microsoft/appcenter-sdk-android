@@ -14,6 +14,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
@@ -50,6 +51,16 @@ import java.util.concurrent.TimeUnit;
 public class Analytics extends AbstractAppCenterService {
 
     /**
+     * Constant marking event of the analytics group.
+     */
+    static final String ANALYTICS_GROUP = "group_analytics";
+
+    /**
+     * Constant marking event of the analytics critical group.
+     */
+    static final String ANALYTICS_CRITICAL_GROUP = ANALYTICS_GROUP + "_critical";
+
+    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Analytics";
@@ -58,11 +69,6 @@ public class Analytics extends AbstractAppCenterService {
      * TAG used in logging for Analytics.
      */
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Constant marking event of the analytics group.
-     */
-    static final String ANALYTICS_GROUP = "group_analytics";
 
     /**
      * Activity suffix to exclude from generated page names.
@@ -689,6 +695,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* If we enabled the service. */
         if (enabled) {
+            mChannel.addGroup(ANALYTICS_CRITICAL_GROUP, getTriggerCount(), Constants.DEFAULT_TRIGGER_INTERVAL, getTriggerMaxParallelRequests(), null, getChannelListener());
 
             /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();
@@ -696,6 +703,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* On disabling service. */
         else {
+            mChannel.removeGroup(ANALYTICS_CRITICAL_GROUP);
 
             /* Cleanup resources. */
             if (mAnalyticsValidator != null) {
@@ -818,7 +826,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.PERSISTENCE_CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
