@@ -19,6 +19,7 @@ import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
@@ -28,6 +29,8 @@ import com.microsoft.appcenter.analytics.EventProperties;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,12 +43,13 @@ import java.util.concurrent.TimeUnit;
 
 public class EventActivity extends AppCompatActivity {
 
+    public static final String LATENCY_SECONDS_KEY = "LATENCY_SECONDS_KEY";
+
     /**
      * Remember for what targets the device id was enabled.
      * It shouldn't be lost on recreate activity.
      */
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
-
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     private TextView mName;
@@ -71,6 +75,8 @@ public class EventActivity extends AppCompatActivity {
     private Spinner mLatencySpinner;
 
     private SeekBar mNumberOfLogs;
+
+    private int currentPosition = 0;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
@@ -187,11 +193,22 @@ public class EventActivity extends AppCompatActivity {
         mLatencySpinner = findViewById(R.id.latency_spinner);
         ArrayAdapter<String> latencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.latency_values));
         mLatencySpinner.setAdapter(latencyAdapter);
+        try {
+            String json = MainActivity.sSharedPreferences.getString(LATENCY_SECONDS_KEY, "");
+            JSONObject jsonObject = new JSONObject(json);
+            mLatencySpinner.setOnItemSelectedListener(null);
+            currentPosition = jsonObject.getInt("position");
+            mLatencySpinner.setSelection(currentPosition);
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
         mLatencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 long latency = 0;
+                if (currentPosition == position)
+                    return;
                 switch (position) {
                     case (0):
                         latency = TimeUnit.SECONDS.toSeconds(3);
@@ -208,7 +225,9 @@ public class EventActivity extends AppCompatActivity {
                         latency = TimeUnit.DAYS.toSeconds(1);
                         break;
                 }
-                
+                MainActivity.sSharedPreferences.edit().putString(LATENCY_SECONDS_KEY, "{\"latency\": " + latency + ", \"position\": " + position + "}").apply();
+                Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
+
 //                Analytics.setTransmissionInterval(latency);
             }
 
