@@ -15,24 +15,24 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public final class Flags {
 
     /**
-     * @deprecated An event can be lost due to low bandwidth or disk space constraints.
+     * @deprecated Use of flag PERSISTENCE_NORMAL has been deprecated, suggest to use new flag NORMAL as replacement.
      */
     @Deprecated
     public static final int PERSISTENCE_NORMAL = 0x01;
 
     /**
-     * A flag as an alias of PERSISTENCE_NORMAL.
+     * An event can be lost due to low bandwidth or disk space constraints.
      */
     public static final int NORMAL = PERSISTENCE_NORMAL;
 
     /**
-     * @deprecated Used for events that should be prioritized over non-critical events.
+     * @deprecated Use of flag PERSISTENCE_CRITICAL has been deprecated, suggest to use new flag CRITICAL as replacement.
      */
     @Deprecated
     public static final int PERSISTENCE_CRITICAL = 0x02;
 
     /**
-     * A flag as an alias of PERSISTENCE_CRITICAL.
+     * Used for events that should be prioritized over non-critical events.
      */
     public static final int CRITICAL = PERSISTENCE_CRITICAL;
 
