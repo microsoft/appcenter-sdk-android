@@ -69,7 +69,7 @@ public class CustomPropertyFragment extends EditDateTimeFragment {
         mValueLabel.setVisibility(type != CustomPropertyType.CLEAR ? View.VISIBLE : View.GONE);
     }
 
-    public CustomPropertyType getType() {
+    private CustomPropertyType getType() {
         return CustomPropertyType.values()[mEditType.getSelectedItemPosition()];
     }
 

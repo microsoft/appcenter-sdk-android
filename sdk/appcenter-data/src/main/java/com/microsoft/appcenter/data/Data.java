@@ -43,6 +43,8 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.microsoft.appcenter.data.Constants.DATA_GROUP;
 import static com.microsoft.appcenter.data.Constants.DEFAULT_API_URL;
@@ -81,7 +83,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     private String mTokenExchangeUrl = DEFAULT_API_URL;
 
-    private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
+    private final Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 
@@ -100,6 +102,11 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private AuthTokenContext.Listener mAuthListener;
 
     private NetworkStateHelper mNetworkStateHelper;
+
+    /**
+     * Document ID validation pattern.
+     */
+    private final Pattern sDocumentIdPattern = Pattern.compile("^[^/\\\\#\\s?]+$");
 
     /**
      * Get shared instance.
@@ -419,7 +426,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
         /* Check partition is supported. */
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidStateOrParameters(partition, result)) {
+        if (isInvalidStateOrParameters(partition, documentId, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -751,7 +758,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String documentId, final T document, final Class<T> documentType, final String partition,
             final WriteOptions writeOptions, final Map<String, String> additionalHeaders) {
         final DefaultAppCenterFuture<DocumentWrapper<T>> result = new DefaultAppCenterFuture<>();
-        if (isInvalidStateOrParameters(partition, result)) {
+        if (isInvalidStateOrParameters(partition, documentId, result)) {
             return result;
         }
         postAsyncGetter(new Runnable() {
@@ -1003,15 +1010,20 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
-    private <T> boolean isInvalidStateOrParameters(String partition, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
+    private <T> boolean isInvalidStateOrParameters(String partition, String documentId, DefaultAppCenterFuture<DocumentWrapper<T>> result) {
         boolean isNotStarted = mAppSecret == null;
         if (isNotStarted) {
             completeFuture(getModuleNotStartedException(), result);
             return true;
         }
-        boolean isInvalidPartition = !LocalDocumentStorage.isValidPartitionName(partition);
-        if (isInvalidPartition) {
+        boolean isValidPartition = LocalDocumentStorage.isValidPartitionName(partition);
+        if (!isValidPartition) {
             completeFuture(getInvalidPartitionDataException(partition), result);
+            return true;
+        }
+        boolean isValidDocumentId = isValidDocumentId(documentId);
+        if (!isValidDocumentId) {
+            completeFuture(new DataException("Invalid document ID."), result);
             return true;
         }
         return false;
@@ -1029,6 +1041,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             return true;
         }
         return false;
+    }
+
+    private boolean isValidDocumentId(String documentId) {
+        if (documentId == null) {
+            return false;
+        }
+        Matcher matcher = sDocumentIdPattern.matcher(documentId);
+        return matcher.matches();
     }
 
     private interface CallTemplate<T> {

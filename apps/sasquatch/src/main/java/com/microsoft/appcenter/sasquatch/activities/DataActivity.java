@@ -26,13 +26,13 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.data.DefaultPartitions;
+import com.microsoft.appcenter.data.Utils;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.data.AppDocumentListAdapter;
 import com.microsoft.appcenter.sasquatch.activities.data.CustomItemAdapter;
-import com.microsoft.appcenter.sasquatch.activities.data.TestDocument;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -40,10 +40,17 @@ import java.util.List;
 import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_CONTENT;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_DATE;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ERROR;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ERROR_NULL_STATUS;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_ID;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_PARTITION;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.DOCUMENT_STATE;
 
 public class DataActivity extends AppCompatActivity {
+
+    private static final int MAX_CONTENT_LENGTH = 50;
 
     private RecyclerView mListView;
 
@@ -61,7 +68,7 @@ public class DataActivity extends AppCompatActivity {
 
     private DocumentType mDocumentType = DocumentType.READONLY;
 
-    private PaginatedDocuments<TestDocument> mCurrentAppDocuments;
+    private PaginatedDocuments<Map> mCurrentAppDocuments;
 
     private PaginatedDocuments<Map> mCurrentUserDocuments;
 
@@ -71,10 +78,10 @@ public class DataActivity extends AppCompatActivity {
 
     private boolean mAppDocumentsLoading;
 
-    private AppCenterConsumer<PaginatedDocuments<TestDocument>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<TestDocument>>() {
+    private final AppCenterConsumer<PaginatedDocuments<Map>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
-        public void accept(PaginatedDocuments<TestDocument> documents) {
+        public void accept(PaginatedDocuments<Map> documents) {
             mAppDocumentsLoading = false;
             if (!mUserDocumentsLoading) {
                 hideProgress();
@@ -86,7 +93,7 @@ public class DataActivity extends AppCompatActivity {
         }
     };
 
-    private AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
+    private final AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
         public void accept(PaginatedDocuments<Map> documents) {
@@ -111,17 +118,17 @@ public class DataActivity extends AppCompatActivity {
         mDocumentTypeSpinner.setEnabled(false);
     }
 
-    private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
+    private final RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
             if (mCurrentAppDocuments != null && mCurrentAppDocuments.hasNextPage() && !mLoading) {
                 mLoading = true;
-                mCurrentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<TestDocument>>() {
+                mCurrentAppDocuments.getNextPage().thenAccept(new AppCenterConsumer<Page<Map>>() {
 
                     @Override
-                    public void accept(Page<TestDocument> testDocumentPage) {
+                    public void accept(Page<Map> testDocumentPage) {
                         mLoading = false;
                         updateAppDocument(testDocumentPage.getItems());
                     }
@@ -130,7 +137,7 @@ public class DataActivity extends AppCompatActivity {
         }
     };
 
-    private RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
+    private final RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -155,7 +162,7 @@ public class DataActivity extends AppCompatActivity {
         mAdapterUser.notifyDataSetChanged();
     }
 
-    private void updateAppDocument(List<DocumentWrapper<TestDocument>> list) {
+    private void updateAppDocument(List<DocumentWrapper<Map>> list) {
         mAppDocumentListAdapter.upload(list);
         mAppDocumentListAdapter.notifyDataSetChanged();
     }
@@ -171,20 +178,20 @@ public class DataActivity extends AppCompatActivity {
         mMessageText = findViewById(R.id.data_message);
 
         /* List the app read-only documents. */
-        mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<DocumentWrapper<TestDocument>>());
+        mAppDocumentListAdapter = new AppDocumentListAdapter(this, new ArrayList<DocumentWrapper<Map>>());
         mAppDocumentListAdapter.setOnItemClickListener(new AppDocumentListAdapter.OnItemClickListener() {
 
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_PARTITION, DefaultPartitions.APP_DOCUMENTS);
-                intent.putExtra(DOCUMENT_ID, mAppDocumentListAdapter.getDocumentByPosition(position));
+                DocumentWrapper<Map> document = mAppDocumentListAdapter.getDocument(position);
+                fillIntentWithDocDetails(intent, document, DefaultPartitions.APP_DOCUMENTS);
                 startActivity(intent);
             }
         });
         showProgress();
         mAppDocumentsLoading = true;
-        Data.list(TestDocument.class, DefaultPartitions.APP_DOCUMENTS).thenAccept(mUploadApp);
+        Data.list(Map.class, DefaultPartitions.APP_DOCUMENTS).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<DocumentWrapper<Map>>(), this);
@@ -193,8 +200,8 @@ public class DataActivity extends AppCompatActivity {
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(DataActivity.this, DocumentDetailActivity.class);
-                intent.putExtra(DOCUMENT_PARTITION, DefaultPartitions.USER_DOCUMENTS);
-                intent.putExtra(DOCUMENT_ID, mAdapterUser.getDocumentByPosition(position));
+                DocumentWrapper<Map> document = mAdapterUser.getDocument(position);
+                fillIntentWithDocDetails(intent, document, DefaultPartitions.USER_DOCUMENTS);
                 startActivity(intent);
             }
 
@@ -233,6 +240,28 @@ public class DataActivity extends AppCompatActivity {
         });
     }
 
+    private void fillIntentWithDocDetails(Intent intent, DocumentWrapper document, String partition) {
+        intent.putExtra(DOCUMENT_PARTITION, partition);
+        intent.putExtra(DOCUMENT_ID, document.getId());
+        if (document.getError() != null) {
+            String message = document.getError().getMessage();
+            if (message.length() > MAX_CONTENT_LENGTH) {
+                message = message.substring(0, MAX_CONTENT_LENGTH) + "...";
+                intent.putExtra(DOCUMENT_ERROR, message);
+                intent.putExtra(DOCUMENT_ERROR_NULL_STATUS, true);
+            }
+        } else {
+            Object doc = document.getDeserializedValue();
+            String docContents = doc == null ? "{}" : Utils.getGson().toJson(doc);
+            intent.putExtra(DOCUMENT_CONTENT, docContents);
+            intent.putExtra(DOCUMENT_ERROR_NULL_STATUS, false);
+        }
+        if (document.getLastUpdatedDate() != null) {
+            intent.putExtra(DOCUMENT_DATE, document.getLastUpdatedDate().toString());
+        }
+        intent.putExtra(DOCUMENT_STATE, document.isFromDeviceCache());
+    }
+
     private void loadUserDocuments() {
 
         /* List the user documents. */
@@ -247,32 +276,30 @@ public class DataActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         mLoading = false;
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                switch (mDocumentType) {
-                    case USER:
-                        String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
-                        if (accountId != null) {
-                            Intent intent = new Intent(DataActivity.this, NewUserDocumentActivity.class);
-                            startActivity(intent);
+        if (item.getItemId() == R.id.action_add) {
+            switch (mDocumentType) {
+                case USER:
+                    String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
+                    if (accountId != null) {
+                        Intent intent = new Intent(DataActivity.this, NewUserDocumentActivity.class);
+                        startActivity(intent);
+                    }
+                    break;
+
+                case READONLY:
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(DataActivity.this);
+                    builder.setIcon(R.drawable.ic_appcenter_logo);
+                    builder.setTitle(getApplicationContext().getResources().getString(R.string.document_type_reminder));
+                    builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            builder.setCancelable(true);
                         }
-                        break;
-
-                    case READONLY:
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(DataActivity.this);
-                        builder.setIcon(R.drawable.ic_appcenter_logo);
-                        builder.setTitle(getApplicationContext().getResources().getString(R.string.document_type_reminder));
-                        builder.setPositiveButton(getApplicationContext().getResources().getString(R.string.alert_ok), new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                builder.setCancelable(true);
-                            }
-                        });
-                        builder.show();
-                        break;
-                }
-                break;
+                    });
+                    builder.show();
+                    break;
+            }
         }
         return true;
     }

@@ -18,7 +18,7 @@ The App Center SDK uses a modular architecture so you can use any or all of the 
 
 4. **App Center Push**: App Center Push enables you to send push notifications to users of your app from the App Center portal. To do that, the App Center SDK and portal integrate with [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/). You can also segment your user base based on a set of properties and send them targeted notifications.
 
-5. **App Center Auth**: App Center Auth is a cloud-based identity management service that enables you to authenticate users and manage their identities. You can also leverage user identities in other App Center services.
+5. **App Center Auth**: App Center Auth is a cloud-based identity management service that enables developers to authenticate application users and manage user identities. The service integrates with other parts of App Center, enabling developers to leverage the user identity to view user data in other services and even send push notifications to users instead of individual devices.
 
 6. **App Center Data**: The App Center Data service provides functionality enabling developers to persist app data in the cloud in both online and offline scenarios. This enables you to store and manage both user-specific data as well as data shared between users and across platforms.
 

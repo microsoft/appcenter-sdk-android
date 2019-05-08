@@ -15,6 +15,8 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Objects;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -41,7 +43,7 @@ public class UserIdContextTest {
             public Boolean answer(InvocationOnMock invocation) {
                 CharSequence a = (CharSequence) invocation.getArguments()[0];
                 CharSequence b = (CharSequence) invocation.getArguments()[1];
-                return a == b || (a != null && a.equals(b));
+                return Objects.equals(a, b);
             }
         });
     }
@@ -77,6 +79,7 @@ public class UserIdContextTest {
         assertTrue(UserIdContext.checkUserIdValidForAppCenter(null));
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void prefixedInvalidUserId() {
         assertNull(UserIdContext.getPrefixedUserId(null));

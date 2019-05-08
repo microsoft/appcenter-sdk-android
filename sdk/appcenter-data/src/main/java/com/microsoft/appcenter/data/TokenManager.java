@@ -90,6 +90,10 @@ public class TokenManager {
                 }
             }
             AppCenterLog.debug(LOG_TAG, String.format("Retrieved token from cache for partition '%s'", partitionName));
+            if (!Utils.isValidTokenResult(token)) {
+                AppCenterLog.warn(LOG_TAG, "Getting an invalid token from local token cache.");
+                return null;
+            }
             return token;
         }
         AppCenterLog.debug(LOG_TAG, String.format("No token found in cache for partition '%s'", partitionName));

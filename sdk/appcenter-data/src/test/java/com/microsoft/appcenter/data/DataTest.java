@@ -73,6 +73,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -182,7 +183,13 @@ public class DataTest extends AbstractDataTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -230,7 +237,13 @@ public class DataTest extends AbstractDataTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbName("dbName")
+                .setDbAccount("accountName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -286,7 +299,13 @@ public class DataTest extends AbstractDataTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -359,7 +378,13 @@ public class DataTest extends AbstractDataTest {
     public void listEndToEndWhenExceptionHappened() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
         when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
@@ -474,7 +499,13 @@ public class DataTest extends AbstractDataTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Setup list documents api response. */
@@ -522,7 +553,14 @@ public class DataTest extends AbstractDataTest {
         /* Setup mock to get expiration token from cache. */
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken")
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collectionName"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Setup list documents api response. Set response as empty string to force deserialization error. */
@@ -605,7 +643,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void readCosmosDbCallEncodeDocumentId() throws JSONException, UnsupportedEncodingException {
-        String documentID = "Test Document";
+        String documentID = "TestDocument";
         Data.read(documentID, TestDocument.class, USER_DOCUMENTS);
         verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
 
@@ -718,7 +756,13 @@ public class DataTest extends AbstractDataTest {
     public void readOnLineWhenLocalStorageContainsNullOperation() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
-        TokenResult tokenResult = new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("tokenResult");
+        TokenResult tokenResult = new TokenResult()
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("tokenResult")
+                .setDbAccount("dbAccount")
+                .setDbCollectionName("collectionName")
+                .setDbName("dbName");
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(Utils.getGson().toJson(tokenResult));
         DocumentWrapper<String> outDatedDocument = new DocumentWrapper<>();
         DocumentWrapper<String> expectedDocument = new DocumentWrapper<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
@@ -1210,6 +1254,70 @@ public class DataTest extends AbstractDataTest {
         Data.setEnabled(false).get();
         assertNull(doc.get());
         verify(mockServiceCall).cancel();
+    }
+
+    @Test
+    public void failFastForInvalidDocumentId() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                fail("Http Client should not have been accessed.");
+                return null;
+            }
+        });
+
+
+        /* Document IDs cannot be null or empty, or contain '#', '/', or '\'. */
+        ArrayList<String> invalidDocumentIds = new ArrayList<String>() {
+            {
+                add(null);
+                add("");
+                add("#");
+                add("abc#");
+                add("#abc");
+                add("ab#c");
+                add("/");
+                add("abc/");
+                add("/abc");
+                add("ab/c");
+                add("\\");
+                add("abc\\");
+                add("\\abc");
+                add("ab\\c");
+                add(" ");
+                add("abc ");
+                add(" abc");
+                add("ab c");
+                add("?");
+                add("abc?");
+                add("?abc");
+                add("ab?c");
+                add("\t");
+                add("abc\t");
+                add("\tabc");
+                add("ab\tc");
+                add("\n");
+                add("abc\n");
+                add("\nabc");
+                add("ab\nc");
+            }
+        };
+        for (String invalidId : invalidDocumentIds) {
+
+            /* Execute each operation that uses a document ID. */
+            DocumentWrapper<TestDocument> createDoc = Data.create(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> readDoc = Data.read(invalidId, TestDocument.class, USER_DOCUMENTS).get();
+            DocumentWrapper<TestDocument> replaceDoc = Data.replace(invalidId, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS).get();
+
+            /* All results must have errors. */
+            assertNotNull(createDoc.getError());
+            assertNotNull(readDoc.getError());
+            assertNotNull(replaceDoc.getError());
+        }
+
+        /* Ensure that local document storage has not been accessed. */
+        verifyNoMoreInteractions(mLocalDocumentStorage);
     }
 
     @Test
