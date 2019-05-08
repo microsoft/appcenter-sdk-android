@@ -146,7 +146,7 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission interval.
      * Valid value ranges from 3 seconds to 1 day.
      */
-    private int mTransmissionInterval = TRANSMISSION_INTERVAL_MINIMUM;
+    private int mTransmissionInterval;
 
     /**
      * Automatic page tracking flag.
@@ -164,6 +164,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(EventLog.TYPE, new EventLogFactory());
         mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
+        mTransmissionInterval = (int) TimeUnit.SECONDS.toMillis(TRANSMISSION_INTERVAL_MINIMUM);
     }
 
     /**
