@@ -29,9 +29,6 @@ import com.microsoft.appcenter.analytics.EventProperties;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,9 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static com.microsoft.appcenter.analytics.Analytics.LOG_TAG;
-
 
 public class EventActivity extends AppCompatActivity {
 
@@ -75,13 +69,19 @@ public class EventActivity extends AppCompatActivity {
 
     private TextView mNumberOfLogsLabel;
 
-    private Spinner mLatencySpinner;
-
     private SeekBar mNumberOfLogs;
 
     private int mCurrentPosition = 0;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
+
+    private Long[] mLatencyValues = {
+            TimeUnit.SECONDS.toSeconds(3),
+            TimeUnit.MINUTES.toSeconds(10),
+            TimeUnit.HOURS.toSeconds(1),
+            TimeUnit.HOURS.toSeconds(8),
+            TimeUnit.DAYS.toSeconds(1)
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -193,18 +193,12 @@ public class EventActivity extends AppCompatActivity {
         });
 
         /* Init latency table columns */
-        mLatencySpinner = findViewById(R.id.latency_spinner);
+        Spinner latencySpinner = findViewById(R.id.latency_spinner);
         ArrayAdapter<String> latencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.latency_values));
-        mLatencySpinner.setAdapter(latencyAdapter);
-        try {
-            String json = MainActivity.sSharedPreferences.getString(LATENCY_SECONDS_KEY, "");
-            JSONObject jsonObject = new JSONObject(json);
-            mCurrentPosition = jsonObject.getInt("position");
-            mLatencySpinner.setSelection(mCurrentPosition);
-        } catch (Exception exc) {
-            AppCenterLog.error(LOG_TAG, "Cannot deserialize latency info.");
-        }
-        mLatencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        latencySpinner.setAdapter(latencyAdapter);
+        mCurrentPosition = MainActivity.sSharedPreferences.getInt(LATENCY_SECONDS_KEY, 0);
+        latencySpinner.setSelection(mCurrentPosition);
+        latencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -218,26 +212,10 @@ public class EventActivity extends AppCompatActivity {
     }
 
     private void onLatencyChanged(int position) {
-        Long latency = 0L;
         if (mCurrentPosition == position)
             return;
-        switch (position) {
-            case (0):
-                latency = TimeUnit.SECONDS.toSeconds(3);
-            case (1):
-                latency = TimeUnit.MINUTES.toSeconds(10);
-                break;
-            case (2):
-                latency = TimeUnit.HOURS.toSeconds(1);
-                break;
-            case (3):
-                latency = TimeUnit.HOURS.toSeconds(8);
-                break;
-            case (4):
-                latency = TimeUnit.DAYS.toSeconds(1);
-                break;
-        }
-        MainActivity.sSharedPreferences.edit().putString(LATENCY_SECONDS_KEY, "{\"latency\": " + latency + ", \"position\": " + position + "}").apply();
+        Long latency = mLatencyValues[position];
+        MainActivity.sSharedPreferences.edit().putInt(LATENCY_SECONDS_KEY, position).apply();
         Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
         Analytics.setTransmissionInterval(latency.intValue());
     }
