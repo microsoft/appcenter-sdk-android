@@ -83,7 +83,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     private String mTokenExchangeUrl = DEFAULT_API_URL;
 
-    private Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
+    private final Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
     private HttpClient mHttpClient;
 

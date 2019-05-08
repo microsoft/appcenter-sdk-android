@@ -99,7 +99,6 @@ public class DatabaseManagerAndroidTest {
         }
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     private static void runDatabaseManagerTest(DatabaseManager databaseManager) {
         ContentValues value1 = generateContentValues();
         ContentValues value2 = generateContentValues();
@@ -229,7 +228,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
         verify(listener).onCreate(any(SQLiteDatabase.class));
@@ -248,7 +246,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
         verify(listener).onCreate(any(SQLiteDatabase.class));
@@ -398,7 +395,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
     }
@@ -441,7 +437,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
         verify(listener).onCreate(any(SQLiteDatabase.class));
@@ -488,7 +483,6 @@ public class DatabaseManagerAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             databaseManager.close();
         }
         verify(listener).onCreate(any(SQLiteDatabase.class));
@@ -602,7 +596,7 @@ public class DatabaseManagerAndroidTest {
                         1,
                         schema1,
                         listener);
-        databaseManager.createTable(secondTable, schema2);
+        databaseManager.createTable(secondTable, schema2, null);
         assertTrue(checkTableExists(databaseManager, firstTable));
         assertTrue(checkTableExists(databaseManager, secondTable));
 
