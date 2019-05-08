@@ -49,6 +49,9 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static com.microsoft.appcenter.sasquatch.activities.EventActivity.LATENCY_SECONDS_KEY;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,6 +78,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
+    private static Long[] mLatencyValues = {
+            TimeUnit.SECONDS.toSeconds(3),
+            TimeUnit.MINUTES.toSeconds(10),
+            TimeUnit.HOURS.toSeconds(1),
+            TimeUnit.HOURS.toSeconds(8),
+            TimeUnit.DAYS.toSeconds(1)
+    };
 
     static SharedPreferences sSharedPreferences;
 
@@ -115,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
     native void setupNativeCrashesListener(String path);
 
     static void startAppCenter(Application application, String startTypeString) {
+        int position = MainActivity.sSharedPreferences.getInt(LATENCY_SECONDS_KEY, 0);
+        Long latency = mLatencyValues[position];
+        Analytics.setTransmissionInterval(latency.intValue());
         StartType startType = StartType.valueOf(startTypeString);
         if (startType == StartType.SKIP_START) {
             return;

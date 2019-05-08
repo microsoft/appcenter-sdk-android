@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class EventActivity extends AppCompatActivity {
 
@@ -74,14 +73,6 @@ public class EventActivity extends AppCompatActivity {
     private int mCurrentPosition = 0;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
-
-    private Long[] mLatencyValues = {
-            TimeUnit.SECONDS.toSeconds(3),
-            TimeUnit.MINUTES.toSeconds(10),
-            TimeUnit.HOURS.toSeconds(1),
-            TimeUnit.HOURS.toSeconds(8),
-            TimeUnit.DAYS.toSeconds(1)
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -214,10 +205,8 @@ public class EventActivity extends AppCompatActivity {
     private void onLatencyChanged(int position) {
         if (mCurrentPosition == position)
             return;
-        Long latency = mLatencyValues[position];
         MainActivity.sSharedPreferences.edit().putInt(LATENCY_SECONDS_KEY, position).apply();
         Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
-        Analytics.setTransmissionInterval(latency.intValue());
     }
 
     @Override
