@@ -218,7 +218,7 @@ public class EventActivity extends AppCompatActivity {
     }
 
     private void onLatencyChanged(int position) {
-        long latency = 0;
+        Long latency = 0L;
         if (mCurrentPosition == position)
             return;
         switch (position) {
@@ -239,8 +239,7 @@ public class EventActivity extends AppCompatActivity {
         }
         MainActivity.sSharedPreferences.edit().putString(LATENCY_SECONDS_KEY, "{\"latency\": " + latency + ", \"position\": " + position + "}").apply();
         Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
-
-//                Analytics.setTransmissionInterval(latency);
+        Analytics.setTransmissionInterval(latency.intValue());
     }
 
     @Override
