@@ -84,12 +84,14 @@ public class Analytics extends AbstractAppCenterService {
     /**
      * Transmission interval minimal value.
      */
-    private static final int TRANSMISSION_INTERVAL_MINIMUM = 3;
+    @VisibleForTesting
+    static final int TRANSMISSION_INTERVAL_MINIMUM = 3;
 
     /**
      * Transmission interval maximum value.
      */
-    private static final int TRANSMISSION_INTERVAL_MAXIMUM = 24 * 60 * 60;
+    @VisibleForTesting
+    static final int TRANSMISSION_INTERVAL_MAXIMUM = 24 * 60 * 60;
 
     /**
      * Log factories managed by this service.
