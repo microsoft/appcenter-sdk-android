@@ -19,15 +19,10 @@
         <item>Infinite</item>
     </string-array>
     <string name="new_user_document_title" tools:ignore="MissingTranslation">New User Document</string>
-    <string name="user_document_id" tools:ignore="MissingTranslation">ID:</string>
     <string name="user_document_id_reminder" tools:ignore="MissingTranslation">Please input an user document id.</string>
     <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
     <string name="save_button" tools:ignore="MissingTranslation">Save</string>
     <string name="app_document_detail_title" tools:ignore="MissingTranslation">Document Detail</string>
-    <string name="user_document_wip" tools:ignore="MissingTranslation">User Documents are placeholders, work in progress…</string>
-    <string name="user_document_detail_title" tools:ignore="MissingTranslation">User Document Detail</string>
-    <string name="documents_from_cache_header" tools:ignore="MissingTranslation">From cache</string>
-    <string name="documents_from_remote_header" tools:ignore="MissingTranslation">From remote</string>
     <string name="user_document_ttl_header" tools:ignore="MissingTranslation">Time to live</string>
     <string name="get_document_failed" tools:ignore="MissingTranslation">Retrieving document with id: %s failed!</string>
     <string name="get_document_success" tools:ignore="MissingTranslation">Retrieving document with id: %s succeeded!</string>
@@ -43,4 +38,5 @@
     <string name="document_info_state_title" tools:ignore="MissingTranslation">State</string>
     <string name="document_info_cached_state" tools:ignore="MissingTranslation">Cached</string>
     <string name="document_info_remote_state" tools:ignore="MissingTranslation">Remote</string>
+    <string name="document_info_refresh" tools:ignore="MissingTranslation">Refresh</string>
 </resources>

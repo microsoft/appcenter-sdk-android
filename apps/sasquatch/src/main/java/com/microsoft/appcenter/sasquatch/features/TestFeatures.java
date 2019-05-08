@@ -45,14 +45,8 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
-
-        /* TODO Remove reflection once Data available in jCenter. */
-        try {
-            Class.forName("com.microsoft.appcenter.data.Data");
-            sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
-            sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
-        } catch (ClassNotFoundException ignore) {
-        }
+        sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
+        sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

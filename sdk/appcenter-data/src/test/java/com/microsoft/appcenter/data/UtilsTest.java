@@ -5,15 +5,18 @@
 
 package com.microsoft.appcenter.data;
 
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.TokenResult;
 
 import org.junit.Test;
 
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -55,13 +58,24 @@ public class UtilsTest {
         assertNotNull(doc.getJsonValue());
         assertEquals(doc.getJsonValue(), Utils.getGson().toJson(testDoc));
         assertNotEquals(doc.getJsonValue(), doc.toString());
+        assertFalse(doc.hasFailed());
+    }
+
+    @Test
+    public void jsonValueForNullDocument() {
+        Void deletedDocument = null;
+        DocumentWrapper<Void> doc = new DocumentWrapper<>(deletedDocument, "partition", "id");
+        assertNull(doc.getJsonValue());
+        assertEquals("partition", doc.getPartition());
+        assertEquals("id", doc.getId());
+        assertFalse(doc.hasFailed());
     }
 
     @Test
     public void getETag() {
-        assertNull(Utils.getEtag(null));
-        assertNull(Utils.getEtag(""));
-        assertNull(Utils.getEtag("{a:1}"));
+        assertNull(Utils.getETag(null));
+        assertNull(Utils.getETag(""));
+        assertNull(Utils.getETag("{a:1}"));
     }
 
     @Test
@@ -122,6 +136,70 @@ public class UtilsTest {
         assertNotNull(document.getError());
         assertTrue(document.getError().getCause() instanceof JsonParseException);
         assertNull(document.getDeserializedValue());
+        assertNull(document.getJsonValue());
+        assertEquals("partition", document.getPartition());
+        assertEquals("id", document.getId());
+    }
+
+    @Test
+    public void missingPartition() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, null, "id");
+        doc = Utils.parseDocument(Utils.getGson().toJson(doc), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB or SQLite, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getId());
+    }
+
+    @Test
+    public void missingDocumentId() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", null);
+        doc = Utils.parseDocument(Utils.getGson().toJson(doc), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB or SQLite, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getPartition());
+    }
+
+    @Test
+    public void missingTimestamp() {
+        TestDocument testDoc = new TestDocument("test-value");
+        DocumentWrapper<TestDocument> doc = new DocumentWrapper<>(testDoc, "partition", "id");
+        JsonObject corruptedPayload = Utils.getGson().toJsonTree(doc).getAsJsonObject();
+        corruptedPayload.remove("_ts");
+        doc = Utils.parseDocument(Utils.getGson().toJson(corruptedPayload), TestDocument.class);
+        assertNotNull(doc.getError());
+
+        /*
+         * The error is corrupted payload from cosmos DB, so other metadata not set when
+         * a required metadata field is missing.
+         */
+        assertNull(doc.getPartition());
+        assertNull(doc.getId());
+    }
+
+    @Test
+    public void isValidTokenResult() {
+        TokenResult result = new TokenResult();
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbAccount("dbAccount");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbName("dbName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbAccount("accountName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setDbCollectionName("collectionName");
+        assertFalse(Utils.isValidTokenResult(result));
+        result.setToken("token");
+        assertTrue(Utils.isValidTokenResult(result));
     }
 
     private class DateDocument {

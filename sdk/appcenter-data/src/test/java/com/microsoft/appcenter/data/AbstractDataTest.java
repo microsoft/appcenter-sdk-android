@@ -264,17 +264,17 @@ abstract public class AbstractDataTest {
         return channel;
     }
 
-    void verifyTokenExchangeToCosmosDbFlow(
+    String verifyTokenExchangeToCosmosDbFlow(
             String documentId,
             String tokenExchangePayload,
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
             Exception cosmosFailureException) throws JSONException {
         verifyTokenExchangeFlow(tokenExchangePayload, null);
-        verifyCosmosDbFlow(documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
+        return verifyCosmosDbFlow(documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
     }
 
-    void verifyCosmosDbFlow(String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
+    String verifyCosmosDbFlow(String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
@@ -287,7 +287,7 @@ abstract public class AbstractDataTest {
                 cosmosDbServiceCallbackArgumentCaptor.capture());
         ServiceCallback cosmosDbServiceCallback = cosmosDbServiceCallbackArgumentCaptor.getValue();
         HttpClient.CallTemplate callTemplate = cosmosDbCallTemplateCallbackArgumentCaptor.getValue();
-        callTemplate.buildRequestBody();
+        String requestBody = callTemplate.buildRequestBody();
         callTemplate.onBeforeCalling(null, new HashMap<String, String>());
         assertNotNull(cosmosDbServiceCallback);
         if (cosmosSuccessPayload != null) {
@@ -296,6 +296,7 @@ abstract public class AbstractDataTest {
         if (cosmosFailureException != null) {
             cosmosDbServiceCallback.onCallFailed(cosmosFailureException);
         }
+        return requestBody;
     }
 
     void verifyTokenExchangeFlow(

@@ -140,7 +140,7 @@ public class LocalDocumentStorageTest {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         when(mDatabaseManager.nextValues(mCursor)).thenReturn(mCurrentValue);
         when(mCurrentValue.getAsLong(anyString())).thenReturn(-1L);
-        when(mCurrentValue.getAsString(anyString())).thenReturn("{\"_ts\":0,\"document\":\"Test value\",\"PartitionKey\":\"partition\",\"id\":\"id\"}");
+        when(mCurrentValue.getAsString(anyString())).thenReturn("\"Test value\"");
         DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
 
         /* Verify that we delete the written document because readOptions are set to NoCache. */

@@ -139,7 +139,7 @@ class LocalDocumentStorage {
         ContentValues values = getContentValues(
                 document.getPartition(),
                 document.getId(),
-                document.toString(),
+                document.getJsonValue(),
                 document.getETag(),
                 writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
                         TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
@@ -169,7 +169,7 @@ class LocalDocumentStorage {
                         createOffline(table, writeDocument, writeOptions) :
                         updateOffline(table, writeDocument, writeOptions);
         if (rowId < 0) {
-            writeDocument = new DocumentWrapper<T>(new DataException("Failed to write document into cache."));
+            writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
         }
         writeDocument.setFromCache(true);
         return writeDocument;
@@ -186,9 +186,9 @@ class LocalDocumentStorage {
     /**
      * Add delete pending operation to a document.
      *
-     * @param table        table.
-     * @param documentWrapper   document wrapper.
-     * @param writeOptions captures the timeToLive on the cached delete operation
+     * @param table           table.
+     * @param documentWrapper document wrapper.
+     * @param writeOptions    captures the timeToLive on the cached delete operation
      * @return true if storage update succeeded, false otherwise.
      */
     boolean deleteOffline(String table, DocumentWrapper<Void> documentWrapper, WriteOptions writeOptions) {
@@ -205,7 +205,7 @@ class LocalDocumentStorage {
      * @param writeOptions captures the timeToLive on the cached delete operation
      * @return true if storage update succeeded, false otherwise.
      */
-     boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
+    boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
         DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId);
         return write(table, writeDocument, writeOptions, PENDING_OPERATION_DELETE_VALUE) > 0;
     }
@@ -332,31 +332,34 @@ class LocalDocumentStorage {
         if (values != null) {
             if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
                 mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
-                AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
-                return new DocumentWrapper<>(new DataException("Document was found in the cache, but it was expired. The cached document has been invalidated."));
+                String errorMessage = "Document was found in the cache, but it was expired. The cached document has been invalidated.";
+                AppCenterLog.debug(LOG_TAG, errorMessage);
+                return new DocumentWrapper<>(new DataException(errorMessage));
             }
-            DocumentWrapper<T> document = Utils.parseDocument(values.getAsString(DOCUMENT_COLUMN_NAME), documentType);
-            if (document.hasFailed()) {
-                Exception error = document.getError();
-                AppCenterLog.error(LOG_TAG, "Failed to read from cache.", error);
-                return new DocumentWrapper<>(new DataException(FAILED_TO_READ_FROM_CACHE, error));
-            }
-            document.setFromCache(true);
-            document.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+            String document = values.getAsString(DOCUMENT_COLUMN_NAME);
+            String eTag = values.getAsString(ETAG_COLUMN_NAME);
+            long operationTime = values.getAsLong(OPERATION_TIME_COLUMN_NAME);
+            DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime / 1000L, documentType);
+            documentWrapper.setFromCache(true);
+            documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
 
-            /* Update the expiredAt time only when the readOptions is not null, otherwise keep updating it. */
+            /*
+             * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
+             */
             if (readOptions != null) {
                 if (readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
 
                     /* Delete the document since no cache was requested. */
                     mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
-                } else {
-                    write(table, document, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
+                } else if (!documentWrapper.hasFailed()) {
+
+                    /* We update cache timestamp only if no serialization issue, otherwise that would corrupt cache in payload. */
+                    write(table, documentWrapper, new WriteOptions(readOptions.getDeviceTimeToLive()), values.getAsString(PENDING_OPERATION_COLUMN_NAME));
                 }
             }
-            return document;
+            return documentWrapper;
         }
-        AppCenterLog.info(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
+        AppCenterLog.debug(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
         return new DocumentWrapper<>(new DataException("Document was not found in the cache."));
     }
 }

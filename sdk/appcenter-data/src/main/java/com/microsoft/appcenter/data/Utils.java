@@ -86,7 +86,12 @@ public class Utils {
         return parseDocument(body, documentType);
     }
 
-    static String getEtag(String cosmosDbPayload) {
+    static <T> DocumentWrapper<T> parseDocument(String documentJson, String partition, String documentId, String eTag, long lastUpdatedTime, Class<T> documentType) {
+        JsonElement documentElement = documentJson == null ? null : sParser.parse(documentJson);
+        return parseDocument(documentElement, partition, documentId, eTag, lastUpdatedTime, documentType);
+    }
+
+    static String getETag(String cosmosDbPayload) {
         if (cosmosDbPayload == null) {
             return null;
         }
@@ -100,22 +105,39 @@ public class Utils {
     }
 
     private static <T> DocumentWrapper<T> parseDocument(JsonObject obj, Class<T> documentType) {
-        try {
-            T document = sGson.fromJson(obj.get(DOCUMENT_FIELD_NAME), documentType);
-            return new DocumentWrapper<>(
-                    document,
-                    obj.get(PARTITION_KEY_FIELD_NAME).getAsString(),
-                    obj.get(ID_FIELD_NAME).getAsString(),
-                    obj.has(ETAG_FIELD_NAME) ? obj.get(ETAG_FIELD_NAME).getAsString() : null,
-                    obj.get(TIMESTAMP_FIELD_NAME).getAsLong());
-        } catch (RuntimeException exception) {
-            return new DocumentWrapper<>(new DataException("Failed to deserialize document.", exception));
+        JsonElement document = obj.get(DOCUMENT_FIELD_NAME);
+        JsonElement partition = obj.get(PARTITION_KEY_FIELD_NAME);
+        JsonElement documentId = obj.get(ID_FIELD_NAME);
+        JsonElement eTag = obj.get(ETAG_FIELD_NAME);
+        JsonElement timestamp = obj.get(TIMESTAMP_FIELD_NAME);
+        if (partition == null || documentId == null || timestamp == null) {
+            return new DocumentWrapper<>(new DataException("Failed to deserialize document."));
         }
+        return parseDocument(
+                document,
+                partition.getAsString(),
+                documentId.getAsString(),
+                eTag != null ? eTag.getAsString() : null,
+                timestamp.getAsLong(),
+                documentType);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    static <T> T fromJson(String doc, Class<T> type) {
-        return sGson.fromJson(doc, type);
+    private static <T> DocumentWrapper<T> parseDocument(JsonElement documentObject, String partition, String documentId, String eTag, long lastUpdatedTime, Class<T> documentType) {
+        T document = null;
+        DataException error = null;
+        if (documentObject != null) {
+            try {
+                document = sGson.fromJson(documentObject, documentType);
+            } catch (JsonParseException exception) {
+                error = new DataException("Failed to deserialize document.", exception);
+            }
+        }
+        return new DocumentWrapper<>(
+                document,
+                partition,
+                documentId,
+                eTag,
+                lastUpdatedTime, error);
     }
 
     public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
@@ -139,7 +161,7 @@ public class Utils {
      *
      * @param e Exception to display in the log.
      */
-    public static synchronized void logApiCallFailure(Exception e) {
+    static synchronized void logApiCallFailure(Exception e) {
         AppCenterLog.error(LOG_TAG, "Failed to call App Center APIs", e);
     }
 
@@ -181,5 +203,12 @@ public class Utils {
 
     static String getOutgoingId(String partition, String documentId) {
         return String.format("%s_%s", partition, documentId);
+    }
+
+    public static boolean isValidTokenResult(TokenResult tokenResult) {
+        return tokenResult.getDbAccount() != null &&
+                tokenResult.getDbName() != null &&
+                tokenResult.getDbCollectionName() != null &&
+                tokenResult.getToken() != null;
     }
 }

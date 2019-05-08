@@ -22,9 +22,9 @@ import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.data.DefaultPartitions;
 import com.microsoft.appcenter.data.TimeToLive;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
-import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -109,7 +109,6 @@ public class NewUserDocumentActivity extends AppCompatActivity {
             property.setGenericProperty(document);
         }
         String documentId = mEditDocumentId.getText().toString();
-        documentId = documentId.replace(" ", "-");
         Data.replace(documentId, document, Map.class, DefaultPartitions.USER_DOCUMENTS, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
 
             @Override

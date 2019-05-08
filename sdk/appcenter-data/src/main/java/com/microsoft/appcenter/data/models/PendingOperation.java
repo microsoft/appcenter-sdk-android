@@ -10,23 +10,23 @@ package com.microsoft.appcenter.data.models;
  */
 public class PendingOperation {
 
-    private String mTable;
+    private final String mTable;
 
     private String mOperation;
 
-    private String mPartition;
+    private final String mPartition;
 
-    private String mDocumentId;
+    private final String mDocumentId;
 
-    private String mDocument;
+    private final String mDocument;
 
     private String mETag;
 
-    private long mExpirationTime;
+    private final long mExpirationTime;
 
-    private long mDownloadTime;
+    private final long mDownloadTime;
 
-    private long mOperationTime;
+    private final long mOperationTime;
 
     public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
         mTable = table;
@@ -79,13 +79,6 @@ public class PendingOperation {
      */
     public String getDocument() {
         return mDocument;
-    }
-
-    /**
-     * @param document object.
-     */
-    public void setDocument(String document) {
-        mDocument = document;
     }
 
     /**
