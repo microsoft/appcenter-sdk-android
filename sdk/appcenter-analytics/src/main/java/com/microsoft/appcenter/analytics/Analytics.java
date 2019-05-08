@@ -828,6 +828,7 @@ public class Analytics extends AbstractAppCenterService {
             @Override
             public void run() {
                 mChannel.pauseGroup(ANALYTICS_GROUP, null);
+                mChannel.pauseGroup(ANALYTICS_CRITICAL_GROUP, null);
             }
         });
     }
@@ -841,6 +842,7 @@ public class Analytics extends AbstractAppCenterService {
             @Override
             public void run() {
                 mChannel.resumeGroup(ANALYTICS_GROUP, null);
+                mChannel.resumeGroup(ANALYTICS_CRITICAL_GROUP, null);
             }
         });
     }
