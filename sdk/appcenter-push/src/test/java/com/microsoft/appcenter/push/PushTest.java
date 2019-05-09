@@ -681,7 +681,7 @@ public class PushTest {
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         when(mContext.getPackageName()).thenReturn("com.contoso");
         Resources resources = mock(Resources.class);
-        when(resources.getIdentifier("gcm_DEFAULTSenderId", "string", "com.contoso")).thenReturn(42);
+        when(resources.getIdentifier("gcm_defaultSenderId", "string", "com.contoso")).thenReturn(42);
         when(mContext.getString(42)).thenReturn("4567");
         when(mContext.getResources()).thenReturn(resources);
         start(Push.getInstance(), mock(Channel.class));
