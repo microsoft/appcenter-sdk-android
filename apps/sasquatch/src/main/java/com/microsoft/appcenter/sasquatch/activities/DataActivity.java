@@ -78,7 +78,7 @@ public class DataActivity extends AppCompatActivity {
 
     private boolean mAppDocumentsLoading;
 
-    private AppCenterConsumer<PaginatedDocuments<Map>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<Map>>() {
+    private final AppCenterConsumer<PaginatedDocuments<Map>> mUploadApp = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
         public void accept(PaginatedDocuments<Map> documents) {
@@ -93,7 +93,7 @@ public class DataActivity extends AppCompatActivity {
         }
     };
 
-    private AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
+    private final AppCenterConsumer<PaginatedDocuments<Map>> mUploadUser = new AppCenterConsumer<PaginatedDocuments<Map>>() {
 
         @Override
         public void accept(PaginatedDocuments<Map> documents) {
@@ -118,7 +118,7 @@ public class DataActivity extends AppCompatActivity {
         mDocumentTypeSpinner.setEnabled(false);
     }
 
-    private RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
+    private final RecyclerView.OnScrollListener mScrollAppListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -137,7 +137,7 @@ public class DataActivity extends AppCompatActivity {
         }
     };
 
-    private RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
+    private final RecyclerView.OnScrollListener mScrollUserListener = new RecyclerView.OnScrollListener() {
 
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {

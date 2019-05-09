@@ -86,7 +86,7 @@ public class CrashesAndroidTest {
     private Channel mChannel;
 
     /* Filter out the minidump folder. */
-    private FileFilter mMinidumpFilter = new FileFilter() {
+    private final FileFilter mMinidumpFilter = new FileFilter() {
 
         @Override
         public boolean accept(File file) {

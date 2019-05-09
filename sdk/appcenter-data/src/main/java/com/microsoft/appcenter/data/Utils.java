@@ -204,4 +204,11 @@ public class Utils {
     static String getOutgoingId(String partition, String documentId) {
         return String.format("%s_%s", partition, documentId);
     }
+
+    public static boolean isValidTokenResult(TokenResult tokenResult) {
+        return tokenResult.getDbAccount() != null &&
+                tokenResult.getDbName() != null &&
+                tokenResult.getDbCollectionName() != null &&
+                tokenResult.getToken() != null;
+    }
 }

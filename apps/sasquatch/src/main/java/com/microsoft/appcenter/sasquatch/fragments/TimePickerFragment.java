@@ -20,7 +20,7 @@ public class TimePickerFragment extends DialogFragment {
 
     private TimePickerDialog.OnTimeSetListener mListener;
 
-    public Date getInitialTime() {
+    private Date getInitialTime() {
         Bundle arguments = getArguments();
         if (arguments != null) {
             return (Date) arguments.getSerializable(INITIAL_TIME);

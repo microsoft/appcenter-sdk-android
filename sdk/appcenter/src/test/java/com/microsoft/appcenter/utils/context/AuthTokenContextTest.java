@@ -17,7 +17,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -220,13 +219,11 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken("authToken2", "accountId", null);
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
-        final boolean[] isCallbackCalled = {false};
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
 
         /* If expires date is null, we should not be able to reach that method. */
         mAuthTokenContext.addListener(listener);
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        Assert.assertFalse(isCallbackCalled[0]);
         verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 

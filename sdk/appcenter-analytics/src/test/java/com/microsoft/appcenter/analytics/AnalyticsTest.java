@@ -8,6 +8,7 @@ package com.microsoft.appcenter.analytics;
 import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
 import com.microsoft.appcenter.analytics.channel.SessionTracker;
@@ -53,6 +54,8 @@ import java.util.concurrent.TimeUnit;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -463,6 +466,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void setEnabled() throws InterruptedException {
+        Channel channel = mock(Channel.class);
+        final ArgumentCaptor<String> captorGroupName = ArgumentCaptor.forClass(String.class);
 
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
@@ -472,11 +477,11 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertFalse(Analytics.isEnabled().get());
 
         /* Start. */
-        Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
         verify(channel).addListener(isA(AnalyticsTransmissionTarget.getChannelListener().getClass()));
@@ -490,7 +495,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).removeListener(isA(SessionTracker.class));
         verify(channel).removeListener(isA(AnalyticsValidator.class));
         verify(channel).removeListener(isA(AnalyticsTransmissionTarget.getChannelListener().getClass()));
-        verify(channel, times(2)).removeGroup(analytics.getGroupName());
+        verify(channel).removeGroup(eq(ANALYTICS_CRITICAL_GROUP));
+        verify(channel, times(2)).removeGroup(eq(ANALYTICS_GROUP));
         verify(channel).clear(analytics.getGroupName());
         verifyStatic();
         SharedPreferencesManager.remove("sessions");
@@ -568,7 +574,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.pause();
 
         /* Check if Analytics group is paused. */
-        verify(channel).pauseGroup(analytics.getGroupName(), null);
+        verify(channel).pauseGroup(ANALYTICS_GROUP, null);
+        verify(channel).pauseGroup(ANALYTICS_CRITICAL_GROUP, null);
 
         /* Send logs to verify the logs are enqueued after pause. */
         Analytics.trackEvent("test");
@@ -579,7 +586,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.resume();
 
         /* Check if Analytics group is resumed. */
-        verify(channel).resumeGroup(analytics.getGroupName(), null);
+        verify(channel).resumeGroup(ANALYTICS_GROUP, null);
+        verify(channel).resumeGroup(ANALYTICS_CRITICAL_GROUP, null);
 
         /* Send logs to verify the logs are enqueued after resume. */
         Analytics.trackEvent("test");
@@ -606,7 +614,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.pause();
 
         /* Check if Analytics group is paused even while disabled. */
-        verify(channel, never()).pauseGroup(analytics.getGroupName(), null);
+        verify(channel, never()).pauseGroup(ANALYTICS_GROUP, null);
+        verify(channel, never()).pauseGroup(ANALYTICS_CRITICAL_GROUP, null);
 
         /* Send logs to verify the logs are enqueued after pause. */
         Analytics.trackEvent("test");
@@ -617,7 +626,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.resume();
 
         /* Check if Analytics group is resumed even while paused. */
-        verify(channel, never()).resumeGroup(analytics.getGroupName(), null);
+        verify(channel, never()).resumeGroup(ANALYTICS_CRITICAL_GROUP, null);
+        verify(channel, never()).resumeGroup(ANALYTICS_GROUP, null);
 
         /* Send logs to verify the logs are enqueued after resume. */
         Analytics.trackEvent("test");
@@ -702,7 +712,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
-        verify(channel).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
+        verify(channel, times(2)).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -717,6 +727,46 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(listener).onBeforeSending(notNull(Log.class));
         verify(listener).onSendingSucceeded(notNull(Log.class));
         verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
+    }
+
+    @Test
+    public void analyticsListenerCriticalEvent() {
+        AnalyticsListener listener = mock(AnalyticsListener.class);
+        Analytics.setListener(listener);
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        Analytics.trackEvent("name", generateEventProperties(), Flags.CRITICAL);
+        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_CRITICAL_GROUP), eq(Flags.CRITICAL));
+    }
+
+    @Test
+    public void analyticsListenerNormalEvent() {
+        AnalyticsListener listener = mock(AnalyticsListener.class);
+        Analytics.setListener(listener);
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        Analytics.trackEvent("name", generateEventProperties(), Flags.NORMAL);
+        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_GROUP), eq(Flags.NORMAL));
+    }
+
+    private EventProperties generateEventProperties() {
+
+        /* Send event with non-empty EventProperties. */
+        EventProperties eventProperties = new EventProperties();
+        eventProperties.set("n0", "value");
+        eventProperties.set("n1", new Date());
+        eventProperties.set("n2", 0L);
+        eventProperties.set("n3", 0d);
+        eventProperties.set("n4", true);
+        return eventProperties;
     }
 
     @Test

@@ -37,6 +37,7 @@ import java.util.Map;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -579,12 +580,14 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Call resume while not paused is only checked by channel so call is forwarded. */
         child.resume();
         verify(mChannel).resumeGroup(ANALYTICS_GROUP, "child");
+        verify(mChannel).resumeGroup(ANALYTICS_CRITICAL_GROUP, "child");
         reset(mChannel);
 
         /* Test pause. */
         parent.pause();
         verify(mChannel).pauseGroup(ANALYTICS_GROUP, "parent");
         verify(mChannel, never()).pauseGroup(ANALYTICS_GROUP, "child");
+        verify(mChannel, never()).pauseGroup(ANALYTICS_CRITICAL_GROUP, "child");
 
         /* We can call it twice, double calls are checked by channel. */
         parent.pause();
@@ -594,6 +597,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         parent.resume();
         verify(mChannel).resumeGroup(ANALYTICS_GROUP, "parent");
         verify(mChannel, never()).resumeGroup(ANALYTICS_GROUP, "child");
+        verify(mChannel, never()).resumeGroup(ANALYTICS_CRITICAL_GROUP, "child");
 
         /* We can call it twice, double calls are checked by channel. */
         parent.resume();
