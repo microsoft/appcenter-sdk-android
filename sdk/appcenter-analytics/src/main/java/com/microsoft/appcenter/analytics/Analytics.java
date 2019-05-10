@@ -42,7 +42,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -924,7 +923,7 @@ public class Analytics extends AbstractAppCenterService {
             return false;
         }
         if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-            AppCenterLog.error(LOG_TAG,"The transmission interval is not valid.");
+            AppCenterLog.error(LOG_TAG, "The transmission interval is not valid.");
             return false;
         }
         mTransmissionInterval = TimeUnit.SECONDS.toMillis(seconds);
