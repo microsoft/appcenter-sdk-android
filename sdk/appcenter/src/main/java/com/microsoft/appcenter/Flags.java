@@ -26,7 +26,7 @@ public final class Flags {
     public static final int NORMAL = PERSISTENCE_NORMAL;
 
     /**
-     * @deprecated Use of flag PERSISTENCE_CRITICAL has been deprecated, suggest to use new flag CRITICAL as replacement.
+     * @deprecated This flag has been deprecated, use {@link #CRITICAL} instead.
      */
     @Deprecated
     public static final int PERSISTENCE_CRITICAL = 0x02;
