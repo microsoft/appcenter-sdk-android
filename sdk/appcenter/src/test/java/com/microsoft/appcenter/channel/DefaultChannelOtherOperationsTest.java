@@ -181,7 +181,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             verify(listener1).shouldFilter(log);
             verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
-            verify(persistence).putLog(log, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+            verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         }
     }
 

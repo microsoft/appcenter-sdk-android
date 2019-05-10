@@ -52,8 +52,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static org.junit.Assert.assertEquals;
@@ -353,9 +353,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_NORMAL);
-        Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_NORMAL);
-        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_NORMAL));
+        Analytics.trackEvent("eventName1", (Map<String, String>) null, NORMAL);
+        Analytics.trackEvent("eventName2", (EventProperties) null, NORMAL);
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(NORMAL));
     }
 
     @Test
@@ -364,9 +364,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        Analytics.trackEvent("eventName1", (Map<String, String>) null, PERSISTENCE_CRITICAL);
-        Analytics.trackEvent("eventName2", (EventProperties) null, PERSISTENCE_CRITICAL);
-        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(PERSISTENCE_CRITICAL));
+        Analytics.trackEvent("eventName1", (Map<String, String>) null, CRITICAL);
+        Analytics.trackEvent("eventName2", (EventProperties) null, CRITICAL);
+        verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(CRITICAL));
     }
 
     @Test
@@ -739,8 +739,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        Analytics.trackEvent("name", generateEventProperties(), Flags.PERSISTENCE_CRITICAL);
-        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_CRITICAL_GROUP), eq(Flags.PERSISTENCE_CRITICAL));
+        Analytics.trackEvent("name", generateEventProperties(), Flags.CRITICAL);
+        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_CRITICAL_GROUP), eq(Flags.CRITICAL));
     }
 
     @Test
@@ -753,8 +753,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        Analytics.trackEvent("name", generateEventProperties(), Flags.PERSISTENCE_NORMAL);
-        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_GROUP), eq(Flags.PERSISTENCE_NORMAL));
+        Analytics.trackEvent("name", generateEventProperties(), Flags.NORMAL);
+        verify(channel).enqueue(any(Log.class), eq(ANALYTICS_GROUP), eq(Flags.NORMAL));
     }
 
     private EventProperties generateEventProperties() {

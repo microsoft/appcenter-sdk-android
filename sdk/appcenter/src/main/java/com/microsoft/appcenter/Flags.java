@@ -15,19 +15,31 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public final class Flags {
 
     /**
+     * @deprecated This flag has been deprecated, use {@link #NORMAL} instead.
+     */
+    @Deprecated
+    public static final int PERSISTENCE_NORMAL = 0x01;
+
+    /**
      * An event can be lost due to low bandwidth or disk space constraints.
      */
-    public static final int PERSISTENCE_NORMAL = 0x01;
+    public static final int NORMAL = PERSISTENCE_NORMAL;
+
+    /**
+     * @deprecated This flag has been deprecated, use {@link #CRITICAL} instead.
+     */
+    @Deprecated
+    public static final int PERSISTENCE_CRITICAL = 0x02;
 
     /**
      * Used for events that should be prioritized over non-critical events.
      */
-    public static final int PERSISTENCE_CRITICAL = 0x02;
+    public static final int CRITICAL = PERSISTENCE_CRITICAL;
 
     /**
      * Default combination of flags.
      */
-    public static final int DEFAULTS = PERSISTENCE_NORMAL;
+    public static final int DEFAULTS = NORMAL;
 
     /**
      * Mask for persistence within flags.
@@ -43,11 +55,11 @@ public final class Flags {
      */
     public static int getPersistenceFlag(int flags, boolean warnFallback) {
         int persistencePriority = flags & PERSISTENCE_MASK;
-        if (persistencePriority != PERSISTENCE_NORMAL && persistencePriority != PERSISTENCE_CRITICAL) {
+        if (persistencePriority != NORMAL && persistencePriority != CRITICAL) {
             if (persistencePriority != 0 && warnFallback) {
                 AppCenterLog.warn(LOG_TAG, "Invalid value=" + persistencePriority + " for persistence flag, using NORMAL as a default.");
             }
-            persistencePriority = PERSISTENCE_NORMAL;
+            persistencePriority = NORMAL;
         }
         return persistencePriority;
     }
