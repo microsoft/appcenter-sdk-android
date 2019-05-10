@@ -15,7 +15,7 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public final class Flags {
 
     /**
-     * @deprecated Use of flag PERSISTENCE_NORMAL has been deprecated, suggest to use new flag NORMAL as replacement.
+     * @deprecated This flag has been deprecated, use {@link #NORMAL} instead.
      */
     @Deprecated
     public static final int PERSISTENCE_NORMAL = 0x01;
