@@ -15,6 +15,7 @@ import org.json.JSONObject;
 /**
  * Release details JSON schema.
  */
+@SuppressWarnings("WeakerAccess")
 public class ReleaseDetails {
 
     private static final String ID = "id";

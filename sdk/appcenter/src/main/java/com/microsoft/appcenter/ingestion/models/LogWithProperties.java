@@ -55,6 +55,7 @@ public abstract class LogWithProperties extends AbstractLog {
         JSONUtils.writeMap(writer, PROPERTIES, getProperties());
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

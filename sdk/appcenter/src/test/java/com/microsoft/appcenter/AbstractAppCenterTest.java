@@ -184,7 +184,7 @@ public class AbstractAppCenterTest {
 
         private static DummyService sharedInstance;
 
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
         public static DummyService getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new DummyService());
@@ -221,7 +221,7 @@ public class AbstractAppCenterTest {
 
         private static AnotherDummyService sharedInstance;
 
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
         public static AnotherDummyService getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new AnotherDummyService());

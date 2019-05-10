@@ -106,27 +106,25 @@ public class EventPropertiesActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                mTypedPropertyFragment.reset();
-                mAddPropertyLayout.setVisibility(View.VISIBLE);
-                mAddPropertyLayout.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
+        if (item.getItemId() == R.id.action_add) {
+            mTypedPropertyFragment.reset();
+            mAddPropertyLayout.setVisibility(View.VISIBLE);
+            mAddPropertyLayout.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
 
-                    @Override
-                    public void onClick(View v) {
-                        mTypedPropertyFragment.set(getSelectedTarget().getPropertyConfigurator());
-                        updatePropertyList();
-                        mAddPropertyLayout.setVisibility(View.GONE);
-                    }
-                });
-                mAddPropertyLayout.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mTypedPropertyFragment.set(getSelectedTarget().getPropertyConfigurator());
+                    updatePropertyList();
+                    mAddPropertyLayout.setVisibility(View.GONE);
+                }
+            });
+            mAddPropertyLayout.findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
 
-                    @Override
-                    public void onClick(View v) {
-                        mAddPropertyLayout.setVisibility(View.GONE);
-                    }
-                });
-                break;
+                @Override
+                public void onClick(View v) {
+                    mAddPropertyLayout.setVisibility(View.GONE);
+                }
+            });
         }
         return true;
     }
