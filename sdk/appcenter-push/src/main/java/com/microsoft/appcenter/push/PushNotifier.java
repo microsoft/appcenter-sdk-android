@@ -147,7 +147,7 @@ class PushNotifier {
     }
 
     @NonNull
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private static Notification.Builder getOldNotificationBuilder(Context context) {
         return new Notification.Builder(context);
     }
@@ -192,7 +192,7 @@ class PushNotifier {
      * @param pushIntent The push intent.
      * @param builder    The builder to modify.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private static void setSound(Context context, Intent pushIntent, Notification.Builder builder) {
         String sound = PushIntentUtils.getSound(pushIntent);
         if (sound != null) {

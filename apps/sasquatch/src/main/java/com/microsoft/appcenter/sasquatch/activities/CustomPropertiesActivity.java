@@ -39,10 +39,8 @@ public class CustomPropertiesActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                addProperty();
-                break;
+        if (item.getItemId() == R.id.action_add) {
+            addProperty();
         }
         return true;
     }
@@ -54,7 +52,6 @@ public class CustomPropertiesActivity extends AppCompatActivity {
         mProperties.add(fragment);
     }
 
-    @SuppressWarnings({"unused", "unchecked"})
     public void send(@SuppressWarnings("UnusedParameters") View view) {
         CustomProperties customProperties = new CustomProperties();
         for (CustomPropertyFragment property : mProperties) {

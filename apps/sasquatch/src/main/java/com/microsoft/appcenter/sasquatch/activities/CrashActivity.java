@@ -54,7 +54,6 @@ public class CrashActivity extends AppCompatActivity {
             new Crash(R.string.title_test_ui_crash, R.string.description_test_ui_crash, new Runnable() {
 
                 @Override
-                @SuppressWarnings("ResultOfMethodCallIgnored")
                 public void run() {
                     ListView view = findViewById(R.id.list);
                     view.setAdapter(new ArrayAdapter<>(CrashActivity.this, android.R.layout.simple_list_item_2, sCrashes));
@@ -149,7 +148,6 @@ public class CrashActivity extends AppCompatActivity {
             new Crash(R.string.title_native_stack_overflow_crash, R.string.description_native_stack_overflow_crash, new Runnable() {
 
                 @Override
-                @SuppressWarnings("InfiniteRecursion")
                 public void run() {
                     nativeStackOverflowCrash();
                 }

@@ -396,8 +396,6 @@ public class DatabasePersistenceAndroidTest {
             persistence.getLogs(group, Collections.<String>emptyList(), allLogs.size(), actualLogs, null, null);
             assertEquals(expectedLogs, actualLogs);
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -446,8 +444,6 @@ public class DatabasePersistenceAndroidTest {
             persistence.getLogs(group, Collections.<String>emptyList(), 2000, actualLogs, null, null);
             assertEquals(expectedLogs, actualLogs);
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -487,8 +483,6 @@ public class DatabasePersistenceAndroidTest {
                 assertEquals(someLogCount, persistence.countLogs("test-p1"));
             }
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -532,8 +526,6 @@ public class DatabasePersistenceAndroidTest {
             /* Verify the behavior: not inserted and database now empty. */
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -580,8 +572,6 @@ public class DatabasePersistenceAndroidTest {
             /* Verify the behavior: not inserted and database now empty. */
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -635,8 +625,6 @@ public class DatabasePersistenceAndroidTest {
             assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
             assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -677,8 +665,6 @@ public class DatabasePersistenceAndroidTest {
             assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
             assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -880,8 +866,6 @@ public class DatabasePersistenceAndroidTest {
             assertTrue(outputLogs.isEmpty());
             assertEquals(0, persistence.countLogs("test"));
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -942,8 +926,6 @@ public class DatabasePersistenceAndroidTest {
             persistence.getLogs("test", Collections.<String>emptyList(), expectedLogs.size(), actualLogs, null, null);
             assertEquals(expectedLogs, actualLogs);
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -1005,8 +987,6 @@ public class DatabasePersistenceAndroidTest {
                 assertNotEquals(resumedKey, ((CommonSchemaLog) log).getIKey());
             }
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }
@@ -1253,8 +1233,6 @@ public class DatabasePersistenceAndroidTest {
             log4.setTimestamp(calendar.getTime());
             persistence.putLog(log4, "test", PERSISTENCE_NORMAL);
         } finally {
-
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }

@@ -43,7 +43,7 @@ class CryptoRsaHandler implements CryptoHandler {
      * We don't run this code prior to Android 4.4 hence no 4.3 secure random problem.
      */
     @Override
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @SuppressLint({"InlinedApi", "TrulyRandom"})
     public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) throws Exception {
         Calendar writeExpiry = Calendar.getInstance();

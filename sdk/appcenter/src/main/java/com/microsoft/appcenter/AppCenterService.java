@@ -19,7 +19,6 @@ import java.util.Map;
 /**
  * Service specification.
  */
-@SuppressWarnings("WeakerAccess")
 public interface AppCenterService extends Application.ActivityLifecycleCallbacks {
 
     /**
@@ -64,6 +63,7 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
      *
      * @param handler background thread handler.
      */
+    @SuppressWarnings("JavadocReference")
     void onStarting(@NonNull AppCenterHandler handler);
 
     /**
@@ -86,5 +86,5 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
      * @param transmissionTargetToken transmission target token.
      */
     @WorkerThread
-    void onConfigurationUpdated(@SuppressWarnings("unused") String appSecret, String transmissionTargetToken);
+    void onConfigurationUpdated(@SuppressWarnings("unused") String appSecret, @SuppressWarnings("unused") String transmissionTargetToken);
 }
