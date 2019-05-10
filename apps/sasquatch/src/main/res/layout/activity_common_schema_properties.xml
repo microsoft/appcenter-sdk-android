@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -12,7 +11,6 @@
     tools:context=".activities.CommonSchemaPropertiesActivity">
 
     <TextView
-        android:id="@+id/common_schema_property_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/common_schema_property_label" />
@@ -24,7 +22,6 @@
         android:background="@android:drawable/btn_dropdown" />
 
     <TextView
-        android:id="@+id/common_schema_property_value"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/common_schema_property_value" />
@@ -35,7 +32,9 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/value"
-        android:inputType="text" />
+        android:importantForAutofill="no"
+        android:inputType="text"
+        tools:targetApi="o" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -44,7 +43,6 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/save_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="saveProperty"

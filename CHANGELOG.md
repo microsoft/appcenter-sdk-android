@@ -2,13 +2,17 @@
 
 ## Version 2.0.1 (Under development)
 
+### AppCenter
+
+* **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
+
 ### AppCenterData
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
 ### AppCenterDistribute
 
-* **[Fix]** Fix a rare crash on downloading the update.
+* **[Fix]** Fix a crash that could occur when downloading the update and calling Distribute APIs such as `notifyUserConfirmation`.
 
 ## Version 2.0.0
 

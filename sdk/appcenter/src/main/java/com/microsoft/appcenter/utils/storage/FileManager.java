@@ -81,8 +81,6 @@ public class FileManager {
                     contents.append(line).append(lineSeparator);
                 }
             } finally {
-
-                //noinspection ThrowFromFinallyBlock
                 reader.close();
             }
             return contents.toString();
@@ -99,7 +97,7 @@ public class FileManager {
      * @return The contents of the file.
      */
     public static byte[] readBytes(@NonNull File file) {
-        byte fileContents[] = new byte[(int) file.length()];
+        byte[] fileContents = new byte[(int) file.length()];
         try {
             FileInputStream fileStream = new FileInputStream(file);
 
@@ -144,7 +142,6 @@ public class FileManager {
         try {
             writer.write(contents);
         } finally {
-            //noinspection ThrowFromFinallyBlock
             writer.close();
         }
     }
@@ -166,7 +163,6 @@ public class FileManager {
         try {
             return (T) inputStream.readObject();
         } finally {
-            //noinspection ThrowFromFinallyBlock
             inputStream.close();
         }
     }
@@ -187,7 +183,6 @@ public class FileManager {
             outputStream.writeObject(object);
         } finally {
 
-            //noinspection ThrowFromFinallyBlock
             outputStream.close();
         }
     }
@@ -278,7 +273,7 @@ public class FileManager {
      *
      * @param path An absolute path for the directory to be created.
      */
-    @SuppressWarnings({"ResultOfMethodCallIgnored", "SpellCheckingInspection"})
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void mkdir(@NonNull String path) {
         new File(path).mkdirs();
     }
