@@ -117,7 +117,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class})
 public class CrashesTest {
 
-    @SuppressWarnings("ThrowableInstanceNeverThrown")
     private static final Exception EXCEPTION = new Exception("This is a test exception.");
 
     private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();

@@ -71,7 +71,6 @@ public class CrashesTest {
 
     private Context mContext;
 
-    @SuppressWarnings("rawtypes")
     private static Matcher<Object> withCrashTitle(@StringRes final int titleId) {
         return new BoundedMatcher<Object, CrashActivity.Crash>(CrashActivity.Crash.class) {
 
@@ -160,7 +159,6 @@ public class CrashesTest {
      * @param titleId Title string resource to find list item.
      * @throws InterruptedException If the current thread is interrupted.
      */
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void crashTest(@StringRes int titleId) throws InterruptedException {
 
         /* Crash. */

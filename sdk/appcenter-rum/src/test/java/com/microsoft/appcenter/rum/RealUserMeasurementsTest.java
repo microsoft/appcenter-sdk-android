@@ -9,6 +9,7 @@ import org.junit.Test;
 
 public class RealUserMeasurementsTest {
 
+    @SuppressWarnings("EmptyMethod")
     @Test
     public void test() {
         // TODO

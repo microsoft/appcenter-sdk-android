@@ -143,7 +143,6 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         notifySending(mContext.getString(R.string.crash_sent_failed));
     }
 
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     @Override
     public void onSendingSucceeded(ErrorReport report) {
         String message = String.format("%s\nCrash ID: %s", mContext.getString(R.string.crash_sent_succeeded), report.getId());

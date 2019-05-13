@@ -189,7 +189,7 @@ public class WrapperSdk implements Model {
     }
 
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
+    @SuppressWarnings({"SimplifiableIfStatement", "EqualsReplaceableByObjectsCall"})
     public boolean equals(Object o) {
         if (this == o) {
             return true;

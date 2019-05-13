@@ -47,10 +47,8 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
     @Test
     public void nullVarargArrayStartFromAppThenLibrary() {
-        //noinspection ConfusingArgumentToVarargsMethod
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>[]) null);
         AppCenter.start((Class<? extends AppCenterService>) null);
-        //noinspection ConfusingArgumentToVarargsMethod
         AppCenter.start((Class<? extends AppCenterService>[]) null);
         AppCenter.startFromLibrary(mApplication, (Class<? extends AppCenterService>[]) null);
 
@@ -68,10 +66,8 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         assertTrue(AppCenter.isConfigured());
         assertEquals(0, AppCenter.getInstance().getServices().size());
         assertEquals(mApplication, AppCenter.getInstance().getApplication());
-        //noinspection ConfusingArgumentToVarargsMethod
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>[]) null);
         AppCenter.start((Class<? extends AppCenterService>) null);
-        //noinspection ConfusingArgumentToVarargsMethod
         AppCenter.start((Class<? extends AppCenterService>[]) null);
 
         /* Verify again. */

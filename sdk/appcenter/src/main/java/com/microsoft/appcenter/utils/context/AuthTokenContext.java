@@ -428,7 +428,7 @@ public class AuthTokenContext {
          *
          * @param authToken authorization token.
          */
-        void onNewAuthToken(String authToken);
+        void onNewAuthToken(@SuppressWarnings("unused") String authToken);
 
         /**
          * Called whenever a new user signs in.

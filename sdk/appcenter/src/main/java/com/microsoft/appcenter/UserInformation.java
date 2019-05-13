@@ -8,7 +8,6 @@ package com.microsoft.appcenter;
 /**
  * User information.
  */
-@SuppressWarnings("WeakerAccess") // TODO remove warning when JCenter published and demo updated
 public class UserInformation {
 
     /**

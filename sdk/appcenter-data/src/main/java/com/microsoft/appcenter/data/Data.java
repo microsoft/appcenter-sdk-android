@@ -179,6 +179,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition, ReadOptions readOptions) {
         return getInstance().instanceRead(documentId, documentType, partition, readOptions);
     }
@@ -279,6 +280,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document with metadata.
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
         return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, CosmosDb.getUpsertAdditionalHeader());
     }

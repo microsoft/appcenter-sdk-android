@@ -226,7 +226,7 @@ public class Distribute extends AbstractAppCenterService {
      * progress indicator while we actually use it to be a modal dialog for forced update.
      * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
     /**
@@ -307,7 +307,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized Distribute getInstance() {
         if (sInstance == null) {
             sInstance = new Distribute();
@@ -326,7 +325,6 @@ public class Distribute extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -339,7 +337,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -349,7 +346,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param installUrl install base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -359,7 +355,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -369,7 +364,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param listener The custom distribute listener.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setListener(DistributeListener listener) {
         getInstance().setInstanceListener(listener);
     }
@@ -381,7 +375,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"})
+    @SuppressWarnings("JavadocReference")
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
     }
@@ -587,6 +581,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Implements {@link #setListener(DistributeListener)}.
      */
+    @SuppressWarnings("JavadocReference")
     private synchronized void setInstanceListener(DistributeListener listener) {
         mListener = listener;
     }
@@ -1723,7 +1718,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @NonNull
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
         return new Notification.Builder(mContext);
     }
@@ -1752,7 +1747,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show download progress.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private void showDownloadProgress() {
         mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
@@ -1767,7 +1762,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Hide progress dialog and stop updating.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;

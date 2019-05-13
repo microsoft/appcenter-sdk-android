@@ -14,6 +14,7 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Constants to use for {@link Distribute#handleUpdateAction}.
  */
+@SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
 @Retention(RetentionPolicy.SOURCE)
 @IntDef({
         UpdateAction.UPDATE,
