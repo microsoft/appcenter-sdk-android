@@ -183,7 +183,7 @@ public class EventActivity extends AppCompatActivity {
             }
         });
 
-        /* Init latency table columns */
+        /* Init latency table columns. */
         Spinner latencySpinner = findViewById(R.id.latency_spinner);
         ArrayAdapter<String> latencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.latency_values));
         latencySpinner.setAdapter(latencyAdapter);
