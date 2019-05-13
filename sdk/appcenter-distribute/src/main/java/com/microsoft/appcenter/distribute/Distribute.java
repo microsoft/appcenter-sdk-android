@@ -70,6 +70,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
+import static android.os.AsyncTask.Status.FINISHED;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
@@ -541,7 +542,7 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isEnqueueingDownload()) {
                     AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
                     return;
                 }
@@ -1577,6 +1578,11 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             showDisabledToast();
         }
+    }
+
+    @VisibleForTesting
+    synchronized boolean isEnqueueingDownload() {
+        return mDownloadTask != null && mDownloadTask.getStatus() != FINISHED;
     }
 
     /**
