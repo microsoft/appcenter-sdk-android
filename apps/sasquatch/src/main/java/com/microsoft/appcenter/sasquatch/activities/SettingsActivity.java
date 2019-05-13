@@ -73,6 +73,12 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sAnalyticsPaused;
 
+    private static String initialStartType;
+
+    private static String oneCollectorLogUrl = "https://mobile.events.data.microsoft.com/OneCollector/1.0";
+
+    private static String otherLogUrl = "https://in-integration.dev.avalanch.es";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +86,14 @@ public class SettingsActivity extends AppCompatActivity {
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
+    }
+
+    public static String defaultLogUrlFunction(String startType){
+        if(StartType.valueOf(startType) == StartType.TARGET){
+            return oneCollectorLogUrl;
+        }else{
+            return otherLogUrl;
+        }
     }
 
     public static class SettingsFragment extends android.preference.PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -91,6 +105,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+
             addPreferencesFromResource(R.xml.settings);
             initCheckBoxSetting(R.string.appcenter_state_key, R.string.appcenter_state_summary_enabled, R.string.appcenter_state_summary_disabled, new HasEnabled() {
 
@@ -105,6 +120,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return AppCenter.isEnabled().get();
                 }
             });
+
             initClickableSetting(R.string.storage_size_key, Formatter.formatFileSize(getActivity(), MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, DEFAULT_MAX_STORAGE_SIZE)), new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -453,7 +469,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            String initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
             initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
@@ -521,7 +537,9 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultLogUrl = getString(R.string.log_url);
+
+//            String defaultLogUrl = getString(R.string.log_url);
+            String defaultLogUrl = defaultLogUrlFunction(initialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
@@ -803,5 +821,13 @@ public class SettingsActivity extends AppCompatActivity {
 
             void onReset();
         }
+    }
+
+    public enum StartType {
+        APP_SECRET,
+        TARGET,
+        BOTH,
+        NO_SECRET,
+        SKIP_START
     }
 }
