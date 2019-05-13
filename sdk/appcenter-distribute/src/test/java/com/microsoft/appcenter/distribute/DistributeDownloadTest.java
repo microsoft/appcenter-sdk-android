@@ -53,6 +53,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -372,13 +373,13 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* No download check yet. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
 
         /* Foreground: check still in progress. */
         Distribute.getInstance().onActivityResumed(mActivity);
         waitCheckDownloadTask();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
         verify(cursor).close();
 
         /* Restart launcher. */
@@ -387,7 +388,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify we don't run the check again. (Only once). */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
 
         /* Download eventually fails. */
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_FAILED);

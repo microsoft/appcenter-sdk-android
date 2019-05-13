@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -13,9 +14,12 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -30,8 +34,10 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -277,7 +283,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
@@ -336,7 +342,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(mActivity)).thenReturn(true);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
@@ -402,6 +408,50 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify UPDATE has NOT been processed. */
         verify(distribute, never()).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+    }
+
+    @Test
+    @PrepareForTest(AsyncTaskUtils.class)
+    public void notifyUserUpdateActionAndThenPostpone() throws Exception {
+
+        /* Mock. */
+        mockForCustomizationTest(false);
+        mockToGetRealDownloadState();
+        mockStatic(AsyncTaskUtils.class);
+        when(AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
+
+            @Override
+            public DownloadTask answer(InvocationOnMock invocation) {
+
+                /* Return as is (do not run). */
+                return (DownloadTask) invocation.getArguments()[1];
+            }
+        });
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        start(distribute);
+        distribute.onActivityResumed(mActivity);
+
+        /* Call handleUpdateAction. */
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
+
+        /* Verify UPDATE has been processed. */
+        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+
+        /* Call handleUpdateAction again. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
+
+        /* Verify UPDATE has NOT been processed. */
+        verify(distribute, never()).completeWorkflow();
+
     }
 
     private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {
