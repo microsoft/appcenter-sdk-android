@@ -46,6 +46,7 @@ public class EventActivity extends AppCompatActivity {
      * It shouldn't be lost on recreate activity.
      */
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
+
     private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     private TextView mName;
@@ -203,8 +204,9 @@ public class EventActivity extends AppCompatActivity {
     }
 
     private void onLatencyChanged(int position) {
-        if (mCurrentPosition == position)
+        if (mCurrentPosition == position) {
             return;
+        }
         MainActivity.sSharedPreferences.edit().putInt(LATENCY_SECONDS_KEY, position).apply();
         Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
     }
