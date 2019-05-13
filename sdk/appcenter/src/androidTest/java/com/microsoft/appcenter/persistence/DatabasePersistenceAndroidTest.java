@@ -53,8 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
 import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
@@ -153,22 +153,22 @@ public class DatabasePersistenceAndroidTest {
 
     @Test
     public void putLogDefaultFlags() throws PersistenceException {
-        putLog(Flags.DEFAULTS, Flags.PERSISTENCE_NORMAL);
+        putLog(Flags.DEFAULTS, Flags.NORMAL);
     }
 
     @Test
     public void putLogNormal() throws PersistenceException {
-        putLog(Flags.PERSISTENCE_NORMAL, Flags.PERSISTENCE_NORMAL);
+        putLog(Flags.NORMAL, Flags.NORMAL);
     }
 
     @Test
     public void putLogCritical() throws PersistenceException {
-        putLog(Flags.PERSISTENCE_CRITICAL, Flags.PERSISTENCE_CRITICAL);
+        putLog(Flags.CRITICAL, Flags.CRITICAL);
     }
 
     @Test
     public void putLogCriticalPlusOtherFlags() throws PersistenceException {
-        putLog(Flags.PERSISTENCE_CRITICAL | 0x0300, Flags.PERSISTENCE_CRITICAL);
+        putLog(Flags.CRITICAL | 0x0300, Flags.CRITICAL);
     }
 
     @Test
@@ -196,7 +196,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+            long id = persistence.putLog(log, "test-p1", NORMAL);
 
             /* Count logs. */
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -254,7 +254,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test-p1", NORMAL);
             fail("putLog was expected to fail");
         } catch (Persistence.PersistenceException e) {
             assertTrue(e.getCause() instanceof IOException);
@@ -294,7 +294,7 @@ public class DatabasePersistenceAndroidTest {
             Map<String, String> properties = new HashMap<>();
             properties.put("key", largeValue.toString());
             log.setProperties(properties);
-            long id = persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+            long id = persistence.putLog(log, "test-p1", NORMAL);
             assertEquals(1, persistence.countLogs("test-p1"));
 
             /* Verify large file. */
@@ -349,7 +349,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Persisting that log should fail. */
             try {
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", NORMAL);
                 fail("Inserting large common schema log is not supposed to work");
             } catch (PersistenceException e) {
 
@@ -380,7 +380,7 @@ public class DatabasePersistenceAndroidTest {
             String group = "test-p1";
             for (int i = 0; allLogs.size() == persistence.countLogs(group); i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, group, PERSISTENCE_NORMAL);
+                persistence.putLog(log, group, NORMAL);
                 allLogs.add(log);
 
                 /* Fail if no eviction happens after a long time to avoid infinite loop on bug. */
@@ -420,7 +420,7 @@ public class DatabasePersistenceAndroidTest {
             int criticalLogCount = 2;
             for (int i = 0; i < criticalLogCount; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+                persistence.putLog(log, "test-p1", CRITICAL);
                 expectedLogs.add(log);
             }
 
@@ -429,7 +429,7 @@ public class DatabasePersistenceAndroidTest {
             String group = "test-p1";
             for (int i = 0; allNormalLogs.size() + criticalLogCount == persistence.countLogs(group); i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, group, PERSISTENCE_NORMAL);
+                persistence.putLog(log, group, NORMAL);
                 allNormalLogs.add(log);
 
                 /* Fail if no eviction happens after a long time to avoid infinite loop on bug. */
@@ -468,7 +468,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate some logs that will be evicted. */
             for (int i = 0; i < someLogCount; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", NORMAL);
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
@@ -479,7 +479,7 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", NORMAL);
                 fail("putLog was expected to fail");
             } catch (PersistenceException e) {
 
@@ -509,7 +509,7 @@ public class DatabasePersistenceAndroidTest {
             /* Generate some logs of both priority that will be evicted. */
             int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", NORMAL);
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
@@ -524,7 +524,7 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", NORMAL);
                 fail("Expected persistence exception");
             } catch (PersistenceException ignore) {
             }
@@ -554,10 +554,10 @@ public class DatabasePersistenceAndroidTest {
             /* Generate some logs of both priority that will be evicted. */
             int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", NORMAL);
             }
             for (int i = 0; i < someLogCount; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_CRITICAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", CRITICAL);
             }
             assertEquals(someLogCount * 2, persistence.countLogs("test-p1"));
 
@@ -572,7 +572,7 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
-                persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+                persistence.putLog(log, "test-p1", CRITICAL);
                 fail("Expected persistence exception");
             } catch (PersistenceException ignore) {
             }
@@ -604,14 +604,14 @@ public class DatabasePersistenceAndroidTest {
             int someLogCount = 3;
             for (int i = 0; i < someLogCount; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+                persistence.putLog(log, "test-p1", CRITICAL);
                 expectedLogs.add(log);
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
             /* Generate some normal priority logs that will be evicted. */
             for (int i = 0; i < 20; i++) {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", NORMAL);
             }
 
             /*
@@ -624,7 +624,7 @@ public class DatabasePersistenceAndroidTest {
             properties.put("key", generateString(size, 'x'));
             log.setProperties(properties);
             try {
-                persistence.putLog(log, "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test-p1", NORMAL);
                 fail("Expected persistence exception");
             } catch (PersistenceException ignore) {
             }
@@ -659,14 +659,14 @@ public class DatabasePersistenceAndroidTest {
             int someLogCount = 12;
             for (int i = 0; i < someLogCount; i++) {
                 MockLog log = AndroidTestUtils.generateMockLog();
-                persistence.putLog(log, "test-p1", PERSISTENCE_CRITICAL);
+                persistence.putLog(log, "test-p1", CRITICAL);
                 expectedLogs.add(log);
             }
             assertEquals(someLogCount, persistence.countLogs("test-p1"));
 
             /* Try to insert a normal log: that will fail and no log deleted. */
             try {
-                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", PERSISTENCE_NORMAL);
+                persistence.putLog(AndroidTestUtils.generateMockLog(), "test-p1", NORMAL);
                 fail("Put log was supposed to fail.");
             } catch (PersistenceException ignore) {
             }
@@ -700,10 +700,10 @@ public class DatabasePersistenceAndroidTest {
             Log log2 = AndroidTestUtils.generateMockLog();
             Log log3 = AndroidTestUtils.generateMockLog();
             Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log1, "test-p1", PERSISTENCE_NORMAL);
-            persistence.putLog(log2, "test-p1", PERSISTENCE_NORMAL);
-            persistence.putLog(log3, "test-p2", PERSISTENCE_NORMAL);
-            persistence.putLog(log4, "test-p3", PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test-p1", NORMAL);
+            persistence.putLog(log2, "test-p1", NORMAL);
+            persistence.putLog(log3, "test-p2", NORMAL);
+            persistence.putLog(log4, "test-p3", NORMAL);
             assertEquals(2, persistence.countLogs("test-p1"));
             assertEquals(1, persistence.countLogs("test-p2"));
             assertEquals(1, persistence.countLogs("test-p3"));
@@ -794,10 +794,10 @@ public class DatabasePersistenceAndroidTest {
             Log log2 = AndroidTestUtils.generateMockLog();
             Log log3 = AndroidTestUtils.generateMockLog();
             Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log1, "test-p1", PERSISTENCE_NORMAL);
-            persistence.putLog(log2, "test-p1", PERSISTENCE_NORMAL);
-            persistence.putLog(log3, "test-p2", PERSISTENCE_NORMAL);
-            persistence.putLog(log4, "test-p3", PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test-p1", NORMAL);
+            persistence.putLog(log2, "test-p1", NORMAL);
+            persistence.putLog(log3, "test-p2", NORMAL);
+            persistence.putLog(log4, "test-p3", NORMAL);
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
@@ -860,7 +860,7 @@ public class DatabasePersistenceAndroidTest {
             Log[] logs = new Log[numberOfLogs];
             for (int i = 0; i < logs.length; i++) {
                 logs[i] = AndroidTestUtils.generateMockLog();
-                persistence.putLog(logs[i], "test", PERSISTENCE_NORMAL);
+                persistence.putLog(logs[i], "test", NORMAL);
             }
 
             /* Get. */
@@ -916,19 +916,19 @@ public class DatabasePersistenceAndroidTest {
 
             /* Put a normal log. */
             Log log1 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log1, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test", NORMAL);
 
             /* Put a critical log. */
             Log log2 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log2, "test", PERSISTENCE_CRITICAL);
+            persistence.putLog(log2, "test", CRITICAL);
 
             /* Put a normal log again. */
             Log log3 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log3, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log3, "test", NORMAL);
 
             /* Put a critical log again. */
             Log log4 = AndroidTestUtils.generateMockLog();
-            persistence.putLog(log4, "test", PERSISTENCE_CRITICAL);
+            persistence.putLog(log4, "test", CRITICAL);
 
             /* Expected order. */
             List<Log> expectedLogs = new ArrayList<>();
@@ -1022,7 +1022,7 @@ public class DatabasePersistenceAndroidTest {
             log.setTimestamp(new Date());
             log.setIKey(iKey);
             log.addTransmissionTarget(iKey + "-token");
-            persistence.putLog(log, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log, "test", NORMAL);
         }
     }
 
@@ -1057,7 +1057,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Put. */
             for (Log log : logs)
-                persistence.putLog(log, "test", PERSISTENCE_NORMAL);
+                persistence.putLog(log, "test", NORMAL);
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();
@@ -1233,25 +1233,25 @@ public class DatabasePersistenceAndroidTest {
             /* Put a log with current date. */
             Log log1 = AndroidTestUtils.generateMockLog();
             log1.setTimestamp(calendar.getTime());
-            persistence.putLog(log1, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log1, "test", NORMAL);
 
             /* Put a log with yesterday date. */
             calendar.add(Calendar.DATE, -1);
             Log log2 = AndroidTestUtils.generateMockLog();
             log2.setTimestamp(calendar.getTime());
-            persistence.putLog(log2, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log2, "test", NORMAL);
 
             /* Put a log with 2 days ago date. */
             calendar.add(Calendar.DATE, -1);
             Log log3 = AndroidTestUtils.generateMockLog();
             log3.setTimestamp(calendar.getTime());
-            persistence.putLog(log3, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log3, "test", NORMAL);
 
             /* Put a log with 3 days ago date. */
             calendar.add(Calendar.DATE, -1);
             Log log4 = AndroidTestUtils.generateMockLog();
             log4.setTimestamp(calendar.getTime());
-            persistence.putLog(log4, "test", PERSISTENCE_NORMAL);
+            persistence.putLog(log4, "test", NORMAL);
         } finally {
 
             //noinspection ThrowFromFinallyBlock
@@ -1311,10 +1311,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
+            persistence.putLog(commonSchemaLog, "test/one", NORMAL);
         } finally {
             persistence.close();
         }
@@ -1343,7 +1343,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
         } finally {
             persistence.close();
         }
@@ -1401,10 +1401,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_NORMAL);
+            persistence.putLog(commonSchemaLog, "test/one", NORMAL);
         } finally {
             persistence.close();
         }
@@ -1433,7 +1433,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Verify timestamp. */
             assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
@@ -1493,10 +1493,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_CRITICAL);
+            persistence.putLog(commonSchemaLog, "test/one", CRITICAL);
         } finally {
             persistence.close();
         }
@@ -1525,7 +1525,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Verify timestamp. */
             assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));
@@ -1554,7 +1554,7 @@ public class DatabasePersistenceAndroidTest {
             contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
             contentValues.put(DatabasePersistence.COLUMN_DATA_TYPE, MOCK_LOG_TYPE);
-            contentValues.put(DatabasePersistence.COLUMN_PRIORITY, PERSISTENCE_NORMAL);
+            contentValues.put(DatabasePersistence.COLUMN_PRIORITY, NORMAL);
             databaseManager.put(contentValues, DatabasePersistence.COLUMN_PRIORITY);
         } finally {
             databaseManager.close();
@@ -1585,10 +1585,10 @@ public class DatabasePersistenceAndroidTest {
 
             /* Check priority migration. */
             ContentValues values = getContentValues(persistence, "test");
-            assertEquals((Integer) PERSISTENCE_NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) NORMAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Put new data with token. */
-            persistence.putLog(commonSchemaLog, "test/one", PERSISTENCE_CRITICAL);
+            persistence.putLog(commonSchemaLog, "test/one", CRITICAL);
         } finally {
             persistence.close();
         }
@@ -1617,7 +1617,7 @@ public class DatabasePersistenceAndroidTest {
             assertEquals(commonSchemaLog.getIKey(), "o:" + targetKey);
 
             /* Verify priority stored too. */
-            assertEquals((Integer) PERSISTENCE_CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
+            assertEquals((Integer) CRITICAL, values.getAsInteger(DatabasePersistence.COLUMN_PRIORITY));
 
             /* Verify timestamp. */
             assertEquals(timestamp, values.getAsLong(DatabasePersistence.COLUMN_TIMESTAMP));

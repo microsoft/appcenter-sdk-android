@@ -66,7 +66,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* 50 logs are persisted but never being sent to Ingestion. */
         assertEquals(50, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(Flags.PERSISTENCE_NORMAL));
+        verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(Flags.NORMAL));
         verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, never()).onBeforeSending(any(Log.class));
@@ -151,7 +151,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
 
         /* Verify persisted but not incrementing and checking logs. */
-        verify(persistence).putLog(log, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+        verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(persistence, never()).countLogs(TEST_GROUP);
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -215,7 +215,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
 
         /* Verify persisted but not incrementing and checking logs. */
-        verify(persistence).putLog(log, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+        verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
