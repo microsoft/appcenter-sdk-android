@@ -102,7 +102,6 @@ public class DatabasePersistenceTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
 

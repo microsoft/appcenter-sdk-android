@@ -58,14 +58,14 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDownloadTest {
 
     @Mock
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
     @Mock
     private Handler mHandler;
 
     @Before
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void setUpDownload() throws Exception {
 
         /* Mock some dialog methods. */
@@ -121,7 +121,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void longMandatoryDownloadAndInstallAcrossRestarts() throws Exception {
 
         /* Make timer goes off only while updating progress, 3 times here. */
@@ -242,7 +242,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void disabledBeforeClickOnDialogInstall() throws Exception {
 
         /* Unblock download. */

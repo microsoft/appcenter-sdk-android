@@ -72,6 +72,7 @@ public interface Log extends Model {
      *
      * @param userId the userId value to set.
      */
+    @SuppressWarnings("unused")
     void setUserId(String userId);
 
     /**
@@ -117,5 +118,6 @@ public interface Log extends Model {
      *
      * @param tag tag object or null to reset tag.
      */
+    @SuppressWarnings("unused")
     void setTag(Object tag);
 }

@@ -3,8 +3,26 @@
 -dontskipnonpubliclibraryclasses
 -verbose
 
-# This enum is accessed via reflection in common msal lib thus proguard removes it.
--keep public enum com.microsoft.identity.common.internal.ui.AuthorizationAgent  {
+# These enums or models are accessed via reflection in common msal lib thus proguard removes them.
+-keep public enum com.microsoft.identity.common.internal.ui.AuthorizationAgent {
+    *;
+}
+-keep public enum com.microsoft.identity.common.internal.authorities.Environment {
+    *;
+}
+-keep public enum com.microsoft.identity.common.internal.providers.oauth2.OpenIdConnectPromptParameter {
+    *;
+}
+-keep public class com.microsoft.identity.common.internal.request.AcquireTokenOperationParameters {
+    *;
+}
+-keep public enum com.microsoft.identity.common.internal.request.SdkType {
+    *;
+}
+-keep public class com.microsoft.identity.common.internal.providers.microsoft.microsoftsts.MicrosoftStsAuthorizationResponse {
+    *;
+}
+-keep public class com.microsoft.identity.common.internal.providers.microsoft.microsoftsts.MicrosoftStsTokenResponse {
     *;
 }
 

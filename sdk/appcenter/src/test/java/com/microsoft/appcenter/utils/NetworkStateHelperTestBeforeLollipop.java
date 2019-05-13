@@ -40,7 +40,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void networkStates() {
         for (NetworkInfo.State state : NetworkInfo.State.values()) {
             NetworkInfo networkInfo = mock(NetworkInfo.class);
@@ -52,7 +52,7 @@ public class NetworkStateHelperTestBeforeLollipop extends AbstractNetworkStateHe
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void permissionDenied() {
         when(mConnectivityManager.getAllNetworkInfo()).thenThrow(new SecurityException());
         NetworkStateHelper helper = new NetworkStateHelper(mContext);

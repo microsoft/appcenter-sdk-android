@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 /**
  * Constants defining default partitions.
  */
+@SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
 public final class DefaultPartitions {
 
     /**

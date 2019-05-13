@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressLint("InlinedApi")
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "RedundantSuppression"})
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Build.class, Settings.Global.class, Settings.Secure.class})
 public class UnknownSourcesDetectionTest {

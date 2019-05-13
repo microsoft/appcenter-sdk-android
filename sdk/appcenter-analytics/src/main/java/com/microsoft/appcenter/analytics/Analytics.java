@@ -148,7 +148,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -211,6 +211,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param listener The custom analytics listener.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);

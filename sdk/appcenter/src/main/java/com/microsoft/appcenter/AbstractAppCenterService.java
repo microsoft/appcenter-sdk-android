@@ -231,7 +231,6 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      */
     protected abstract String getLoggerTag();
 
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     protected String getEnabledPreferenceKey() {
         return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getServiceName();
@@ -261,8 +260,8 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      *
      * @return A maximum number of requests.
      */
-    @SuppressWarnings("WeakerAccess")
-    protected int getTriggerMaxParallelRequests() {
+    @SuppressWarnings("SameReturnValue")
+    int getTriggerMaxParallelRequests() {
         return DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
     }
 
@@ -271,7 +270,6 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      *
      * @return A listener for channel
      */
-    @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     protected Channel.GroupListener getChannelListener() {
         return null;
     }

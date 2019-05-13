@@ -82,10 +82,8 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
     public void set(Map<String, String> eventProperties) {
         EventPropertyType type = getType();
         String key = mEditKey.getText().toString();
-        switch (type) {
-            case STRING:
-                eventProperties.put(key, mEditString.getText().toString());
-                break;
+        if (type == EventPropertyType.STRING) {
+            eventProperties.put(key, mEditString.getText().toString());
         }
     }
 

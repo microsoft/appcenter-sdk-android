@@ -69,7 +69,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest {
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private static final String COLUMN_LOCAL_FILENAME = DownloadManager.COLUMN_LOCAL_FILENAME;
 
     @Before
@@ -739,7 +739,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
     @Test
     @SuppressLint("NewApi")
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void doNotShowInstallUiIfUpgradedAfterNotification() throws Exception {
 
         /* Mock download time storage. */

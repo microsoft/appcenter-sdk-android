@@ -253,7 +253,6 @@ public class PropertyConfigurator extends AbstractChannelListener {
      *
      * @param userId user identifier.
      */
-    @SuppressWarnings("WeakerAccess")
     public void setUserId(final String userId) {
         if (UserIdContext.checkUserIdValidForOneCollector(userId)) {
             Analytics.getInstance().postCommandEvenIfDisabled(new Runnable() {

@@ -35,6 +35,7 @@ public class LogContainer {
         this.logs = logs;
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

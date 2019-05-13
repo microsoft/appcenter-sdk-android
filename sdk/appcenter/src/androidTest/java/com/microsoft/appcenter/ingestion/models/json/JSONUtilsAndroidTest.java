@@ -107,6 +107,8 @@ public class JSONUtilsAndroidTest {
         /* Test null value. */
         writer = new JSONStringer();
         JSONUtils.writeArray(writer, "null", null);
+
+        //noinspection ConstantConditions
         assertNull(writer.toString());
     }
 
@@ -136,6 +138,8 @@ public class JSONUtilsAndroidTest {
         /* Test null value. */
         writer = new JSONStringer();
         JSONUtils.writeStringArray(writer, "null", null);
+
+        //noinspection ConstantConditions
         assertNull(writer.toString());
     }
 
