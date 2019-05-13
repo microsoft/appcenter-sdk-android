@@ -620,8 +620,8 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     @Override
-    protected int getTriggerInterval() {
-        return  (int) mTransmissionInterval;
+    protected long getTriggerInterval() {
+        return mTransmissionInterval;
     }
 
     /**
