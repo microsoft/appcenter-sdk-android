@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
-    private static Long[] mLatencyValues = {
+    private static long[] mLatencyValues = {
             TimeUnit.SECONDS.toSeconds(3),
             TimeUnit.MINUTES.toSeconds(10),
             TimeUnit.HOURS.toSeconds(1),
