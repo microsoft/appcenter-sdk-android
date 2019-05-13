@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.DownloadManager;
 import android.content.DialogInterface;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -18,12 +18,13 @@ import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import static android.os.AsyncTask.Status.FINISHED;
+import static android.os.AsyncTask.Status.RUNNING;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
@@ -34,10 +35,8 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -283,7 +282,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
@@ -342,7 +341,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
@@ -418,15 +417,10 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         mockForCustomizationTest(false);
         mockToGetRealDownloadState();
         mockStatic(AsyncTaskUtils.class);
-        when(AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
-
-            @Override
-            public DownloadTask answer(InvocationOnMock invocation) {
-
-                /* Return as is (do not run). */
-                return (DownloadTask) invocation.getArguments()[1];
-            }
-        });
+        DownloadTask downloadTask = mock(DownloadTask.class);
+        when(downloadTask.getStatus()).thenReturn(RUNNING);
+        when(AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg())).thenReturn(downloadTask);
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
@@ -440,7 +434,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Call handleUpdateAction. */
-        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
@@ -452,6 +445,15 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify UPDATE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
 
+        /* Simulate start downloading. */
+        distribute.storeDownloadRequestId(mock(DownloadManager.class), downloadTask, 42, System.currentTimeMillis());
+        when(downloadTask.getStatus()).thenReturn(FINISHED);
+
+        /* Call handleUpdateAction again. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
+
+        /* Verify UPDATE has NOT been processed. */
+        verify(distribute, never()).completeWorkflow();
     }
 
     private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {

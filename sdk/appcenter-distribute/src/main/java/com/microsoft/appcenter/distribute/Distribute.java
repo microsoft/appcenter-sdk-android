@@ -542,7 +542,7 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isEnqueueingDownload()) {
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
                     AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
                     return;
                 }
@@ -1578,11 +1578,6 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             showDisabledToast();
         }
-    }
-
-    @VisibleForTesting
-    synchronized boolean isEnqueueingDownload() {
-        return mDownloadTask != null && mDownloadTask.getStatus() != FINISHED;
     }
 
     /**

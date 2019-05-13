@@ -29,7 +29,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -54,7 +53,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
