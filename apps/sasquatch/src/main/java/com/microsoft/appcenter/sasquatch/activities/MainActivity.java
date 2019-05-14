@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
-    private static final long[] mLatencyValues = {
+    private static final long[] sLatencyValues = {
             TimeUnit.SECONDS.toSeconds(3),
             TimeUnit.MINUTES.toSeconds(10),
             TimeUnit.HOURS.toSeconds(1),
@@ -127,11 +127,11 @@ public class MainActivity extends AppCompatActivity {
 
     static void startAppCenter(Application application, String startTypeString) {
         int position = MainActivity.sSharedPreferences.getInt(LATENCY_SECONDS_KEY, 0);
-        long latency = mLatencyValues[position];
+        long latency = sLatencyValues[position];
         try{
             //noinspection unchecked,JavaReflectionMemberAccess
             Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, (int) latency);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
             /* Nothing to handle; this is reached if Analytics isn't being used. */
         }
