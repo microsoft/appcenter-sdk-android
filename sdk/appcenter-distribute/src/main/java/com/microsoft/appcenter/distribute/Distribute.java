@@ -70,7 +70,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
-import static android.os.AsyncTask.Status.FINISHED;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
@@ -376,7 +375,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    @SuppressWarnings("JavadocReference")
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
     }
@@ -582,7 +580,6 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Implements {@link #setListener(DistributeListener)}.
      */
-    @SuppressWarnings("JavadocReference")
     private synchronized void setInstanceListener(DistributeListener listener) {
         mListener = listener;
     }
@@ -752,8 +749,11 @@ public class Distribute extends AbstractAppCenterService {
                     enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 }
 
-                /* Or restore update dialog if that's the last thing we did before being paused. */
-                else {
+                /*
+                 * Or restore update dialog if that's the last thing we did before being paused.
+                 * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
+                 */
+                else if (mDownloadTask == null) {
                     showUpdateDialog();
                 }
 

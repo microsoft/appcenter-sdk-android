@@ -51,7 +51,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
@@ -799,5 +798,25 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify cancellation. */
         verify(mDownloadManager).remove(DOWNLOAD_ID);
+    }
+
+    @Test
+    public void checkNoDuplicateDialogWhileEnqueuingDownloadAndSwitchingActivity() {
+
+        /* If we restart a new activity quickly before download is enqueued. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Then update dialog is not shown twice. */
+        verify(mDialog).show();
+
+        /* And download state saving works as expected. */
+        waitDownloadTask();
+        verifyStatic();
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        verifyStatic();
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
     }
 }
