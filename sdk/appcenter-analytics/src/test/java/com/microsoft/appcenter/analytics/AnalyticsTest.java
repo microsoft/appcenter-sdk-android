@@ -866,7 +866,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void triggerIntervalReturnFalse() {
+    public void triggerInterval() {
         Analytics analytics = Analytics.getInstance();
         boolean result = Analytics.setTransmissionInterval(1);
         assertFalse(result);

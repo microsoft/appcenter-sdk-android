@@ -215,7 +215,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param seconds Set latency of sending events to Analytics in seconds.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
-    public static boolean setTransmissionInterval(int seconds) {
+    public static boolean setTransmissionInterval(long seconds) {
         return getInstance().setInstanceTransmissionInterval(seconds);
     }
 
@@ -919,7 +919,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param seconds Set latency of sending events to Analytics.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
-    private boolean setInstanceTransmissionInterval(int seconds) {
+    private boolean setInstanceTransmissionInterval(long seconds) {
         if (mChannel != null) {
             AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
             return false;
