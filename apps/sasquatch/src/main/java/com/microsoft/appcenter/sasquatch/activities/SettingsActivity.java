@@ -529,7 +529,6 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-
             String defaultLogUrl = generateLogUrl(sInitialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
