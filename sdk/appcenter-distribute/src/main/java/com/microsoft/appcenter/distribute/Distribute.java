@@ -535,11 +535,11 @@ public class Distribute extends AbstractAppCenterService {
                     return;
                 }
                 if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
                 if (mUsingDefaultUpdateDialog) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action when using default dialog.");
                     return;
                 }
                 switch (updateAction) {
