@@ -145,7 +145,7 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
-     * Transmission interval.
+     * Transmission interval in milliseconds.
      */
     private long mTransmissionInterval;
 
