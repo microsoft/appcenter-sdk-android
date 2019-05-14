@@ -2,7 +2,7 @@
     Thanks for your interest in using the App Center SDK for Android.
     If your issue is not related to using our Android SDK but rather about the product experience like the portal or CI,
     please create a ticket using the blue chat button on any page of the https://appcenter.ms portal instead.
-    If you are using Xamarin, please report the issue on https://github.com/Microsoft/AppCenter-SDK-DotNet instead. 
+    If you are using Xamarin, please report the issue on https://github.com/microsoft/appcenter-sdk-dotnet instead. 
 -->
 
 ### **Description**
