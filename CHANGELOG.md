@@ -14,6 +14,11 @@
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
+### AppCenterDistribute
+
+* **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
+* **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
+
 ## Version 2.0.0
 
 Version 2 of the App Center SDK includes two new modules: Auth and Data.
@@ -28,7 +33,7 @@ The App Center Data service provides functionality enabling developers to persis
 
 ### AppCenterCrashes
 
-* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
+* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes.
 
 ### AppCenterDistribute
 

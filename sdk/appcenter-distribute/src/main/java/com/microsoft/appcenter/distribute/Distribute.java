@@ -375,7 +375,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    @SuppressWarnings("JavadocReference")
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
     }
@@ -535,12 +534,12 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
                 if (mUsingDefaultUpdateDialog) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action when using default dialog.");
                     return;
                 }
                 switch (updateAction) {
@@ -581,7 +580,6 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Implements {@link #setListener(DistributeListener)}.
      */
-    @SuppressWarnings("JavadocReference")
     private synchronized void setInstanceListener(DistributeListener listener) {
         mListener = listener;
     }
@@ -751,8 +749,11 @@ public class Distribute extends AbstractAppCenterService {
                     enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 }
 
-                /* Or restore update dialog if that's the last thing we did before being paused. */
-                else {
+                /*
+                 * Or restore update dialog if that's the last thing we did before being paused.
+                 * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
+                 */
+                else if (mDownloadTask == null) {
                     showUpdateDialog();
                 }
 
@@ -1596,7 +1597,7 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task) {
+        if (mDownloadTask == task && mReleaseDetails != null) {
 
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();
