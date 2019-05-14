@@ -79,12 +79,12 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
-    private static final long[] sLatencyValues = {
-            TimeUnit.SECONDS.toSeconds(3),
-            TimeUnit.MINUTES.toSeconds(10),
-            TimeUnit.HOURS.toSeconds(1),
-            TimeUnit.HOURS.toSeconds(8),
-            TimeUnit.DAYS.toSeconds(1)
+    private static final int[] sLatencyValues = {
+            (int)TimeUnit.SECONDS.toSeconds(3),
+            (int)TimeUnit.MINUTES.toSeconds(10),
+            (int)TimeUnit.HOURS.toSeconds(1),
+            (int)TimeUnit.HOURS.toSeconds(8),
+            (int)TimeUnit.DAYS.toSeconds(1)
     };
 
     static SharedPreferences sSharedPreferences;
