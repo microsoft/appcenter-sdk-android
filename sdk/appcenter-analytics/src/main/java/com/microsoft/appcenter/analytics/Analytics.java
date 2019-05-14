@@ -42,7 +42,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Analytics service.
@@ -79,6 +81,18 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Analytics sInstance;
+
+    /**
+     * Transmission interval minimum value.
+     */
+    @VisibleForTesting
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+
+    /**
+     * Transmission interval maximum value.
+     */
+    @VisibleForTesting
+    static final int MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 24 * 60 * 60;
 
     /**
      * Log factories managed by this service.
@@ -132,6 +146,11 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
+     * Transmission interval in milliseconds.
+     */
+    private long mTransmissionInterval;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -147,6 +166,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(EventLog.TYPE, new EventLogFactory());
         mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
+        mTransmissionInterval = TimeUnit.SECONDS.toMillis(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
     }
 
     /**
@@ -187,6 +207,18 @@ public class Analytics extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * Set transmission interval. The transmission interval should be between 3 seconds and 86400 seconds (1 day).
+     * Should be called before the service is started.
+     *
+     * @param seconds the latency of sending events to Analytics in seconds.
+     * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
+     */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once API used in jCenter variant.
+    public static boolean setTransmissionInterval(int seconds) {
+        return getInstance().setInstanceTransmissionInterval(seconds);
     }
 
     /**
@@ -590,6 +622,11 @@ public class Analytics extends AbstractAppCenterService {
         }, updateCurrentActivityRunnable, updateCurrentActivityRunnable);
     }
 
+    @Override
+    protected long getTriggerInterval() {
+        return mTransmissionInterval;
+    }
+
     /**
      * On an activity being resumed, start a new session if needed
      * and track current page automatically if that mode is enabled.
@@ -794,7 +831,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, filteredFlags == Flags.PERSISTENCE_CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
@@ -876,6 +913,30 @@ public class Analytics extends AbstractAppCenterService {
         if (transmissionTargetToken != null) {
             mDefaultTransmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
         }
+    }
+
+    /**
+     * Set transmission interval. The interval should be between 3 seconds and 86400 seconds (1 day).
+     * Should be called before the service is started.
+     *
+     * @param seconds the latency of sending events to Analytics.
+     * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
+     */
+    private boolean setInstanceTransmissionInterval(int seconds) {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
+            return false;
+        }
+        if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+            AppCenterLog.error(LOG_TAG, String.format(Locale.getDefault(),
+                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day)",
+                    MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
+            return false;
+        }
+        mTransmissionInterval = TimeUnit.SECONDS.toMillis(seconds);
+        return true;
     }
 
     /**

@@ -251,7 +251,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      * @return A maximum time interval in milliseconds.
      */
     @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
-    protected int getTriggerInterval() {
+    protected long getTriggerInterval() {
         return DEFAULT_TRIGGER_INTERVAL;
     }
 

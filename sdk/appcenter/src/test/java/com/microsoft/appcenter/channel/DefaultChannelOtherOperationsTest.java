@@ -189,7 +189,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         channel.addListener(listener);
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
-        verify(listener).onGroupAdded(TEST_GROUP, groupListener);
+        verify(listener).onGroupAdded(TEST_GROUP, groupListener, BATCH_TIME_INTERVAL);
         channel.pauseGroup(TEST_GROUP, null);
         verify(listener).onPaused(TEST_GROUP, null);
         channel.pauseGroup(TEST_GROUP, "token");

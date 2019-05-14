@@ -145,7 +145,7 @@ public interface Channel {
          * @param groupName     group name.
          * @param groupListener group listener.
          */
-        void onGroupAdded(@NonNull String groupName, GroupListener groupListener);
+        void onGroupAdded(@NonNull String groupName, GroupListener groupListener, long batchTimeInterval);
 
         /**
          * Called whenever a new group is removed.

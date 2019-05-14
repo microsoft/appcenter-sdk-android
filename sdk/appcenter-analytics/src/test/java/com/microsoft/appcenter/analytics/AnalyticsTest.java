@@ -56,6 +56,8 @@ import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
+import static com.microsoft.appcenter.analytics.Analytics.MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.analytics.Analytics.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -861,6 +863,38 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* And prints an error. */
         verifyStatic();
         AppCenterLog.error(anyString(), contains("AppCenter is not configured"));
+    }
+
+    @Test
+    public void unableToSetTransmissionIntervalMoreThanMaximum() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
+        assertFalse(result);
+    }
+
+    @Test
+    public void setTransmissionInterval() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
+        assertTrue(result);
+        assertEquals(TimeUnit.MILLISECONDS.toSeconds(Analytics.getInstance().getTriggerInterval()),MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
+    }
+
+    @Test
+    public void unableToSetTransmissionIntervalLessThanMinimum() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS - 1);
+        assertFalse(result);
+    }
+
+    @Test
+    public void unableToSetTransmissionIntervalAfterStart() {
+        Analytics analytics = Analytics.getInstance();
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, null, null, false);
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
+        assertFalse(result);
     }
 
     /**
