@@ -519,7 +519,6 @@ public class AppCenter {
      *
      * @param customProperties custom properties object.
      */
-    @SuppressWarnings("JavadocReference")
     private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
         if (customProperties == null) {
             AppCenterLog.error(LOG_TAG, "Custom properties may not be null.");
