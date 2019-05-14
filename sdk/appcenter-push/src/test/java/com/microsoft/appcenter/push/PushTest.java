@@ -291,7 +291,7 @@ public class PushTest {
         verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(true);
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @Test
     public void verifyEnableFirebaseAnalytics() {
         Push push = Push.getInstance();
@@ -302,7 +302,7 @@ public class PushTest {
         verify(mFirebaseAnalyticsInstance).setAnalyticsCollectionEnabled(false);
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @Test
     public void verifyEnableFirebaseAnalyticsBeforeStart() {
         Push push = Push.getInstance();

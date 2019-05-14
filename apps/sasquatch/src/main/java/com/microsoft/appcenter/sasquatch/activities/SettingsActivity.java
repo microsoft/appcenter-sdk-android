@@ -73,6 +73,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sAnalyticsPaused;
 
+    private static String sInitialStartType;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -272,8 +274,6 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     Auth.setEnabled(enabled);
                 }
-
-
             });
 
             /* Data. */
@@ -288,8 +288,6 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     Data.setEnabled(enabled);
                 }
-
-
             });
 
             /* Push. */
@@ -453,8 +451,11 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            String initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
-            initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
+            final String startType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            if (sInitialStartType == null) {
+                sInitialStartType = startType;
+            }
+            initChangeableSetting(R.string.appcenter_start_type_key, startType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -466,12 +467,17 @@ public class SettingsActivity extends AppCompatActivity {
                     preference.setSummary(MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, null));
 
                     /* Try to start now, this tests double calls log an error as well as valid call if previous type was none. */
+                    String logUrl = MainActivity.sSharedPreferences.getString(LOG_URL_KEY, MainActivity.getLogUrl(getActivity(), startValue));
+                    if (!TextUtils.isEmpty(logUrl)) {
+                        AppCenter.setLogUrl(logUrl);
+                    }
                     MainActivity.startAppCenter(getActivity().getApplication(), startValue);
 
                     /* Invite to restart app to take effect. */
                     if (sNeedRestartOnStartTypeUpdate) {
                         Toast.makeText(getActivity(), R.string.appcenter_start_type_changed, Toast.LENGTH_SHORT).show();
                     } else {
+                        sInitialStartType = startValue;
                         sNeedRestartOnStartTypeUpdate = true;
                     }
                     return true;
@@ -521,7 +527,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultLogUrl = getString(R.string.log_url);
+            String defaultLogUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
@@ -556,9 +562,9 @@ public class SettingsActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setDefaultUrl();
-                                    if (!TextUtils.isEmpty(getString(R.string.log_url))) {
-                                        AppCenter.setLogUrl(getString(R.string.log_url));
+                                    String defaultUrl = setDefaultUrl();
+                                    if (!TextUtils.isEmpty(defaultUrl)) {
+                                        AppCenter.setLogUrl(defaultUrl);
                                     }
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
@@ -568,9 +574,11 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setDefaultUrl() {
+                private String setDefaultUrl() {
                     setKeyValue(LOG_URL_KEY, null);
-                    toastUrlChange(getString(R.string.log_url));
+                    String logUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
+                    toastUrlChange(logUrl);
+                    return logUrl;
                 }
 
                 private void toastUrlChange(String url) {

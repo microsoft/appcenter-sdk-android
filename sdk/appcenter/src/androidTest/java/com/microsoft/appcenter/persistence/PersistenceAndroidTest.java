@@ -62,7 +62,6 @@ public class PersistenceAndroidTest {
         } finally {
 
             /* Close. */
-            //noinspection ThrowFromFinallyBlock
             persistence.close();
         }
     }

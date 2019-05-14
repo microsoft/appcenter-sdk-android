@@ -114,6 +114,15 @@ public class MainActivity extends AppCompatActivity {
 
     native void setupNativeCrashesListener(String path);
 
+    static String getLogUrl(Context context, String startType) {
+        switch (StartType.valueOf(startType)) {
+            case TARGET:
+            case NO_SECRET:
+                return context.getString(R.string.log_url_one_collector);
+        }
+        return context.getString(R.string.log_url);
+    }
+
     static void startAppCenter(Application application, String startTypeString) {
         StartType startType = StartType.valueOf(startTypeString);
         if (startType == StartType.SKIP_START) {
@@ -188,10 +197,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                break;
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
         }
         return true;
     }
@@ -247,7 +254,8 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getLogUrl(this, startType));
         if (!TextUtils.isEmpty(logUrl)) {
             AppCenter.setLogUrl(logUrl);
         }
@@ -300,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
         setMaxStorageSize();
 
         /* Start App Center. */
-        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
         /* Set user id. */

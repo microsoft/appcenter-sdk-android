@@ -213,6 +213,7 @@ public class FileManagerAndroidTest {
         final int number;
         final InnerModel object;
 
+        @SuppressWarnings("SameParameterValue")
         DataModel(int number, String text, boolean enabled) {
             this.number = number;
             this.object = new InnerModel(text, enabled);
