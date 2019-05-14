@@ -174,7 +174,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -216,6 +216,7 @@ public class Analytics extends AbstractAppCenterService {
      * @param seconds the latency of sending events to Analytics in seconds.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once API used in jCenter variant.
     public static boolean setTransmissionInterval(int seconds) {
         return getInstance().setInstanceTransmissionInterval(seconds);
     }
@@ -829,7 +830,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, filteredFlags == Flags.PERSISTENCE_CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
@@ -930,7 +931,7 @@ public class Analytics extends AbstractAppCenterService {
                     "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day)",
                     MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
                     MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
-                    (int) TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
+                    TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
             return false;
         }
         mTransmissionInterval = TimeUnit.SECONDS.toMillis(seconds);
