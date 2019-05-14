@@ -16,7 +16,7 @@
 
 ### AppCenterDistribute
 
-* **[Fix]** Fix duplicate in-app update dialog when restarting activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in that duplicate dialog.
+* **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
 * **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
 
 ## Version 2.0.0
