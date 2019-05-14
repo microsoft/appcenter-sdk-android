@@ -73,11 +73,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sAnalyticsPaused;
 
-    private static String initialStartType;
-
-    private static String oneCollectorLogUrl = "https://mobile.events.data.microsoft.com/OneCollector/1.0";
-
-    private static String otherLogUrl = "https://in-integration.dev.avalanch.es";
+    private static String sInitialStartType;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -88,19 +84,17 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
-    public static String defaultLogUrlFunction(String startType){
-        if(StartType.valueOf(startType) == StartType.TARGET){
-            return oneCollectorLogUrl;
-        }else{
-            return otherLogUrl;
-        }
-    }
-
     public static class SettingsFragment extends android.preference.PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
         private FileObserver mDatabaseFileObserver;
+
+        private String generateLogUrl(String startType) {
+            String oneCollectorLogUrl = getString(R.string.log_url_one_collector);
+            String productLogUrl = getString(R.string.log_url);
+            return StartType.valueOf(startType) == StartType.TARGET ? oneCollectorLogUrl : productLogUrl;
+        }
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -467,8 +461,8 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
-            initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
+            sInitialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            initChangeableSetting(R.string.appcenter_start_type_key, sInitialStartType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -536,7 +530,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            String defaultLogUrl = defaultLogUrlFunction(initialStartType);
+            String defaultLogUrl = generateLogUrl(sInitialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
@@ -818,13 +812,5 @@ public class SettingsActivity extends AppCompatActivity {
 
             void onReset();
         }
-    }
-
-    public enum StartType {
-        APP_SECRET,
-        TARGET,
-        BOTH,
-        NO_SECRET,
-        SKIP_START
     }
 }
