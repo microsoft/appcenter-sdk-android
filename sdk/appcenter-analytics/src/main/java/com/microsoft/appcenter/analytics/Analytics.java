@@ -913,7 +913,7 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Set transmission interval. The interval should be between 3 seconds and 1 day.
+     * Set transmission interval. The interval should be between 3 seconds and 86400 seconds (1 day).
      * Should be called before the service is started.
      *
      * @param seconds the latency of sending events to Analytics.
