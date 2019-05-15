@@ -77,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
+    private static final int DATABASE_SIZE_MULTIPLE = 4096;
+
     static SharedPreferences sSharedPreferences;
 
     @SuppressLint("StaticFieldLeak")
@@ -87,11 +89,10 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchPushListener sPushListener;
 
+
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
-
-    private final int DATABASE_SIZE_MULTIPLE = 4096;
 
     public static void setTextAttachment(String textAttachment) {
         SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -116,22 +117,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static void startAppCenter(Application application, String startTypeString) {
-        int latency = DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
         if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
-            latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, 0);
-        }
-        try {
+            int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+            try {
+                boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, latency);
+                if (result) {
+                    Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(application, application.getString(R.string.analytics_transmission_interval_change_failed), Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception ignored) {
 
-            //noinspection unchecked,JavaReflectionMemberAccess
-            boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, (int) latency);
-            if (result) {
-                Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(application, application.getString(R.string.analytics_transmission_interval_change_failed), Toast.LENGTH_SHORT).show();
+                /* Nothing to handle; this is reached if Analytics isn't being used. */
             }
-        } catch (Exception ignored) {
-
-            /* Nothing to handle; this is reached if Analytics isn't being used. */
         }
         StartType startType = StartType.valueOf(startTypeString);
         if (startType == StartType.SKIP_START) {
@@ -208,10 +206,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                break;
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
         }
         return true;
     }

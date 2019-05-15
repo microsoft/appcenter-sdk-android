@@ -190,7 +190,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     /* Initialize views for dialog. */
                     final EditText input = new EditText(getActivity());
-                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    input.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
                     input.setHint(R.string.time_interval_in_seconds);
                     input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS)));
                     input.setSelection(input.getText().length());
@@ -208,7 +208,11 @@ public class SettingsActivity extends AppCompatActivity {
                                         Toast.makeText(getActivity(), getActivity().getString(R.string.analytics_transmission_interval_invalid_value), Toast.LENGTH_SHORT).show();
                                         return;
                                     }
-                                    MainActivity.sSharedPreferences.edit().putInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, newInterval).apply();
+                                    if (newInterval == ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS) {
+                                        MainActivity.sSharedPreferences.edit().remove(ANALYTICS_TRANSMISSION_INTERVAL_KEY).apply();
+                                    } else {
+                                        MainActivity.sSharedPreferences.edit().putInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, newInterval).apply();
+                                    }
                                     String intervalString = getTransmissionInterval(newInterval);
                                     Toast.makeText(getActivity(), intervalString, Toast.LENGTH_SHORT).show();
                                     preference.setSummary(intervalString);
@@ -801,10 +805,12 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private String getTransmissionInterval(int interval) {
+            String sign = interval >= 0 ? "" : "-";
+            interval = Math.abs(interval);
             int hours = interval / 60 / 60;
             int minutes = interval / 60 - hours * 60;
             int seconds = interval % 60;
-            return String.format(Locale.ENGLISH, getString(R.string.appcenter_analytics_transmission_interval_summary_format), interval, hours, minutes, seconds);
+            return String.format(Locale.ENGLISH, getString(R.string.appcenter_analytics_transmission_interval_summary_format), sign, interval, sign, hours, minutes, seconds);
         }
 
         private boolean isFirebaseEnabled() {
