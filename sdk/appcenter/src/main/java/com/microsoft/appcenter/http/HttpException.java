@@ -47,7 +47,6 @@ public class HttpException extends IOException {
      * @param status  HTTP status code.
      * @param payload HTTP payload.
      */
-    @SuppressWarnings("WeakerAccess")
     public HttpException(int status, @NonNull String payload) {
         this(status, payload, new HashMap<String, String>());
     }
@@ -59,7 +58,6 @@ public class HttpException extends IOException {
      * @param payload HTTP payload.
      * @param headers HTTP responseHeaders.
      */
-    @SuppressWarnings("WeakerAccess")
     public HttpException(int status, @NonNull String payload, @NonNull Map<String, String> headers) {
         super(getDetailMessage(status, payload));
         this.payload = payload;
@@ -80,7 +78,6 @@ public class HttpException extends IOException {
      *
      * @return HTTP status code.
      */
-    @SuppressWarnings("WeakerAccess")
     public int getStatusCode() {
         return statusCode;
     }
@@ -90,7 +87,6 @@ public class HttpException extends IOException {
      *
      * @return HTTP payload. Can be empty string.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public String getPayload() {
         return payload;
@@ -101,7 +97,6 @@ public class HttpException extends IOException {
      *
      * @return HTTP headers.
      */
-    @SuppressWarnings("WeakerAccess")
     @NonNull
     public Map<String, String> getHeaders() {
         return headers;

@@ -80,7 +80,7 @@ public class CryptoTest {
     private X509Certificate mRsaCert;
 
     @Mock
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.security.KeyPairGeneratorSpec.Builder mRsaBuilder;
 
     @Mock
@@ -96,7 +96,7 @@ public class CryptoTest {
     private CryptoUtils.ICipher mCipher;
 
     @Before
-    @SuppressWarnings({"deprecation", "WrongConstant"})
+    @SuppressWarnings({"deprecation", "WrongConstant", "RedundantSuppression"})
     public void setUp() throws Exception {
         when(mContext.getApplicationContext()).thenReturn(mContext);
         mockStatic(KeyStore.class);

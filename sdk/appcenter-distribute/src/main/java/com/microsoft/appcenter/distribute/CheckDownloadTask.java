@@ -70,7 +70,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         mReleaseDetails = releaseDetails;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
         return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
     }

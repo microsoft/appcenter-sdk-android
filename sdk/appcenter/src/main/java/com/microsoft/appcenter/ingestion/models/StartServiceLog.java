@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * Describe a AppCenter.start call from the SDK.
  */
+@SuppressWarnings("RedundantSuppression")
 public class StartServiceLog extends AbstractLog {
 
     /**
@@ -66,7 +67,7 @@ public class StartServiceLog extends AbstractLog {
     }
 
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
+    @SuppressWarnings({"EqualsReplaceableByObjectsCall", "RedundantSuppression"})
     public boolean equals(Object o) {
         if (this == o) {
             return true;

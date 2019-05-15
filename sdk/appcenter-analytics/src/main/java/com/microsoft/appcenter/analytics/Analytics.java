@@ -42,6 +42,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -145,7 +146,7 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
-     * Transmission interval.
+     * Transmission interval in milliseconds.
      */
     private long mTransmissionInterval;
 
@@ -173,7 +174,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -209,12 +210,13 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Set transmission interval. The transmission interval should be between 3 seconds and 1 day.
+     * Set transmission interval. The transmission interval should be between 3 seconds and 86400 seconds (1 day).
      * Should be called before the service is started.
      *
-     * @param seconds Set latency of sending events to Analytics in seconds.
+     * @param seconds the latency of sending events to Analytics in seconds.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
+    @SuppressWarnings("WeakerAccess") // TODO remove suppress once API used in jCenter variant.
     public static boolean setTransmissionInterval(int seconds) {
         return getInstance().setInstanceTransmissionInterval(seconds);
     }
@@ -247,6 +249,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param listener The custom analytics listener.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);
@@ -828,7 +831,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, filteredFlags == Flags.PERSISTENCE_CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
@@ -913,10 +916,10 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Set transmission interval. The interval should be between 3 seconds and 1 day.
+     * Set transmission interval. The interval should be between 3 seconds and 86400 seconds (1 day).
      * Should be called before the service is started.
      *
-     * @param seconds Set latency of sending events to Analytics.
+     * @param seconds the latency of sending events to Analytics.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
     private boolean setInstanceTransmissionInterval(int seconds) {
@@ -925,7 +928,11 @@ public class Analytics extends AbstractAppCenterService {
             return false;
         }
         if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-            AppCenterLog.error(LOG_TAG, "The transmission interval is not valid.");
+            AppCenterLog.error(LOG_TAG, String.format(Locale.getDefault(),
+                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day)",
+                    MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
             return false;
         }
         mTransmissionInterval = TimeUnit.SECONDS.toMillis(seconds);

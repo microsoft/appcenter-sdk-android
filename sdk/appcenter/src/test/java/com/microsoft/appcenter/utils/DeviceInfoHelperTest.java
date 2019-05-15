@@ -65,7 +65,6 @@ public class DeviceInfoHelperTest {
         /* Mock data. */
         final String appVersion = "1.0";
         final String appBuild = "1";
-        //noinspection SpellCheckingInspection
         final String appNamespace = "com.contoso.app";
         final String carrierCountry = "us";
         final String carrierName = "mock-service";

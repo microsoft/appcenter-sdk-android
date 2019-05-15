@@ -116,6 +116,17 @@ public class MainActivity extends AppCompatActivity {
         sCrashesListener.setFileAttachment(fileAttachment);
     }
 
+    native void setupNativeCrashesListener(String path);
+
+    static String getLogUrl(Context context, String startType) {
+        switch (StartType.valueOf(startType)) {
+            case TARGET:
+            case NO_SECRET:
+                return context.getString(R.string.log_url_one_collector);
+        }
+        return context.getString(R.string.log_url);
+    }
+
     static void startAppCenter(Application application, String startTypeString) {
         if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
             int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
@@ -158,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
     public static void setUserId(String userId) {
         AppCenter.setUserId(userId);
     }
-
-    native void setupNativeCrashesListener(String path);
 
     @SuppressWarnings("deprecation")
     private void setSenderId() {
@@ -263,7 +272,8 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getLogUrl(this, startType));
         if (!TextUtils.isEmpty(logUrl)) {
             AppCenter.setLogUrl(logUrl);
         }
@@ -316,7 +326,6 @@ public class MainActivity extends AppCompatActivity {
         setMaxStorageSize();
 
         /* Start App Center. */
-        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
         /* Set user id. */

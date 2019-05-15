@@ -866,20 +866,34 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
-    public void triggerIntervalReturnFalse() {
+    public void unableToSetTransmissionIntervalMoreThanMaximum() {
         Analytics analytics = Analytics.getInstance();
-        boolean result = Analytics.setTransmissionInterval(1);
+        boolean result = Analytics.setTransmissionInterval(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
         assertFalse(result);
-        result = Analytics.setTransmissionInterval(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
-        assertFalse(result);
-        result = Analytics.setTransmissionInterval(4);
+    }
+
+    @Test
+    public void setTransmissionInterval() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
         assertTrue(result);
-        result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS - 1);
+        assertEquals(TimeUnit.MILLISECONDS.toSeconds(Analytics.getInstance().getTriggerInterval()),MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
+    }
+
+    @Test
+    public void unableToSetTransmissionIntervalLessThanMinimum() {
+        Analytics analytics = Analytics.getInstance();
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS - 1);
         assertFalse(result);
+    }
+
+    @Test
+    public void unableToSetTransmissionIntervalAfterStart() {
+        Analytics analytics = Analytics.getInstance();
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, null, null, false);
-        result = Analytics.setTransmissionInterval(1);
+        boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
         assertFalse(result);
     }
 

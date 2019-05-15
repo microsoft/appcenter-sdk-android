@@ -52,6 +52,15 @@ public class FlagsTest {
         AppCenterLog.warn(anyString(), anyString());
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void persistenceBackwardCompatible() {
+        assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_NORMAL, true));
+        assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL, true));
+        verifyStatic(never());
+        AppCenterLog.warn(anyString(), anyString());
+    }
+
     @Test
     public void persistenceDefaults() {
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULTS, false));
