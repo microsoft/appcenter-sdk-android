@@ -1495,7 +1495,6 @@ public class CrashesTest {
     public void stacktraceNull() throws Exception {
         long appStartTime = 99L;
         long crashTime = 123L;
-
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
         mock(ErrorAttachmentLog.class);
