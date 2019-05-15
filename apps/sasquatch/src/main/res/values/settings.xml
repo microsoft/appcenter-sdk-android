@@ -31,7 +31,7 @@
 
     <string name="appcenter_analytics_transmission_interval_key" tools:ignore="MissingTranslation">appcenter_analytics_transmission_interval_key</string>
     <string name="appcenter_analytics_transmission_interval_title" tools:ignore="MissingTranslation">Transmission Interval</string>
-    <string name="appcenter_analytics_transmission_interval_summary_format" tools:ignore="MissingTranslation">%d second(s) (%02d:%02d:%02d)</string>
+    <string name="appcenter_analytics_transmission_interval_summary_format" tools:ignore="MissingTranslation,PluralsCandidate">%d second(s) (%02d:%02d:%02d)</string>
 
     <string name="appcenter_auto_page_tracking_key" tools:ignore="MissingTranslation">appcenter_auto_page_tracking_key</string>
     <string name="appcenter_auto_page_tracking_title" tools:ignore="MissingTranslation">Analytics automatic page tracking</string>
