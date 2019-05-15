@@ -19,7 +19,6 @@ import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
@@ -38,8 +37,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class EventActivity extends AppCompatActivity {
-
-    public static final String LATENCY_SECONDS_KEY = "LATENCY_SECONDS_KEY";
 
     /**
      * Remember for what targets the device id was enabled.
@@ -70,8 +67,6 @@ public class EventActivity extends AppCompatActivity {
     private TextView mNumberOfLogsLabel;
 
     private SeekBar mNumberOfLogs;
-
-    private int mCurrentPosition = 0;
 
     private List<AnalyticsTransmissionTarget> mTransmissionTargets = new ArrayList<>();
 
@@ -183,32 +178,6 @@ public class EventActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
-
-        /* Init latency table columns. */
-        Spinner latencySpinner = findViewById(R.id.latency_spinner);
-        ArrayAdapter<String> latencyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.latency_values));
-        latencySpinner.setAdapter(latencyAdapter);
-        mCurrentPosition = MainActivity.sSharedPreferences.getInt(LATENCY_SECONDS_KEY, 0);
-        latencySpinner.setSelection(mCurrentPosition);
-        latencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                onLatencyChanged(position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
-
-    private void onLatencyChanged(int position) {
-        if (mCurrentPosition == position) {
-            return;
-        }
-        MainActivity.sSharedPreferences.edit().putInt(LATENCY_SECONDS_KEY, position).apply();
-        Toast.makeText(EventActivity.this, getString(R.string.latency_changed_message), Toast.LENGTH_SHORT).show();
     }
 
     @Override

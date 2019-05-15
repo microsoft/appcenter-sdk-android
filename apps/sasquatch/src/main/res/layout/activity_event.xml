@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -111,18 +110,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:max="1000" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/latency" />
-
-            <Spinner
-                android:id="@+id/latency_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@android:drawable/btn_dropdown"
-                android:spinnerMode="dropdown" />
 
             <TextView
                 android:layout_width="match_parent"

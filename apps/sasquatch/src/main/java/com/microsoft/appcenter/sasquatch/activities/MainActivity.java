@@ -49,9 +49,9 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.appcenter.sasquatch.activities.EventActivity.LATENCY_SECONDS_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,36 +70,21 @@ public class MainActivity extends AppCompatActivity {
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
-
-    private final int DATABASE_SIZE_MULTIPLE = 4096;
-
     private static final String SENDER_ID = "177539951155";
-
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
-
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
-
-    private static final int[] sLatencyValues = {
-            (int)TimeUnit.SECONDS.toSeconds(3),
-            (int)TimeUnit.MINUTES.toSeconds(10),
-            (int)TimeUnit.HOURS.toSeconds(1),
-            (int)TimeUnit.HOURS.toSeconds(8),
-            (int)TimeUnit.DAYS.toSeconds(1)
-    };
-
     static SharedPreferences sSharedPreferences;
-
     @SuppressLint("StaticFieldLeak")
     static SasquatchAnalyticsListener sAnalyticsListener;
-
     @SuppressLint("StaticFieldLeak")
     static SasquatchCrashesListener sCrashesListener;
-
     static SasquatchPushListener sPushListener;
 
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
+
+    private final int DATABASE_SIZE_MULTIPLE = 4096;
 
     public static void setTextAttachment(String textAttachment) {
         SharedPreferences.Editor editor = sSharedPreferences.edit();
@@ -123,14 +108,19 @@ public class MainActivity extends AppCompatActivity {
         sCrashesListener.setFileAttachment(fileAttachment);
     }
 
-    native void setupNativeCrashesListener(String path);
-
     static void startAppCenter(Application application, String startTypeString) {
-        int position = MainActivity.sSharedPreferences.getInt(LATENCY_SECONDS_KEY, 0);
-        long latency = sLatencyValues[position];
-        try{
+        int latency = DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
+        if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
+            latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, 0);
+        }
+        try {
             //noinspection unchecked,JavaReflectionMemberAccess
-            Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, (int) latency);
+            boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, (int) latency);
+            if (result) {
+                Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(application, application.getString(R.string.analytics_transmission_interval_change_failed), Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception ignored) {
 
             /* Nothing to handle; this is reached if Analytics isn't being used. */
@@ -162,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
     public static void setUserId(String userId) {
         AppCenter.setUserId(userId);
     }
+
+    native void setupNativeCrashesListener(String path);
 
     @SuppressWarnings("deprecation")
     private void setSenderId() {
