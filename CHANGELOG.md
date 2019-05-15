@@ -2,15 +2,19 @@
 
 ## Version 2.0.1 (Under development)
 
-### App Center
+### AppCenter
 
 * **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
 
-### App Center Auth
+### AppCenterAnalytics
+
+* **[Feature]** Support setting latency of sending events via `Analytics.setTransmissionInterval`.
+
+### AppCenterAuth
 
 * **[Fix]** Fix missing proguard rules so that the app does not have to specify them.
 
-### App Center Data
+### AppCenterData
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
