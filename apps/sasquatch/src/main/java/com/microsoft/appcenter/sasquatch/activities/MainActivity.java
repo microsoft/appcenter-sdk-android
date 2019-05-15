@@ -89,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchPushListener sPushListener;
 
-
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
