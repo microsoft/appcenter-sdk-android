@@ -49,6 +49,8 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
@@ -180,6 +182,47 @@ public class SettingsActivity extends AppCompatActivity {
                         Analytics.resume();
                     }
                     sAnalyticsPaused = enabled;
+                }
+            });
+            int interval = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+            initClickableSetting(R.string.appcenter_analytics_transmission_interval_key, getTransmissionInterval(interval), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+
+                    /* Initialize views for dialog. */
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+                    input.setHint(R.string.time_interval_in_seconds);
+                    input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS)));
+                    input.setSelection(input.getText().length());
+
+                    /* Display dialog. */
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.appcenter_analytics_transmission_interval_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    int newInterval;
+                                    try {
+                                        newInterval = Integer.parseInt(input.getText().toString());
+                                    } catch (NumberFormatException ignored) {
+                                        Toast.makeText(getActivity(), getActivity().getString(R.string.analytics_transmission_interval_invalid_value), Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+                                    if (newInterval == ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS) {
+                                        MainActivity.sSharedPreferences.edit().remove(ANALYTICS_TRANSMISSION_INTERVAL_KEY).apply();
+                                    } else {
+                                        MainActivity.sSharedPreferences.edit().putInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, newInterval).apply();
+                                    }
+                                    String intervalString = getTransmissionInterval(newInterval);
+                                    Toast.makeText(getActivity(), intervalString, Toast.LENGTH_SHORT).show();
+                                    preference.setSummary(intervalString);
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
                 }
             });
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
@@ -767,6 +810,15 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putString(key, value);
             }
             editor.apply();
+        }
+
+        private String getTransmissionInterval(int interval) {
+            String sign = interval >= 0 ? "" : "-";
+            interval = Math.abs(interval);
+            int hours = interval / 60 / 60;
+            int minutes = interval / 60 - hours * 60;
+            int seconds = interval % 60;
+            return String.format(Locale.ENGLISH, getString(R.string.appcenter_analytics_transmission_interval_summary_format), sign, interval, sign, hours, minutes, seconds);
         }
 
         private boolean isFirebaseEnabled() {

@@ -50,6 +50,9 @@ import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
 
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
+
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "AppCenterSasquatch";
@@ -68,13 +71,13 @@ public class MainActivity extends AppCompatActivity {
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
-    private final int DATABASE_SIZE_MULTIPLE = 4096;
-
     private static final String SENDER_ID = "177539951155";
 
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
+    private static final int DATABASE_SIZE_MULTIPLE = 4096;
 
     static SharedPreferences sSharedPreferences;
 
@@ -124,6 +127,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static void startAppCenter(Application application, String startTypeString) {
+        if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
+            int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+            try {
+                boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, latency);
+                if (result) {
+                    Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(application, application.getString(R.string.analytics_transmission_interval_change_failed), Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception ignored) {
+
+                /* Nothing to handle; this is reached if Analytics isn't being used. */
+            }
+        }
         StartType startType = StartType.valueOf(startTypeString);
         if (startType == StartType.SKIP_START) {
             return;
