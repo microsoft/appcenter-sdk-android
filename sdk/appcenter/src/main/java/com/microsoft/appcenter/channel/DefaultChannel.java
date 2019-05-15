@@ -656,7 +656,7 @@ public class DefaultChannel implements Channel {
 
         /* Check if disabled with discarding logs. */
         if (mDiscardLogs) {
-            AppCenterLog.warn(LOG_TAG, "Channel is disabled, logs are discarded.");
+            AppCenterLog.warn(LOG_TAG, "Channel is disabled, the log is discarded.");
             if (groupState.mListener != null) {
                 groupState.mListener.onBeforeSending(log);
                 groupState.mListener.onFailure(log, new CancellationException());
