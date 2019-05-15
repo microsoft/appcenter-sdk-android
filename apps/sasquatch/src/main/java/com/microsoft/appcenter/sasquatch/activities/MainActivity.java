@@ -70,14 +70,21 @@ public class MainActivity extends AppCompatActivity {
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
+
     private static final String SENDER_ID = "177539951155";
+
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
     static SharedPreferences sSharedPreferences;
+
     @SuppressLint("StaticFieldLeak")
     static SasquatchAnalyticsListener sAnalyticsListener;
+
     @SuppressLint("StaticFieldLeak")
     static SasquatchCrashesListener sCrashesListener;
+
     static SasquatchPushListener sPushListener;
 
     static {
@@ -114,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
             latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, 0);
         }
         try {
+
             //noinspection unchecked,JavaReflectionMemberAccess
             boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, (int) latency);
             if (result) {
