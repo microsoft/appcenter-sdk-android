@@ -928,8 +928,8 @@ public class Analytics extends AbstractAppCenterService {
             return false;
         }
         if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-            AppCenterLog.error(LOG_TAG, String.format(Locale.getDefault(),
-                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day)",
+            AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH,
+                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day).",
                     MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
                     MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
                     TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
