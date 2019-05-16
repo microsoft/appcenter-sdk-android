@@ -2,23 +2,23 @@
 
 ## Version 2.0.1 (Under development)
 
-### AppCenter
+### App Center
 
 * **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
 
-### AppCenterAnalytics
+### App Center Analytics
 
 * **[Feature]** Support setting latency of sending events via `Analytics.setTransmissionInterval`.
 
-### AppCenterAuth
+### App Center Auth
 
 * **[Fix]** Fix missing proguard rules so that the app does not have to specify them.
 
-### AppCenterData
+### App Center Data
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
-### AppCenterDistribute
+### App Center Distribute
 
 * **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
 * **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
