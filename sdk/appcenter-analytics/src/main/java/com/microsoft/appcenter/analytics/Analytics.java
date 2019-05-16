@@ -216,7 +216,6 @@ public class Analytics extends AbstractAppCenterService {
      * @param seconds the latency of sending events to Analytics in seconds.
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove suppress once API used in jCenter variant.
     public static boolean setTransmissionInterval(int seconds) {
         return getInstance().setInstanceTransmissionInterval(seconds);
     }
