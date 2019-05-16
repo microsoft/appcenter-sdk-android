@@ -27,6 +27,9 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +51,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
-     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
+     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List, Date, Date)} when clearing.
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
@@ -212,6 +216,9 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
+        /* Listen for token refreshed to unblock sending logs after waiting for the token update. */
+        AuthTokenContext.getInstance().addListener(groupState);
+
         /*
          * If no app secret, don't resume sending App Center logs from storage.
          * If the ingestion is alternate implementation we assume One Collector
@@ -235,6 +242,7 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
+            AuthTokenContext.getInstance().removeListener(groupState);
         }
 
         /* Call listeners so that they can react on group removed. */
@@ -408,7 +416,7 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs);
+        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs, null, null);
         if (logs.size() > 0 && groupState.mListener != null) {
             for (Log log : logs) {
                 groupState.mListener.onBeforeSending(log);
@@ -453,50 +461,81 @@ public class DefaultChannel implements Channel {
             return;
         }
 
-        /* Get a batch from Persistence. */
-        final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
+        /* Get auth token. */
+        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        List<AuthTokenInfo> authTokenHistory = authTokenContext.getAuthTokenValidityList();
+        ListIterator<AuthTokenInfo> iterator = authTokenHistory.listIterator();
+        while (iterator.hasNext()) {
+            AuthTokenInfo authTokenInfo = iterator.next();
+            final String authToken;
+            Date startTime = null;
+            Date endTime = null;
+            if (authTokenInfo != null) {
+                authToken = authTokenInfo.getAuthToken();
+                startTime = authTokenInfo.getStartTime();
+                endTime = authTokenInfo.getEndTime();
 
-        /* Decrement counter. */
-        groupState.mPendingLogCount -= maxFetch;
+                /* Check if token is about to expired or about to expire, and refresh it if necessary. */
+                authTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+            } else {
+                authToken = null;
+            }
 
-        /* Nothing more to do if no logs. */
-        if (batchId == null) {
+            /* Get a batch from Persistence. */
+            final List<Log> batch = new ArrayList<>(maxFetch);
+            final int stateSnapshot = mCurrentState;
+            final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, startTime, endTime);
+
+            /* Decrement counter. */
+            groupState.mPendingLogCount -= batch.size();
+
+            /* If there are no logs to send. */
+            if (batchId == null) {
+
+                /* Remove oldest token if there are no more logs. */
+                if (iterator.previousIndex() == 0 && endTime != null &&
+                        mPersistence.countLogs(endTime) == 0) {
+                    authTokenContext.removeOldestTokenIfMatching(authToken);
+                }
+                continue;
+            }
+            AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
+
+            /* Call group listener before sending logs to ingestion service. */
+            if (groupState.mListener != null) {
+                for (Log log : batch) {
+                    groupState.mListener.onBeforeSending(log);
+                }
+            }
+
+            /* Remember this batch. */
+            groupState.mSendingBatches.put(batchId, batch);
+
+            /*
+             * Due to bug on old Android versions (verified on 4.0.4),
+             * if we start an async task from here, i.e. the async handler thread,
+             * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
+             * instead of using main thread as advertised in Javadoc (and its a static field there).
+             *
+             * Our SDK guards against an application that would make a first async task in non UI
+             * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
+             * with our wrong handler to avoid creating bugs in the application code since we are
+             * a library.
+             *
+             * So make sure we execute the async task from UI thread to avoid any issue.
+             */
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    sendLogs(groupState, stateSnapshot, batch, batchId, authToken);
+                }
+            });
             return;
         }
-        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-        /* Call group listener before sending logs to ingestion service. */
-        if (groupState.mListener != null) {
-            for (Log log : batch) {
-                groupState.mListener.onBeforeSending(log);
-            }
-        }
-
-        /* Remember this batch. */
-        groupState.mSendingBatches.put(batchId, batch);
-
-        /*
-         * Due to bug on old Android versions (verified on 4.0.4),
-         * if we start an async task from here, i.e. the async handler thread,
-         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-         * instead of using main thread as advertised in Javadoc (and its a static field there).
-         *
-         * Our SDK guards against an application that would make a first async task in non UI
-         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-         * with our wrong handler to avoid creating bugs in the application code since we are
-         * a library.
-         *
-         * So make sure we execute the async task from UI thread to avoid any issue.
-         */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                sendLogs(groupState, stateSnapshot, batch, batchId);
-            }
-        });
+        /* Some corrupted entries may be deleted, reset the counter to actual amount of logs pending to be sent. */
+        groupState.mPendingLogCount = mPersistence.countLogs(groupState.mName);
     }
 
     /**
@@ -508,16 +547,16 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId, String authToken) {
         if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(authToken, mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload) {
+                public void onCallSucceeded(String payload, Map<String, String> headers) {
                     mAppCenterHandler.post(new Runnable() {
 
                         @Override
@@ -617,7 +656,7 @@ public class DefaultChannel implements Channel {
 
         /* Check if disabled with discarding logs. */
         if (mDiscardLogs) {
-            AppCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
+            AppCenterLog.warn(LOG_TAG, "Channel is disabled, the log is discarded.");
             if (groupState.mListener != null) {
                 groupState.mListener.onBeforeSending(log);
                 groupState.mListener.onFailure(log, new CancellationException());
@@ -750,7 +789,7 @@ public class DefaultChannel implements Channel {
      * State for a specific log group.
      */
     @VisibleForTesting
-    class GroupState {
+    class GroupState extends AbstractTokenContextListener {
 
         /**
          * Group name.
@@ -837,6 +876,11 @@ public class DefaultChannel implements Channel {
             mMaxParallelBatches = maxParallelBatches;
             mIngestion = ingestion;
             mListener = listener;
+        }
+
+        @Override
+        public void onNewAuthToken(String authToken) {
+            checkPendingLogs(this);
         }
     }
 }

@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -17,7 +18,6 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
-import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -33,10 +33,11 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
+import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
-import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -72,8 +73,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static boolean sAnalyticsPaused;
 
+    private static String sInitialStartType;
+
     @Override
-    @SuppressWarnings("deprecation")
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sNeedRestartOnStartTypeUpdate = !MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString()).equals(StartType.SKIP_START.toString());
@@ -82,7 +84,6 @@ public class SettingsActivity extends AppCompatActivity {
                 .commit();
     }
 
-    @SuppressWarnings("deprecation")
     public static class SettingsFragment extends android.preference.PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         private static final String UUID_FORMAT_REGEX = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
@@ -260,15 +261,47 @@ public class SettingsActivity extends AppCompatActivity {
                     return Push.isEnabled().get();
                 }
             });
+
+            /* Auth. */
+            initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return Auth.isEnabled().get();
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Auth.setEnabled(enabled);
+                }
+            });
+
+            /* Data. */
+            initCheckBoxSetting(R.string.appcenter_data_state_key, R.string.appcenter_data_state_summary_enabled, R.string.appcenter_data_state_summary_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return Data.isEnabled().get();
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Data.setEnabled(enabled);
+                }
+            });
+
+            /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
                 @Override
-                @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "JavaReflectionInvocation"})
+                @SuppressWarnings("unchecked")
                 public void setEnabled(boolean enabled) {
                     try {
                         if (enabled) {
                             Push.enableFirebaseAnalytics(getActivity());
                         } else {
+
+                            /* TODO remove reflection once vanilla build variant is removed and merged with firebase build variant. */
                             try {
                                 Class firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
                                 Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, getActivity());
@@ -338,7 +371,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
 
                 @Override
-                @SuppressWarnings("unchecked")
                 public boolean isEnabled() {
                     return sEventFilterStarted && EventFilter.isEnabled().get();
                 }
@@ -419,8 +451,11 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            String initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
-            initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
+            final String startType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            if (sInitialStartType == null) {
+                sInitialStartType = startType;
+            }
+            initChangeableSetting(R.string.appcenter_start_type_key, startType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -432,12 +467,17 @@ public class SettingsActivity extends AppCompatActivity {
                     preference.setSummary(MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, null));
 
                     /* Try to start now, this tests double calls log an error as well as valid call if previous type was none. */
+                    String logUrl = MainActivity.sSharedPreferences.getString(LOG_URL_KEY, MainActivity.getLogUrl(getActivity(), startValue));
+                    if (!TextUtils.isEmpty(logUrl)) {
+                        AppCenter.setLogUrl(logUrl);
+                    }
                     MainActivity.startAppCenter(getActivity().getApplication(), startValue);
 
                     /* Invite to restart app to take effect. */
                     if (sNeedRestartOnStartTypeUpdate) {
                         Toast.makeText(getActivity(), R.string.appcenter_start_type_changed, Toast.LENGTH_SHORT).show();
                     } else {
+                        sInitialStartType = startValue;
                         sNeedRestartOnStartTypeUpdate = true;
                     }
                     return true;
@@ -478,6 +518,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
             initClickableSetting(R.string.clear_crash_user_confirmation_key, new Preference.OnPreferenceClickListener() {
 
+                @SuppressLint("VisibleForTests")
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
                     SharedPreferences appCenterPreferences = getActivity().getSharedPreferences("AppCenter", Context.MODE_PRIVATE);
@@ -486,7 +527,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultLogUrl = getString(R.string.log_url);
+            String defaultLogUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
@@ -521,9 +562,9 @@ public class SettingsActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setDefaultUrl();
-                                    if (!TextUtils.isEmpty(getString(R.string.log_url))) {
-                                        AppCenter.setLogUrl(getString(R.string.log_url));
+                                    String defaultUrl = setDefaultUrl();
+                                    if (!TextUtils.isEmpty(defaultUrl)) {
+                                        AppCenter.setLogUrl(defaultUrl);
                                     }
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
@@ -533,9 +574,11 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setDefaultUrl() {
+                private String setDefaultUrl() {
                     setKeyValue(LOG_URL_KEY, null);
-                    toastUrlChange(getString(R.string.log_url));
+                    String logUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
+                    toastUrlChange(logUrl);
+                    return logUrl;
                 }
 
                 private void toastUrlChange(String url) {

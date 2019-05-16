@@ -32,9 +32,11 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -286,7 +288,6 @@ public class AppCenter {
      *
      * @return true if configured, false otherwise.
      */
-    @SuppressWarnings("WeakerAccess")
     public static boolean isConfigured() {
         return getInstance().isInstanceConfigured();
     }
@@ -298,7 +299,6 @@ public class AppCenter {
      * @param application Your application object.
      * @param appSecret   A unique and secret key used to identify the application.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application, String appSecret) {
         getInstance().configureInstanceWithRequiredAppSecret(application, appSecret);
     }
@@ -309,7 +309,6 @@ public class AppCenter {
      *
      * @param application Your application object.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void configure(Application application) {
         getInstance().configureInstance(application, null, true);
     }
@@ -415,7 +414,6 @@ public class AppCenter {
      * @param storageSizeInBytes New size for the SQLite db in bytes.
      * @return Future with true result if succeeded, otherwise future with false result.
      */
-    @SuppressWarnings("WeakerAccess") // TODO remove annotation when updating demo app for release.
     public static AppCenterFuture<Boolean> setMaxStorageSize(long storageSizeInBytes) {
         return getInstance().setInstanceMaxStorageSizeAsync(storageSizeInBytes);
     }
@@ -749,6 +747,7 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
+        AuthTokenContext.initialize(mApplication);
 
         /* Initialize session storage. */
         SessionContext.getInstance();
@@ -775,8 +774,10 @@ public class AppCenter {
         mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
         if (mLogUrl != null) {
             if (mAppSecret != null) {
+                AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + mLogUrl);
                 mChannel.setLogUrl(mLogUrl);
             } else {
+                AppCenterLog.info(LOG_TAG, "The log url of One Collector endpoint has been changed to " + mLogUrl);
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
@@ -926,6 +927,11 @@ public class AppCenter {
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
+
+            /* Finish auth token context initialization. */
+            AuthTokenContext.getInstance().finishInitialization();
+
+            /* Send start service log. */
             for (AppCenterService service : updatedServices) {
                 mStartedServicesNamesToLog.add(service.getServiceName());
             }

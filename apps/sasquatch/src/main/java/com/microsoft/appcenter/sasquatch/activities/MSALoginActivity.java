@@ -28,13 +28,10 @@ import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
-import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -156,7 +153,6 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 failSignIn(errorCode, description);
             }
@@ -193,7 +189,6 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 clearCookies();
                 failSignOut(errorCode, description);
@@ -209,7 +204,6 @@ public class MSALoginActivity extends AppCompatActivity {
         mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
     }
 
-    @SuppressWarnings("deprecation")
     private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -324,7 +318,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload) {
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString(USER_ID);
@@ -368,7 +362,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload) {
+                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter;
+package com.microsoft.appcenter.utils.storage;
 
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.Rule;
 import org.junit.Test;

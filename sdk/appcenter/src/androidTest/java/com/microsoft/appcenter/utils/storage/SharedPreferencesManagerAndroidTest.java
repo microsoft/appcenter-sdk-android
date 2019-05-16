@@ -5,16 +5,12 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,20 +20,11 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-@SuppressWarnings("unused")
-@SmallTest
-@RunWith(AndroidJUnit4.class)
 public class SharedPreferencesManagerAndroidTest {
-
-    /**
-     * Context instance.
-     */
-    @SuppressLint("StaticFieldLeak")
-    private static Context sContext;
 
     @BeforeClass
     public static void setUpClass() {
-        sContext = InstrumentationRegistry.getTargetContext();
+        Context sContext = InstrumentationRegistry.getTargetContext();
         SharedPreferencesManager.initialize(sContext);
     }
 
@@ -47,7 +34,7 @@ public class SharedPreferencesManagerAndroidTest {
         /* Clean up shared preferences. */
         try {
             for (SharedPreferencesTestData data : generateSharedPreferenceData()) {
-                String key = data.value.getClass().getCanonicalName();
+                String key = data.value.getClass().getName();
                 SharedPreferencesManager.remove(key);
             }
         } catch (NoSuchMethodException ignored) {
@@ -121,7 +108,7 @@ public class SharedPreferencesManagerAndroidTest {
         for (SharedPreferencesTestData data : generateSharedPreferenceData()) {
 
             /* Put value to shared preferences. */
-            String key = data.value.getClass().getCanonicalName();
+            String key = data.value.getClass().getName();
             data.putMethod.invoke(null, key, data.value);
 
             /* Get value from shared preferences. */

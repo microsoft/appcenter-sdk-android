@@ -20,14 +20,15 @@ public interface Ingestion extends Closeable {
     /**
      * Send logs to the Ingestion service.
      *
+     * @param authToken       value of authorization token (optional).
      * @param appSecret       a unique and secret key used to identify the application.
      * @param installId       install identifier.
      * @param logContainer    payload.
      * @param serviceCallback the async ServiceCallback to handle successful and failed responses.
      * @return the {@link ServiceCall} object
-     * @throws IllegalArgumentException thrown if callback is null
+     * @throws IllegalArgumentException thrown if callback is null.
      */
-    ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
+    ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException;
 
     /**
      * Update log URL.

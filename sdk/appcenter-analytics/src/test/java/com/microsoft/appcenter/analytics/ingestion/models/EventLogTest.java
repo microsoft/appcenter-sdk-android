@@ -5,17 +5,13 @@
 
 package com.microsoft.appcenter.analytics.ingestion.models;
 
-import com.microsoft.appcenter.analytics.EventProperties;
-import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 

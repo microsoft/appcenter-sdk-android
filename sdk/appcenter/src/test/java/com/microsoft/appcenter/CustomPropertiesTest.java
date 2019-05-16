@@ -49,11 +49,7 @@ public class CustomPropertiesTest {
 
         /* Null key. */
         String nullKey = null;
-        properties.set(nullKey, string);
-        properties.set(nullKey, date);
-        properties.set(nullKey, number);
-        properties.set(nullKey, bool);
-        properties.clear(nullKey);
+        properties.set(nullKey, string).set(nullKey, date).set(nullKey, number).set(nullKey, bool).clear(nullKey);
         assertEquals(0, properties.getProperties().size());
         verifyStatic(times(5));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
@@ -232,9 +228,9 @@ public class CustomPropertiesTest {
     }
 
     @Test
-    public void maxPropertiesCount(){
+    public void maxPropertiesCount() {
         CustomProperties properties = new CustomProperties();
-        for (int i = 0; i < CustomProperties.MAX_PROPERTIES_COUNT; i++){
+        for (int i = 0; i < CustomProperties.MAX_PROPERTIES_COUNT; i++) {
             properties.set("key" + i, "value" + i);
         }
         assertEquals(CustomProperties.MAX_PROPERTIES_COUNT, properties.getProperties().size());

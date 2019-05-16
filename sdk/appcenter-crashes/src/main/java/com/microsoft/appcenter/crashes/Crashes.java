@@ -12,10 +12,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.SessionContext;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -35,9 +33,10 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.SessionContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -58,7 +57,6 @@ import java.util.UUID;
 /**
  * Crashes service.
  */
-@SuppressWarnings("WeakerAccess")
 public class Crashes extends AbstractAppCenterService {
 
     /**
@@ -513,7 +511,7 @@ public class Crashes extends AbstractAppCenterService {
         queueException(new ExceptionModelBuilder() {
 
             @Override
-            public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
+            public Exception buildExceptionModel() {
                 return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
             }
         }, properties);
@@ -525,11 +523,11 @@ public class Crashes extends AbstractAppCenterService {
      * @param modelException An handled exception already in JSON model form.
      * @param properties     optional properties.
      */
-    synchronized void queueException(@NonNull final com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
+    synchronized void queueException(@NonNull final Exception modelException, Map<String, String> properties) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
-            public com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel() {
+            public Exception buildExceptionModel() {
                 return modelException;
             }
         }, properties);
@@ -777,7 +775,7 @@ public class Crashes extends AbstractAppCenterService {
                 if (file.length() > 0) {
                     try {
                         throwable = FileManager.readObject(file);
-                    } catch (IOException | ClassNotFoundException | StackOverflowError e) {
+                    } catch (IOException | ClassNotFoundException | RuntimeException | StackOverflowError e) {
                         AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
                     }
                 }
@@ -930,7 +928,7 @@ public class Crashes extends AbstractAppCenterService {
      * @throws JSONException if an error occurred during JSON serialization of modelException.
      * @throws IOException   if an error occurred while accessing the file system.
      */
-    UUID saveUncaughtException(Thread thread, Throwable throwable, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException) throws JSONException, IOException {
+    UUID saveUncaughtException(Thread thread, Throwable throwable, Exception modelException) throws JSONException, IOException {
 
         /* Ignore call if Crash is disabled. */
         if (!Crashes.isEnabled().get()) {
@@ -1081,7 +1079,7 @@ public class Crashes extends AbstractAppCenterService {
          *
          * @return model exception.
          */
-        com.microsoft.appcenter.crashes.ingestion.models.Exception buildExceptionModel();
+        Exception buildExceptionModel();
     }
 
     /**

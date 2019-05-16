@@ -33,9 +33,9 @@ import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -148,7 +148,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -211,6 +211,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param listener The custom analytics listener.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);

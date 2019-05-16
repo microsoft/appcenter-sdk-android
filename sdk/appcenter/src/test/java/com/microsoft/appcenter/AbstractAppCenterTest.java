@@ -17,6 +17,7 @@ import android.os.Looper;
 
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
@@ -70,7 +71,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         ShutdownHelper.class,
         CustomProperties.class,
         InstrumentationRegistryHelper.class,
-        NetworkStateHelper.class
+        NetworkStateHelper.class,
+        JSONUtils.class
 })
 public class AbstractAppCenterTest {
 
@@ -127,6 +129,7 @@ public class AbstractAppCenterTest {
         mockStatic(DeviceInfoHelper.class);
         mockStatic(InstrumentationRegistryHelper.class);
         mockStatic(NetworkStateHelper.class);
+        mockStatic(JSONUtils.class);
 
         /* Mock handlers. */
         Handler handler = mock(Handler.class);
@@ -181,7 +184,7 @@ public class AbstractAppCenterTest {
 
         private static DummyService sharedInstance;
 
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
         public static DummyService getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new DummyService());
@@ -218,7 +221,7 @@ public class AbstractAppCenterTest {
 
         private static AnotherDummyService sharedInstance;
 
-        @SuppressWarnings("WeakerAccess")
+        @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
         public static AnotherDummyService getInstance() {
             if (sharedInstance == null) {
                 sharedInstance = spy(new AnotherDummyService());

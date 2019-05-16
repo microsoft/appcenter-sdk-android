@@ -14,6 +14,7 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
 import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
+import com.microsoft.appcenter.sasquatch.activities.DataActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
@@ -44,6 +45,8 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+        sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
+        sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

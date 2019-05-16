@@ -15,17 +15,21 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.UserIdContext;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -105,6 +109,21 @@ public class Push extends AbstractAppCenterService {
     private boolean mTokenNeedsRegistrationInForeground;
 
     /**
+     * The last value of push token.
+     */
+    private String mLatestPushToken;
+
+    /**
+     * Authorization listener for {@link AuthTokenContext}.
+     */
+    private AuthTokenContext.Listener mAuthListener;
+
+    /**
+     * User id context listener for {@link UserIdContext}.
+     */
+    private UserIdContext.Listener mUserListener;
+
+    /**
      * Init.
      */
     private Push() {
@@ -117,7 +136,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized Push getInstance() {
         if (sInstance == null) {
             sInstance = new Push();
@@ -136,7 +154,6 @@ public class Push extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -149,7 +166,6 @@ public class Push extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -159,7 +175,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushListener push listener.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setListener(PushListener pushListener) {
         getInstance().setInstanceListener(pushListener);
     }
@@ -172,7 +187,7 @@ public class Push extends AbstractAppCenterService {
      * @param activity activity calling {@link Activity#onNewIntent(Intent)} (pass this).
      * @param intent   intent from {@link Activity#onNewIntent(Intent)}.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("JavadocReference")
     public static void checkLaunchedFromNotification(Activity activity, Intent intent) {
         getInstance().checkPushInActivityIntent(activity, intent);
     }
@@ -182,14 +197,12 @@ public class Push extends AbstractAppCenterService {
      * Sender ID of your project before starting the Push service.
      *
      * @param senderId sender ID of your project.
-     *
-     * @deprecated For all the Android developers using App Center, there is a change coming where 
+     * @deprecated For all the Android developers using App Center, there is a change coming where
      * Firebase SDK is required to use Push Notifications. For Android P, its scheduled at
      * the release date for the latest OS version. For all other versions of Android, it will be
      * required after April 2019. Please follow the migration guide at https://aka.ms/acfba.
      */
     @Deprecated
-    @SuppressWarnings("WeakerAccess")
     public static void setSenderId(@SuppressWarnings("SameParameterValue") String senderId) {
         getInstance().instanceSetSenderId(senderId);
     }
@@ -199,7 +212,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         AppCenterLog.debug(LOG_TAG, "Enabling Firebase analytics collection.");
         getInstance().setFirebaseAnalyticsEnabled(context, true);
@@ -228,13 +240,25 @@ public class Push extends AbstractAppCenterService {
     /**
      * Enqueue a push installation log.
      *
-     * @param pushToken the push token value
+     * @param pushToken the push token value.
+     * @param userId    the user identifier value.
      */
-    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+    @WorkerThread
+    private void enqueuePushInstallationLog(@NonNull String pushToken, String userId) {
         PushInstallationLog log = new PushInstallationLog();
         log.setPushToken(pushToken);
-        log.setUserId(UserIdContext.getInstance().getUserId());
+        log.setUserId(userId);
         mChannel.enqueue(log, PUSH_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Enqueue a push installation log.
+     *
+     * @param pushToken the push token value.
+     */
+    @WorkerThread
+    private void enqueuePushInstallationLog(@NonNull String pushToken) {
+        enqueuePushInstallationLog(pushToken, UserIdContext.getInstance().getUserId());
     }
 
     /**
@@ -245,6 +269,7 @@ public class Push extends AbstractAppCenterService {
     synchronized void onTokenRefresh(final String pushToken) {
         if (pushToken != null) {
             AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+            mLatestPushToken = pushToken;
             post(new Runnable() {
 
                 @Override
@@ -263,7 +288,12 @@ public class Push extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
+            AuthTokenContext.getInstance().addListener(mAuthListener);
+            UserIdContext.getInstance().addListener(mUserListener);
             registerPushToken();
+        } else {
+            AuthTokenContext.getInstance().removeListener(mAuthListener);
+            UserIdContext.getInstance().removeListener(mUserListener);
         }
     }
 
@@ -295,6 +325,24 @@ public class Push extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        mAuthListener = new AbstractTokenContextListener() {
+
+            @Override
+            public void onNewUser(UserInformation userInfo) {
+                if (mLatestPushToken != null) {
+                    enqueuePushInstallationLog(mLatestPushToken);
+                }
+            }
+        };
+        mUserListener = new UserIdContext.Listener() {
+
+            @Override
+            public void onNewUserId(String userId) {
+                if (mLatestPushToken != null) {
+                    enqueuePushInstallationLog(mLatestPushToken, userId);
+                }
+            }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (FirebaseUtils.isFirebaseAvailable() && !mFirebaseAnalyticsEnabled) {
             AppCenterLog.debug(LOG_TAG, "Disabling Firebase analytics collection by default.");
@@ -313,7 +361,6 @@ public class Push extends AbstractAppCenterService {
      * We can miss onCreate onStarted depending on how developers init the SDK.
      * So look for multiple events.
      */
-
     @Override
     public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
         checkPushInActivityIntent(activity);

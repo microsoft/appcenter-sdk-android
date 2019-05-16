@@ -12,21 +12,26 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.TextUtils;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.ingestion.models.Log;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
+import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
@@ -41,6 +46,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -83,7 +89,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
         SharedPreferencesManager.class,
         FirebaseInstanceId.class,
         FirebaseAnalytics.class,
-        HandlerUtils.class
+        HandlerUtils.class,
+        CryptoUtils.class,
+        JSONUtils.class,
+        TextUtils.class,
+        UserIdContext.class,
+        AuthTokenContext.class
 })
 public class PushTest {
 
@@ -171,6 +182,21 @@ public class PushTest {
 
         /* Mock package manager. */
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
+
+        /* Mock text, JSON and crypto utils. */
+        mockStatic(JSONUtils.class);
+        mockStatic(CryptoUtils.class);
+        when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mock(CryptoUtils.class));
+        mockStatic(TextUtils.class);
+        when(TextUtils.equals(any(CharSequence.class), any(CharSequence.class))).then(new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) {
+                CharSequence a = (CharSequence) invocation.getArguments()[0];
+                CharSequence b = (CharSequence) invocation.getArguments()[1];
+                return a == b || (a != null && a.equals(b));
+            }
+        });
     }
 
     private void start(Push push, Channel channel) {
@@ -265,7 +291,7 @@ public class PushTest {
         verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(true);
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @Test
     public void verifyEnableFirebaseAnalytics() {
         Push push = Push.getInstance();
@@ -276,7 +302,7 @@ public class PushTest {
         verify(mFirebaseAnalyticsInstance).setAnalyticsCollectionEnabled(false);
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @Test
     public void verifyEnableFirebaseAnalyticsBeforeStart() {
         Push push = Push.getInstance();
@@ -450,7 +476,7 @@ public class PushTest {
 
     @Test
     public void receivedPushInBackgroundWithoutFirebaseWithoutDebugLog() {
-        when(AppCenterLog.getLogLevel()).thenReturn(Log.INFO);
+        when(AppCenterLog.getLogLevel()).thenReturn(android.util.Log.INFO);
         IllegalStateException exception = new IllegalStateException();
         when(FirebaseInstanceId.getInstance()).thenThrow(exception);
         Intent pushIntent = mock(Intent.class);
@@ -721,6 +747,191 @@ public class PushTest {
         assertTrue(Push.isEnabled().get());
         verifyStatic();
         FirebaseAnalytics.getInstance(any(Context.class));
+    }
+
+    @Test
+    public void verifyEnqueueCalledOnNewAuthToken() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyEnqueueCalledOnNewUserId() {
+
+        /* When we start Push and got a token. */
+        String mockUserId1 = "userId1";
+        String mockUserId2 = "userId2";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+
+        /* Then we send the first log without userId. */
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), anyString(), anyInt());
+        assertNull(log.getValue().getUserId());
+
+        /* When we update userId, we send another log. */
+        UserIdContext.getInstance().setUserId(mockUserId1);
+        verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId1);
+
+        /* When we update to the same userId value, then no new log sent. */
+        UserIdContext.getInstance().setUserId(mockUserId1);
+        verify(channel, times(2)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId1);
+
+        /* When we actually update the userId, a new log is sent. */
+        UserIdContext.getInstance().setUserId(mockUserId2);
+        verify(channel, times(3)).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(log.getValue().getUserId(), mockUserId2);
+
+        /* When we remove userId, we re-send log without userId. */
+        UserIdContext.getInstance().setUserId(null);
+        verify(channel, times(4)).enqueue(log.capture(), anyString(), anyInt());
+        assertNull(log.getValue().getUserId());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledWhileTokenIsNull() {
+
+        /* When we start and somehow get null token. */
+        String mockUserId = "userId";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh(null);
+
+        /* Then we don't send a log. */
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+
+        /* Updating userId before we get token does not send a log. */
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+
+        /* When we get token update (after userId set). */
+        push.onTokenRefresh("push-token");
+
+        /* Then we send log with current userId. */
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), anyString(), anyInt());
+        assertEquals(mockUserId, log.getValue().getUserId());
+    }
+
+    @Test
+    public void verifyEnqueueCalledAnonymouslyOnClearToken() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledOnTheSameUser() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyEnqueueCalledOnNewUser() {
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        push.onTokenRefresh("push-token");
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        AuthTokenContext.getInstance().setAuthToken("new-token", "new-id", mock(Date.class));
+        verify(channel, times(3)).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledOnNewAuthTokenBeforeRegistration() {
+        String mockUserId = UUIDUtils.randomUUID().toString();
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledOnPushDisabled() {
+        String mockUserId = UUIDUtils.randomUUID().toString();
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        Push.setEnabled(false);
+        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockHomeId = UUIDUtils.randomUUID().toString();
+        AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
+        UserIdContext.getInstance().setUserId(mockUserId);
+        verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
+    }
+
+    @Test
+    public void verifyCalledListenerAfterStart() {
+
+        /* When we start push being enabled. */
+        ArgumentCaptor<UserIdContext.Listener> userIdContextArgument = ArgumentCaptor.forClass(UserIdContext.Listener.class);
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        UserIdContext.Listener currentUserIdContextListener;
+        AuthTokenContext.Listener currentAuthTokenContextListener;
+        UserIdContext userIdContext = mock(UserIdContext.class);
+        AuthTokenContext authTokenContext = mock(AuthTokenContext.class);
+        mockStatic(UserIdContext.class);
+        mockStatic(AuthTokenContext.class);
+        when(UserIdContext.getInstance()).thenReturn(userIdContext);
+        when(AuthTokenContext.getInstance()).thenReturn(authTokenContext);
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+
+        /* Then push set up a listener on user and auth contexts. */
+        verify(userIdContext).addListener(userIdContextArgument.capture());
+        verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
+        currentUserIdContextListener = userIdContextArgument.getValue();
+        verify(authTokenContext).addListener(authTokenArgument.capture());
+        verify(authTokenContext, never()).removeListener(any(AuthTokenContext.Listener.class));
+        currentAuthTokenContextListener = authTokenArgument.getValue();
+
+        /* When push is disabled. */
+        push.applyEnabledState(false);
+
+        /* Then listeners are removed. (And thus not added more than once in total). */
+        verify(userIdContext).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext).removeListener(eq(currentUserIdContextListener));
+        verify(authTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext).removeListener(eq(currentAuthTokenContextListener));
+
+        /* When re-enabling push. */
+        push.applyEnabledState(true);
+
+        /* Then we re-register listener (thus twice in total). And thus we didn't remove more than once total. */
+        verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
+        verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
+        verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext).removeListener(any(AuthTokenContext.Listener.class));
     }
 
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {

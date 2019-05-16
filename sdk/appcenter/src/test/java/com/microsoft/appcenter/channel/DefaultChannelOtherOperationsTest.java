@@ -17,6 +17,7 @@ import com.microsoft.appcenter.utils.UUIDUtils;
 import org.junit.Test;
 import org.mockito.Matchers;
 
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -39,7 +40,6 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTest {
 
     @Test
-    @SuppressWarnings("unchecked")
     public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion, mAppCenterHandler);
@@ -50,8 +50,6 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
     @Test
     public void logCallbacks() {
-
-        @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         Channel.Listener listener = spy(new AbstractChannelListener());
@@ -98,7 +96,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any()))
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any(), any(Date.class), any(Date.class)))
                 .then(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -117,8 +115,6 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
-
-        @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 

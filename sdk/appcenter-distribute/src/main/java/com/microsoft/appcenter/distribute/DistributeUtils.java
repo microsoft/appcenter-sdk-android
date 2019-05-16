@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -47,7 +46,6 @@ class DistributeUtils {
     /**
      * Scheme used to open the native Android tester app.
      */
-    @VisibleForTesting
     static final String TESTER_APP_PACKAGE_NAME = "com.microsoft.hockeyapp.testerapp";
 
     /**

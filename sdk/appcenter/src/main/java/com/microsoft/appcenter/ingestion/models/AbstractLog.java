@@ -191,6 +191,7 @@ public abstract class AbstractLog implements Log {
         }
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

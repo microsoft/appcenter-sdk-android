@@ -47,6 +47,7 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIA
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -79,7 +80,7 @@ public class CryptoTest {
     private X509Certificate mRsaCert;
 
     @Mock
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.security.KeyPairGeneratorSpec.Builder mRsaBuilder;
 
     @Mock
@@ -95,7 +96,7 @@ public class CryptoTest {
     private CryptoUtils.ICipher mCipher;
 
     @Before
-    @SuppressWarnings({"deprecation", "WrongConstant"})
+    @SuppressWarnings({"deprecation", "WrongConstant", "RedundantSuppression"})
     public void setUp() throws Exception {
         when(mContext.getApplicationContext()).thenReturn(mContext);
         mockStatic(KeyStore.class);
@@ -419,17 +420,21 @@ public class CryptoTest {
 
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
 
-        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
-        assertEquals(1, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
+        CryptoUtils.CryptoHandlerEntry handlerEntry = cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE);
+        assertNotNull(handlerEntry);
+        assertEquals(0, handlerEntry.mAliasIndex);
+        assertEquals(1, handlerEntry.mAliasIndexMC);
 
         /* do it again for sets of dates which are the same */
         when(mKeyStore.getCreationDate(alias0MC)).thenReturn(d);
         when(mKeyStore.getCreationDate(alias1MC)).thenReturn(d);
 
         cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+        handlerEntry = cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE);
+        assertNotNull(handlerEntry);
 
-        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndex);
-        assertEquals(0, cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE).mAliasIndexMC);
+        assertEquals(0, handlerEntry.mAliasIndex);
+        assertEquals(0, handlerEntry.mAliasIndexMC);
     }
 }
 

@@ -123,8 +123,6 @@ public class NetworkStateHelper implements Closeable {
                         onNetworkLost(network);
                     }
                 };
-
-                //noinspection ConstantConditions
                 mConnectivityManager.registerNetworkCallback(request.build(), mNetworkCallback);
             } else {
                 mConnectivityReceiver = new ConnectivityReceiver();
@@ -145,7 +143,7 @@ public class NetworkStateHelper implements Closeable {
     }
 
     @NonNull
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private IntentFilter getOldIntentFilter() {
         return new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     }
@@ -177,7 +175,8 @@ public class NetworkStateHelper implements Closeable {
                 }
             }
         } else {
-            @SuppressWarnings("deprecation")
+
+            @SuppressWarnings({"deprecation", "RedundantSuppression"})
             NetworkInfo[] networks = mConnectivityManager.getAllNetworkInfo();
             if (networks == null) {
                 return false;
@@ -196,7 +195,7 @@ public class NetworkStateHelper implements Closeable {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void onNetworkAvailable(Network network) {
-        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is available.");
+        AppCenterLog.debug(LOG_TAG, "Network " + network + " is available.");
         if (mConnected.compareAndSet(false, true)) {
             notifyNetworkStateUpdated(true);
         }
@@ -207,10 +206,10 @@ public class NetworkStateHelper implements Closeable {
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void onNetworkLost(Network network) {
-        AppCenterLog.debug(LOG_TAG, "Network "+ network + " is lost.");
+        AppCenterLog.debug(LOG_TAG, "Network " + network + " is lost.");
         Network[] networks = mConnectivityManager.getAllNetworks();
         boolean noNetwork = networks == null || networks.length == 0 ||
-                Arrays.equals(networks, new Network[] { network });
+                Arrays.equals(networks, new Network[]{network});
         if (noNetwork && mConnected.compareAndSet(true, false)) {
             notifyNetworkStateUpdated(false);
         }

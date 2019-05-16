@@ -9,6 +9,8 @@ include ':sdk:appcenter'
 include ':sdk:appcenter-crashes'
 include ':sdk:appcenter-analytics'
 include ':sdk:appcenter-distribute'
+include ':sdk:appcenter-auth'
+include ':sdk:appcenter-data'
 include ':sdk:appcenter-push'
 include ':sdk:appcenter-rum'
 

@@ -29,7 +29,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -54,8 +53,8 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -69,15 +68,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
     static final long DOWNLOAD_ID = 42;
-
-
-    static final ArgumentMatcher<CheckDownloadTask> sCheckCompleteTask = new ArgumentMatcher<CheckDownloadTask>() {
-
-        @Override
-        public boolean matches(Object argument) {
-            return argument instanceof CheckDownloadTask;
-        }
-    };
 
     @Mock
     Uri mDownloadUrl;
@@ -179,7 +169,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
                 return mock(ServiceCall.class);
             }
         });
@@ -197,13 +187,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         mDownloadBeforeSemaphore = new Semaphore(0);
         mDownloadAfterSemaphore = new Semaphore(0);
         mDownloadTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<DownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof DownloadTask;
-            }
-        }), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
 
             @Override
             public DownloadTask answer(InvocationOnMock invocation) {
@@ -223,13 +207,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         });
 
         /* Mock remove download async task. */
-        when(AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<RemoveDownloadTask>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof RemoveDownloadTask;
-            }
-        }), Mockito.<Void>anyVararg())).then(new Answer<RemoveDownloadTask>() {
+        when(AsyncTaskUtils.execute(anyString(), isA(RemoveDownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<RemoveDownloadTask>() {
 
             @Override
             public RemoveDownloadTask answer(InvocationOnMock invocation) {
@@ -243,7 +221,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         mCheckDownloadBeforeSemaphore = new Semaphore(0);
         mCheckDownloadAfterSemaphore = new Semaphore(0);
         mCompletionTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg())).then(new Answer<CheckDownloadTask>() {
+        when(AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<CheckDownloadTask>() {
 
             @Override
             public CheckDownloadTask answer(InvocationOnMock invocation) {

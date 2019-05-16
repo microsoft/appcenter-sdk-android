@@ -34,6 +34,16 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public static final String METHOD_POST = "POST";
 
     /**
+     * HTTP DELETE method.
+     */
+    public static final String METHOD_DELETE = "DELETE";
+
+    /**
+     * Retry after milliseconds duration header.
+     */
+    static final String X_MS_RETRY_AFTER_MS_HEADER = "x-ms-retry-after-ms";
+
+    /**
      * Content type header key.
      */
     public static final String CONTENT_TYPE_KEY = "Content-Type";
@@ -61,7 +71,20 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     /**
      * List of ongoing call tasks.
      */
-    private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+    private final Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+
+    /**
+     * Indicates whether compression is enabled.
+     */
+    private final boolean mCompressionEnabled;
+
+    public DefaultHttpClient() {
+        this(true);
+    }
+
+    public DefaultHttpClient(boolean compressionEnabled) {
+        mCompressionEnabled = compressionEnabled;
+    }
 
     @VisibleForTesting
     Set<DefaultHttpClientCallTask> getTasks() {
@@ -70,7 +93,7 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
 
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, final ServiceCallback serviceCallback) {
-        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this);
+        final DefaultHttpClientCallTask task = new DefaultHttpClientCallTask(url, method, headers, callTemplate, serviceCallback, this, mCompressionEnabled);
         try {
             task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } catch (final RejectedExecutionException e) {
@@ -125,5 +148,10 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     public void reopen() {
 
         /* Nothing to do. */
+    }
+
+    @VisibleForTesting
+    boolean isCompressionEnabled() {
+        return mCompressionEnabled;
     }
 }

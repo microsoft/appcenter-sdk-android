@@ -63,22 +63,24 @@ repositories {
 dependencies {
     implementation "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:customtabs:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
     projectDependencyImplementation project(':sdk:appcenter-distribute')
     projectDependencyImplementation project(':sdk:appcenter-push')
     projectDependencyImplementation project(':sdk:appcenter-rum')
+    projectDependencyImplementation project(':sdk:appcenter-auth')
+    projectDependencyImplementation project(':sdk:appcenter-data')
 
-    def appCenterSdkVersion = "1.11.4"
-    //noinspection GradleDependency
+    def appCenterSdkVersion = "2.0.0"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-    //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
-    //noinspection GradleDependency
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-auth:${appCenterSdkVersion}"
+    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-data:${appCenterSdkVersion}"
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

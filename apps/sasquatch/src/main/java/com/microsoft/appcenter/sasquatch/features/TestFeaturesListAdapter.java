@@ -82,7 +82,7 @@ public class TestFeaturesListAdapter extends BaseAdapter {
 
         private final TextView mTextView2;
 
-        private ViewHolder(Class clazz, TextView view) {
+        private ViewHolder(@SuppressWarnings("SameParameterValue") Class clazz, TextView view) {
             this(clazz, view, null);
         }
 

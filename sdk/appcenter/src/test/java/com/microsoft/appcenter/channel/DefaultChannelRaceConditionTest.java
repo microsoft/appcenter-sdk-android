@@ -23,6 +23,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
@@ -40,7 +41,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 
 public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest {
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileSendingLogs() {
 
         /* Set up mocking. */
@@ -48,8 +49,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         doAnswer(new Answer<Void>() {
 
@@ -83,10 +84,10 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         afterCallSemaphore.acquireUninterruptibly();
 
         /* Verify ingestion not sent. */
-        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileHandlingIngestionSuccess() {
 
         /* Set up mocking. */
@@ -94,10 +95,10 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -106,7 +107,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded("");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
                         afterCallSemaphore.release();
                     }
                 }.start();
@@ -139,7 +140,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         verify(mockPersistence, never()).deleteLogs(anyString(), anyString());
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void disabledWhileHandlingIngestionFailure() {
 
         /* Set up mocking. */
@@ -147,11 +148,11 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         final Exception mockException = new IOException();
-        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -160,7 +161,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(mockException);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(mockException);
                         afterCallSemaphore.release();
                     }
                 }.start();

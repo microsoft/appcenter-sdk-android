@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="sign_in_reminder" tools:ignore="MissingTranslation">Please Sign In to Auth before getting user documents.</string>
+    <string name="document_type" tools:ignore="MissingTranslation">Document Type</string>
+    <string name="document_type_reminder" tools:ignore="MissingTranslation">Only User document can be added.</string>
+    <string name="alert_ok" tools:ignore="MissingTranslation">OK</string>
+    <string-array name="document_type_names" tools:ignore="InconsistentArrays,MissingTranslation">
+        <item>App</item>
+        <item>User</item>
+    </string-array>
+    <string-array name="data_ttls" tools:ignore="InconsistentArrays,MissingTranslation">
+        <item>Default</item>
+        <item>No Cache</item>
+        <item>2 seconds</item>
+        <item>Infinite</item>
+    </string-array>
+    <string name="new_user_document_title" tools:ignore="MissingTranslation">New User Document</string>
+    <string name="user_document_id_reminder" tools:ignore="MissingTranslation">Please input an user document id.</string>
+    <string name="user_document_content_label" tools:ignore="MissingTranslation">Contents:</string>
+    <string name="save_button" tools:ignore="MissingTranslation">Save</string>
+    <string name="app_document_detail_title" tools:ignore="MissingTranslation">Document Detail</string>
+    <string name="user_document_ttl_header" tools:ignore="MissingTranslation">Time to live</string>
+    <string name="get_document_failed" tools:ignore="MissingTranslation">Retrieving document with id: %s failed!</string>
+    <string name="get_document_success" tools:ignore="MissingTranslation">Retrieving document with id: %s succeeded!</string>
+    <string name="message_whether_success" tools:ignore="MissingTranslation">Successfully added user document.</string>
+    <string name="message_whether_error" tools:ignore="MissingTranslation">Failed to add user document.</string>
+    <string name="data_file_remove_success" tools:ignore="MissingTranslation">File remove success.</string>
+    <string name="data_file_remove_error" tools:ignore="MissingTranslation">File remove error.</string>
+    <string name="document_info_id_title" tools:ignore="MissingTranslation">Document ID</string>
+    <string name="document_info_partition_title" tools:ignore="MissingTranslation">Partition</string>
+    <string name="document_info_error_title" tools:ignore="MissingTranslation">Document Error</string>
+    <string name="document_info_content_title" tools:ignore="MissingTranslation">Document Content</string>
+    <string name="document_info_date_title" tools:ignore="MissingTranslation">Date</string>
+    <string name="document_info_state_title" tools:ignore="MissingTranslation">State</string>
+    <string name="document_info_cached_state" tools:ignore="MissingTranslation">Cached</string>
+    <string name="document_info_remote_state" tools:ignore="MissingTranslation">Remote</string>
+    <string name="document_info_refresh" tools:ignore="MissingTranslation">Refresh</string>
+</resources>

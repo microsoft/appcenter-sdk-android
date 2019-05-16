@@ -25,7 +25,6 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/transmission_target_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/transmission_target" />
@@ -90,7 +89,6 @@
                 android:visibility="gone" />
 
             <TextView
-                android:id="@+id/event_priority_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/event_priority" />

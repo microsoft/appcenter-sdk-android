@@ -7,7 +7,7 @@ package com.microsoft.appcenter.ingestion.models.one;
 
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
-import com.microsoft.appcenter.utils.UserIdContext;
+import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.util.Locale;
 import java.util.regex.Pattern;

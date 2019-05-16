@@ -6,8 +6,8 @@
 // Bintray constants
 
 ext {
-    siteUrl = 'https://github.com/Microsoft/AppCenter-SDK-Android'
-    gitUrl = 'https://github.com/Microsoft/AppCenter-SDK-Android.git'
+    siteUrl = 'https://github.com/microsoft/appcenter-sdk-android'
+    gitUrl = 'https://github.com/microsoft/appcenter-sdk-android.git'
     groupId = 'com.microsoft.appcenter'
 
     Properties properties = new Properties()

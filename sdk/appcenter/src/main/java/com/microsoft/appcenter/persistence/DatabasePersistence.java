@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,6 +63,12 @@ public class DatabasePersistence extends Persistence {
     static final int VERSION_TARGET_KEY = 3;
 
     /**
+     * Version of the schema that introduced persistence priority for logs.
+     */
+    @VisibleForTesting
+    static final int VERSION_PRIORITY_KEY = 4;
+
+    /**
      * Table name.
      */
     @VisibleForTesting
@@ -78,6 +85,13 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String COLUMN_LOG = "log";
+
+    /**
+     * Name of date column in the table.
+     * Value is stored in milliseconds.
+     */
+    @VisibleForTesting
+    static final String COLUMN_TIMESTAMP = "timestamp";
 
     /**
      * Name of target token column in the table.
@@ -103,12 +117,11 @@ public class DatabasePersistence extends Persistence {
     @VisibleForTesting
     static final String COLUMN_PRIORITY = "priority";
 
-
     /**
      * Table schema for Persistence.
      */
     @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0, 0L);
 
     /**
      * Database name.
@@ -119,7 +132,7 @@ public class DatabasePersistence extends Persistence {
     /**
      * Current version of the schema.
      */
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
 
     /**
      * Priority index.
@@ -191,7 +204,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -217,7 +230,10 @@ public class DatabasePersistence extends Persistence {
                 if (oldVersion < VERSION_TARGET_KEY) {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                if (oldVersion < VERSION_PRIORITY_KEY) {
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                }
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT 0");
                 createPriorityIndex(db);
                 return true;
             }
@@ -238,7 +254,7 @@ public class DatabasePersistence extends Persistence {
      * @param priority    The persistence priority.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority, Long timestamp) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
@@ -246,6 +262,7 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
         values.put(COLUMN_PRIORITY, priority);
+        values.put(COLUMN_TIMESTAMP, timestamp);
         return values;
     }
 
@@ -262,6 +279,8 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.debug(LOG_TAG, "Storing a log to the Persistence database for log type " + log.getType() + " with flags=" + flags);
             String payload = getLogSerializer().serializeLog(log);
             ContentValues contentValues;
+
+            //noinspection CharsetObjectCanBeUsed min API level 19 required to fix this warning.
             int payloadSize = payload.getBytes("UTF-8").length;
             boolean isLargePayload = payloadSize >= PAYLOAD_MAX_SIZE;
             String targetKey;
@@ -285,7 +304,7 @@ public class DatabasePersistence extends Persistence {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false), log.getTimestamp().getTime());
             long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
@@ -342,6 +361,7 @@ public class DatabasePersistence extends Persistence {
         AppCenterLog.debug(LOG_TAG, "Deleting logs from the Persistence database for " + group + " with " + id);
         AppCenterLog.debug(LOG_TAG, "The IDs for deleting log(s) is/are:");
 
+        /* Delete logs. */
         List<Long> dbIdentifiers = mPendingDbIdentifiersGroups.remove(group + id);
         File directory = getLargePayloadGroupDirectory(group);
         if (dbIdentifiers != null) {
@@ -359,7 +379,7 @@ public class DatabasePersistence extends Persistence {
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Deleting all logs from the Persistence database for " + group);
 
-        /* Delete large payload files */
+        /* Delete large payload files. */
         File directory = getLargePayloadGroupDirectory(group);
         File[] files = directory.listFiles();
         if (files != null) {
@@ -374,7 +394,8 @@ public class DatabasePersistence extends Persistence {
         directory.delete();
 
         /* Delete from database. */
-        mDatabaseManager.delete(COLUMN_GROUP, group);
+        int deletedCount = mDatabaseManager.delete(COLUMN_GROUP, group);
+        AppCenterLog.debug(LOG_TAG, "Deleted " + deletedCount + " logs.");
 
         /* Delete from pending state. */
         for (Iterator<String> iterator = mPendingDbIdentifiersGroups.keySet().iterator(); iterator.hasNext(); ) {
@@ -387,13 +408,22 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public int countLogs(@NonNull String group) {
+        return countLogs(COLUMN_GROUP + " = ?", group);
+    }
+
+    @Override
+    public int countLogs(@NonNull Date timestamp) {
+        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
+    }
+
+    private int countLogs(String whereClause, String ...whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_GROUP + " = ?");
+        builder.appendWhere(whereClause);
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, whereArgs, null);
             try {
                 cursor.moveToNext();
                 count = cursor.getInt(0);
@@ -408,7 +438,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -416,8 +446,8 @@ public class DatabasePersistence extends Persistence {
         /* Query database. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
-        String[] selectionArgs = new String[pausedTargetKeys.size() + 1];
-        selectionArgs[0] = group;
+        List<String> selectionArgs = new ArrayList<>();
+        selectionArgs.add(group);
         if (!pausedTargetKeys.isEmpty()) {
             StringBuilder filter = new StringBuilder();
             for (int i = 0; i < pausedTargetKeys.size(); i++) {
@@ -426,7 +456,19 @@ public class DatabasePersistence extends Persistence {
             filter.deleteCharAt(filter.length() - 1);
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
-            System.arraycopy(pausedTargetKeys.toArray(new String[0]), 0, selectionArgs, 1, pausedTargetKeys.size());
+            selectionArgs.addAll(pausedTargetKeys);
+        }
+
+        /* Filter by time. */
+        if (from != null) {
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TIMESTAMP + " >= ?");
+            selectionArgs.add(String.valueOf(from.getTime()));
+        }
+        if (to != null) {
+            builder.appendWhere(" AND ");
+            builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
+            selectionArgs.add(String.valueOf(to.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */
@@ -434,10 +476,11 @@ public class DatabasePersistence extends Persistence {
         Map<Long, Log> candidates = new LinkedHashMap<>();
         List<Long> failedDbIdentifiers = new ArrayList<>();
         File largePayloadGroupDirectory = getLargePayloadGroupDirectory(group);
+        String[] selectionArgsArray = selectionArgs.toArray(new String[0]);
         Cursor cursor = null;
         ContentValues values;
         try {
-            cursor = mDatabaseManager.getCursor(builder, null, selectionArgs, GET_SORT_ORDER);
+            cursor = mDatabaseManager.getCursor(builder, null, selectionArgsArray, GET_SORT_ORDER);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
@@ -454,7 +497,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                List<Long> corruptedIds = getCorruptedIds(builder, selectionArgs);
+                List<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
                 for (Long corruptedId : corruptedIds) {
                     if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
@@ -568,15 +611,15 @@ public class DatabasePersistence extends Persistence {
         mDatabaseManager.close();
     }
 
-    private List<Long> getCorruptedIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
+    private List<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
         List<Long> result = new ArrayList<>();
         try {
             Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
                 while (cursor.moveToNext()) {
                     ContentValues idValues = mDatabaseManager.buildValues(cursor);
-                    Long invalidId = idValues.getAsLong(PRIMARY_KEY);
-                    result.add(invalidId);
+                    Long id = idValues.getAsLong(PRIMARY_KEY);
+                    result.add(id);
                 }
             } finally {
                 cursor.close();

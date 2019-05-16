@@ -140,7 +140,6 @@ public class EventActivity extends AppCompatActivity {
         mPauseTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
-            @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
                 getSelectedTarget().pause();
             }
@@ -149,7 +148,6 @@ public class EventActivity extends AppCompatActivity {
         mResumeTransmissionButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
-            @SuppressWarnings("ConstantConditions")
             public void onClick(View v) {
                 getSelectedTarget().resume();
             }
@@ -189,10 +187,8 @@ public class EventActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                addProperty();
-                break;
+        if (item.getItemId() == R.id.action_add) {
+            addProperty();
         }
         return true;
     }

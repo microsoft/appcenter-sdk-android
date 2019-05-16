@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 public class DistributeHttpTest extends AbstractDistributeTest {
@@ -109,7 +107,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void onBeforeCallingWithAnotherLogLevel() throws Exception {
+    public void onBeforeCallingWithAnotherLogLevel() {
 
         /* Mock instances. */
         String appSecret = UUID.randomUUID().toString();
@@ -139,7 +137,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         Assert.assertNull(callTemplate.buildRequestBody());
     }
 
-    private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) throws Exception {
+    private HttpClient.CallTemplate getCallTemplate(String appSecret, String apiToken) {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         Distribute.getInstance().onStarting(mAppCenterHandler);

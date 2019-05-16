@@ -28,9 +28,14 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
+import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.data.Data;
+import com.microsoft.appcenter.data.exception.DataException;
+import com.microsoft.appcenter.data.models.DocumentMetadata;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -109,6 +114,136 @@ public class MainActivity extends AppCompatActivity {
 
     native void setupNativeCrashesListener(String path);
 
+    static String getLogUrl(Context context, String startType) {
+        switch (StartType.valueOf(startType)) {
+            case TARGET:
+            case NO_SECRET:
+                return context.getString(R.string.log_url_one_collector);
+        }
+        return context.getString(R.string.log_url);
+    }
+
+    static void startAppCenter(Application application, String startTypeString) {
+        StartType startType = StartType.valueOf(startTypeString);
+        if (startType == StartType.SKIP_START) {
+            return;
+        }
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
+        String appIdArg = "";
+        switch (startType) {
+            case APP_SECRET:
+                appIdArg = appId;
+                break;
+            case TARGET:
+                appIdArg = String.format("target=%s", targetId);
+                break;
+            case BOTH:
+                appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
+                break;
+            case NO_SECRET:
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+                return;
+        }
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+    }
+
+    public static void setUserId(String userId) {
+        AppCenter.setUserId(userId);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setSenderId() {
+        Push.setSenderId(SENDER_ID);
+    }
+
+    private void setMaxStorageSize() {
+        if (AppCenter.isConfigured()) {
+            return;
+        }
+        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
+        if (maxStorageSize <= 0) {
+            return;
+        }
+        AppCenter.setMaxStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
+
+            @Override
+            public void accept(Boolean succeeded) {
+                if (succeeded) {
+
+                    /* SQLite always use the next multiple of 4KB as maximum size. */
+                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) DATABASE_SIZE_MULTIPLE) * DATABASE_SIZE_MULTIPLE;
+                    Toast.makeText(MainActivity.this, String.format(
+                            MainActivity.this.getString(R.string.max_storage_size_change_success),
+                            Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
+                } else {
+
+                    /* SQLite shrinks to fileSize rounded to next page size in that case. */
+                    Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
+                    String DATABASE_NAME = "com.microsoft.appcenter.persistence";
+                    long fileSize = getDatabasePath(DATABASE_NAME).length();
+                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, fileSize).apply();
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+        }
+        return true;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(LOG_TAG, "onNewIntent triggered");
+        Push.checkLaunchedFromNotification(this, intent);
+    }
+
+    @NonNull
+    private AnalyticsListener getAnalyticsListener() {
+        if (sAnalyticsListener == null) {
+            sAnalyticsListener = new SasquatchAnalyticsListener(this);
+        }
+        return sAnalyticsListener;
+    }
+
+    @NonNull
+    private CrashesListener getCrashesListener() {
+        if (sCrashesListener == null) {
+            sCrashesListener = new SasquatchCrashesListener(this);
+        }
+        return sCrashesListener;
+    }
+
+    @NonNull
+    private PushListener getPushListener() {
+        if (sPushListener == null) {
+            sPushListener = new SasquatchPushListener();
+        }
+        return sPushListener;
+    }
+
+    private RemoteOperationListener getDataRemoteOperationListener() {
+        return new RemoteOperationListener() {
+
+            @Override
+            public void onRemoteOperationCompleted(String operation, DocumentMetadata documentMetadata, DataException error) {
+                Log.i(LOG_TAG, String.format("Remote operation completed operation=%s partition=%s documentId=%s eTag=%s", operation, documentMetadata.getPartition(), documentMetadata.getId(), documentMetadata.getETag()), error);
+            }
+        };
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -119,7 +254,8 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getLogUrl(this, startType));
         if (!TextUtils.isEmpty(logUrl)) {
             AppCenter.setLogUrl(logUrl);
         }
@@ -129,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
+        Data.setRemoteOperationListener(getDataRemoteOperationListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -138,6 +275,18 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
+        }
+
+        /* Set auth config url. */
+        String configUrl = getString(R.string.auth_config_url);
+        if (!TextUtils.isEmpty(configUrl)) {
+            Auth.setConfigUrl(configUrl);
+        }
+
+        /* Set token exchange url. */
+        String tokenExchangeUrl = getString(R.string.token_exchange_url);
+        if (!TextUtils.isEmpty(tokenExchangeUrl)) {
+            Data.setTokenExchangeUrl(tokenExchangeUrl);
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */
@@ -159,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
         setMaxStorageSize();
 
         /* Start App Center. */
-        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
         /* Set user id. */
@@ -214,120 +362,6 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
-    }
-
-    @SuppressWarnings("deprecation")
-    private void setSenderId() {
-        Push.setSenderId(SENDER_ID);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void setMaxStorageSize() {
-        if (AppCenter.isConfigured()) {
-            return;
-        }
-        final long maxStorageSize = sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, 0);
-        if (maxStorageSize <= 0) {
-            return;
-        }
-        AppCenter.setMaxStorageSize(maxStorageSize).thenAccept(new AppCenterConsumer<Boolean>() {
-
-            @Override
-            public void accept(Boolean succeeded) {
-                if (succeeded) {
-
-                    /* SQLite always use the next multiple of 4KB as maximum size. */
-                    long expectedMultipleMaxSize = (long) Math.ceil((double) maxStorageSize / (double) DATABASE_SIZE_MULTIPLE) * DATABASE_SIZE_MULTIPLE;
-                    Toast.makeText(MainActivity.this, String.format(
-                            MainActivity.this.getString(R.string.max_storage_size_change_success),
-                            Formatter.formatFileSize(MainActivity.this, expectedMultipleMaxSize)), Toast.LENGTH_SHORT).show();
-                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, expectedMultipleMaxSize).apply();
-                } else {
-
-                    /* SQLite shrinks to fileSize rounded to next page size in that case. */
-                    Toast.makeText(MainActivity.this, R.string.max_storage_size_change_failed, Toast.LENGTH_SHORT).show();
-                    String DATABASE_NAME = "com.microsoft.appcenter.persistence";
-                    long fileSize = getDatabasePath(DATABASE_NAME).length();
-                    sSharedPreferences.edit().putLong(MAX_STORAGE_SIZE_KEY, fileSize).apply();
-                }
-            }
-        });
-    }
-
-    public static void setUserId(String userId) {
-        AppCenter.setUserId(userId);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                break;
-        }
-        return true;
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        Log.d(LOG_TAG, "onNewIntent triggered");
-        Push.checkLaunchedFromNotification(this, intent);
-    }
-
-    @NonNull
-    private AnalyticsListener getAnalyticsListener() {
-        if (sAnalyticsListener == null) {
-            sAnalyticsListener = new SasquatchAnalyticsListener(this);
-        }
-        return sAnalyticsListener;
-    }
-
-    @NonNull
-    private CrashesListener getCrashesListener() {
-        if (sCrashesListener == null) {
-            sCrashesListener = new SasquatchCrashesListener(this);
-        }
-        return sCrashesListener;
-    }
-
-    @NonNull
-    private PushListener getPushListener() {
-        if (sPushListener == null) {
-            sPushListener = new SasquatchPushListener();
-        }
-        return sPushListener;
-    }
-
-    static void startAppCenter(Application application, String startTypeString) {
-        StartType startType = StartType.valueOf(startTypeString);
-        if (startType == StartType.SKIP_START) {
-            return;
-        }
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
-        String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
-        String appIdArg = "";
-        switch (startType) {
-            case APP_SECRET:
-                appIdArg = appId;
-                break;
-            case TARGET:
-                appIdArg = String.format("target=%s", targetId);
-                break;
-            case BOTH:
-                appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
-                break;
-            case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
-                return;
-        }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
 
     public enum StartType {

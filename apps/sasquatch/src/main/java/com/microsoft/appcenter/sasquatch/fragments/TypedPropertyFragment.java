@@ -82,10 +82,8 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
     public void set(Map<String, String> eventProperties) {
         EventPropertyType type = getType();
         String key = mEditKey.getText().toString();
-        switch (type) {
-            case STRING:
-                eventProperties.put(key, mEditString.getText().toString());
-                break;
+        if (type == EventPropertyType.STRING) {
+            eventProperties.put(key, mEditString.getText().toString());
         }
     }
 
@@ -99,7 +97,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             case NUMBER_DOUBLE: {
                 String stringValue = mEditNumberDouble.getText().toString();
                 if (!stringValue.isEmpty()) {
-                    Double value = Double.parseDouble(stringValue);
+                    double value = Double.parseDouble(stringValue);
                     eventProperties.set(key, value);
                 } else {
                     eventProperties.set(key, Double.NaN);
@@ -109,7 +107,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             case NUMBER_LONG: {
                 String stringValue = mEditNumberLong.getText().toString();
                 if (!stringValue.isEmpty()) {
-                    Long value = Long.parseLong(stringValue);
+                    long value = Long.parseLong(stringValue);
                     eventProperties.set(key, value);
                 }
                 break;
@@ -133,7 +131,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             case NUMBER_DOUBLE: {
                 String stringValue = mEditNumberDouble.getText().toString();
                 if (!stringValue.isEmpty()) {
-                    Double value = Double.parseDouble(stringValue);
+                    double value = Double.parseDouble(stringValue);
                     configurator.setEventProperty(key, value);
                 } else {
                     configurator.setEventProperty(key, Double.NaN);
@@ -143,7 +141,7 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
             case NUMBER_LONG: {
                 String stringValue = mEditNumberLong.getText().toString();
                 if (!stringValue.isEmpty()) {
-                    Long value = Long.parseLong(stringValue);
+                    long value = Long.parseLong(stringValue);
                     configurator.setEventProperty(key, value);
                 }
                 break;
@@ -153,6 +151,40 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
                 break;
             case STRING:
                 configurator.setEventProperty(key, mEditString.getText().toString());
+                break;
+        }
+    }
+
+    public void setGenericProperty(Map<String, Object> map) {
+        EventPropertyType type = getType();
+        String key = mEditKey.getText().toString();
+        switch (type) {
+            case BOOLEAN:
+                map.put(key, mEditBool.isChecked());
+                break;
+            case NUMBER_DOUBLE: {
+                String stringValue = mEditNumberDouble.getText().toString();
+                if (!stringValue.isEmpty()) {
+                    double value = Double.parseDouble(stringValue);
+                    map.put(key, value);
+                } else {
+                    map.put(key, Double.NaN);
+                }
+                break;
+            }
+            case NUMBER_LONG: {
+                String stringValue = mEditNumberLong.getText().toString();
+                if (!stringValue.isEmpty()) {
+                    long value = Long.parseLong(stringValue);
+                    map.put(key, value);
+                }
+                break;
+            }
+            case DATETIME:
+                map.put(key, mDate);
+                break;
+            case STRING:
+                map.put(key, mEditString.getText().toString());
                 break;
         }
     }

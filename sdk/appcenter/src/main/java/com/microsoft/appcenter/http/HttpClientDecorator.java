@@ -5,9 +5,11 @@
 
 package com.microsoft.appcenter.http;
 
+import android.support.annotation.VisibleForTesting;
+
 import java.io.IOException;
 
-abstract class HttpClientDecorator implements HttpClient {
+public abstract class HttpClientDecorator implements HttpClient {
 
     final HttpClient mDecoratedApi;
 
@@ -23,5 +25,10 @@ abstract class HttpClientDecorator implements HttpClient {
     @Override
     public void reopen() {
         mDecoratedApi.reopen();
+    }
+
+    @VisibleForTesting
+    HttpClient getDecoratedApi() {
+        return mDecoratedApi;
     }
 }
