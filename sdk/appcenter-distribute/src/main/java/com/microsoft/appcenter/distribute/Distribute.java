@@ -297,7 +297,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Flag to track whether the distribute feature can be used in a debuggable build.
      * Flag is false by default.
-     *
+     * <p>
      * Call setEnabledForDebuggableBuild(boolean) to adjust.
      */
     private boolean mEnabledForDebuggableBuild;
@@ -377,11 +377,10 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Change whether the distribute service can be used within a DEBUGGABLE build.
+     * Change whether the distribute service can be used within a debuggable build.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setEnabledForDebuggableBuild(boolean enabled) {
         getInstance().setInstanceEnabledForDebuggableBuild(enabled);
     }
@@ -603,7 +602,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setEnabledForDebuggableBuild(Boolean)}.
+     * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
      */
     private synchronized void setInstanceEnabledForDebuggableBuild(boolean enabled) {
         mEnabledForDebuggableBuild = enabled;
