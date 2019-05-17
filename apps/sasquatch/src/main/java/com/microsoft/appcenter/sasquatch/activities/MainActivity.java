@@ -48,6 +48,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -307,6 +308,9 @@ public class MainActivity extends AppCompatActivity {
         /* Set max storage size. */
         setMaxStorageSize();
 
+        /* Set debug enabled for distribute. */
+        setDistributeEnabledForDebuggableBuild();
+
         /* Start App Center. */
         startAppCenter(getApplication(), startType);
 
@@ -362,6 +366,18 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    private void setDistributeEnabledForDebuggableBuild() {
+
+        /* TODO Call method directly / remove reflection once SDK being released. */
+        try {
+            Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
+            method.invoke(null, sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false));
+        } catch (NoSuchMethodException ignore) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public enum StartType {
