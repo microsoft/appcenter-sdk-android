@@ -164,9 +164,64 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfDebug() {
+    public void doNothingIfEnabledForDebuggableBuildNotSet() {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         testDistributeInactive();
+    }
+
+    @Test
+    public void doNothingWhenEnabledForDebuggableBuildSetToFalse() {
+        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
+        Distribute.setEnabledForDebuggableBuild(false);
+        testDistributeInactive();
+    }
+
+    @Test
+    public void continueWhenEnabledForDebuggableBuildSetToTrue() throws Exception {
+        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
+        Distribute.setEnabledForDebuggableBuild(true);
+
+        /* Setup mock. */
+        Distribute.setInstallUrl("http://mock");
+        Distribute.setApiUrl("https://mock2");
+        UUID requestId = UUID.randomUUID();
+        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+
+        /* Mock install id from AppCenter. */
+        UUID installId = UUID.randomUUID();
+        when(mAppCenterFuture.get()).thenReturn(installId);
+        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+
+        /* Start and resume: open browser. */
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verifyStatic();
+        String url = "http://mock";
+        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
+        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
+        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
+        url += "&" + PARAMETER_INSTALL_ID + "=" + installId.toString();
+        BrowserUtils.openBrowser(url, mActivity);
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* Store token. */
+        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().startsWith("https://mock2");
+            }
+        }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test

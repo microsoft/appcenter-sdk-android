@@ -295,6 +295,13 @@ public class Distribute extends AbstractAppCenterService {
     private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
+     * Flag to track whether the distribute feature can be used in a debuggable build.
+     * Flag is false by default.
+     * Updated by calling {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private boolean mEnabledForDebuggableBuild;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -366,6 +373,15 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static void setListener(DistributeListener listener) {
         getInstance().setInstanceListener(listener);
+    }
+
+    /**
+     * Set whether the distribute service can be used within a debuggable build.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    public static void setEnabledForDebuggableBuild(boolean enabled) {
+        getInstance().setInstanceEnabledForDebuggableBuild(enabled);
     }
 
     /**
@@ -585,6 +601,13 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private synchronized void setInstanceEnabledForDebuggableBuild(boolean enabled) {
+        mEnabledForDebuggableBuild = enabled;
+    }
+
+    /**
      * Cancel everything.
      */
     private synchronized void cancelPreviousTasks() {
@@ -628,8 +651,8 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
-                AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
+                AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
                 return;
             }

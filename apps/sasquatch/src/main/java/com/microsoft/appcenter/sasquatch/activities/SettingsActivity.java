@@ -248,6 +248,30 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            /* TODO Call method directly / remove reflection once SDK being released. */
+            try {
+                final Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_distribute_debug_state_key, R.string.appcenter_distribute_debug_summary_enabled, R.string.appcenter_distribute_debug_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public boolean isEnabled() {
+                        return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false);
+                    }
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_debug_state_key), enabled).apply();
+                        try {
+                            method.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.appcenter_distribute_debug_state_key)));
+            }
+
             /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_state_key, R.string.appcenter_push_state_summary_enabled, R.string.appcenter_push_state_summary_disabled, new HasEnabled() {
 

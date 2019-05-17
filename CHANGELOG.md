@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 2.0.1 (Under development)
+## Version 2.1.0 (Under development)
 
 ### App Center
 
@@ -14,8 +14,9 @@
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
-### AppCenterDistribute
+### App Center Distribute
 
+* **[Feature]** Add `Distribute.setEnabledForDebuggableBuild(boolean)` method to allow in-app updates in debuggable builds.
 * **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
 * **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
 
