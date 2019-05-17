@@ -72,12 +72,12 @@ public abstract class Persistence implements Closeable {
     public abstract int countLogs(@NonNull Date timestamp);
 
     /**
-     * Gets an old log by group.
+     * Gets the time of the oldest.
      *
-     * @param group @NonNull String group.
-     * @return A last log.
+     * @param group The group of the storage for logs.
+     * @return The time of the oldest.
      */
-    public abstract long getOldLog(@NonNull String group);
+    public abstract long getOldetLogTime(@NonNull String group);
 
     /**
      * Gets an array of logs for the given {@code group}.
