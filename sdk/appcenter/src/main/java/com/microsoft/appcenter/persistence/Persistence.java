@@ -43,8 +43,8 @@ public abstract class Persistence implements Closeable {
     /**
      * Deletes a log with the give ID from the {@code group}.
      *
-     * @param group     The group of the storage for logs.
-     * @param batchId   The ID for a set of logs.
+     * @param group   The group of the storage for logs.
+     * @param batchId The ID for a set of logs.
      */
     public abstract void deleteLogs(@NonNull String group, @NonNull String batchId);
 
@@ -72,11 +72,12 @@ public abstract class Persistence implements Closeable {
     public abstract int countLogs(@NonNull Date timestamp);
 
     /**
-     * Gets a last log by group.
+     * Gets an old log by group.
+     *
      * @param group @NonNull String group.
      * @return A last log.
      */
-    public abstract Long getLastLog(@NonNull String group);
+    public abstract long getOldLog(@NonNull String group);
 
     /**
      * Gets an array of logs for the given {@code group}.

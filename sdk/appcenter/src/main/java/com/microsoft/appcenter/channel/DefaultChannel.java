@@ -767,18 +767,15 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupState);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-
             Date now = new Date();
-
             long delay = MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
-            // TODO only if groupState.mBatchTimeInterval > 3s
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-                Long oldestLogTime = mPersistence.getLastLog(groupState.mName);
+                long oldestLogTime = mPersistence.getOldLog(groupState.mName);
                 delay = groupState.mBatchTimeInterval - (now.getTime() - oldestLogTime);
-                // Use min interval to avoid problems on startup.
-                delay = Math.min(delay < 0 ? 0 : delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
-            }
 
+                /* Use max interval to avoid problems on startup. */
+                delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
+            }
             mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
         }
     }

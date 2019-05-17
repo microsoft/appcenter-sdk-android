@@ -437,11 +437,12 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public Long getLastLog(@NonNull String group) {
-
+    public long getOldLog(@NonNull String group) {
         Long lastTimestamp = 0L;
+
         /* Log. */
-        AppCenterLog.debug(LOG_TAG, "Trying to get last log from the Persistence database for " + group);
+        AppCenterLog.debug(LOG_TAG, "Trying to get old log from the Persistence database for " + group);
+
         /* Query database. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere(COLUMN_GROUP + " = ?");
@@ -449,24 +450,22 @@ public class DatabasePersistence extends Persistence {
         selectionArgs.add(group);
         Cursor cursor = null;
         String[] selectionArgsArray = selectionArgs.toArray(new String[0]);
+        String[] columnArgsArray = {"min(timestamp)"};
         try {
-            cursor = mDatabaseManager.getCursor(builder, null, selectionArgsArray, GET_SORT_ORDER + " LIMIT 1 ");
+            cursor = mDatabaseManager.getCursor(builder, columnArgsArray, selectionArgsArray, null);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
-
         ContentValues values = mDatabaseManager.nextValues(cursor);
         if (values != null) {
-            lastTimestamp = values.getAsLong("timestamp");
+            lastTimestamp = values.getAsLong("min(timestamp)");
         }
-
         if (cursor != null) {
             try {
                 cursor.close();
             } catch (RuntimeException ignore) {
             }
         }
-
         return lastTimestamp;
     }
 
