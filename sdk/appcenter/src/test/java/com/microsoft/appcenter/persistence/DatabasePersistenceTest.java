@@ -467,7 +467,7 @@ public class DatabasePersistenceTest {
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
 
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
-        long result = persistence.getOldLog("old-group");
+        long result = persistence.getOldetLogTime("old-group");
         assertEquals(result, 1L);
     }
 
@@ -489,7 +489,7 @@ public class DatabasePersistenceTest {
         when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
 
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
-        long result = persistence.getOldLog("old-group");
+        long result = persistence.getOldetLogTime("old-group");
         assertEquals(result, 0L);
     }
 
