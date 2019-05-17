@@ -449,6 +449,50 @@ public class DatabasePersistenceTest {
         persistence.putLog(mock(Log.class), "test-p1", NORMAL);
     }
 
+    @Test
+    public void getOldLogTimestamp() throws Exception {
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+
+        /* Valid record. */
+        ContentValues contentValues = mock(ContentValues.class);
+        when(contentValues.getAsLong("min(timestamp)")).thenReturn(1L);
+
+        /* Mock log sequence retrieved from cursor. */
+        List<ContentValues> fieldValues = new ArrayList<>();
+        fieldValues.add(contentValues);
+
+        MockCursor mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        long result = persistence.getOldLog("old-group");
+        assertEquals(result, 1L);
+    }
+
+    @Test
+    public void getOldLogTimestampNull() throws Exception {
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+
+        /* Valid record. */
+        ContentValues contentValues = mock(ContentValues.class);
+        when(contentValues.getAsLong("min(timestamp)")).thenReturn(null);
+
+        /* Mock log sequence retrieved from cursor. */
+        List<ContentValues> fieldValues = new ArrayList<>();
+        fieldValues.add(contentValues);
+
+        MockCursor mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        long result = persistence.getOldLog("old-group");
+        assertEquals(result, 0L);
+    }
+
     private static class MockCursor extends CursorWrapper {
 
         private final List<ContentValues> mList;
