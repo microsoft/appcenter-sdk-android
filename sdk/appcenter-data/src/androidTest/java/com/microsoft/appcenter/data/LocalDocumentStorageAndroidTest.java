@@ -241,6 +241,25 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void createAndUpdateOfflineDifferentIDs() {
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertTrue(operation.getDocument().contains("Test"));
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID + "1", "Test2", String.class, new WriteOptions());
+        operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(2, operations.size());
+        PendingOperation operation1 = operations.get(0);
+        PendingOperation operation2 = operations.get(1);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation1.getOperation());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation2.getOperation());
+        assertTrue(operation1.getDocument().contains("Test"));
+        assertTrue(operation2.getDocument().contains("Test2"));
+    }
+
+    @Test
     public void createUnExpiredDocument() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, "Test", String.class, new WriteOptions(TimeToLive.INFINITE));
         DocumentWrapper<String> document = mLocalDocumentStorage.read(USER_TABLE_NAME, USER_DOCUMENTS, ID, String.class, null);
