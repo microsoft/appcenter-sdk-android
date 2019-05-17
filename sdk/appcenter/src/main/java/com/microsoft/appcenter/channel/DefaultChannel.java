@@ -60,7 +60,7 @@ public class DefaultChannel implements Channel {
      * Transmission interval minimum value.
      */
     @VisibleForTesting
-    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3 * 1000;
 
     /**
      * Application context.
@@ -767,11 +767,11 @@ public class DefaultChannel implements Channel {
             triggerIngestion(groupState);
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            Date now = new Date();
-            long delay = MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+            long delay = groupState.mBatchTimeInterval;
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
                 long oldestLogTime = mPersistence.getOldestLogTime(groupState.mName);
-                delay = groupState.mBatchTimeInterval - (now.getTime() - oldestLogTime);
+                Date now = new Date();
+                delay -= now.getTime() - oldestLogTime;
 
                 /* Use max interval to avoid problems on startup. */
                 delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);

@@ -441,7 +441,7 @@ public class DatabasePersistence extends Persistence {
         Long lastTimestamp = 0L;
 
         /* Log. */
-        AppCenterLog.debug(LOG_TAG, "Trying to get the time of the oldest log from the Persistence database for " + group);
+        AppCenterLog.debug(LOG_TAG, "Trying to get the timestamp of the oldest log from the Persistence database for " + group);
 
         /* Query database. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
@@ -455,13 +455,14 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
         }
         ContentValues values = mDatabaseManager.nextValues(cursor);
-        if (values != null) {
+        if (values != null && values.containsKey(String.format("min(%s)", COLUMN_TIMESTAMP))) {
             lastTimestamp = values.getAsLong(String.format("min(%s)", COLUMN_TIMESTAMP));
         }
         if (cursor != null) {
             try {
                 cursor.close();
-            } catch (RuntimeException ignore) {
+            } catch (RuntimeException e) {
+                AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
             }
         }
         return lastTimestamp;
