@@ -57,6 +57,12 @@ public class DefaultChannel implements Channel {
     static final int CLEAR_BATCH_SIZE = 100;
 
     /**
+     * Transmission interval minimum value.
+     */
+    @VisibleForTesting
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+
+    /**
      * Application context.
      */
     private final Context mContext;
@@ -764,13 +770,14 @@ public class DefaultChannel implements Channel {
 
             Date now = new Date();
 
+            long delay = MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
             // TODO only if groupState.mBatchTimeInterval > 3s
-             Date oldestLogTime = null; // TODO
-
-            long delay = groupState.mBatchTimeInterval - (now.getTime() - oldestLogTime.getTime());
-
-            // Use min interval to avoid problems on startup.
-            delay = Math.min(delay, 3000);
+            if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+                Long oldestLogTime = mPersistence.getLastLog(groupState.mName);
+                delay = groupState.mBatchTimeInterval - (now.getTime() - oldestLogTime);
+                // Use min interval to avoid problems on startup.
+                delay = Math.min(delay < 0 ? 0 : delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
+            }
 
             mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
         }

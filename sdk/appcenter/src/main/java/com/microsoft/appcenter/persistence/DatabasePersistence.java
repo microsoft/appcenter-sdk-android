@@ -416,7 +416,7 @@ public class DatabasePersistence extends Persistence {
         return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
     }
 
-    private int countLogs(String whereClause, String ...whereArgs) {
+    private int countLogs(String whereClause, String... whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
@@ -434,6 +434,40 @@ public class DatabasePersistence extends Persistence {
             AppCenterLog.error(LOG_TAG, "Failed to get logs count: ", e);
         }
         return count;
+    }
+
+    @Override
+    public Long getLastLog(@NonNull String group) {
+
+        Long lastTimestamp = 0L;
+        /* Log. */
+        AppCenterLog.debug(LOG_TAG, "Trying to get last log from the Persistence database for " + group);
+        /* Query database. */
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(COLUMN_GROUP + " = ?");
+        List<String> selectionArgs = new ArrayList<>();
+        selectionArgs.add(group);
+        Cursor cursor = null;
+        String[] selectionArgsArray = selectionArgs.toArray(new String[0]);
+        try {
+            cursor = mDatabaseManager.getCursor(builder, null, selectionArgsArray, GET_SORT_ORDER + " LIMIT 1 ");
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
+        }
+
+        ContentValues values = mDatabaseManager.nextValues(cursor);
+        if (values != null) {
+            lastTimestamp = values.getAsLong("timestamp");
+        }
+
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (RuntimeException ignore) {
+            }
+        }
+
+        return lastTimestamp;
     }
 
     @Override
