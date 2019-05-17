@@ -5,8 +5,11 @@
 
 package com.microsoft.appcenter.channel;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.CancellationException;
@@ -18,11 +21,15 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
+import com.microsoft.appcenter.ingestion.models.one.Data;
+import com.microsoft.appcenter.persistence.DatabasePersistence;
+import com.microsoft.appcenter.persistence.DatabasePersistenceTest;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.DatabaseManager;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +63,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
@@ -1070,5 +1078,25 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Verify the logs triggered immediately or scheduled. */
         listenerArgumentCaptor.getValue().onNewAuthToken("test");
         verify(channel, times(2)).checkPendingLogs(any(DefaultChannel.GroupState.class));
+    }
+
+    @Test
+    public void checkPendingLogsWithMultyInterval() throws Exception {
+        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+
+        /* Create channel. Verify scheduling logs. */
+        Persistence mockPersistence = mock(Persistence.class);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+
+        channel.addGroup(TEST_GROUP, 10, 5000, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+        //TODO added test for Math.max and groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS
     }
 }

@@ -870,6 +870,46 @@ public class DatabasePersistenceAndroidTest {
         }
     }
 
+    @Test
+    public void getOldestLog() throws PersistenceException {
+        /* Initialize database persistence. */
+        DatabasePersistence persistence = new DatabasePersistence(sContext);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
+        persistence.setLogSerializer(logSerializer);
+        try {
+
+            /* Test constants. */
+            int numberOfLogs = 10;
+
+            /* Generate and persist some logs. */
+            Log[] logs = new Log[numberOfLogs];
+            for (int i = 0; i < logs.length; i++) {
+                logs[i] = AndroidTestUtils.generateMockLog();
+                persistence.putLog(logs[i], "test", NORMAL);
+            }
+
+            /* Get. */
+            List<Log> outputLogs = new ArrayList<>();
+            persistence.getLogs("test", Collections.<String>emptyList(), numberOfLogs, outputLogs, null, null);
+            long oldestLogTimestamp = persistence.getOldestLogTime("test");
+            assertEquals(outputLogs.get(0).getTimestamp().getTime(), oldestLogTimestamp);
+
+            /* Delete. */
+            persistence.deleteLogs("test");
+            outputLogs = new ArrayList<>();
+            assertNull(persistence.getLogs("test", Collections.<String>emptyList(), numberOfLogs, outputLogs, null, null));
+            assertTrue(outputLogs.isEmpty());
+            assertEquals(0, persistence.countLogs("test"));
+            oldestLogTimestamp = persistence.getOldestLogTime("test");
+            assertEquals(oldestLogTimestamp, 0L);
+        } finally {
+            persistence.close();
+        }
+    }
+
     private void getAllLogs(DatabasePersistence persistence, int numberOfLogs, int sizeForGetLogs) {
         List<Log> outputLogs = new ArrayList<>();
         int expected = 0;

@@ -13,6 +13,7 @@ import android.database.sqlite.SQLiteDiskIOException;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
@@ -33,6 +34,7 @@ import java.util.Date;
 import java.util.List;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_TIMESTAMP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -456,7 +458,7 @@ public class DatabasePersistenceTest {
 
         /* Valid record. */
         ContentValues contentValues = mock(ContentValues.class);
-        when(contentValues.getAsLong("min(timestamp)")).thenReturn(1L);
+        when(contentValues.getAsLong(String.format("min(%s)", COLUMN_TIMESTAMP))).thenReturn(0L);
 
         /* Mock log sequence retrieved from cursor. */
         List<ContentValues> fieldValues = new ArrayList<>();
@@ -468,7 +470,7 @@ public class DatabasePersistenceTest {
 
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         long result = persistence.getOldestLogTime("old-group");
-        assertEquals(result, 1L);
+        assertEquals(result, 0L);
     }
 
     @Test
@@ -495,13 +497,35 @@ public class DatabasePersistenceTest {
     }
 
     @Test
+    public void getOldestLogTimeContentValueEmpty() throws Exception {
+        DatabaseManager databaseManager = mock(DatabaseManager.class);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
+
+        /* Valid record. */
+        ContentValues contentValues = mock(ContentValues.class);
+        when(contentValues.getAsLong("")).thenReturn(null);
+
+        /* Mock log sequence retrieved from cursor. */
+        List<ContentValues> fieldValues = new ArrayList<>();
+        fieldValues.add(contentValues);
+
+        MockCursor mockCursor = new MockCursor(fieldValues);
+        mockCursor.mockBuildValues(databaseManager);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.nextValues(mockCursor)).thenReturn(contentValues);
+        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
+        long result = persistence.getOldestLogTime("old-group");
+        assertEquals(result, 0L);
+    }
+
+    @Test
     public void getOldestLogTimeExceptionWhenCloseCursor() throws Exception {
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
 
         /* Valid record. */
         ContentValues contentValues = mock(ContentValues.class);
-        when(contentValues.getAsLong("min(timestamp)")).thenReturn(null);
+        when(contentValues.getAsLong(String.format("min(%s)", COLUMN_TIMESTAMP))).thenReturn(null);
 
         /* Mock log sequence retrieved from cursor. */
         List<ContentValues> fieldValues = new ArrayList<>();
@@ -532,7 +556,7 @@ public class DatabasePersistenceTest {
 
         /* Valid record. */
         ContentValues contentValues = mock(ContentValues.class);
-        when(contentValues.getAsLong("min(timestamp)")).thenReturn(null);
+        when(contentValues.getAsLong(String.format("min(%s)", COLUMN_TIMESTAMP))).thenReturn(null);
 
         /* Mock log sequence retrieved from cursor. */
         List<ContentValues> fieldValues = new ArrayList<>();
