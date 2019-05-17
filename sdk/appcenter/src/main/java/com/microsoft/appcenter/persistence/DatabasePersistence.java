@@ -437,7 +437,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public long getOldetLogTime(@NonNull String group) {
+    public long getOldestLogTime(@NonNull String group) {
         Long lastTimestamp = 0L;
 
         /* Log. */

@@ -770,7 +770,7 @@ public class DefaultChannel implements Channel {
             Date now = new Date();
             long delay = MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-                long oldestLogTime = mPersistence.getOldetLogTime(groupState.mName);
+                long oldestLogTime = mPersistence.getOldestLogTime(groupState.mName);
                 delay = groupState.mBatchTimeInterval - (now.getTime() - oldestLogTime);
 
                 /* Use max interval to avoid problems on startup. */
