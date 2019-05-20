@@ -34,7 +34,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -770,27 +769,52 @@ public class DefaultChannel implements Channel {
             return;
         }
         long pendingLogCount = groupState.mPendingLogCount;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount);
-        if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
-            triggerIngestion(groupState);
-        } else if (pendingLogCount > 0 && !groupState.mScheduled) {
-            groupState.mScheduled = true;
-            long delay = groupState.mBatchTimeInterval;
-            if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
-                long now = System.currentTimeMillis();
-                long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
-                if (startTimer == 0) {
-                    SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
-                } else if (startTimer > now) {
-                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
-                } else {
-                    delay -= now - startTimer;
-                }
+        long batchTimeInterval = groupState.mBatchTimeInterval;
+        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount + " batchTimeInterval=" + batchTimeInterval);
 
-                /* Use max interval to avoid problems on startup. */
-                delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL);
+        /* If the interval is custom. */
+        if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
+            long now = System.currentTimeMillis();
+            long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
+
+            /* The timer isn't started, so start it and store the current time. */
+            if (startTimer == 0) {
+                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
             }
-            mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
+
+            /* Handle invalid values (start time in the future). */
+            else if (startTimer > now) {
+                SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                AppCenterLog.debug(LOG_TAG, "Invalid timer value for " + groupState.mName + " channel has been removed.");
+            }
+
+            /* If the interval is over. */
+            else if (startTimer + batchTimeInterval < now) {
+
+                /* Send all logs without any additional timers. */
+                if (pendingLogCount > 0) {
+                    triggerIngestion(groupState);
+                } else {
+                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                    AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
+                }
+                return;
+            }
+
+            /* We still have to wait for the rest of the interval. */
+            else {
+                batchTimeInterval -= now - startTimer;
+            }
+        } else if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
+            triggerIngestion(groupState);
+            return;
+        }
+
+        /* Postpone triggering ingestion. */
+        if (pendingLogCount > 0 && !groupState.mScheduled) {
+            groupState.mScheduled = true;
+            mAppCenterHandler.postDelayed(groupState.mRunnable, batchTimeInterval);
         }
     }
 
@@ -885,7 +909,6 @@ public class DefaultChannel implements Channel {
             public void run() {
                 mScheduled = false;
                 triggerIngestion(GroupState.this);
-                SharedPreferencesManager.remove(START_TIMER_PREFIX + mName);
             }
         };
 
