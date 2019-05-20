@@ -5,11 +5,8 @@
 
 package com.microsoft.appcenter.channel;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.CancellationException;
@@ -21,21 +18,20 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
-import com.microsoft.appcenter.ingestion.models.one.Data;
-import com.microsoft.appcenter.persistence.DatabasePersistence;
-import com.microsoft.appcenter.persistence.DatabasePersistenceTest;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
-import com.microsoft.appcenter.utils.storage.DatabaseManager;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -46,6 +42,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.channel.DefaultChannel.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -62,10 +60,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
+@PrepareForTest({SharedPreferencesManager.class, System.class})
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
+
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mockStatic(SharedPreferencesManager.class);
+        mockStatic(System.class);
+    }
 
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
@@ -1081,22 +1089,100 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void checkPendingLogsWithMultyInterval() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+    public void checkPendingLogsCheckDelay() throws InterruptedException {
+        long mockInterval = 5000;
+        long mockSystemTime = 1L;
+        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
 
         /* Create channel. Verify scheduling logs. */
         Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
+
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
-        channel.addGroup(TEST_GROUP, 10, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
+        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
-        channel.addGroup(TEST_GROUP, 10, 5000, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+        /* Checked values. */
         verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
-        //TODO added test for Math.max and groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(mockSystemTime));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
+    }
+
+    @Test
+    public void checkPendingLogsSetTimeTimerNeverInvoke() {
+        long mockInterval = 1000;
+
+        /* Create channel. Verify scheduling logs. */
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+
+        /* Check values. */
+        verifyStatic(never());
+        SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP));
+
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
+
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
+    }
+
+    @Test
+    public void checkPendingLogsWhenMaxDelay() {
+        long mockInterval = 10000;
+        long mockSystemTime = 5000L;
+        final long mockPrefTime = 1000L;
+
+        /* Mock static classes. */
+        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+
+        /* Mock channel. */
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+
+        /* Check values. */
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
+
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (mockSystemTime - mockPrefTime)));
+    }
+
+    @Test
+    public void checkPendingLogsWhenMinDelay() {
+        long mockInterval = 5000;
+        long mockSystemTime = 10000L;
+        final long mockPrefTime = 1000L;
+
+        /* Mock static classes. */
+        mockStatic(System.class);
+        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+
+        /* Mock channel. */
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
+
+        /* Check values. */
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
+        
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS));
     }
 }

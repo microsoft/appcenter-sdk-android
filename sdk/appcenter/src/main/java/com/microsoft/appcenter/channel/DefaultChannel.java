@@ -61,13 +61,13 @@ public class DefaultChannel implements Channel {
     /**
      * Start of schedule timestamp.
      */
-    static final String START_TIMER = "START_TIMER_";
+    static final String START_TIMER_PREFIX = "START_TIMER_PREFIX_";
 
     /**
      * Transmission interval minimum value.
      */
     @VisibleForTesting
-    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3 * 1000;
+    static final long MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3 * 1000;
 
     /**
      * Application context.
@@ -448,7 +448,7 @@ public class DefaultChannel implements Channel {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
-            SharedPreferencesManager.remove(START_TIMER + groupState.mName);
+            SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
         }
     }
 
@@ -778,9 +778,9 @@ public class DefaultChannel implements Channel {
             long delay = groupState.mBatchTimeInterval;
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
                 long now = System.currentTimeMillis();
-                long startTimer = SharedPreferencesManager.getLong(START_TIMER + groupState.mName, 0);
+                long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
                 if(startTimer == 0) {
-                    SharedPreferencesManager.putLong(START_TIMER + groupState.mName, now);
+                    SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
                 } else {
                     delay -= now - startTimer;
                 }
@@ -883,7 +883,7 @@ public class DefaultChannel implements Channel {
             public void run() {
                 mScheduled = false;
                 triggerIngestion(GroupState.this);
-                SharedPreferencesManager.remove(START_TIMER + mName);
+                SharedPreferencesManager.remove(START_TIMER_PREFIX + mName);
             }
         };
 

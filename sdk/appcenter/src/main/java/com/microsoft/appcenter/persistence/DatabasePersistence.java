@@ -437,38 +437,6 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public long getOldestLogTime(@NonNull String group) {
-        Long lastTimestamp = 0L;
-
-        /* Log. */
-        AppCenterLog.debug(LOG_TAG, "Trying to get the timestamp of the oldest log from the Persistence database for " + group);
-
-        /* Query database. */
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(COLUMN_GROUP + " = ?");
-        Cursor cursor = null;
-        String[] selectionArgsArray = {group};
-        String[] columnArgsArray = {String.format("min(%s)", COLUMN_TIMESTAMP)};
-        try {
-            cursor = mDatabaseManager.getCursor(builder, columnArgsArray, selectionArgsArray, null);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to get logs: ", e);
-        }
-        ContentValues values = mDatabaseManager.nextValues(cursor);
-        if (values != null && values.containsKey(String.format("min(%s)", COLUMN_TIMESTAMP))) {
-            lastTimestamp = values.getAsLong(String.format("min(%s)", COLUMN_TIMESTAMP));
-        }
-        if (cursor != null) {
-            try {
-                cursor.close();
-            } catch (RuntimeException e) {
-                AppCenterLog.error(LOG_TAG, "Failed to get corrupted ids: ", e);
-            }
-        }
-        return lastTimestamp;
-    }
-
-    @Override
     @Nullable
     public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
 
