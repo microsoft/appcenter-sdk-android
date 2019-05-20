@@ -30,9 +30,11 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -55,6 +57,11 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
+
+    /**
+     * Start of schedule timestamp.
+     */
+    static final String START_TIMER = "START_TIMER_";
 
     /**
      * Transmission interval minimum value.
@@ -441,6 +448,7 @@ public class DefaultChannel implements Channel {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
+            SharedPreferencesManager.remove(START_TIMER + groupState.mName);
         }
     }
 
@@ -769,15 +777,20 @@ public class DefaultChannel implements Channel {
             groupState.mScheduled = true;
             long delay = groupState.mBatchTimeInterval;
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
-                long oldestLogTime = mPersistence.getOldestLogTime(groupState.mName);
+                long startTimer = SharedPreferencesManager.getLong(START_TIMER + groupState.mName, 0);
+                if(startTimer == 0) {
+                    SharedPreferencesManager.putLong(START_TIMER + groupState.mName, System.currentTimeMillis());
+                }
                 Date now = new Date();
-                delay -= now.getTime() - oldestLogTime;
+                delay -= now.getTime() - startTimer;
 
                 /* Use max interval to avoid problems on startup. */
                 delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
             }
             mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
         }
+
+
     }
 
     @VisibleForTesting
@@ -871,6 +884,7 @@ public class DefaultChannel implements Channel {
             public void run() {
                 mScheduled = false;
                 triggerIngestion(GroupState.this);
+                SharedPreferencesManager.remove(START_TIMER + mName);
             }
         };
 
