@@ -64,10 +64,10 @@ public class DefaultChannel implements Channel {
     static final String START_TIMER_PREFIX = "START_TIMER_PREFIX_";
 
     /**
-     * Transmission interval minimum value.
+     * Transmission interval minimum value, in ms.
      */
     @VisibleForTesting
-    static final long MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3 * 1000;
+    static final long MINIMUM_TRANSMISSION_INTERVAL = 3 * 1000;
 
     /**
      * Application context.
@@ -776,7 +776,7 @@ public class DefaultChannel implements Channel {
         } else if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
             long delay = groupState.mBatchTimeInterval;
-            if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+            if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
                 long now = System.currentTimeMillis();
                 long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
                 if(startTimer == 0) {
@@ -786,7 +786,7 @@ public class DefaultChannel implements Channel {
                 }
 
                 /* Use max interval to avoid problems on startup. */
-                delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
+                delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL);
             }
             mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
         }
