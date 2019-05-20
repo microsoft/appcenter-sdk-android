@@ -92,3 +92,13 @@ def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
 if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
     apply plugin: 'com.google.gms.google-services'
 }
+
+/*
+ * Project and jcenter conflicts since they are not using same version of Push and
+ * somehow affects the plugin when building.
+ * If we build project alone (commenting jcenter dependencies), the problem is solved.
+ * So until we release the SDK with the push update, disable version check.
+ * TODO remove this after SDK release.
+ */
+//noinspection UnnecessaryQualifiedReference
+com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true

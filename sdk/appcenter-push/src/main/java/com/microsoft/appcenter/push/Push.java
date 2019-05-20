@@ -18,6 +18,9 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.InstanceIdResult;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.UserInformation;
@@ -484,8 +487,20 @@ public class Push extends AbstractAppCenterService {
         try {
 
             /* Try to get token through firebase. */
-            onTokenRefresh(FirebaseUtils.getToken());
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
+            FirebaseUtils.getFirebaseInstanceId().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+
+                @Override
+                public void onSuccess(InstanceIdResult instanceIdResult) {
+                    onTokenRefresh(instanceIdResult.getToken());
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    AppCenterLog.error(LOG_TAG, "Failed to register push.", e);
+                }
+            });
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
                     "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
