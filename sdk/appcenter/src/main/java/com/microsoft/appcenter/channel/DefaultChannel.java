@@ -777,20 +777,19 @@ public class DefaultChannel implements Channel {
             groupState.mScheduled = true;
             long delay = groupState.mBatchTimeInterval;
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+                long now = System.currentTimeMillis();
                 long startTimer = SharedPreferencesManager.getLong(START_TIMER + groupState.mName, 0);
                 if(startTimer == 0) {
-                    SharedPreferencesManager.putLong(START_TIMER + groupState.mName, System.currentTimeMillis());
+                    SharedPreferencesManager.putLong(START_TIMER + groupState.mName, now);
+                } else {
+                    delay -= now - startTimer;
                 }
-                Date now = new Date();
-                delay -= now.getTime() - startTimer;
 
                 /* Use max interval to avoid problems on startup. */
                 delay = Math.max(delay, MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
             }
             mAppCenterHandler.postDelayed(groupState.mRunnable, delay);
         }
-
-
     }
 
     @VisibleForTesting
