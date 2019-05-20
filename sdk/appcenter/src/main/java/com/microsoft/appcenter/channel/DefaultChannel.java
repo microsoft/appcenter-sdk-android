@@ -779,8 +779,10 @@ public class DefaultChannel implements Channel {
             if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
                 long now = System.currentTimeMillis();
                 long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
-                if(startTimer == 0) {
+                if (startTimer == 0) {
                     SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                } else if (startTimer > now) {
+                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
                 } else {
                     delay -= now - startTimer;
                 }
