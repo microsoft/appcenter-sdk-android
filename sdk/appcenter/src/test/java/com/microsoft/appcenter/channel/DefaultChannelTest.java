@@ -26,6 +26,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -1158,33 +1159,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (mockSystemTime - mockPrefTime)));
-    }
-
-    @Test
-    public void checkPendingLogsWhenMinDelay() {
-        long mockInterval = 5000;
-        long mockSystemTime = 10000L;
-        final long mockPrefTime = 1000L;
-
-        /* Mock static classes. */
-        mockStatic(System.class);
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
-        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
-
-        /* Mock channel. */
-        Persistence mockPersistence = mock(Persistence.class);
-        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
-        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
-        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
-
-        /* Check values. */
-        verifyStatic(never());
-        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(MINIMUM_TRANSMISSION_INTERVAL));
     }
 
     @Test
