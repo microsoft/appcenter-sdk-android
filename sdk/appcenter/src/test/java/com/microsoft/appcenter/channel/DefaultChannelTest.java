@@ -42,7 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.channel.DefaultChannel.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.channel.DefaultChannel.MINIMUM_TRANSMISSION_INTERVAL;
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1183,6 +1183,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
         
         verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(MINIMUM_TRANSMISSION_INTERVAL));
     }
 }
