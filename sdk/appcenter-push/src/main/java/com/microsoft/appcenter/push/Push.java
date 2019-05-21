@@ -270,7 +270,8 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushToken the push token value.
      */
-    synchronized void onTokenRefresh(final String pushToken) {
+    @SuppressWarnings("WeakerAccess") // protected so that Xamarin can use it.
+    protected synchronized void onTokenRefresh(final String pushToken) {
         if (pushToken != null) {
             AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
             mLatestPushToken = pushToken;
