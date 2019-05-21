@@ -770,7 +770,7 @@ public class DefaultChannel implements Channel {
         }
         long pendingLogCount = groupState.mPendingLogCount;
         long batchTimeInterval = groupState.mBatchTimeInterval;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount + " batchTimeInterval=" + batchTimeInterval);
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs( %s ) pendingLogCount=%s batchTimeInterval=%s" , groupState.mName , pendingLogCount, batchTimeInterval));
 
         /* If the interval is custom. */
         if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
