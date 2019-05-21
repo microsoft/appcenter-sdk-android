@@ -20,6 +20,7 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
@@ -484,11 +485,26 @@ public class Push extends AbstractAppCenterService {
 
         /* Update enable state of the firebase service. */
         FirebaseUtils.setFirebaseMessagingServiceEnabled(mContext, FirebaseUtils.isFirebaseAvailable());
+        FirebaseInstanceId firebaseInstanceId;
         try {
 
             /* Try to get token through firebase. */
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
-            FirebaseUtils.getFirebaseInstanceId().getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+            firebaseInstanceId = FirebaseUtils.getFirebaseInstanceId();
+        } catch (FirebaseUtils.FirebaseUnavailableException e) {
+            AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
+                    "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
+                    "to use Push Notifications. For Android P, its scheduled at the release date for the latest OS version. " +
+                    "For all other versions of Android, it will be required after April 2019. " +
+                    "Please follow the migration guide at https://aka.ms/acfba.\n" +
+                    "Cause: " + e.getMessage());
+            registerPushTokenWithoutFirebase();
+            return;
+        }
+
+        /* Use the current API. */
+        try {
+            firebaseInstanceId.getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
 
                 @Override
                 public void onSuccess(InstanceIdResult instanceIdResult) {
@@ -501,15 +517,17 @@ public class Push extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Failed to register push.", e);
                 }
             });
-        } catch (FirebaseUtils.FirebaseUnavailableException e) {
-            AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
-                    "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
-                    "to use Push Notifications. For Android P, its scheduled at the release date for the latest OS version. " +
-                    "For all other versions of Android, it will be required after April 2019. " +
-                    "Please follow the migration guide at https://aka.ms/acfba.\n" +
-                    "Cause: " + e.getMessage());
-            registerPushTokenWithoutFirebase();
+        } catch (NoSuchMethodError e) {
+            onTokenRefresh(getToken(firebaseInstanceId));
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private String getToken(FirebaseInstanceId firebaseInstanceId) {
+
+        /* On Xamarin, the stable Nuget still uses a version of Xamarin having the old API only. */
+        AppCenterLog.debug(LOG_TAG, "Using old Firebase methods.");
+        return firebaseInstanceId.getToken();
     }
 
     /**
