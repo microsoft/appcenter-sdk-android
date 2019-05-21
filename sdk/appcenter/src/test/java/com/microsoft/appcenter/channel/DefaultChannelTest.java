@@ -1099,11 +1099,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
         /* Checked values. */
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verifyStatic();
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(mockSystemTime));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
@@ -1118,9 +1117,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
 
         /* Check values. */
         verifyStatic(never());
@@ -1145,13 +1143,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (mockSystemTime - mockPrefTime)));
     }
 
@@ -1171,13 +1168,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verifyStatic();
         SharedPreferencesManager.remove(eq(START_TIMER_PREFIX + TEST_GROUP));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
@@ -1199,7 +1195,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(0);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
         /* Check values. */
@@ -1224,7 +1220,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion, mockListener);
 
         /* Check values. */
@@ -1242,7 +1238,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion1 = mock(AppCenterIngestion.class);
         AppCenterIngestion mockIngestion2 = mock(AppCenterIngestion.class);
-        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler));
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion2, mockListener);
         channel.setAppSecret("app-secret");
 
