@@ -1240,4 +1240,21 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
         verify(mockPersistence, times(2)).countLogs(eq(TEST_GROUP));
     }
+
+    @Test
+    public void setAppSecretIngestionNoEquals() {
+        long mockInterval = 10000;
+
+        /* Mock channel. */
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(0);
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        AppCenterIngestion mockIngestion1 = mock(AppCenterIngestion.class);
+        AppCenterIngestion mockIngestion2 = mock(AppCenterIngestion.class);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler));
+        channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion2, mockListener);
+        channel.setAppSecret("app-secret");
+        verify(mockIngestion1, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion2, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
 }
