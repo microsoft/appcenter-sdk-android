@@ -26,7 +26,6 @@ import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -43,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.channel.DefaultChannel.MINIMUM_TRANSMISSION_INTERVAL;
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -66,7 +64,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest({SharedPreferencesManager.class, System.class})
+@PrepareForTest({
+        SharedPreferencesManager.class,
+        System.class
+})
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Before

@@ -13,7 +13,6 @@ import android.database.sqlite.SQLiteDiskIOException;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.persistence.Persistence.PersistenceException;
@@ -34,7 +33,6 @@ import java.util.Date;
 import java.util.List;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.COLUMN_TIMESTAMP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -450,8 +448,6 @@ public class DatabasePersistenceTest {
         /* Persist a log. */
         persistence.putLog(mock(Log.class), "test-p1", NORMAL);
     }
-
-
 
     private static class MockCursor extends CursorWrapper {
 

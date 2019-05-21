@@ -66,7 +66,7 @@ public class DefaultChannel implements Channel {
      * Transmission interval minimum value, in ms.
      */
     @VisibleForTesting
-    static final long MINIMUM_TRANSMISSION_INTERVAL = 3 * 1000;
+    static final long MINIMUM_TRANSMISSION_INTERVAL = 3000;
 
     /**
      * Application context.
@@ -770,7 +770,7 @@ public class DefaultChannel implements Channel {
         }
         long pendingLogCount = groupState.mPendingLogCount;
         long batchTimeInterval = groupState.mBatchTimeInterval;
-        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs( %s ) pendingLogCount=%s batchTimeInterval=%s" , groupState.mName , pendingLogCount, batchTimeInterval));
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s", groupState.mName, pendingLogCount, batchTimeInterval));
 
         /* If the interval is custom. */
         if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
@@ -796,6 +796,8 @@ public class DefaultChannel implements Channel {
                 if (pendingLogCount > 0) {
                     triggerIngestion(groupState);
                 } else {
+
+                    /* Remove the time only when there are no logs left. */
                     SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
                     AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
                 }

@@ -14,10 +14,8 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.UUIDUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.IOException;
 import java.util.Date;
@@ -34,9 +32,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-@PrepareForTest({SharedPreferencesManager.class})
 public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannelTest {
 
     @Test
@@ -116,7 +112,6 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        mockStatic(SharedPreferencesManager.class);
 
         /* Simulate we have 1 pending log in storage. */
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
