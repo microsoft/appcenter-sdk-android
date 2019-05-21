@@ -1385,11 +1385,9 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     @Test
-    public void refreshTokenWithoutConfig() throws Exception {
+    public void refreshTokenWithoutConfig() {
         ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
         doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
-        ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
-        doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
 
         /* Start auth service. */
         Auth auth = Auth.getInstance();
@@ -1400,8 +1398,8 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Connect to online with token to update. */
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
-        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
-        networkStateListenerCaptor.getValue().onNetworkStateUpdated(true);
+
+        /* Do not crash. */
     }
 
     @Test
