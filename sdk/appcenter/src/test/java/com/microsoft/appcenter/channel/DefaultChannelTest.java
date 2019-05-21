@@ -64,17 +64,13 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest({
-        SharedPreferencesManager.class,
-        System.class
-})
+@PrepareForTest(System.class)
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mockStatic(SharedPreferencesManager.class);
         mockStatic(System.class);
     }
 
