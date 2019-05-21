@@ -1125,10 +1125,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP));
-
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
     }
 
@@ -1153,7 +1151,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-
         verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (mockSystemTime - mockPrefTime)));
     }
@@ -1180,12 +1177,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-
         verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
-
         verifyStatic();
         SharedPreferencesManager.remove(eq(START_TIMER_PREFIX + TEST_GROUP));
-
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
     }
 
@@ -1251,6 +1245,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler));
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion2, mockListener);
         channel.setAppSecret("app-secret");
+
+        /* Check values. */
         verify(mockIngestion1, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockIngestion2, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
