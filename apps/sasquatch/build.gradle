@@ -94,7 +94,7 @@ if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
 }
 
 /*
- * Project and jcenter conflicts since they are not using same version of Push and
+ * Project and jcenter conflict since they are not using same version of Push and
  * somehow affects the plugin when building.
  * If we build project alone (commenting jcenter dependencies), the problem is solved.
  * So until we release the SDK with the push update, disable version check.
