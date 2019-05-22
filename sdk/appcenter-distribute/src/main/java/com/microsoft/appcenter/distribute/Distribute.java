@@ -295,6 +295,13 @@ public class Distribute extends AbstractAppCenterService {
     private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
+     * Flag to track whether the distribute feature can be used in a debuggable build.
+     * Flag is false by default.
+     * Updated by calling {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private boolean mEnabledForDebuggableBuild;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -369,13 +376,21 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Set whether the distribute service can be used within a debuggable build.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    public static void setEnabledForDebuggableBuild(boolean enabled) {
+        getInstance().setInstanceEnabledForDebuggableBuild(enabled);
+    }
+
+    /**
      * If update dialog is customized by returning <code>true</code> in  {@link DistributeListener#onReleaseAvailable(Activity, ReleaseDetails)},
      * You need to tell the distribute SDK using this function what is the user action.
      *
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    @SuppressWarnings("JavadocReference")
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
     }
@@ -535,12 +550,12 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
                 if (mUsingDefaultUpdateDialog) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action when using default dialog.");
                     return;
                 }
                 switch (updateAction) {
@@ -581,9 +596,15 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Implements {@link #setListener(DistributeListener)}.
      */
-    @SuppressWarnings("JavadocReference")
     private synchronized void setInstanceListener(DistributeListener listener) {
         mListener = listener;
+    }
+
+    /**
+     * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private synchronized void setInstanceEnabledForDebuggableBuild(boolean enabled) {
+        mEnabledForDebuggableBuild = enabled;
     }
 
     /**
@@ -630,8 +651,8 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
-                AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
+                AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
                 return;
             }
@@ -751,8 +772,11 @@ public class Distribute extends AbstractAppCenterService {
                     enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 }
 
-                /* Or restore update dialog if that's the last thing we did before being paused. */
-                else {
+                /*
+                 * Or restore update dialog if that's the last thing we did before being paused.
+                 * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
+                 */
+                else if (mDownloadTask == null) {
                     showUpdateDialog();
                 }
 
@@ -1596,7 +1620,7 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task) {
+        if (mDownloadTask == task && mReleaseDetails != null) {
 
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();

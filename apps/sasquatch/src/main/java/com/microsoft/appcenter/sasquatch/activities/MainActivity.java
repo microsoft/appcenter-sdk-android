@@ -48,6 +48,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -113,6 +114,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     native void setupNativeCrashesListener(String path);
+
+    static String getLogUrl(Context context, String startType) {
+        switch (StartType.valueOf(startType)) {
+            case TARGET:
+            case NO_SECRET:
+                return context.getString(R.string.log_url_one_collector);
+        }
+        return context.getString(R.string.log_url);
+    }
 
     static void startAppCenter(Application application, String startTypeString) {
         StartType startType = StartType.valueOf(startTypeString);
@@ -245,7 +255,8 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getLogUrl(this, startType));
         if (!TextUtils.isEmpty(logUrl)) {
             AppCenter.setLogUrl(logUrl);
         }
@@ -297,8 +308,10 @@ public class MainActivity extends AppCompatActivity {
         /* Set max storage size. */
         setMaxStorageSize();
 
+        /* Set debug enabled for distribute. */
+        setDistributeEnabledForDebuggableBuild();
+
         /* Start App Center. */
-        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
         /* Set user id. */
@@ -353,6 +366,18 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    private void setDistributeEnabledForDebuggableBuild() {
+
+        /* TODO Call method directly / remove reflection once SDK being released. */
+        try {
+            Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
+            method.invoke(null, sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false));
+        } catch (NoSuchMethodException ignore) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public enum StartType {

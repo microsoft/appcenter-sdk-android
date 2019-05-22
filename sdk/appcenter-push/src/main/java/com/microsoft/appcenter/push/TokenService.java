@@ -5,16 +5,19 @@
 
 package com.microsoft.appcenter.push;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.FirebaseInstanceIdService;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import static com.microsoft.appcenter.push.Push.LOG_TAG;
 
 /**
  * A service to handle the creation, rotation, and updating of registration tokens.
  */
-public class TokenService extends FirebaseInstanceIdService {
+public class TokenService extends FirebaseMessagingService {
 
     @Override
-    public void onTokenRefresh() {
-        Push.getInstance().onTokenRefresh(FirebaseInstanceId.getInstance().getToken());
+    public void onNewToken(String token) {
+        AppCenterLog.debug(LOG_TAG, "Received push token update via service callback.");
+        Push.getInstance().onTokenRefresh(token);
     }
 }

@@ -51,8 +51,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -372,13 +372,13 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* No download check yet. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
 
         /* Foreground: check still in progress. */
         Distribute.getInstance().onActivityResumed(mActivity);
         waitCheckDownloadTask();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
         verify(cursor).close();
 
         /* Restart launcher. */
@@ -387,7 +387,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify we don't run the check again. (Only once). */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(sCheckCompleteTask), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
 
         /* Download eventually fails. */
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_FAILED);
@@ -785,5 +785,38 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify new release checked (for example what we installed was something else than the upgrade. */
         verify(mDialog, times(2)).show();
+    }
+
+    @Test
+    public void completeWorkflowOnStartDownloading() {
+
+        /* Complete workflow. */
+        Distribute.getInstance().completeWorkflow();
+
+        /* Unblock download. */
+        waitDownloadTask();
+
+        /* Verify cancellation. */
+        verify(mDownloadManager).remove(DOWNLOAD_ID);
+    }
+
+    @Test
+    public void checkNoDuplicateDialogWhileEnqueuingDownloadAndSwitchingActivity() {
+
+        /* If we restart a new activity quickly before download is enqueued. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Then update dialog is not shown twice. */
+        verify(mDialog).show();
+
+        /* And download state saving works as expected. */
+        waitDownloadTask();
+        verifyStatic();
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        verifyStatic();
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, DOWNLOAD_ID);
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), anyLong());
     }
 }

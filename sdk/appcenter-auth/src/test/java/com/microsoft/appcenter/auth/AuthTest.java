@@ -325,14 +325,7 @@ public class AuthTest extends AbstractAuthTest {
         }).when(publicClientApplication).acquireToken(any(Activity.class), notNull(String[].class), notNull(AuthenticationCallback.class));
 
         /* Start auth service. */
-        Auth auth = Auth.getInstance();
-        start(auth);
-
-        /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
-
-        /* Go foreground. */
-        auth.onActivityResumed(mock(Activity.class));
+        mockReadyToSignIn();
 
         /* Sign in. */
         AppCenterFuture<SignInResult> future = Auth.signIn();
@@ -371,14 +364,7 @@ public class AuthTest extends AbstractAuthTest {
         when(publicClientApplication.getAccount(eq(mockHomeAccountId), anyString())).thenReturn(mockAccount);
 
         /* Start auth service. */
-        Auth auth = Auth.getInstance();
-        start(auth);
-
-        /* Download configuration. */
-        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
-
-        /* Go foreground. */
-        auth.onActivityResumed(mock(Activity.class));
+        mockReadyToSignIn();
 
         /* Silent sign in. */
         AppCenterFuture<SignInResult> future = Auth.signIn();
@@ -1399,6 +1385,25 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     @Test
+    public void refreshTokenWithoutConfig() {
+        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* Mock foreground. */
+        auth.onActivityResumed(mock(Activity.class));
+
+        /* Connect to online with token to update. */
+        authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Verify sign out cleared token. */
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+    }
+
+    @Test
     public void refreshTokenDuringSignIn() throws Exception {
 
         /* Capture Listener to call onTokenRequiresRefresh later. */
@@ -1443,7 +1448,6 @@ public class AuthTest extends AbstractAuthTest {
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
         verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
     }
-
 
     @Test
     public void signInDuringRefreshToken() throws Exception {

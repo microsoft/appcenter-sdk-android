@@ -47,12 +47,10 @@ public class TokenServiceTest {
     @Test
     public void onTokenRefresh() {
         TokenService service = new TokenService();
-        when(mFirebaseInstanceId.getToken()).thenReturn(null);
-        service.onTokenRefresh();
+        service.onNewToken(null);
         verify(mPush).onTokenRefresh(null);
         String testToken = "TEST";
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
-        service.onTokenRefresh();
+        service.onNewToken(testToken);
         verify(mPush).onTokenRefresh(eq(testToken));
     }
 }
