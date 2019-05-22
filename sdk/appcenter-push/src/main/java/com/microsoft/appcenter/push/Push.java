@@ -526,7 +526,7 @@ public class Push extends AbstractAppCenterService {
     @SuppressWarnings("deprecation")
     private String getToken(FirebaseInstanceId firebaseInstanceId) {
 
-        /* On Xamarin, the stable Nuget still uses a version of Xamarin having the old API only. */
+        /* On Xamarin, the stable Nuget still uses a version of Firebase having the old API only. */
         AppCenterLog.debug(LOG_TAG, "Using old Firebase methods.");
         return firebaseInstanceId.getToken();
     }
