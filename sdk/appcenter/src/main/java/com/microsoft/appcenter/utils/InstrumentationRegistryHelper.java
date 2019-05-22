@@ -23,10 +23,10 @@ public class InstrumentationRegistryHelper {
      * @throws LinkageError          if the class, method is not found or does not match, typically no test dependencies in release.
      */
     public static Bundle getArguments() throws LinkageError {
-        return getArguments();
+        return getArgumentsByReflection();
     }
 
-    private static Bundle getArguments() {
+    private static Bundle getArgumentsByReflection() {
         for (String location: locations) {
             try {
                 Class<?> aClass = Class.forName(location);
