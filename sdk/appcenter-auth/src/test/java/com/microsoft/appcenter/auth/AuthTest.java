@@ -1399,7 +1399,8 @@ public class AuthTest extends AbstractAuthTest {
         /* Connect to online with token to update. */
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
 
-        /* Do not crash. */
+        /* Verify sign out cleared token. */
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
