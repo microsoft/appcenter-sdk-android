@@ -1090,8 +1090,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void checkPendingLogsCheckDelay() throws InterruptedException {
         long mockInterval = 5000;
-        long mockSystemTime = 1L;
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
+        long now = 1L;
+        when(System.currentTimeMillis()).thenReturn(now);
 
         /* Create channel. Verify scheduling logs. */
         Persistence mockPersistence = mock(Persistence.class);
@@ -1104,7 +1104,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Checked values. */
         verifyStatic();
-        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(mockSystemTime));
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval));
     }
 
@@ -1131,12 +1131,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void checkPendingLogsWhenMaxDelay() {
         long mockInterval = 10000;
-        long mockSystemTime = 5000L;
-        final long mockPrefTime = 1000L;
+        long now = 5000L;
+        final long startTime = 1000L;
 
         /* Mock static classes. */
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
-        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+        when(System.currentTimeMillis()).thenReturn(now);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(startTime);
 
         /* Mock channel. */
         Persistence mockPersistence = mock(Persistence.class);
@@ -1149,19 +1149,19 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Check values. */
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), any(long.class));
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (mockSystemTime - mockPrefTime)));
+        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(mockInterval - (now - startTime)));
     }
 
     @Test
     public void checkPendingLogsWhenStartTimeMoreNow() {
         long mockInterval = 5000L;
-        long mockSystemTime = 1000L;
-        final long mockPrefTime = 10000L;
+        long now = 1000L;
+        final long startTime = 10000L;
 
         /* Mock static classes. */
         mockStatic(System.class);
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
-        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+        when(System.currentTimeMillis()).thenReturn(now);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(startTime);
 
         /* Mock channel. */
         Persistence mockPersistence = mock(Persistence.class);
@@ -1182,13 +1182,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void checkPendingLogsZeroMorePendingLog() {
         long mockInterval = 10000;
-        long mockSystemTime = 50000L;
-        final long mockPrefTime = 1000L;
+        long now = 50000L;
+        final long startTime = 1000L;
 
         /* Mock static classes. */
         mockStatic(System.class);
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
-        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+        when(System.currentTimeMillis()).thenReturn(now);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(startTime);
 
         /* Mock channel. */
         Persistence mockPersistence = mock(Persistence.class);
@@ -1207,13 +1207,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     @Test
     public void checkPendingLogsPendingLogMoreZero() {
         long mockInterval = 10000;
-        long mockSystemTime = 50000L;
-        final long mockPrefTime = 1000L;
+        long now = 50000L;
+        final long startTime = 1000L;
 
         /* Mock static classes. */
         mockStatic(System.class);
-        when(System.currentTimeMillis()).thenReturn(mockSystemTime);
-        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(mockPrefTime);
+        when(System.currentTimeMillis()).thenReturn(now);
+        when(SharedPreferencesManager.getLong(eq(START_TIMER_PREFIX + TEST_GROUP))).thenReturn(startTime);
 
         /* Mock channel. */
         Persistence mockPersistence = mock(Persistence.class);
