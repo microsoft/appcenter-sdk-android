@@ -9,6 +9,7 @@
 ### App Center Auth
 
 * **[Fix]** Fix missing proguard rules so that the app does not have to specify them.
+* **[Fix]** Fix crash on silently refreshing token if initialization of MSAL fails.
 
 ### App Center Data
 

@@ -638,6 +638,11 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
+        if (mAuthenticationClient == null) {
+            AppCenterLog.warn(LOG_TAG, "Failed to refresh token: Auth isn't configured.");
+            AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            return;
+        }
         if (isFutureInProgress(mLastSignInFuture)) {
             AppCenterLog.debug(LOG_TAG, "Failed to refresh token: sign-in already in progress.");
             return;
