@@ -8,6 +8,7 @@ package com.microsoft.appcenter;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
@@ -29,6 +30,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
@@ -109,6 +111,11 @@ public class AppCenter {
      */
     @SuppressLint("StaticFieldLeak")
     private static AppCenter sInstance;
+
+    /**
+     * Environment variable name for test to see if we're running in App Center Test
+     */
+    private static String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
 
     /**
      * Remember if log level was configured using this class.
@@ -201,11 +208,6 @@ public class AppCenter {
      * Redirect selected traffic to One Collector.
      */
     private OneCollectorChannelListener mOneCollectorChannelListener;
-
-    /**
-     * Environment variable name for test to see if we're running in App Center Test
-     */
-    private string RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
 
     /**
      * Get unique instance.
@@ -306,8 +308,8 @@ public class AppCenter {
     public static boolean runningInAppCenter() {
         try
         {
-            var arguments = InstrumentationRegistryHelper.getArguments();
-            var runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
+            Bundle arguments = InstrumentationRegistryHelper.getArguments();
+            String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
             if (runningValue == null || runningValue != "1")
             {
                 return false;

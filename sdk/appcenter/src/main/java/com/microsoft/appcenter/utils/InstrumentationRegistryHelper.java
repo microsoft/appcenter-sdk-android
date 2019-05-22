@@ -7,6 +7,9 @@ package com.microsoft.appcenter.utils;
 
 import android.os.Bundle;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /**
  * Wraps InstrumentationRegistry class to enable mocking in unit tests.
  */
