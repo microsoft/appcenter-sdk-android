@@ -778,7 +778,7 @@ public class DefaultChannel implements Channel {
             long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
 
             /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
-            if (startTimer == 0 || startTimer > now) {
+            if (pendingLogCount > 0 && (startTimer == 0 || startTimer > now)) {
                 SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
                 AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
             }

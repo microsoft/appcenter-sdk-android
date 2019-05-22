@@ -1105,6 +1105,26 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
+    public void checkPendingLogsDoesNotStartTimerWithoutLogs() {
+
+        /* Mock current time. */
+        long now = 1;
+        when(System.currentTimeMillis()).thenReturn(now);
+
+        /* Create channel and group. */
+        Persistence mockPersistence = mock(Persistence.class);
+        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(0);
+        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 10, CUSTOM_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
+
+        /* Verify that timer isn't started. */
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
+        verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(CUSTOM_INTERVAL));
+    }
+
+    @Test
     public void checkPendingLogsResumesStartTime() {
 
         /* Mock stored start time. */
@@ -1183,7 +1203,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void checkPendingLogsSendBatchesByInterval() {
+    public void checkPendingLogsSendsAllBatchesIfTimerIsOver() {
 
         /* Mock current time. */
         long now = 5000;
