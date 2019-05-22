@@ -15,7 +15,7 @@ final class ActivityConstants {
     /**
      * Shared preference key to store Analytics transmission interval.
      */
-    static final String ANALYTICS_TRANSMISSION_INTERVAL_KEY = "ANALYTICS_TRANSMISSION_INTERVAL_KEY";
+    static final String ANALYTICS_TRANSMISSION_INTERVAL_KEY = "analyticsTransmissionInterval";
 
     /**
      * Default Analytics transmission interval in seconds.
