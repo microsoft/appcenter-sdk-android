@@ -22,7 +22,7 @@
 
 ### App Center Push
 
-* **[Fix]** Update firebase dependency to avoid conflict in applications using latest support libraries (v28) or the latest Firebase messaging version (v18).
+* **[Fix]** Update Firebase dependency to avoid conflict in applications using latest support libraries (v28) or the latest Firebase messaging version (v18).
 
 ## Version 2.0.0
 
