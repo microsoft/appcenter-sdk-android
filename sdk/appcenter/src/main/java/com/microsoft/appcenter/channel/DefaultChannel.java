@@ -777,16 +777,10 @@ public class DefaultChannel implements Channel {
             long now = System.currentTimeMillis();
             long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
 
-            /* The timer isn't started, so start it and store the current time. */
-            if (startTimer == 0) {
+            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
+            if (startTimer == 0 || startTimer > now) {
                 SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
                 AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
-            }
-
-            /* Handle invalid values (start time in the future). */
-            else if (startTimer > now) {
-                SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
-                AppCenterLog.debug(LOG_TAG, "Invalid timer value for " + groupState.mName + " channel has been removed.");
             }
 
             /* If the interval is over. */
