@@ -30,6 +30,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,6 +56,17 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
+
+    /**
+     * Start of schedule timestamp.
+     */
+    @VisibleForTesting
+    static final String START_TIMER_PREFIX = "startTimerPrefix.";
+
+    /**
+     * Transmission interval minimum value, in ms.
+     */
+    private static final long MINIMUM_TRANSMISSION_INTERVAL = 3000;
 
     /**
      * Application context.
@@ -435,6 +447,7 @@ public class DefaultChannel implements Channel {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
+            SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
         }
     }
 
@@ -756,12 +769,48 @@ public class DefaultChannel implements Channel {
             return;
         }
         long pendingLogCount = groupState.mPendingLogCount;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount);
-        if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
+        long batchTimeInterval = groupState.mBatchTimeInterval;
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s", groupState.mName, pendingLogCount, batchTimeInterval));
+
+        /* If the interval is custom. */
+        if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
+            long now = System.currentTimeMillis();
+            long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
+
+            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
+            if (pendingLogCount > 0 && (startTimer == 0 || startTimer > now)) {
+                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
+            }
+
+            /* If the interval is over. */
+            else if (startTimer + batchTimeInterval < now) {
+
+                /* Send all logs without any additional timers. */
+                if (pendingLogCount > 0) {
+                    triggerIngestion(groupState);
+                } else {
+
+                    /* Remove the time only when there are no logs left. */
+                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                    AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
+                }
+                return;
+            }
+
+            /* We still have to wait for the rest of the interval. */
+            else {
+                batchTimeInterval -= now - startTimer;
+            }
+        } else if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
             triggerIngestion(groupState);
-        } else if (pendingLogCount > 0 && !groupState.mScheduled) {
+            return;
+        }
+
+        /* Postpone triggering ingestion. */
+        if (pendingLogCount > 0 && !groupState.mScheduled) {
             groupState.mScheduled = true;
-            mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
+            mAppCenterHandler.postDelayed(groupState.mRunnable, batchTimeInterval);
         }
     }
 

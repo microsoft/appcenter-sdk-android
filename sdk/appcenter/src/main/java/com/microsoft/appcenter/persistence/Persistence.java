@@ -43,8 +43,8 @@ public abstract class Persistence implements Closeable {
     /**
      * Deletes a log with the give ID from the {@code group}.
      *
-     * @param group     The group of the storage for logs.
-     * @param batchId   The ID for a set of logs.
+     * @param group   The group of the storage for logs.
+     * @param batchId The ID for a set of logs.
      */
     public abstract void deleteLogs(@NonNull String group, @NonNull String batchId);
 

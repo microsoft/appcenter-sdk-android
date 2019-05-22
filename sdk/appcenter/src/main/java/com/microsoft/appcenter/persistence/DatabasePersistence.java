@@ -416,7 +416,7 @@ public class DatabasePersistence extends Persistence {
         return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
     }
 
-    private int countLogs(String whereClause, String ...whereArgs) {
+    private int countLogs(String whereClause, String... whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
