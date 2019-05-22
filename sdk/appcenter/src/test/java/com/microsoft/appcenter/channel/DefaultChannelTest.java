@@ -42,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -66,6 +65,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @PrepareForTest(System.class)
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
+
+    private final String START_TIMER_PREFIX = "START_TIMER_PREFIX_";
 
     @Before
     @Override
@@ -1238,12 +1239,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         AppCenterIngestion mockIngestion1 = mock(AppCenterIngestion.class);
         AppCenterIngestion mockIngestion2 = mock(AppCenterIngestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler);
+        DefaultChannel channel = spy(new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion1, mAppCenterHandler));
         channel.addGroup(TEST_GROUP, 10, mockInterval, MAX_PARALLEL_BATCHES, mockIngestion2, mockListener);
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
         channel.setAppSecret("app-secret");
 
         /* Check values. */
-        verify(mockIngestion1, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(mockIngestion2, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(channel).checkPendingLogs(any(DefaultChannel.GroupState.class));
     }
 }
