@@ -14,8 +14,12 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.TextUtils;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
@@ -39,7 +43,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -49,6 +55,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -104,6 +111,15 @@ public class PushTest {
 
     @Mock
     private FirebaseInstanceId mFirebaseInstanceId;
+
+    @Mock
+    private Task<InstanceIdResult> mFirebaseInstanceIdResult;
+
+    @Captor
+    private ArgumentCaptor<OnSuccessListener<InstanceIdResult>> mFirebaseInstanceIdSuccessListener;
+
+    @Captor
+    private ArgumentCaptor<OnFailureListener> mFirebaseInstanceIdFailureListener;
 
     @Mock
     private FirebaseAnalytics mFirebaseAnalyticsInstance;
@@ -163,6 +179,8 @@ public class PushTest {
         /* Mock Firebase instance. */
         mockStatic(FirebaseInstanceId.class);
         when(FirebaseInstanceId.getInstance()).thenReturn(mFirebaseInstanceId);
+        when(mFirebaseInstanceId.getInstanceId()).thenReturn(mFirebaseInstanceIdResult);
+        when(mFirebaseInstanceIdResult.addOnSuccessListener(Mockito.<OnSuccessListener<InstanceIdResult>>any())).thenReturn(mFirebaseInstanceIdResult);
 
         /* Mock Firebase Analytics instance. */
         mockStatic(FirebaseAnalytics.class);
@@ -194,7 +212,7 @@ public class PushTest {
             public Boolean answer(InvocationOnMock invocation) {
                 CharSequence a = (CharSequence) invocation.getArguments()[0];
                 CharSequence b = (CharSequence) invocation.getArguments()[1];
-                return a == b || (a != null && a.equals(b));
+                return Objects.equals(a, b);
             }
         });
     }
@@ -229,23 +247,32 @@ public class PushTest {
         String testToken = "TEST";
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
-        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
         start(push, channel);
+
+        /* Verify state. */
         verify(channel).removeGroup(eq(push.getGroupName()));
         assertTrue(Push.isEnabled().get());
-        verify(mFirebaseInstanceId).getToken();
+        verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
+                eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
+        assertNotNull(mFirebaseInstanceIdSuccessListener.getValue());
+
+        /* Unblock get token call. */
+        InstanceIdResult result = mock(InstanceIdResult.class);
+        when(result.getToken()).thenReturn(testToken);
+        mFirebaseInstanceIdSuccessListener.getValue().onSuccess(result);
+
+        /* Check log is sent. */
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
         verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
         assertEquals(testToken, log.getValue().getPushToken());
-        verify(mPackageManager).setComponentEnabledSetting(any(ComponentName.class),
-                eq(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT), eq(PackageManager.DONT_KILL_APP));
 
         /* Enable while already enabled. */
         Push.setEnabled(true);
         assertTrue(Push.isEnabled().get());
 
         /* Verify behavior happened only once. */
-        verify(mFirebaseInstanceId).getToken();
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Disable. */
@@ -269,7 +296,7 @@ public class PushTest {
         push.onTokenRefresh(testToken);
 
         /* Verify behavior happened only once. */
-        verify(mFirebaseInstanceId).getToken();
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
         verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), eq(DEFAULTS));
 
         /* Make sure no logging when posting check activity intent commands. */
@@ -289,6 +316,48 @@ public class PushTest {
         start(push, channel);
         verify(mFirebaseAnalyticsInstance, times(2)).setAnalyticsCollectionEnabled(false);
         verify(mFirebaseAnalyticsInstance, never()).setAnalyticsCollectionEnabled(true);
+    }
+
+    @Test
+    public void getTokenCallbackFails() {
+
+        /* Start. */
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+
+        /* Verify token is requested. */
+        verify(mFirebaseInstanceIdResult).addOnFailureListener(mFirebaseInstanceIdFailureListener.capture());
+        assertNotNull(mFirebaseInstanceIdFailureListener.getValue());
+
+        /* Make the call fail. */
+        mFirebaseInstanceIdFailureListener.getValue().onFailure(new Exception());
+
+        /* No log is sent. */
+        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void sendTokenUsingOlderGetAPI() {
+
+        /* Make new API fail by being missing (like on Xamarin). */
+        when(mFirebaseInstanceId.getInstanceId()).thenThrow(new NoSuchMethodError());
+
+        /* Start. */
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        when(mFirebaseInstanceId.getToken()).thenReturn(testToken);
+        start(push, channel);
+
+        /* Verify. */
+        verify(channel).removeGroup(eq(push.getGroupName()));
+        assertTrue(Push.isEnabled().get());
+        verify(mFirebaseInstanceId).getToken();
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+        assertEquals(testToken, log.getValue().getPushToken());
     }
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
@@ -322,7 +391,7 @@ public class PushTest {
         UserIdContext.getInstance().setUserId("alice");
         start(push, channel);
         assertTrue(Push.isEnabled().get());
-        verify(mFirebaseInstanceId).getToken();
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
         verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
 
         /* Refresh. */
@@ -333,7 +402,7 @@ public class PushTest {
         assertEquals("alice", log.getValue().getUserId());
 
         /* Only once. */
-        verify(mFirebaseInstanceId).getToken();
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
     }
 
     @Test
@@ -709,8 +778,6 @@ public class PushTest {
         start(Push.getInstance(), mock(Channel.class));
         assertTrue(Push.isEnabled().get());
         verifyStatic();
-        AppCenterLog.info(anyString(), anyString());
-        verifyStatic();
         AppCenterLog.warn(anyString(), anyString());
         Push.getInstance().onActivityResumed(mock(Activity.class));
         verify(mContext, times(2)).startService(any(Intent.class));
@@ -822,6 +889,34 @@ public class PushTest {
         ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
         verify(channel).enqueue(log.capture(), anyString(), anyInt());
         assertEquals(mockUserId, log.getValue().getUserId());
+    }
+
+    @Test
+    public void verifyEnqueueNotCalledWhileTokenDoesNotChange() {
+
+        /* Start. */
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+
+        /* Unblock get token call. */
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
+        assertNotNull(mFirebaseInstanceIdSuccessListener.getValue());
+        InstanceIdResult result = mock(InstanceIdResult.class);
+        when(result.getToken()).thenReturn(testToken);
+        mFirebaseInstanceIdSuccessListener.getValue().onSuccess(result);
+
+        /* Check log is sent. */
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+        assertEquals(testToken, log.getValue().getPushToken());
+
+        /* Update with the same token. This actually happens during the first launch. */
+        push.onTokenRefresh(testToken);
+
+        /* The token was sent only once. */
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
     }
 
     @Test
