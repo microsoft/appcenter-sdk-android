@@ -60,7 +60,8 @@ public class DefaultChannel implements Channel {
     /**
      * Start of schedule timestamp.
      */
-    private final String START_TIMER_PREFIX = "START_TIMER_PREFIX_";
+    @VisibleForTesting
+    static final String START_TIMER_PREFIX = "START_TIMER_PREFIX_";
 
     /**
      * Transmission interval minimum value, in ms.
