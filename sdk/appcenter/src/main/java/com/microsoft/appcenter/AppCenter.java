@@ -203,6 +203,11 @@ public class AppCenter {
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
+     * Environment variable name for test to see if we're running in App Center Test
+     */
+    private string RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -290,6 +295,30 @@ public class AppCenter {
      */
     public static boolean isConfigured() {
         return getInstance().isInstanceConfigured();
+    }
+
+    /**
+     * Check whether app is running in App Center Test.
+     *
+     * @return true if running in App Center Test, false otherwise
+     * (and where no test dependencies in release.
+     */
+    public static boolean runningInAppCenter() {
+        try
+        {
+            var arguments = InstrumentationRegistryHelper.getArguments();
+            var runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
+            if (runningValue == null || runningValue != "1")
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (LinkageError e)
+        {
+            return false;
+        }
     }
 
     /**
