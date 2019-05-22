@@ -892,6 +892,34 @@ public class PushTest {
     }
 
     @Test
+    public void verifyEnqueueNotCalledWhileTokenDoesNotChange() {
+
+        /* Start. */
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+
+        /* Unblock get token call. */
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
+        assertNotNull(mFirebaseInstanceIdSuccessListener.getValue());
+        InstanceIdResult result = mock(InstanceIdResult.class);
+        when(result.getToken()).thenReturn(testToken);
+        mFirebaseInstanceIdSuccessListener.getValue().onSuccess(result);
+
+        /* Check log is sent. */
+        ArgumentCaptor<PushInstallationLog> log = ArgumentCaptor.forClass(PushInstallationLog.class);
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+        assertEquals(testToken, log.getValue().getPushToken());
+
+        /* Update with the same token. This actually happens during the first launch. */
+        push.onTokenRefresh(testToken);
+
+        /* The token was sent only once. */
+        verify(channel).enqueue(log.capture(), eq(push.getGroupName()), eq(DEFAULTS));
+    }
+
+    @Test
     public void verifyEnqueueCalledAnonymouslyOnClearToken() {
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
