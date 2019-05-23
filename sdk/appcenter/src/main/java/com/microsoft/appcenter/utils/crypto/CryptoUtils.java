@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
+import android.util.Log;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -260,11 +261,16 @@ public class CryptoUtils {
      * Get key store entry for the corresponding handler.
      */
     @Nullable
-    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry, boolean mobileCenterFailOver) throws Exception {
+    private KeyStore.Entry getKeyStoreEntry(@NonNull CryptoHandlerEntry handlerEntry) throws Exception {
+        return getKeyStoreEntry(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex, false);
+    }
+
+    @Nullable
+    private KeyStore.Entry getKeyStoreEntry(CryptoHandler cryptoHandler, int aliasIndex, boolean mobileCenterFailOver) throws Exception {
         if (mKeyStore == null) {
             return null;
         }
-        String alias = getAlias(handlerEntry.mCryptoHandler, handlerEntry.mAliasIndex, mobileCenterFailOver);
+        String alias = getAlias(cryptoHandler, aliasIndex, mobileCenterFailOver);
         return mKeyStore.getEntry(alias, null);
     }
 
@@ -287,7 +293,7 @@ public class CryptoUtils {
             try {
 
                 /* Attempt encryption. */
-                KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, false);
+                KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry);
                 byte[] encryptedBytes = handler.encrypt(mCryptoFactory, mApiLevel, keyStoreEntry, data.getBytes(CHARSET));
                 String encryptedString = Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
 
@@ -343,24 +349,41 @@ public class CryptoUtils {
         String[] dataSplit = data.split(ALGORITHM_DATA_SEPARATOR);
         CryptoHandlerEntry handlerEntry = dataSplit.length == 2 ? mCryptoHandlers.get(dataSplit[0]) : null;
         CryptoHandler cryptoHandler = handlerEntry == null ? null : handlerEntry.mCryptoHandler;
-        try {
-            if (cryptoHandler == null) {
-                throw new IllegalStateException("Could not find crypto handler that was used for the specified data.");
-            }
-            KeyStore.Entry keyStoreEntry = getKeyStoreEntry(handlerEntry, mobileCenterFailOver);
-            byte[] decryptedBytes = cryptoHandler.decrypt(mCryptoFactory, mApiLevel, keyStoreEntry, Base64.decode(dataSplit[1], Base64.DEFAULT));
-            String decryptedString = new String(decryptedBytes, CHARSET);
-            String newEncryptedData = null;
-            if (cryptoHandler != mCryptoHandlers.values().iterator().next().mCryptoHandler) {
-                newEncryptedData = encrypt(decryptedString);
-            }
-            return new DecryptedData(decryptedString, newEncryptedData);
-        } catch (Exception e) {
+        if (cryptoHandler == null) {
 
             /* Return data as is. */
             AppCenterLog.error(LOG_TAG, "Failed to decrypt data.");
             return new DecryptedData(data, null);
         }
+
+        /* Try the current alias. */
+        try {
+            return getDecryptedData(cryptoHandler, handlerEntry.mAliasIndex, dataSplit[1], mobileCenterFailOver);
+        } catch (Exception e) {
+
+            /* Try the expired alias. */
+            Log.d(LOG_TAG, "Failed to decrypt data with current key, trying expired one.");
+            try {
+                return getDecryptedData(cryptoHandler, handlerEntry.mAliasIndex ^ 1, dataSplit[1], mobileCenterFailOver);
+            } catch (Exception e2) {
+
+                /* Return data as is on failure. We cannot log details for security. */
+                AppCenterLog.error(LOG_TAG, "Failed to decrypt data.");
+                return new DecryptedData(data, null);
+            }
+        }
+    }
+
+    @NonNull
+    private DecryptedData getDecryptedData(CryptoHandler cryptoHandler, int aliasIndex, String data, boolean mobileCenterFailOver) throws Exception {
+        KeyStore.Entry keyStoreEntry = getKeyStoreEntry(cryptoHandler, aliasIndex, mobileCenterFailOver);
+        byte[] decryptedBytes = cryptoHandler.decrypt(mCryptoFactory, mApiLevel, keyStoreEntry, Base64.decode(data, Base64.DEFAULT));
+        String decryptedString = new String(decryptedBytes, CHARSET);
+        String newEncryptedData = null;
+        if (cryptoHandler != mCryptoHandlers.values().iterator().next().mCryptoHandler) {
+            newEncryptedData = encrypt(decryptedString);
+        }
+        return new DecryptedData(decryptedString, newEncryptedData);
     }
 
     /**
@@ -456,7 +479,7 @@ public class CryptoUtils {
         final CryptoHandler mCryptoHandler;
 
         /**
-         * Keystore alias index, 0 or 1.
+         * Current keystore alias index, 0 or 1.
          */
         int mAliasIndex;
 
