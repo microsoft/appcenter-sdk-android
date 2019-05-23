@@ -278,6 +278,20 @@ public class CryptoTest {
     }
 
     @Test
+    public void failsToDecrypt() throws Exception {
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
+        String encryptedData = cryptoUtils.encrypt(data);
+        assertNotEquals(data, encryptedData);
+        when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+
+        /* Check decryption failed (data returned as is). */
+        assertEquals(encryptedData, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+    }
+
+    @Test
     public void readExpiredData() throws Exception {
 
         /* Encrypt test data. */
