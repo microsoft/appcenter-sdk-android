@@ -20,6 +20,7 @@
 * **[Feature]** Add `Distribute.setEnabledForDebuggableBuild(boolean)` method to allow in-app updates in debuggable builds.
 * **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
 * **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
+* **[Fix]** Fix a crash that could occur while trying to open the browser on some devices.
 
 ### App Center Push
 
