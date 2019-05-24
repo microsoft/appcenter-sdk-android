@@ -49,7 +49,6 @@ public class InstrumentationRegistryHelper {
             } catch (Exception ignored) {
             }
         }
-
         return new Bundle();
     }
 }
