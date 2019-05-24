@@ -17,7 +17,8 @@ import java.util.List;
  * Wraps InstrumentationRegistry class to enable mocking in unit tests.
  */
 public class InstrumentationRegistryHelper {
-    private static List<String> locations = Arrays.asList("androidx.test.platform.app.InstrumentationRegistry",
+
+    private static final List<String> LOCATIONS = Arrays.asList("androidx.test.platform.app.InstrumentationRegistry",
             "androidx.test.InstrumentationRegistry",
             "android.support.test.InstrumentationRegistry");
 
@@ -29,7 +30,7 @@ public class InstrumentationRegistryHelper {
      * @throws LinkageError          if the class, method is not found or does not match, typically no test dependencies in release.
      */
     public static Bundle getArguments() throws LinkageError, IllegalStateException {
-        Iterator<String> iterator = locations.iterator();
+        Iterator<String> iterator = LOCATIONS.iterator();
         while (iterator.hasNext()) {
             String location = iterator.next();
 
@@ -37,25 +38,15 @@ public class InstrumentationRegistryHelper {
                 Class<?> aClass = Class.forName(location);
                 Method getArguments = aClass.getMethod("getArguments", (Class[]) null);
                 return (Bundle) getArguments.invoke(null, (Object[]) null);
-                // We need to support api level 8 and up, so we cannot combine catches into one
             } catch (IllegalStateException e) {
-                // Ignore unless last item
                 if (!iterator.hasNext()) {
                     throw e;
                 }
             } catch (LinkageError e) {
-                // Ignore unless last item
                 if (!iterator.hasNext()) {
                     throw e;
                 }
-            } catch (ClassNotFoundException e) {
-                // Ignore
-            } catch (NoSuchMethodException e) {
-                // Ignore
-            } catch (IllegalAccessException e) {
-                // Ignore
-            } catch (InvocationTargetException e) {
-                // Ignore
+            } catch (Exception ignored) {
             }
         }
 

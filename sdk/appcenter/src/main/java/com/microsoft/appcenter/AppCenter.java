@@ -313,11 +313,7 @@ public class AppCenter {
 
             return "1".equals(runningValue);
         }
-        catch (LinkageError e)
-        {
-            return false;
-        }
-        catch (IllegalStateException e)
+        catch (LinkageError | IllegalStateException e)
         {
             return false;
         }
