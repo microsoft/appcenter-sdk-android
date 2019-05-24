@@ -311,7 +311,7 @@ public class AppCenter {
             Bundle arguments = InstrumentationRegistryHelper.getArguments();
             String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
 
-            return runningValue != null && runningValue == "1";
+            return "1".equals(runningValue);
         }
         catch (LinkageError e)
         {
