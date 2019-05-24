@@ -34,7 +34,6 @@ import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -767,7 +766,7 @@ public class DefaultChannel implements Channel {
     @VisibleForTesting
     synchronized void checkPendingLogs(@NonNull GroupState groupState) {
         AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
-                groupState.mName, groupState.mPendingLogCount, DateFormat.getTimeInstance().format(new Date(groupState.mBatchTimeInterval))));
+                groupState.mName, groupState.mPendingLogCount, groupState.mBatchTimeInterval));
         Long batchTimeInterval = resolveTriggerInterval(groupState);
 
         /* Check if there is no need to trigger ingestion. */
@@ -817,7 +816,7 @@ public class DefaultChannel implements Channel {
                 return groupState.mBatchTimeInterval;
             }
 
-            /* We still have to wait for the rest of the interval. */
+            /* Wait for the rest of the interval. */
             return Math.max(groupState.mBatchTimeInterval - (now - startTimer), 0);
         } else {
 
