@@ -176,7 +176,10 @@ public class CryptoTest {
                 int length = (int) invocation.getArguments()[2];
                 byte[] data = new byte[length];
 
-                /* Input will be null when overriding the mock. (This will be called.). */
+                /*
+                 * This answer is called when trying to change it again using when().
+                 * Need to check for null (any() returns null).
+                 */
                 if (input != null) {
                     System.arraycopy(input, offset, data, 0, length);
                 }

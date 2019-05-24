@@ -13,7 +13,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
-import android.util.Log;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -362,7 +361,6 @@ public class CryptoUtils {
         } catch (Exception e) {
 
             /* Try the expired alias. */
-            Log.d(LOG_TAG, "Failed to decrypt data with current key, trying expired one.");
             try {
                 return getDecryptedData(cryptoHandler, handlerEntry.mAliasIndex ^ 1, dataSplit[1], mobileCenterFailOver);
             } catch (Exception e2) {
