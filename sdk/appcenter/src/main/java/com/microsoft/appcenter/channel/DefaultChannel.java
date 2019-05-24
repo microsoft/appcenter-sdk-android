@@ -33,6 +33,7 @@ import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -764,54 +765,69 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     synchronized void checkPendingLogs(@NonNull GroupState groupState) {
-        if (groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, groupState.mName + " is paused. Skip checking pending logs.");
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
+                groupState.mName, groupState.mPendingLogCount, DateFormat.getTimeInstance().format(new Date(groupState.mBatchTimeInterval))));
+        Long batchTimeInterval = resolveTriggerInterval(groupState);
+
+        /* */
+        if (batchTimeInterval == null || groupState.mPaused) {
             return;
         }
-        long pendingLogCount = groupState.mPendingLogCount;
-        long batchTimeInterval = groupState.mBatchTimeInterval;
-        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s", groupState.mName, pendingLogCount, batchTimeInterval));
 
-        /* If the interval is custom. */
-        if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
-            long now = System.currentTimeMillis();
-            long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
-
-            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
-            if (pendingLogCount > 0 && (startTimer == 0 || startTimer > now)) {
-                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
-                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
-            }
-
-            /* If the interval is over. */
-            else if (startTimer + batchTimeInterval < now) {
-
-                /* Send all logs without any additional timers. */
-                if (pendingLogCount > 0) {
-                    triggerIngestion(groupState);
-                } else {
-
-                    /* Remove the time only when there are no logs left. */
-                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
-                    AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
-                }
-                return;
-            }
-
-            /* We still have to wait for the rest of the interval. */
-            else {
-                batchTimeInterval -= now - startTimer;
-            }
-        } else if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
+        /* */
+        if (batchTimeInterval == 0) {
             triggerIngestion(groupState);
             return;
         }
 
         /* Postpone triggering ingestion. */
-        if (pendingLogCount > 0 && !groupState.mScheduled) {
+        if (!groupState.mScheduled) {
             groupState.mScheduled = true;
             mAppCenterHandler.postDelayed(groupState.mRunnable, batchTimeInterval);
         }
+    }
+
+    /**
+     *
+     *
+     * @param groupState
+     * @return
+     */
+    private Long resolveTriggerInterval(@NonNull GroupState groupState) {
+
+        /* If the interval is custom. */
+        if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
+            long now = System.currentTimeMillis();
+            long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
+
+            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
+            if (groupState.mPendingLogCount > 0 && (startTimer == 0 || startTimer > now)) {
+                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
+            }
+
+            /* If the interval is over. */
+            else if (startTimer + groupState.mBatchTimeInterval < now) {
+
+                /* Remove the time only when there are no logs left. */
+                if (groupState.mPendingLogCount == 0) {
+                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                    AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
+                    return null;
+                }
+
+                /* Send all logs without any additional timers. */
+                return 0L;
+            }
+
+            /* We still have to wait for the rest of the interval. */
+            else {
+                return groupState.mBatchTimeInterval - (now - startTimer);
+            }
+        } else if (groupState.mPendingLogCount >= groupState.mMaxLogsPerBatch) {
+            return 0L;
+        }
+        return groupState.mPendingLogCount > 0 ? groupState.mBatchTimeInterval : null;
     }
 
     @VisibleForTesting
