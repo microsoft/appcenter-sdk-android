@@ -14,6 +14,8 @@ import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -56,6 +58,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -1083,5 +1087,36 @@ public class AppCenterTest extends AbstractAppCenterTest {
                 return argument instanceof OneCollectorChannelListener;
             }
         }));
+    }
+
+    @Test
+    public void notRunningInAppCenterTestNoEnvironment() {
+        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
+    }
+
+    @Test
+    public void notRunningInAppCenterTest() {
+        addRunningInAppCenterToRegistry("0");
+        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
+    }
+
+    @Test
+    public void runningInAppCenterTest() {
+        addRunningInAppCenterToRegistry("1");
+        assertEquals(true, AppCenter.isRunningInAppCenterTestCloud());
+    }
+
+    @Test
+    public void notRunningInAppCenterTestWhenLinkageError() throws Exception {
+        mockStatic(InstrumentationRegistryHelper.class);
+        doThrow(new LinkageError()).when(InstrumentationRegistryHelper.class, "getArguments");
+        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
+    }
+
+    @Test
+    public void notRunningInAppCenterTestWhenIllegalStateException() throws Exception {
+        mockStatic(InstrumentationRegistryHelper.class);
+        doThrow(new IllegalStateException()).when(InstrumentationRegistryHelper.class, "getArguments");
+        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
     }
 }

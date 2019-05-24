@@ -107,15 +107,16 @@ public class AppCenter {
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
 
     /**
+     * Environment variable name for test to see if we're running in App Center Test
+     */
+    @VisibleForTesting
+    static String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
+
+    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
     private static AppCenter sInstance;
-
-    /**
-     * Environment variable name for test to see if we're running in App Center Test
-     */
-    private static String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
 
     /**
      * Remember if log level was configured using this class.
