@@ -317,6 +317,10 @@ public class AppCenter {
         {
             return false;
         }
+        catch (IllegalStateException e)
+        {
+            return false;
+        }
     }
 
     /**
