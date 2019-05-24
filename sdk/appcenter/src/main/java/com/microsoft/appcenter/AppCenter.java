@@ -305,17 +305,13 @@ public class AppCenter {
      * @return true if running in App Center Test, false otherwise
      * (and where no test dependencies in release.
      */
-    public static boolean runningInAppCenter() {
+    public static boolean isRunningInAppCenterTestCloud() {
         try
         {
             Bundle arguments = InstrumentationRegistryHelper.getArguments();
             String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
-            if (runningValue == null || runningValue != "1")
-            {
-                return false;
-            }
 
-            return true;
+            return runningValue != null && runningValue == "1";
         }
         catch (LinkageError e)
         {
