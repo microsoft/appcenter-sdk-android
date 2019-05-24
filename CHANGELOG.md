@@ -5,7 +5,7 @@
 ### App Center
 
 * **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
-* **[Fix]** Fix decrypting stored values that were stored after the app has been running for more than a year (such as the in-app update token).
+* **[Fix]** Fix decrypting values that have been stored for more than a year (such as the in-app update token).
 
 ### App Center Auth
 
