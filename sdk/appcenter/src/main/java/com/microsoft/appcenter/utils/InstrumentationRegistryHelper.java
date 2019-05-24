@@ -38,11 +38,7 @@ public class InstrumentationRegistryHelper {
                 Class<?> aClass = Class.forName(location);
                 Method getArguments = aClass.getMethod("getArguments", (Class[]) null);
                 return (Bundle) getArguments.invoke(null, (Object[]) null);
-            } catch (IllegalStateException e) {
-                if (!iterator.hasNext()) {
-                    throw e;
-                }
-            } catch (LinkageError e) {
+            } catch (IllegalStateException | LinkageError e) {
                 if (!iterator.hasNext()) {
                     throw e;
                 }
