@@ -580,7 +580,7 @@ public class Crashes extends AbstractAppCenterService {
             Exception modelException = new Exception();
             modelException.setType("minidump");
             modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-            modelException.setStackTrace(dest.getPath());
+            modelException.setMinidumpFilePath(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
             errorLog.setTimestamp(new Date(minidumpDate));
@@ -836,10 +836,11 @@ public class Crashes extends AbstractAppCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         if (errorLogReport.report.getThrowable() instanceof NativeException) {
-                            Exception exception = errorLogReport.log.getException();
-                            if (exception.getStackTrace() != null) {
-                                dumpFile = new File(exception.getStackTrace());
-                                exception.setStackTrace(null);
+                            String minidumpFilePath = errorLogReport.log.getException().getMinidumpFilePath();
+
+                            /* It can be null when NativeException is incorrectly used or there is already stored invalid data. */
+                            if (minidumpFilePath != null) {
+                                dumpFile = new File(minidumpFilePath);
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                             }
