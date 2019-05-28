@@ -24,13 +24,11 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -57,21 +55,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest(System.class)
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     private static final long CUSTOM_INTERVAL = 10000;
-
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        mockStatic(System.class);
-    }
 
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
@@ -1032,7 +1021,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Prepare to mock timer. */
         ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
-            when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Create channel. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
@@ -1078,34 +1067,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verifyStatic();
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(CUSTOM_INTERVAL));
-    }
-
-    @Test
-    public void checkPendingLogsStoresStartTimeWhenPaused() {
-
-        /* Mock current time. */
-        long now = 1;
-        when(System.currentTimeMillis()).thenReturn(now);
-
-        /* Create channel and group. */
-        Persistence mockPersistence = mock(Persistence.class);
-        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(0);
-        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
-        channel.addGroup(TEST_GROUP, 10, CUSTOM_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
-        verifyStatic(never());
-        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), anyLong());
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
-
-        channel.pauseGroup(TEST_GROUP, null);
-        channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
-
-        /* Verify that timer starts and current time is saved into preferences. */
-        verifyStatic();
-        SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
     }
 
     @Test
