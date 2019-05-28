@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
         if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
             int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
             try {
+
+                /* TODO remove reflection and catch block after API available to jCenter. */
                 boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, latency);
                 if (result) {
                     Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();

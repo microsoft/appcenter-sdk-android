@@ -47,8 +47,13 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
@@ -831,12 +836,15 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private String getTransmissionInterval(int interval) {
-            String sign = interval >= 0 ? "" : "-";
-            interval = Math.abs(interval);
-            int hours = interval / 60 / 60;
-            int minutes = interval / 60 - hours * 60;
-            int seconds = interval % 60;
-            return String.format(Locale.ENGLISH, getString(R.string.appcenter_analytics_transmission_interval_summary_format), sign, interval, sign, hours, minutes, seconds);
+            Date date = new Date(TimeUnit.SECONDS.toMillis(interval));
+            DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String formattedInterval = dateFormat.format(date);
+            long days = TimeUnit.SECONDS.toDays(interval);
+            if (days > 0) {
+                formattedInterval = days + "." + formattedInterval;
+            }
+            return interval + getString(R.string.appcenter_analytics_transmission_interval_summary_format) +  formattedInterval;
         }
 
         private boolean isFirebaseEnabled() {
