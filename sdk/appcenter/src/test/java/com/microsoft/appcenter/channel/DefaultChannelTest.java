@@ -7,7 +7,6 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.Flags;
@@ -25,13 +24,11 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.IOException;
 import java.net.SocketException;
@@ -39,13 +36,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyListOf;
@@ -60,21 +55,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest(System.class)
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     private static final long CUSTOM_INTERVAL = 10000;
-
-    @Before
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        mockStatic(System.class);
-    }
 
     @Test
     public void invalidGroup() throws Persistence.PersistenceException {
@@ -140,7 +126,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Schedule only 1 log after that. */
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
@@ -151,9 +138,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockListener, times(50)).onSuccess(any(Log.class));
 
         /* Simulate the timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
-        runnable.set(null);
+        delayedRunnable.getValue().run();
 
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -170,8 +155,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockListener, times(51)).onSuccess(any(Log.class));
 
         /* Simulate the timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -200,7 +184,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Enqueuing 49 events. */
         for (int i = 1; i <= 49; i++) {
@@ -214,30 +199,10 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
 
         /* Wait for timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         /* Database returned less logs than we expected (40 vs 50), yet counter must be reset. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-    }
-
-    @NonNull
-    private AtomicReference<Runnable> catchPostRunnable() {
-        return catchPostRunnable(BATCH_TIME_INTERVAL);
-    }
-
-    @NonNull
-    private AtomicReference<Runnable> catchPostRunnable(long interval) {
-        final AtomicReference<Runnable> runnable = new AtomicReference<>();
-        when(mAppCenterHandler.postDelayed(any(Runnable.class), eq(interval))).then(new Answer<Boolean>() {
-
-            @Override
-            public Boolean answer(InvocationOnMock invocation) {
-                runnable.set((Runnable) invocation.getArguments()[0]);
-                return true;
-            }
-        });
-        return runnable;
     }
 
     @Test
@@ -269,7 +234,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Enqueue enough logs to be split in N + 1 maximum requests. */
         for (int i = 0; i < 200; i++) {
@@ -297,8 +263,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* Wait for timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
@@ -398,7 +363,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(70, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Enable channel. */
         channel.setEnabled(true);
@@ -407,8 +373,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(20, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Wait for timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         /* The counter should be 0 after the second batch. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
@@ -480,7 +445,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Enable channel to see if it can work again after that error state. */
         channel.setEnabled(true);
@@ -492,8 +458,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         assertEquals(20, channel.getGroupState(TEST_GROUP).mPendingLogCount);
 
         /* Wait for timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         /* The counter should back to 0 now. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
@@ -729,11 +694,11 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(listener).onGloballyEnabled(false);
 
         /* Enable and send a new log. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
         channel.setEnabled(true);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
         verify(ingestion).reopen();
         verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(listener).onGloballyEnabled(true);
@@ -764,7 +729,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void initialLogs() throws IOException {
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
@@ -781,8 +747,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
         verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
@@ -790,7 +755,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void initialLogsMoreThan1Batch() throws IOException {
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
@@ -800,8 +766,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(3, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
         verify(ingestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
@@ -809,7 +774,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void initialLogsThenDisable() throws IOException {
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
@@ -823,8 +789,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mAppCenterHandler).removeCallbacks(any(Runnable.class));
         verify(ingestion).close();
         verify(persistence).deleteLogs(TEST_GROUP);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
@@ -851,7 +816,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void somehowDatabaseEmptiedAfterTimer() throws IOException {
 
         /* Cover the if (batchId != null) test though it could happen only if the database content disappear after the timer... */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
         Ingestion ingestion = mock(Ingestion.class);
         doThrow(new IOException()).when(ingestion).close();
         Persistence persistence = mock(Persistence.class);
@@ -860,8 +826,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         assertEquals(2, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
         verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
         verify(mAppCenterHandler, never()).removeCallbacks(any(Runnable.class));
@@ -1055,15 +1020,15 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         /* Prepare to mock timer. */
-        AtomicReference<Runnable> runnable = catchPostRunnable();
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        when(mAppCenterHandler.postDelayed(delayedRunnable.capture(), anyLong())).thenReturn(true);
 
         /* Create channel. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Wait for timer. */
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
     }
 
     @Test
@@ -1242,7 +1207,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Prepare to mock timer. */
         long timeDelay = CUSTOM_INTERVAL - (now - startTimer);
-        AtomicReference<Runnable> runnable = catchPostRunnable(timeDelay);
 
         /* Enqueuing 200 events. */
         for (int i = 0; i < 200; i++) {
@@ -1250,13 +1214,13 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         }
 
         /* Check invoke the timer with custom timestamp. */
-        verify(mAppCenterHandler).postDelayed(any(Runnable.class), eq(timeDelay));
+        ArgumentCaptor<Runnable> delayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        verify(mAppCenterHandler).postDelayed(delayedRunnable.capture(), eq(timeDelay));
 
         /* Wait for timer. */
         now = 12000;
         when(System.currentTimeMillis()).thenReturn(now);
-        assertNotNull(runnable.get());
-        runnable.get().run();
+        delayedRunnable.getValue().run();
 
         /* Check sending the logs batches. */
         verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));

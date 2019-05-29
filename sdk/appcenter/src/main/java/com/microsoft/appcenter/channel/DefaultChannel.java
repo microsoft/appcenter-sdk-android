@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -764,54 +765,75 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     synchronized void checkPendingLogs(@NonNull GroupState groupState) {
-        if (groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, groupState.mName + " is paused. Skip checking pending logs.");
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
+                groupState.mName, groupState.mPendingLogCount, groupState.mBatchTimeInterval));
+        Long batchTimeInterval = resolveTriggerInterval(groupState);
+
+        /* Check if there is no need to trigger ingestion. */
+        if (batchTimeInterval == null || groupState.mPaused) {
             return;
         }
-        long pendingLogCount = groupState.mPendingLogCount;
-        long batchTimeInterval = groupState.mBatchTimeInterval;
-        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s", groupState.mName, pendingLogCount, batchTimeInterval));
 
-        /* If the interval is custom. */
-        if (batchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
-            long now = System.currentTimeMillis();
-            long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
-
-            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
-            if (pendingLogCount > 0 && (startTimer == 0 || startTimer > now)) {
-                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
-                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
-            }
-
-            /* If the interval is over. */
-            else if (startTimer + batchTimeInterval < now) {
-
-                /* Send all logs without any additional timers. */
-                if (pendingLogCount > 0) {
-                    triggerIngestion(groupState);
-                } else {
-
-                    /* Remove the time only when there are no logs left. */
-                    SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
-                    AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
-                }
-                return;
-            }
-
-            /* We still have to wait for the rest of the interval. */
-            else {
-                batchTimeInterval -= now - startTimer;
-            }
-        } else if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
+        /* Trigger immediately. */
+        if (batchTimeInterval == 0) {
             triggerIngestion(groupState);
-            return;
         }
 
         /* Postpone triggering ingestion. */
-        if (pendingLogCount > 0 && !groupState.mScheduled) {
+        else if (!groupState.mScheduled) {
             groupState.mScheduled = true;
             mAppCenterHandler.postDelayed(groupState.mRunnable, batchTimeInterval);
         }
+    }
+
+    /**
+     * Calculate remaining interval to trigger ingestion based on initial batch interval and stored start value.
+     *
+     * @param groupState The group state.
+     * @return Remaining interval to trigger ingestion. <code>null</code> if there is no need to trigger at all.
+     */
+    @WorkerThread
+    private Long resolveTriggerInterval(@NonNull GroupState groupState) {
+
+        /* If the interval is custom. */
+        if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
+            return resolveCustomTriggerInterval(groupState);
+        } else {
+            return resolveDefaultTriggerInterval(groupState);
+        }
+    }
+
+    @WorkerThread
+    private Long resolveCustomTriggerInterval(@NonNull GroupState groupState) {
+        long now = System.currentTimeMillis();
+        long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
+        if (groupState.mPendingLogCount > 0) {
+
+            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
+            if (startTimer == 0 || startTimer > now) {
+                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
+                return groupState.mBatchTimeInterval;
+            }
+
+            /* Wait for the rest of the interval. */
+            return Math.max(groupState.mBatchTimeInterval - (now - startTimer), 0);
+        } else {
+
+            /* If the interval is over. */
+            if (startTimer + groupState.mBatchTimeInterval < now) {
+                SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
+            }
+            return null;
+        }
+    }
+
+    private Long resolveDefaultTriggerInterval(@NonNull GroupState groupState) {
+        if (groupState.mPendingLogCount >= groupState.mMaxLogsPerBatch) {
+            return 0L;
+        }
+        return groupState.mPendingLogCount > 0 ? groupState.mBatchTimeInterval : null;
     }
 
     @VisibleForTesting

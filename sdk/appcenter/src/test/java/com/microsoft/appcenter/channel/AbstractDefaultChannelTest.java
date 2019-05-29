@@ -47,7 +47,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DeviceInfoHelper.class,
         HandlerUtils.class,
         IdHelper.class,
-        SharedPreferencesManager.class
+        SharedPreferencesManager.class,
+        System.class
 })
 public class AbstractDefaultChannelTest {
 
@@ -141,5 +142,6 @@ public class AbstractDefaultChannelTest {
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
         mockStatic(SharedPreferencesManager.class);
+        mockStatic(System.class);
     }
 }
