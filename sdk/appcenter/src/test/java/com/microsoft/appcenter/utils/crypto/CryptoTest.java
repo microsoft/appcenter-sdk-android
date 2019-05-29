@@ -24,6 +24,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -32,6 +33,7 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.BadPaddingException;
 import javax.security.auth.x500.X500Principal;
@@ -54,6 +56,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -171,7 +175,14 @@ public class CryptoTest {
                 int offset = (int) invocation.getArguments()[1];
                 int length = (int) invocation.getArguments()[2];
                 byte[] data = new byte[length];
-                System.arraycopy(input, offset, data, 0, length);
+
+                /*
+                 * This answer is called when trying to change it again using when().
+                 * Need to check for null (any() returns null).
+                 */
+                if (input != null) {
+                    System.arraycopy(input, offset, data, 0, length);
+                }
                 return data;
             }
         });
@@ -267,6 +278,74 @@ public class CryptoTest {
         decryptedData = cryptoUtils.decrypt(encryptedData, true);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
+    }
+
+    @Test
+    public void failsToDecrypt() throws Exception {
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
+        String encryptedData = cryptoUtils.encrypt(data);
+        assertNotEquals(data, encryptedData);
+        when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException());
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+
+        /* Check decryption failed (data returned as is). */
+        assertEquals(encryptedData, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+    }
+
+    @Test
+    public void readExpiredData() throws Exception {
+
+        /* Encrypt test data. */
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        String data = "oldData";
+        String encryptedData = cryptoUtils.encrypt(data);
+
+        /* Make key rotate on next encryption. */
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException()).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                return (byte[]) invocation.getArguments()[0];
+            }
+        });
+        cryptoUtils.encrypt("otherData");
+
+        /*
+         * Make decrypt fail with current key and work with expired key (i.e. the second call).
+         */
+        when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException()).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                byte[] input = (byte[]) invocation.getArguments()[0];
+                int offset = (int) invocation.getArguments()[1];
+                int length = (int) invocation.getArguments()[2];
+                byte[] data = new byte[length];
+                System.arraycopy(input, offset, data, 0, length);
+                return data;
+            }
+        });
+        int expectedKeyStoreCalls = 3;
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
+
+        /* Verify we can decrypt with retry on expired key. */
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+
+        /* Verify the second alias was picked for decryption. */
+        expectedKeyStoreCalls += 2;
+        ArgumentCaptor<String> aliasCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull(KeyStore.ProtectionParameter.class));
+        List<String> aliases = aliasCaptor.getAllValues();
+
+        /* Check last calls: first we tried to read with the second alias (after rotation). */
+        assertTrue(aliases.get(3).startsWith("appcenter.1."));
+
+        /* Then we tried with the old one. */
+        assertTrue(aliases.get(4).startsWith("appcenter.0."));
     }
 
     private void verifyRsaPreferred(int apiLevel) throws Exception {

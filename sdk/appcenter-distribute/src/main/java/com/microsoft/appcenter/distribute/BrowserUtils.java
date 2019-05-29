@@ -26,13 +26,12 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
  * Browser utils.
  */
 class BrowserUtils {
-    
+
     @VisibleForTesting
     BrowserUtils() {
 
         /* Hide constructor in utils pattern. */
     }
-
 
     /**
      * Open a URL in the best browser available.
@@ -41,8 +40,31 @@ class BrowserUtils {
      * @param activity activity from which to open browser.
      */
     static void openBrowser(@NonNull String url, @NonNull Activity activity) {
+        try {
+            openBrowserWithoutIntentChooser(url, activity);
+        } catch (SecurityException e) {
 
-        /* Open a browser but we don't want a chooser U.I. to pop. */
+            /*
+             * If opening browser failed with the custom logic, open it in a standard way.
+             * This might show the intent chooser if there is no default browser...
+             * Don't reuse intent from the other method as it was modified to contain component name
+             * and it simplifies testing for parameter verification.
+             */
+            AppCenterLog.warn(LOG_TAG, "Browser could not be opened by trying to avoid intent chooser, starting implicit intent instead.", e);
+            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        }
+    }
+
+    /**
+     * Try to open a browser but we don't want a chooser U.I. to pop.
+     * This approach fails on some devices: https://github.com/microsoft/appcenter-sdk-android/issues/1162.
+     * This method thus must be caught for exceptions.
+     *
+     * @param url      url to open browser.
+     * @param activity activity from which to open browser.
+     * @throws SecurityException unexpected permission issue while trying to open the browser.
+     */
+    private static void openBrowserWithoutIntentChooser(@NonNull String url, @NonNull Activity activity) throws SecurityException {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
         if (browsers.isEmpty()) {

@@ -78,7 +78,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
+import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
@@ -372,7 +372,7 @@ public class CrashesTest {
             public boolean matches(Object log) {
                 return log.equals(mErrorLog);
             }
-        }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
+        }), eq(crashes.getGroupName()), eq(CRITICAL));
         verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
 
@@ -461,7 +461,7 @@ public class CrashesTest {
             public boolean matches(Object log) {
                 return log.equals(mErrorLog);
             }
-        }), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
+        }), eq(crashes.getGroupName()), eq(CRITICAL));
 
         verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
@@ -1311,7 +1311,7 @@ public class CrashesTest {
         when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
         /* 1 log sent. Other one is filtered. */
-        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(CRITICAL));
 
         /* We can send attachments via wrapper instead of using listener (both work but irrelevant to test with listener). */
         ErrorAttachmentLog mockAttachment = mock(ErrorAttachmentLog.class);
@@ -1346,7 +1346,7 @@ public class CrashesTest {
 
         /* Get crash reports, check always sent was returned and sent without confirmation. */
         assertTrue(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report2.getId())).get());
-        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(PERSISTENCE_CRITICAL));
+        verify(mockChannel).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), eq(CRITICAL));
     }
 
     @Test

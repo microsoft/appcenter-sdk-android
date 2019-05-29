@@ -31,12 +31,6 @@ import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 public class OneCollectorChannelListener extends AbstractChannelListener {
 
     /**
-     * Maximum time interval in milliseconds after which a synchronize will be triggered, regardless of queue size.
-     */
-    @VisibleForTesting
-    static final long ONE_COLLECTOR_TRIGGER_INTERVAL = 3 * 1000;
-
-    /**
      * Number of metrics queue items which will trigger synchronization.
      */
     @VisibleForTesting
@@ -109,12 +103,12 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     }
 
     @Override
-    public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener) {
+    public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener, long batchTimeInterval) {
         if (isOneCollectorGroup(groupName)) {
             return;
         }
         String oneCollectorGroupName = getOneCollectorGroupName(groupName);
-        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, ONE_COLLECTOR_TRIGGER_INTERVAL, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, mIngestion, groupListener);
+        mChannel.addGroup(oneCollectorGroupName, ONE_COLLECTOR_TRIGGER_COUNT, batchTimeInterval, ONE_COLLECTOR_TRIGGER_MAX_PARALLEL_REQUESTS, mIngestion, groupListener);
     }
 
     @Override

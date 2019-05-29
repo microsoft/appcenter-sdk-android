@@ -850,7 +850,7 @@ public class Crashes extends AbstractAppCenterService {
                         }
 
                         /* Send report. */
-                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.PERSISTENCE_CRITICAL);
+                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.CRITICAL);
 
                         /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {

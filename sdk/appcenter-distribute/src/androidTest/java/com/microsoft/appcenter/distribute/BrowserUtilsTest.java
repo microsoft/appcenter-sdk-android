@@ -26,6 +26,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -243,6 +244,34 @@ public class BrowserUtilsTest {
             public boolean matches(Object o) {
                 Intent intent = (Intent) o;
                 return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent() != null && intent.getComponent().getClassName().equals("firefox");
+            }
+        }));
+        order.verifyNoMoreInteractions();
+    }
+
+    @Test
+    public void openExplicitBrowserFails() {
+        Activity activity = mock(Activity.class);
+        PackageManager packageManager = mock(PackageManager.class);
+        when(activity.getPackageManager()).thenReturn(packageManager);
+        ActivityInfo activityInfo = new ActivityInfo();
+        activityInfo.packageName = "system";
+        activityInfo.name = "browser";
+        ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.activityInfo = activityInfo;
+        when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.singletonList(resolveInfo));
+        doThrow(new SecurityException()).doNothing().when(activity).startActivity(notNull(Intent.class));
+
+        /* Open browser with explicit intent then fall back to implicit intent. */
+        BrowserUtils.openBrowser(TEST_URL, activity);
+        InOrder order = inOrder(activity);
+        order.verify(activity).startActivity(argThat(mBrowserArgumentMatcher));
+        order.verify(activity).startActivity(argThat(new ArgumentMatcher<Intent>() {
+
+            @Override
+            public boolean matches(Object o) {
+                Intent intent = (Intent) o;
+                return Intent.ACTION_VIEW.equals(intent.getAction()) && Uri.parse(TEST_URL).equals(intent.getData()) && intent.getComponent() == null;
             }
         }));
         order.verifyNoMoreInteractions();

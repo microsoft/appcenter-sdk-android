@@ -135,7 +135,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify we didn't persist the log since AppCenter not started with app secret. */
-        verify(mockPersistence, never()).putLog(any(Log.class), eq(appCenterGroup), eq(Flags.PERSISTENCE_NORMAL));
+        verify(mockPersistence, never()).putLog(any(Log.class), eq(appCenterGroup), eq(Flags.NORMAL));
 
         /* Enqueuing 1 event from one collector group. */
         channel.enqueue(mock(Log.class), oneCollectorGroup, Flags.DEFAULTS);
