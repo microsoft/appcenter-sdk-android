@@ -581,6 +581,7 @@ public class Crashes extends AbstractAppCenterService {
             modelException.setType("minidump");
             modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
             modelException.setMinidumpFilePath(dest.getPath());
+            modelException.setStackTrace(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
             errorLog.setTimestamp(new Date(minidumpDate));
@@ -844,6 +845,8 @@ public class Crashes extends AbstractAppCenterService {
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                             }
+                            errorLogReport.log.getException().setMinidumpFilePath(null);
+                            errorLogReport.log.getException().setStackTrace(null);
                         }
 
                         /* Send report. */

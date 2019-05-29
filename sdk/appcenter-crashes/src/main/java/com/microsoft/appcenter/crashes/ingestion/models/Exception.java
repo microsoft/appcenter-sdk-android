@@ -43,6 +43,11 @@ public class Exception implements Model {
     private String message;
 
     /**
+     * Raw stack trace. Sent when the frames property is either missing or unreliable.
+     */
+    private String stackTrace;
+
+    /**
      * The path to the minidump file. Used for reports from the NDK.
      */
     private String minidumpFilePath;
@@ -100,13 +105,31 @@ public class Exception implements Model {
         this.message = message;
     }
 
-    /***
+    /**
+     * Get the stack trace value.
+     *
+     * @return the stack trace file path.
+     */
+    public String getStackTrace() {
+        return stackTrace;
+    }
+
+    /**
      * Get the minidump file path.
      *
      * @return the minidump file path.
      */
     public String getMinidumpFilePath() {
         return minidumpFilePath;
+    }
+
+    /**
+     * Set stack trace value.
+     *
+     * @param stackTrace the stack trace value to set.
+     */
+    public void setStackTrace(String stackTrace) {
+        this.stackTrace = stackTrace;
     }
 
     /**
@@ -177,6 +200,7 @@ public class Exception implements Model {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
         setMinidumpFilePath(object.optString(STACK_TRACE, null));
+        setStackTrace(object.optString(STACK_TRACE, null));
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
         setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
@@ -187,6 +211,7 @@ public class Exception implements Model {
         JSONUtils.write(writer, TYPE, getType());
         JSONUtils.write(writer, MESSAGE, getMessage());
         JSONUtils.write(writer, STACK_TRACE, getMinidumpFilePath());
+        JSONUtils.write(writer, STACK_TRACE, getStackTrace());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
         JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
@@ -211,6 +236,9 @@ public class Exception implements Model {
         if (minidumpFilePath != null ? !minidumpFilePath.equals(exception.minidumpFilePath) : exception.minidumpFilePath != null) {
             return false;
         }
+        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null) {
+            return false;
+        }
         if (frames != null ? !frames.equals(exception.frames) : exception.frames != null) {
             return false;
         }
@@ -225,6 +253,7 @@ public class Exception implements Model {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (message != null ? message.hashCode() : 0);
         result = 31 * result + (minidumpFilePath != null ? minidumpFilePath.hashCode() : 0);
+        result = 31 * result + (stackTrace != null ? stackTrace.hashCode() : 0);
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
         result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
         result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
