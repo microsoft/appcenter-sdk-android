@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -430,7 +430,7 @@ public class DatabasePersistenceTest {
         persistence.setLogSerializer(logSerializer);
 
         /* Persist a log. */
-        persistence.putLog(mock(Log.class), "test-p1", PERSISTENCE_NORMAL);
+        persistence.putLog(mock(Log.class), "test-p1", NORMAL);
     }
 
     @Test(expected = PersistenceException.class)
@@ -446,7 +446,7 @@ public class DatabasePersistenceTest {
         persistence.setLogSerializer(logSerializer);
 
         /* Persist a log. */
-        persistence.putLog(mock(Log.class), "test-p1", PERSISTENCE_NORMAL);
+        persistence.putLog(mock(Log.class), "test-p1", NORMAL);
     }
 
     private static class MockCursor extends CursorWrapper {

@@ -7,6 +7,10 @@
 * **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
 * **[Fix]** Fix decrypting values that have been stored for more than a year (such as the in-app update token).
 
+### App Center Analytics
+
+* **[Feature]** Support setting latency of sending events via `Analytics.setTransmissionInterval`.
+
 ### App Center Auth
 
 * **[Fix]** Fix missing proguard rules so that the app does not have to specify them.

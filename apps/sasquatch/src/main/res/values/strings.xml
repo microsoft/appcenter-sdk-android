@@ -87,7 +87,13 @@
     <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
     <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>
+    <string name="storage_size_changed_format" tools:ignore="MissingTranslation">Storage maximum size has been changed to %s. The new size is not a final size, please close the application completely and relaunch again.</string>
+    <string name="storage_size_error" tools:ignore="MissingTranslation">Storage size is not valid.</string>
+    <string name="analytics_transmission_interval_change_success" tools:ignore="MissingTranslation,PluralsCandidate">Analytics transmission interval changed to %d second(s) successfully. Check SDK logs for actual interval.</string>
+    <string name="analytics_transmission_interval_change_failed" tools:ignore="MissingTranslation">Failed to change Analytics transmission interval.</string>
+    <string name="analytics_transmission_interval_invalid_value" tools:ignore="MissingTranslation">Transmission interval cannot take long type.</string>
     <string name="size_in_bytes" tools:ignore="MissingTranslation">Size in bytes</string>
+    <string name="time_interval_in_seconds" tools:ignore="MissingTranslation">Time interval in seconds</string>
     <string name="event_priority" tools:ignore="MissingTranslation">Event Priority</string>
     <string-array name="event_priority_values" tools:ignore="MissingTranslation">
         <item>Default</item>

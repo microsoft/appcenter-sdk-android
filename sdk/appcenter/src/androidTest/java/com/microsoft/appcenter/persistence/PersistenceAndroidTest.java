@@ -19,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 
 @SuppressWarnings("unused")
 @SmallTest
@@ -58,7 +58,7 @@ public class PersistenceAndroidTest {
         try {
 
             /* Generate a log and persist. */
-            persistence.putLog(new MockLog(), "exception", PERSISTENCE_NORMAL);
+            persistence.putLog(new MockLog(), "exception", NORMAL);
         } finally {
 
             /* Close. */

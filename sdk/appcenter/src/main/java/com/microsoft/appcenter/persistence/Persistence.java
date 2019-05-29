@@ -38,13 +38,13 @@ public abstract class Persistence implements Closeable {
      * @throws PersistenceException Exception will be thrown if Persistence cannot write a log to the storage.
      */
     public abstract long putLog(@NonNull Log log, @NonNull String group,
-                                @IntRange(from = Flags.PERSISTENCE_NORMAL, to = Flags.PERSISTENCE_CRITICAL) int flags) throws PersistenceException;
+                                @IntRange(from = Flags.NORMAL, to = Flags.CRITICAL) int flags) throws PersistenceException;
 
     /**
      * Deletes a log with the give ID from the {@code group}.
      *
-     * @param group     The group of the storage for logs.
-     * @param batchId   The ID for a set of logs.
+     * @param group   The group of the storage for logs.
+     * @param batchId The ID for a set of logs.
      */
     public abstract void deleteLogs(@NonNull String group, @NonNull String batchId);
 
