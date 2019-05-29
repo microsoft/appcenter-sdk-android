@@ -303,12 +303,12 @@ public class ErrorModelTest {
             }
             {
                 exception1.setMinidumpFilePath("1");
-                exception1.setStackTrace("1");
+                exception1.setStackTrace("5");
                 checkNotEquals(exception1, exception2);
                 checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
 
                 exception2.setMinidumpFilePath("2");
-                exception2.setStackTrace("2");
+                exception2.setStackTrace("6");
                 checkNotEquals(exception1, exception2);
 
                 exception2.setMinidumpFilePath(exception1.getMinidumpFilePath());

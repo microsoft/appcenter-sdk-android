@@ -28,6 +28,8 @@ public class Exception implements Model {
 
     private static final String STACK_TRACE = "stackTrace";
 
+    private static final String MINIDUMP_FILE_PATH = "MinidumpFilePath";
+
     private static final String INNER_EXCEPTIONS = "innerExceptions";
 
     private static final String WRAPPER_SDK_NAME = "wrapperSdkName";
@@ -43,7 +45,7 @@ public class Exception implements Model {
     private String message;
 
     /**
-     * Raw stack trace. Sent when the frames property is either missing or unreliable.
+     * Raw stack trace. Sent when the frames property is either missing or unreliable (used for Xamarin exceptions).
      */
     private String stackTrace;
 
@@ -199,7 +201,7 @@ public class Exception implements Model {
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
-        setMinidumpFilePath(object.optString(STACK_TRACE, null));
+        setMinidumpFilePath(object.optString(MINIDUMP_FILE_PATH, null));
         setStackTrace(object.optString(STACK_TRACE, null));
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
