@@ -581,7 +581,6 @@ public class Crashes extends AbstractAppCenterService {
             modelException.setType("minidump");
             modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
             modelException.setMinidumpFilePath(dest.getPath());
-            modelException.setStackTrace(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
             errorLog.setTimestamp(new Date(minidumpDate));
