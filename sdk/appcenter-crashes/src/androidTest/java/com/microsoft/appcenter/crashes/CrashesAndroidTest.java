@@ -45,8 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Semaphore;
 
-import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -466,6 +466,8 @@ public class CrashesAndroidTest {
         verify(mChannel).enqueue(managedErrorLog.capture(), anyString(), eq(CRITICAL));
         assertNotNull(managedErrorLog.getValue());
         assertEquals(mUserId, managedErrorLog.getValue().getUserId());
+        assertNotNull(managedErrorLog.getValue().getException());
+        assertNull(managedErrorLog.getValue().getException().getMinidumpFilePath());
         assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);

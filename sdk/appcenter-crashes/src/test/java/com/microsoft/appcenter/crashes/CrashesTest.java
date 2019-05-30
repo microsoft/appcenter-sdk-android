@@ -1592,6 +1592,9 @@ public class CrashesTest {
         /* Verify that attachmentWithBinary does get sent. */
         verifyStatic();
         attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
+
+        /* Verify temporary field erased. */
+        verify(exception).setStackTrace(null);
     }
 
     @Test
