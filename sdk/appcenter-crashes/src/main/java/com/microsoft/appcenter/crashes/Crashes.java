@@ -844,8 +844,8 @@ public class Crashes extends AbstractAppCenterService {
                                 dumpFile = new File(minidumpFilePath);
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                                exception.setMinidumpFilePath(null);
                             }
-                            exception.setMinidumpFilePath(null);
                         }
 
                         /* Send report. */

@@ -111,7 +111,7 @@ public class Exception implements Model {
     /**
      * Get the stack trace value.
      *
-     * @return the stack trace file path.
+     * @return the stack trace value
      */
     public String getStackTrace() {
         return stackTrace;
@@ -122,6 +122,7 @@ public class Exception implements Model {
      *
      * @param stackTrace the stack trace value to set.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setStackTrace(String stackTrace) {
         this.stackTrace = stackTrace;
     }
