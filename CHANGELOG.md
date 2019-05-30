@@ -22,7 +22,7 @@
 
 ### App Center Crashes
 
-* **[Fix]** Fix possible crash on parsing invalid native crash reports.
+* **[Fix]** Fix a crash that could sometimes occur while processing native crash reports.
 
 ### App Center Distribute
 
