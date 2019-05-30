@@ -1544,6 +1544,57 @@ public class CrashesTest {
     }
 
     @Test
+    public void minidumpStoredWithOldSDK() throws Exception {
+
+        /* Set up mock for the crash. */
+        long appStartTime = 99L;
+        long crashTime = 123L;
+        final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
+        mock(ErrorAttachmentLog.class);
+        mockStatic(ErrorLogHelper.class);
+        mockStatic(ErrorAttachmentLog.class);
+        ErrorReport errorReport = new ErrorReport();
+        errorReport.setThrowable(new NativeException());
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(Throwable.class))).thenReturn(errorReport);
+        whenNew(DefaultLogSerializer.class).withAnyArguments().thenReturn(defaultLogSerializer);
+        whenNew(com.microsoft.appcenter.crashes.ingestion.models.Exception.class).withAnyArguments().thenReturn(exception);
+        when(exception.getStackTrace()).thenReturn("some minidump");
+
+        /* This mocks we already processed minidump to convert to pending regular crash report as that would be the case if migrating data from older SDK. */
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(FileManager.read(any(File.class))).thenReturn("");
+        String jsonCrash = "{}";
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+
+            @Override
+            public ManagedErrorLog answer(InvocationOnMock invocation) {
+                ManagedErrorLog log = mock(ManagedErrorLog.class);
+                when(log.getId()).thenReturn(UUID.randomUUID());
+                when(log.getException()).thenReturn(exception);
+                return log;
+            }
+        });
+        when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
+        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+        ErrorAttachmentLog errorAttachmentLog = mock(ErrorAttachmentLog.class);
+        whenNew(ErrorAttachmentLog.class).withAnyArguments().thenReturn(errorAttachmentLog);
+
+        /* Start crashes. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mock(Channel.class), "secret-app-mock", null, true);
+
+        /* Verify that attachmentWithBinary does get sent. */
+        verifyStatic();
+        attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
+    }
+
+    @Test
     public void stackOverflowOnSavingThrowable() throws Exception {
 
         /* Mock error log utils. */

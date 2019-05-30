@@ -836,15 +836,32 @@ public class Crashes extends AbstractAppCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         if (errorLogReport.report.getThrowable() instanceof NativeException) {
+
+                            /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
                             String minidumpFilePath = exception.getMinidumpFilePath();
 
-                            /* It can be null when NativeException is incorrectly used or there is already stored invalid data. */
+                            /* Erase temporary field so that it's not sent to server. */
+                            exception.setMinidumpFilePath(null);
+
+                            /*
+                             * Before SDK 2.1.0, the JSON was using the stacktrace field to hold file path on file storage.
+                             * Try reading the old field.
+                             */
+                            if (minidumpFilePath == null) {
+                                minidumpFilePath = exception.getStackTrace();
+
+                                /* Erase temporary field so that it's not sent to server. */
+                                exception.setStackTrace(null);
+                            }
+
+                            /* It can be null when NativeException is thrown or there is already invalid stored data. */
                             if (minidumpFilePath != null) {
                                 dumpFile = new File(minidumpFilePath);
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
-                                exception.setMinidumpFilePath(null);
+                            } else {
+                                AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
                             }
                         }
 
