@@ -20,6 +20,10 @@
 
 * **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
 
+### App Center Crashes
+
+* **[Fix]** Fix a crash that could sometimes occur while processing native crash reports.
+
 ### App Center Distribute
 
 * **[Feature]** Add `Distribute.setEnabledForDebuggableBuild(boolean)` method to allow in-app updates in debuggable builds.

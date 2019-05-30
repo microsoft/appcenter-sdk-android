@@ -580,7 +580,7 @@ public class Crashes extends AbstractAppCenterService {
             Exception modelException = new Exception();
             modelException.setType("minidump");
             modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-            modelException.setStackTrace(dest.getPath());
+            modelException.setMinidumpFilePath(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
             errorLog.setTimestamp(new Date(minidumpDate));
@@ -836,11 +836,33 @@ public class Crashes extends AbstractAppCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         if (errorLogReport.report.getThrowable() instanceof NativeException) {
+
+                            /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
-                            dumpFile = new File(exception.getStackTrace());
-                            exception.setStackTrace(null);
-                            byte[] logfileContents = FileManager.readBytes(dumpFile);
-                            dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                            String minidumpFilePath = exception.getMinidumpFilePath();
+
+                            /* Erase temporary field so that it's not sent to server. */
+                            exception.setMinidumpFilePath(null);
+
+                            /*
+                             * Before SDK 2.1.0, the JSON was using the stacktrace field to hold file path on file storage.
+                             * Try reading the old field.
+                             */
+                            if (minidumpFilePath == null) {
+                                minidumpFilePath = exception.getStackTrace();
+
+                                /* Erase temporary field so that it's not sent to server. */
+                                exception.setStackTrace(null);
+                            }
+
+                            /* It can be null when NativeException is thrown or there is already invalid stored data. */
+                            if (minidumpFilePath != null) {
+                                dumpFile = new File(minidumpFilePath);
+                                byte[] logfileContents = FileManager.readBytes(dumpFile);
+                                dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                            } else {
+                                AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
+                            }
                         }
 
                         /* Send report. */
