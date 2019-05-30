@@ -69,10 +69,10 @@ public class ErrorModelTest {
             Exception exception3 = new Exception();
             exception3.setType(exception1.getType());
             exception3.setMessage(exception1.getMessage());
-            exception3.setMinidumpFilePath(exception1.getMinidumpFilePath());
             exception3.setStackTrace(exception1.getStackTrace());
             exception3.setFrames(exception1.getFrames());
             exception3.setWrapperSdkName(exception1.getWrapperSdkName());
+            exception3.setMinidumpFilePath(exception1.getMinidumpFilePath());
             errorLog2.setException(exception3);
             checkEquals(errorLog1, errorLog2);
 
@@ -302,17 +302,25 @@ public class ErrorModelTest {
                 checkEquals(exception1, exception2);
             }
             {
+                exception1.setStackTrace("1");
+                checkNotEquals(exception1, exception2);
+                checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
+
+                exception2.setStackTrace("2");
+                checkNotEquals(exception1, exception2);
+
+                exception2.setStackTrace(exception1.getStackTrace());
+                checkEquals(exception1, exception2);
+            }
+            {
                 exception1.setMinidumpFilePath("1");
-                exception1.setStackTrace("5");
                 checkNotEquals(exception1, exception2);
                 checkExceptions(serializer, errorLog1, errorLog2, exception1, exception2);
 
                 exception2.setMinidumpFilePath("2");
-                exception2.setStackTrace("6");
                 checkNotEquals(exception1, exception2);
 
                 exception2.setMinidumpFilePath(exception1.getMinidumpFilePath());
-                exception2.setStackTrace(exception1.getStackTrace());
                 checkEquals(exception1, exception2);
             }
             {

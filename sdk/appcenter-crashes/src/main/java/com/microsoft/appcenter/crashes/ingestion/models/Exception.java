@@ -28,11 +28,11 @@ public class Exception implements Model {
 
     private static final String STACK_TRACE = "stackTrace";
 
-    private static final String MINIDUMP_FILE_PATH = "MinidumpFilePath";
-
     private static final String INNER_EXCEPTIONS = "innerExceptions";
 
     private static final String WRAPPER_SDK_NAME = "wrapperSdkName";
+
+    private static final String MINIDUMP_FILE_PATH = "minidumpFilePath";
 
     /**
      * Exception type (fully qualified class name).
@@ -50,11 +50,6 @@ public class Exception implements Model {
     private String stackTrace;
 
     /**
-     * The path to the minidump file. Used for reports from the NDK.
-     */
-    private String minidumpFilePath;
-
-    /**
      * Exception stack trace elements.
      */
     private List<StackFrame> frames;
@@ -70,6 +65,12 @@ public class Exception implements Model {
      * e.g. "appcenter.xamarin", "hockeysdk.cordova".
      */
     private String wrapperSdkName;
+
+    /**
+     * The path to the minidump file. Used for reports from the NDK.
+     * This is stored locally but will not be sent to the server.
+     */
+    private String minidumpFilePath;
 
     /**
      * Get the type value.
@@ -117,30 +118,12 @@ public class Exception implements Model {
     }
 
     /**
-     * Get the minidump file path.
-     *
-     * @return the minidump file path.
-     */
-    public String getMinidumpFilePath() {
-        return minidumpFilePath;
-    }
-
-    /**
      * Set stack trace value.
      *
      * @param stackTrace the stack trace value to set.
      */
     public void setStackTrace(String stackTrace) {
         this.stackTrace = stackTrace;
-    }
-
-    /**
-     * Set minidump file path.
-     *
-     * @param minidumpFilePath the minidump file path to set.
-     */
-    public void setMinidumpFilePath(String minidumpFilePath) {
-        this.minidumpFilePath = minidumpFilePath;
     }
 
     /**
@@ -184,6 +167,7 @@ public class Exception implements Model {
      *
      * @return the wrapperSdkName value
      */
+    @SuppressWarnings("WeakerAccess")
     public String getWrapperSdkName() {
         return wrapperSdkName;
     }
@@ -197,68 +181,77 @@ public class Exception implements Model {
         this.wrapperSdkName = wrapperSdkName;
     }
 
+    /**
+     * Get the minidump file path.
+     *
+     * @return the minidump file path.
+     */
+    public String getMinidumpFilePath() {
+        return minidumpFilePath;
+    }
+
+    /**
+     * Set minidump file path.
+     *
+     * @param minidumpFilePath the minidump file path to set.
+     */
+    public void setMinidumpFilePath(String minidumpFilePath) {
+        this.minidumpFilePath = minidumpFilePath;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
         setMessage(object.optString(MESSAGE, null));
-        setMinidumpFilePath(object.optString(MINIDUMP_FILE_PATH, null));
         setStackTrace(object.optString(STACK_TRACE, null));
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
         setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
+        setMinidumpFilePath(object.optString(MINIDUMP_FILE_PATH, null));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         JSONUtils.write(writer, TYPE, getType());
         JSONUtils.write(writer, MESSAGE, getMessage());
-        JSONUtils.write(writer, STACK_TRACE, getMinidumpFilePath());
         JSONUtils.write(writer, STACK_TRACE, getStackTrace());
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
         JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
+        JSONUtils.write(writer, MINIDUMP_FILE_PATH, getMinidumpFilePath());
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
         Exception exception = (Exception) o;
-        if (type != null ? !type.equals(exception.type) : exception.type != null) {
+
+        if (type != null ? !type.equals(exception.type) : exception.type != null) return false;
+        if (message != null ? !message.equals(exception.message) : exception.message != null)
             return false;
-        }
-        if (message != null ? !message.equals(exception.message) : exception.message != null) {
+        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null)
             return false;
-        }
-        if (minidumpFilePath != null ? !minidumpFilePath.equals(exception.minidumpFilePath) : exception.minidumpFilePath != null) {
+        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
             return false;
-        }
-        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null) {
+        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null)
             return false;
-        }
-        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null) {
+        if (wrapperSdkName != null ? !wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName != null)
             return false;
-        }
-        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null) {
-            return false;
-        }
-        return wrapperSdkName != null ? wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName == null;
+        return minidumpFilePath != null ? minidumpFilePath.equals(exception.minidumpFilePath) : exception.minidumpFilePath == null;
     }
 
     @Override
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (message != null ? message.hashCode() : 0);
-        result = 31 * result + (minidumpFilePath != null ? minidumpFilePath.hashCode() : 0);
         result = 31 * result + (stackTrace != null ? stackTrace.hashCode() : 0);
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
         result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
         result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
+        result = 31 * result + (minidumpFilePath != null ? minidumpFilePath.hashCode() : 0);
         return result;
     }
 }

@@ -65,7 +65,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,8 +76,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
@@ -1499,7 +1498,7 @@ public class CrashesTest {
         long appStartTime = 99L;
         long crashTime = 123L;
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
-        final DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
+        DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
         mock(ErrorAttachmentLog.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(ErrorAttachmentLog.class);
@@ -1516,6 +1515,7 @@ public class CrashesTest {
         String jsonCrash = "{}";
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
                 ManagedErrorLog log = mock(ManagedErrorLog.class);
@@ -1535,7 +1535,10 @@ public class CrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "secret-app-mock", null, true);
 
-        /* Verify that attachmentWithBinary doesn't called. */
+        /*
+         * Verify that attachmentWithBinary doesn't get called if minidump is missing.
+         * This scenario used to crash before, so if the test succeeds that also tests the crash is fixed.
+         */
         verifyStatic(never());
         attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
     }

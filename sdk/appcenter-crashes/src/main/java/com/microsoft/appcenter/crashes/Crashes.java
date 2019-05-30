@@ -837,7 +837,8 @@ public class Crashes extends AbstractAppCenterService {
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
                         if (errorLogReport.report.getThrowable() instanceof NativeException) {
-                            String minidumpFilePath = errorLogReport.log.getException().getMinidumpFilePath();
+                            Exception exception = errorLogReport.log.getException();
+                            String minidumpFilePath = exception.getMinidumpFilePath();
 
                             /* It can be null when NativeException is incorrectly used or there is already stored invalid data. */
                             if (minidumpFilePath != null) {
@@ -845,8 +846,7 @@ public class Crashes extends AbstractAppCenterService {
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                             }
-                            errorLogReport.log.getException().setMinidumpFilePath(null);
-                            errorLogReport.log.getException().setStackTrace(null);
+                            exception.setMinidumpFilePath(null);
                         }
 
                         /* Send report. */
