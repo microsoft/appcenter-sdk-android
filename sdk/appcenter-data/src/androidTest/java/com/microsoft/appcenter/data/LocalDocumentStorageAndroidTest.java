@@ -149,6 +149,24 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void offlineDeletePreservesEtagNullDocumentValue() {
+
+        /* Write document to the cache with an etag set. */
+        DocumentWrapper<Void> document = new DocumentWrapper<>(null, DefaultPartitions.USER_DOCUMENTS, ID, "etag", 0);
+        mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument.getETag());
+        assertEquals("etag", createdDocument.getETag());
+
+        /* Delete document offline, etag should be replaced. */
+        boolean success = mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, new WriteOptions());
+        assertTrue(success);
+        DocumentWrapper<Void> deletedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, Void.class, null);
+        assertNotNull(deletedDoc.getETag());
+        assertEquals("etag", deletedDoc.getETag());
+    }
+
+    @Test
     public void readExpiredDocument() {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */
