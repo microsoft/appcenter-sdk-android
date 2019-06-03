@@ -72,11 +72,12 @@ public class TokenTest extends AbstractDataTest {
                     assertEquals(ACCOUNT_ID, tokenResult.getAccountId());
                 }
             };
-    @Mock
-    HttpClient mHttpClient;
 
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
+
+    @Mock
+    HttpClient mHttpClient;
 
     @After
     public void tearDown() {
