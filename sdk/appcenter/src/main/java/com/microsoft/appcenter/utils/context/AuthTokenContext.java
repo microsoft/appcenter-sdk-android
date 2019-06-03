@@ -148,7 +148,7 @@ public class AuthTokenContext {
     }
 
     /**
-     * Sets new authorization token.
+     * Sets authorization token, access token, expiry time of authorization token and account Id.
      *
      * @param authToken     authorization token.
      * @param accessToken   access token.
