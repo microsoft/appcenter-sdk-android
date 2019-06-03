@@ -136,19 +136,6 @@ public class PushTest {
     @Mock
     private PackageManager mPackageManager;
 
-    private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
-        mockStatic(PushIntentUtils.class);
-        Intent pushIntentMock = mock(Intent.class);
-        when(PushIntentUtils.getTitle(pushIntentMock)).thenReturn(title);
-        when(PushIntentUtils.getMessage(pushIntentMock)).thenReturn(message);
-        if (customData != null) {
-            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(customData);
-        } else {
-            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
-        }
-        return pushIntentMock;
-    }
-
     @Before
     public void setUp() {
         Push.unsetInstance();
@@ -1040,5 +1027,18 @@ public class PushTest {
         verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
         verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
         verify(authTokenContext).removeListener(any(AuthTokenContext.Listener.class));
+    }
+
+    private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
+        mockStatic(PushIntentUtils.class);
+        Intent pushIntentMock = mock(Intent.class);
+        when(PushIntentUtils.getTitle(pushIntentMock)).thenReturn(title);
+        when(PushIntentUtils.getMessage(pushIntentMock)).thenReturn(message);
+        if (customData != null) {
+            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(customData);
+        } else {
+            when(PushIntentUtils.getCustomData(pushIntentMock)).thenReturn(new HashMap<String, String>());
+        }
+        return pushIntentMock;
     }
 }
