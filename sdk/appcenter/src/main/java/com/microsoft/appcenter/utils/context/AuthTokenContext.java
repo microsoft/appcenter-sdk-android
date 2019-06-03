@@ -144,18 +144,17 @@ public class AuthTokenContext {
             return;
         }
         mResetAuthTokenRequired = false;
-        setAuthToken(null, null, null, null);
+        setAuthToken(null, null, null);
     }
 
     /**
-     * Sets authorization token, access token, expiry time of authorization token and account Id.
+     * Sets new authorization token.
      *
      * @param authToken     authorization token.
-     * @param accessToken   access token.
-     * @param expiresOn     time when token expires.
      * @param homeAccountId unique user id.
+     * @param expiresOn     time when token expires.
      */
-    public void setAuthToken(String authToken, String accessToken, Date expiresOn, String homeAccountId) {
+    public void setAuthToken(String authToken, String homeAccountId, Date expiresOn) {
 
         /* Do not store any data for anonymous token. */
         if (authToken == null) {
@@ -172,7 +171,7 @@ public class AuthTokenContext {
             listener.onNewAuthToken(authToken);
             if (isNewUser) {
                 String accountId = homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
-                UserInformation userInfo = accountId == null ? null : new UserInformation(accountId, accessToken, authToken);
+                UserInformation userInfo = accountId == null ? null : new UserInformation(accountId);
                 listener.onNewUser(userInfo);
             }
         }
@@ -299,7 +298,7 @@ public class AuthTokenContext {
     /**
      * Removes the token from history. Please note that only oldest token is
      * allowed to remove. To reset current to anonymous, use
-     * {@link #setAuthToken(String, String, Date, String)} with <code>null</code> value instead.
+     * {@link #setAuthToken(String, String, Date)} with <code>null</code> value instead.
      *
      * @param token auth token to remove. Despite the fact that only the oldest
      *              token can be removed, it's required to avoid removing

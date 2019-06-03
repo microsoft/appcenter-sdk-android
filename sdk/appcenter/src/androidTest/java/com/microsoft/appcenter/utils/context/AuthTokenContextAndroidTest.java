@@ -33,8 +33,6 @@ public class AuthTokenContextAndroidTest {
 
     private static final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
 
-    private static final String ACCESS_TOKEN = UUIDUtils.randomUUID().toString();
-
     private static final String ACCOUNT_ID = UUIDUtils.randomUUID().toString();
 
     private AuthTokenContext mAuthTokenContext;
@@ -65,7 +63,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(1, history.size());
 
         /* Account id is still null we can't pass valid token. */
-        mAuthTokenContext.setAuthToken(null, null, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(null, ACCOUNT_ID, new Date());
         assertNull(mAuthTokenContext.getAuthToken());
         assertNull(mAuthTokenContext.getHomeAccountId());
         assertEquals(1, mAuthTokenContext.getHistory().size());
@@ -73,7 +71,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(1, history.size());
 
         /* Save the token into storage. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
 
         /* Assert that storage returns the same token. */
         assertEquals(AUTH_TOKEN, mAuthTokenContext.getAuthToken());
@@ -81,7 +79,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(ACCOUNT_ID.substring(0, Math.min(ACCOUNT_ID_LENGTH, ACCOUNT_ID.length())), mAuthTokenContext.getAccountId());
 
         /* Remove the token from storage. */
-        mAuthTokenContext.setAuthToken(null, null, null, null);
+        mAuthTokenContext.setAuthToken(null, null, null);
 
         /* Assert that there's no token in storage. */
         assertNull(mAuthTokenContext.getAuthToken());
@@ -90,9 +88,9 @@ public class AuthTokenContextAndroidTest {
 
         /* The same token should't be in history twice in a row. */
         Calendar calendar = Calendar.getInstance();
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, calendar.getTime(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, calendar.getTime());
         calendar.add(Calendar.HOUR, 1);
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, calendar.getTime(), null);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, null, calendar.getTime());
 
         /* Check history. */
         assertEquals(4, mAuthTokenContext.getHistory().size());
@@ -119,7 +117,7 @@ public class AuthTokenContextAndroidTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* Add some token to empty history. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
     }
 
@@ -145,7 +143,7 @@ public class AuthTokenContextAndroidTest {
         assertNull(authTokenInfo.getEndTime());
 
         /* Add some token to empty history. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
     }
 
@@ -186,7 +184,7 @@ public class AuthTokenContextAndroidTest {
         assertNull(mAuthTokenContext.getHistory());
 
         /* Save the token into storage. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, null, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Remove current token (not allowed). */
@@ -194,7 +192,7 @@ public class AuthTokenContextAndroidTest {
         assertEquals(1, mAuthTokenContext.getHistory().size());
 
         /* Add second token. */
-        mAuthTokenContext.setAuthToken("42", null, new Date(Long.MAX_VALUE), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken("42", ACCOUNT_ID, new Date(Long.MAX_VALUE));
         assertEquals(2, mAuthTokenContext.getHistory().size());
 
         /* Remove current token (not allowed). */
@@ -216,9 +214,9 @@ public class AuthTokenContextAndroidTest {
         Date afterHour = calendar.getTime();
 
         /* Store some tokens. */
-        mAuthTokenContext.setAuthToken("1", "101", beforeHour, ACCOUNT_ID);
-        mAuthTokenContext.setAuthToken("2", "102", afterHour, ACCOUNT_ID);
-        mAuthTokenContext.setAuthToken("3", "103", afterHour, ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken("1", ACCOUNT_ID, beforeHour);
+        mAuthTokenContext.setAuthToken("2", ACCOUNT_ID, afterHour);
+        mAuthTokenContext.setAuthToken("3", ACCOUNT_ID, afterHour);
 
         /* Check history. */
         List<AuthTokenInfo> history = mAuthTokenContext.getAuthTokenValidityList();
@@ -252,17 +250,16 @@ public class AuthTokenContextAndroidTest {
     @Test
     public void tokenHistoryLimit() {
         for (int i = 0; i < TOKEN_HISTORY_LIMIT + 3; i++) {
-            String mockIdToken = UUIDUtils.randomUUID().toString();
-            String mockAccessToken = UUIDUtils.randomUUID().toString();
+            String mockToken = UUIDUtils.randomUUID().toString();
             String mockAccountId = UUIDUtils.randomUUID().toString();
-            mAuthTokenContext.setAuthToken(mockIdToken, mockAccessToken, new Date(), mockAccountId);
+            mAuthTokenContext.setAuthToken(mockToken, mockAccountId, new Date());
         }
         assertEquals(TOKEN_HISTORY_LIMIT, mAuthTokenContext.getHistory().size());
     }
 
     @Test
     public void preventResetAuthTokenAfterStart() {
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, new Date(), ACCOUNT_ID);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCOUNT_ID, new Date());
         List<AuthTokenHistoryEntry> listBeforeFinishInitialization = mAuthTokenContext.getHistory();
         mAuthTokenContext.doNotResetAuthAfterStart();
         mAuthTokenContext.finishInitialization();

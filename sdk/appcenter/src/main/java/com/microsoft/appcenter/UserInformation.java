@@ -25,12 +25,22 @@ public class UserInformation {
      */
     private final String mIdToken;
 
+
     /**
      * Init.
      *
      * @param accountId User account identifier.
+     */
+    public UserInformation(String accountId) {
+        this(accountId, null, null);
+    }
+
+    /**
+     * Init.
+     *
+     * @param accountId   User account identifier.
      * @param accessToken Access token for user.
-     * @param idToken Id token for user.
+     * @param idToken     Id token for user.
      */
     public UserInformation(String accountId, String accessToken, String idToken) {
         mAccountId = accountId;

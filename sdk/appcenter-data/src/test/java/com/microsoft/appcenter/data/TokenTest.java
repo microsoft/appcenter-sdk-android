@@ -72,12 +72,11 @@ public class TokenTest extends AbstractDataTest {
                     assertEquals(ACCOUNT_ID, tokenResult.getAccountId());
                 }
             };
+    @Mock
+    HttpClient mHttpClient;
 
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
-
-    @Mock
-    HttpClient mHttpClient;
 
     @After
     public void tearDown() {
@@ -117,8 +116,7 @@ public class TokenTest extends AbstractDataTest {
 
         /* Mock http call to get token. */
         String authToken = "auth-token";
-        String accessToken = "access-token";
-        AuthTokenContext.getInstance().setAuthToken(authToken, accessToken, new Date(Long.MAX_VALUE), "account id");
+        AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(sTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
 
             @Override

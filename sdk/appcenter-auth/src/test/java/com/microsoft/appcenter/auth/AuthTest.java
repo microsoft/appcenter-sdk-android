@@ -96,6 +96,57 @@ public class AuthTest extends AbstractAuthTest {
     @Captor
     private ArgumentCaptor<Map<String, String>> mHeadersCaptor;
 
+    @NonNull
+    private static JSONObject mockValidForAppCenterConfig() throws Exception {
+        JSONObject jsonConfig = mock(JSONObject.class);
+        when(jsonConfig.toString()).thenReturn("mockConfig");
+        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
+        JSONArray authorities = mock(JSONArray.class);
+        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
+        when(authorities.length()).thenReturn(1);
+        JSONObject authority = mock(JSONObject.class);
+        when(authorities.getJSONObject(0)).thenReturn(authority);
+        when(authority.optBoolean("default")).thenReturn(true);
+        when(authority.getString("type")).thenReturn("B2C");
+        when(authority.getString("authority_url")).thenReturn("https://mock");
+        return jsonConfig;
+    }
+
+    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
+        ServiceCallback serviceCallback = mockHttpCallStarted(httpClient);
+        mockHttpCallSuccess(jsonConfig, serviceCallback);
+    }
+
+    private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
+
+        /* Intercept parameters. */
+        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
+        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
+        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/auth/" + APP_SECRET + ".json";
+        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
+        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
+        assertNotNull(serviceCallback);
+
+        /* Verify call template. */
+        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
+
+        /* Verify no logging if verbose log not enabled (default). */
+        try {
+            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
+        } catch (MalformedURLException e) {
+            fail("test url should always be valid " + e.getMessage());
+        }
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
+        return serviceCallback;
+    }
+
+    private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("ETag", "mockETag");
+        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+    }
+
     @Test
     public void singleton() {
         assertSame(Auth.getInstance(), Auth.getInstance());
@@ -137,7 +188,7 @@ public class AuthTest extends AbstractAuthTest {
         assertFalse(Auth.isEnabled().get());
         verify(mAuthTokenContext).removeListener(any(AuthTokenContext.Listener.class));
         verify(mNetworkStateHelper).removeListener(any(NetworkStateHelper.Listener.class));
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -342,6 +393,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
         assertEquals(mockIdToken, future.get().getUserInformation().getIdToken());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
     }
 
@@ -380,9 +432,12 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
-        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+
+        /* IdToken is missing in MSAL so accessToken will be filled. */
+        assertEquals(mockAccessToken, future.get().getUserInformation().getIdToken());
         assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
-        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
     }
 
     @Test
@@ -446,7 +501,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(idToken), eq(accessToken), any(Date.class), eq(homeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(idToken), eq(homeAccountId), any(Date.class));
 
         /* Disable Auth. */
         Auth.setEnabled(false).get();
@@ -461,7 +516,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify no more interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(idToken), eq(accessToken), any(Date.class), eq(homeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(idToken), eq(homeAccountId), any(Date.class));
     }
 
     @Test
@@ -522,7 +577,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Auth.signIn();
@@ -530,7 +585,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -581,7 +636,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -642,7 +697,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Auth.signIn();
@@ -650,7 +705,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Verify interactions - should succeed silent sign-in. */
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class), any(String.class),
                 eq(true), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -711,7 +766,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify interactions. */
         verify(publicClientApplication).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
 
         /* Call signIn again to trigger silent sign-in. */
         Auth.signIn();
@@ -720,7 +775,7 @@ public class AuthTest extends AbstractAuthTest {
         verify(publicClientApplication).acquireTokenSilentAsync(notNull(String[].class), any(IAccount.class),
                 any(String.class), eq(true), notNull(AuthenticationCallback.class));
         verify(publicClientApplication, times(2)).acquireToken(same(activity), notNull(String[].class), notNull(AuthenticationCallback.class));
-        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockAccessToken), any(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext, times(2)).setAuthToken(eq(mockIdToken), eq(mockHomeAccountId), any(Date.class));
     }
 
     @Test
@@ -996,7 +1051,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof CancellationException);
         assertNull(future.get().getUserInformation());
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1019,7 +1074,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertTrue(future.get().getException() instanceof MsalException);
         assertNull(future.get().getUserInformation());
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1099,10 +1154,10 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
-        assertEquals("accountId", future.get().getUserInformation().getAccountId());
         assertEquals("accessToken", future.get().getUserInformation().getIdToken());
         assertEquals("accessToken", future.get().getUserInformation().getAccessToken());
-        verify(mAuthTokenContext).setAuthToken(eq("accessToken"), eq("accessToken"), notNull(Date.class), eq("homeAccountId"));
+        assertEquals("accountId", future.get().getUserInformation().getAccountId());
+        verify(mAuthTokenContext).setAuthToken(eq("accessToken"), eq("homeAccountId"), notNull(Date.class));
     }
 
     @Test
@@ -1113,7 +1168,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Sign out should clear token. */
         Auth.signOut();
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1140,17 +1195,17 @@ public class AuthTest extends AbstractAuthTest {
         Auth.signIn();
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
-        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class), anyString());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
 
         /* Sign out. */
         Auth.signOut();
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Simulate cancel. */
         callbackCaptor.getValue().onCancel();
 
         /* Verify signIn was cancelled. */
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
@@ -1177,17 +1232,17 @@ public class AuthTest extends AbstractAuthTest {
         Auth.signIn();
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
-        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class), anyString());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
 
         /* Sign out. */
         Auth.signOut();
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Simulate error. */
         callbackCaptor.getValue().onError(mock(MsalException.class));
 
         /* Verify signIn was cancelled. */
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
@@ -1215,17 +1270,17 @@ public class AuthTest extends AbstractAuthTest {
         Auth.signIn();
         ArgumentCaptor<AuthenticationCallback> callbackCaptor = ArgumentCaptor.forClass(AuthenticationCallback.class);
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), callbackCaptor.capture());
-        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class), anyString());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
 
         /* Sign out. */
         Auth.signOut();
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Simulate success. */
         callbackCaptor.getValue().onSuccess(mockResult);
 
         /* Verify signIn was cancelled. */
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
@@ -1256,11 +1311,11 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Check that we don't try to update it without network and don't clear the current one. */
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Sign out. */
         Auth.signOut();
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Come back online. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -1268,7 +1323,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Check that signOut() canceled token refresh. */
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), notNull(Date.class));
     }
 
     @Test
@@ -1286,7 +1341,7 @@ public class AuthTest extends AbstractAuthTest {
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
 
         /* Check token is cleared when account is null. */
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1306,7 +1361,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Check that we acquire new token silently and don't clear the current one. */
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1330,7 +1385,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Check that we don't try to update it without network and don't clear the current one. */
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Come back online. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -1365,7 +1420,7 @@ public class AuthTest extends AbstractAuthTest {
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
 
         /* Check that we don't try to show UI as fallback. */
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
         verify(publicClientApplication, never()).acquireToken(any(Activity.class), any(String[].class), any(AuthenticationCallback.class));
     }
 
@@ -1388,7 +1443,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Check that we acquire new token only once. */
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1407,7 +1462,7 @@ public class AuthTest extends AbstractAuthTest {
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
 
         /* Verify sign out cleared token. */
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
 
     @Test
@@ -1441,7 +1496,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify acquireTokenSilentAsync is not called twice since onTokenRequiresRefresh has been invoked. */
         verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
-        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class), anyString());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
 
         /* Simulate success. */
         callbackCaptor.getValue().onSuccess(mockResult);
@@ -1451,10 +1506,10 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
-        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
         assertEquals(mockAccessToken, future.get().getUserInformation().getIdToken());
         assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
-        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
     }
 
     @Test
@@ -1489,7 +1544,7 @@ public class AuthTest extends AbstractAuthTest {
 
         /* Verify acquireTokenSilentAsync called both from refreshToken() and Auth.signIn(). */
         verify(publicClientApplication, times(2)).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), signInCallbackCaptor.capture());
-        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class), anyString());
+        verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
 
         /* Simulate Sign-In success. */
         signInCallbackCaptor.getValue().onSuccess(mockResult);
@@ -1500,12 +1555,12 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
-        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
         assertEquals(mockAccessToken, future.get().getUserInformation().getIdToken());
         assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
+        assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
 
         /* Verify called only once. */
-        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));
+        verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockHomeAccountId), notNull(Date.class));
     }
 
     @Test
@@ -1538,13 +1593,13 @@ public class AuthTest extends AbstractAuthTest {
         Auth.signOut();
 
         /* Verify sign out cleared token. */
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Simulate Sign-In success. */
         tokenRefreshCallbackCaptor.getValue().onSuccess(mockResult);
 
         /* Verify not called second time, cause sign out should cancel refreshToken(). */
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class));
     }
 
     @Test
@@ -1577,13 +1632,13 @@ public class AuthTest extends AbstractAuthTest {
         Auth.setEnabled(false);
 
         /* Verify sign out cleared token. */
-        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class), isNull(String.class));
+        verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
 
         /* Simulate Sign-In success. */
         tokenRefreshCallbackCaptor.getValue().onSuccess(mockResult);
 
         /* Verify not called second time, cause sign out should cancel refreshToken(). */
-        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class), notNull(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(notNull(String.class), notNull(String.class), any(Date.class));
     }
 
     @Test
@@ -1592,7 +1647,7 @@ public class AuthTest extends AbstractAuthTest {
         start(auth);
         Auth.signOut();
         when(AppCenter.getLogLevel()).thenReturn(Log.WARN);
-        verify(mAuthTokenContext, never()).setAuthToken(any(String.class), any(String.class), any(Date.class), any(String.class));
+        verify(mAuthTokenContext, never()).setAuthToken(any(String.class), any(String.class), any(Date.class));
     }
 
     @Test
@@ -1858,7 +1913,6 @@ public class AuthTest extends AbstractAuthTest {
         verify(publicClientApplication, never()).acquireTokenSilentAsync(any(String[].class), notNull(IAccount.class), isNull(String.class), eq(true), any(AuthenticationCallback.class));
     }
 
-
     private void mockReadyToSignIn() throws Exception {
 
         /* Start auth service. */
@@ -1893,56 +1947,5 @@ public class AuthTest extends AbstractAuthTest {
         auth.onStarting(mAppCenterHandler);
         auth.onStarted(mock(Context.class), channel, APP_SECRET, null, true);
         return channel;
-    }
-
-    @NonNull
-    private static JSONObject mockValidForAppCenterConfig() throws Exception {
-        JSONObject jsonConfig = mock(JSONObject.class);
-        when(jsonConfig.toString()).thenReturn("mockConfig");
-        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
-        JSONArray authorities = mock(JSONArray.class);
-        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
-        when(authorities.length()).thenReturn(1);
-        JSONObject authority = mock(JSONObject.class);
-        when(authorities.getJSONObject(0)).thenReturn(authority);
-        when(authority.optBoolean("default")).thenReturn(true);
-        when(authority.getString("type")).thenReturn("B2C");
-        when(authority.getString("authority_url")).thenReturn("https://mock");
-        return jsonConfig;
-    }
-
-    private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
-        ServiceCallback serviceCallback = mockHttpCallStarted(httpClient);
-        mockHttpCallSuccess(jsonConfig, serviceCallback);
-    }
-
-    private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
-
-        /* Intercept parameters. */
-        ArgumentCaptor<HttpClient.CallTemplate> templateArgumentCaptor = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        ArgumentCaptor<ServiceCallback> callbackArgumentCaptor = ArgumentCaptor.forClass(ServiceCallback.class);
-        String expectedUrl = Constants.DEFAULT_CONFIG_URL + "/auth/" + APP_SECRET + ".json";
-        verify(httpClient).callAsync(eq(expectedUrl), anyString(), anyMapOf(String.class, String.class), templateArgumentCaptor.capture(), callbackArgumentCaptor.capture());
-        ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
-        assertNotNull(serviceCallback);
-
-        /* Verify call template. */
-        assertNull(templateArgumentCaptor.getValue().buildRequestBody());
-
-        /* Verify no logging if verbose log not enabled (default). */
-        try {
-            templateArgumentCaptor.getValue().onBeforeCalling(new URL("https://mock"), new HashMap<String, String>());
-        } catch (MalformedURLException e) {
-            fail("test url should always be valid " + e.getMessage());
-        }
-        verifyStatic(never());
-        AppCenterLog.verbose(anyString(), anyString());
-        return serviceCallback;
-    }
-
-    private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
     }
 }
