@@ -32,7 +32,6 @@ import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VA
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
 import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
-import static com.microsoft.appcenter.data.Utils.FAILED_TO_DESERIALIZE_DOCUMENT;
 
 @WorkerThread
 class LocalDocumentStorage {
@@ -212,12 +211,7 @@ class LocalDocumentStorage {
      */
     boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
         DocumentWrapper<Void> cachedDocument = read(table, partition, documentId, Void.class, null);
-        DocumentWrapper<Void> writeDocument;
-        if (cachedDocument.getError() != null && !cachedDocument.getError().getMessage().equals(FAILED_TO_DESERIALIZE_DOCUMENT)) {
-            writeDocument = new DocumentWrapper<>(null, partition, documentId);
-        } else {
-            writeDocument = new DocumentWrapper<>(null, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
-        }
+        DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
         return write(table, writeDocument, writeOptions, PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 
