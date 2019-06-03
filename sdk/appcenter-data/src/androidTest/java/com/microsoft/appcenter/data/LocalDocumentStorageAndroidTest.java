@@ -119,7 +119,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNotNull(createdDocument.getETag());
         assertEquals("etag", createdDocument.getETag());
 
-        /* Replace document offline, etag should be not replaced. */
+        /* Replace document offline, etag should not be replaced. */
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, DefaultPartitions.APP_DOCUMENTS, ID, "value2", String.class, new WriteOptions());
         DocumentWrapper<String> updatedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, new ReadOptions());
         assertNotNull(updatedDoc.getETag());
@@ -141,7 +141,7 @@ public class LocalDocumentStorageAndroidTest {
         assertNotNull(createdDocument.getETag());
         assertEquals("etag", createdDocument.getETag());
 
-        /* Delete document offline, etag should be not replaced. */
+        /* Delete document offline, etag should not be replaced. */
         mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, new WriteOptions());
         deletedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, null);
         assertNotNull(deletedDoc.getETag());
