@@ -25,7 +25,6 @@ public class UserInformation {
      */
     private final String mIdToken;
 
-
     /**
      * Init.
      *
