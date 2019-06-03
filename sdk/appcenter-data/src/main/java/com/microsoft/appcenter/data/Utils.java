@@ -48,6 +48,11 @@ import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 
 public class Utils {
 
+    /**
+     * Error message when a document cannot be deserialized.
+     */
+    static final String FAILED_TO_DESERIALIZE_DOCUMENT = "Failed to deserialize document.";
+
     private static final Gson sGson = new GsonBuilder().registerTypeAdapter(Date.class, new DateAdapter()).create();
 
     private static final JsonParser sParser = new JsonParser();
@@ -111,7 +116,7 @@ public class Utils {
         JsonElement eTag = obj.get(ETAG_FIELD_NAME);
         JsonElement timestamp = obj.get(TIMESTAMP_FIELD_NAME);
         if (partition == null || documentId == null || timestamp == null) {
-            return new DocumentWrapper<>(new DataException("Failed to deserialize document."));
+            return new DocumentWrapper<>(new DataException(FAILED_TO_DESERIALIZE_DOCUMENT));
         }
         return parseDocument(
                 document,
@@ -129,7 +134,7 @@ public class Utils {
             try {
                 document = sGson.fromJson(documentObject, documentType);
             } catch (JsonParseException exception) {
-                error = new DataException("Failed to deserialize document.", exception);
+                error = new DataException(FAILED_TO_DESERIALIZE_DOCUMENT, exception);
             }
         }
         return new DocumentWrapper<>(
