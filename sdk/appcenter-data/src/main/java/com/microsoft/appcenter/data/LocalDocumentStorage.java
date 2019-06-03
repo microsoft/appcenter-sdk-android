@@ -163,15 +163,11 @@ class LocalDocumentStorage {
         }
 
         /* The document cache has been expired, or the document did not exists, create it. */
-        DocumentWrapper<T> writeDocument;
-        long rowId;
-        if (cachedDocument.getError() != null) {
-            writeDocument = new DocumentWrapper<>(document, partition, documentId);
-            rowId = createOffline(table, writeDocument, writeOptions);
-        } else {
-            writeDocument = new DocumentWrapper<>(document, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
-            rowId = updateOffline(table, writeDocument, writeOptions);
-        }
+        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
+        long rowId =
+                cachedDocument.getError() != null ?
+                        createOffline(table, writeDocument, writeOptions) :
+                        updateOffline(table, writeDocument, writeOptions);
         if (rowId < 0) {
             writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
         }
