@@ -63,6 +63,8 @@ public class AuthTokenContextTest {
 
     private final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
 
+    private final String ACCESS_TOKEN = UUIDUtils.randomUUID().toString();
+
     private AuthTokenContext mAuthTokenContext;
 
     @Mock
@@ -104,8 +106,8 @@ public class AuthTokenContextTest {
 
         /* Set new auth token. */
         mAuthTokenContext.addListener(mockListener);
-        mAuthTokenContext.setAuthToken("42", homeAccountId, mock(Date.class));
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, homeAccountId, mock(Date.class));
+        mAuthTokenContext.setAuthToken("42", null, mock(Date.class), homeAccountId);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, mock(Date.class), homeAccountId);
 
         /* Verify the value is stored. */
         verifyStatic(times(2));
@@ -122,7 +124,7 @@ public class AuthTokenContextTest {
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);
 
         /* Clear token data. */
-        mAuthTokenContext.setAuthToken(null, null, null);
+        mAuthTokenContext.setAuthToken(null, null, null, null);
 
         /* Verify that listener is called on empty token. */
         verify(mockListener).onNewAuthToken(isNull(String.class));
@@ -135,7 +137,7 @@ public class AuthTokenContextTest {
         mAuthTokenContext.removeListener(mockListener);
 
         /* Update token without listener attached. */
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, homeAccountId, mock(Date.class));
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, mock(Date.class), homeAccountId);
 
         /* Verify that listener is called only once on a new token (i.e. before we removed listener). */
         verify(mockListener, times(1)).onNewAuthToken(AUTH_TOKEN);
@@ -167,7 +169,7 @@ public class AuthTokenContextTest {
     public void tokenRefreshOnNullToken() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, -60);
-        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        mAuthTokenContext.setAuthToken("authToken1", "accessToken1", calendar.getTime(), "accountId1");
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
         mAuthTokenContext.addListener(listener);
         AuthTokenInfo mockTokenInfo = mock(AuthTokenInfo.class);
@@ -180,9 +182,9 @@ public class AuthTokenContextTest {
     public void tokenRefreshCheck() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, -60);
-        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        mAuthTokenContext.setAuthToken("authToken1", "accessToken1", calendar.getTime(), "accountId1");
         calendar.add(Calendar.SECOND, 1);
-        mAuthTokenContext.setAuthToken("authToken2", "accountId2", calendar.getTime());
+        mAuthTokenContext.setAuthToken("authToken2", "accessToken2", calendar.getTime(), "accountId2");
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
@@ -197,9 +199,9 @@ public class AuthTokenContextTest {
     public void tokenRefreshCheckNotExpiresOrNotLast() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, 24);
-        mAuthTokenContext.setAuthToken("authToken1", "accountId", calendar.getTime());
+        mAuthTokenContext.setAuthToken("authToken1", "accessToken1", calendar.getTime(), "accountId");
         calendar.add(Calendar.SECOND, 1);
-        mAuthTokenContext.setAuthToken("authToken2", "accountId", calendar.getTime());
+        mAuthTokenContext.setAuthToken("authToken2", "accessToken2", calendar.getTime(), "accountId");
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
@@ -216,7 +218,7 @@ public class AuthTokenContextTest {
 
     @Test
     public void tokenRefreshCheckWhenExpiresIsNull() {
-        mAuthTokenContext.setAuthToken("authToken2", "accountId", null);
+        mAuthTokenContext.setAuthToken("authToken2", "accessToken2", null, "accountId");
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
@@ -291,7 +293,7 @@ public class AuthTokenContextTest {
                 latch2.countDown();
             }
         }).start();
-        mAuthTokenContext.setAuthToken(AUTH_TOKEN, "some-id", null);
+        mAuthTokenContext.setAuthToken(AUTH_TOKEN, ACCESS_TOKEN, null, "some-id");
     }
 
     @Test(timeout = 5000)

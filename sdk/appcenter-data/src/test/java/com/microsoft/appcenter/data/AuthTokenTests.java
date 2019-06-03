@@ -43,7 +43,7 @@ public class AuthTokenTests extends AbstractDataTest {
         partitionNames.add(DefaultPartitions.APP_DOCUMENTS);
         when(SharedPreferencesManager.getStringSet(PREFERENCE_PARTITION_NAMES)).thenReturn(partitionNames);
         Data.setEnabled(true);
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
 
         /* Verify. */
         verify(mLocalDocumentStorage).resetDatabase();
@@ -57,15 +57,15 @@ public class AuthTokenTests extends AbstractDataTest {
     @Test
     public void authTokenListenerNotCalledWhenDisabled() {
         Data.setEnabled(false);
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName[0-9]"));
     }
 
     @Test
     public void authTokenListenerNotCalledWhenNewUser() {
-        AuthTokenContext.getInstance().setAuthToken("someToken", "someId", new Date(Long.MAX_VALUE));
-        AuthTokenContext.getInstance().setAuthToken(null, null, null);
+        AuthTokenContext.getInstance().setAuthToken("authToken", "accessToken", new Date(Long.MAX_VALUE), "someId");
+        AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
         verifyStatic(never());
         SharedPreferencesManager.remove(matches(PREFERENCE_PARTITION_PREFIX + "partitionName[0-9]"));
     }
@@ -83,7 +83,7 @@ public class AuthTokenTests extends AbstractDataTest {
 
         /* Set new auth token. */
         AuthTokenContext.getInstance().addListener(mockListener);
-        AuthTokenContext.getInstance().setAuthToken("mock-token", "mock-user", new Date(Long.MAX_VALUE));
+        AuthTokenContext.getInstance().setAuthToken("authToken", "accessToken", new Date(Long.MAX_VALUE), "mock-user");
 
         /* Verify. */
         verify(mTokenManager, never()).removeAllCachedTokens();

@@ -117,7 +117,8 @@ public class TokenTest extends AbstractDataTest {
 
         /* Mock http call to get token. */
         String authToken = "auth-token";
-        AuthTokenContext.getInstance().setAuthToken(authToken, "account id", new Date(Long.MAX_VALUE));
+        String accessToken = "access-token";
+        AuthTokenContext.getInstance().setAuthToken(authToken, accessToken, new Date(Long.MAX_VALUE), "account id");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(sTokenExchangeServiceCallback))).then(new Answer<ServiceCall>() {
 
             @Override

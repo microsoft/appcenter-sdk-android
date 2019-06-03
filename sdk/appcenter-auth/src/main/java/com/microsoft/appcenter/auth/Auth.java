@@ -306,7 +306,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void removeTokenAndAccount() {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         removeAccount(authTokenContext.getHomeAccountId());
-        authTokenContext.setAuthToken(null, null, null);
+        authTokenContext.setAuthToken(null, null, null, null);
     }
 
     private synchronized void cancelPendingOperations(Exception exception) {
@@ -640,7 +640,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
         if (mAuthenticationClient == null) {
             AppCenterLog.warn(LOG_TAG, "Failed to refresh token: Auth isn't configured.");
-            AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
             return;
         }
         if (isFutureInProgress(mLastSignInFuture)) {
@@ -663,7 +663,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             silentSignIn(future, account, false);
         } else {
             AppCenterLog.warn(LOG_TAG, "Failed to refresh token: unable to retrieve account.");
-            AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
         }
     }
 
@@ -691,10 +691,11 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     AppCenterLog.warn(LOG_TAG, "Sign-in result does not contain ID token, using access token.");
                     token = authenticationResult.getAccessToken();
                 }
-                AuthTokenContext.getInstance().setAuthToken(token, homeAccountId, expiresOn);
+                String accessToken = authenticationResult.getAccessToken();
+                AuthTokenContext.getInstance().setAuthToken(token, accessToken, expiresOn, homeAccountId);
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                future.complete(new SignInResult(new UserInformation(accountId), null));
+                future.complete(new SignInResult(new UserInformation(accountId, accessToken, token), null));
             }
         });
     }
@@ -710,7 +711,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
                     return;
                 }
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
                 AppCenterLog.error(LOG_TAG, "User sign-in failed.", exception);
                 future.complete(new SignInResult(null, exception));
             }
@@ -728,7 +729,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     AppCenterLog.debug(LOG_TAG, "The future is already completed. Ignoring the result.");
                     return;
                 }
-                AuthTokenContext.getInstance().setAuthToken(null, null, null);
+                AuthTokenContext.getInstance().setAuthToken(null, null, null, null);
                 AppCenterLog.warn(LOG_TAG, "User canceled sign-in.");
                 future.complete(new SignInResult(null, new CancellationException("User cancelled sign-in.")));
             }

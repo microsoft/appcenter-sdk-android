@@ -63,7 +63,7 @@ public class LocalDocumentStorageAndroidTest {
     public void setUp() {
         SharedPreferencesManager.initialize(sContext);
         AuthTokenContext.initialize(sContext);
-        AuthTokenContext.getInstance().setAuthToken(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID().toString(), new Date());
+        AuthTokenContext.getInstance().setAuthToken(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID().toString(), new Date(), UUIDUtils.randomUUID().toString());
         mLocalDocumentStorage = new LocalDocumentStorage(sContext, USER_TABLE_NAME);
     }
 
