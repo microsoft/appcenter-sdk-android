@@ -341,6 +341,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(future.get());
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
+        assertEquals(mockIdToken, future.get().getUserInformation().getIdToken());
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
     }
 
@@ -356,7 +357,6 @@ public class AuthTest extends AbstractAuthTest {
         String mockHomeAccountId = UUIDUtils.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(null, mockAccessToken, mockHomeAccountId, mockAccountId);
-        when(mockResult.getAccessToken()).thenReturn(mockAccessToken);
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -381,6 +381,7 @@ public class AuthTest extends AbstractAuthTest {
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
         verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));
     }
 
@@ -439,6 +440,8 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(signInResult);
         assertNotNull(signInResult.getUserInformation());
         assertEquals(accountId, signInResult.getUserInformation().getAccountId());
+        assertEquals(idToken, signInResult.getUserInformation().getIdToken());
+        assertEquals(accessToken, signInResult.getUserInformation().getAccessToken());
         assertNull(signInResult.getException());
 
         /* Verify interactions. */
@@ -1449,6 +1452,8 @@ public class AuthTest extends AbstractAuthTest {
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getIdToken());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
         verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));
     }
 
@@ -1496,6 +1501,8 @@ public class AuthTest extends AbstractAuthTest {
         assertNull(future.get().getException());
         assertNotNull(future.get().getUserInformation());
         assertEquals(mockAccountId, future.get().getUserInformation().getAccountId());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getIdToken());
+        assertEquals(mockAccessToken, future.get().getUserInformation().getAccessToken());
 
         /* Verify called only once. */
         verify(mAuthTokenContext).setAuthToken(eq(mockAccessToken), eq(mockAccessToken), notNull(Date.class), eq(mockHomeAccountId));

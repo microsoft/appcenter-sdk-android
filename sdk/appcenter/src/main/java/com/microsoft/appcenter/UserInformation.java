@@ -16,8 +16,7 @@ public class UserInformation {
     private final String mAccountId;
 
     /**
-     * Access token for user. A JWT that can be used with the Microsoft Graph API (https://developer.microsoft.com/en-us/graph). It can also
-     * be decoded and parsed to obtain information about the current user.
+     * Access token for user.
      */
     private final String mAccessToken;
 
