@@ -128,11 +128,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         }
         mAuthInfoTestFeature = getAuthenticationDefaultTestFeature();
         if (!_default) {
-            if (isAuthenticated()) {
-                mAuthInfoTestFeature = getAuthenticatedTestFeature();
-            } else {
-                mAuthInfoTestFeature = getNotAuthenticatedTestFeature();
-            }
+            mAuthInfoTestFeature = isAuthenticated() ? getAuthenticatedTestFeature() : getNotAuthenticatedTestFeature();
         }
         mFeatureList.add(mAuthInfoTestFeature);
         mListView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
