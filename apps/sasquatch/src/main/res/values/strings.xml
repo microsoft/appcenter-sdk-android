@@ -85,7 +85,7 @@
     <string name="b2c_sign_in_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="b2c_sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
     <string name="b2c_authentication_status_title" tools:ignore="MissingTranslation">Authentication status</string>
-    <string name="b2c_user_info_id_title" tools:ignore="MissingTranslation">User ID</string>
+    <string name="b2c_user_info_id_title" tools:ignore="MissingTranslation">Account ID</string>
     <string name="b2c_user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
     <string name="b2c_user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
     <string name="b2c_authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
