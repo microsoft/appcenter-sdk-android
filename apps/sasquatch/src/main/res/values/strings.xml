@@ -84,6 +84,13 @@
     <string name="b2c_sign_in_title" tools:ignore="MissingTranslation">Azure B2C ticket</string>
     <string name="b2c_sign_in_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="b2c_sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
+    <string name="b2c_authentication_status_title" tools:ignore="MissingTranslation">Authentication status</string>
+    <string name="b2c_user_info_id_title" tools:ignore="MissingTranslation">User ID</string>
+    <string name="b2c_user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
+    <string name="b2c_user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
+    <string name="b2c_authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
+    <string name="b2c_authentication_status_description" tools:ignore="MissingTranslation">Unknown</string>
+    <string name="b2c_authentication_status_not_authenticated" tools:ignore="MissingTranslation">User not authenticated</string>
     <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
     <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>

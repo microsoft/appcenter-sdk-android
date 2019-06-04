@@ -17,6 +17,8 @@
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning,UnpackedNativeCode"
         tools:targetApi="n">
+        <activity android:name=".activities.UserInformationActivity">
+        </activity>
         <activity
             android:name=".activities.MainActivity"
             android:launchMode="singleTop">

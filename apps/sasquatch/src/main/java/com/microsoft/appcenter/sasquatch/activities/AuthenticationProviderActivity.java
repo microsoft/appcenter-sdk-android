@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
+import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.auth.SignInResult;
@@ -26,11 +27,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.ACCOUNT_ID;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ACCESS_TOKEN;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ID;
+import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ID_TOKEN;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private boolean mUserLeaving;
+
+    private UserInformation mUserInformation;
+
+    private TestFeatures.TestFeature mAuthInfoTestFeature;
+
+    private List<TestFeatures.TestFeatureModel> mFeatureList;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,12 +77,16 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                             if (exception != null) {
                                 throw exception;
                             }
-                            String accountId = signInResult.getUserInformation().getAccountId();
+                            mUserInformation = signInResult.getUserInformation();
+                            loadAuthStatus(false);
+                            String accountId = mUserInformation.getAccountId();
                             SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                             edit.putString("accountId", accountId);
                             edit.apply();
                             Log.i(LOG_TAG, "Auth.signIn succeeded, accountId=" + accountId);
                         } catch (Exception e) {
+                            mUserInformation = null;
+                            loadAuthStatus(false);
                             Log.e(LOG_TAG, "Auth.signIn failed", e);
                         }
                     }
@@ -85,6 +99,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     Auth.signOut();
+                    mUserInformation = null;
+                    loadAuthStatus(false);
                     SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                     edit.putString(ACCOUNT_ID, null);
                     edit.apply();
@@ -93,14 +109,79 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 }
             }
         }));
+        mFeatureList = featureList;
+        loadAuthStatus(true);
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(featureList));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
+    private void loadAuthStatus(boolean _default) {
+        if (mAuthInfoTestFeature != null) {
+            mFeatureList.remove(mAuthInfoTestFeature);
+        }
+        mAuthInfoTestFeature = getDefaultAuthenticationTestFeature();
+        if (!_default) {
+            if (isAuthenticated()) {
+                mAuthInfoTestFeature = getAuthenticatedTestFeature();
+            } else {
+                mAuthInfoTestFeature = getNotAuthenticatedTestFeature();
+            }
+        }
+        mFeatureList.add(mAuthInfoTestFeature);
+    }
+
+    private TestFeatures.TestFeature getDefaultAuthenticationTestFeature() {
+        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_description, new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (isAuthenticated()) {
+                    startUserInfoActivity(mUserInformation);
+                }
+            }
+        });
+    }
+
+    private TestFeatures.TestFeature getAuthenticatedTestFeature() {
+        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_authenticated, new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (isAuthenticated()) {
+                    startUserInfoActivity(mUserInformation);
+                }
+            }
+        });
+    }
+
+    private TestFeatures.TestFeature getNotAuthenticatedTestFeature() {
+        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_not_authenticated, new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (isAuthenticated()) {
+                    startUserInfoActivity(mUserInformation);
+                }
+            }
+        });
+    }
+
+    private boolean isAuthenticated() {
+        return mUserInformation != null && mUserInformation.getAccessToken() != null;
+    }
+
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
         Intent intent = new Intent(getApplication(), MSALoginActivity.class);
         intent.putExtra(AuthenticationProvider.Type.class.getName(), type);
+        startActivity(intent);
+    }
+
+    private void startUserInfoActivity(UserInformation userInformation) {
+        Intent intent = new Intent(getApplication(), UserInformationActivity.class);
+        intent.putExtra(USER_INFORMATION_ID, userInformation.getAccountId());
+        intent.putExtra(USER_INFORMATION_ID_TOKEN, userInformation.getIdToken());
+        intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, userInformation.getAccessToken());
         startActivity(intent);
     }
 

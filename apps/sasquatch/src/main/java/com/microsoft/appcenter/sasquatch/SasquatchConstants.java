@@ -22,4 +22,10 @@ public class SasquatchConstants {
     public static final String DOCUMENT_ERROR = "documentError";
 
     public static final String DOCUMENT_ERROR_NULL_STATUS = "documentErrorNullStatus";
+
+    public static final String USER_INFORMATION_ID = "userInfoId";
+
+    public static final String USER_INFORMATION_ID_TOKEN = "userInfoIdToken";
+
+    public static final String USER_INFORMATION_ACCESS_TOKEN = "userInfoAccessToken";
 }
