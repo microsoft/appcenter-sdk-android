@@ -126,16 +126,28 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         if (mAuthInfoTestFeature != null) {
             mFeatureList.remove(mAuthInfoTestFeature);
         }
-        mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_description);
+        mAuthInfoTestFeature = getAuthenticationDefaultTestFeature();
         if (!_default) {
             if (isAuthenticated()) {
-                mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_authenticated);
+                mAuthInfoTestFeature = getAuthenticatedTestFeature();
             } else {
-                mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_not_authenticated);
+                mAuthInfoTestFeature = getNotAuthenticatedTestFeature();
             }
         }
         mFeatureList.add(mAuthInfoTestFeature);
         mListView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
+    }
+
+    private TestFeatures.TestFeature getAuthenticationDefaultTestFeature() {
+        return getAuthenticationTestFeature(R.string.b2c_authentication_status_description);
+    }
+
+    private TestFeatures.TestFeature getAuthenticatedTestFeature() {
+        return getAuthenticationTestFeature(R.string.b2c_authentication_status_authenticated);
+    }
+
+    private TestFeatures.TestFeature getNotAuthenticatedTestFeature() {
+        return getAuthenticationTestFeature(R.string.b2c_authentication_status_not_authenticated);
     }
 
     private TestFeatures.TestFeature getAuthenticationTestFeature(int valueStringId) {
@@ -147,10 +159,10 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                     startUserInfoActivity(sUserInformation);
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(AuthenticationProviderActivity.this);
-                    builder
-                            .setTitle(R.string.b2c_authentication_status_dialog_unavailable_title)
-                            .setMessage(R.string.b2c_authentication_status_dialog_unavailable_description)
-                            .setPositiveButton(R.string.alert_ok, new DialogInterface.OnClickListener() {
+                    builder.setTitle(R.string.b2c_authentication_status_dialog_unavailable_title)
+                           .setMessage(R.string.b2c_authentication_status_dialog_unavailable_description)
+                           .setPositiveButton(R.string.alert_ok, new DialogInterface.OnClickListener() {
+
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
                                     dialogInterface.dismiss();
