@@ -48,23 +48,23 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_auth_provider_list);
 
         /* Populate UI. */
-        List<TestFeatures.TestFeatureModel> featureList = new ArrayList<>();
-        featureList.add(new TestFeatures.TestFeatureTitle(R.string.msa_title));
-        featureList.add(new TestFeatures.TestFeature(R.string.msa_compact_title, R.string.msa_compact_description, new View.OnClickListener() {
+        mFeatureList = new ArrayList<>();
+        mFeatureList.add(new TestFeatures.TestFeatureTitle(R.string.msa_title));
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.msa_compact_title, R.string.msa_compact_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_COMPACT);
             }
         }));
-        featureList.add(new TestFeatures.TestFeature(R.string.msa_delegate_title, R.string.msa_delegate_description, new View.OnClickListener() {
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.msa_delegate_title, R.string.msa_delegate_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_DELEGATE);
             }
         }));
-        featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -93,7 +93,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 });
             }
         }));
-        featureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -109,10 +109,9 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 }
             }
         }));
-        mFeatureList = featureList;
         loadAuthStatus(sUserInformation == null);
         ListView listView = findViewById(R.id.list);
-        listView.setAdapter(new TestFeaturesListAdapter(featureList));
+        listView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 

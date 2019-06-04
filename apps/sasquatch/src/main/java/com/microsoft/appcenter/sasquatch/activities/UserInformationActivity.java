@@ -17,12 +17,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ACCESS_TOKEN;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ID;
@@ -47,7 +52,20 @@ public class UserInformationActivity extends AppCompatActivity {
         fillInfo(userId, idToken, accessToken);
     }
 
+    private String getParsedToken(String rawToken) {
+        try {
+            JWT parsedIdToken = JWTParser.parse(rawToken);
+            Map<String, Object> claims = parsedIdToken.getJWTClaimsSet().getClaims();
+            return new JSONObject(claims).toString().replace("\\/", "/");
+        } catch (ParseException ex) {
+            AppCenterLog.error(AppCenterLog.LOG_TAG, getString(R.string.b2c_jwt_parse_error));
+        }
+        return getString(R.string.b2c_jwt_parse_error);
+    }
+
     private void fillInfo(String userId, String idToken, String accessToken) {
+        idToken = getParsedToken(idToken);
+        accessToken = getParsedToken(accessToken);
         final List<UserInfoDisplayModel> list = getUserInfoDisplayModelList(userId, idToken, accessToken);
         ArrayAdapter<UserInfoDisplayModel> adapter = new ArrayAdapter<UserInfoDisplayModel>(this, R.layout.info_list_item, R.id.info_title, list) {
 
