@@ -201,8 +201,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             String idToken = method.invoke(userInformation).toString();
             method = UserInformation.class.getMethod("getAccessToken");
             String accessToken = method.invoke(userInformation).toString();
-            intent.putExtra(USER_INFORMATION_ID_TOKEN, accessToken);
-            intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, idToken);
+            intent.putExtra(USER_INFORMATION_ID_TOKEN, idToken);
+            intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, accessToken);
         } catch (NoSuchMethodException ignore) {
         } catch (Exception e) {
             throw new RuntimeException(e);
