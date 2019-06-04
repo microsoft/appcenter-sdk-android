@@ -1773,6 +1773,9 @@ public class Distribute extends AbstractAppCenterService {
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private void showDownloadProgress() {
+        if (mForegroundActivity == null) {
+            return;
+        }
         mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
