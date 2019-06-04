@@ -36,8 +36,11 @@ import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMAT
 public class UserInformationActivity extends AppCompatActivity {
 
     private static final int MAX_CONTENT_LENGTH = 50;
+
     private String mFullIdToken;
+
     private String mFullAccessToken;
+
     private ListView mListView;
 
     @Override

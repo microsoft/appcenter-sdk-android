@@ -89,6 +89,8 @@
     <string name="b2c_user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
     <string name="b2c_user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
     <string name="b2c_authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
+    <string name="b2c_authentication_status_dialog_unavailable_title" tools:ignore="MissingTranslation">Please sign in</string>
+    <string name="b2c_authentication_status_dialog_unavailable_description" tools:ignore="MissingTranslation">Please perform a sign in to get user information.</string>
     <string name="b2c_authentication_status_description" tools:ignore="MissingTranslation">Unknown</string>
     <string name="b2c_authentication_status_not_authenticated" tools:ignore="MissingTranslation">User not authenticated</string>
     <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>

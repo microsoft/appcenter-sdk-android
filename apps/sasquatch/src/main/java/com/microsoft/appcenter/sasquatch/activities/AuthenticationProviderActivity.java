@@ -5,10 +5,12 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -116,60 +118,48 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
+    private static boolean isAuthenticated() {
+        return sUserInformation != null && sUserInformation.getAccessToken() != null;
+    }
+
     private void loadAuthStatus(boolean _default) {
         if (mAuthInfoTestFeature != null) {
             mFeatureList.remove(mAuthInfoTestFeature);
         }
-        mAuthInfoTestFeature = getDefaultAuthenticationTestFeature();
+        mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_description);
         if (!_default) {
             if (isAuthenticated()) {
-                mAuthInfoTestFeature = getAuthenticatedTestFeature();
+                mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_authenticated);
             } else {
-                mAuthInfoTestFeature = getNotAuthenticatedTestFeature();
+                mAuthInfoTestFeature = getAuthenticationTestFeature(R.string.b2c_authentication_status_not_authenticated);
             }
         }
         mFeatureList.add(mAuthInfoTestFeature);
         mListView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
     }
 
-    private TestFeatures.TestFeature getDefaultAuthenticationTestFeature() {
-        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_description, new View.OnClickListener() {
+    private TestFeatures.TestFeature getAuthenticationTestFeature(int valueStringId) {
+        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, valueStringId, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 if (isAuthenticated()) {
                     startUserInfoActivity(sUserInformation);
+                } else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(AuthenticationProviderActivity.this);
+                    builder
+                            .setTitle(R.string.b2c_authentication_status_dialog_unavailable_title)
+                            .setMessage(R.string.b2c_authentication_status_dialog_unavailable_description)
+                            .setPositiveButton(R.string.alert_ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            });
+                    builder.create().show();
                 }
             }
         });
-    }
-
-    private TestFeatures.TestFeature getAuthenticatedTestFeature() {
-        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_authenticated, new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (isAuthenticated()) {
-                    startUserInfoActivity(sUserInformation);
-                }
-            }
-        });
-    }
-
-    private TestFeatures.TestFeature getNotAuthenticatedTestFeature() {
-        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, R.string.b2c_authentication_status_not_authenticated, new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (isAuthenticated()) {
-                    startUserInfoActivity(sUserInformation);
-                }
-            }
-        });
-    }
-
-    private boolean isAuthenticated() {
-        return sUserInformation != null && sUserInformation.getAccessToken() != null;
     }
 
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
