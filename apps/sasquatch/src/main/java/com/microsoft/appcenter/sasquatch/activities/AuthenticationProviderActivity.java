@@ -137,12 +137,12 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         return !accessTokenIsNull;
     }
 
-    private void loadAuthStatus(boolean _default) {
+    private void loadAuthStatus(boolean loadDefaultStatus) {
         if (mAuthInfoTestFeature != null) {
             mFeatureList.remove(mAuthInfoTestFeature);
         }
         mAuthInfoTestFeature = getAuthenticationDefaultTestFeature();
-        if (!_default) {
+        if (!loadDefaultStatus) {
             mAuthInfoTestFeature = isAuthenticated() ? getAuthenticatedTestFeature() : getNotAuthenticatedTestFeature();
         }
         mFeatureList.add(mAuthInfoTestFeature);
