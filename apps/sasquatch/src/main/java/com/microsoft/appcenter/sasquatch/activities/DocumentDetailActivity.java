@@ -215,7 +215,7 @@ public class DocumentDetailActivity extends AppCompatActivity {
     }
 
     @VisibleForTesting
-    class DocumentInfoDisplayModel {
+    static class DocumentInfoDisplayModel {
 
         final String mTitle;
 

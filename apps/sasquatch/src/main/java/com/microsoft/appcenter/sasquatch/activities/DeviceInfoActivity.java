@@ -125,7 +125,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     }
 
     @VisibleForTesting
-    class DeviceInfoDisplayModel {
+    static class DeviceInfoDisplayModel {
         String title;
         String value;
     }
