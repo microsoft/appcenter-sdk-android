@@ -110,4 +110,5 @@
     </string-array>
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
     <string name="b2c_jwt_parse_error" tools:ignore="MissingTranslation">Could not parse the JWT token</string>
+    <string name="b2c_jwt_parse_json_error" tools:ignore="MissingTranslation">An error occurred during parsing JWT claims.</string>
 </resources>

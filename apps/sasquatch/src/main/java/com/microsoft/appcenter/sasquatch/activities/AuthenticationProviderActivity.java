@@ -42,6 +42,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private List<TestFeatures.TestFeatureModel> mFeatureList;
 
+    private ListView mListView;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,10 +111,9 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 }
             }
         }));
+        mListView = findViewById(R.id.list);
         loadAuthStatus(sUserInformation == null);
-        ListView listView = findViewById(R.id.list);
-        listView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
-        listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+        mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
     private void loadAuthStatus(boolean _default) {
@@ -128,6 +129,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }
         }
         mFeatureList.add(mAuthInfoTestFeature);
+        mListView.setAdapter(new TestFeaturesListAdapter(mFeatureList));
     }
 
     private TestFeatures.TestFeature getDefaultAuthenticationTestFeature() {
