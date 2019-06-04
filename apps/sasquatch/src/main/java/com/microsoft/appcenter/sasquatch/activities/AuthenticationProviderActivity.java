@@ -123,6 +123,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         if (sUserInformation == null) {
             return false;
         }
+
+        /* TODO Call method directly / remove reflection once SDK being released. */
         boolean accessTokenIsNull = false;
         try {
             Method method = UserInformation.class.getMethod("getAccessToken");
