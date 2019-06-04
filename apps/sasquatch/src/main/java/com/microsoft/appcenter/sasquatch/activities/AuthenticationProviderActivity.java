@@ -36,7 +36,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private boolean mUserLeaving;
 
-    private UserInformation mUserInformation;
+    private static UserInformation sUserInformation;
 
     private TestFeatures.TestFeature mAuthInfoTestFeature;
 
@@ -77,15 +77,15 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                             if (exception != null) {
                                 throw exception;
                             }
-                            mUserInformation = signInResult.getUserInformation();
+                            sUserInformation = signInResult.getUserInformation();
                             loadAuthStatus(false);
-                            String accountId = mUserInformation.getAccountId();
+                            String accountId = sUserInformation.getAccountId();
                             SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                             edit.putString("accountId", accountId);
                             edit.apply();
                             Log.i(LOG_TAG, "Auth.signIn succeeded, accountId=" + accountId);
                         } catch (Exception e) {
-                            mUserInformation = null;
+                            sUserInformation = null;
                             loadAuthStatus(false);
                             Log.e(LOG_TAG, "Auth.signIn failed", e);
                         }
@@ -99,7 +99,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     Auth.signOut();
-                    mUserInformation = null;
+                    sUserInformation = null;
                     loadAuthStatus(false);
                     SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
                     edit.putString(ACCOUNT_ID, null);
@@ -110,7 +110,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }
         }));
         mFeatureList = featureList;
-        loadAuthStatus(true);
+        loadAuthStatus(sUserInformation == null);
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(featureList));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
@@ -137,7 +137,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isAuthenticated()) {
-                    startUserInfoActivity(mUserInformation);
+                    startUserInfoActivity(sUserInformation);
                 }
             }
         });
@@ -149,7 +149,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isAuthenticated()) {
-                    startUserInfoActivity(mUserInformation);
+                    startUserInfoActivity(sUserInformation);
                 }
             }
         });
@@ -161,14 +161,14 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isAuthenticated()) {
-                    startUserInfoActivity(mUserInformation);
+                    startUserInfoActivity(sUserInformation);
                 }
             }
         });
     }
 
     private boolean isAuthenticated() {
-        return mUserInformation != null && mUserInformation.getAccessToken() != null;
+        return sUserInformation != null && sUserInformation.getAccessToken() != null;
     }
 
     private void startMSALoginActivity(AuthenticationProvider.Type type) {
