@@ -139,7 +139,7 @@ public class UserInformationActivity extends AppCompatActivity {
     }
 
     @VisibleForTesting
-    class UserInfoDisplayModel {
+    static class UserInfoDisplayModel {
 
         final String mTitle;
 
