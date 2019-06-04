@@ -663,6 +663,28 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
+    public void readCosmosDbCallEncodeDocumentIdWithDoubleQuote() throws JSONException {
+        String documentID = "idWith\"DoubleQuote";
+        String encodedDocumentId = "idWith%22DoubleQuote";
+        Data.delete(documentID, USER_DOCUMENTS);
+        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+
+        /* Verify that document base Uri is properly constructed by CosmosDb.getDocumentBaseUrl method. */
+        String expectedUri = String.format("dbs/%s", DATABASE_NAME) + "/" +
+                String.format("colls/%s", COLLECTION_NAME) + "/" +
+                String.format("docs/%s", encodedDocumentId);
+        assertEquals(expectedUri, CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID));
+
+        /* Now verify that actual call was properly encoded. */
+        verify(mHttpClient).callAsync(
+                endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID)),
+                eq(METHOD_DELETE),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                notNull(ServiceCallback.class));
+    }
+
+    @Test
     public void readFailTokenExchangeReturnsFailedTokenResultPayload() {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS);
 
