@@ -25,6 +25,7 @@ import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,7 +120,19 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     private static boolean isAuthenticated() {
-        return sUserInformation != null && sUserInformation.getAccessToken() != null;
+        if (sUserInformation == null) {
+            return false;
+        }
+        boolean accessTokenIsNull = false;
+        try {
+            Method method = UserInformation.class.getMethod("getAccessToken");
+            Object accessToken = method.invoke(sUserInformation);
+            accessTokenIsNull = accessToken == null;
+        } catch (NoSuchMethodException ignore) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return !accessTokenIsNull;
     }
 
     private void loadAuthStatus(boolean _default) {
@@ -179,8 +192,19 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     private void startUserInfoActivity(UserInformation userInformation) {
         Intent intent = new Intent(getApplication(), UserInformationActivity.class);
         intent.putExtra(USER_INFORMATION_ID, userInformation.getAccountId());
-        intent.putExtra(USER_INFORMATION_ID_TOKEN, userInformation.getIdToken());
-        intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, userInformation.getAccessToken());
+
+        /* TODO Call method directly / remove reflection once SDK being released. */
+        try {
+            Method method = UserInformation.class.getMethod("getIdToken");
+            String idToken = method.invoke(userInformation).toString();
+            method = UserInformation.class.getMethod("getAccessToken");
+            String accessToken = method.invoke(userInformation).toString();
+            intent.putExtra(USER_INFORMATION_ID_TOKEN, accessToken);
+            intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, idToken);
+        } catch (NoSuchMethodException ignore) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         startActivity(intent);
     }
 

@@ -48,11 +48,11 @@ public class UserInformationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_information);
         Intent intent = getIntent();
-        String userId = intent.getStringExtra(USER_INFORMATION_ID);
+        String accountId = intent.getStringExtra(USER_INFORMATION_ID);
         String idToken = intent.getStringExtra(USER_INFORMATION_ID_TOKEN);
         String accessToken = intent.getStringExtra(USER_INFORMATION_ACCESS_TOKEN);
         mListView = findViewById(R.id.user_info_list_view);
-        fillInfo(userId, idToken, accessToken);
+        fillInfo(accountId, idToken, accessToken);
     }
 
     private JSONObject getParsedToken(String rawToken) {
@@ -66,10 +66,10 @@ public class UserInformationActivity extends AppCompatActivity {
         return null;
     }
 
-    private void fillInfo(String userId, String idToken, String accessToken) {
-        JSONObject idTokenJSON = getParsedToken(idToken);
-        JSONObject accessTokenJSON = getParsedToken(accessToken);
-        final List<UserInfoDisplayModel> list = getUserInfoDisplayModelList(userId, idTokenJSON, accessTokenJSON);
+    private void fillInfo(String accountId, String idToken, String accessToken) {
+        final List<UserInfoDisplayModel> list = (idToken == null || accessToken == null) ?
+                getOnlyAccountIdDisplayModel(accountId) :
+                getUserInfoDisplayModelList(accountId, getParsedToken(idToken), getParsedToken(accessToken));
         ArrayAdapter<UserInfoDisplayModel> adapter = new ArrayAdapter<UserInfoDisplayModel>(this, R.layout.info_list_item, R.id.info_title, list) {
 
             @NonNull
@@ -104,9 +104,15 @@ public class UserInformationActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
     }
 
-    private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String userId, JSONObject idTokenJSON, JSONObject accessTokenJSON) {
+    private List<UserInfoDisplayModel> getOnlyAccountIdDisplayModel(String accountId) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
-        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), userId));
+        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), accountId));
+        return list;
+    }
+
+    private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, JSONObject idTokenJSON, JSONObject accessTokenJSON) {
+        List<UserInfoDisplayModel> list = new ArrayList<>();
+        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), accountId));
         mFullIdToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_id_token_title), idTokenJSON, list);
         mFullAccessToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_access_token_title), accessTokenJSON, list);
         return list;
