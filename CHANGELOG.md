@@ -13,6 +13,7 @@
 
 ### App Center Auth
 
+* **[Feature]** Expose the ID Token and Access Token (as raw JWT format) in the `UserInformation` object returned from the sign-in method.
 * **[Fix]** Fix missing proguard rules so that the app does not have to specify them.
 * **[Fix]** Fix crash on silently refreshing token if initialization of MSAL fails.
 

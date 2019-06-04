@@ -16,12 +16,35 @@ public class UserInformation {
     private final String mAccountId;
 
     /**
+     * Access token for user.
+     */
+    private final String mAccessToken;
+
+    /**
+     * Id token for user.
+     */
+    private final String mIdToken;
+
+    /**
      * Init.
      *
      * @param accountId User account identifier.
      */
     public UserInformation(String accountId) {
+        this(accountId, null, null);
+    }
+
+    /**
+     * Init.
+     *
+     * @param accountId   User account identifier.
+     * @param accessToken Access token for user.
+     * @param idToken     Id token for user.
+     */
+    public UserInformation(String accountId, String accessToken, String idToken) {
         mAccountId = accountId;
+        mAccessToken = accessToken;
+        mIdToken = idToken;
     }
 
     /**
@@ -31,5 +54,23 @@ public class UserInformation {
      */
     public String getAccountId() {
         return mAccountId;
+    }
+
+    /**
+     * Get access token.
+     *
+     * @return Access token.
+     */
+    public String getAccessToken() {
+        return mAccessToken;
+    }
+
+    /**
+     * Get Id token.
+     *
+     * @return Id token.
+     */
+    public String getIdToken() {
+        return mIdToken;
     }
 }

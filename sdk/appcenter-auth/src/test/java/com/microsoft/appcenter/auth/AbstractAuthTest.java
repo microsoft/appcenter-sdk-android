@@ -137,9 +137,10 @@ abstract public class AbstractAuthTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
     }
 
-    IAuthenticationResult mockAuthResult(String idToken, String accountId, String homeAccountId) {
+    IAuthenticationResult mockAuthResult(String idToken, String accessToken, String homeAccountId, String accountId) {
         IAuthenticationResult mockResult = mock(IAuthenticationResult.class);
         when(mockResult.getIdToken()).thenReturn(idToken);
+        when(mockResult.getAccessToken()).thenReturn(accessToken);
         IAccount account = mock(IAccount.class);
         IAccountIdentifier homeAccountIdentifier = mock(IAccountIdentifier.class);
         when(homeAccountIdentifier.getIdentifier()).thenReturn(homeAccountId);

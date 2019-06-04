@@ -692,9 +692,10 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     token = authenticationResult.getAccessToken();
                 }
                 AuthTokenContext.getInstance().setAuthToken(token, homeAccountId, expiresOn);
+                String accessToken = authenticationResult.getAccessToken();
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                future.complete(new SignInResult(new UserInformation(accountId), null));
+                future.complete(new SignInResult(new UserInformation(accountId, accessToken, token), null));
             }
         });
     }
