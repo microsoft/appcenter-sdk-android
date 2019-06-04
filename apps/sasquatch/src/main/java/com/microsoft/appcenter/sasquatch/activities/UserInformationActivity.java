@@ -104,37 +104,29 @@ public class UserInformationActivity extends AppCompatActivity {
     private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String userId, JSONObject idTokenJSON, JSONObject accessTokenJSON) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
         list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), userId));
-        String idTokenPreview;
-        try {
-            if (idTokenJSON == null) {
-                mFullIdToken = idTokenPreview = getString(R.string.b2c_jwt_parse_error);
-            } else {
-                mFullIdToken = idTokenJSON.toString(4).replace("\\", "");
-                idTokenPreview = idTokenJSON.toString();
-            }
-        } catch (JSONException e) {
-            mFullIdToken = idTokenPreview = getString(R.string.b2c_jwt_parse_json_error);
-        }
-        if (idTokenPreview.length() > MAX_CONTENT_LENGTH) {
-            idTokenPreview = idTokenPreview.substring(0, MAX_CONTENT_LENGTH) + "...";
-        }
-        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_token_title), idTokenPreview));
-        String accessTokenPreview;
-        try {
-            if (accessTokenJSON == null) {
-                mFullAccessToken = accessTokenPreview = getString(R.string.b2c_jwt_parse_error);
-            } else {
-                mFullAccessToken = accessTokenJSON.toString(4).replace("\\", "");
-                accessTokenPreview = accessTokenJSON.toString();
-            }
-        } catch (JSONException e) {
-            mFullAccessToken = accessTokenPreview = getString(R.string.b2c_jwt_parse_json_error);
-        }
-        if (accessTokenPreview.length() > MAX_CONTENT_LENGTH) {
-            accessTokenPreview = accessTokenPreview.substring(0, MAX_CONTENT_LENGTH) + "...";
-        }
-        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_access_token_title), accessTokenPreview));
+        mFullIdToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_id_token_title), idTokenJSON, list);
+        mFullAccessToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_access_token_title), accessTokenJSON, list);
         return list;
+    }
+
+    private String parseAndAddTokenToList(String title, JSONObject tokenJSON, List<UserInfoDisplayModel> list) {
+        String fullToken;
+        String tokenPreview;
+        try {
+            if (tokenJSON == null) {
+                fullToken = tokenPreview = getString(R.string.b2c_jwt_parse_error);
+            } else {
+                fullToken = tokenJSON.toString(4).replace("\\", "");
+                tokenPreview = tokenJSON.toString();
+            }
+        } catch (JSONException e) {
+            fullToken = tokenPreview = getString(R.string.b2c_jwt_parse_json_error);
+        }
+        if (tokenPreview.length() > MAX_CONTENT_LENGTH) {
+            tokenPreview = tokenPreview.substring(0, MAX_CONTENT_LENGTH) + "...";
+        }
+        list.add(new UserInfoDisplayModel(title, tokenPreview));
+        return fullToken;
     }
 
     @VisibleForTesting
