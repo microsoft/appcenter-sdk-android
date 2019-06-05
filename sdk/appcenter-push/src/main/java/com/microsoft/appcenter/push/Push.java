@@ -24,7 +24,6 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -333,7 +332,7 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public void onNewUser(UserInformation userInfo) {
+            public void onNewUser(String accountId) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }

@@ -15,7 +15,6 @@ import android.support.annotation.WorkerThread;
 
 import com.google.gson.JsonElement;
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
@@ -320,12 +319,12 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public void onNewUser(UserInformation userInfo) {
-                if (userInfo == null) {
+            public void onNewUser(String accountId) {
+                if (accountId == null) {
                     mTokenManager.removeAllCachedTokens();
                     mLocalDocumentStorage.resetDatabase();
                 } else {
-                    String userTable = Utils.getUserTableName(userInfo.getAccountId());
+                    String userTable = Utils.getUserTableName(accountId);
                     mLocalDocumentStorage.createTableIfDoesNotExist(userTable);
                 }
             }

@@ -8,7 +8,6 @@ package com.microsoft.appcenter.utils.context;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -113,10 +112,10 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called. */
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
-        ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
+        ArgumentCaptor<String> captorArg = ArgumentCaptor.forClass(String.class);
         verify(mockListener).onNewUser(captorArg.capture());
         assertNotNull(captorArg.getValue());
-        assertEquals(accountId, captorArg.getValue().getAccountId());
+        assertEquals(accountId, captorArg.getValue());
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);
@@ -126,7 +125,7 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called on empty token. */
         verify(mockListener).onNewAuthToken(isNull(String.class));
-        ArgumentCaptor<UserInformation> captorArgNull = ArgumentCaptor.forClass(UserInformation.class);
+        ArgumentCaptor<String> captorArgNull = ArgumentCaptor.forClass(String.class);
         verify(mockListener, times(2)).onNewUser(captorArgNull.capture());
         assertNull(captorArgNull.getValue());
         assertNull(mAuthTokenContext.getAuthToken());
