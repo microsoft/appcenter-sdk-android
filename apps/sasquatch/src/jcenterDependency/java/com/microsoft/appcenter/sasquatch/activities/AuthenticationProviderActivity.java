@@ -120,21 +120,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     private static boolean isAuthenticated() {
-        if (sUserInformation == null) {
-            return false;
-        }
-
-        /* TODO Call method directly / remove reflection once SDK being released. */
-        boolean accessTokenIsNull = false;
-        try {
-            Method method = UserInformation.class.getMethod("getAccessToken");
-            Object accessToken = method.invoke(sUserInformation);
-            accessTokenIsNull = accessToken == null;
-        } catch (NoSuchMethodException ignore) {
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return !accessTokenIsNull;
+        return sUserInformation != null;
     }
 
     private void loadAuthStatus(boolean loadDefaultStatus) {
