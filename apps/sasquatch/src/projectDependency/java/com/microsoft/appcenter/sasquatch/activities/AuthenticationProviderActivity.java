@@ -16,10 +16,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.auth.SignInResult;
+import com.microsoft.appcenter.auth.UserInformation;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
@@ -123,18 +123,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         if (sUserInformation == null) {
             return false;
         }
-
-        /* TODO Call method directly / remove reflection once SDK being released. */
-        boolean accessTokenIsNull = false;
-        try {
-            Method method = UserInformation.class.getMethod("getAccessToken");
-            Object accessToken = method.invoke(sUserInformation);
-            accessTokenIsNull = accessToken == null;
-        } catch (NoSuchMethodException ignore) {
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return !accessTokenIsNull;
+        return sUserInformation.getAccessToken() != null;
     }
 
     private void loadAuthStatus(boolean loadDefaultStatus) {
@@ -194,19 +183,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     private void startUserInfoActivity(UserInformation userInformation) {
         Intent intent = new Intent(getApplication(), UserInformationActivity.class);
         intent.putExtra(USER_INFORMATION_ID, userInformation.getAccountId());
-
-        /* TODO Call method directly / remove reflection once SDK being released. */
-        try {
-            Method method = UserInformation.class.getMethod("getIdToken");
-            String idToken = method.invoke(userInformation).toString();
-            method = UserInformation.class.getMethod("getAccessToken");
-            String accessToken = method.invoke(userInformation).toString();
-            intent.putExtra(USER_INFORMATION_ID_TOKEN, idToken);
-            intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, accessToken);
-        } catch (NoSuchMethodException ignore) {
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        intent.putExtra(USER_INFORMATION_ID_TOKEN, userInformation.getIdToken());
+        intent.putExtra(USER_INFORMATION_ACCESS_TOKEN, userInformation.getAccessToken());
         startActivity(intent);
     }
 

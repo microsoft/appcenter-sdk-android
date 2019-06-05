@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter;
+package com.microsoft.appcenter.auth;
 
 /**
  * User information.
@@ -24,15 +24,6 @@ public class UserInformation {
      * Id token for user.
      */
     private final String mIdToken;
-
-    /**
-     * Init.
-     *
-     * @param accountId User account identifier.
-     */
-    public UserInformation(String accountId) {
-        this(accountId, null, null);
-    }
 
     /**
      * Init.
