@@ -9,6 +9,9 @@
 
 evaluationDependsOn(':apps')
 
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
 android {
 
     flavorDimensions "dependency", "pushLibrary"
@@ -58,6 +61,7 @@ repositories {
     maven {
         url "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
     }
+    mavenCentral()
 }
 
 dependencies {
@@ -65,6 +69,7 @@ dependencies {
     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:customtabs:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')

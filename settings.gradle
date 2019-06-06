@@ -13,6 +13,7 @@ include ':sdk:appcenter-auth'
 include ':sdk:appcenter-data'
 include ':sdk:appcenter-push'
 include ':sdk:appcenter-rum'
+include ':sdk:appcenter-kotlin'
 
 // common test code
 include ':test'
