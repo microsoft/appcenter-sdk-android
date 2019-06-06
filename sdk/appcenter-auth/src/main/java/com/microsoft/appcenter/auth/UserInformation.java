@@ -32,7 +32,7 @@ public class UserInformation {
      * @param accessToken Access token for user.
      * @param idToken     Id token for user.
      */
-    public UserInformation(String accountId, String accessToken, String idToken) {
+    UserInformation(String accountId, String accessToken, String idToken) {
         mAccountId = accountId;
         mAccessToken = accessToken;
         mIdToken = idToken;
