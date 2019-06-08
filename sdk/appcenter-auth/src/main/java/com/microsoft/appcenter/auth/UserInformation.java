@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter;
+package com.microsoft.appcenter.auth;
 
 /**
  * User information.
@@ -28,20 +28,11 @@ public class UserInformation {
     /**
      * Init.
      *
-     * @param accountId User account identifier.
-     */
-    public UserInformation(String accountId) {
-        this(accountId, null, null);
-    }
-
-    /**
-     * Init.
-     *
      * @param accountId   User account identifier.
      * @param accessToken Access token for user.
      * @param idToken     Id token for user.
      */
-    public UserInformation(String accountId, String accessToken, String idToken) {
+    UserInformation(String accountId, String accessToken, String idToken) {
         mAccountId = accountId;
         mAccessToken = accessToken;
         mIdToken = idToken;
