@@ -1,0 +1,34 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+evaluationDependsOn(':apps')
+
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':sdk:appcenter-analytics')
+    implementation project(':sdk:appcenter-auth')
+    implementation project(':sdk:appcenter-crashes')
+    implementation project(':sdk:appcenter-data')
+    implementation project(':sdk:appcenter-distribute')
+    implementation project(':sdk:appcenter-push')
+    implementation project(':sdk:appcenter-kotlin')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:customtabs:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:design:${rootProject.ext.supportLibVersion}"
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+}
