@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -57,6 +58,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -574,8 +576,12 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    @PrepareForTest(AsyncTaskUtils.class)
+    @PrepareForTest({AsyncTaskUtils.class, ProgressDialog.class})
     public void pauseBeforeDownload() throws Exception {
+
+        /* Mock ProgressDialog. */
+        whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mock(ProgressDialog.class));
+        whenNew(ProgressDialog.class).withArguments(isNull()).thenThrow(new NullPointerException());
 
         /* Mock we already have redirection parameters. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");

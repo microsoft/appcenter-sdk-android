@@ -8,7 +8,6 @@ package com.microsoft.appcenter.distribute;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -53,7 +52,6 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -62,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("CanBeFinal")
+@SuppressWarnings({"WeakerAccess", "CanBeFinal"})
 @PrepareForTest({
         AppCenter.class,
         AppCenterLog.class,
@@ -78,7 +76,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         SharedPreferencesManager.class,
         TextUtils.class,
         Toast.class,
-        ProgressDialog.class,
         UUIDUtils.class
 })
 public class AbstractDistributeTest {
@@ -265,10 +262,9 @@ public class AbstractDistributeTest {
             }
         }).when(mDialog).hide();
 
-        /* Toast and ProgressDialog. */
+        /* Toast. */
         mockStatic(Toast.class);
         when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
-        whenNew(ProgressDialog.class).withArguments(isNull()).thenThrow(new NullPointerException());
 
         /* Mock Handler .*/
         mockStatic(HandlerUtils.class);
