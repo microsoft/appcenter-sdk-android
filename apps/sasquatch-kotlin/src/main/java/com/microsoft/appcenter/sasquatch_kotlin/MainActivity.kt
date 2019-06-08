@@ -16,7 +16,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         nav_view.setupWithNavController(nav_host_fragment.findNavController())
 
+        if (!AppCenter.isConfigured) {
+            configureAppCenter()
+        }
+    }
+
+    private fun configureAppCenter() {
         AppCenter.logLevel = VERBOSE
-        AppCenter.start(application, "", Analytics, Crashes)
+        AppCenter.start(application, "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics, Crashes)
     }
 }

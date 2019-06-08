@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="AppCenter">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="appcenter_enabled"
+            android:title="AppCenter State" />
+        <EditTextPreference
+            android:key="max_storage_size"
+            android:singleLine="true"
+            android:title="Max Storage Size" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Miscellaneous">
+        <Preference
+            android:key="sdk_version"
+            android:title="SDK Version" />
+        <Preference
+            android:key="install_id"
+            android:title="Install Id" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

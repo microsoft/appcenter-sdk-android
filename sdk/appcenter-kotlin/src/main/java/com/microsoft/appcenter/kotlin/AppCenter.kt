@@ -26,7 +26,8 @@ object AppCenter {
 
     fun setCustomProperties(customProperties: CustomProperties) = JavaAppCenter.setCustomProperties(customProperties)
 
-    fun isConfigured(): Boolean = JavaAppCenter.isConfigured()
+    val isConfigured: Boolean
+        get() = JavaAppCenter.isConfigured()
 
     fun configure(application: Application, appSecret: String) = JavaAppCenter.configure(application, appSecret)
 
@@ -60,7 +61,7 @@ object AppCenter {
         JavaAppCenter.setEnabled(enabled).thenAccept { c.resume(Unit) }
     }
 
-    suspend fun getInstallId(): UUID = suspendCoroutine { c ->
+    suspend fun getInstallId(): UUID? = suspendCoroutine { c ->
         JavaAppCenter.getInstallId().thenAccept { c.resume(it) }
     }
 
