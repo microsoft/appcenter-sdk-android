@@ -9,8 +9,6 @@ import android.app.Application
 import android.content.Context
 import com.microsoft.appcenter.CustomProperties
 import java.util.*
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import com.microsoft.appcenter.AppCenter as JavaAppCenter
 
 object AppCenter {
@@ -53,21 +51,15 @@ object AppCenter {
         JavaAppCenter.startFromLibrary(context, *javaServices)
     }
 
-    suspend fun isEnabled(): Boolean = suspendCoroutine { c ->
-        JavaAppCenter.isEnabled().thenAccept { c.resume(it) }
+    suspend fun isEnabled(): Boolean = JavaAppCenter.isEnabled().await()
+
+    suspend fun setEnabled(enabled: Boolean) {
+        JavaAppCenter.setEnabled(enabled).await()
     }
 
-    suspend fun setEnabled(enabled: Boolean): Unit = suspendCoroutine { c ->
-        JavaAppCenter.setEnabled(enabled).thenAccept { c.resume(Unit) }
-    }
+    suspend fun getInstallId(): UUID? = JavaAppCenter.getInstallId().await()
 
-    suspend fun getInstallId(): UUID? = suspendCoroutine { c ->
-        JavaAppCenter.getInstallId().thenAccept { c.resume(it) }
-    }
-
-    suspend fun setMaxStorageSize(storageSizeInBytes: Long): Boolean = suspendCoroutine { c ->
-        JavaAppCenter.setMaxStorageSize(storageSizeInBytes).thenAccept { c.resume(it) }
-    }
+    suspend fun setMaxStorageSize(storageSizeInBytes: Long): Boolean = JavaAppCenter.setMaxStorageSize(storageSizeInBytes).await()
 
     fun setUserId(userId: String) = JavaAppCenter.setUserId(userId)
 }

@@ -1,8 +1,6 @@
 package com.microsoft.appcenter.kotlin
 
 import com.microsoft.appcenter.auth.SignInResult
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import com.microsoft.appcenter.auth.Auth as JavaAuth
 
 object Auth : AppCenterService {
@@ -10,17 +8,13 @@ object Auth : AppCenterService {
 
     fun setConfigUrl(configUrl: String) = JavaAuth.setConfigUrl(configUrl)
 
-    suspend fun isEnabled(): Boolean = suspendCoroutine { c ->
-        JavaAuth.isEnabled().thenAccept { c.resume(it) }
+    suspend fun isEnabled(): Boolean = JavaAuth.isEnabled().await()
+
+    suspend fun setEnabled(enabled: Boolean) {
+        JavaAuth.setEnabled(enabled).await()
     }
 
-    suspend fun setEnabled(enabled: Boolean): Unit = suspendCoroutine { c ->
-        JavaAuth.setEnabled(enabled).thenAccept { c.resume(Unit) }
-    }
-
-    suspend fun signIn(): SignInResult = suspendCoroutine { c ->
-        JavaAuth.signIn().thenAccept { c.resume(it) }
-    }
+    suspend fun signIn(): SignInResult = JavaAuth.signIn().await()
 
     fun signOut() = JavaAuth.signOut()
 }

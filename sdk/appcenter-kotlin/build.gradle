@@ -24,4 +24,5 @@ dependencies {
     compileOnly project(':sdk:appcenter-push')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0'
 }

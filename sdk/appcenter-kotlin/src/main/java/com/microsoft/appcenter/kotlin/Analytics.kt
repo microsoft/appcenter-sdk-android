@@ -6,19 +6,15 @@
 package com.microsoft.appcenter.kotlin
 
 import com.microsoft.appcenter.analytics.EventProperties
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import com.microsoft.appcenter.analytics.Analytics as JavaAnalytics
 
 object Analytics : AppCenterService {
     override val original = JavaAnalytics::class
 
-    suspend fun isEnabled(): Boolean = suspendCoroutine { c ->
-        JavaAnalytics.isEnabled().thenAccept { c.resume(it) }
-    }
+    suspend fun isEnabled(): Boolean = JavaAnalytics.isEnabled().await()
 
-    suspend fun setEnabled(enabled: Boolean): Unit = suspendCoroutine { c ->
-        JavaAnalytics.setEnabled(enabled).thenAccept { c.resume(Unit) }
+    suspend fun setEnabled(enabled: Boolean) {
+        JavaAnalytics.setEnabled(enabled).await()
     }
 
     fun setTransmissionInterval(seconds: Int): Boolean = JavaAnalytics.setTransmissionInterval(seconds)
