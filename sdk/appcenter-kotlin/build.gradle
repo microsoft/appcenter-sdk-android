@@ -7,19 +7,21 @@ project.description = 'This package contains Kotlin wrapper for App Center servi
 evaluationDependsOn(':sdk')
 
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compileOnly project(':sdk:appcenter')
+    api project(':sdk:appcenter')
+
+    // Add all modules as optional dependencies.
     compileOnly project(':sdk:appcenter-analytics')
     compileOnly project(':sdk:appcenter-auth')
     compileOnly project(':sdk:appcenter-crashes')
     compileOnly project(':sdk:appcenter-data')
     compileOnly project(':sdk:appcenter-distribute')
     compileOnly project(':sdk:appcenter-push')
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

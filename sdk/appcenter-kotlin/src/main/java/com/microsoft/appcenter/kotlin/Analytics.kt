@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.kotlin
 
-import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget
 import com.microsoft.appcenter.analytics.EventProperties
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -37,6 +36,4 @@ object Analytics : AppCenterService {
     fun trackEvent(name: String, properties: EventProperties) = JavaAnalytics.trackEvent(name, properties)
 
     fun trackEvent(name: String, properties: EventProperties, flags: Int) = JavaAnalytics.trackEvent(name, properties, flags)
-
-    fun getTransmissionTarget(transmissionTargetToken: String): AnalyticsTransmissionTarget = JavaAnalytics.getTransmissionTarget(transmissionTargetToken)
 }

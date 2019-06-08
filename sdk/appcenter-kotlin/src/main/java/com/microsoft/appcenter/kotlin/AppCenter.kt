@@ -14,6 +14,7 @@ import kotlin.coroutines.suspendCoroutine
 import com.microsoft.appcenter.AppCenter as JavaAppCenter
 
 object AppCenter {
+
     val sdkVersion: String
         get() = JavaAppCenter.getSdkVersion()
 
