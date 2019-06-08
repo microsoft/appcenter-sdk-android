@@ -3,4 +3,7 @@
     <string name="title_overview">Overview</string>
     <string name="title_analytics">Analytics</string>
     <string name="title_crashes">Crashes</string>
+    <string name="appcenter_state_title">AppCenter State</string>
+    <string name="appcenter_install_id_title">Install ID</string>
+    <string name="appcenter_sdk_version_title">SDK Version</string>
 </resources>

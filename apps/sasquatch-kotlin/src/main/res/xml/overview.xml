@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -9,21 +8,18 @@
     <PreferenceCategory android:title="AppCenter">
         <SwitchPreference
             android:defaultValue="false"
-            android:key="appcenter_enabled"
-            android:title="AppCenter State" />
-        <EditTextPreference
-            android:key="max_storage_size"
-            android:singleLine="true"
-            android:title="Max Storage Size" />
+            android:key="@string/appcenter_state"
+            android:title="@string/appcenter_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Miscellaneous">
         <Preference
-            android:key="sdk_version"
-            android:title="SDK Version" />
+            android:key="@string/appcenter_sdk_version"
+            android:title="@string/appcenter_sdk_version_title" />
         <Preference
-            android:key="install_id"
-            android:title="Install Id" />
+            android:key="@string/appcenter_install_id"
+            android:title="@string/appcenter_install_id_title"
+            android:dependency="@string/appcenter_state" />
     </PreferenceCategory>
 
 </PreferenceScreen>

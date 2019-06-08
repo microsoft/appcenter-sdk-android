@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="appcenter_state" tools:ignore="MissingTranslation">appcenter_state</string>
+    <string name="appcenter_max_storage_size" tools:ignore="MissingTranslation">appcenter_max_storage_size</string>
+    <string name="appcenter_sdk_version" tools:ignore="MissingTranslation">appcenter_sdk_version</string>
+    <string name="appcenter_install_id" tools:ignore="MissingTranslation">appcenter_install_id</string>
+</resources>
