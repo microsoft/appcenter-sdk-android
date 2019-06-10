@@ -482,21 +482,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             mLastRefreshFuture.complete(new SignInResult(null, new CancellationException()));
         }
         mLastSignInFuture = future;
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                future.complete(new SignInResult(null, new IllegalStateException("Auth is disabled.")));
-                mLastSignInFuture = null;
-            }
-        };
-        post(new Runnable() {
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
                 selectSignInTypeAndSignIn(future);
             }
-        }, disabledRunnable, disabledRunnable);
+        }, future, new SignInResult(null, new IllegalStateException("Auth is disabled.")));
         return future;
     }
 
