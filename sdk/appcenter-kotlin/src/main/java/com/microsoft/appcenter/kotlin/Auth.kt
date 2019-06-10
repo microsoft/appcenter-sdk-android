@@ -1,6 +1,8 @@
 package com.microsoft.appcenter.kotlin
 
-import com.microsoft.appcenter.auth.SignInResult
+import com.microsoft.appcenter.auth.UserInformation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import com.microsoft.appcenter.auth.Auth as JavaAuth
 
 object Auth : AppCenterService {
@@ -14,7 +16,13 @@ object Auth : AppCenterService {
         JavaAuth.setEnabled(enabled).await()
     }
 
-    suspend fun signIn(): SignInResult = JavaAuth.signIn().await()
+    suspend fun signIn(): UserInformation = JavaAuth.signIn().await {
+        if (it.exception != null) {
+            resumeWithException(it.exception)
+        } else {
+            resume(it.userInformation)
+        }
+    }
 
     fun signOut() = JavaAuth.signOut()
 }

@@ -1,13 +1,13 @@
 package com.microsoft.appcenter.sasquatch_kotlin.modules
 
-import android.os.Bundle
 import android.support.v14.preference.SwitchPreference
 import com.microsoft.appcenter.kotlin.Crashes
 import com.microsoft.appcenter.sasquatch_kotlin.R
 
 class CrashesModulePage : BaseModulePage() {
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.crashes)
+    override val preferencesResource: Int = R.xml.crashes
+
+    override fun updatePreferences() {
         updateCrashesState()
         updateGenerateTestCrash()
     }

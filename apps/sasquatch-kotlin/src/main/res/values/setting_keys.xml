@@ -8,8 +8,13 @@
     <string name="appcenter_max_storage_size" tools:ignore="MissingTranslation">appcenter_max_storage_size</string>
     <string name="appcenter_sdk_version" tools:ignore="MissingTranslation">appcenter_sdk_version</string>
     <string name="appcenter_install_id" tools:ignore="MissingTranslation">appcenter_install_id</string>
+    <string name="auth_state" tools:ignore="MissingTranslation">auth_state</string>
+    <string name="auth_sign_in" tools:ignore="MissingTranslation">auth_sign_in</string>
+    <string name="auth_sign_out" tools:ignore="MissingTranslation">auth_sign_out</string>
 
     <string name="analytics_state" tools:ignore="MissingTranslation">analytics_state</string>
+    <string name="analytics_pause" tools:ignore="MissingTranslation">analytics_pause</string>
+    <string name="analytics_resume" tools:ignore="MissingTranslation">analytics_resume</string>
     <string name="analytics_track_event_name" tools:ignore="MissingTranslation">analytics_track_event_name</string>
     <string name="analytics_track_event" tools:ignore="MissingTranslation">analytics_track_event</string>
 

@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.sasquatch_kotlin.modules
 
+import android.os.Bundle
 import android.support.annotation.StringRes
 import android.support.v7.preference.Preference
 import android.support.v7.preference.PreferenceFragmentCompat
@@ -9,6 +10,15 @@ import kotlinx.coroutines.launch
 
 abstract class BaseModulePage : PreferenceFragmentCompat() {
     protected val uiScope = CoroutineScope(Dispatchers.Main)
+
+    protected abstract val preferencesResource: Int
+
+    protected abstract fun updatePreferences()
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        addPreferencesFromResource(preferencesResource)
+        updatePreferences()
+    }
 
     // region Helpers
 

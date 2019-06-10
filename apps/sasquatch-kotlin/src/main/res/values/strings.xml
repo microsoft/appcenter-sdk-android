@@ -6,13 +6,19 @@
 
     <string name="appcenter_category_settings">AppCenter Settings</string>
     <string name="appcenter_category_miscellaneous">Miscellaneous</string>
+    <string name="appcenter_category_auth">Authentication</string>
     <string name="appcenter_state_title">AppCenter State</string>
     <string name="appcenter_install_id_title">Install ID</string>
     <string name="appcenter_sdk_version_title">SDK Version</string>
+    <string name="auth_state_title">Auth State</string>
+    <string name="auth_sign_in_title">Sign In</string>
+    <string name="auth_sign_out_title">Sign Out</string>
 
     <string name="analytics_category_settings">Analytics Settings</string>
     <string name="analytics_category_tracking_events">Tracking Events</string>
     <string name="analytics_state_title">Analytics State</string>
+    <string name="analytics_pause_title">Pause</string>
+    <string name="analytics_resume_title">Resume</string>
     <string name="analytics_track_event_name_title">Event Name</string>
     <string name="analytics_track_event_title">Track Event</string>
 

@@ -4,11 +4,13 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+public suspend fun <T> AppCenterFuture<T>.await(): T = await { resume(it) }
 
-public suspend fun <T> AppCenterFuture<T>.await(): T =
+public suspend fun <T, R> AppCenterFuture<T>.await(resume: Continuation<R>.(T) -> Unit): R =
         suspendCoroutine { continuation ->
 
             /*

@@ -5,7 +5,10 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log.VERBOSE
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
-import com.microsoft.appcenter.kotlin.*
+import com.microsoft.appcenter.kotlin.Analytics
+import com.microsoft.appcenter.kotlin.AppCenter
+import com.microsoft.appcenter.kotlin.Auth
+import com.microsoft.appcenter.kotlin.Crashes
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +24,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun configureAppCenter() {
         AppCenter.logLevel = VERBOSE
-        AppCenter.start(application, "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics, Crashes)
+        AppCenter.start(application, "45d1d9f6-2492-4e68-bd44-7190351eb5f3", Analytics, Auth, Crashes)
     }
 }

@@ -1,14 +1,14 @@
 package com.microsoft.appcenter.sasquatch_kotlin.modules
 
-import android.os.Bundle
 import android.support.v14.preference.SwitchPreference
 import android.support.v7.preference.EditTextPreference
 import com.microsoft.appcenter.kotlin.Analytics
 import com.microsoft.appcenter.sasquatch_kotlin.R
 
 class AnalyticsModulePage : BaseModulePage() {
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.analytics)
+    override val preferencesResource: Int = R.xml.analytics
+
+    override fun updatePreferences() {
         updateAnalyticsState()
         updateTrackEventName()
         updateTrackEvent()

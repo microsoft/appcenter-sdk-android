@@ -22,4 +22,17 @@
             android:dependency="@string/appcenter_state" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/appcenter_category_auth">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/auth_state"
+            android:title="@string/auth_state_title" />
+        <Preference
+            android:key="@string/auth_sign_in"
+            android:title="@string/auth_sign_in_title" />
+        <Preference
+            android:key="@string/auth_sign_out"
+            android:title="@string/auth_sign_out_title" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

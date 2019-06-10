@@ -10,6 +10,12 @@
             android:defaultValue="false"
             android:key="@string/analytics_state"
             android:title="@string/analytics_state_title" />
+        <Preference
+            android:key="@string/analytics_pause"
+            android:title="@string/analytics_pause_title" />
+        <Preference
+            android:key="@string/analytics_resume"
+            android:title="@string/analytics_resume_title" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/analytics_category_tracking_events">
