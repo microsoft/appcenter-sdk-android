@@ -21,4 +21,3 @@ include ':test'
 // test apps
 include ':apps'
 include ':apps:sasquatch'
-include ':apps:sasquatch-kotlin'
