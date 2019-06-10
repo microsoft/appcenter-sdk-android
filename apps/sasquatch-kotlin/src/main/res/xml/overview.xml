@@ -5,14 +5,14 @@
 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="AppCenter">
+    <PreferenceCategory android:title="@string/appcenter_category_settings">
         <SwitchPreference
             android:defaultValue="false"
             android:key="@string/appcenter_state"
             android:title="@string/appcenter_state_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Miscellaneous">
+    <PreferenceCategory android:title="@string/appcenter_category_miscellaneous">
         <Preference
             android:key="@string/appcenter_sdk_version"
             android:title="@string/appcenter_sdk_version_title" />

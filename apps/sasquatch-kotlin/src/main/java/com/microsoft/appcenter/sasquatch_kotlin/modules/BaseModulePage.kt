@@ -12,11 +12,22 @@ abstract class BaseModulePage : PreferenceFragmentCompat() {
 
     // region Helpers
 
+    protected inline fun <reified T : Preference> getPreference(@StringRes id: Int): T =
+            preferenceManager.findPreference(getString(id)) as T
+
     protected inline fun <reified T : Preference> updatePreference(@StringRes id: Int, crossinline block: suspend T.() -> Unit) =
             uiScope.launch {
-                val preference = preferenceManager.findPreference(getString(id)) as T
+                val preference = getPreference<T>(id)
                 preference.block()
             }
+
+    protected inline fun updateClickPreference(@StringRes id: Int, crossinline block: suspend () -> Unit) {
+        val preference = getPreference<Preference>(id)
+        preference.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            uiScope.launch { block() }
+            true
+        }
+    }
 
     protected inline fun <reified T> onPreferenceChange(crossinline block: suspend (value: T) -> Unit) =
             Preference.OnPreferenceChangeListener { _, newValue ->

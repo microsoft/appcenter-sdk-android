@@ -3,7 +3,20 @@
     <string name="title_overview">Overview</string>
     <string name="title_analytics">Analytics</string>
     <string name="title_crashes">Crashes</string>
+
+    <string name="appcenter_category_settings">AppCenter Settings</string>
+    <string name="appcenter_category_miscellaneous">Miscellaneous</string>
     <string name="appcenter_state_title">AppCenter State</string>
     <string name="appcenter_install_id_title">Install ID</string>
     <string name="appcenter_sdk_version_title">SDK Version</string>
+
+    <string name="analytics_category_settings">Analytics Settings</string>
+    <string name="analytics_category_tracking_events">Tracking Events</string>
+    <string name="analytics_state_title">Analytics State</string>
+    <string name="analytics_track_event_name_title">Event Name</string>
+    <string name="analytics_track_event_title">Track Event</string>
+
+    <string name="crashes_category_settings">Crashes Settings</string>
+    <string name="crashes_state_title">Crashes State</string>
+    <string name="crashes_generate_test_crash_title">Generate Test Crash</string>
 </resources>
