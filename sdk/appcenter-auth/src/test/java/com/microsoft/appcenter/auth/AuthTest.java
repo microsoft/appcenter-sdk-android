@@ -351,7 +351,7 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     @Test
-    public void getLastSessionCrashReportWithMultipleListenersAndResultIsNullBeforeInit() {
+    public void signInIsCalledBeforeStart() {
         Auth auth = Auth.getInstance();
 
         @SuppressWarnings("unchecked")
