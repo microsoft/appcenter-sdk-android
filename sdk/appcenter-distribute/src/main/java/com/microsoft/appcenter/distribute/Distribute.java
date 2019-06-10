@@ -1774,6 +1774,7 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private void showDownloadProgress() {
         if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
             return;
         }
         mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
