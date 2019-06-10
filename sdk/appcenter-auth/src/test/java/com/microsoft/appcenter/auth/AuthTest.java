@@ -23,6 +23,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -42,6 +43,7 @@ import org.json.JSONObject;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -346,6 +348,24 @@ public class AuthTest extends AbstractAuthTest {
         verifyStatic(never());
         String configPayload = jsonConfig.toString();
         FileManager.write(notNull(File.class), eq(configPayload));
+    }
+
+    @Test
+    public void signInIsCalledBeforeStart() {
+        Auth auth = Auth.getInstance();
+
+        @SuppressWarnings("unchecked")
+        AppCenterConsumer<SignInResult> callback = (AppCenterConsumer<SignInResult>) Mockito.mock(AppCenterConsumer.class);
+
+        /* Call twice for multiple callbacks before initialize. */
+        Auth.signIn().thenAccept(callback);
+        Auth.signIn().thenAccept(callback);
+        start(auth);
+
+        SignInResult result = Auth.signIn().get();
+        assertNotNull(result.getException());
+        assertTrue(result.getException() instanceof IllegalStateException);
+        verify(callback, times(2)).accept(any(SignInResult.class));
     }
 
     @Test
