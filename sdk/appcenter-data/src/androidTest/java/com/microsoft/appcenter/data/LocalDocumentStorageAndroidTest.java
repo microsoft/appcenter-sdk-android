@@ -274,38 +274,35 @@ public class LocalDocumentStorageAndroidTest {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
         documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
         assertEquals(1, documents.size());
-        LocalDocument localDocument = documents.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+        validateLocalDocument(documents, 0, USER_DOCUMENTS);
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(documents));
 
         /* Add second one with a different partition, check twice */
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, APP_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
         documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, APP_DOCUMENTS);
         assertEquals(1, documents.size());
-        localDocument = documents.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(APP_DOCUMENTS, localDocument.getPartition());
+        validateLocalDocument(documents, 0, APP_DOCUMENTS);
         documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
         assertEquals(1, documents.size());
-        localDocument = documents.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+        validateLocalDocument(documents, 0, USER_DOCUMENTS);
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(documents));
 
         /* Add a third document with the same partition as either of the previous two, check twice */
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID + 123, "Test", String.class, new WriteOptions());
         documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
         assertEquals(2, documents.size());
-        localDocument = documents.get(0);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
-        localDocument = documents.get(1);
-        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+        validateLocalDocument(documents, 0, USER_DOCUMENTS);
+        validateLocalDocument(documents, 1, USER_DOCUMENTS);
         documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, APP_DOCUMENTS);
         assertEquals(1, documents.size());
-        localDocument = documents.get(0);
+        validateLocalDocument(documents, 0, APP_DOCUMENTS);
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(documents));
+    }
+
+    private static void validateLocalDocument(List<LocalDocument> documents, int i, String appDocuments) {
+        LocalDocument localDocument = documents.get(i);
         assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
-        assertEquals(APP_DOCUMENTS, localDocument.getPartition());
+        assertEquals(appDocuments, localDocument.getPartition());
     }
 
     @Test
