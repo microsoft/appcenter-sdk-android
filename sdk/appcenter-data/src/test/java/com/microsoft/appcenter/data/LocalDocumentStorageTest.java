@@ -12,7 +12,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -179,7 +179,7 @@ public class LocalDocumentStorageTest {
         Cursor cursor = mock(Cursor.class);
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(cursor);
         when(cursor.moveToNext()).thenThrow(new RuntimeException());
-        List<PendingOperation> pendingOperations = mLocalDocumentStorage.getPendingOperations(mUserTableName);
+        List<LocalDocument> pendingOperations = mLocalDocumentStorage.getPendingOperations(mUserTableName);
     }
 
     @Test
@@ -277,7 +277,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void getPendingOperationsOnNonUserTable() {
-        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(null);
+        List<LocalDocument> operations = mLocalDocumentStorage.getPendingOperations(null);
         assertNotNull(operations);
         assertEquals(0, operations.size());
     }

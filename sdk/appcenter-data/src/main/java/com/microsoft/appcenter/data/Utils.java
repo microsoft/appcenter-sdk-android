@@ -21,7 +21,9 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -74,6 +76,40 @@ public class Utils {
                 throw new JsonParseException(e);
             }
         }
+    }
+
+    static <T> DocumentWrapper<T> parseLocalDocument(LocalDocument localDocument, Class<T> documentType) {
+        JsonObject body;
+        try {
+            body = sParser.parse(localDocument.getDocument()).getAsJsonObject();
+        } catch (RuntimeException e) {
+            return new DocumentWrapper<>(e);
+        }
+        DocumentWrapper<T> documentWrapper =
+                parseDocument(
+                        body,
+                        localDocument.getPartition(),
+                        localDocument.getDocumentId(),
+                        localDocument.getETag(),
+                        localDocument.getOperationTime(),
+                        documentType);
+        documentWrapper.setFromCache(true);
+        documentWrapper.setPendingOperation(localDocument.getOperation());
+        return documentWrapper;
+    }
+
+    static <T> PaginatedDocuments<T> localDocumentsToNonExpiredPaginated(List<LocalDocument> localDocuments, Class<T> documentType) {
+        PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<>();
+        Page<T> page = new Page<>();
+        ArrayList<DocumentWrapper<T>> documentWrappers = new ArrayList<>();
+        for (LocalDocument localDoc : localDocuments) {
+            if (!localDoc.isExpired()) {
+                documentWrappers.add(Utils.parseLocalDocument(localDoc, documentType));
+            }
+        }
+        page.setItems(documentWrappers);
+        paginatedDocuments.setCurrentPage(page);
+        return paginatedDocuments;
     }
 
     static <T> DocumentWrapper<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
@@ -174,6 +210,13 @@ public class Utils {
 
     public static Gson getGson() {
         return sGson;
+    }
+
+    static String getTableName(String partition) {
+        if (USER_DOCUMENTS.equals(partition)) {
+            return getUserTableName();
+        }
+        return READONLY_TABLE;
     }
 
     @NonNull

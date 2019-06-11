@@ -16,7 +16,7 @@ import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
-import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -841,7 +841,7 @@ public class DataTest extends AbstractDataTest {
     public void createPendingOperationWithoutUpsertHeader() {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -899,7 +899,7 @@ public class DataTest extends AbstractDataTest {
     public void replacePendingOperationWithUpsertHeader() {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1378,7 +1378,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1418,7 +1418,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationNotProcessedWhenNetworkOff() {
 
         /* If we have one pending operation delete, and the network is off. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1451,7 +1451,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
 
         /* If we have delete, create, update pending operation, and the network is on. */
-        final PendingOperation deletePendingOperation = new PendingOperation(
+        final LocalDocument deletePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1460,7 +1460,7 @@ public class DataTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        final PendingOperation createPendingOperation = new PendingOperation(
+        final LocalDocument createPendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1469,7 +1469,7 @@ public class DataTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        final PendingOperation replacePendingOperation = new PendingOperation(
+        final LocalDocument replacePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1527,7 +1527,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationProcessedOnceWhenDuplicatePendingOperations() throws JSONException {
 
         /* If we have duplicate pending operation. (Mock the situation we have call processPendingOperation at the same time.) */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1567,7 +1567,7 @@ public class DataTest extends AbstractDataTest {
     public void partiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
 
         /* If we have one pending operation, and network is on. */
-        final PendingOperation deletePendingOperation = new PendingOperation(
+        final LocalDocument deletePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
