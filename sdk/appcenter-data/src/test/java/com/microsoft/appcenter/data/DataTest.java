@@ -522,19 +522,28 @@ public class DataTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(documents)
         );
 
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(
+                            endsWith("docs"),
+                            anyString(),
+                            anyMapOf(String.class, String.class),
+                            any(HttpClient.CallTemplate.class),
+                            any(ServiceCallback.class)))
+        .then(new Answer<ServiceCall>() {
 
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
-                return mock(ServiceCall.class);
+    @Override
+    public ServiceCall answer(InvocationOnMock invocation) {
+            ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+            return mock(ServiceCall.class);
             }
         });
 
         /* Make the call. Ensure deserialization error on document by passing incorrect class type. */
         AppCenterFuture<PaginatedDocuments<String>> result = Data.list(String.class, DefaultPartitions.USER_DOCUMENTS);
 
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
 
         /* Verify the result is correct. */
         assertNotNull(result);
@@ -580,7 +589,10 @@ public class DataTest extends AbstractDataTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> result = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS);
 
         /* Verify the result is correct and the cache was not touched. */
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
         assertNotNull(result);
         PaginatedDocuments<TestDocument> docs = result.get();
         assertNotNull(docs);
