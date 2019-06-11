@@ -12,8 +12,6 @@
 
     <string name="storage_size_key" tools:ignore="MissingTranslation">storage_size_key</string>
     <string name="storage_size_title" tools:ignore="MissingTranslation">Storage Max Size</string>
-    <string name="storage_size_changed_format" tools:ignore="MissingTranslation">Storage maximum size has been changed to %s. The new size is not a final size, please close the application completely and relaunch again.</string>
-    <string name="storage_size_error" tools:ignore="MissingTranslation">Storage size is not valid.</string>
 
     <string name="storage_file_size_key" tools:ignore="MissingTranslation">storage_file_size_key</string>
     <string name="storage_file_size_title" tools:ignore="MissingTranslation">Storage File Size</string>
@@ -30,6 +28,10 @@
     <string name="appcenter_analytics_pause_title" tools:ignore="MissingTranslation">Analytics paused state</string>
     <string name="appcenter_analytics_pause_summary_paused" tools:ignore="MissingTranslation">Analytics is paused</string>
     <string name="appcenter_analytics_pause_summary_resumed" tools:ignore="MissingTranslation">Analytics is resumed</string>
+
+    <string name="appcenter_analytics_transmission_interval_key" tools:ignore="MissingTranslation">appcenter_analytics_transmission_interval_key</string>
+    <string name="appcenter_analytics_transmission_interval_title" tools:ignore="MissingTranslation">Transmission Interval</string>
+    <string name="appcenter_analytics_transmission_interval_summary_format" tools:ignore="MissingTranslation,PluralsCandidate"> second(s) </string>
 
     <string name="appcenter_auto_page_tracking_key" tools:ignore="MissingTranslation">appcenter_auto_page_tracking_key</string>
     <string name="appcenter_auto_page_tracking_title" tools:ignore="MissingTranslation">Analytics automatic page tracking</string>
@@ -61,6 +63,10 @@
     <string name="appcenter_distribute_state_title" tools:ignore="MissingTranslation">Distribute state</string>
     <string name="appcenter_distribute_state_summary_enabled" tools:ignore="MissingTranslation">Distribute is enabled</string>
     <string name="appcenter_distribute_state_summary_disabled" tools:ignore="MissingTranslation">Distribute is disabled</string>
+    <string name="appcenter_distribute_debug_state_key" tools:ignore="MissingTranslation">appcenter_distribute_debug_state_key</string>
+    <string name="appcenter_distribute_debug_state_title" tools:ignore="MissingTranslation">Distribute in debug state</string>
+    <string name="appcenter_distribute_debug_summary_enabled" tools:ignore="MissingTranslation">Distribute in debug is enabled</string>
+    <string name="appcenter_distribute_debug_summary_disabled" tools:ignore="MissingTranslation">Distribute in debug is disabled</string>
 
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>

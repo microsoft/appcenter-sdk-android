@@ -11,7 +11,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 /**
  * Interface for the crashes listener.
  */
-@SuppressWarnings({"WeakerAccess", "UnusedReturnValue", "SameReturnValue", "UnusedParameters", "EmptyMethod"})
+@SuppressWarnings({"UnusedReturnValue", "SameReturnValue", "UnusedParameters", "EmptyMethod", "WeakerAccess", "RedundantSuppression"})
 public interface CrashesListener {
 
     /**
@@ -28,6 +28,7 @@ public interface CrashesListener {
      * @return <code>true</code> if it requires to be confirmed by a user, otherwise <code>false</code>.
      * If this method returns <code>true</code>, {@link Crashes#notifyUserConfirmation(int)} must be called by yourself.
      */
+    @SuppressWarnings({"JavadocReference", "RedundantSuppression"})
     boolean shouldAwaitUserConfirmation();
 
     /**

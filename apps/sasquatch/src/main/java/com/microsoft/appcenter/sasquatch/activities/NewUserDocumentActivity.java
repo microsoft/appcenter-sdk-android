@@ -88,10 +88,8 @@ public class NewUserDocumentActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                addProperty();
-                break;
+        if (item.getItemId() == R.id.action_add) {
+            addProperty();
         }
         return true;
     }
@@ -109,7 +107,6 @@ public class NewUserDocumentActivity extends AppCompatActivity {
             property.setGenericProperty(document);
         }
         String documentId = mEditDocumentId.getText().toString();
-        documentId = documentId.replace(" ", "-");
         Data.replace(documentId, document, Map.class, DefaultPartitions.USER_DOCUMENTS, mWriteOptions).thenAccept(new AppCenterConsumer<DocumentWrapper<Map>>() {
 
             @Override

@@ -9,7 +9,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -73,13 +72,8 @@ class FirebaseUtils {
                 PackageManager.DONT_KILL_APP);
     }
 
-    @Nullable
-    static String getToken() throws FirebaseUnavailableException {
-        return getFirebaseInstanceId().getToken();
-    }
-
     @NonNull
-    private static FirebaseInstanceId getFirebaseInstanceId() throws FirebaseUnavailableException {
+    static FirebaseInstanceId getFirebaseInstanceId() throws FirebaseUnavailableException {
         try {
             FirebaseInstanceId instance = FirebaseInstanceId.getInstance();
             if (instance == null) {

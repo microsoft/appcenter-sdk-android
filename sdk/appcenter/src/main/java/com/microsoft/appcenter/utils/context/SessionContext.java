@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.utils.context;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
@@ -196,8 +197,7 @@ public class SessionContext {
         /**
          * @return session timestamp.
          */
-        @SuppressWarnings("WeakerAccess")
-        public long getTimestamp() {
+        long getTimestamp() {
             return mTimestamp;
         }
 
@@ -215,6 +215,7 @@ public class SessionContext {
             return mAppLaunchTimestamp;
         }
 
+        @NonNull
         @Override
         public String toString() {
             String rawSession = getTimestamp() + STORAGE_KEY_VALUE_SEPARATOR;

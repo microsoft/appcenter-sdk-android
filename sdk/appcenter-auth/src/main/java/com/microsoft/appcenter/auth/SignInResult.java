@@ -5,12 +5,9 @@
 
 package com.microsoft.appcenter.auth;
 
-import com.microsoft.appcenter.UserInformation;
-
 /**
  * Result for sign-in operation.
  */
-@SuppressWarnings("WeakerAccess") // TODO remove warning when JCenter published and demo updated
 public class SignInResult {
 
     /**
@@ -48,8 +45,6 @@ public class SignInResult {
      *
      * @return User information or null if an error occurred.
      */
-    @SuppressWarnings("WeakerAccess")
-    // TODO remove warning once published to jCenter and used in test app
     public UserInformation getUserInformation() {
         return mUserInformation;
     }

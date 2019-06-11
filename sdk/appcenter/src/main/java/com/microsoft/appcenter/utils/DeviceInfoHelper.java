@@ -122,7 +122,7 @@ public class DeviceInfoHelper {
         return device;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public static int getVersionCode(PackageInfo packageInfo) {
 
         /*

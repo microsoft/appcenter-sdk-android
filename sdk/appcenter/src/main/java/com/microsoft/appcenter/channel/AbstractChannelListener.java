@@ -16,7 +16,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 public class AbstractChannelListener implements Channel.Listener {
 
     @Override
-    public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener) {
+    public void onGroupAdded(@NonNull String groupName, Channel.GroupListener groupListener, long batchTimeInterval) {
     }
 
     @Override

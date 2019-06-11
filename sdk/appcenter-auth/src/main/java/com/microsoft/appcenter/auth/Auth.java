@@ -16,7 +16,6 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
@@ -139,7 +138,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * The listener to catch if a token needs to be refreshed.
      */
-    private AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
+    private final AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
@@ -483,20 +482,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             mLastRefreshFuture.complete(new SignInResult(null, new CancellationException()));
         }
         mLastSignInFuture = future;
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                future.complete(new SignInResult(null, new IllegalStateException("Auth is disabled.")));
-            }
-        };
-        post(new Runnable() {
+        postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
                 selectSignInTypeAndSignIn(future);
             }
-        }, disabledRunnable, disabledRunnable);
+        }, future, new SignInResult(null, new IllegalStateException("Auth is disabled.")));
         return future;
     }
 
@@ -638,6 +630,11 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
     @WorkerThread
     private synchronized void refreshToken(String homeAccountId, boolean networkConnected) {
+        if (mAuthenticationClient == null) {
+            AppCenterLog.warn(LOG_TAG, "Failed to refresh token: Auth isn't configured.");
+            AuthTokenContext.getInstance().setAuthToken(null, null, null);
+            return;
+        }
         if (isFutureInProgress(mLastSignInFuture)) {
             AppCenterLog.debug(LOG_TAG, "Failed to refresh token: sign-in already in progress.");
             return;
@@ -687,9 +684,10 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     token = authenticationResult.getAccessToken();
                 }
                 AuthTokenContext.getInstance().setAuthToken(token, homeAccountId, expiresOn);
+                String accessToken = authenticationResult.getAccessToken();
                 String accountId = account.getAccountIdentifier().getIdentifier();
                 AppCenterLog.info(LOG_TAG, "User sign-in succeeded.");
-                future.complete(new SignInResult(new UserInformation(accountId), null));
+                future.complete(new SignInResult(new UserInformation(accountId, accessToken, token), null));
             }
         });
     }

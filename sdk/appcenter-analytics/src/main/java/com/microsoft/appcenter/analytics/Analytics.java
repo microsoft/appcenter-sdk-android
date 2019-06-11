@@ -14,6 +14,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.analytics.channel.AnalyticsValidator;
@@ -41,12 +42,24 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Analytics service.
  */
 public class Analytics extends AbstractAppCenterService {
+
+    /**
+     * Constant marking event of the analytics group.
+     */
+    static final String ANALYTICS_GROUP = "group_analytics";
+
+    /**
+     * Constant marking event of the analytics critical group.
+     */
+    static final String ANALYTICS_CRITICAL_GROUP = ANALYTICS_GROUP + "_critical";
 
     /**
      * Name of the service.
@@ -59,11 +72,6 @@ public class Analytics extends AbstractAppCenterService {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
-     * Constant marking event of the analytics group.
-     */
-    static final String ANALYTICS_GROUP = "group_analytics";
-
-    /**
      * Activity suffix to exclude from generated page names.
      */
     private static final String ACTIVITY_SUFFIX = "Activity";
@@ -73,6 +81,18 @@ public class Analytics extends AbstractAppCenterService {
      */
     @SuppressLint("StaticFieldLeak")
     private static Analytics sInstance;
+
+    /**
+     * Transmission interval minimum value.
+     */
+    @VisibleForTesting
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+
+    /**
+     * Transmission interval maximum value.
+     */
+    @VisibleForTesting
+    static final int MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 24 * 60 * 60;
 
     /**
      * Log factories managed by this service.
@@ -126,6 +146,11 @@ public class Analytics extends AbstractAppCenterService {
     private AnalyticsListener mAnalyticsListener;
 
     /**
+     * Transmission interval in milliseconds.
+     */
+    private long mTransmissionInterval;
+
+    /**
      * Automatic page tracking flag.
      * TODO the backend does not support pages yet so the default value would be true after the service becomes public.
      */
@@ -141,6 +166,7 @@ public class Analytics extends AbstractAppCenterService {
         mFactories.put(EventLog.TYPE, new EventLogFactory());
         mFactories.put(CommonSchemaEventLog.TYPE, new CommonSchemaEventLogFactory());
         mTransmissionTargets = new HashMap<>();
+        mTransmissionInterval = TimeUnit.SECONDS.toMillis(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS);
     }
 
     /**
@@ -148,7 +174,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static synchronized Analytics getInstance() {
         if (sInstance == null) {
             sInstance = new Analytics();
@@ -184,6 +210,17 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
+     * Set transmission interval. The transmission interval should be between 3 seconds and 86400 seconds (1 day).
+     * Should be called before the service is started.
+     *
+     * @param seconds the latency of sending events to Analytics in seconds.
+     * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
+     */
+    public static boolean setTransmissionInterval(int seconds) {
+        return getInstance().setInstanceTransmissionInterval(seconds);
+    }
+
+    /**
      * Pauses log transmission. This API cannot be used if the service is disabled.
      * Transmission is resumed:
      * <ul>
@@ -211,6 +248,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param listener The custom analytics listener.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     @VisibleForTesting
     protected static void setListener(AnalyticsListener listener) {
         getInstance().setInstanceListener(listener);
@@ -346,11 +384,11 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     * @param flags      Optional flags. Events tracked with the {@link Flags#CRITICAL}
      *                   flag will take precedence over all other events in storage.
      *                   An event tracked with this option will only be dropped
      *                   if storage must make room for a newer event that is also marked with the
-     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     *                   {@link Flags#CRITICAL} flag.
      */
     public static void trackEvent(String name, Map<String, String> properties, int flags) {
         getInstance().trackEventAsync(name, convertProperties(properties), null, flags);
@@ -417,11 +455,11 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param name       An event name.
      * @param properties Optional properties.
-     * @param flags      Optional flags. Events tracked with the {@link Flags#PERSISTENCE_CRITICAL}
+     * @param flags      Optional flags. Events tracked with the {@link Flags#CRITICAL}
      *                   flag will take precedence over all other events in storage.
      *                   An event tracked with this option will only be dropped
      *                   if storage must make room for a newer event that is also marked with the
-     *                   {@link Flags#PERSISTENCE_CRITICAL} flag.
+     *                   {@link Flags#CRITICAL} flag.
      */
     public static void trackEvent(String name, EventProperties properties, int flags) {
         trackEvent(name, properties, null, flags);
@@ -583,6 +621,11 @@ public class Analytics extends AbstractAppCenterService {
         }, updateCurrentActivityRunnable, updateCurrentActivityRunnable);
     }
 
+    @Override
+    protected long getTriggerInterval() {
+        return mTransmissionInterval;
+    }
+
     /**
      * On an activity being resumed, start a new session if needed
      * and track current page automatically if that mode is enabled.
@@ -656,6 +699,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* If we enabled the service. */
         if (enabled) {
+            mChannel.addGroup(ANALYTICS_CRITICAL_GROUP, getTriggerCount(), Constants.DEFAULT_TRIGGER_INTERVAL, getTriggerMaxParallelRequests(), null, getChannelListener());
 
             /* Check if service started at application level and enable corresponding features. */
             startAppLevelFeatures();
@@ -663,6 +707,7 @@ public class Analytics extends AbstractAppCenterService {
 
         /* On disabling service. */
         else {
+            mChannel.removeGroup(ANALYTICS_CRITICAL_GROUP);
 
             /* Cleanup resources. */
             if (mAnalyticsValidator != null) {
@@ -785,7 +830,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
             }
         });
     }
@@ -820,6 +865,7 @@ public class Analytics extends AbstractAppCenterService {
             @Override
             public void run() {
                 mChannel.pauseGroup(ANALYTICS_GROUP, null);
+                mChannel.pauseGroup(ANALYTICS_CRITICAL_GROUP, null);
             }
         });
     }
@@ -833,6 +879,7 @@ public class Analytics extends AbstractAppCenterService {
             @Override
             public void run() {
                 mChannel.resumeGroup(ANALYTICS_GROUP, null);
+                mChannel.resumeGroup(ANALYTICS_CRITICAL_GROUP, null);
             }
         });
     }
@@ -865,6 +912,30 @@ public class Analytics extends AbstractAppCenterService {
         if (transmissionTargetToken != null) {
             mDefaultTransmissionTarget = createAnalyticsTransmissionTarget(transmissionTargetToken);
         }
+    }
+
+    /**
+     * Set transmission interval. The interval should be between 3 seconds and 86400 seconds (1 day).
+     * Should be called before the service is started.
+     *
+     * @param seconds the latency of sending events to Analytics.
+     * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
+     */
+    private boolean setInstanceTransmissionInterval(int seconds) {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
+            return false;
+        }
+        if (seconds < MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS || seconds > MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS) {
+            AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH,
+                    "The transmission interval is invalid. The value should be between %d seconds and %d seconds (%d day).",
+                    MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS,
+                    TimeUnit.SECONDS.toDays(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS)));
+            return false;
+        }
+        mTransmissionInterval = TimeUnit.SECONDS.toMillis(seconds);
+        return true;
     }
 
     /**

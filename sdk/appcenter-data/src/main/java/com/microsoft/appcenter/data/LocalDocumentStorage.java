@@ -163,7 +163,7 @@ class LocalDocumentStorage {
         }
 
         /* The document cache has been expired, or the document did not exists, create it. */
-        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId);
+        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
         long rowId =
                 cachedDocument.getError() != null ?
                         createOffline(table, writeDocument, writeOptions) :
@@ -206,7 +206,8 @@ class LocalDocumentStorage {
      * @return true if storage update succeeded, false otherwise.
      */
     boolean deleteOffline(String table, String partition, String documentId, WriteOptions writeOptions) {
-        DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId);
+        DocumentWrapper<Void> cachedDocument = read(table, partition, documentId, Void.class, null);
+        DocumentWrapper<Void> writeDocument = new DocumentWrapper<>(null, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
         return write(table, writeDocument, writeOptions, PENDING_OPERATION_DELETE_VALUE) > 0;
     }
 

@@ -1,5 +1,43 @@
 # App Center SDK for Android Change Log
 
+## Version 2.1.0
+
+### App Center
+
+* **[Fix]** Handle incorrect usage of `AppCenter.setLogUrl` API to provide readable error message.
+* **[Fix]** Fix decrypting values that have been stored for more than a year (such as the in-app update token).
+
+### App Center Analytics
+
+* **[Feature]** Support setting latency of sending events via `Analytics.setTransmissionInterval`.
+
+### App Center Auth
+
+* **[Feature]** Expose the ID Token and Access Token (as raw JWT format) in the `UserInformation` object returned from the sign-in method.
+* **[Fix]** Fix missing proguard rules so that the app does not have to specify them.
+* **[Fix]** Fix crash on silently refreshing token if initialization of MSAL fails.
+* **[Fix]** Fix sign-in before start auth service never ends and blocks every next try.
+* **[Breaking change]** The `UserInformation` class has been moved from the `appcenter` module to the `appcenter-auth` module and must now be imported as `import com.microsoft.appcenter.auth.UserInformation`.
+
+### App Center Data
+
+* **[Fix]** Fix an issue where invalid characters in the document ID are accepted at creation time but causing errors while trying to read or delete the document. The characters are `#`, `\`, `/`, `?`, and all whitespaces.
+
+### App Center Crashes
+
+* **[Fix]** Fix a crash that could sometimes occur while processing native crash reports.
+
+### App Center Distribute
+
+* **[Feature]** Add `Distribute.setEnabledForDebuggableBuild(boolean)` method to allow in-app updates in debuggable builds.
+* **[Fix]** Fix duplicate in-app update dialog when restarting (or switching) activity quickly after clicking download. Also fixes a crash when choosing "Ask me in a day" in the duplicate dialog.
+* **[Fix]** Fix a crash that could occur when downloading the update with a customized dialog and then calling `Distribute.notifyUserConfirmation(UpdateAction.POSTPONE)` right after calling `Distribute.notifyUserConfirmation(UpdateAction.UPDATE)`.
+* **[Fix]** Fix a crash that could occur while trying to open the browser on some devices.
+
+### App Center Push
+
+* **[Fix]** Update Firebase dependency and AppCenter push logic to avoid a runtime issue with the latest Firebase messaging version 18.0.0.
+
 ## Version 2.0.0
 
 Version 2 of the App Center SDK includes two new modules: Auth and Data.
@@ -14,7 +52,7 @@ The App Center Data service provides functionality enabling developers to persis
 
 ### AppCenterCrashes
 
-* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes. 
+* **[Feature]** After calling `Auth.signIn`, the next crashes are associated with an `accountId` corresponding to the signed in user. This is a different field than the `userId` set by `AppCenter.setUserId`. Calling `Auth.signOut` stops the `accountId` association for the next crashes.
 
 ### AppCenterDistribute
 

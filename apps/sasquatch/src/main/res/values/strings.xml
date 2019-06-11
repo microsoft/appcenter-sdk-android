@@ -16,8 +16,6 @@
     <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
     <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
     <string name="title_data" tools:ignore="MissingTranslation">Data</string>
-    <string name="title_app_document" tools:ignore="MissingTranslation">App Document</string>
-    <string name="title_user_document" tools:ignore="MissingTranslation">User Document</string>
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
@@ -86,10 +84,25 @@
     <string name="b2c_sign_in_title" tools:ignore="MissingTranslation">Azure B2C ticket</string>
     <string name="b2c_sign_in_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="b2c_sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
+    <string name="b2c_authentication_status_title" tools:ignore="MissingTranslation">Authentication status</string>
+    <string name="b2c_user_info_id_title" tools:ignore="MissingTranslation">Account ID</string>
+    <string name="b2c_user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
+    <string name="b2c_user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
+    <string name="b2c_authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
+    <string name="b2c_authentication_status_dialog_unavailable_title" tools:ignore="MissingTranslation">Please sign in</string>
+    <string name="b2c_authentication_status_dialog_unavailable_description" tools:ignore="MissingTranslation">Please perform a sign in to get user information.</string>
+    <string name="b2c_authentication_status_description" tools:ignore="MissingTranslation">Unknown</string>
+    <string name="b2c_authentication_status_not_authenticated" tools:ignore="MissingTranslation">User not authenticated</string>
     <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
     <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>
+    <string name="storage_size_changed_format" tools:ignore="MissingTranslation">Storage maximum size has been changed to %s. The new size is not a final size, please close the application completely and relaunch again.</string>
+    <string name="storage_size_error" tools:ignore="MissingTranslation">Storage size is not valid.</string>
+    <string name="analytics_transmission_interval_change_success" tools:ignore="MissingTranslation,PluralsCandidate">Analytics transmission interval changed to %d second(s) successfully. Check SDK logs for actual interval.</string>
+    <string name="analytics_transmission_interval_change_failed" tools:ignore="MissingTranslation">Failed to change Analytics transmission interval.</string>
+    <string name="analytics_transmission_interval_invalid_value" tools:ignore="MissingTranslation">Transmission interval cannot take long type.</string>
     <string name="size_in_bytes" tools:ignore="MissingTranslation">Size in bytes</string>
+    <string name="time_interval_in_seconds" tools:ignore="MissingTranslation">Time interval in seconds</string>
     <string name="event_priority" tools:ignore="MissingTranslation">Event Priority</string>
     <string-array name="event_priority_values" tools:ignore="MissingTranslation">
         <item>Default</item>
@@ -98,4 +111,6 @@
         <item>Invalid</item>
     </string-array>
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
+    <string name="b2c_jwt_parse_error" tools:ignore="MissingTranslation">Could not parse the JWT token</string>
+    <string name="b2c_jwt_parse_json_error" tools:ignore="MissingTranslation">An error occurred during parsing JWT claims.</string>
 </resources>

@@ -58,8 +58,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
 
         final List<DeviceInfoDisplayModel> list = getDeviceInfoDisplayModelList(log);
 
-        @SuppressLint("HardwareIds")
-        final String deviceId = Settings.Secure.getString(getApplication().getContentResolver(), Settings.Secure.ANDROID_ID);
+        @SuppressLint("HardwareIds") final String deviceId = Settings.Secure.getString(getApplication().getContentResolver(), Settings.Secure.ANDROID_ID);
         list.add(new DeviceInfoDisplayModel() {{
             title = "Device ID";
             value = deviceId;
@@ -126,7 +125,7 @@ public class DeviceInfoActivity extends AppCompatActivity implements NetworkStat
     }
 
     @VisibleForTesting
-    class DeviceInfoDisplayModel {
+    static class DeviceInfoDisplayModel {
         String title;
         String value;
     }

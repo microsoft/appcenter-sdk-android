@@ -26,6 +26,9 @@
             android:dependency="@string/appcenter_analytics_state_key"
             android:key="@string/appcenter_analytics_pause_key"
             android:title="@string/appcenter_analytics_pause_title" />
+        <Preference
+            android:key="@string/appcenter_analytics_transmission_interval_key"
+            android:title="@string/appcenter_analytics_transmission_interval_title" />
         <CheckBoxPreference
             android:key="@string/appcenter_auto_page_tracking_key"
             android:title="@string/appcenter_auto_page_tracking_title" />
@@ -57,6 +60,9 @@
             android:dependency="@string/appcenter_state_key"
             android:key="@string/appcenter_distribute_state_key"
             android:title="@string/appcenter_distribute_state_title" />
+        <CheckBoxPreference
+            android:key="@string/appcenter_distribute_debug_state_key"
+            android:title="@string/appcenter_distribute_debug_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory

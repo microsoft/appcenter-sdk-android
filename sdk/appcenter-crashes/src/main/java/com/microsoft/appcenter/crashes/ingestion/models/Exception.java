@@ -32,6 +32,8 @@ public class Exception implements Model {
 
     private static final String WRAPPER_SDK_NAME = "wrapperSdkName";
 
+    private static final String MINIDUMP_FILE_PATH = "minidumpFilePath";
+
     /**
      * Exception type (fully qualified class name).
      */
@@ -43,7 +45,7 @@ public class Exception implements Model {
     private String message;
 
     /**
-     * Raw stack trace. Sent when the frames property is either missing or unreliable.
+     * Raw stack trace. Sent when the frames property is either missing or unreliable (used for Xamarin exceptions).
      */
     private String stackTrace;
 
@@ -63,6 +65,12 @@ public class Exception implements Model {
      * e.g. "appcenter.xamarin", "hockeysdk.cordova".
      */
     private String wrapperSdkName;
+
+    /**
+     * The path to the minidump file. Used for reports from the NDK.
+     * This is stored locally but will not be sent to the server.
+     */
+    private String minidumpFilePath;
 
     /**
      * Get the type value.
@@ -100,7 +108,7 @@ public class Exception implements Model {
         this.message = message;
     }
 
-    /***
+    /**
      * Get the stack trace value.
      *
      * @return the stack trace value
@@ -114,6 +122,7 @@ public class Exception implements Model {
      *
      * @param stackTrace the stack trace value to set.
      */
+    @SuppressWarnings("WeakerAccess")
     public void setStackTrace(String stackTrace) {
         this.stackTrace = stackTrace;
     }
@@ -159,6 +168,7 @@ public class Exception implements Model {
      *
      * @return the wrapperSdkName value
      */
+    @SuppressWarnings("WeakerAccess")
     public String getWrapperSdkName() {
         return wrapperSdkName;
     }
@@ -172,6 +182,24 @@ public class Exception implements Model {
         this.wrapperSdkName = wrapperSdkName;
     }
 
+    /**
+     * Get the minidump file path.
+     *
+     * @return the minidump file path.
+     */
+    public String getMinidumpFilePath() {
+        return minidumpFilePath;
+    }
+
+    /**
+     * Set minidump file path.
+     *
+     * @param minidumpFilePath the minidump file path to set.
+     */
+    public void setMinidumpFilePath(String minidumpFilePath) {
+        this.minidumpFilePath = minidumpFilePath;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         setType(object.optString(TYPE, null));
@@ -180,6 +208,7 @@ public class Exception implements Model {
         setFrames(JSONUtils.readArray(object, FRAMES, StackFrameFactory.getInstance()));
         setInnerExceptions(JSONUtils.readArray(object, INNER_EXCEPTIONS, ExceptionFactory.getInstance()));
         setWrapperSdkName(object.optString(WRAPPER_SDK_NAME, null));
+        setMinidumpFilePath(object.optString(MINIDUMP_FILE_PATH, null));
     }
 
     @Override
@@ -190,34 +219,29 @@ public class Exception implements Model {
         JSONUtils.writeArray(writer, FRAMES, getFrames());
         JSONUtils.writeArray(writer, INNER_EXCEPTIONS, getInnerExceptions());
         JSONUtils.write(writer, WRAPPER_SDK_NAME, getWrapperSdkName());
+        JSONUtils.write(writer, MINIDUMP_FILE_PATH, getMinidumpFilePath());
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
         Exception exception = (Exception) o;
-        if (type != null ? !type.equals(exception.type) : exception.type != null) {
+
+        if (type != null ? !type.equals(exception.type) : exception.type != null) return false;
+        if (message != null ? !message.equals(exception.message) : exception.message != null)
             return false;
-        }
-        if (message != null ? !message.equals(exception.message) : exception.message != null) {
+        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null)
             return false;
-        }
-        if (stackTrace != null ? !stackTrace.equals(exception.stackTrace) : exception.stackTrace != null) {
+        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null)
             return false;
-        }
-        if (frames != null ? !frames.equals(exception.frames) : exception.frames != null) {
+        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null)
             return false;
-        }
-        if (innerExceptions != null ? !innerExceptions.equals(exception.innerExceptions) : exception.innerExceptions != null) {
+        if (wrapperSdkName != null ? !wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName != null)
             return false;
-        }
-        return wrapperSdkName != null ? wrapperSdkName.equals(exception.wrapperSdkName) : exception.wrapperSdkName == null;
+        return minidumpFilePath != null ? minidumpFilePath.equals(exception.minidumpFilePath) : exception.minidumpFilePath == null;
     }
 
     @Override
@@ -228,6 +252,7 @@ public class Exception implements Model {
         result = 31 * result + (frames != null ? frames.hashCode() : 0);
         result = 31 * result + (innerExceptions != null ? innerExceptions.hashCode() : 0);
         result = 31 * result + (wrapperSdkName != null ? wrapperSdkName.hashCode() : 0);
+        result = 31 * result + (minidumpFilePath != null ? minidumpFilePath.hashCode() : 0);
         return result;
     }
 }

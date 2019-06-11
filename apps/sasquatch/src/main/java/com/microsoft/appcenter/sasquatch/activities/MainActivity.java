@@ -48,7 +48,11 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
+
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,13 +72,13 @@ public class MainActivity extends AppCompatActivity {
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
-    private final int DATABASE_SIZE_MULTIPLE = 4096;
-
     private static final String SENDER_ID = "177539951155";
 
     private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
     private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+
+    private static final int DATABASE_SIZE_MULTIPLE = 4096;
 
     static SharedPreferences sSharedPreferences;
 
@@ -114,7 +118,32 @@ public class MainActivity extends AppCompatActivity {
 
     native void setupNativeCrashesListener(String path);
 
+    static String getLogUrl(Context context, String startType) {
+        switch (StartType.valueOf(startType)) {
+            case TARGET:
+            case NO_SECRET:
+                return context.getString(R.string.log_url_one_collector);
+        }
+        return context.getString(R.string.log_url);
+    }
+
     static void startAppCenter(Application application, String startTypeString) {
+        if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
+            int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+            try {
+
+                /* TODO remove reflection and catch block after API available to jCenter. */
+                boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, latency);
+                if (result) {
+                    Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(application, application.getString(R.string.analytics_transmission_interval_change_failed), Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception ignored) {
+
+                /* Nothing to handle; this is reached if Analytics isn't being used. */
+            }
+        }
         StartType startType = StartType.valueOf(startTypeString);
         if (startType == StartType.SKIP_START) {
             return;
@@ -188,10 +217,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                break;
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
         }
         return true;
     }
@@ -247,7 +274,8 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectAll().build());
 
         /* Set custom log URL if one was configured in settings. */
-        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getString(R.string.log_url));
+        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+        String logUrl = sSharedPreferences.getString(LOG_URL_KEY, getLogUrl(this, startType));
         if (!TextUtils.isEmpty(logUrl)) {
             AppCenter.setLogUrl(logUrl);
         }
@@ -299,8 +327,10 @@ public class MainActivity extends AppCompatActivity {
         /* Set max storage size. */
         setMaxStorageSize();
 
+        /* Set debug enabled for distribute. */
+        setDistributeEnabledForDebuggableBuild();
+
         /* Start App Center. */
-        String startType = sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
         startAppCenter(getApplication(), startType);
 
         /* Set user id. */
@@ -355,6 +385,18 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    private void setDistributeEnabledForDebuggableBuild() {
+
+        /* TODO Call method directly / remove reflection once SDK being released. */
+        try {
+            Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
+            method.invoke(null, sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false));
+        } catch (NoSuchMethodException ignore) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public enum StartType {

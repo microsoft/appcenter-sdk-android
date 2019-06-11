@@ -71,12 +71,12 @@ public class DefaultHttpClient implements HttpClient, DefaultHttpClientCallTask.
     /**
      * List of ongoing call tasks.
      */
-    private Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
+    private final Set<DefaultHttpClientCallTask> mTasks = new HashSet<>();
 
     /**
      * Indicates whether compression is enabled.
      */
-    private boolean mCompressionEnabled;
+    private final boolean mCompressionEnabled;
 
     public DefaultHttpClient() {
         this(true);

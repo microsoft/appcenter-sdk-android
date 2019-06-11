@@ -126,7 +126,6 @@ public class AppExtension implements Model {
      *
      * @return application locale.
      */
-    @SuppressWarnings("WeakerAccess")
     public String getLocale() {
         return locale;
     }
@@ -145,6 +144,7 @@ public class AppExtension implements Model {
      *
      * @return user ID.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public String getUserId() {
         return userId;
     }
@@ -176,6 +176,7 @@ public class AppExtension implements Model {
         JSONUtils.write(writer, USER_ID, getUserId());
     }
 
+    @SuppressWarnings("EqualsReplaceableByObjectsCall")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

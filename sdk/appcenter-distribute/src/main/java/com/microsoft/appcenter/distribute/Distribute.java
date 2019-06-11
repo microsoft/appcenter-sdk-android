@@ -226,7 +226,7 @@ public class Distribute extends AbstractAppCenterService {
      * progress indicator while we actually use it to be a modal dialog for forced update.
      * They will always keep this dialog to remain compatible but just mark it deprecated.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
     /**
@@ -295,6 +295,13 @@ public class Distribute extends AbstractAppCenterService {
     private SharedPreferences mMobileCenterPreferenceStorage;
 
     /**
+     * Flag to track whether the distribute feature can be used in a debuggable build.
+     * Flag is false by default.
+     * Updated by calling {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private boolean mEnabledForDebuggableBuild;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -307,7 +314,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized Distribute getInstance() {
         if (sInstance == null) {
             sInstance = new Distribute();
@@ -326,7 +332,6 @@ public class Distribute extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -339,7 +344,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -349,7 +353,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param installUrl install base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setInstallUrl(String installUrl) {
         getInstance().setInstanceInstallUrl(installUrl);
     }
@@ -359,7 +362,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param apiUrl API base URL.
      */
-    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
     }
@@ -369,9 +371,17 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param listener The custom distribute listener.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setListener(DistributeListener listener) {
         getInstance().setInstanceListener(listener);
+    }
+
+    /**
+     * Set whether the distribute service can be used within a debuggable build.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    public static void setEnabledForDebuggableBuild(boolean enabled) {
+        getInstance().setInstanceEnabledForDebuggableBuild(enabled);
     }
 
     /**
@@ -381,7 +391,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    @SuppressWarnings({"unused", "WeakerAccess"})
     public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
     }
@@ -541,12 +550,12 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action at this time.");
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
                 if (mUsingDefaultUpdateDialog) {
-                    AppCenterLog.error(LOG_TAG, "Cannot handler user update action when using default dialog.");
+                    AppCenterLog.error(LOG_TAG, "Cannot handle user update action when using default dialog.");
                     return;
                 }
                 switch (updateAction) {
@@ -589,6 +598,13 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void setInstanceListener(DistributeListener listener) {
         mListener = listener;
+    }
+
+    /**
+     * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
+     */
+    private synchronized void setInstanceEnabledForDebuggableBuild(boolean enabled) {
+        mEnabledForDebuggableBuild = enabled;
     }
 
     /**
@@ -635,8 +651,8 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE) {
-                AppCenterLog.info(LOG_TAG, "Not checking in app updates in debug.");
+            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
+                AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
                 return;
             }
@@ -756,8 +772,11 @@ public class Distribute extends AbstractAppCenterService {
                     enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
                 }
 
-                /* Or restore update dialog if that's the last thing we did before being paused. */
-                else {
+                /*
+                 * Or restore update dialog if that's the last thing we did before being paused.
+                 * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
+                 */
+                else if (mDownloadTask == null) {
                     showUpdateDialog();
                 }
 
@@ -1601,7 +1620,7 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task) {
+        if (mDownloadTask == task && mReleaseDetails != null) {
 
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();
@@ -1723,7 +1742,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @NonNull
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
         return new Notification.Builder(mContext);
     }
@@ -1752,8 +1771,12 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show download progress.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private void showDownloadProgress() {
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
+            return;
+        }
         mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
@@ -1767,7 +1790,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Hide progress dialog and stop updating.
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;

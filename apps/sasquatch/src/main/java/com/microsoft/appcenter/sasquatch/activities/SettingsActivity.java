@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.PreferenceCategory;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -46,9 +47,16 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
@@ -72,6 +80,8 @@ public class SettingsActivity extends AppCompatActivity {
     private static boolean sNeedRestartOnStartTypeUpdate;
 
     private static boolean sAnalyticsPaused;
+
+    private static String sInitialStartType;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -180,6 +190,64 @@ public class SettingsActivity extends AppCompatActivity {
                     sAnalyticsPaused = enabled;
                 }
             });
+            try {
+
+                /* TODO remove reflection and catch block after API available to jCenter. */
+                final Method setTransmissionInterval = Analytics.class.getMethod("setTransmissionInterval", int.class);
+                int interval = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+                initClickableSetting(R.string.appcenter_analytics_transmission_interval_key, getTransmissionInterval(interval), new Preference.OnPreferenceClickListener() {
+
+                    @Override
+                    public boolean onPreferenceClick(final Preference preference) {
+
+                        /* Initialize views for dialog. */
+                        final EditText input = new EditText(getActivity());
+                        input.setInputType(InputType.TYPE_NUMBER_FLAG_SIGNED);
+                        input.setHint(R.string.time_interval_in_seconds);
+                        input.setText(String.format(Locale.ENGLISH, "%d", MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS)));
+                        input.setSelection(input.getText().length());
+
+                        /* Display dialog. */
+                        new AlertDialog.Builder(getActivity()).setTitle(R.string.appcenter_analytics_transmission_interval_title).setView(input)
+                                .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        int newInterval;
+                                        try {
+                                            newInterval = Integer.parseInt(input.getText().toString());
+                                        } catch (NumberFormatException ignored) {
+                                            Toast.makeText(getActivity(), getActivity().getString(R.string.analytics_transmission_interval_invalid_value), Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
+                                        if (newInterval == ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS) {
+                                            MainActivity.sSharedPreferences.edit().remove(ANALYTICS_TRANSMISSION_INTERVAL_KEY).apply();
+                                        } else {
+                                            MainActivity.sSharedPreferences.edit().putInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, newInterval).apply();
+                                        }
+                                        String intervalString = getTransmissionInterval(newInterval);
+                                        preference.setSummary(intervalString);
+                                        Toast.makeText(getActivity(), intervalString, Toast.LENGTH_SHORT).show();
+
+                                        /* TODO remove reflection and catch block after API available to jCenter. */
+                                        try {
+
+                                            /* Setting interval without restarting works if we used SKIP_START and has not started yet by changing startType. */
+                                            setTransmissionInterval.invoke(null, newInterval);
+                                        } catch (Exception e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }
+                                })
+                                .setNegativeButton(R.string.cancel, null)
+                                .create().show();
+                        return true;
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                PreferenceCategory preference = (PreferenceCategory) findPreference(getString(R.string.analytics_key));
+                preference.removePreference(preference.findPreference(getString(R.string.appcenter_analytics_transmission_interval_key)));
+            }
             initCheckBoxSetting(R.string.appcenter_auto_page_tracking_key, R.string.appcenter_auto_page_tracking_enabled, R.string.appcenter_auto_page_tracking_disabled, new HasEnabled() {
 
                 @Override
@@ -246,6 +314,30 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            /* TODO Call method directly / remove reflection once SDK being released. */
+            try {
+                final Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
+                initCheckBoxSetting(R.string.appcenter_distribute_debug_state_key, R.string.appcenter_distribute_debug_summary_enabled, R.string.appcenter_distribute_debug_summary_disabled, new HasEnabled() {
+
+                    @Override
+                    public boolean isEnabled() {
+                        return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false);
+                    }
+
+                    @Override
+                    public void setEnabled(boolean enabled) {
+                        MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_debug_state_key), enabled).apply();
+                        try {
+                            method.invoke(null, enabled);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                getPreferenceScreen().removePreference(findPreference(getString(R.string.appcenter_distribute_debug_state_key)));
+            }
+
             /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_state_key, R.string.appcenter_push_state_summary_enabled, R.string.appcenter_push_state_summary_disabled, new HasEnabled() {
 
@@ -272,8 +364,6 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     Auth.setEnabled(enabled);
                 }
-
-
             });
 
             /* Data. */
@@ -288,8 +378,6 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     Data.setEnabled(enabled);
                 }
-
-
             });
 
             /* Push. */
@@ -453,8 +541,11 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             /* Miscellaneous. */
-            String initialStartType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
-            initChangeableSetting(R.string.appcenter_start_type_key, initialStartType, new Preference.OnPreferenceChangeListener() {
+            final String startType = MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, StartType.APP_SECRET.toString());
+            if (sInitialStartType == null) {
+                sInitialStartType = startType;
+            }
+            initChangeableSetting(R.string.appcenter_start_type_key, startType, new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -466,12 +557,17 @@ public class SettingsActivity extends AppCompatActivity {
                     preference.setSummary(MainActivity.sSharedPreferences.getString(APPCENTER_START_TYPE, null));
 
                     /* Try to start now, this tests double calls log an error as well as valid call if previous type was none. */
+                    String logUrl = MainActivity.sSharedPreferences.getString(LOG_URL_KEY, MainActivity.getLogUrl(getActivity(), startValue));
+                    if (!TextUtils.isEmpty(logUrl)) {
+                        AppCenter.setLogUrl(logUrl);
+                    }
                     MainActivity.startAppCenter(getActivity().getApplication(), startValue);
 
                     /* Invite to restart app to take effect. */
                     if (sNeedRestartOnStartTypeUpdate) {
                         Toast.makeText(getActivity(), R.string.appcenter_start_type_changed, Toast.LENGTH_SHORT).show();
                     } else {
+                        sInitialStartType = startValue;
                         sNeedRestartOnStartTypeUpdate = true;
                     }
                     return true;
@@ -521,7 +617,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            String defaultLogUrl = getString(R.string.log_url);
+            String defaultLogUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
             final String defaultLogUrlDisplay = TextUtils.isEmpty(defaultLogUrl) ? getString(R.string.log_url_set_to_production) : defaultLogUrl;
             initClickableSetting(R.string.log_url_key, MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay), new Preference.OnPreferenceClickListener() {
 
@@ -556,9 +652,9 @@ public class SettingsActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    setDefaultUrl();
-                                    if (!TextUtils.isEmpty(getString(R.string.log_url))) {
-                                        AppCenter.setLogUrl(getString(R.string.log_url));
+                                    String defaultUrl = setDefaultUrl();
+                                    if (!TextUtils.isEmpty(defaultUrl)) {
+                                        AppCenter.setLogUrl(defaultUrl);
                                     }
                                     preference.setSummary(MainActivity.sSharedPreferences.getString(LOG_URL_KEY, defaultLogUrlDisplay));
                                 }
@@ -568,9 +664,11 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
 
-                private void setDefaultUrl() {
+                private String setDefaultUrl() {
                     setKeyValue(LOG_URL_KEY, null);
-                    toastUrlChange(getString(R.string.log_url));
+                    String logUrl = MainActivity.getLogUrl(getActivity(), sInitialStartType);
+                    toastUrlChange(logUrl);
+                    return logUrl;
                 }
 
                 private void toastUrlChange(String url) {
@@ -759,6 +857,18 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putString(key, value);
             }
             editor.apply();
+        }
+
+        private String getTransmissionInterval(int interval) {
+            Date date = new Date(TimeUnit.SECONDS.toMillis(interval));
+            DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String formattedInterval = dateFormat.format(date);
+            long days = TimeUnit.SECONDS.toDays(interval);
+            if (days > 0) {
+                formattedInterval = days + "." + formattedInterval;
+            }
+            return interval + getString(R.string.appcenter_analytics_transmission_interval_summary_format) +  formattedInterval;
         }
 
         private boolean isFirebaseEnabled() {

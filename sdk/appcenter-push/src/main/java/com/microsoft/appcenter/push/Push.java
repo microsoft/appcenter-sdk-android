@@ -18,9 +18,12 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
@@ -136,7 +139,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized Push getInstance() {
         if (sInstance == null) {
             sInstance = new Push();
@@ -155,7 +157,6 @@ public class Push extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Boolean> isEnabled() {
         return getInstance().isInstanceEnabledAsync();
     }
@@ -168,7 +169,6 @@ public class Push extends AbstractAppCenterService {
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      * @return future with null result to monitor when the operation completes.
      */
-    @SuppressWarnings("WeakerAccess")
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
     }
@@ -178,7 +178,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushListener push listener.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void setListener(PushListener pushListener) {
         getInstance().setInstanceListener(pushListener);
     }
@@ -191,7 +190,7 @@ public class Push extends AbstractAppCenterService {
      * @param activity activity calling {@link Activity#onNewIntent(Intent)} (pass this).
      * @param intent   intent from {@link Activity#onNewIntent(Intent)}.
      */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings("JavadocReference")
     public static void checkLaunchedFromNotification(Activity activity, Intent intent) {
         getInstance().checkPushInActivityIntent(activity, intent);
     }
@@ -207,7 +206,6 @@ public class Push extends AbstractAppCenterService {
      * required after April 2019. Please follow the migration guide at https://aka.ms/acfba.
      */
     @Deprecated
-    @SuppressWarnings("WeakerAccess")
     public static void setSenderId(@SuppressWarnings("SameParameterValue") String senderId) {
         getInstance().instanceSetSenderId(senderId);
     }
@@ -217,7 +215,6 @@ public class Push extends AbstractAppCenterService {
      *
      * @param context the context to retrieve FirebaseAnalytics instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static void enableFirebaseAnalytics(@NonNull Context context) {
         AppCenterLog.debug(LOG_TAG, "Enabling Firebase analytics collection.");
         getInstance().setFirebaseAnalyticsEnabled(context, true);
@@ -272,8 +269,9 @@ public class Push extends AbstractAppCenterService {
      *
      * @param pushToken the push token value.
      */
-    synchronized void onTokenRefresh(final String pushToken) {
-        if (pushToken != null) {
+    @SuppressWarnings("WeakerAccess") /* protected so that Xamarin can use it. */
+    protected synchronized void onTokenRefresh(final String pushToken) {
+        if (pushToken != null && !pushToken.equals(mLatestPushToken)) {
             AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
             mLatestPushToken = pushToken;
             post(new Runnable() {
@@ -334,7 +332,7 @@ public class Push extends AbstractAppCenterService {
         mAuthListener = new AbstractTokenContextListener() {
 
             @Override
-            public void onNewUser(UserInformation userInfo) {
+            public void onNewUser(String accountId) {
                 if (mLatestPushToken != null) {
                     enqueuePushInstallationLog(mLatestPushToken);
                 }
@@ -487,11 +485,12 @@ public class Push extends AbstractAppCenterService {
 
         /* Update enable state of the firebase service. */
         FirebaseUtils.setFirebaseMessagingServiceEnabled(mContext, FirebaseUtils.isFirebaseAvailable());
+        FirebaseInstanceId firebaseInstanceId;
         try {
 
             /* Try to get token through firebase. */
-            onTokenRefresh(FirebaseUtils.getToken());
             AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
+            firebaseInstanceId = FirebaseUtils.getFirebaseInstanceId();
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
                     "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
@@ -500,7 +499,35 @@ public class Push extends AbstractAppCenterService {
                     "Please follow the migration guide at https://aka.ms/acfba.\n" +
                     "Cause: " + e.getMessage());
             registerPushTokenWithoutFirebase();
+            return;
         }
+
+        /* Use the current API. */
+        try {
+            firebaseInstanceId.getInstanceId().addOnSuccessListener(new OnSuccessListener<InstanceIdResult>() {
+
+                @Override
+                public void onSuccess(InstanceIdResult instanceIdResult) {
+                    onTokenRefresh(instanceIdResult.getToken());
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    AppCenterLog.error(LOG_TAG, "Failed to register push.", e);
+                }
+            });
+        } catch (NoSuchMethodError e) {
+            onTokenRefresh(getToken(firebaseInstanceId));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private String getToken(FirebaseInstanceId firebaseInstanceId) {
+
+        /* On Xamarin, the stable Nuget still uses a version of Firebase having the old API only. */
+        AppCenterLog.debug(LOG_TAG, "Using old Firebase methods.");
+        return firebaseInstanceId.getToken();
     }
 
     /**

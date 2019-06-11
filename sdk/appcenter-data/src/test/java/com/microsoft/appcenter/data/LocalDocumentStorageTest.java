@@ -215,6 +215,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void deleteDocumentOfflineSucceeds() {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
+        when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         DocumentWrapper<Void> wrapper = new DocumentWrapper<>(null, PARTITION, DOCUMENT_ID);
         assertTrue(mLocalDocumentStorage.deleteOffline(mUserTableName, wrapper, new WriteOptions()));
         assertTrue(wrapper.isFromDeviceCache());
@@ -235,6 +236,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void deleteOfflineFails() {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(-1L);
+        when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID, new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
@@ -245,6 +247,7 @@ public class LocalDocumentStorageTest {
     @Test
     public void deleteOfflineSucceeds() {
         when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
+        when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID, new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
         verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());

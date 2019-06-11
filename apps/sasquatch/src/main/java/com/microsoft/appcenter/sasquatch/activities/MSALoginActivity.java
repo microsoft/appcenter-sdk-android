@@ -153,7 +153,6 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 failSignIn(errorCode, description);
             }
@@ -190,7 +189,6 @@ public class MSALoginActivity extends AppCompatActivity {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 clearCookies();
                 failSignOut(errorCode, description);
@@ -206,7 +204,6 @@ public class MSALoginActivity extends AppCompatActivity {
         mWebView.loadUrl(SIGN_OUT_URL + REDIRECT_URI_PARAM + CLIENT_ID_PARAM);
     }
 
-    @SuppressWarnings("deprecation")
     private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -320,13 +317,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    /* TODO remove this method once Auth published to jCenter. */
-                    public void onCallSucceeded(String payload) {
-                        onCallSucceeded(payload, null);
-                    }
-
-                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
-                    @SuppressWarnings("WeakerAccess")
+                    @Override
                     public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);
@@ -370,13 +361,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 },
                 new ServiceCallback() {
 
-                    /* TODO remove this method once Auth published to jCenter. */
-                    public void onCallSucceeded(String payload) {
-                        onCallSucceeded(payload, null);
-                    }
-
-                    /* TODO add @Override once Auth published to jCenter. Remove also suppress warnings. */
-                    @SuppressWarnings("WeakerAccess")
+                    @Override
                     public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
                         try {
                             JSONObject response = new JSONObject(payload);

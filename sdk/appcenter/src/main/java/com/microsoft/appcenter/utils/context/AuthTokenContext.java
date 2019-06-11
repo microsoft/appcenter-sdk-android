@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -171,8 +170,7 @@ public class AuthTokenContext {
             listener.onNewAuthToken(authToken);
             if (isNewUser) {
                 String accountId = homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
-                UserInformation userInfo = accountId == null ? null : new UserInformation(accountId);
-                listener.onNewUser(userInfo);
+                listener.onNewUser(accountId);
             }
         }
     }
@@ -428,14 +426,14 @@ public class AuthTokenContext {
          *
          * @param authToken authorization token.
          */
-        void onNewAuthToken(String authToken);
+        void onNewAuthToken(@SuppressWarnings("unused") String authToken);
 
         /**
          * Called whenever a new user signs in.
          *
-         * @param userInfo user information.
+         * @param accountId account id.
          */
-        void onNewUser(UserInformation userInfo);
+        void onNewUser(String accountId);
 
         /**
          * Called whenever token needs to be refreshed.

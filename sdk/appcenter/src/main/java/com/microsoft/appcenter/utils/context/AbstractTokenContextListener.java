@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.utils.context;
 
-import com.microsoft.appcenter.UserInformation;
-
 /**
  * Empty implementation to make callbacks optional.
  */
@@ -17,11 +15,10 @@ public abstract class AbstractTokenContextListener implements AuthTokenContext.L
     }
 
     @Override
-    public void onNewUser(UserInformation userInfo) {
+    public void onNewUser(String accountId) {
     }
 
     @Override
     public void onTokenRequiresRefresh(String homeAccountId) {
     }
-
 }

@@ -8,7 +8,6 @@ package com.microsoft.appcenter.utils.context;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.UserInformation;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -17,7 +16,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,10 +112,10 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called. */
         verify(mockListener, times(2)).onNewAuthToken(notNull(String.class));
-        ArgumentCaptor<UserInformation> captorArg = ArgumentCaptor.forClass(UserInformation.class);
+        ArgumentCaptor<String> captorArg = ArgumentCaptor.forClass(String.class);
         verify(mockListener).onNewUser(captorArg.capture());
         assertNotNull(captorArg.getValue());
-        assertEquals(accountId, captorArg.getValue().getAccountId());
+        assertEquals(accountId, captorArg.getValue());
 
         /* Verify that the returned token is the same. */
         assertEquals(mAuthTokenContext.getAuthToken(), AUTH_TOKEN);
@@ -127,7 +125,7 @@ public class AuthTokenContextTest {
 
         /* Verify that listener is called on empty token. */
         verify(mockListener).onNewAuthToken(isNull(String.class));
-        ArgumentCaptor<UserInformation> captorArgNull = ArgumentCaptor.forClass(UserInformation.class);
+        ArgumentCaptor<String> captorArgNull = ArgumentCaptor.forClass(String.class);
         verify(mockListener, times(2)).onNewUser(captorArgNull.capture());
         assertNull(captorArgNull.getValue());
         assertNull(mAuthTokenContext.getAuthToken());
@@ -220,13 +218,11 @@ public class AuthTokenContextTest {
         mAuthTokenContext.setAuthToken("authToken2", "accountId", null);
         List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
         AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
-        final boolean[] isCallbackCalled = {false};
         AuthTokenContext.Listener listener = spy(AbstractTokenContextListener.class);
 
         /* If expires date is null, we should not be able to reach that method. */
         mAuthTokenContext.addListener(listener);
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-        Assert.assertFalse(isCallbackCalled[0]);
         verify(listener, never()).onTokenRequiresRefresh(notNull(String.class));
     }
 

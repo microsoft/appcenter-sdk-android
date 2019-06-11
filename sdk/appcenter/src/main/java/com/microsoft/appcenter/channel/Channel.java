@@ -11,8 +11,8 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 
-import static com.microsoft.appcenter.Flags.PERSISTENCE_CRITICAL;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 
 /**
  * The interface for Channel.
@@ -79,7 +79,7 @@ public interface Channel {
      */
     void enqueue(@NonNull Log log,
                  @NonNull String groupName,
-                 @IntRange(from = PERSISTENCE_NORMAL, to = PERSISTENCE_CRITICAL) int flags);
+                 @IntRange(from = NORMAL, to = CRITICAL) int flags);
 
     /**
      * Check whether channel is enabled or disabled.
@@ -145,7 +145,7 @@ public interface Channel {
          * @param groupName     group name.
          * @param groupListener group listener.
          */
-        void onGroupAdded(@NonNull String groupName, GroupListener groupListener);
+        void onGroupAdded(@NonNull String groupName, GroupListener groupListener, long batchTimeInterval);
 
         /**
          * Called whenever a new group is removed.

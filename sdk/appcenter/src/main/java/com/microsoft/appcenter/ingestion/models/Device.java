@@ -135,7 +135,6 @@ public class Device extends WrapperSdk {
      *
      * @return the sdkName value
      */
-    @SuppressWarnings("WeakerAccess")
     public String getSdkName() {
         return sdkName;
     }
@@ -154,7 +153,6 @@ public class Device extends WrapperSdk {
      *
      * @return the sdkVersion value
      */
-    @SuppressWarnings("WeakerAccess")
     public String getSdkVersion() {
         return this.sdkVersion;
     }
@@ -463,7 +461,7 @@ public class Device extends WrapperSdk {
     }
 
     @Override
-    @SuppressWarnings("SimplifiableIfStatement")
+    @SuppressWarnings({"SimplifiableIfStatement", "EqualsReplaceableByObjectsCall"})
     public boolean equals(Object o) {
         if (this == o) {
             return true;

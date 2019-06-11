@@ -18,6 +18,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,7 +46,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DefaultChannel.class,
         DeviceInfoHelper.class,
         HandlerUtils.class,
-        IdHelper.class
+        IdHelper.class,
+        SharedPreferencesManager.class,
+        System.class
 })
 public class AbstractDefaultChannelTest {
 
@@ -138,5 +141,7 @@ public class AbstractDefaultChannelTest {
         when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
+        mockStatic(SharedPreferencesManager.class);
+        mockStatic(System.class);
     }
 }

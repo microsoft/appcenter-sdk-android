@@ -110,6 +110,45 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void offlineUpdatePreservesEtag() {
+
+        /* Write document to the cache with an etag set. */
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, DefaultPartitions.USER_DOCUMENTS, ID, "etag", 0);
+        mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument.getETag());
+        assertEquals("etag", createdDocument.getETag());
+
+        /* Replace document offline, etag should not be replaced. */
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, DefaultPartitions.APP_DOCUMENTS, ID, "value2", String.class, new WriteOptions());
+        DocumentWrapper<String> updatedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(updatedDoc.getETag());
+        assertEquals("etag", updatedDoc.getETag());
+    }
+
+    @Test
+    public void offlineDeletePreservesEtag() {
+
+        /* Delete a non-existant document offline, etag should be null. */
+        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, new WriteOptions());
+        DocumentWrapper<String> deletedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, null);
+        assertNull(deletedDoc.getETag());
+
+        /* Write document to the cache with an etag set. */
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, DefaultPartitions.USER_DOCUMENTS, ID, "etag", 0);
+        mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument.getETag());
+        assertEquals("etag", createdDocument.getETag());
+
+        /* Delete document offline, etag should not be replaced. */
+        mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, new WriteOptions());
+        deletedDoc = mLocalDocumentStorage.read(USER_TABLE_NAME, DefaultPartitions.USER_DOCUMENTS, ID, String.class, null);
+        assertNotNull(deletedDoc.getETag());
+        assertEquals("etag", deletedDoc.getETag());
+    }
+
+    @Test
     public void readExpiredDocument() {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */
@@ -238,6 +277,25 @@ public class LocalDocumentStorageAndroidTest {
         operation = operations.get(0);
         assertEquals(Constants.PENDING_OPERATION_REPLACE_VALUE, operation.getOperation());
         assertTrue(operation.getDocument().contains("Test2"));
+    }
+
+    @Test
+    public void createAndUpdateOfflineDifferentIDs() {
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
+        List<PendingOperation> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(1, operations.size());
+        PendingOperation operation = operations.get(0);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation.getOperation());
+        assertTrue(operation.getDocument().contains("Test"));
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID + "1", "Test2", String.class, new WriteOptions());
+        operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);
+        assertEquals(2, operations.size());
+        PendingOperation operation1 = operations.get(0);
+        PendingOperation operation2 = operations.get(1);
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation1.getOperation());
+        assertEquals(PENDING_OPERATION_CREATE_VALUE, operation2.getOperation());
+        assertTrue(operation1.getDocument().contains("Test"));
+        assertTrue(operation2.getDocument().contains("Test2"));
     }
 
     @Test

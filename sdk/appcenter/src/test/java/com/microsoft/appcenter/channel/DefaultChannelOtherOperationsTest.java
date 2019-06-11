@@ -40,7 +40,6 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTest {
 
     @Test
-    @SuppressWarnings("unchecked")
     public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion, mAppCenterHandler);
@@ -51,8 +50,6 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
     @Test
     public void logCallbacks() {
-
-        @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         Channel.Listener listener = spy(new AbstractChannelListener());
@@ -118,8 +115,6 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
-
-        @SuppressWarnings("ConstantConditions")
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
@@ -181,7 +176,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
             verify(listener1).shouldFilter(log);
             verify(listener2).onPreparingLog(log, TEST_GROUP);
             verify(listener2).shouldFilter(log);
-            verify(persistence).putLog(log, TEST_GROUP, Flags.PERSISTENCE_NORMAL);
+            verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         }
     }
 
@@ -194,7 +189,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         channel.addListener(listener);
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
-        verify(listener).onGroupAdded(TEST_GROUP, groupListener);
+        verify(listener).onGroupAdded(TEST_GROUP, groupListener, BATCH_TIME_INTERVAL);
         channel.pauseGroup(TEST_GROUP, null);
         verify(listener).onPaused(TEST_GROUP, null);
         channel.pauseGroup(TEST_GROUP, "token");

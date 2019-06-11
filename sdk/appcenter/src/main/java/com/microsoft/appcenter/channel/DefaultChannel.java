@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -30,6 +31,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,6 +57,17 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
+
+    /**
+     * Start of schedule timestamp.
+     */
+    @VisibleForTesting
+    static final String START_TIMER_PREFIX = "startTimerPrefix.";
+
+    /**
+     * Transmission interval minimum value, in ms.
+     */
+    private static final long MINIMUM_TRANSMISSION_INTERVAL = 3000;
 
     /**
      * Application context.
@@ -232,7 +245,7 @@ public class DefaultChannel implements Channel {
 
         /* Call listeners so that they can react on group adding. */
         for (Listener listener : mListeners) {
-            listener.onGroupAdded(groupName, groupListener);
+            listener.onGroupAdded(groupName, groupListener, batchTimeInterval);
         }
     }
 
@@ -435,6 +448,7 @@ public class DefaultChannel implements Channel {
         if (groupState.mScheduled) {
             groupState.mScheduled = false;
             mAppCenterHandler.removeCallbacks(groupState.mRunnable);
+            SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
         }
     }
 
@@ -656,7 +670,7 @@ public class DefaultChannel implements Channel {
 
         /* Check if disabled with discarding logs. */
         if (mDiscardLogs) {
-            AppCenterLog.warn(LOG_TAG, "Channel is disabled, log are discarded.");
+            AppCenterLog.warn(LOG_TAG, "Channel is disabled, the log is discarded.");
             if (groupState.mListener != null) {
                 groupState.mListener.onBeforeSending(log);
                 groupState.mListener.onFailure(log, new CancellationException());
@@ -751,18 +765,75 @@ public class DefaultChannel implements Channel {
      */
     @VisibleForTesting
     synchronized void checkPendingLogs(@NonNull GroupState groupState) {
-        if (groupState.mPaused) {
-            AppCenterLog.debug(LOG_TAG, groupState.mName + " is paused. Skip checking pending logs.");
+        AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
+                groupState.mName, groupState.mPendingLogCount, groupState.mBatchTimeInterval));
+        Long batchTimeInterval = resolveTriggerInterval(groupState);
+
+        /* Check if there is no need to trigger ingestion. */
+        if (batchTimeInterval == null || groupState.mPaused) {
             return;
         }
-        long pendingLogCount = groupState.mPendingLogCount;
-        AppCenterLog.debug(LOG_TAG, "checkPendingLogs(" + groupState.mName + ") pendingLogCount=" + pendingLogCount);
-        if (pendingLogCount >= groupState.mMaxLogsPerBatch) {
+
+        /* Trigger immediately. */
+        if (batchTimeInterval == 0) {
             triggerIngestion(groupState);
-        } else if (pendingLogCount > 0 && !groupState.mScheduled) {
-            groupState.mScheduled = true;
-            mAppCenterHandler.postDelayed(groupState.mRunnable, groupState.mBatchTimeInterval);
         }
+
+        /* Postpone triggering ingestion. */
+        else if (!groupState.mScheduled) {
+            groupState.mScheduled = true;
+            mAppCenterHandler.postDelayed(groupState.mRunnable, batchTimeInterval);
+        }
+    }
+
+    /**
+     * Calculate remaining interval to trigger ingestion based on initial batch interval and stored start value.
+     *
+     * @param groupState The group state.
+     * @return Remaining interval to trigger ingestion. <code>null</code> if there is no need to trigger at all.
+     */
+    @WorkerThread
+    private Long resolveTriggerInterval(@NonNull GroupState groupState) {
+
+        /* If the interval is custom. */
+        if (groupState.mBatchTimeInterval > MINIMUM_TRANSMISSION_INTERVAL) {
+            return resolveCustomTriggerInterval(groupState);
+        } else {
+            return resolveDefaultTriggerInterval(groupState);
+        }
+    }
+
+    @WorkerThread
+    private Long resolveCustomTriggerInterval(@NonNull GroupState groupState) {
+        long now = System.currentTimeMillis();
+        long startTimer = SharedPreferencesManager.getLong(START_TIMER_PREFIX + groupState.mName);
+        if (groupState.mPendingLogCount > 0) {
+
+            /* The timer isn't started or has invalid value (start time in the future), so start it and store the current time. */
+            if (startTimer == 0 || startTimer > now) {
+                SharedPreferencesManager.putLong(START_TIMER_PREFIX + groupState.mName, now);
+                AppCenterLog.debug(LOG_TAG, "The timer value for " + groupState.mName + " has been saved.");
+                return groupState.mBatchTimeInterval;
+            }
+
+            /* Wait for the rest of the interval. */
+            return Math.max(groupState.mBatchTimeInterval - (now - startTimer), 0);
+        } else {
+
+            /* If the interval is over. */
+            if (startTimer + groupState.mBatchTimeInterval < now) {
+                SharedPreferencesManager.remove(START_TIMER_PREFIX + groupState.mName);
+                AppCenterLog.debug(LOG_TAG, "The timer for " + groupState.mName + " channel finished.");
+            }
+            return null;
+        }
+    }
+
+    private Long resolveDefaultTriggerInterval(@NonNull GroupState groupState) {
+        if (groupState.mPendingLogCount >= groupState.mMaxLogsPerBatch) {
+            return 0L;
+        }
+        return groupState.mPendingLogCount > 0 ? groupState.mBatchTimeInterval : null;
     }
 
     @VisibleForTesting

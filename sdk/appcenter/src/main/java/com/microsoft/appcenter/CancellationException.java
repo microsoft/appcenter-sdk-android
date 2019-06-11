@@ -8,6 +8,7 @@ package com.microsoft.appcenter;
 /**
  * Thrown when {@link AppCenter} received a cancellation sending request to the server.
  */
+@SuppressWarnings("JavadocReference")
 public class CancellationException extends Exception {
 
     public CancellationException() {

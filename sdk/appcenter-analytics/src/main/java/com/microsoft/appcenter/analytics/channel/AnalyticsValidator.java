@@ -54,7 +54,6 @@ public class AnalyticsValidator extends AbstractChannelListener {
      * @param log The log.
      * @return true if validation passed, false otherwise.
      */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean validateLog(@NonNull LogWithNameAndProperties log) {
         String name = validateName(log.getName(), log.getType());
         if (name == null) {
@@ -72,7 +71,6 @@ public class AnalyticsValidator extends AbstractChannelListener {
      * @param log The log.
      * @return true if validation passed, false otherwise.
      */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean validateLog(@NonNull EventLog log) {
         String name = validateName(log.getName(), log.getType());
         if (name == null) {
@@ -246,8 +244,6 @@ public class AnalyticsValidator extends AbstractChannelListener {
 
     @Override
     public boolean shouldFilter(@NonNull Log log) {
-
-        //noinspection SimplifiableIfStatement
         if (log instanceof PageLog) {
             return !validateLog((LogWithNameAndProperties) log);
         } else if (log instanceof EventLog) {

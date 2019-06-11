@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.Flags.PERSISTENCE_NORMAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
@@ -204,7 +204,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -231,7 +231,7 @@ public class DatabasePersistence extends Persistence {
                     db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
                 }
                 if (oldVersion < VERSION_PRIORITY_KEY) {
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + PERSISTENCE_NORMAL);
+                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + NORMAL);
                 }
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT 0");
                 createPriorityIndex(db);
@@ -272,7 +272,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     @Override
-    public long putLog(@NonNull Log log, @NonNull String group, @IntRange(from = Flags.PERSISTENCE_NORMAL, to = Flags.PERSISTENCE_CRITICAL) int flags) throws PersistenceException {
+    public long putLog(@NonNull Log log, @NonNull String group, @IntRange(from = Flags.NORMAL, to = Flags.CRITICAL) int flags) throws PersistenceException {
 
         /* Convert log to JSON string and put in the database. */
         try {
@@ -416,7 +416,7 @@ public class DatabasePersistence extends Persistence {
         return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
     }
 
-    private int countLogs(String whereClause, String ...whereArgs) {
+    private int countLogs(String whereClause, String... whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();

@@ -62,7 +62,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void listenNetwork() {
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
         ArgumentCaptor<ConnectivityManager.NetworkCallback> callback = ArgumentCaptor.forClass(ConnectivityManager.NetworkCallback.class);
