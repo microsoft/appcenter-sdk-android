@@ -48,7 +48,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
@@ -131,9 +130,7 @@ public class MainActivity extends AppCompatActivity {
         if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
             int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
             try {
-
-                /* TODO remove reflection and catch block after API available to jCenter. */
-                boolean result = (boolean) Analytics.class.getMethod("setTransmissionInterval", int.class).invoke(null, latency);
+                boolean result = Analytics.setTransmissionInterval(latency);
                 if (result) {
                     Toast.makeText(application, String.format(application.getString(R.string.analytics_transmission_interval_change_success), latency), Toast.LENGTH_SHORT).show();
                 } else {
@@ -388,15 +385,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setDistributeEnabledForDebuggableBuild() {
-
-        /* TODO Call method directly / remove reflection once SDK being released. */
-        try {
-            Method method = Distribute.class.getMethod("setEnabledForDebuggableBuild", boolean.class);
-            method.invoke(null, sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false));
-        } catch (NoSuchMethodException ignore) {
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        boolean enabledForDebuggableBuild = sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false);
+        Distribute.setEnabledForDebuggableBuild(enabledForDebuggableBuild);
     }
 
     public enum StartType {
