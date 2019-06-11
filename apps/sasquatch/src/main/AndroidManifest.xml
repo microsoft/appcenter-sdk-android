@@ -60,9 +60,6 @@
             android:name=".activities.CommonSchemaPropertiesActivity"
             android:label="@string/cs_properties_title" />
         <activity
-            android:name=".activities.AuthenticationProviderActivity"
-            android:label="@string/title_auth" />
-        <activity
             android:name=".activities.DataActivity"
             android:label="@string/title_data" />
         <activity
