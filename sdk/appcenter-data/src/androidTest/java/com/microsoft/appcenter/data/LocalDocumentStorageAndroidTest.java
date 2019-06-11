@@ -27,6 +27,7 @@ import java.util.List;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.data.DefaultPartitions.APP_DOCUMENTS;
 import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 import static com.microsoft.appcenter.data.LocalDocumentStorage.FAILED_TO_READ_FROM_CACHE;
 import static org.junit.Assert.assertEquals;
@@ -261,6 +262,50 @@ public class LocalDocumentStorageAndroidTest {
         assertEquals(1, operations.size());
         operation = operations.get(0);
         assertEquals(PENDING_OPERATION_DELETE_VALUE, operation.getOperation());
+    }
+
+    @Test
+    public void getDocumentsByPartition() {
+        /* Test there's nothing at the beginning */
+        List<LocalDocument> documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(0, documents.size());
+
+        /* Create a document, check there's one returned */
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
+        documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(1, documents.size());
+        LocalDocument localDocument = documents.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+
+        /* Add second one with a different partition, check twice */
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, APP_DOCUMENTS, ID, "Test", String.class, new WriteOptions());
+        documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, APP_DOCUMENTS);
+        assertEquals(1, documents.size());
+        localDocument = documents.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(APP_DOCUMENTS, localDocument.getPartition());
+        documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(1, documents.size());
+        localDocument = documents.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+
+        /* Add a third document with the same partition as either of the previous two, check twice */
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID + 123, "Test", String.class, new WriteOptions());
+        documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(2, documents.size());
+        localDocument = documents.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+        localDocument = documents.get(1);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(USER_DOCUMENTS, localDocument.getPartition());
+        documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, APP_DOCUMENTS);
+        assertEquals(1, documents.size());
+        localDocument = documents.get(0);
+        assertEquals(Constants.PENDING_OPERATION_CREATE_VALUE, localDocument.getOperation());
+        assertEquals(APP_DOCUMENTS, localDocument.getPartition());
     }
 
     @Test
