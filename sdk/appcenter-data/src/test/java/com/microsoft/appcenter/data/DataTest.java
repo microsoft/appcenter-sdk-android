@@ -85,6 +85,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.refEq;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -168,13 +169,14 @@ public class DataTest extends AbstractDataTest {
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
         Page<TestDocument> page = docs.getCurrentPage();
-        assertNull(page.getItems());
-        assertNotNull(page.getError());
-        assertEquals(DataException.class, page.getError().getClass());
+        assertNotNull(page.getItems());
+        assertNull(page.getError());
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mRemoteOperationListener);
-        verifyZeroInteractions(mLocalDocumentStorage);
-        verifyZeroInteractions(mAuthTokenContext);
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
     }
 
     @Test
