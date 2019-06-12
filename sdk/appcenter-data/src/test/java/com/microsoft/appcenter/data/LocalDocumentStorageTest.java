@@ -281,4 +281,9 @@ public class LocalDocumentStorageTest {
         assertNotNull(operations);
         assertEquals(0, operations.size());
     }
+
+    @Test
+    public void localDocumentNoPendingOperation(){
+        assertFalse(new LocalDocument("Table", null, "partition", "id","doc", 0, 0,0).isPendingOperation());
+    }
 }

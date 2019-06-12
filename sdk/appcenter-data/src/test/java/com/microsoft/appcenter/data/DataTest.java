@@ -29,6 +29,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
@@ -38,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -56,6 +58,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import javax.net.ssl.SSLException;
+
+import javassist.bytecode.analysis.Util;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
@@ -1386,7 +1390,54 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getError());
         assertTrue(deleteDocument.getError().getMessage().contains(failedMessage));
+
+        mockSignOut();
+        PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        assertNotNull(documents);
+        Page<TestDocument> currentPage = documents.getCurrentPage();
+        assertNotNull(currentPage);
+        DataException error = currentPage.getError();
+        assertNull(currentPage.getItems());
+        assertNotNull(error);
+        assertTrue(error.getMessage().contains("List operation requested on user partition, but the user is not logged in."));
     }
+
+    private void mockSignOut() {
+        Mockito.when(mAuthTokenContext.getAccountId()).thenReturn(null);
+    }
+
+    @Test
+    public void listWhenThereArePendingOperations(){
+        /* return arraylist of one item which will have a non-expired pending operation */
+        final LocalDocument localDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                Utils.getGson().toJson(new TestDocument("test")),
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
+        List<LocalDocument> storedDocuments = Collections.singletonList(localDocument);
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(storedDocuments));
+        when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS)).thenReturn(storedDocuments);
+        PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        assertNull(documents.getCurrentPage().getError());
+        List<DocumentWrapper<TestDocument>> items = documents.getCurrentPage().getItems();
+        assertEquals(1, items.size());
+        assertNull(items.get(0).getError());
+        assertEquals(localDocument.getDocumentId(), items.get(0).getId());
+
+    }
+
+    @Test
+    public void readOnlyListReturnsEmptyResult() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        when(mLocalDocumentStorage.getDocumentsByPartition(com.microsoft.appcenter.Constants.READONLY_TABLE, APP_DOCUMENTS)).thenReturn(new ArrayList<LocalDocument>());
+        PaginatedDocuments<String> documents = Data.list(String.class,APP_DOCUMENTS).get();
+        assertTrue(documents.getCurrentPage().getItems().size() == 0);
+    }
+
 
     @Test
     public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
