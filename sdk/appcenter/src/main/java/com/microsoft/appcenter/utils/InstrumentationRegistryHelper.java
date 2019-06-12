@@ -18,33 +18,34 @@ import java.util.List;
  */
 public class InstrumentationRegistryHelper {
 
-    private static final List<String> LOCATIONS = Arrays.asList("androidx.test.platform.app.InstrumentationRegistry",
+    private static final String[] LOCATIONS = new String[]{"androidx.test.platform.app.InstrumentationRegistry",
             "androidx.test.InstrumentationRegistry",
-            "android.support.test.InstrumentationRegistry");
+            "android.support.test.InstrumentationRegistry"};
 
     /**
      * Get the instrumentation arguments from the InstrumentationRegistry. Wrapper exists for unit
      * tests.
      *
      * @return the instrumentation arguments.
-     * @throws LinkageError          if the class, method is not found or does not match, typically no test dependencies in release.
+     * @throws IllegalStateException if it cannot call getArguments using any of the provided classes.
      */
-    public static Bundle getArguments() throws LinkageError, IllegalStateException {
-        Iterator<String> iterator = LOCATIONS.iterator();
-        while (iterator.hasNext()) {
-            String location = iterator.next();
+    public static Bundle getArguments() throws IllegalStateException {
+        Exception exception = null;
 
+        for (String location : LOCATIONS) {
             try {
-                Class<?> aClass = Class.forName(location);
+                Class<?> aClass = getClass(location);
                 Method getArguments = aClass.getMethod("getArguments", (Class[]) null);
                 return (Bundle) getArguments.invoke(null, (Object[]) null);
-            } catch (IllegalStateException | LinkageError e) {
-                if (!iterator.hasNext()) {
-                    throw e;
-                }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                exception = e;
             }
         }
-        return new Bundle();
+
+        throw new IllegalStateException(exception);
+    }
+
+    public static Class<?> getClass(String className) throws ClassNotFoundException {
+        return Class.forName(className);
     }
 }

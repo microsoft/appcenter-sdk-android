@@ -107,10 +107,16 @@ public class AppCenter {
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
 
     /**
-     * Environment variable name for test to see if we're running in App Center Test
+     * Environment variable name for test to see if we're running in App Center Test.
      */
     @VisibleForTesting
-    static String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
+    static final String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
+
+    /**
+     * A string value for environment variables denoting `true`.
+     */
+    @VisibleForTesting
+    static final String TRUE_ENVIRONMENT_STRING = "1";
 
     /**
      * Shared instance.
@@ -304,18 +310,15 @@ public class AppCenter {
      * Check whether app is running in App Center Test.
      *
      * @return true if running in App Center Test, false otherwise
-     * (and where no test dependencies in release.
+     * (and where no test dependencies in release).
      */
     public static boolean isRunningInAppCenterTestCloud() {
-        try
-        {
+        try {
             Bundle arguments = InstrumentationRegistryHelper.getArguments();
             String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
 
-            return "1".equals(runningValue);
-        }
-        catch (LinkageError | IllegalStateException e)
-        {
+            return TRUE_ENVIRONMENT_STRING.equals(runningValue);
+        } catch (IllegalStateException e) {
             return false;
         }
     }

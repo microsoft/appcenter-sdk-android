@@ -1088,35 +1088,4 @@ public class AppCenterTest extends AbstractAppCenterTest {
             }
         }));
     }
-
-    @Test
-    public void notRunningInAppCenterTestNoEnvironment() {
-        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
-    }
-
-    @Test
-    public void notRunningInAppCenterTest() {
-        addRunningInAppCenterToRegistry("0");
-        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
-    }
-
-    @Test
-    public void runningInAppCenterTest() {
-        addRunningInAppCenterToRegistry("1");
-        assertEquals(true, AppCenter.isRunningInAppCenterTestCloud());
-    }
-
-    @Test
-    public void notRunningInAppCenterTestWhenLinkageError() throws Exception {
-        mockStatic(InstrumentationRegistryHelper.class);
-        doThrow(new LinkageError()).when(InstrumentationRegistryHelper.class, "getArguments");
-        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
-    }
-
-    @Test
-    public void notRunningInAppCenterTestWhenIllegalStateException() throws Exception {
-        mockStatic(InstrumentationRegistryHelper.class);
-        doThrow(new IllegalStateException()).when(InstrumentationRegistryHelper.class, "getArguments");
-        assertEquals(false, AppCenter.isRunningInAppCenterTestCloud());
-    }
 }
