@@ -78,7 +78,7 @@ public class Utils {
         }
     }
 
-    static <T> DocumentWrapper<T> parseLocalDocument(LocalDocument localDocument, Class<T> documentType) {
+    private static <T> DocumentWrapper<T> parseLocalDocument(LocalDocument localDocument, Class<T> documentType) {
         DocumentWrapper<T> documentWrapper = parseDocument(
                 localDocument.getDocument(),
                 localDocument.getPartition(),
@@ -97,7 +97,7 @@ public class Utils {
         ArrayList<DocumentWrapper<T>> documentWrappers = new ArrayList<>();
         for (LocalDocument localDoc : localDocuments) {
             if (!localDoc.isExpired()) {
-                documentWrappers.add(Utils.parseLocalDocument(localDoc, documentType));
+                documentWrappers.add(parseLocalDocument(localDoc, documentType));
             }
         }
         page.setItems(documentWrappers);

@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.data.models;
 
-import com.microsoft.appcenter.data.Utils;
-
 /**
  * Pending operation.
  */

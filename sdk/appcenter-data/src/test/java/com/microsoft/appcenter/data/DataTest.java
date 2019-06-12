@@ -14,9 +14,9 @@ import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
-import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -29,7 +29,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.hamcrest.CoreMatchers;
@@ -58,8 +57,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import javax.net.ssl.SSLException;
-
-import javassist.bytecode.analysis.Util;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
@@ -1396,6 +1393,8 @@ public class DataTest extends AbstractDataTest {
     public void listUserPartitionReturnsAnExceptionWhenNotSignedIn() {
         mockSignOut();
         PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        Iterator<DocumentWrapper<TestDocument>> iterator = documents.iterator();
+        assertFalse(iterator.hasNext());
         assertNotNull(documents);
         Page<TestDocument> currentPage = documents.getCurrentPage();
         assertNotNull(currentPage);
@@ -1425,20 +1424,59 @@ public class DataTest extends AbstractDataTest {
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
-                DOCUMENT_ID,
+                "localDocument",
                 document,
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        List<LocalDocument> storedDocuments = Collections.singletonList(localDocument);
+        final LocalDocument expiredDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "expiredDocument",
+                document,
+                PAST_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+        );
+        final LocalDocument notPendingDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                null,
+                RESOLVED_USER_PARTITION,
+                "notPendingDocument",
+                document,
+                PAST_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+        );
+        final LocalDocument notPendingNotExpiredDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                null,
+                RESOLVED_USER_PARTITION,
+                "notPendingNotExpiredDocument",
+                document,
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
+        List<LocalDocument> storedDocuments = new ArrayList<>();
+        storedDocuments.add(localDocument);
+        storedDocuments.add(expiredDocument);
+        storedDocuments.add(notPendingDocument);
+        storedDocuments.add(notPendingNotExpiredDocument);
         assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(storedDocuments));
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(localDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(expiredDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingNotExpiredDocument)));
         when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS)).thenReturn(storedDocuments);
         PaginatedDocuments<T> documents = Data.list(documentType, USER_DOCUMENTS).get();
         assertNull(documents.getCurrentPage().getError());
         List<DocumentWrapper<T>> items = documents.getCurrentPage().getItems();
-        assertEquals(1, items.size());
+        assertEquals(2, items.size());
         assertNull(items.get(0).getError());
         assertEquals(localDocument.getDocumentId(), items.get(0).getId());
+        assertNull(items.get(1).getError());
+        assertEquals(notPendingNotExpiredDocument.getDocumentId(), items.get(1).getId());
     }
 
     @Test
@@ -1446,7 +1484,7 @@ public class DataTest extends AbstractDataTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getDocumentsByPartition(com.microsoft.appcenter.Constants.READONLY_TABLE, APP_DOCUMENTS)).thenReturn(new ArrayList<LocalDocument>());
         PaginatedDocuments<String> documents = Data.list(String.class,APP_DOCUMENTS).get();
-        assertTrue(documents.getCurrentPage().getItems().size() == 0);
+        assertEquals(0, documents.getCurrentPage().getItems().size());
     }
 
 

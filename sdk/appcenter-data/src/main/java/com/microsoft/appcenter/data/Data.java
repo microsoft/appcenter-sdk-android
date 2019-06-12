@@ -22,9 +22,9 @@ import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCal
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
-import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -620,25 +620,24 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;
         }
-        // TODO: wrap background calls with `post`
-        String tableName = Utils.getTableName(partition);
-        if (tableName == null) {
-            completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on user partition, but the user is not logged in."), result);
-            return result;
-        }
-        List<LocalDocument> localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, partition);
-        if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
-            completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
-            return result;
-        }
-        if (!mNetworkStateHelper.isNetworkConnected()) {
-            completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
-            return result;
-        }
         postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
+                String tableName = Utils.getTableName(partition);
+                if (tableName == null) {
+                    completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on user partition, but the user is not logged in."), result);
+                    return;
+                }
+                List<LocalDocument> localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, partition);
+                if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
+                    completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                    return;
+                }
+                if (!mNetworkStateHelper.isNetworkConnected()) {
+                    completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                    return;
+                }
                 getTokenAndCallCosmosDbApi(
                         partition,
                         result,

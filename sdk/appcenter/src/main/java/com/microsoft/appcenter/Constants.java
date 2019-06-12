@@ -56,7 +56,6 @@ public class Constants {
     /**
      * Readonly table name.
      */
-    @VisibleForTesting
     public static final String READONLY_TABLE = "app_documents";
 
     /**
