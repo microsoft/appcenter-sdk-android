@@ -1390,7 +1390,10 @@ public class DataTest extends AbstractDataTest {
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getError());
         assertTrue(deleteDocument.getError().getMessage().contains(failedMessage));
+    }
 
+    @Test
+    public void listUserPartitionReturnsAnExceptionWhenNotSignedIn() {
         mockSignOut();
         PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
         assertNotNull(documents);
@@ -1407,27 +1410,35 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
-    public void listWhenThereArePendingOperations(){
+    public void listAnObjectWhenThereArePendingOperations(){
+        listAnObjectWhenThereArePendingOperations(Utils.getGson().toJson(new TestDocument("test")), TestDocument.class);
+    }
+
+    @Test
+    public void listPrimitiveTypeWhenThereArePendingOperations(){
+        listAnObjectWhenThereArePendingOperations("document", String.class);
+    }
+
+    private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
         /* return arraylist of one item which will have a non-expired pending operation */
         final LocalDocument localDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
-                Utils.getGson().toJson(new TestDocument("test")),
+                document,
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         List<LocalDocument> storedDocuments = Collections.singletonList(localDocument);
         assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(storedDocuments));
         when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS)).thenReturn(storedDocuments);
-        PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        PaginatedDocuments<T> documents = Data.list(documentType, USER_DOCUMENTS).get();
         assertNull(documents.getCurrentPage().getError());
-        List<DocumentWrapper<TestDocument>> items = documents.getCurrentPage().getItems();
+        List<DocumentWrapper<T>> items = documents.getCurrentPage().getItems();
         assertEquals(1, items.size());
         assertNull(items.get(0).getError());
         assertEquals(localDocument.getDocumentId(), items.get(0).getId());
-
     }
 
     @Test

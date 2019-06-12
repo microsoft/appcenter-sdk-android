@@ -79,29 +79,13 @@ public class Utils {
     }
 
     static <T> DocumentWrapper<T> parseLocalDocument(LocalDocument localDocument, Class<T> documentType) {
-        DocumentWrapper<T> documentWrapper;
-
-        try {
-            JsonElement jsonElement = sParser.parse(localDocument.getDocument());
-            /*if(jsonElement.isJsonPrimitive()){
-                documentWrapper = new DocumentWrapper<>(
-                        jsonElement.getAsJsonPrimitive(),
-                        localDocument.getPartition(),
-                        localDocument.getDocumentId(),
-                        localDocument.getETag(),
-                        localDocument.getOperationTime());
-            }*/
-            JsonObject body = jsonElement.getAsJsonObject();
-            documentWrapper = parseDocument(
-                    body,
-                    localDocument.getPartition(),
-                    localDocument.getDocumentId(),
-                    localDocument.getETag(),
-                    localDocument.getOperationTime(),
-                    documentType);
-        } catch (RuntimeException e) {
-            return new DocumentWrapper<>(e);
-        }
+        DocumentWrapper<T> documentWrapper = parseDocument(
+                localDocument.getDocument(),
+                localDocument.getPartition(),
+                localDocument.getDocumentId(),
+                localDocument.getETag(),
+                localDocument.getOperationTime(),
+                documentType);
         documentWrapper.setFromCache(true);
         documentWrapper.setPendingOperation(localDocument.getOperation());
         return documentWrapper;
