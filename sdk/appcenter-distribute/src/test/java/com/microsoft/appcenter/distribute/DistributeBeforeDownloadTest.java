@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -57,6 +58,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -570,6 +572,54 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify no download scheduled. */
         verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    @PrepareForTest({AsyncTaskUtils.class, ProgressDialog.class})
+    public void pauseBeforeDownload() throws Exception {
+
+        /* Mock ProgressDialog. */
+        whenNew(ProgressDialog.class).withAnyArguments().thenReturn(mock(ProgressDialog.class));
+        whenNew(ProgressDialog.class).withArguments(isNull()).thenThrow(new NullPointerException());
+
+        /* Mock we already have redirection parameters. */
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                return mock(ServiceCall.class);
+            }
+        });
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(releaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        mockStatic(AsyncTaskUtils.class);
+        when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify dialog. */
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
+        verify(mDialog).show();
+
+        /* Pause. */
+        Distribute.getInstance().onActivityPaused(null);
+
+        /* Click on download. */
+        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        when(mDialog.isShowing()).thenReturn(false);
+
+        /* Verify that download is scheduled. */
+        verifyStatic();
         AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg());
     }
 
