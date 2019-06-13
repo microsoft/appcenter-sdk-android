@@ -30,8 +30,8 @@ public class InstrumentationRegistryHelper {
         for (String location : LOCATIONS) {
             try {
                 Class<?> aClass = getClass(location);
-                Method getArguments = aClass.getMethod("getArguments", (Class[]) null);
-                return (Bundle) getArguments.invoke(null, (Object[]) null);
+                Method getArguments = aClass.getMethod("getArguments");
+                return (Bundle) getArguments.invoke(null);
             } catch (Exception e) {
                 exception = e;
             }
