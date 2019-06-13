@@ -37,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -116,6 +117,9 @@ public class DataTest extends AbstractDataTest {
 
     @Mock
     private RemoteOperationListener mRemoteOperationListener;
+
+    @Captor
+    private ArgumentCaptor<DocumentWrapper<TestDocument>> mTestDocumentWrapperCaptor;
 
     @Before
     public void setUpAuth() {
@@ -225,11 +229,16 @@ public class DataTest extends AbstractDataTest {
         assertEquals(docs.getCurrentPage().getItems().get(0).getDeserializedValue().test, documents.get(0).getDeserializedValue().test);
 
         /* Verify result was cached */
-        /*verify(mLocalDocumentStorage).writeOnline(
+        ArgumentCaptor<WriteOptions> writeOptions = ArgumentCaptor.forClass(WriteOptions.class);
+        verify(mLocalDocumentStorage).writeOnline(
                 eq(USER_TABLE_NAME),
-                eq(documents.get(0)),
-                any(WriteOptions.class)
-        );*/
+                mTestDocumentWrapperCaptor.capture(),
+                writeOptions.capture()
+        );
+        assertNotNull(mTestDocumentWrapperCaptor.getValue());
+        assertEquals("document id", mTestDocumentWrapperCaptor.getValue().getId());
+        assertNotNull(writeOptions.getValue());
+        assertEquals(TimeToLive.DEFAULT, writeOptions.getValue().getDeviceTimeToLive());
 
         /* Disable the Data module. */
         Data.setEnabled(false).get();
