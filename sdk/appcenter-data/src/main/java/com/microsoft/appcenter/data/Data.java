@@ -41,6 +41,7 @@ import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -595,6 +596,17 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Page<T> page = Utils.parseDocuments(payload, documentType);
+                        String tableName = Utils.getTableName(tokenResult);
+                        if (page.getItems() != null) {
+                            Iterator<DocumentWrapper<T>> documentWrapperIterator = page.getItems().iterator();
+                            while (documentWrapperIterator.hasNext()) {
+                                DocumentWrapper<T> document = documentWrapperIterator.next();
+                                if (document.getError() == null) {
+                                    mLocalDocumentStorage.writeOnline(tableName, document, new WriteOptions());
+                                }
+                            }
+                        }
+                        AppCenterLog.verbose(LOG_TAG, "Success Call Result");
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .setCurrentPage(page).setTokenResult(tokenResult)
                                 .setHttpClient(mHttpClient)

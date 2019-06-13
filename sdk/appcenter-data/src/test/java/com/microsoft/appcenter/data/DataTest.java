@@ -188,6 +188,7 @@ public class DataTest extends AbstractDataTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setDbAccount("accountName")
+                .setAccountId(AbstractDataTest.ACCOUNT_ID)
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -222,6 +223,13 @@ public class DataTest extends AbstractDataTest {
         assertFalse(docs.hasNextPage());
         assertEquals(1, docs.getCurrentPage().getItems().size());
         assertEquals(docs.getCurrentPage().getItems().get(0).getDeserializedValue().test, documents.get(0).getDeserializedValue().test);
+
+        /* Verify result was cached */
+        /*verify(mLocalDocumentStorage).writeOnline(
+                eq(USER_TABLE_NAME),
+                eq(documents.get(0)),
+                any(WriteOptions.class)
+        );*/
 
         /* Disable the Data module. */
         Data.setEnabled(false).get();
@@ -289,6 +297,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        assertNull(docs.getCurrentPage().getError());
         assertTrue(docs.hasNextPage());
         assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
         Page<TestDocument> secondPage = docs.getNextPage().get();
