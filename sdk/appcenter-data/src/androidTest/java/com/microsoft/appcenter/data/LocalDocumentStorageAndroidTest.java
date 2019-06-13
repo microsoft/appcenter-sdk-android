@@ -266,6 +266,7 @@ public class LocalDocumentStorageAndroidTest {
 
     @Test
     public void getDocumentsByPartition() {
+
         /* Test there's nothing at the beginning */
         List<LocalDocument> documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
         assertEquals(0, documents.size());
