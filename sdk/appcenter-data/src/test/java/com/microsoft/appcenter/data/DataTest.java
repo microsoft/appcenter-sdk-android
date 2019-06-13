@@ -1430,7 +1430,7 @@ public class DataTest extends AbstractDataTest {
     private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
         
         /* Return list of one item which will have a non-expired pending operation. */
-        final LocalDocument localDocument = new LocalDocument(
+        LocalDocument localDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1439,7 +1439,7 @@ public class DataTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        final LocalDocument expiredDocument = new LocalDocument(
+        LocalDocument expiredDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1449,7 +1449,7 @@ public class DataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
         );
-        final LocalDocument notPendingDocument = new LocalDocument(
+        LocalDocument notPendingDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 null,
                 RESOLVED_USER_PARTITION,
@@ -1459,7 +1459,7 @@ public class DataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP
         );
-        final LocalDocument notPendingNotExpiredDocument = new LocalDocument(
+        LocalDocument notPendingNotExpiredDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 null,
                 RESOLVED_USER_PARTITION,

@@ -119,10 +119,14 @@ public class LocalDocument {
     /**
      * @return whether the document is expired
      */
-    public boolean isExpired() { return getExpirationTime() <= System.currentTimeMillis(); }
+    public boolean isExpired() {
+        return getExpirationTime() <= System.currentTimeMillis();
+    }
 
     /**
      * @return whether the document is a pending operation or has been synchronized with the DB
      */
-    public boolean isPendingOperation() { return mOperation != null; }
+    public boolean isPendingOperation() {
+        return mOperation != null;
+    }
 }

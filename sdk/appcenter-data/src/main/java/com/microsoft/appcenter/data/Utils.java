@@ -91,13 +91,13 @@ public class Utils {
         return documentWrapper;
     }
 
-    static <T> PaginatedDocuments<T> localDocumentsToNonExpiredPaginated(List<LocalDocument> localDocuments, Class<T> documentType) {
+    static <T> PaginatedDocuments<T> localDocumentsToNonExpiredPaginated(Iterable<LocalDocument> localDocuments, Class<T> documentType) {
         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<>();
         Page<T> page = new Page<>();
         ArrayList<DocumentWrapper<T>> documentWrappers = new ArrayList<>();
-        for (LocalDocument localDoc : localDocuments) {
-            if (!localDoc.isExpired()) {
-                documentWrappers.add(parseLocalDocument(localDoc, documentType));
+        for (LocalDocument localDocument : localDocuments) {
+            if (!localDocument.isExpired()) {
+                documentWrappers.add(parseLocalDocument(localDocument, documentType));
             }
         }
         page.setItems(documentWrappers);
