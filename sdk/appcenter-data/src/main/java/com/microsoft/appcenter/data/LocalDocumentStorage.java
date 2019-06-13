@@ -233,7 +233,7 @@ class LocalDocumentStorage {
     }
 
     List<LocalDocument> getDocumentsByPartition(String table, String partition) {
-        return queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[] { partition });
+        return queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[]{partition});
     }
 
     List<LocalDocument> getPendingOperations(String table) {
@@ -270,7 +270,8 @@ class LocalDocumentStorage {
     }
 
     /**
-     *  Check if local documents contain any pending operation that has not expired yet.
+     * Check if local documents contain any pending operation that has not expired yet.
+     *
      * @param localDocuments list of documents to check.
      * @return true if there is at least one document is in storage for the given partition
      * and has pending operation on it and is not expired.
