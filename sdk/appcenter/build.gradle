@@ -5,10 +5,3 @@
 
 description = 'This package contains the basic functionalities that all App Center services use to communicate with the backend.'
 evaluationDependsOn(':sdk')
-
-dependencies {
-    def version = "1.0.1"
-    def testRunner = "com.android.support.test:runner:${version}"
-    compileOnly testRunner
-    testImplementation testRunner
-}
