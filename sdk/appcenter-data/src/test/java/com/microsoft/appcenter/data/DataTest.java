@@ -1419,7 +1419,8 @@ public class DataTest extends AbstractDataTest {
     }
 
     private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
-        /* return arraylist of one item which will have a non-expired pending operation */
+        
+        /* Return list of one item which will have a non-expired pending operation. */
         final LocalDocument localDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
