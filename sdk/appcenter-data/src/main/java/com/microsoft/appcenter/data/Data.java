@@ -355,8 +355,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private synchronized void processPendingOperations() {
-        for (LocalDocument po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
-            String outgoingId = Utils.getOutgoingId(po.getPartition(), po.getDocumentId());
+        for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+            String outgoingId = Utils.getOutgoingId(localDocument.getPartition(), localDocument.getDocumentId());
 
             /* If the operation is already being processed, skip it. */
             if (mOutgoingPendingOperationCalls.containsKey(outgoingId)) {
@@ -365,13 +365,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
             /* Put the pending document id into the map to prevent further duplicate http call. The ServiceCall will be set when the http operation executes. */
             mOutgoingPendingOperationCalls.put(outgoingId, null);
-            if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                    PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                instanceCreateOrUpdate(po);
-            } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                instanceDelete(po);
+            if (PENDING_OPERATION_CREATE_VALUE.equals(localDocument.getOperation()) ||
+                    PENDING_OPERATION_REPLACE_VALUE.equals(localDocument.getOperation())) {
+                instanceCreateOrUpdate(localDocument);
+            } else if (PENDING_OPERATION_DELETE_VALUE.equals(localDocument.getOperation())) {
+                instanceDelete(localDocument);
             } else {
-                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", po.getOperation()));
+                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", localDocument.getOperation()));
             }
         }
     }

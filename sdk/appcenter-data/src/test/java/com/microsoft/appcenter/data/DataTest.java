@@ -533,19 +533,19 @@ public class DataTest extends AbstractDataTest {
         );
 
         when(mHttpClient.callAsync(
-                            endsWith("docs"),
-                            anyString(),
-                            anyMapOf(String.class, String.class),
-                            any(HttpClient.CallTemplate.class),
-                            any(ServiceCallback.class)))
-        .then(new Answer<ServiceCall>() {
+                endsWith("docs"),
+                anyString(),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class)))
+                .then(new Answer<ServiceCall>() {
 
-    @Override
-    public ServiceCall answer(InvocationOnMock invocation) {
-            ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
-            return mock(ServiceCall.class);
-            }
-        });
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        return mock(ServiceCall.class);
+                    }
+                });
 
         /* Make the call. Ensure deserialization error on document by passing incorrect class type. */
         AppCenterFuture<PaginatedDocuments<String>> result = Data.list(String.class, DefaultPartitions.USER_DOCUMENTS);
@@ -1418,17 +1418,17 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
-    public void listAnObjectWhenThereArePendingOperations(){
+    public void listAnObjectWhenThereArePendingOperations() {
         listAnObjectWhenThereArePendingOperations(Utils.getGson().toJson(new TestDocument("test")), TestDocument.class);
     }
 
     @Test
-    public void listPrimitiveTypeWhenThereArePendingOperations(){
+    public void listPrimitiveTypeWhenThereArePendingOperations() {
         listAnObjectWhenThereArePendingOperations("document", String.class);
     }
 
     private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
-        
+
         /* Return list of one item which will have a non-expired pending operation. */
         LocalDocument localDocument = new LocalDocument(
                 USER_TABLE_NAME,
@@ -1493,7 +1493,7 @@ public class DataTest extends AbstractDataTest {
     public void readOnlyListReturnsEmptyResult() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         when(mLocalDocumentStorage.getDocumentsByPartition(com.microsoft.appcenter.Constants.READONLY_TABLE, APP_DOCUMENTS)).thenReturn(new ArrayList<LocalDocument>());
-        PaginatedDocuments<String> documents = Data.list(String.class,APP_DOCUMENTS).get();
+        PaginatedDocuments<String> documents = Data.list(String.class, APP_DOCUMENTS).get();
         assertEquals(0, documents.getCurrentPage().getItems().size());
     }
 

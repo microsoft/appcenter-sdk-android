@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 2.1.1
+
+### App Center Data
+
+* **[Feature]** Added offline support for `Data.list` operation.
+
 ## Version 2.1.0
 
 ### App Center
