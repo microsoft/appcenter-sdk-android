@@ -254,14 +254,14 @@ class LocalDocumentStorage {
             while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
                 result.add(new LocalDocument(
-                                table,
-                                values.getAsString(PENDING_OPERATION_COLUMN_NAME),
-                                values.getAsString(PARTITION_COLUMN_NAME),
-                                values.getAsString(DOCUMENT_ID_COLUMN_NAME),
-                                values.getAsString(DOCUMENT_COLUMN_NAME),
-                                values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
-                                values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
-                                values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
+                        table,
+                        values.getAsString(PENDING_OPERATION_COLUMN_NAME),
+                        values.getAsString(PARTITION_COLUMN_NAME),
+                        values.getAsString(DOCUMENT_ID_COLUMN_NAME),
+                        values.getAsString(DOCUMENT_COLUMN_NAME),
+                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
+                        values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
             }
         } finally {
             cursor.close();
