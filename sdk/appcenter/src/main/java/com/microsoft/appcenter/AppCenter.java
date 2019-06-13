@@ -316,7 +316,6 @@ public class AppCenter {
         try {
             Bundle arguments = InstrumentationRegistryHelper.getArguments();
             String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
-
             return TRUE_ENVIRONMENT_STRING.equals(runningValue);
         } catch (IllegalStateException e) {
             return false;

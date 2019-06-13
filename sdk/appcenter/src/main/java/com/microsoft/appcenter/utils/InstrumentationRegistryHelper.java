@@ -7,11 +7,7 @@ package com.microsoft.appcenter.utils;
 
 import android.os.Bundle;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Wraps InstrumentationRegistry class to enable mocking in unit tests.
@@ -31,7 +27,6 @@ public class InstrumentationRegistryHelper {
      */
     public static Bundle getArguments() throws IllegalStateException {
         Exception exception = null;
-
         for (String location : LOCATIONS) {
             try {
                 Class<?> aClass = getClass(location);
@@ -41,11 +36,10 @@ public class InstrumentationRegistryHelper {
                 exception = e;
             }
         }
-
         throw new IllegalStateException(exception);
     }
 
-    public static Class<?> getClass(String className) throws ClassNotFoundException {
+    static Class<?> getClass(String className) throws ClassNotFoundException {
         return Class.forName(className);
     }
 }
