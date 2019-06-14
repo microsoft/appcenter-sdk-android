@@ -115,7 +115,7 @@ public class AppCenter {
     /**
      * A string value for environment variables denoting `true`.
      */
-    static final String TRUE_ENVIRONMENT_STRING = "1";
+    private static final String TRUE_ENVIRONMENT_STRING = "1";
 
     /**
      * Shared instance.
