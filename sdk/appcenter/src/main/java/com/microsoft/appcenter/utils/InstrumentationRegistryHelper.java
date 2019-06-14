@@ -39,7 +39,14 @@ public class InstrumentationRegistryHelper {
         throw new IllegalStateException(exception);
     }
 
-    static Class<?> getClass(String className) throws ClassNotFoundException {
+    /**
+     * Get class by name. Separate method so that it can be overridden by mocks in unit tests. Do not inline.
+     *
+     * @param className class name to resolve.
+     * @return the Class object from name.
+     * @throws ClassNotFoundException if the class could no be found.
+     */
+    private static Class<?> getClass(String className) throws ClassNotFoundException {
         return Class.forName(className);
     }
 }
