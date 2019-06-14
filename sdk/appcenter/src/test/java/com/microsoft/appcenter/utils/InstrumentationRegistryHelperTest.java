@@ -5,13 +5,14 @@
 
 package com.microsoft.appcenter.utils;
 
-import com.microsoft.appcenter.AbstractAppCenterTest;
 import com.microsoft.appcenter.AppCenter;
-import java.lang.reflect.Method;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+
+import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;

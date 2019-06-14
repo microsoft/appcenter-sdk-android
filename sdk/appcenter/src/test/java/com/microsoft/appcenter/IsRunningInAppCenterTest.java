@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter;
 
-import android.os.Bundle;
-import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
