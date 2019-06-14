@@ -115,7 +115,6 @@ public class AppCenter {
     /**
      * A string value for environment variables denoting `true`.
      */
-    @VisibleForTesting
     static final String TRUE_ENVIRONMENT_STRING = "1";
 
     /**
