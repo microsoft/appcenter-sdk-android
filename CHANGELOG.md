@@ -2,9 +2,10 @@
 
 ## Version 2.2.0 (Under development)
 
-### App Center Data
+### App Center
 
-* **[Feature]** Added offline support for `Data.list` operation.
+* **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
+* **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
 
 ## Version 2.1.0
 

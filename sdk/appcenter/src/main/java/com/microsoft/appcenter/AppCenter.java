@@ -8,6 +8,7 @@ package com.microsoft.appcenter;
 import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.IntRange;
@@ -30,6 +31,7 @@ import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
+import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -103,6 +105,17 @@ public class AppCenter {
      */
     @VisibleForTesting
     static final String TRANSMISSION_TARGET_TOKEN_KEY = "target";
+
+    /**
+     * Environment variable name for test to see if we're running in App Center Test.
+     */
+    @VisibleForTesting
+    static final String RUNNING_IN_APP_CENTER = "RUNNING_IN_APP_CENTER";
+
+    /**
+     * A string value for environment variables denoting `true`.
+     */
+    private static final String TRUE_ENVIRONMENT_STRING = "1";
 
     /**
      * Shared instance.
@@ -290,6 +303,22 @@ public class AppCenter {
      */
     public static boolean isConfigured() {
         return getInstance().isInstanceConfigured();
+    }
+
+    /**
+     * Check whether app is running in App Center Test.
+     *
+     * @return true if running in App Center Test, false otherwise
+     * (and where no test dependencies in release).
+     */
+    public static boolean isRunningInAppCenterTestCloud() {
+        try {
+            Bundle arguments = InstrumentationRegistryHelper.getArguments();
+            String runningValue = arguments.getString(RUNNING_IN_APP_CENTER);
+            return TRUE_ENVIRONMENT_STRING.equals(runningValue);
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     /**

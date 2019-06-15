@@ -105,6 +105,12 @@ public class AbstractAppCenterTest {
         when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
     }
 
+    static void addRunningInAppCenterToRegistry(String value) {
+        Bundle mockBundle = mock(Bundle.class);
+        when(mockBundle.getString(AppCenter.RUNNING_IN_APP_CENTER)).thenReturn(value);
+        when(InstrumentationRegistryHelper.getArguments()).thenReturn(mockBundle);
+    }
+
     @Before
     public void setUp() throws Exception {
         AppCenter.unsetInstance();
