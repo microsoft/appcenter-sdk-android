@@ -15,7 +15,6 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -71,7 +70,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -116,7 +115,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);
@@ -170,7 +169,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         });
 
         /* Simulate enable module then disable. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         Channel.GroupListener listener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, listener);
         channel.setEnabled(false);

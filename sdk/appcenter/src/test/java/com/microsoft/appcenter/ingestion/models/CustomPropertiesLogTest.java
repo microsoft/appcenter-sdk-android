@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.ingestion.models;
 
 import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 
@@ -34,7 +33,7 @@ public class CustomPropertiesLogTest {
         checkEquals(a, b);
         checkEquals(a.getType(), CustomPropertiesLog.TYPE);
 
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         a.setSid(sid);
         checkNotEquals(a, b);
         b.setSid(sid);

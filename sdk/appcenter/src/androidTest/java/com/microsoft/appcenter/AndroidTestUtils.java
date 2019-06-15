@@ -11,13 +11,13 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.MockLog;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.UUID;
 
 public final class AndroidTestUtils {
 
@@ -39,7 +39,7 @@ public final class AndroidTestUtils {
     public static MockLog generateMockLog() {
         MockLog log = new MockLog();
         log.setDevice(generateMockDevice());
-        log.setSid(UUIDUtils.randomUUID());
+        log.setSid(UUID.randomUUID());
         log.setTimestamp(new Date());
         return log;
     }

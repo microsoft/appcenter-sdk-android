@@ -11,7 +11,6 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Assert;
@@ -35,7 +34,7 @@ public class DistributeSerializerTest {
             logs.add(log);
         }
         expectedContainer.setLogs(logs);
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         for (Log log : logs) {
             log.setSid(sid);
         }

@@ -13,7 +13,6 @@ import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -24,6 +23,7 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
@@ -63,7 +63,7 @@ public class LocalDocumentStorageAndroidTest {
     public void setUp() {
         SharedPreferencesManager.initialize(sContext);
         AuthTokenContext.initialize(sContext);
-        AuthTokenContext.getInstance().setAuthToken(UUIDUtils.randomUUID().toString(), UUIDUtils.randomUUID().toString(), new Date());
+        AuthTokenContext.getInstance().setAuthToken(UUID.randomUUID().toString(), UUID.randomUUID().toString(), new Date());
         mLocalDocumentStorage = new LocalDocumentStorage(sContext, USER_TABLE_NAME);
     }
 

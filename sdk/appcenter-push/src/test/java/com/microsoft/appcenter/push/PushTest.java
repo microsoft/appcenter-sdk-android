@@ -30,7 +30,6 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -56,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -822,8 +822,8 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         start(push, channel);
         push.onTokenRefresh("push-token");
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
     }
@@ -925,8 +925,8 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         start(push, channel);
         push.onTokenRefresh("push-token");
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(null, null, null);
         verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
     }
@@ -937,8 +937,8 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         start(push, channel);
         push.onTokenRefresh("push-token");
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         verify(channel, times(2)).enqueue(any(Log.class), anyString(), anyInt());
@@ -950,8 +950,8 @@ public class PushTest {
         Channel channel = mock(Channel.class);
         start(push, channel);
         push.onTokenRefresh("push-token");
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         AuthTokenContext.getInstance().setAuthToken("new-token", "new-id", mock(Date.class));
         verify(channel, times(3)).enqueue(any(Log.class), anyString(), anyInt());
@@ -959,12 +959,12 @@ public class PushTest {
 
     @Test
     public void verifyEnqueueNotCalledOnNewAuthTokenBeforeRegistration() {
-        String mockUserId = UUIDUtils.randomUUID().toString();
+        String mockUserId = UUID.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         start(push, channel);
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
@@ -972,13 +972,13 @@ public class PushTest {
 
     @Test
     public void verifyEnqueueNotCalledOnPushDisabled() {
-        String mockUserId = UUIDUtils.randomUUID().toString();
+        String mockUserId = UUID.randomUUID().toString();
         Push push = Push.getInstance();
         Channel channel = mock(Channel.class);
         start(push, channel);
         Push.setEnabled(false);
-        String mockToken = UUIDUtils.randomUUID().toString();
-        String mockHomeId = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
+        String mockHomeId = UUID.randomUUID().toString();
         AuthTokenContext.getInstance().setAuthToken(mockToken, mockHomeId, mock(Date.class));
         UserIdContext.getInstance().setUserId(mockUserId);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
