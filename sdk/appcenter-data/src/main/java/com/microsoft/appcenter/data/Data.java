@@ -40,6 +40,7 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -607,7 +608,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                 }
                             }
                         }
-                        AppCenterLog.verbose(LOG_TAG, "Success Call Result");
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .setCurrentPage(page).setTokenResult(tokenResult)
                                 .setHttpClient(mHttpClient)
@@ -642,10 +642,20 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on user partition, but the user is not logged in."), result);
                     return;
                 }
-                List<LocalDocument> localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, partition);
-                if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
-                    completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                final TokenResult cachedTokenResult = mTokenManager.getCachedToken(partition, true);
+                if (cachedTokenResult == null && !mNetworkStateHelper.isNetworkConnected()) {
+                    completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on a partition, but no network."), result);
                     return;
+                }
+                List<LocalDocument> localDocuments;
+                if (cachedTokenResult != null) {
+                    localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, cachedTokenResult.getPartition());
+                    if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
+                        completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                        return;
+                    }
+                } else {
+                    localDocuments = new ArrayList<>();
                 }
                 if (!mNetworkStateHelper.isNetworkConnected()) {
                     completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);

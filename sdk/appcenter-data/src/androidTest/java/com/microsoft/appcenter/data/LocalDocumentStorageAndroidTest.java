@@ -150,6 +150,17 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void writeSameDocumentToLocalStorage() {
+        DocumentWrapper<String> document = new DocumentWrapper<>(TEST_VALUE, USER_DOCUMENTS, ID);
+        mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
+        List<LocalDocument> documents = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(1, documents.size());
+
+        mLocalDocumentStorage.writeOnline(USER_TABLE_NAME, document, new WriteOptions());
+        List<LocalDocument> documents2 = mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS);
+        assertEquals(1, documents2.size());
+    }
+    @Test
     public void readExpiredDocument() {
 
         /* Write a document and mock device ttl to be already expired a few seconds ago. */

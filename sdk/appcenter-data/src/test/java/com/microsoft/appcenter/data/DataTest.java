@@ -167,6 +167,16 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void listWhenOffline() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
@@ -178,7 +188,7 @@ public class DataTest extends AbstractDataTest {
         assertNull(page.getError());
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mRemoteOperationListener);
-        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(RESOLVED_USER_PARTITION));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mAuthTokenContext).getAccountId();
         verifyNoMoreInteractions(mAuthTokenContext);
@@ -390,6 +400,8 @@ public class DataTest extends AbstractDataTest {
         PaginatedDocuments<TestDocument> paginatedDocuments = Data.list(TestDocument.class, USER_DOCUMENTS).get();
         Iterator<DocumentWrapper<TestDocument>> iterator = paginatedDocuments.iterator();
         assertFalse(iterator.hasNext());
+        assertNotNull(paginatedDocuments.getCurrentPage().getError());
+        assertNull(paginatedDocuments.getCurrentPage().getItems());
 
         /* Verify not throws exception. */
         iterator.remove();
@@ -559,7 +571,7 @@ public class DataTest extends AbstractDataTest {
         /* Make the call. Ensure deserialization error on document by passing incorrect class type. */
         AppCenterFuture<PaginatedDocuments<String>> result = Data.list(String.class, DefaultPartitions.USER_DOCUMENTS);
 
-        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), startsWith(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mAuthTokenContext).getAccountId();
         verifyNoMoreInteractions(mAuthTokenContext);
@@ -608,7 +620,7 @@ public class DataTest extends AbstractDataTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> result = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS);
 
         /* Verify the result is correct and the cache was not touched. */
-        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(USER_DOCUMENTS));
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), startsWith(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         verify(mAuthTokenContext).getAccountId();
         verifyNoMoreInteractions(mAuthTokenContext);
@@ -1437,6 +1449,16 @@ public class DataTest extends AbstractDataTest {
     }
 
     private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Return list of one item which will have a non-expired pending operation. */
         LocalDocument localDocument = new LocalDocument(
@@ -1487,7 +1509,7 @@ public class DataTest extends AbstractDataTest {
         assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(expiredDocument)));
         assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingDocument)));
         assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingNotExpiredDocument)));
-        when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, USER_DOCUMENTS)).thenReturn(storedDocuments);
+        when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, RESOLVED_USER_PARTITION)).thenReturn(storedDocuments);
         PaginatedDocuments<T> documents = Data.list(documentType, USER_DOCUMENTS).get();
         assertNull(documents.getCurrentPage().getError());
         List<DocumentWrapper<T>> items = documents.getCurrentPage().getItems();
@@ -1501,6 +1523,16 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void readOnlyListReturnsEmptyResult() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setAccountId(AbstractDataTest.ACCOUNT_ID)
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(new Date())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + APP_DOCUMENTS)).thenReturn(tokenResult);
+
         when(mLocalDocumentStorage.getDocumentsByPartition(com.microsoft.appcenter.Constants.READONLY_TABLE, APP_DOCUMENTS)).thenReturn(new ArrayList<LocalDocument>());
         PaginatedDocuments<String> documents = Data.list(String.class, APP_DOCUMENTS).get();
         assertEquals(0, documents.getCurrentPage().getItems().size());

@@ -45,12 +45,14 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    private static final String PARTITION_COLUMN_NAME = "partition";
+    @VisibleForTesting
+    static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    @VisibleForTesting
+    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -146,7 +148,7 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(table, values);
+        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
@@ -253,15 +255,22 @@ class LocalDocumentStorage {
         try {
             while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
+                String pendingOperation = values.getAsString(PENDING_OPERATION_COLUMN_NAME);
+                Long expirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
+                //TODO When read options argument is available in list function use ReadOptions.isExpired in the condition
+                //boolean isPendingOperation = pendingOperation != null;
+                //boolean isNotExpired = expirationTime > System.currentTimeMillis();
+                //if (isPendingOperation && isNotExpired) {
                 result.add(new LocalDocument(
                         table,
-                        values.getAsString(PENDING_OPERATION_COLUMN_NAME),
+                        pendingOperation,
                         values.getAsString(PARTITION_COLUMN_NAME),
                         values.getAsString(DOCUMENT_ID_COLUMN_NAME),
                         values.getAsString(DOCUMENT_COLUMN_NAME),
-                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        expirationTime,
                         values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
                         values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
+                //}
             }
         } finally {
             cursor.close();
@@ -367,7 +376,6 @@ class LocalDocumentStorage {
             DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime / 1000L, documentType);
             documentWrapper.setFromCache(true);
             documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-
             /*
              * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
              */

@@ -32,6 +32,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.List;
 
+import static com.microsoft.appcenter.data.LocalDocumentStorage.DOCUMENT_ID_COLUMN_NAME;
+import static com.microsoft.appcenter.data.LocalDocumentStorage.PARTITION_COLUMN_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -117,7 +119,7 @@ public class LocalDocumentStorageTest {
     public void updateGetsCalledInWrite() {
         mLocalDocumentStorage.writeOnline(mUserTableName, new DocumentWrapper<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
+        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture(), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
     }
 
@@ -131,7 +133,7 @@ public class LocalDocumentStorageTest {
     public void updateGetsCalledInWriteWithPendingOperation() {
         mLocalDocumentStorage.writeOnline(mUserTableName, new DocumentWrapper<>("Test value", PARTITION, DOCUMENT_ID), new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
+        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture(), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
     }
 
@@ -198,7 +200,7 @@ public class LocalDocumentStorageTest {
     public void createOrUpdateFailedToWriteException() {
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         when(mDatabaseManager.nextValues(mCursor)).thenReturn(null);
-        when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(-1L);
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME))).thenReturn(-1L);
         DocumentWrapper<String> doc = mLocalDocumentStorage.createOrUpdateOffline(mUserTableName, PARTITION, DOCUMENT_ID, "test", String.class, new WriteOptions());
         assertNotNull(doc);
         assertNotNull(doc.getError());
@@ -214,7 +216,7 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void deleteDocumentOfflineSucceeds() {
-        when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME))).thenReturn(1L);
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         DocumentWrapper<Void> wrapper = new DocumentWrapper<>(null, PARTITION, DOCUMENT_ID);
         assertTrue(mLocalDocumentStorage.deleteOffline(mUserTableName, wrapper, new WriteOptions()));
@@ -235,22 +237,22 @@ public class LocalDocumentStorageTest {
 
     @Test
     public void deleteOfflineFails() {
-        when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(-1L);
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME))).thenReturn(-1L);
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID, new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
+        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture(), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
         assertFalse(isSuccess);
     }
 
     @Test
     public void deleteOfflineSucceeds() {
-        when(mDatabaseManager.replace(anyString(), any(ContentValues.class))).thenReturn(1L);
+        when(mDatabaseManager.replace(anyString(), any(ContentValues.class), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME))).thenReturn(1L);
         when(mDatabaseManager.getCursor(anyString(), any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mCursor);
         boolean isSuccess = mLocalDocumentStorage.deleteOffline(mUserTableName, PARTITION, DOCUMENT_ID, new WriteOptions());
         ArgumentCaptor<ContentValues> argumentCaptor = ArgumentCaptor.forClass(ContentValues.class);
-        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture());
+        verify(mDatabaseManager).replace(eq(mUserTableName), argumentCaptor.capture(), eq(PARTITION_COLUMN_NAME), eq(DOCUMENT_ID_COLUMN_NAME));
         assertNotNull(argumentCaptor.getValue());
         assertTrue(isSuccess);
     }
