@@ -22,7 +22,6 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -55,6 +54,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
 import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
@@ -375,10 +375,10 @@ public class AuthTest extends AbstractAuthTest {
         mockValidForAppCenterConfig();
 
         /* Mock authentication result. */
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(mockIdToken, mockAccessToken, mockHomeAccountId, mockAccountId);
 
@@ -424,9 +424,9 @@ public class AuthTest extends AbstractAuthTest {
         mockValidForAppCenterConfig();
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(null, mockAccessToken, mockHomeAccountId, mockAccountId);
 
@@ -470,10 +470,10 @@ public class AuthTest extends AbstractAuthTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        String idToken = UUIDUtils.randomUUID().toString();
-        String accessToken = UUIDUtils.randomUUID().toString();
-        String accountId = UUIDUtils.randomUUID().toString();
-        String homeAccountId = UUIDUtils.randomUUID().toString();
+        String idToken = UUID.randomUUID().toString();
+        String accessToken = UUID.randomUUID().toString();
+        String accountId = UUID.randomUUID().toString();
+        String homeAccountId = UUID.randomUUID().toString();
         final IAuthenticationResult mockResult = mockAuthResult(idToken, accessToken, homeAccountId, accountId);
         doAnswer(new Answer<Void>() {
 
@@ -550,10 +550,10 @@ public class AuthTest extends AbstractAuthTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
         IAccount mockAccount = mock(IAccount.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
@@ -618,10 +618,10 @@ public class AuthTest extends AbstractAuthTest {
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
@@ -670,10 +670,10 @@ public class AuthTest extends AbstractAuthTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
         IAccount mockAccount = mock(IAccount.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
 
         /* First time do interactive by returning empty cache then return saved token. */
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
@@ -739,10 +739,10 @@ public class AuthTest extends AbstractAuthTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
         IAccount mockAccount = mock(IAccount.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
 
         /* Always return empty cache. */
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
@@ -809,10 +809,10 @@ public class AuthTest extends AbstractAuthTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         Activity activity = mock(Activity.class);
         IAccount mockAccount = mock(IAccount.class);
-        String mockIdToken = UUIDUtils.randomUUID().toString();
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockIdToken = UUID.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
 
         /* Always return empty cache. */
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null).thenReturn(mockHomeAccountId);
@@ -1199,8 +1199,8 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
 
         /* Mock authentication lib. */
@@ -1236,8 +1236,8 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
 
         /* Mock authentication lib. */
@@ -1273,8 +1273,8 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult("idToken", mockAccessToken, mockHomeAccountId, "accountId");
 
@@ -1311,7 +1311,7 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
 
         /* Mock no network and auth. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -1493,9 +1493,9 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(null, mockAccessToken, mockHomeAccountId, mockAccountId);
 
@@ -1540,9 +1540,9 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(null, mockAccessToken, mockHomeAccountId, mockAccountId);
 
@@ -1591,11 +1591,11 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock auth token. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
         when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
 
         /* Mock authentication result. */
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         final IAuthenticationResult mockResult = mockAuthResult("idToken", "accessToken", "homeAccountId", "accountId");
 
         /* Mock authentication lib. */
@@ -1630,11 +1630,11 @@ public class AuthTest extends AbstractAuthTest {
         doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
 
         /* Mock auth token. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
         when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
 
         /* Mock authentication result. */
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         final IAuthenticationResult mockResult = mockAuthResult("idToken", "accessToken", "homeAccountId", "accountId");
 
         /* Mock authentication lib. */
@@ -1689,8 +1689,8 @@ public class AuthTest extends AbstractAuthTest {
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(null);
         Auth auth = Auth.getInstance();
         start(auth);
-        when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
-        when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUID.randomUUID().toString());
+        when(mAuthTokenContext.getAuthToken()).thenReturn(UUID.randomUUID().toString());
         Auth.signOut();
         verify(publicClientApplication, never()).getAccount(anyString(), anyString());
     }
@@ -1715,7 +1715,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(null);
-        when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mAuthTokenContext.getAuthToken()).thenReturn(UUID.randomUUID().toString());
         Auth.signOut();
         verify(publicClientApplication, never()).getAccount(anyString(), anyString());
     }
@@ -1737,14 +1737,14 @@ public class AuthTest extends AbstractAuthTest {
         when(FileManager.read(file)).thenReturn(config);
 
         /* Mock MSAL client. */
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
 
         /* Check removing account */
         Auth auth = Auth.getInstance();
         when(mAuthTokenContext.getHomeAccountId()).thenReturn(mockHomeAccountId);
-        when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mAuthTokenContext.getAuthToken()).thenReturn(UUID.randomUUID().toString());
         start(auth);
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
@@ -1782,8 +1782,8 @@ public class AuthTest extends AbstractAuthTest {
         when(publicClientApplication.getAccount(anyString(), anyString())).thenReturn(null);
         IAccount account = mock(IAccount.class);
         Auth auth = Auth.getInstance();
-        when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUIDUtils.randomUUID().toString());
-        when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mAuthTokenContext.getHomeAccountId()).thenReturn(UUID.randomUUID().toString());
+        when(mAuthTokenContext.getAuthToken()).thenReturn(UUID.randomUUID().toString());
         start(auth);
         Auth.signOut();
         verify(publicClientApplication, never()).removeAccount(eq(account), any(PublicClientApplication.AccountsRemovedCallback.class));
@@ -1811,7 +1811,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
         when(mAuthTokenContext.getHomeAccountId()).thenReturn("5");
-        when(mAuthTokenContext.getAuthToken()).thenReturn(UUIDUtils.randomUUID().toString());
+        when(mAuthTokenContext.getAuthToken()).thenReturn(UUID.randomUUID().toString());
         IAccount account = mock(IAccount.class);
         IAccountIdentifier accountIdentifier = mock(IAccountIdentifier.class);
         when(accountIdentifier.getIdentifier()).thenReturn("10");
@@ -1843,9 +1843,9 @@ public class AuthTest extends AbstractAuthTest {
                 any(ServiceCallback.class))).thenReturn(getConfigCall);
 
         /* Mock authentication result. */
-        String mockAccessToken = UUIDUtils.randomUUID().toString();
-        String mockAccountId = UUIDUtils.randomUUID().toString();
-        String mockHomeAccountId = UUIDUtils.randomUUID().toString();
+        String mockAccessToken = UUID.randomUUID().toString();
+        String mockAccountId = UUID.randomUUID().toString();
+        String mockHomeAccountId = UUID.randomUUID().toString();
         IAccount mockAccount = mock(IAccount.class);
         final IAuthenticationResult mockResult = mockAuthResult(null, mockAccessToken, mockHomeAccountId, mockAccountId);
 

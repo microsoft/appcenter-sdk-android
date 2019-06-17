@@ -9,7 +9,6 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
@@ -60,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 public class AuthTokenContextTest {
 
-    private final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
+    private final String AUTH_TOKEN = UUID.randomUUID().toString();
 
     private AuthTokenContext mAuthTokenContext;
 
@@ -98,7 +98,7 @@ public class AuthTokenContextTest {
 
         /* Mock context listener. */
         AuthTokenContext.Listener mockListener = spy(AbstractTokenContextListener.class);
-        String accountId = UUIDUtils.randomUUID().toString();
+        String accountId = UUID.randomUUID().toString();
         String homeAccountId = accountId + "-other_user_information";
 
         /* Set new auth token. */

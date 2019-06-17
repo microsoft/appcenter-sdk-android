@@ -25,7 +25,6 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
@@ -98,7 +97,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 /**
  * Cover scenarios that are happening before we see an API call success for latest release.
  */
-@PrepareForTest({ErrorDetails.class, DistributeUtils.class, SessionContext.class})
+@PrepareForTest({ErrorDetails.class, DistributeUtils.class, SessionContext.class, UUID.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Mock
@@ -185,12 +184,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.setInstallUrl("http://mock");
         Distribute.setApiUrl("https://mock2");
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -408,7 +408,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
         /* Restart should open browser if still have network. */
-        when(UUIDUtils.randomUUID()).thenReturn(UUID.randomUUID());
         restartResumeLauncher(mActivity);
         verifyStatic();
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
@@ -551,12 +550,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -583,13 +583,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
         when(mContext.getPackageName()).thenReturn(DistributeUtils.TESTER_APP_PACKAGE_NAME);
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -605,7 +606,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         String url = "ms-actesterapp://update-setup";
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
@@ -617,7 +620,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -656,7 +658,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         String url = "ms-actesterapp://update-setup";
@@ -765,12 +768,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -892,12 +896,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -1019,12 +1024,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.setInstallUrl("http://mock");
         Distribute.setApiUrl("https://mock2");
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
@@ -1089,10 +1095,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();
-        when(UUIDUtils.randomUUID()).thenReturn(requestId);
+        UUID installId = UUID.randomUUID();
+        mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(requestId);
 
         /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
         when(mAppCenterFuture.get()).thenReturn(installId);
         when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 

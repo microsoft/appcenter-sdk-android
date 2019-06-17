@@ -34,7 +34,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
@@ -920,7 +919,7 @@ public class CrashesTest {
         verifyStatic();
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, EXCEPTION);
 
-        mErrorLog.setId(UUIDUtils.randomUUID());
+        mErrorLog.setId(UUID.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
         assertNull(report);
     }
@@ -954,21 +953,21 @@ public class CrashesTest {
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(classNotFoundException));
 
         /* Test IOException. */
-        mErrorLog.setId(UUIDUtils.randomUUID());
+        mErrorLog.setId(UUID.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
         assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(ioException));
 
         /* Test RuntimeException. */
-        mErrorLog.setId(UUIDUtils.randomUUID());
+        mErrorLog.setId(UUID.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
         assertNotNull(report);
         verifyStatic();
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(runtimeException));
 
         /* Test StackOverflowError. */
-        mErrorLog.setId(UUIDUtils.randomUUID());
+        mErrorLog.setId(UUID.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
         assertNotNull(report);
         verifyStatic();
@@ -1042,7 +1041,7 @@ public class CrashesTest {
     public void crashInLastSession() throws JSONException, IOException, ClassNotFoundException {
 
         final ManagedErrorLog errorLog = new ManagedErrorLog();
-        errorLog.setId(UUIDUtils.randomUUID());
+        errorLog.setId(UUID.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
         Date logTimestamp = new Date(10);
         errorLog.setTimestamp(logTimestamp);
@@ -1247,7 +1246,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
         ErrorReport report1 = new ErrorReport();
-        report1.setId(UUIDUtils.randomUUID().toString());
+        report1.setId(UUID.randomUUID().toString());
         ErrorReport report2 = new ErrorReport();
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
@@ -1355,7 +1354,7 @@ public class CrashesTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
         ErrorReport report1 = new ErrorReport();
-        report1.setId(UUIDUtils.randomUUID().toString());
+        report1.setId(UUID.randomUUID().toString());
         ErrorReport report2 = new ErrorReport();
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});

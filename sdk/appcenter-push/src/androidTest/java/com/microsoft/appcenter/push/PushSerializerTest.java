@@ -11,7 +11,6 @@ import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Assert;
@@ -36,7 +35,7 @@ public class PushSerializerTest {
             logs.add(log);
         }
         expectedContainer.setLogs(logs);
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         for (Log log : logs) {
             log.setSid(sid);
         }

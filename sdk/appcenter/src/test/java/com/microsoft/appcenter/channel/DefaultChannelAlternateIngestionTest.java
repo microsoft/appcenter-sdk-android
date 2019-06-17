@@ -13,7 +13,6 @@ import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 
@@ -79,7 +78,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
         /* Enqueuing 1 event. */

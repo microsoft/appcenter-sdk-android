@@ -16,10 +16,11 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
+
+import java.util.UUID;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
@@ -108,7 +109,7 @@ class DistributeUtils {
         String releaseHash = computeReleaseHash(packageInfo);
 
         /* Generate request identifier. */
-        String requestId = UUIDUtils.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
 
         /* Build URL. */
         String url = "ms-actesterapp://update-setup";
@@ -153,7 +154,7 @@ class DistributeUtils {
         String releaseHash = computeReleaseHash(packageInfo);
 
         /* Generate request identifier. */
-        String requestId = UUIDUtils.randomUUID().toString();
+        String requestId = UUID.randomUUID().toString();
 
         /* Build URL. */
         String url = installUrl;

@@ -19,7 +19,6 @@ import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import org.json.JSONArray;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 
@@ -138,7 +138,6 @@ public class RealUserMeasurements extends AbstractAppCenterService {
      *
      * @return shared instance.
      */
-    @SuppressWarnings("WeakerAccess")
     public static synchronized RealUserMeasurements getInstance() {
         if (sInstance == null) {
             sInstance = new RealUserMeasurements();
@@ -179,7 +178,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
      * All unique identifiers used in Rum don't have dashes...
      */
     private static String rumUniqueId() {
-        return UUIDUtils.randomUUID().toString().replace("-", "");
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**

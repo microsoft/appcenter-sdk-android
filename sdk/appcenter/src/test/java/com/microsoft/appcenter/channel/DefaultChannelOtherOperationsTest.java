@@ -12,13 +12,13 @@ import com.microsoft.appcenter.ingestion.AppCenterIngestion;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 import org.mockito.Matchers;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +42,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     @Test
     public void setLogUrl() {
         Ingestion ingestion = mock(Ingestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), ingestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), ingestion, mAppCenterHandler);
         String logUrl = "http://mockUrl";
         channel.setLogUrl(logUrl);
         verify(ingestion).setLogUrl(logUrl);
@@ -50,7 +50,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
     @Test
     public void logCallbacks() {
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
         Channel.Listener listener = spy(new AbstractChannelListener());
         channel.addListener(listener);
@@ -78,7 +78,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     @Test
     public void clear() {
         Persistence mockPersistence = mock(Persistence.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Clear an existing channel. */
@@ -98,7 +98,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any(), any(Date.class), any(Date.class)))
                 .then(getGetLogsAnswer(1));
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Enqueuing 1 event. */
@@ -115,7 +115,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
 
         /* Given a mock channel. */
         Persistence persistence = mock(Persistence.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);
 
         /* Given we add mock listeners. */
@@ -185,7 +185,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         Persistence persistence = mock(Persistence.class);
         Ingestion ingestion = mock(Ingestion.class);
         Channel.Listener listener = spy(new AbstractChannelListener());
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, ingestion, mAppCenterHandler);
         channel.addListener(listener);
         Channel.GroupListener groupListener = mock(Channel.GroupListener.class);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, groupListener);
@@ -208,7 +208,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
         Persistence persistence = mock(Persistence.class);
         when(persistence.setMaxStorageSize(anyLong())).thenReturn(true).thenReturn(false);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUIDUtils.randomUUID().toString(), persistence, mock(Ingestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, mock(Ingestion.class), mAppCenterHandler);
 
         /* Just checks calls are forwarded to the low level database layer. */
         assertTrue(channel.setMaxStorageSize(20480));
