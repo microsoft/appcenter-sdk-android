@@ -126,7 +126,7 @@ public class LocalDocument {
     /**
      * @return whether the document is a pending operation or has been synchronized with the DB
      */
-    public boolean isPendingOperation() {
+    public boolean hasPendingOperation() {
         return mOperation != null;
     }
 }

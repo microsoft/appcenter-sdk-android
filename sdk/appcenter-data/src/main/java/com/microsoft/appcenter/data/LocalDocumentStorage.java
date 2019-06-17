@@ -282,7 +282,7 @@ class LocalDocumentStorage {
      */
     static boolean hasPendingOperationAndIsNotExpired(@NonNull List<LocalDocument> localDocuments) {
         for (LocalDocument doc : localDocuments) {
-            if (doc.isPendingOperation() && !doc.isExpired()) {
+            if (doc.hasPendingOperation() && !doc.isExpired()) {
                 return true;
             }
         }
