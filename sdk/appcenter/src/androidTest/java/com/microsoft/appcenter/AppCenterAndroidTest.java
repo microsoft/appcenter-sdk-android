@@ -15,7 +15,6 @@ import android.util.Log;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -56,7 +55,7 @@ public class AppCenterAndroidTest {
         assertNull(AppCenter.getInstallId().get());
         SharedPreferencesManager.initialize(mApplication);
         SharedPreferencesManager.remove(PrefStorageConstants.KEY_INSTALL_ID);
-        AppCenter.start(mApplication, UUIDUtils.randomUUID().toString(), DummyService.class);
+        AppCenter.start(mApplication, UUID.randomUUID().toString(), DummyService.class);
         UUID installId = AppCenter.getInstallId().get();
         assertNotNull(installId);
         assertEquals(installId, AppCenter.getInstallId().get());
@@ -84,7 +83,7 @@ public class AppCenterAndroidTest {
     @Test
     public void setDefaultLogLevelDebug() {
         AppCenterLog.setLogLevel(Log.ASSERT);
-        AppCenter.start(mApplication, UUIDUtils.randomUUID().toString());
+        AppCenter.start(mApplication, UUID.randomUUID().toString());
         assertEquals(Log.WARN, AppCenter.getLogLevel());
     }
 

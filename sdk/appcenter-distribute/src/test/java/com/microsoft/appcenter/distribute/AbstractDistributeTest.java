@@ -27,7 +27,6 @@ import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -60,7 +59,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+@SuppressWarnings("CanBeFinal")
 @PrepareForTest({
         AppCenter.class,
         AppCenterLog.class,
@@ -75,8 +74,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         ReleaseDetails.class,
         SharedPreferencesManager.class,
         TextUtils.class,
-        Toast.class,
-        UUIDUtils.class
+        Toast.class
 })
 public class AbstractDistributeTest {
 
@@ -210,7 +208,6 @@ public class AbstractDistributeTest {
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
-        mockStatic(UUIDUtils.class);
         mockStatic(ReleaseDetails.class);
         mockStatic(TextUtils.class);
         mockStatic(InstallerUtils.class);

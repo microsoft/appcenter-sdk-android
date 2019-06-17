@@ -22,7 +22,6 @@ import com.microsoft.appcenter.ingestion.models.properties.DoubleTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.LongTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.StringTypedProperty;
 import com.microsoft.appcenter.ingestion.models.properties.TypedProperty;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Assert;
@@ -82,14 +81,14 @@ public class AnalyticsSerializerTest {
         {
             EventLog eventLog = new EventLog();
             eventLog.setTimestamp(new Date());
-            eventLog.setId(UUIDUtils.randomUUID());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setName("subscribe");
             logs.add(eventLog);
         }
         {
             EventLog eventLog = new EventLog();
             eventLog.setTimestamp(new Date());
-            eventLog.setId(UUIDUtils.randomUUID());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setName("click");
             eventLog.setProperties(new HashMap<String, String>() {{
                 put("x", "1");
@@ -121,12 +120,12 @@ public class AnalyticsSerializerTest {
             properties.add(sp);
             EventLog eventLog = new EventLog();
             eventLog.setTimestamp(new Date());
-            eventLog.setId(UUIDUtils.randomUUID());
+            eventLog.setId(UUID.randomUUID());
             eventLog.setName("event");
             eventLog.setTypedProperties(properties);
             logs.add(eventLog);
         }
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         for (Log log : logs) {
             log.setSid(sid);
             log.setDevice(device);

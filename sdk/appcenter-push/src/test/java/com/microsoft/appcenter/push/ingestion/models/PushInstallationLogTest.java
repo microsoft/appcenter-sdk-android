@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.push.ingestion.models;
 
 import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.Test;
 
@@ -32,7 +31,7 @@ public class PushInstallationLogTest {
         checkEquals(a, b);
         checkEquals(a.getType(), PushInstallationLog.TYPE);
 
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         a.setSid(sid);
         checkNotEquals(a, b);
         b.setSid(sid);

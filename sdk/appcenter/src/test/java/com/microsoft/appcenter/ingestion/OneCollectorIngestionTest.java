@@ -21,7 +21,6 @@ import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.TicketCache;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
@@ -334,7 +334,7 @@ public class OneCollectorIngestionTest {
 
         /* Mock instances. */
         URL url = new URL("http://mock/path/file");
-        String apiKeys = UUIDUtils.randomUUID().toString();
+        String apiKeys = UUID.randomUUID().toString();
         String obfuscatedApiKeys = HttpUtils.hideApiKeys(apiKeys);
         String tickets = "{'hash':'secretValue'}";
         String obfuscatedTickets = HttpUtils.hideTickets(tickets);
@@ -377,7 +377,7 @@ public class OneCollectorIngestionTest {
     public void onBeforeCallingWithAnotherLogLevel() {
 
         /* Mock instances. */
-        String apiKey = UUIDUtils.randomUUID().toString();
+        String apiKey = UUID.randomUUID().toString();
         HttpClient.CallTemplate callTemplate = getCallTemplate();
 
         /* Change log level. */

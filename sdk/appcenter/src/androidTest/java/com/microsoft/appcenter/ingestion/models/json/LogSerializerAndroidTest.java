@@ -10,7 +10,6 @@ import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.junit.Test;
@@ -72,7 +71,7 @@ public class LogSerializerAndroidTest {
         services.add("FIRST");
         services.add("SECOND");
         log.setServices(services);
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         log.setSid(sid);
         log.setTimestamp(new Date());
 
@@ -111,7 +110,7 @@ public class LogSerializerAndroidTest {
         //noinspection ConstantConditions
         properties.put("t5", null);
         log.setProperties(properties);
-        UUID sid = UUIDUtils.randomUUID();
+        UUID sid = UUID.randomUUID();
         log.setSid(sid);
         log.setTimestamp(new Date());
 
