@@ -42,7 +42,6 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -598,12 +597,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Page<T> page = Utils.parseDocuments(payload, documentType);
                         String tableName = Utils.getTableName(tokenResult);
-                        if (page.getItems() != null) {
-                            Iterator<DocumentWrapper<T>> documentWrapperIterator = page.getItems().iterator();
-
-                            //noinspection WhileLoopReplaceableByForEach Must be a while loop to keep the iterator focus in the proper place
-                            while (documentWrapperIterator.hasNext()) {
-                                DocumentWrapper<T> document = documentWrapperIterator.next();
+                        List<DocumentWrapper<T>> items = page.getItems();
+                        if (items != null) {
+                            for (DocumentWrapper<T> document : items) {
                                 if (document.getError() == null) {
                                     mLocalDocumentStorage.writeOnline(tableName, document, new WriteOptions());
                                 }
