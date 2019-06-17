@@ -34,7 +34,7 @@ public class IdHelperAndroidTest {
     @Test
     public void getInstallId() {
         Log.i(TAG, "Testing installId-shortcut");
-        UUID expected = UUIDUtils.randomUUID();
+        UUID expected = UUID.randomUUID();
         SharedPreferencesManager.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
 
         UUID actual = IdHelper.getInstallId();

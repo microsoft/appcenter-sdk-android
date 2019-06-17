@@ -29,7 +29,7 @@ public class IdHelper {
             installId = UUID.fromString(installIdString);
         } catch (Exception e) {
             AppCenterLog.warn(AppCenter.LOG_TAG, "Unable to get installID from Shared Preferences");
-            installId = UUIDUtils.randomUUID();
+            installId = UUID.randomUUID();
             SharedPreferencesManager.putString(KEY_INSTALL_ID, installId.toString());
         }
         return installId;

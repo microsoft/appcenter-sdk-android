@@ -8,7 +8,6 @@ package com.microsoft.appcenter.utils.context;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.ACCOUNT_ID_LENGTH;
 import static com.microsoft.appcenter.utils.context.AuthTokenContext.PREFERENCE_KEY_TOKEN_HISTORY;
@@ -31,9 +31,9 @@ import static org.junit.Assert.assertTrue;
 
 public class AuthTokenContextAndroidTest {
 
-    private static final String AUTH_TOKEN = UUIDUtils.randomUUID().toString();
+    private static final String AUTH_TOKEN = UUID.randomUUID().toString();
 
-    private static final String ACCOUNT_ID = UUIDUtils.randomUUID().toString();
+    private static final String ACCOUNT_ID = UUID.randomUUID().toString();
 
     private AuthTokenContext mAuthTokenContext;
 
@@ -250,8 +250,8 @@ public class AuthTokenContextAndroidTest {
     @Test
     public void tokenHistoryLimit() {
         for (int i = 0; i < TOKEN_HISTORY_LIMIT + 3; i++) {
-            String mockToken = UUIDUtils.randomUUID().toString();
-            String mockAccountId = UUIDUtils.randomUUID().toString();
+            String mockToken = UUID.randomUUID().toString();
+            String mockAccountId = UUID.randomUUID().toString();
             mAuthTokenContext.setAuthToken(mockToken, mockAccountId, new Date());
         }
         assertEquals(TOKEN_HISTORY_LIMIT, mAuthTokenContext.getHistory().size());

@@ -14,7 +14,6 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import org.junit.Test;
@@ -50,7 +49,7 @@ public class ChannelLogDecorateTest {
         mockStatic(IdHelper.class);
         mockStatic(AuthTokenContext.class);
         AuthTokenContext tokenContext = mock(AuthTokenContext.class);
-        String mockToken = UUIDUtils.randomUUID().toString();
+        String mockToken = UUID.randomUUID().toString();
         Mockito.when(tokenContext.getAuthToken()).thenReturn(mockToken);
         Mockito.when(AuthTokenContext.getInstance()).thenReturn(tokenContext);
         whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(tokenContext);

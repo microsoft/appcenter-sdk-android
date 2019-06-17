@@ -25,9 +25,9 @@ import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.push.Push.LOG_TAG;
@@ -70,7 +70,7 @@ class PushNotifier {
         String messageId = PushIntentUtils.getMessageId(pushIntent);
         if (messageId == null) {
             AppCenterLog.warn(LOG_TAG, "Push notification did not contain identifier, generate one.");
-            messageId = UUIDUtils.randomUUID().toString();
+            messageId = UUID.randomUUID().toString();
         }
         int notificationId = messageId.hashCode();
 

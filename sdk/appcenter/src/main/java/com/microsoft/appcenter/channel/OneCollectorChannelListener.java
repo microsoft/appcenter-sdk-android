@@ -16,7 +16,6 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -146,7 +145,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
             /* Add SDK extension missing fields: installId, epoch and seq. libVer is already set. */
             EpochAndSeq epochAndSeq = mEpochsAndSeqsByIKey.get(commonSchemaLog.getIKey());
             if (epochAndSeq == null) {
-                epochAndSeq = new EpochAndSeq(UUIDUtils.randomUUID().toString());
+                epochAndSeq = new EpochAndSeq(UUID.randomUUID().toString());
                 mEpochsAndSeqsByIKey.put(commonSchemaLog.getIKey(), epochAndSeq);
             }
             SdkExtension sdk = commonSchemaLog.getExt().getSdk();

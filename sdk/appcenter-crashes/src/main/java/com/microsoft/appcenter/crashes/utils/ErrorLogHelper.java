@@ -23,7 +23,6 @@ import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
@@ -131,7 +130,7 @@ public class ErrorLogHelper {
 
         /* Build error log with a unique identifier. */
         ManagedErrorLog errorLog = new ManagedErrorLog();
-        errorLog.setId(UUIDUtils.randomUUID());
+        errorLog.setId(UUID.randomUUID());
 
         /* Set current time. Will be correlated to session after restart. */
         errorLog.setTimestamp(new Date());

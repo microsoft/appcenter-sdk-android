@@ -7,7 +7,6 @@ package com.microsoft.appcenter;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 

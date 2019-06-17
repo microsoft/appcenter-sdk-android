@@ -16,7 +16,6 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.SessionContext;
 
 import java.util.Date;
@@ -123,7 +122,7 @@ public class SessionTracker extends AbstractChannelListener {
         if (mSid == null || hasSessionTimedOut()) {
 
             /* New session: generate a new identifier. */
-            mSid = UUIDUtils.randomUUID();
+            mSid = UUID.randomUUID();
 
             /* Update session storage. */
             SessionContext.getInstance().addSession(mSid);
