@@ -14,9 +14,9 @@ import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
-import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -37,7 +37,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -85,6 +87,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Matchers.refEq;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -114,6 +117,9 @@ public class DataTest extends AbstractDataTest {
 
     @Mock
     private RemoteOperationListener mRemoteOperationListener;
+
+    @Captor
+    private ArgumentCaptor<DocumentWrapper<TestDocument>> mTestDocumentWrapperCaptor;
 
     @Before
     public void setUpAuth() {
@@ -161,6 +167,16 @@ public class DataTest extends AbstractDataTest {
     @Test
     public void listWhenOffline() {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
@@ -168,13 +184,14 @@ public class DataTest extends AbstractDataTest {
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
         Page<TestDocument> page = docs.getCurrentPage();
-        assertNull(page.getItems());
-        assertNotNull(page.getError());
-        assertEquals(DataException.class, page.getError().getClass());
+        assertNotNull(page.getItems());
+        assertNull(page.getError());
         verifyZeroInteractions(mHttpClient);
         verifyZeroInteractions(mRemoteOperationListener);
-        verifyZeroInteractions(mLocalDocumentStorage);
-        verifyZeroInteractions(mAuthTokenContext);
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(RESOLVED_USER_PARTITION));
+        verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
     }
 
     @Test
@@ -185,6 +202,7 @@ public class DataTest extends AbstractDataTest {
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
                 .setDbAccount("accountName")
+                .setAccountId(AbstractDataTest.ACCOUNT_ID)
                 .setDbName("dbName")
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
@@ -219,6 +237,18 @@ public class DataTest extends AbstractDataTest {
         assertFalse(docs.hasNextPage());
         assertEquals(1, docs.getCurrentPage().getItems().size());
         assertEquals(docs.getCurrentPage().getItems().get(0).getDeserializedValue().test, documents.get(0).getDeserializedValue().test);
+
+        /* Verify result was cached */
+        ArgumentCaptor<WriteOptions> writeOptions = ArgumentCaptor.forClass(WriteOptions.class);
+        verify(mLocalDocumentStorage).writeOnline(
+                eq(USER_TABLE_NAME),
+                mTestDocumentWrapperCaptor.capture(),
+                writeOptions.capture()
+        );
+        assertNotNull(mTestDocumentWrapperCaptor.getValue());
+        assertEquals("document id", mTestDocumentWrapperCaptor.getValue().getId());
+        assertNotNull(writeOptions.getValue());
+        assertEquals(TimeToLive.DEFAULT, writeOptions.getValue().getDeviceTimeToLive());
 
         /* Disable the Data module. */
         Data.setEnabled(false).get();
@@ -286,6 +316,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        assertNull(docs.getCurrentPage().getError());
         assertTrue(docs.hasNextPage());
         assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
         Page<TestDocument> secondPage = docs.getNextPage().get();
@@ -369,6 +400,8 @@ public class DataTest extends AbstractDataTest {
         PaginatedDocuments<TestDocument> paginatedDocuments = Data.list(TestDocument.class, USER_DOCUMENTS).get();
         Iterator<DocumentWrapper<TestDocument>> iterator = paginatedDocuments.iterator();
         assertFalse(iterator.hasNext());
+        assertNotNull(paginatedDocuments.getCurrentPage().getError());
+        assertNull(paginatedDocuments.getCurrentPage().getItems());
 
         /* Verify not throws exception. */
         iterator.remove();
@@ -520,19 +553,28 @@ public class DataTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(documents)
         );
 
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(
+                endsWith("docs"),
+                anyString(),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class)))
+                .then(new Answer<ServiceCall>() {
 
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
-                return mock(ServiceCall.class);
-            }
-        });
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        return mock(ServiceCall.class);
+                    }
+                });
 
         /* Make the call. Ensure deserialization error on document by passing incorrect class type. */
         AppCenterFuture<PaginatedDocuments<String>> result = Data.list(String.class, DefaultPartitions.USER_DOCUMENTS);
 
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), startsWith(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
 
         /* Verify the result is correct. */
         assertNotNull(result);
@@ -578,7 +620,10 @@ public class DataTest extends AbstractDataTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> result = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS);
 
         /* Verify the result is correct and the cache was not touched. */
+        verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), startsWith(USER_DOCUMENTS));
         verifyNoMoreInteractions(mLocalDocumentStorage);
+        verify(mAuthTokenContext).getAccountId();
+        verifyNoMoreInteractions(mAuthTokenContext);
         assertNotNull(result);
         PaginatedDocuments<TestDocument> docs = result.get();
         assertNotNull(docs);
@@ -841,7 +886,7 @@ public class DataTest extends AbstractDataTest {
     public void createPendingOperationWithoutUpsertHeader() {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -899,7 +944,7 @@ public class DataTest extends AbstractDataTest {
     public void replacePendingOperationWithUpsertHeader() {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1375,10 +1420,130 @@ public class DataTest extends AbstractDataTest {
     }
 
     @Test
+    public void listUserPartitionReturnsAnExceptionWhenNotSignedIn() {
+        mockSignOut();
+        PaginatedDocuments<TestDocument> documents = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        Iterator<DocumentWrapper<TestDocument>> iterator = documents.iterator();
+        assertFalse(iterator.hasNext());
+        assertNotNull(documents);
+        Page<TestDocument> currentPage = documents.getCurrentPage();
+        assertNotNull(currentPage);
+        DataException error = currentPage.getError();
+        assertNull(currentPage.getItems());
+        assertNotNull(error);
+        assertTrue(error.getMessage().contains("List operation requested on user partition, but the user is not logged in."));
+    }
+
+    private void mockSignOut() {
+        Mockito.when(mAuthTokenContext.getAccountId()).thenReturn(null);
+    }
+
+    @Test
+    public void listAnObjectWhenThereArePendingOperations() {
+        listAnObjectWhenThereArePendingOperations(Utils.getGson().toJson(new TestDocument("test")), TestDocument.class);
+    }
+
+    @Test
+    public void listPrimitiveTypeWhenThereArePendingOperations() {
+        listAnObjectWhenThereArePendingOperations("document", String.class);
+    }
+
+    private <T> void listAnObjectWhenThereArePendingOperations(String document, Class<T> documentType) {
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
+
+        /* Return list of one item which will have a non-expired pending operation. */
+        LocalDocument localDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "localDocument",
+                document,
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
+        LocalDocument expiredDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_DELETE_VALUE,
+                RESOLVED_USER_PARTITION,
+                "expiredDocument",
+                document,
+                PAST_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+        );
+        LocalDocument notPendingDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                null,
+                RESOLVED_USER_PARTITION,
+                "notPendingDocument",
+                document,
+                PAST_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+        );
+        LocalDocument notPendingNotExpiredDocument = new LocalDocument(
+                USER_TABLE_NAME,
+                null,
+                RESOLVED_USER_PARTITION,
+                "notPendingNotExpiredDocument",
+                document,
+                FUTURE_TIMESTAMP,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
+        List<LocalDocument> storedDocuments = new ArrayList<>();
+        storedDocuments.add(localDocument);
+        storedDocuments.add(expiredDocument);
+        storedDocuments.add(notPendingDocument);
+        storedDocuments.add(notPendingNotExpiredDocument);
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(storedDocuments));
+        assertTrue(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(localDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(expiredDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingDocument)));
+        assertFalse(LocalDocumentStorage.hasPendingOperationAndIsNotExpired(Collections.singletonList(notPendingNotExpiredDocument)));
+        when(mLocalDocumentStorage.getDocumentsByPartition(USER_TABLE_NAME, RESOLVED_USER_PARTITION)).thenReturn(storedDocuments);
+        PaginatedDocuments<T> documents = Data.list(documentType, USER_DOCUMENTS).get();
+        assertNull(documents.getCurrentPage().getError());
+        List<DocumentWrapper<T>> items = documents.getCurrentPage().getItems();
+        assertEquals(2, items.size());
+        assertNull(items.get(0).getError());
+        assertEquals(localDocument.getDocumentId(), items.get(0).getId());
+        assertNull(items.get(1).getError());
+        assertEquals(notPendingNotExpiredDocument.getDocumentId(), items.get(1).getId());
+    }
+
+    @Test
+    public void readOnlyListReturnsEmptyResult() {
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setAccountId(AbstractDataTest.ACCOUNT_ID)
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(new Date())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + APP_DOCUMENTS)).thenReturn(tokenResult);
+
+        when(mLocalDocumentStorage.getDocumentsByPartition(com.microsoft.appcenter.Constants.READONLY_TABLE, APP_DOCUMENTS)).thenReturn(new ArrayList<LocalDocument>());
+        PaginatedDocuments<String> documents = Data.list(String.class, APP_DOCUMENTS).get();
+        assertEquals(0, documents.getCurrentPage().getItems().size());
+    }
+
+
+    @Test
     public void pendingOperationProcessedWhenNetworkOnAndApplyAppEnabled() throws JSONException {
 
         /* If we have one pending operation delete, and the network is on. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1418,7 +1583,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationNotProcessedWhenNetworkOff() {
 
         /* If we have one pending operation delete, and the network is off. */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1451,7 +1616,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationNotProcessedWhenApplyEnabledFalse() {
 
         /* If we have delete, create, update pending operation, and the network is on. */
-        final PendingOperation deletePendingOperation = new PendingOperation(
+        final LocalDocument deletePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1460,7 +1625,7 @@ public class DataTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        final PendingOperation createPendingOperation = new PendingOperation(
+        final LocalDocument createPendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1469,7 +1634,7 @@ public class DataTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        final PendingOperation replacePendingOperation = new PendingOperation(
+        final LocalDocument replacePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1527,7 +1692,7 @@ public class DataTest extends AbstractDataTest {
     public void pendingOperationProcessedOnceWhenDuplicatePendingOperations() throws JSONException {
 
         /* If we have duplicate pending operation. (Mock the situation we have call processPendingOperation at the same time.) */
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -1567,7 +1732,7 @@ public class DataTest extends AbstractDataTest {
     public void partiallySavedPendingOperationDoesNotThrowExceptionWhenDisabled() {
 
         /* If we have one pending operation, and network is on. */
-        final PendingOperation deletePendingOperation = new PendingOperation(
+        final LocalDocument deletePendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,

@@ -15,7 +15,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -45,12 +45,14 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    private static final String PARTITION_COLUMN_NAME = "partition";
+    @VisibleForTesting
+    static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    @VisibleForTesting
+    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -146,7 +148,7 @@ class LocalDocumentStorage {
                 now,
                 now,
                 pendingOperationValue);
-        return mDatabaseManager.replace(table, values);
+        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
@@ -232,26 +234,36 @@ class LocalDocumentStorage {
         }
     }
 
-    List<PendingOperation> getPendingOperations(String table) {
-        List<PendingOperation> result = new ArrayList<>();
+    List<LocalDocument> getDocumentsByPartition(String table, String partition) {
+        return queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[]{partition});
+    }
+
+    List<LocalDocument> getPendingOperations(String table) {
+        return queryLocalStorage(table, PENDING_OPERATION_COLUMN_NAME + " IS NOT NULL", null);
+    }
+
+    private List<LocalDocument> queryLocalStorage(String table, String whereClause, String[] selectionArgs) {
+        List<LocalDocument> result = new ArrayList<>();
         if (table == null) {
             return result;
         }
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
-        Cursor cursor = mDatabaseManager.getCursor(table, builder, null, null, null);
+        builder.appendWhere(whereClause);
+        Cursor cursor = mDatabaseManager.getCursor(table, builder, null, selectionArgs, null);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
             while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
-                result.add(new PendingOperation(
+                String pendingOperation = values.getAsString(PENDING_OPERATION_COLUMN_NAME);
+                Long expirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
+                result.add(new LocalDocument(
                         table,
-                        values.getAsString(PENDING_OPERATION_COLUMN_NAME),
+                        pendingOperation,
                         values.getAsString(PARTITION_COLUMN_NAME),
                         values.getAsString(DOCUMENT_ID_COLUMN_NAME),
                         values.getAsString(DOCUMENT_COLUMN_NAME),
-                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        expirationTime,
                         values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
                         values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
             }
@@ -259,6 +271,22 @@ class LocalDocumentStorage {
             cursor.close();
         }
         return result;
+    }
+
+    /**
+     * Check if local documents contain any pending operation that has not expired yet.
+     *
+     * @param localDocuments list of documents to check.
+     * @return true if there is at least one document is in storage for the given partition
+     * and has pending operation on it and is not expired.
+     */
+    static boolean hasPendingOperationAndIsNotExpired(@NonNull List<LocalDocument> localDocuments) {
+        for (LocalDocument doc : localDocuments) {
+            if (doc.hasPendingOperation() && !doc.isExpired()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -297,7 +325,7 @@ class LocalDocumentStorage {
      *
      * @param operation Pending operation to update.
      */
-    void updatePendingOperation(PendingOperation operation) {
+    void updatePendingOperation(LocalDocument operation) {
         ContentValues values = getContentValues(
                 operation.getPartition(),
                 operation.getDocumentId(),
@@ -343,7 +371,6 @@ class LocalDocumentStorage {
             DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime / 1000L, documentType);
             documentWrapper.setFromCache(true);
             documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-
             /*
              * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
              */

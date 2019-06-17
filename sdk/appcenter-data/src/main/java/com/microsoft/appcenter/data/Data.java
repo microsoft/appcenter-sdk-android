@@ -22,9 +22,9 @@ import com.microsoft.appcenter.data.client.TokenExchange.TokenExchangeServiceCal
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
-import com.microsoft.appcenter.data.models.PendingOperation;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.data.models.TokenResult;
@@ -40,7 +40,9 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -353,8 +355,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private synchronized void processPendingOperations() {
-        for (PendingOperation po : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
-            String outgoingId = Utils.getOutgoingId(po.getPartition(), po.getDocumentId());
+        for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+            String outgoingId = Utils.getOutgoingId(localDocument.getPartition(), localDocument.getDocumentId());
 
             /* If the operation is already being processed, skip it. */
             if (mOutgoingPendingOperationCalls.containsKey(outgoingId)) {
@@ -363,13 +365,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
             /* Put the pending document id into the map to prevent further duplicate http call. The ServiceCall will be set when the http operation executes. */
             mOutgoingPendingOperationCalls.put(outgoingId, null);
-            if (PENDING_OPERATION_CREATE_VALUE.equals(po.getOperation()) ||
-                    PENDING_OPERATION_REPLACE_VALUE.equals(po.getOperation())) {
-                instanceCreateOrUpdate(po);
-            } else if (PENDING_OPERATION_DELETE_VALUE.equals(po.getOperation())) {
-                instanceDelete(po);
+            if (PENDING_OPERATION_CREATE_VALUE.equals(localDocument.getOperation()) ||
+                    PENDING_OPERATION_REPLACE_VALUE.equals(localDocument.getOperation())) {
+                instanceCreateOrUpdate(localDocument);
+            } else if (PENDING_OPERATION_DELETE_VALUE.equals(localDocument.getOperation())) {
+                instanceDelete(localDocument);
             } else {
-                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", po.getOperation()));
+                AppCenterLog.debug(LOG_TAG, String.format("Pending operation '%s' is not supported.", localDocument.getOperation()));
             }
         }
     }
@@ -594,6 +596,15 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     @Override
                     public void onCallSucceeded(String payload, Map<String, String> headers) {
                         Page<T> page = Utils.parseDocuments(payload, documentType);
+                        String tableName = Utils.getTableName(tokenResult);
+                        List<DocumentWrapper<T>> items = page.getItems();
+                        if (items != null) {
+                            for (DocumentWrapper<T> document : items) {
+                                if (document.getError() == null) {
+                                    mLocalDocumentStorage.writeOnline(tableName, document, new WriteOptions());
+                                }
+                            }
+                        }
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .setCurrentPage(page).setTokenResult(tokenResult)
                                 .setHttpClient(mHttpClient)
@@ -619,14 +630,34 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;
         }
-        if (!mNetworkStateHelper.isNetworkConnected()) {
-            completeFutureAndRemovePendingCallWhenDocuments(new DataException("No network detected. List operation is not supported offline."), result);
-            return result;
-        }
         postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
+                String tableName = Utils.getTableName(partition);
+                if (tableName == null) {
+                    completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on user partition, but the user is not logged in."), result);
+                    return;
+                }
+                final TokenResult cachedTokenResult = mTokenManager.getCachedToken(partition, true);
+                if (cachedTokenResult == null && !mNetworkStateHelper.isNetworkConnected()) {
+                    completeFutureAndRemovePendingCallWhenDocuments(new DataException("List operation requested on a partition, but no network."), result);
+                    return;
+                }
+                List<LocalDocument> localDocuments;
+                if (cachedTokenResult != null) {
+                    localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, cachedTokenResult.getPartition());
+                    if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
+                        completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                        return;
+                    }
+                } else {
+                    localDocuments = new ArrayList<>();
+                }
+                if (!mNetworkStateHelper.isNetworkConnected()) {
+                    completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
+                    return;
+                }
                 getTokenAndCallCosmosDbApi(
                         partition,
                         result,
@@ -652,7 +683,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * The document type (T) must be JSON deserializable.
      */
     private synchronized void instanceCreateOrUpdate(
-            final PendingOperation pendingOperation) {
+            final LocalDocument pendingOperation) {
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
@@ -720,7 +751,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private synchronized void callCosmosDbCreateOrUpdateApi(
             final TokenResult tokenResult,
-            final PendingOperation pendingOperation) {
+            final LocalDocument pendingOperation) {
         String outgoingId = Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId());
 
         /* Build payload. */
@@ -798,7 +829,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         return result;
     }
 
-    private synchronized void instanceDelete(final PendingOperation pendingOperation) {
+    private synchronized void instanceDelete(final LocalDocument pendingOperation) {
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
                 null,
@@ -855,7 +886,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final PendingOperation operation) {
+    private synchronized void callCosmosDbDeleteApi(TokenResult tokenResult, final LocalDocument operation) {
         String outgoingId = Utils.getOutgoingId(operation.getPartition(), operation.getDocumentId());
         mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
@@ -933,7 +964,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mPendingCalls.remove(future);
     }
 
-    private void notifyListenerAndUpdateOperationOnSuccess(final String cosmosDbResponsePayload, final PendingOperation pendingOperation) {
+    private void notifyListenerAndUpdateOperationOnSuccess(final String cosmosDbResponsePayload, final LocalDocument pendingOperation) {
         post(new Runnable() {
 
             @Override
@@ -950,7 +981,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                     eTag),
                             null);
                 }
-                if (pendingOperation.getExpirationTime() <= System.currentTimeMillis() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
+                if (pendingOperation.isExpired() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
 
                     /* Remove the document if expiration_time has elapsed or it is a delete operation. */
                     mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
@@ -965,7 +996,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         });
     }
 
-    private void notifyListenerAndUpdateOperationOnFailure(final DataException e, final PendingOperation pendingOperation) {
+    private void notifyListenerAndUpdateOperationOnFailure(final DataException e, final LocalDocument pendingOperation) {
         post(new Runnable() {
 
             @Override
@@ -991,7 +1022,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             null,
                             e);
                 }
-                if (deleteLocalCopy || pendingOperation.getExpirationTime() <= System.currentTimeMillis()) {
+                if (deleteLocalCopy || pendingOperation.isExpired()) {
 
                     /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
                     mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());

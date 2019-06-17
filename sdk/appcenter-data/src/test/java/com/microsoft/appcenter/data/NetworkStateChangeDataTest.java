@@ -8,7 +8,7 @@ package com.microsoft.appcenter.data;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.HttpException;
 
@@ -65,7 +65,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     private void verifyPendingCreateOperationsSuccess(boolean operationExpired) throws JSONException {
         long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -75,7 +75,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -114,9 +114,9 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         } else {
 
             /* Verify operation is updated in the cache when operation is not expired. */
-            ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
+            ArgumentCaptor<LocalDocument> pendingOperationCaptor = ArgumentCaptor.forClass(LocalDocument.class);
             verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
-            PendingOperation capturedOperation = pendingOperationCaptor.getValue();
+            LocalDocument capturedOperation = pendingOperationCaptor.getValue();
             assertNotNull(capturedOperation);
             assertEquals(ETAG, capturedOperation.getETag());
             assertEquals("document", capturedOperation.getDocument());
@@ -127,7 +127,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     @Test
     public void pendingCreateOperationSuccessWithNoListener() throws JSONException {
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -137,7 +137,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
 
@@ -149,9 +149,9 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertEquals(RESOLVED_USER_PARTITION, requestPayload.getPartition());
         assertEquals("document", requestPayload.getDeserializedValue());
 
-        ArgumentCaptor<PendingOperation> pendingOperationCaptor = ArgumentCaptor.forClass(PendingOperation.class);
+        ArgumentCaptor<LocalDocument> pendingOperationCaptor = ArgumentCaptor.forClass(LocalDocument.class);
         verify(mLocalDocumentStorage).updatePendingOperation(pendingOperationCaptor.capture());
-        PendingOperation capturedOperation = pendingOperationCaptor.getValue();
+        LocalDocument capturedOperation = pendingOperationCaptor.getValue();
         assertNotNull(capturedOperation);
         assertEquals(pendingOperation, capturedOperation);
         assertEquals(ETAG, capturedOperation.getETag());
@@ -173,8 +173,8 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     private void verifyPendingOperationFailure(String operation, String cosmosDbMethod, String documentId) throws JSONException {
         final String document = "document";
-        final PendingOperation pendingOperation =
-                new PendingOperation(
+        final LocalDocument pendingOperation =
+                new LocalDocument(
                         USER_TABLE_NAME,
                         operation,
                         RESOLVED_USER_PARTITION,
@@ -184,7 +184,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                         CURRENT_TIMESTAMP,
                         CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
@@ -209,8 +209,8 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
     @Test
     public void unsupportedPendingOperation() {
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
-                    add(new PendingOperation(
+                new ArrayList<LocalDocument>() {{
+                    add(new LocalDocument(
                             USER_TABLE_NAME,
                             "Order a coffee",
                             RESOLVED_USER_PARTITION,
@@ -244,7 +244,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
     }
 
     private void verifyTokenExchangeCallFails(String operation) throws JSONException {
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 operation,
                 RESOLVED_USER_PARTITION,
@@ -254,7 +254,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
 
@@ -274,7 +274,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     @Test
     public void pendingDeleteOperationSuccess() throws JSONException {
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -284,7 +284,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
         ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
@@ -326,7 +326,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     private void verifyPendingDeleteOperationWithCosmosDbError(int httpStatusCode, boolean operationExpired) throws JSONException {
         long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -336,7 +336,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
@@ -362,7 +362,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     @Test
     public void pendingDeleteOperationWithCosmosDb409ErrorNoListener() throws JSONException {
-        final PendingOperation pendingOperation = new PendingOperation(
+        final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_DELETE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -372,7 +372,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
         when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
-                new ArrayList<PendingOperation>() {{
+                new ArrayList<LocalDocument>() {{
                     add(pendingOperation);
                 }});
 

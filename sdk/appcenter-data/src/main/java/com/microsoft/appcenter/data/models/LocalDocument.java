@@ -8,7 +8,7 @@ package com.microsoft.appcenter.data.models;
 /**
  * Pending operation.
  */
-public class PendingOperation {
+public class LocalDocument {
 
     private final String mTable;
 
@@ -28,7 +28,7 @@ public class PendingOperation {
 
     private final long mOperationTime;
 
-    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
+    public LocalDocument(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
         mTable = table;
         mOperation = operation;
         mPartition = partition;
@@ -114,5 +114,19 @@ public class PendingOperation {
      */
     public long getOperationTime() {
         return mOperationTime;
+    }
+
+    /**
+     * @return whether the document is expired
+     */
+    public boolean isExpired() {
+        return getExpirationTime() <= System.currentTimeMillis();
+    }
+
+    /**
+     * @return whether the document is a pending operation or has been synchronized with the DB
+     */
+    public boolean hasPendingOperation() {
+        return mOperation != null;
     }
 }
