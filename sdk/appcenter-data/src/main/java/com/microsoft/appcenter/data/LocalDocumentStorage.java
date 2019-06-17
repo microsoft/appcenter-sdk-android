@@ -257,10 +257,6 @@ class LocalDocumentStorage {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
                 String pendingOperation = values.getAsString(PENDING_OPERATION_COLUMN_NAME);
                 Long expirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
-                //TODO When read options argument is available in list function use ReadOptions.isExpired in the condition
-                //boolean isPendingOperation = pendingOperation != null;
-                //boolean isNotExpired = expirationTime > System.currentTimeMillis();
-                //if (isPendingOperation && isNotExpired) {
                 result.add(new LocalDocument(
                         table,
                         pendingOperation,
@@ -270,7 +266,6 @@ class LocalDocumentStorage {
                         expirationTime,
                         values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
                         values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
-                //}
             }
         } finally {
             cursor.close();
