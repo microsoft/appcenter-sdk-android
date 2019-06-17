@@ -600,6 +600,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                         String tableName = Utils.getTableName(tokenResult);
                         if (page.getItems() != null) {
                             Iterator<DocumentWrapper<T>> documentWrapperIterator = page.getItems().iterator();
+                            
                             //noinspection Must be a while loop to keep the iterator focus in the proper place
                             while (documentWrapperIterator.hasNext()) {
                                 DocumentWrapper<T> document = documentWrapperIterator.next();
