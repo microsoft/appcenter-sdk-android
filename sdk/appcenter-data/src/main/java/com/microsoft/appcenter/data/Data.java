@@ -195,7 +195,21 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
-        return getInstance().instanceList(documentType, partition);
+        return list(documentType, partition, new ReadOptions());
+    }
+
+    /**
+     * Retrieve a paginated list of the documents in a partition.
+     *
+     * @param documentType The document type.
+     * @param partition    The CosmosDB partition key.
+     * @param readOptions  Cache read options when the operation is done offline.
+     * @param <T>          The document type.
+     * @return Future asynchronous operation with result being the document list.
+     * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
+     */
+    public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition, ReadOptions readOptions) {
+        return getInstance().instanceList(documentType, partition, readOptions);
     }
 
     /**
@@ -625,7 +639,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Create a document
      * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition) {
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition, final ReadOptions readOptions) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;

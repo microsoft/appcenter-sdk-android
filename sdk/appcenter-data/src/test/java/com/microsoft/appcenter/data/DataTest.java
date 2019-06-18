@@ -179,7 +179,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Make the call. */
-        PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS, new ReadOptions()).get();
 
         /* Verify the result correct. */
         assertFalse(docs.hasNextPage());
