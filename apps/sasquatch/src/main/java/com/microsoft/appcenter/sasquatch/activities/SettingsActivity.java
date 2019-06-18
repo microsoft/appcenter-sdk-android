@@ -570,6 +570,9 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void onSave(String value) {
+                    if (value != null && value.isEmpty()){
+                        value = null;
+                    }
                     setKeyValue(USER_ID_KEY, value);
                     MainActivity.setUserId(value);
                 }
