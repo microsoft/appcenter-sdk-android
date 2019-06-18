@@ -195,7 +195,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
-        return list(documentType, partition, new ReadOptions());
+        return getInstance().instanceList(documentType, partition, new ReadOptions());
     }
 
     /**
