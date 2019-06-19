@@ -566,15 +566,20 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
                 }
             });
-            initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
+            initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, getString(R.string.user_id_unset), new EditTextListener() {
 
                 @Override
                 public void onSave(String value) {
-                    if (value != null && value.isEmpty()){
-                        value = null;
+                    if (value != null && value.isEmpty()) {
+                        setKeyValue(USER_ID_KEY, getString(R.string.user_id_empty));
+                        MainActivity.setUserId(value);
                     }
-                    setKeyValue(USER_ID_KEY, value);
-                    MainActivity.setUserId(value);
+                    else {
+                        if (!value.equals(getString(R.string.user_id_unset)) && !value.equals(getString(R.string.user_id_empty))) {
+                            setKeyValue(USER_ID_KEY, value);
+                            MainActivity.setUserId(value);
+                        }
+                    }
                 }
 
                 @Override
