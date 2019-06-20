@@ -566,20 +566,12 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
                 }
             });
-            initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, getString(R.string.user_id_unset), new EditTextListener() {
+            initEditText(R.string.user_id_key, R.string.user_id_title, USER_ID_KEY, null, new EditTextListener() {
 
                 @Override
                 public void onSave(String value) {
-                    if (value != null && value.isEmpty()) {
-                        setKeyValue(USER_ID_KEY, getString(R.string.user_id_empty));
-                        MainActivity.setUserId(value);
-                    }
-                    else {
-                        if (!value.equals(getString(R.string.user_id_unset)) && !value.equals(getString(R.string.user_id_empty))) {
-                            setKeyValue(USER_ID_KEY, value);
-                            MainActivity.setUserId(value);
-                        }
-                    }
+                    setKeyValue(USER_ID_KEY, value);
+                    MainActivity.setUserId(value);
                 }
 
                 @Override
@@ -743,7 +735,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
                 return;
             }
-            preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+            preference.setSummary(getSummary(preferencesKey, defaultValue));
             preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -757,14 +749,14 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     listener.onSave(input.getText().toString());
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     listener.onReset();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -880,6 +872,17 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }
             return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
+        }
+
+        private String getSummary(final String preferencesKey, final String defaultValue) {
+            String summary = MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue);
+            if (summary == null) {
+                return getString(R.string.unset_summary);
+            }
+            else if (summary.isEmpty()) {
+                return getString(R.string.empty_summary);
+            }
+            return summary;
         }
 
         private interface HasEnabled {
