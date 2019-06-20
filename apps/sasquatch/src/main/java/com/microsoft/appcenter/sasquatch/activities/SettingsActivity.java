@@ -878,8 +878,7 @@ public class SettingsActivity extends AppCompatActivity {
             String summary = MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue);
             if (summary == null) {
                 return getString(R.string.unset_summary);
-            }
-            else if (summary.isEmpty()) {
+            } else if (summary.isEmpty()) {
                 return getString(R.string.empty_summary);
             }
             return summary;
