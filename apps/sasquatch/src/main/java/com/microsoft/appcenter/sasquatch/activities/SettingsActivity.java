@@ -735,7 +735,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Log.w(LOG_TAG, "Couldn't find preference for key: " + key);
                 return;
             }
-            preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+            preference.setSummary(getSummary(preferencesKey, defaultValue));
             preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
                 @Override
@@ -749,14 +749,14 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     listener.onSave(input.getText().toString());
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
                                 }
                             })
                             .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     listener.onReset();
-                                    preference.setSummary(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -872,6 +872,16 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }
             return getString(R.string.appcenter_crashes_file_attachment_summary_empty);
+        }
+
+        private String getSummary(final String preferencesKey, final String defaultValue) {
+            String summary = MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue);
+            if (summary == null) {
+                return getString(R.string.unset_summary);
+            } else if (summary.isEmpty()) {
+                return getString(R.string.empty_summary);
+            }
+            return summary;
         }
 
         private interface HasEnabled {

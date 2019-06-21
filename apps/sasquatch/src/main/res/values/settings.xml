@@ -153,6 +153,9 @@
 
     <string name="property_saved" tools:ignore="MissingTranslation">Property saved</string>
 
+    <string name="unset_summary" tools:ignore="MissingTranslation">Unset</string>
+    <string name="empty_summary" tools:ignore="MissingTranslation">Empty</string>
+
     <string name="save" tools:ignore="MissingTranslation">Save</string>
     <string name="reset" tools:ignore="MissingTranslation">Reset</string>
     <string name="cancel" tools:ignore="MissingTranslation">Cancel</string>
