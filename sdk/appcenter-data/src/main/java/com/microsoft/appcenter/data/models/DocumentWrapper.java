@@ -46,11 +46,12 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * @param document        content
-     * @param partition       of the document
-     * @param id              of the document
-     * @param eTag            of the document
-     * @param lastUpdatedDate in seconds
+     Init.
+     * @param document        user payload.
+     * @param partition       Partition containing the document.
+     * @param id              Document identifier.
+     * @param eTag            Document eTag.
+     * @param lastUpdatedDate Last updated time in seconds.
      */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate) {
         this(document, partition, id);
