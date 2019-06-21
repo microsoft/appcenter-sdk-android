@@ -47,7 +47,7 @@ public class DocumentWrapper<T> extends DocumentMetadata {
 
     /**
      Init.
-     * @param document        user payload.
+     * @param document        User payload.
      * @param partition       Partition containing the document.
      * @param id              Document identifier.
      * @param eTag            Document eTag.
@@ -60,12 +60,13 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * @param document        content
-     * @param partition       of the document
-     * @param id              of the document
-     * @param eTag            of the document
-     * @param lastUpdatedDate in seconds
-     * @param exception       in case there is an error initializing document wrapper
+     Init.
+     * @param document        User payload.
+     * @param partition       Partition containing the document.
+     * @param id              Document identifier.
+     * @param eTag            Document eTag.
+     * @param lastUpdatedDate Last updated time in seconds.
+     * @param exception       Exception in case there is an error initializing document wrapper
      */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate, DataException exception) {
         this(document, partition, id, eTag, lastUpdatedDate);
@@ -103,9 +104,9 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * Get last time the document was updated in CosmosDB in UTC unix epoch in milliseconds.
+     * Get last time the document was updated in CosmosDB in UTC unix epoch.
      *
-     * @return UTC unix timestamp in milliseconds.
+     * @return UTC unix timestamp.
      */
     public Date getLastUpdatedDate() {
 
