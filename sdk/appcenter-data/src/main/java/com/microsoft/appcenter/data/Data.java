@@ -195,7 +195,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition) {
-        return getInstance().instanceList(documentType, partition, new ReadOptions());
+        return list(documentType, partition, new ReadOptions());
     }
 
     /**
@@ -208,6 +208,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * @return Future asynchronous operation with result being the document list.
      * If the operation fails, the error can be checked by reading {@link Page#getError()} on the first page of the results: {@link PaginatedDocuments#getCurrentPage()}.
      */
+    @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition, ReadOptions readOptions) {
         return getInstance().instanceList(documentType, partition, readOptions);
     }
@@ -660,8 +661,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 }
                 List<LocalDocument> localDocuments;
                 if (cachedTokenResult != null) {
-                    localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, cachedTokenResult.getPartition());
-                    if (LocalDocumentStorage.hasPendingOperationAndIsNotExpired(localDocuments)) {
+                    localDocuments = mLocalDocumentStorage.getDocumentsByPartition(tableName, cachedTokenResult.getPartition(), readOptions);
+                    if (LocalDocumentStorage.hasPendingOperation(localDocuments)) {
                         completeFuture(Utils.localDocumentsToNonExpiredPaginated(localDocuments, documentType), result);
                         return;
                     }

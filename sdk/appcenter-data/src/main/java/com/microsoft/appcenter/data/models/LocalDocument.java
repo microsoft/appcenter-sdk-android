@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.data.models;
 
 /**
- * Pending operation.
+ * Java object representation of a row in Local Document storage in a SqLite table.
  */
 public class LocalDocument {
 
@@ -22,10 +22,19 @@ public class LocalDocument {
 
     private String mETag;
 
+    /**
+     * Expiration time in milliseconds.
+     */
     private final long mExpirationTime;
 
+    /**
+     * Download time in milliseconds.
+     */
     private final long mDownloadTime;
 
+    /**
+     * Operation time in milliseconds.
+     */
     private final long mOperationTime;
 
     public LocalDocument(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {

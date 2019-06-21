@@ -19,6 +19,12 @@ import java.util.Date;
  */
 public class DocumentWrapper<T> extends DocumentMetadata {
 
+    /**
+     * Last updated time in seconds.
+     * Gets deserialized from cosmosDB payload.
+     * Uploading this value back to cosmosDB doesn't update the value. CosmosDB automatically forces the
+     * value to be the value of the operation regardless of what it is set to at the time of serialization.
+     */
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long mLastUpdatedDate;
 
@@ -39,12 +45,27 @@ public class DocumentWrapper<T> extends DocumentMetadata {
         mDocument = document;
     }
 
+    /**
+     * @param document        content
+     * @param partition       of the document
+     * @param id              of the document
+     * @param eTag            of the document
+     * @param lastUpdatedDate in seconds
+     */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate) {
         this(document, partition, id);
         mETag = eTag;
         mLastUpdatedDate = lastUpdatedDate;
     }
 
+    /**
+     * @param document        content
+     * @param partition       of the document
+     * @param id              of the document
+     * @param eTag            of the document
+     * @param lastUpdatedDate in seconds
+     * @param exception       in case there is an error initializing document wrapper
+     */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate, DataException exception) {
         this(document, partition, id, eTag, lastUpdatedDate);
         mError = exception;
@@ -81,9 +102,9 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * Get last time the document was updated in CosmosDB in UTC unix epoch.
+     * Get last time the document was updated in CosmosDB in UTC unix epoch in milliseconds.
      *
-     * @return UTC unix timestamp.
+     * @return UTC unix timestamp in milliseconds.
      */
     public Date getLastUpdatedDate() {
 

@@ -132,6 +132,28 @@ class LocalDocumentStorage {
         write(table, document, writeOptions, null);
     }
 
+    /**
+     * Check if local documents contains any pending operation.
+     *
+     * @param localDocuments list of documents to check.
+     * @return true if there is at least one document is in storage for the given partition
+     * and has pending operation on it.
+     */
+    static boolean hasPendingOperation(@NonNull List<LocalDocument> localDocuments) {
+        for (LocalDocument doc : localDocuments) {
+            if (doc.hasPendingOperation() && !doc.getOperation().equals(PENDING_OPERATION_DELETE_VALUE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE);
+        return builder;
+    }
+
     private <T> long write(String table, DocumentWrapper<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
             return 0;
@@ -145,36 +167,10 @@ class LocalDocumentStorage {
                 document.getETag(),
                 writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
                         TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
-                now,
-                now,
+                document.getLastUpdatedDate().getTime(),
+                document.getLastUpdatedDate().getTime(),
                 pendingOperationValue);
         return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
-    }
-
-    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE);
-        return builder;
-    }
-
-    <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
-        cachedDocument.setFromCache(true);
-        if (cachedDocument.getError() != null && cachedDocument.getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
-            return cachedDocument;
-        }
-
-        /* The document cache has been expired, or the document did not exists, create it. */
-        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
-        long rowId =
-                cachedDocument.getError() != null ?
-                        createOffline(table, writeDocument, writeOptions) :
-                        updateOffline(table, writeDocument, writeOptions);
-        if (rowId < 0) {
-            writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
-        }
-        writeDocument.setFromCache(true);
-        return writeDocument;
     }
 
     private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
@@ -234,8 +230,30 @@ class LocalDocumentStorage {
         }
     }
 
-    List<LocalDocument> getDocumentsByPartition(String table, String partition) {
-        return queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[]{partition});
+    <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+        DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
+        cachedDocument.setFromCache(true);
+        if (cachedDocument.getError() != null && cachedDocument.getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
+            return cachedDocument;
+        }
+
+        /* The document cache has been expired, or the document did not exists, create it. */
+        DocumentWrapper<T> writeDocument =
+                new DocumentWrapper<>(
+                        document,
+                        partition,
+                        documentId,
+                        cachedDocument.getETag(),
+                        System.currentTimeMillis() / 1000L);
+        long rowId =
+                cachedDocument.getError() != null ?
+                        createOffline(table, writeDocument, writeOptions) :
+                        updateOffline(table, writeDocument, writeOptions);
+        if (rowId < 0) {
+            writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
+        }
+        writeDocument.setFromCache(true);
+        return writeDocument;
     }
 
     List<LocalDocument> getPendingOperations(String table) {
@@ -273,20 +291,29 @@ class LocalDocumentStorage {
         return result;
     }
 
-    /**
-     * Check if local documents contain any pending operation that has not expired yet.
-     *
-     * @param localDocuments list of documents to check.
-     * @return true if there is at least one document is in storage for the given partition
-     * and has pending operation on it and is not expired.
-     */
-    static boolean hasPendingOperationAndIsNotExpired(@NonNull List<LocalDocument> localDocuments) {
-        for (LocalDocument doc : localDocuments) {
-            if (doc.hasPendingOperation() && !doc.isExpired()) {
-                return true;
+    List<LocalDocument> getDocumentsByPartition(String table, String partition, ReadOptions readOptions) {
+        List<LocalDocument> result = new ArrayList<>();
+        if (table == null) {
+            return result;
+        }
+        List<LocalDocument> localDocuments = queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[]{partition});
+        for (LocalDocument localDocument : localDocuments) {
+            String pendingOperation = localDocument.getOperation();
+            boolean isExpired = ReadOptions.isExpired(localDocument.getExpirationTime());
+            boolean isNotPendingDeleteOperation = pendingOperation != null && !pendingOperation.equals(PENDING_OPERATION_DELETE_VALUE);
+            boolean isDocumentWithoutPendingOperation = pendingOperation == null;
+            boolean notDeleteOrNonpendingDocument = isNotPendingDeleteOperation || isDocumentWithoutPendingOperation;
+            if ((isExpired && notDeleteOrNonpendingDocument) || readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
+                mDatabaseManager.delete(
+                        table,
+                        BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
+                        new String[]{localDocument.getPartition(), localDocument.getDocumentId()});
+            }
+            if (!isExpired && notDeleteOrNonpendingDocument) {
+                result.add(localDocument);
             }
         }
-        return false;
+        return result;
     }
 
     /**
