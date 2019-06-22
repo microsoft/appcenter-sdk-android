@@ -19,6 +19,12 @@ import java.util.Date;
  */
 public class DocumentWrapper<T> extends DocumentMetadata {
 
+    /**
+     * Last updated time in seconds.
+     * Gets deserialized from cosmosDB payload.
+     * Uploading this value back to cosmosDB doesn't update the value. CosmosDB automatically forces the
+     * value to be the value of the operation regardless of what it is set to at the time of serialization.
+     */
     @SerializedName(value = Constants.TIMESTAMP_FIELD_NAME)
     private long mLastUpdatedDate;
 
@@ -39,12 +45,29 @@ public class DocumentWrapper<T> extends DocumentMetadata {
         mDocument = document;
     }
 
+    /**
+     Init.
+     * @param document        User payload.
+     * @param partition       Partition containing the document.
+     * @param id              Document identifier.
+     * @param eTag            Document eTag.
+     * @param lastUpdatedDate Last updated time in seconds.
+     */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate) {
         this(document, partition, id);
         mETag = eTag;
         mLastUpdatedDate = lastUpdatedDate;
     }
 
+    /**
+     Init.
+     * @param document        User payload.
+     * @param partition       Partition containing the document.
+     * @param id              Document identifier.
+     * @param eTag            Document eTag.
+     * @param lastUpdatedDate Last updated time in seconds.
+     * @param exception       Exception in case there is an error initializing document wrapper
+     */
     public DocumentWrapper(T document, String partition, String id, String eTag, long lastUpdatedDate, DataException exception) {
         this(document, partition, id, eTag, lastUpdatedDate);
         mError = exception;

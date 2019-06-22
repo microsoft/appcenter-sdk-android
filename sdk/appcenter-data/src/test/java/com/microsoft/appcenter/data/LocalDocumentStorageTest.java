@@ -124,6 +124,13 @@ public class LocalDocumentStorageTest {
     }
 
     @Test
+    public void getDocumentsByPartitionWhenTableIsNull() {
+        List<LocalDocument> list = mLocalDocumentStorage.getDocumentsByPartition(null, DefaultPartitions.USER_DOCUMENTS, new ReadOptions());
+        assertNotNull(list);
+        assertEquals(0, list.size());
+    }
+
+    @Test
     public void localStorageDoNotWriteWhenNotCache() {
         mLocalDocumentStorage.writeOffline(mUserTableName, new DocumentWrapper<>("Test", PARTITION, DOCUMENT_ID), new WriteOptions(TimeToLive.NO_CACHE));
         verify(mDatabaseManager, never()).replace(anyString(), any(ContentValues.class));

@@ -84,7 +84,7 @@ public class Utils {
                 localDocument.getPartition(),
                 localDocument.getDocumentId(),
                 localDocument.getETag(),
-                localDocument.getOperationTime(),
+                localDocument.getOperationTime() / 1000L,
                 documentType);
         documentWrapper.setFromCache(true);
         documentWrapper.setPendingOperation(localDocument.getOperation());
