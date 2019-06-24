@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -50,12 +49,6 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-
-@PrepareForTest({
-        CosmosDb.class,
-        TokenExchange.class,
-        TokenManager.class
-})
 public class DataReadTest extends AbstractDataTest {
 
     @Before

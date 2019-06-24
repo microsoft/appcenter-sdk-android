@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.client.CosmosDb;
-import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.LocalDocument;
@@ -22,7 +21,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -59,11 +57,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest({
-        CosmosDb.class,
-        TokenExchange.class,
-        TokenManager.class
-})
 public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
     @Before

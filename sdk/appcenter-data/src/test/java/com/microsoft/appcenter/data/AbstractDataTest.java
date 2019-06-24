@@ -74,7 +74,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         NetworkStateHelper.class,
         LocalDocumentStorage.class,
         Utils.class,
-        AuthTokenContext.class
+        AuthTokenContext.class,
+        CosmosDb.class,
+        TokenExchange.class,
+        TokenManager.class
 })
 abstract public class AbstractDataTest {
 

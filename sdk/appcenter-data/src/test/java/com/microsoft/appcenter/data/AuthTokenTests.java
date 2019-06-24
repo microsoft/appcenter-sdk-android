@@ -11,7 +11,6 @@ import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -29,7 +28,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest(TokenManager.class)
 public class AuthTokenTests extends AbstractDataTest {
 
     @Test
