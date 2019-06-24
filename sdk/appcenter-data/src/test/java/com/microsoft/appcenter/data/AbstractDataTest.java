@@ -15,6 +15,7 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
@@ -141,6 +142,9 @@ abstract public class AbstractDataTest {
 
     @Mock
     protected HttpClientRetryer mHttpClient;
+
+    @Mock
+    protected RemoteOperationListener mRemoteOperationListener;
 
     @Mock
     AppCenterHandler mAppCenterHandler;
