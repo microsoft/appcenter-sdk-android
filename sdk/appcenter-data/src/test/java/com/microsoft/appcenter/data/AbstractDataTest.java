@@ -15,6 +15,7 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
@@ -110,6 +111,16 @@ abstract public class AbstractDataTest {
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
 
+    static final String TOKEN_RESULT = String.format("{\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"db\",\n" +
+            "            \"dbCollectionName\": \"collection\",\n" +
+            "            \"token\": \"%s\",\n" +
+            "            \"status\": \"Succeed\",\n" +
+            "            \"accountId\": \"%s\"\n" +
+            "}", RESOLVED_USER_PARTITION, "token", ACCOUNT_ID);
+
     static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractDataTest.ACCOUNT_ID);
 
     static final String DATA_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Data.getInstance().getServiceName();
@@ -141,6 +152,9 @@ abstract public class AbstractDataTest {
 
     @Mock
     protected HttpClientRetryer mHttpClient;
+
+    @Mock
+    protected RemoteOperationListener mRemoteOperationListener;
 
     @Mock
     AppCenterHandler mAppCenterHandler;
