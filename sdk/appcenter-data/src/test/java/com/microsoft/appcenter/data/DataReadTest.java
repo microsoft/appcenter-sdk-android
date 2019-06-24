@@ -308,5 +308,4 @@ public class DataReadTest extends AbstractDataTest {
         verifyNoMoreInteractions(mHttpClient);
         assertEquals(createdDocument.getDeserializedValue(), document.getDeserializedValue());
     }
-
 }
