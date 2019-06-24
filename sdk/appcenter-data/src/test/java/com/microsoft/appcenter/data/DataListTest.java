@@ -1,7 +1,5 @@
 package com.microsoft.appcenter.data;
 
-import com.microsoft.appcenter.data.client.CosmosDb;
-import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.LocalDocument;
@@ -26,7 +24,6 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,11 +59,6 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@PrepareForTest({
-        CosmosDb.class,
-        TokenExchange.class,
-        TokenManager.class
-})
 public class DataListTest extends AbstractDataTest {
 
     @Captor
@@ -104,8 +96,7 @@ public class DataListTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Return list of one item which will have a non-expired pending operation. */
-        //TODO make these final to improve reusability
-        LocalDocument localDocument = new LocalDocument(
+        final LocalDocument localDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_CREATE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -113,8 +104,8 @@ public class DataListTest extends AbstractDataTest {
                 document,
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP);
-        LocalDocument expiredDocument = new LocalDocument(
+                CURRENT_TIMESTAMP),
+                expiredDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 PENDING_OPERATION_REPLACE_VALUE,
                 RESOLVED_USER_PARTITION,
@@ -122,9 +113,8 @@ public class DataListTest extends AbstractDataTest {
                 document,
                 PAST_TIMESTAMP,
                 CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
-        );
-        LocalDocument notPendingDocument = new LocalDocument(
+                        CURRENT_TIMESTAMP),
+                notPendingDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 null,
                 RESOLVED_USER_PARTITION,
@@ -132,9 +122,8 @@ public class DataListTest extends AbstractDataTest {
                 document,
                 PAST_TIMESTAMP,
                 CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
-        );
-        LocalDocument notPendingNotExpiredDocument = new LocalDocument(
+                        CURRENT_TIMESTAMP),
+                notPendingNotExpiredDocument = new LocalDocument(
                 USER_TABLE_NAME,
                 null,
                 RESOLVED_USER_PARTITION,
@@ -143,11 +132,12 @@ public class DataListTest extends AbstractDataTest {
                 FUTURE_TIMESTAMP,
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP);
-        List<LocalDocument> storedDocuments = new ArrayList<>();
-        storedDocuments.add(localDocument);
-        storedDocuments.add(expiredDocument);
-        storedDocuments.add(notPendingDocument);
-        storedDocuments.add(notPendingNotExpiredDocument);
+        List<LocalDocument> storedDocuments = new ArrayList<LocalDocument>() {{
+            add(localDocument);
+            add(expiredDocument);
+            add(notPendingDocument);
+            add(notPendingNotExpiredDocument);
+        }};
         assertTrue(LocalDocumentStorage.hasPendingOperation(storedDocuments));
         assertTrue(LocalDocumentStorage.hasPendingOperation(Collections.singletonList(localDocument)));
         assertTrue(LocalDocumentStorage.hasPendingOperation(Collections.singletonList(expiredDocument)));
