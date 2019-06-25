@@ -8,7 +8,8 @@ package com.microsoft.appcenter.data.models;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 public interface NextPageDelegate {
-    <T> void LoadNextPage(
+
+    <T> void loadNextPage(
             final TokenResult tokenResult,
             final DefaultAppCenterFuture<PaginatedDocuments<T>> result,
             final ReadOptions readOptions,
