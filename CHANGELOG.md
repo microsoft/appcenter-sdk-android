@@ -10,7 +10,7 @@
 
 ### App Center Data
 
-* **[Feature]** Change the default offline persistence from 1 day to infinite.
+* **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
 
 ## Version 2.1.0
 
