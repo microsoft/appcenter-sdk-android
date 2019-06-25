@@ -152,7 +152,7 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
             setCurrentPage(docs.mCurrentPage);
             setContinuationToken(docs.mContinuationToken);
             setNextPageDelegate(docs.mNextPageDelegate);
-            result.complete(docs.getCurrentPage());
+            result.complete(getCurrentPage());
         } else {
             result.complete(new Page<T>(new NoSuchElementException()));
         }
