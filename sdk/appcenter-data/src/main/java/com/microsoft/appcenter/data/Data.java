@@ -667,7 +667,11 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * Create a document
      * The document type (T) must be JSON deserializable
      */
-    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(final Class<T> documentType, final String partition, final ReadOptions readOptions) {
+    private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(
+            final Class<T> documentType,
+            final String partition,
+            final ReadOptions readOptions,
+            final String continuationToken) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;
