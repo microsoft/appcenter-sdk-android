@@ -7,6 +7,7 @@ package com.microsoft.appcenter.data.models;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.data.Constants;
@@ -32,6 +33,8 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     private transient HttpClient mHttpClient;
 
     private transient Class<T> mDocumentType;
+
+    private transient ReadOptions mReadOptions;
 
     /**
      * Continuation token for retrieving the next page.
@@ -101,6 +104,17 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     }
 
     /**
+     * Set ReadOptions
+     *
+     * @param readOptions The read options for the next page
+     * @return PaginatedDocuments.
+     */
+    public PaginatedDocuments<T> setReadOptions(ReadOptions readOptions) {
+        mReadOptions = readOptions;
+        return this;
+    }
+
+    /**
      * Set the document type.
      *
      * @param documentType The document type.
@@ -119,25 +133,17 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     public AppCenterFuture<Page<T>> getNextPage() {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
         if (hasNextPage()) {
-            CosmosDb.callCosmosDbListApi(
+            final DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
+            Data.getInstance().callCosmosDbListApi(
                     mTokenResult,
-                    mContinuationToken,
-                    mHttpClient,
-                    new ServiceCallback() {
-
-                        @Override
-                        public void onCallSucceeded(String payload, Map<String, String> headers) {
-                            Page<T> page = Utils.parseDocuments(payload, mDocumentType);
-                            mCurrentPage = page;
-                            mContinuationToken = headers.get(Constants.CONTINUATION_TOKEN_HEADER);
-                            result.complete(page);
-                        }
-
-                        @Override
-                        public void onCallFailed(Exception e) {
-                            result.complete(new Page<T>(e));
-                        }
-                    });
+                    paginatedResult,
+                    mReadOptions,
+                    mDocumentType,
+                    mContinuationToken);
+            PaginatedDocuments<T> docs = paginatedResult.get();
+            this.setCurrentPage(mCurrentPage);
+            this.setContinuationToken(docs.mContinuationToken);
+            result.complete(docs.getCurrentPage());
         } else {
             result.complete(new Page<T>(new NoSuchElementException()));
         }
