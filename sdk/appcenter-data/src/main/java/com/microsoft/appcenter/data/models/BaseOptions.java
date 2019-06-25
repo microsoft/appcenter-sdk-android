@@ -23,7 +23,7 @@ public abstract class BaseOptions {
     }
 
     /**
-     * @return document time-to-live in seconds (default to one day).
+     * @return document time-to-live in seconds (default to infinite).
      */
     public int getDeviceTimeToLive() {
         return mTtl;
