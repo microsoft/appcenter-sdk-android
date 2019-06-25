@@ -117,7 +117,7 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     }
 
     /**
-     * Set Next page load delegate.
+     * Set next page load delegate.
      *
      * @param nextPageDelegate The next page load delegate.
      * @return PaginatedDocuments.
@@ -146,8 +146,8 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     public AppCenterFuture<Page<T>> getNextPage() {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
         if (hasNextPage()) {
-            final DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
-            mNextPageDelegate.LoadNextPage(mTokenResult, paginatedResult, mReadOptions, mDocumentType, mContinuationToken);
+            DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
+            mNextPageDelegate.loadNextPage(mTokenResult, paginatedResult, mReadOptions, mDocumentType, mContinuationToken);
             PaginatedDocuments<T> docs = paginatedResult.get();
             setCurrentPage(docs.mCurrentPage);
             setContinuationToken(docs.mContinuationToken);

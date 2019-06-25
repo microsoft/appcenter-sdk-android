@@ -10,10 +10,10 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 public interface NextPageDelegate {
 
     <T> void loadNextPage(
-            final TokenResult tokenResult,
-            final DefaultAppCenterFuture<PaginatedDocuments<T>> result,
-            final ReadOptions readOptions,
-            final Class<T> documentType,
-            final String continuationToken);
+            TokenResult tokenResult,
+            DefaultAppCenterFuture<PaginatedDocuments<T>> result,
+            ReadOptions readOptions,
+            Class<T> documentType,
+            String continuationToken);
 }
 
