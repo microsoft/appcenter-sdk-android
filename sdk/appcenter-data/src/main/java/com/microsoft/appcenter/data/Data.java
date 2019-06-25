@@ -638,7 +638,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                 .setNextPageDelegate(new NextPageDelegate() {
                                     
                                     @Override
-                                    public <T> void LoadNextPage(
+                                    public <T> void loadNextPage(
                                             TokenResult tokenResult,
                                             DefaultAppCenterFuture<PaginatedDocuments<T>> result,
                                             ReadOptions readOptions,
