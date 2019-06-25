@@ -644,7 +644,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                             ReadOptions readOptions,
                                             Class<T> documentType,
                                             String continuationToken) {
-                                        Data.getInstance().callCosmosDbListApi(
+                                        Data.this.callCosmosDbListApi(
                                                 tokenResult,
                                                 result,
                                                 readOptions,
