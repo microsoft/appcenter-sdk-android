@@ -7,6 +7,9 @@
 * **[Fix]** Remove unsecure UUID fallback when UUID generation theorically fails, in reality it never fails.
 * **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
 * **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
+
+### AppCenterData
+
 * **[Feature]** Change the default offline persistence from 1 day to infinite.
 
 ## Version 2.1.0
