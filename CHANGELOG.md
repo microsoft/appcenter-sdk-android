@@ -8,6 +8,10 @@
 * **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
 * **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
 
+### App Center Data
+
+* **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
+
 ## Version 2.1.0
 
 ### App Center
