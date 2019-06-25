@@ -36,6 +36,8 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
 
     private transient ReadOptions mReadOptions;
 
+    private transient NextPageDelegate mNextPageDelegate;
+
     /**
      * Continuation token for retrieving the next page.
      */
@@ -104,13 +106,24 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     }
 
     /**
-     * Set ReadOptions
+     * Set ReadOptions.
      *
-     * @param readOptions The read options for the next page
+     * @param readOptions The read options for the next page.
      * @return PaginatedDocuments.
      */
     public PaginatedDocuments<T> setReadOptions(ReadOptions readOptions) {
         mReadOptions = readOptions;
+        return this;
+    }
+
+    /**
+     * Set Next page load delegate.
+     *
+     * @param nextPageDelegate The next page load delegate.
+     * @return PaginatedDocuments.
+     */
+    public PaginatedDocuments<T> setNextPageDelegate(NextPageDelegate nextPageDelegate) {
+        mNextPageDelegate = nextPageDelegate;
         return this;
     }
 
@@ -134,15 +147,11 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
         if (hasNextPage()) {
             final DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
-            Data.getInstance().callCosmosDbListApi(
-                    mTokenResult,
-                    paginatedResult,
-                    mReadOptions,
-                    mDocumentType,
-                    mContinuationToken);
+            mNextPageDelegate.LoadNextPage(mTokenResult, paginatedResult, mReadOptions, mDocumentType, mContinuationToken);
             PaginatedDocuments<T> docs = paginatedResult.get();
-            this.setCurrentPage(mCurrentPage);
-            this.setContinuationToken(docs.mContinuationToken);
+            setCurrentPage(docs.mCurrentPage);
+            setContinuationToken(docs.mContinuationToken);
+            setNextPageDelegate(docs.mNextPageDelegate);
             result.complete(docs.getCurrentPage());
         } else {
             result.complete(new Page<T>(new NoSuchElementException()));

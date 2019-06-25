@@ -23,6 +23,7 @@ import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentMetadata;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.LocalDocument;
+import com.microsoft.appcenter.data.models.NextPageDelegate;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.ReadOptions;
@@ -598,14 +599,14 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mPendingCalls.put(result, cosmosDbCall);
     }
 
-    public synchronized <T> void callCosmosDbListApi(
+    private synchronized <T> void callCosmosDbListApi(
             final TokenResult tokenResult,
             final DefaultAppCenterFuture<PaginatedDocuments<T>> result,
             final ReadOptions readOptions,
             final Class<T> documentType,
             final String continuationToken) {
         if (!mNetworkStateHelper.isNetworkConnected() && continuationToken != null) {
-            // if not online throw exception
+            /* if not online throw exception */
             completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode.."), result);
             return;
         }
@@ -632,7 +633,23 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                 .setHttpClient(mHttpClient)
                                 .setContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .setReadOptions(readOptions)
-                                .setDocumentType(documentType);
+                                .setDocumentType(documentType)
+                                .setNextPageDelegate(new NextPageDelegate() {
+                                    @Override
+                                    public <T> void LoadNextPage(
+                                            TokenResult tokenResult,
+                                            DefaultAppCenterFuture<PaginatedDocuments<T>> result,
+                                            ReadOptions readOptions,
+                                            Class<T> documentType,
+                                            String continuationToken) {
+                                        Data.getInstance().callCosmosDbListApi(
+                                                tokenResult,
+                                                result,
+                                                readOptions,
+                                                documentType,
+                                                continuationToken);
+                                    }
+                                });
                         completeFuture(paginatedDocuments, result);
                     }
 
