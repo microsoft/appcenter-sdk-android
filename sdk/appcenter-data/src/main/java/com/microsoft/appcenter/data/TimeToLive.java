@@ -20,7 +20,7 @@ public final class TimeToLive {
     public static final int NO_CACHE = 0;
 
     /**
-     * Default caching value of one day (in seconds).
+     * Default caching value is cache does not expire.
      */
-    public static final int DEFAULT = 60 * 60 * 24;
+    public static final int DEFAULT = INFINITE;
 }

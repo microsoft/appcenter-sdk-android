@@ -97,9 +97,9 @@ abstract public class AbstractDataTest {
 
     static final long CURRENT_TIMESTAMP = System.currentTimeMillis();
 
-    static final long FUTURE_TIMESTAMP = CURRENT_TIMESTAMP + 2 * TimeToLive.DEFAULT * 1000L;
+    static final long FUTURE_TIMESTAMP = CURRENT_TIMESTAMP + 2 * 24 * 60 * 60 * 1000L;
 
-    static final long PAST_TIMESTAMP = CURRENT_TIMESTAMP - 2 * TimeToLive.DEFAULT * 1000L;
+    static final long PAST_TIMESTAMP = CURRENT_TIMESTAMP - 2 * 24 * 60 * 60 * 1000L;
 
     final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
