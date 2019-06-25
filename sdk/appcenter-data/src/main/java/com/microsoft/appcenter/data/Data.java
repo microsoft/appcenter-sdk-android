@@ -606,7 +606,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final Class<T> documentType,
             final String continuationToken) {
         if (!mNetworkStateHelper.isNetworkConnected() && continuationToken != null) {
-            /* if not online throw exception */
+            
+            /* If not online, return an error. */
             completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode.."), result);
             return;
         }
