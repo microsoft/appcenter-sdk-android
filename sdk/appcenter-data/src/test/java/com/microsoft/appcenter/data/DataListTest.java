@@ -463,8 +463,9 @@ public class DataListTest extends AbstractDataTest {
 
     @Test
     public void listOffLineWithContinuationToken() {
-        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+
         /* Setup mock to get expiration token from cache. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
         String tokenResult = Utils.getGson().toJson(new TokenResult()
@@ -514,12 +515,12 @@ public class DataListTest extends AbstractDataTest {
             }
         });
 
-
         /* Make the call. */
         PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
         assertNull(docs.getCurrentPage().getError());
         assertTrue(docs.hasNextPage());
         assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+
         /* Turn the network off before making the second page call. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         Page<TestDocument> secondPage = docs.getNextPage().get();

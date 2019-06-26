@@ -7,19 +7,14 @@ package com.microsoft.appcenter.data.models;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.Utils;
-import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
@@ -148,11 +143,16 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
         if (hasNextPage() && mNextPageDelegate != null) {
             DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
             mNextPageDelegate.loadNextPage(mTokenResult, paginatedResult, mReadOptions, mDocumentType, mContinuationToken);
-            PaginatedDocuments<T> docs = paginatedResult.get();
-            setCurrentPage(docs.mCurrentPage);
-            setContinuationToken(docs.mContinuationToken);
-            setNextPageDelegate(docs.mNextPageDelegate);
-            result.complete(getCurrentPage());
+            paginatedResult.thenAccept(new AppCenterConsumer<PaginatedDocuments<T>>() {
+
+                @Override
+                public void accept(PaginatedDocuments<T> docs) {
+                    setCurrentPage(docs.mCurrentPage);
+                    setContinuationToken(docs.mContinuationToken);
+                    setNextPageDelegate(docs.mNextPageDelegate);
+                    result.complete(getCurrentPage());
+                }
+            });
         } else {
             result.complete(new Page<T>(new NoSuchElementException()));
         }

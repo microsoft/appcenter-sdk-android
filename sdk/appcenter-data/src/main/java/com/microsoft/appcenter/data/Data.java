@@ -607,7 +607,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final String continuationToken) {
         if (continuationToken != null) {
             if (!mNetworkStateHelper.isNetworkConnected()) {
-                
+
                 /* If not online, return an error. */
                 completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode."), result);
                 return;
@@ -640,11 +640,11 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                 .setNextPageDelegate(new NextPageDelegate() {
                                     
                                     @Override
-                                    public <T> void loadNextPage(
+                                    public <TDocument> void loadNextPage(
                                             TokenResult tokenResult,
-                                            DefaultAppCenterFuture<PaginatedDocuments<T>> result,
+                                            DefaultAppCenterFuture<PaginatedDocuments<TDocument>> result,
                                             ReadOptions readOptions,
-                                            Class<T> documentType,
+                                            Class<TDocument> documentType,
                                             String continuationToken) {
                                         Data.this.callCosmosDbListApi(
                                                 tokenResult,
