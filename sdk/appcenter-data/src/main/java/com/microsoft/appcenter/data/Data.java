@@ -211,7 +211,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition, ReadOptions readOptions) {
-        return getInstance().instanceList(documentType, partition, readOptions, null);
+        return getInstance().instanceList(documentType, partition, readOptions);
     }
 
     /**
@@ -605,11 +605,13 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final ReadOptions readOptions,
             final Class<T> documentType,
             final String continuationToken) {
-        if (!mNetworkStateHelper.isNetworkConnected() && continuationToken != null) {
-            
-            /* If not online, return an error. */
-            completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode."), result);
-            return;
+        if (continuationToken != null) {
+            if (!mNetworkStateHelper.isNetworkConnected()) {
+                
+                /* If not online, return an error. */
+                completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode."), result);
+                return;
+            }
         }
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbListApi(
                 tokenResult,
@@ -670,8 +672,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized <T> AppCenterFuture<PaginatedDocuments<T>> instanceList(
             final Class<T> documentType,
             final String partition,
-            final ReadOptions readOptions,
-            final String continuationToken) {
+            final ReadOptions readOptions) {
         final DefaultAppCenterFuture<PaginatedDocuments<T>> result = new DefaultAppCenterFuture<>();
         if (isInvalidStateOrParametersWhenDocuments(partition, result)) {
             return result;
@@ -711,7 +712,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                             @Override
                             public void callCosmosDb(TokenResult tokenResult) {
-                                callCosmosDbListApi(tokenResult, result, readOptions, documentType, continuationToken);
+                                callCosmosDbListApi(tokenResult, result, readOptions, documentType, null);
                             }
 
                             @Override
