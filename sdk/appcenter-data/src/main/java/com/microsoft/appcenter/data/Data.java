@@ -633,7 +633,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                         }
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .setCurrentPage(page).setTokenResult(tokenResult)
-                                .setHttpClient(mHttpClient)
                                 .setContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .setReadOptions(readOptions)
                                 .setDocumentType(documentType)

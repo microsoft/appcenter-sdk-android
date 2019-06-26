@@ -565,7 +565,7 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(nextPage.getError());
 
         /* Set the continuation token, but the http call failed. */
-        docs.setContinuationToken("fake continuation token").setTokenResult(Utils.getGson().fromJson(tokenResult, TokenResult.class)).setHttpClient(mHttpClient);
+        docs.setContinuationToken("fake continuation token").setTokenResult(Utils.getGson().fromJson(tokenResult, TokenResult.class));
         nextPage = docs.getNextPage().get();
         assertNotNull(nextPage);
         assertNotNull(nextPage.getError());

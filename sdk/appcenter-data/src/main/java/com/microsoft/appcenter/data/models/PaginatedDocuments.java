@@ -7,7 +7,6 @@ package com.microsoft.appcenter.data.models;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -24,8 +23,6 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     private transient Page<T> mCurrentPage;
 
     private transient TokenResult mTokenResult;
-
-    private transient HttpClient mHttpClient;
 
     private transient Class<T> mDocumentType;
 
@@ -76,17 +73,6 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
      */
     public Page<T> getCurrentPage() {
         return mCurrentPage;
-    }
-
-    /**
-     * Set the httpclient.
-     *
-     * @param httpClient The httpclient to be set.
-     * @return PaginatedDocuments.
-     */
-    public PaginatedDocuments<T> setHttpClient(HttpClient httpClient) {
-        mHttpClient = httpClient;
-        return this;
     }
 
     /**
