@@ -608,7 +608,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         if (!mNetworkStateHelper.isNetworkConnected() && continuationToken != null) {
             
             /* If not online, return an error. */
-            completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode.."), result);
+            completeFutureAndRemovePendingCallWhenDocuments(new DataException("Listing next page is not supported in off-line mode."), result);
             return;
         }
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbListApi(
