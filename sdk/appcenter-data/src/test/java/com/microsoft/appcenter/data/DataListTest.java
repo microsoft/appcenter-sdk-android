@@ -64,6 +64,9 @@ public class DataListTest extends AbstractDataTest {
     @Captor
     private ArgumentCaptor<DocumentWrapper<TestDocument>> mTestDocumentWrapperCaptor;
 
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeaders;
+
     private void mockSignOut() {
         Mockito.when(mAuthTokenContext.getAccountId()).thenReturn(null);
     }
@@ -352,13 +355,12 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -415,13 +417,12 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -499,13 +500,12 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }

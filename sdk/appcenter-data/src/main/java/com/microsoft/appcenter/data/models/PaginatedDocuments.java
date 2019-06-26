@@ -124,7 +124,7 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
      *
      * @return Next page.
      */
-    public AppCenterFuture<Page<T>> getNextPage() {
+    public synchronized AppCenterFuture<Page<T>> getNextPage() {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
         if (hasNextPage() && mNextPageDelegate != null) {
             DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
