@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.data.exception.DataException;
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -294,5 +296,37 @@ public class LocalDocumentStorageTest {
     @Test
     public void localDocumentNoPendingOperation(){
         assertFalse(new LocalDocument("Table", null, "partition", "id", "doc", 0, 0, 0).hasPendingOperation());
+    }
+
+    @Test
+    public void localDocumentStorageDatabaseListenerTests() {
+        String userTableName = "UserTable";
+        localDocumentStorageDatabaseListenerTest(0, 1, null, false, true);
+        localDocumentStorageDatabaseListenerTest(0, 1, userTableName, false, true);
+        localDocumentStorageDatabaseListenerTest(1, 1, null, false, true);
+        localDocumentStorageDatabaseListenerTest(1, 1, userTableName, false, true);
+        localDocumentStorageDatabaseListenerTest(1, 2, null, false, true);
+        localDocumentStorageDatabaseListenerTest(1, 2, userTableName, true, false);
+        localDocumentStorageDatabaseListenerTest(2, 2, null, false, true);
+        localDocumentStorageDatabaseListenerTest(2, 2, userTableName, false, true);
+    }
+
+    private void localDocumentStorageDatabaseListenerTest(int oldVersion, int newVersion, String userTableName, boolean expectTableDrop, boolean expectedOnUpgradeResult) {
+        SQLiteDatabase db = mock(SQLiteDatabase.class);
+        LocalDocumentStorageDatabaseListener listener =
+                new LocalDocumentStorageDatabaseListener(userTableName);
+
+        /* Verify no interactions in `onCreate` */
+        listener.onCreate(db);
+        verifyZeroInteractions(db);
+
+        /* Verify `onUpgrade` */
+        boolean onUpgradeResult = listener.onUpgrade(db, oldVersion, newVersion);
+        if (expectTableDrop) {
+            verify(db).execSQL(eq(SQLiteUtils.formatDropTableQuery(userTableName)));
+        } else {
+            verifyZeroInteractions(db);
+        }
+        assertEquals(expectedOnUpgradeResult, onUpgradeResult);
     }
 }
