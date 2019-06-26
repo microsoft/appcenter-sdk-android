@@ -7,18 +7,13 @@ package com.microsoft.appcenter.data.models;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.data.Constants;
-import com.microsoft.appcenter.data.Utils;
-import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static com.microsoft.appcenter.data.Constants.LOG_TAG;
@@ -29,9 +24,11 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
 
     private transient TokenResult mTokenResult;
 
-    private transient HttpClient mHttpClient;
-
     private transient Class<T> mDocumentType;
+
+    private transient ReadOptions mReadOptions;
+
+    private transient NextPageDelegate mNextPageDelegate;
 
     /**
      * Continuation token for retrieving the next page.
@@ -79,17 +76,6 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
     }
 
     /**
-     * Set the httpclient.
-     *
-     * @param httpClient The httpclient to be set.
-     * @return PaginatedDocuments.
-     */
-    public PaginatedDocuments<T> setHttpClient(HttpClient httpClient) {
-        mHttpClient = httpClient;
-        return this;
-    }
-
-    /**
      * Set the continuation token.
      *
      * @param continuationToken The continuation token to retrieve the next page.
@@ -97,6 +83,28 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
      */
     public PaginatedDocuments<T> setContinuationToken(String continuationToken) {
         mContinuationToken = continuationToken;
+        return this;
+    }
+
+    /**
+     * Set ReadOptions.
+     *
+     * @param readOptions The read options for the next page.
+     * @return PaginatedDocuments.
+     */
+    public PaginatedDocuments<T> setReadOptions(ReadOptions readOptions) {
+        mReadOptions = readOptions;
+        return this;
+    }
+
+    /**
+     * Set next page load delegate.
+     *
+     * @param nextPageDelegate The next page load delegate.
+     * @return PaginatedDocuments.
+     */
+    public PaginatedDocuments<T> setNextPageDelegate(NextPageDelegate nextPageDelegate) {
+        mNextPageDelegate = nextPageDelegate;
         return this;
     }
 
@@ -116,28 +124,21 @@ public class PaginatedDocuments<T> implements Iterable<DocumentWrapper<T>> {
      *
      * @return Next page.
      */
-    public AppCenterFuture<Page<T>> getNextPage() {
+    public synchronized AppCenterFuture<Page<T>> getNextPage() {
         final DefaultAppCenterFuture<Page<T>> result = new DefaultAppCenterFuture<>();
-        if (hasNextPage()) {
-            CosmosDb.callCosmosDbListApi(
-                    mTokenResult,
-                    mContinuationToken,
-                    mHttpClient,
-                    new ServiceCallback() {
+        if (hasNextPage() && mNextPageDelegate != null) {
+            DefaultAppCenterFuture<PaginatedDocuments<T>> paginatedResult = new DefaultAppCenterFuture<>();
+            mNextPageDelegate.loadNextPage(mTokenResult, paginatedResult, mReadOptions, mDocumentType, mContinuationToken);
+            paginatedResult.thenAccept(new AppCenterConsumer<PaginatedDocuments<T>>() {
 
-                        @Override
-                        public void onCallSucceeded(String payload, Map<String, String> headers) {
-                            Page<T> page = Utils.parseDocuments(payload, mDocumentType);
-                            mCurrentPage = page;
-                            mContinuationToken = headers.get(Constants.CONTINUATION_TOKEN_HEADER);
-                            result.complete(page);
-                        }
-
-                        @Override
-                        public void onCallFailed(Exception e) {
-                            result.complete(new Page<T>(e));
-                        }
-                    });
+                @Override
+                public void accept(PaginatedDocuments<T> docs) {
+                    setCurrentPage(docs.mCurrentPage);
+                    setContinuationToken(docs.mContinuationToken);
+                    setNextPageDelegate(docs.mNextPageDelegate);
+                    result.complete(getCurrentPage());
+                }
+            });
         } else {
             result.complete(new Page<T>(new NoSuchElementException()));
         }

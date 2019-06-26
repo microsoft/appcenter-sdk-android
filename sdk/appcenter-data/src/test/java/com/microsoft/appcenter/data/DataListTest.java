@@ -64,6 +64,9 @@ public class DataListTest extends AbstractDataTest {
     @Captor
     private ArgumentCaptor<DocumentWrapper<TestDocument>> mTestDocumentWrapperCaptor;
 
+    @Captor
+    private ArgumentCaptor<Map<String, String>> mHeaders;
+
     private void mockSignOut() {
         Mockito.when(mAuthTokenContext.getAccountId()).thenReturn(null);
     }
@@ -352,13 +355,12 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -415,13 +417,12 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        @SuppressWarnings("unchecked") final ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass((Class) Map.class);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), headers.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                String expectedResponse = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
-                Map<String, String> newHeader = headers.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
                     {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
@@ -462,6 +463,74 @@ public class DataListTest extends AbstractDataTest {
     }
 
     @Test
+    public void listOffLineWithContinuationToken() {
+
+        /* Setup mock to get expiration token from cache. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbName("dbName")
+                .setDbAccount("accountName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<DocumentWrapper<TestDocument>> firstPartDocuments = Collections.singletonList(new DocumentWrapper<>(
+                new TestDocument("Test"),
+                RESOLVED_USER_PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedFirstResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(firstPartDocuments)
+        );
+        final List<DocumentWrapper<TestDocument>> secondPartDocuments = Collections.singletonList(new DocumentWrapper<>(
+                new TestDocument("Test2"),
+                RESOLVED_USER_PARTITION,
+                "document id 2",
+                "e tag 2",
+                1
+        ));
+        final String expectedSecondResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(secondPartDocuments)
+        );
+
+        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                String expectedResponse = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? expectedSecondResponse : expectedFirstResponse;
+                Map<String, String> newHeader = mHeaders.getValue().containsKey(Constants.CONTINUATION_TOKEN_HEADER) ? new HashMap<String, String>() : new HashMap<String, String>() {
+                    {
+                        put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
+                    }
+                };
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Make the call. */
+        PaginatedDocuments<TestDocument> docs = Data.list(TestDocument.class, USER_DOCUMENTS).get();
+        assertNull(docs.getCurrentPage().getError());
+        assertTrue(docs.hasNextPage());
+        assertEquals(firstPartDocuments.get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+
+        /* Turn the network off before making the second page call. */
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Page<TestDocument> secondPage = docs.getNextPage().get();
+        DataException ex = secondPage.getError();
+        assertNotNull(ex);
+        assertNotNull(ex.getMessage());
+        assertTrue(ex.getMessage().contains("Listing next page is not supported in off-line mode."));
+    }
+
+    @Test
     public void listEndToEndWhenExceptionHappened() {
         Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         expirationDate.add(Calendar.SECOND, 1000);
@@ -496,7 +565,7 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(nextPage.getError());
 
         /* Set the continuation token, but the http call failed. */
-        docs.setContinuationToken("fake continuation token").setTokenResult(Utils.getGson().fromJson(tokenResult, TokenResult.class)).setHttpClient(mHttpClient);
+        docs.setContinuationToken("fake continuation token").setTokenResult(Utils.getGson().fromJson(tokenResult, TokenResult.class));
         nextPage = docs.getNextPage().get();
         assertNotNull(nextPage);
         assertNotNull(nextPage.getError());
