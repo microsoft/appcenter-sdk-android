@@ -131,7 +131,7 @@ public class LocalDocument {
      * @return whether the document is expired
      */
     public boolean isExpired() {
-        if (mExpirationTime == TimeToLive.INFINITE){
+        if (mExpirationTime == TimeToLive.INFINITE) {
             return false;
         }
         return mExpirationTime <= System.currentTimeMillis();
