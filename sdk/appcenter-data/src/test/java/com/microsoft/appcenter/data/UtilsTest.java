@@ -84,6 +84,7 @@ public class UtilsTest {
         LocalDocument localDocument = new LocalDocument(DefaultPartitions.APP_DOCUMENTS, null, "user", "test", "test", TimeToLive.INFINITE, 0, 0);
         assertFalse(localDocument.isExpired());
     }
+
     @Test
     public void doesNotAlterReadOnlyPartitionName() {
         assertEquals(DefaultPartitions.APP_DOCUMENTS, Utils.removeAccountIdFromPartitionName(DefaultPartitions.APP_DOCUMENTS));
