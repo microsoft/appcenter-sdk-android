@@ -12,6 +12,7 @@
 
 * **[Feature]** Add support for offline list of documents.
 * **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
+* **[Feature]** Add `ReadOptions` parameter to the `list` API.
 
 ## Version 2.1.0
 
