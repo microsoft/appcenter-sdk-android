@@ -654,6 +654,56 @@ public class DataListTest extends AbstractDataTest {
     }
 
     @Test
+    public void listDoUpdateOptions() {
+
+        /* Setup mock to get expiration token from cache. */
+        Calendar expirationDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        expirationDate.add(Calendar.SECOND, 1000);
+        String tokenResult = Utils.getGson().toJson(new TokenResult()
+                .setDbAccount("accountName")
+                .setDbName("dbName")
+                .setDbCollectionName("collectionName")
+                .setPartition(RESOLVED_USER_PARTITION)
+                .setExpirationDate(expirationDate.getTime())
+                .setToken("fakeToken"));
+        when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
+
+        /* Setup list documents api response. */
+        List<DocumentWrapper<TestDocument>> documents = Collections.singletonList(new DocumentWrapper<>(
+                new TestDocument("Test"),
+                RESOLVED_USER_PARTITION,
+                "document id",
+                "e tag",
+                0
+        ));
+        final String expectedResponse = Utils.getGson().toJson(
+                new Page<TestDocument>().setItems(documents)
+        );
+
+        when(mHttpClient.callAsync(
+                endsWith("docs"),
+                anyString(),
+                anyMapOf(String.class, String.class),
+                any(HttpClient.CallTemplate.class),
+                any(ServiceCallback.class)))
+                .then(new Answer<ServiceCall>() {
+
+                    @Override
+                    public ServiceCall answer(InvocationOnMock invocation) {
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        return mock(ServiceCall.class);
+                    }
+                });
+
+        /* Make the call, ensure the readOptions ttl has been passed to writeOptions. */
+        int ttl = 10;
+        Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS, new ReadOptions(ttl));
+        ArgumentCaptor<WriteOptions> argumentCaptor = ArgumentCaptor.forClass(WriteOptions.class);
+        verify(mLocalDocumentStorage).writeOnline(anyString(), any(DocumentWrapper.class), argumentCaptor.capture());
+        assertEquals(ttl, argumentCaptor.getValue().getDeviceTimeToLive());
+    }
+
+    @Test
     public void listFailsToDeserializeListOfDocumentsDoesNotThrow() {
 
         /* Setup mock to get expiration token from cache. */

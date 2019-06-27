@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.TokenResult;
 
@@ -76,6 +77,12 @@ public class UtilsTest {
         assertNull(Utils.getETag(null));
         assertNull(Utils.getETag(""));
         assertNull(Utils.getETag("{a:1}"));
+    }
+
+    @Test
+    public void localDocumentExpired() {
+        LocalDocument localDocument = new LocalDocument(DefaultPartitions.APP_DOCUMENTS, null, "user", "test", "test", TimeToLive.INFINITE, 0, 0);
+        assertFalse(localDocument.isExpired());
     }
 
     @Test
