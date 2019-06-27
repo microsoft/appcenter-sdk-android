@@ -10,8 +10,10 @@
 
 ### App Center Data
 
+* **[Feature]** Add support for offline list of documents.
 * **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
 * **[Fix]** Fix `isExpired` method in `LocalDocument` for incorrect handling `INFINITE` ttl situation. 
+* **[Feature]** Add `ReadOptions` parameter to the `list` API.
 
 ## Version 2.1.0
 
