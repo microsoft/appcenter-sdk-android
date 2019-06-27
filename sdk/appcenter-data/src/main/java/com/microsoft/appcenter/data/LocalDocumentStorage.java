@@ -104,7 +104,7 @@ class LocalDocumentStorage {
 
     private final DatabaseManager mDatabaseManager;
 
-    LocalDocumentStorage(Context context, final String userTable) {
+    LocalDocumentStorage(Context context, String userTable) {
         mDatabaseManager = new DatabaseManager(
                 context,
                 DATABASE,
@@ -428,10 +428,10 @@ class LocalDocumentStorage {
 
 class LocalDocumentStorageDatabaseListener implements DatabaseManager.Listener {
 
-    private String userTable;
+    private String mUserTable;
 
     LocalDocumentStorageDatabaseListener(String userTable) {
-        this.userTable = userTable;
+        mUserTable = userTable;
     }
 
     @Override
@@ -440,16 +440,17 @@ class LocalDocumentStorageDatabaseListener implements DatabaseManager.Listener {
 
     @Override
     public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
         /*
             Between versions 1 and 2 we need to drop both user and readonly tables
             because we discovered we had been doing inserts instead of upserts into the cache in the original SDK release.
             Dropping the table will allow to clean up what essentially are duplicate rows
             (the same partition and document ID, but different `oid`).
          */
-        if (oldVersion == 1 && newVersion == 2 && userTable != null) {
-            SQLiteUtils.dropTable(db, userTable);
+        if (oldVersion == 1 && mUserTable != null) {
+            SQLiteUtils.dropTable(db, mUserTable);
 
-            /* Returning false here so that the default table gets deleted by `DatabaseManager` */
+            /* Returning false here so that the default table gets deleted by `DatabaseManager`. */
             return false;
         }
 

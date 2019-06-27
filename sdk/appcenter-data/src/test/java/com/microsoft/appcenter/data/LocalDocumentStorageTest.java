@@ -301,14 +301,10 @@ public class LocalDocumentStorageTest {
     @Test
     public void localDocumentStorageDatabaseListenerTests() {
         String userTableName = "UserTable";
-        localDocumentStorageDatabaseListenerTest(0, 1, null, false, true);
-        localDocumentStorageDatabaseListenerTest(0, 1, userTableName, false, true);
-        localDocumentStorageDatabaseListenerTest(1, 1, null, false, true);
-        localDocumentStorageDatabaseListenerTest(1, 1, userTableName, false, true);
         localDocumentStorageDatabaseListenerTest(1, 2, null, false, true);
         localDocumentStorageDatabaseListenerTest(1, 2, userTableName, true, false);
-        localDocumentStorageDatabaseListenerTest(2, 2, null, false, true);
-        localDocumentStorageDatabaseListenerTest(2, 2, userTableName, false, true);
+        localDocumentStorageDatabaseListenerTest(2, 3, null, false, true);
+        localDocumentStorageDatabaseListenerTest(2, 3, userTableName, false, true);
     }
 
     private void localDocumentStorageDatabaseListenerTest(int oldVersion, int newVersion, String userTableName, boolean expectTableDrop, boolean expectedOnUpgradeResult) {
@@ -316,11 +312,11 @@ public class LocalDocumentStorageTest {
         LocalDocumentStorageDatabaseListener listener =
                 new LocalDocumentStorageDatabaseListener(userTableName);
 
-        /* Verify no interactions in `onCreate` */
+        /* Verify no interactions in `onCreate`. */
         listener.onCreate(db);
         verifyZeroInteractions(db);
 
-        /* Verify `onUpgrade` */
+        /* Verify `onUpgrade`. */
         boolean onUpgradeResult = listener.onUpgrade(db, oldVersion, newVersion);
         if (expectTableDrop) {
             verify(db).execSQL(eq(SQLiteUtils.formatDropTableQuery(userTableName)));
