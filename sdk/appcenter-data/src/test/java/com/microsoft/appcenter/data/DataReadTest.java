@@ -149,6 +149,7 @@ public class DataReadTest extends AbstractDataTest {
                 notNull(ServiceCallback.class));
     }
 
+
     @Test
     public void readCosmosDbCallEncodeDocumentIdWithDoubleQuote() throws JSONException {
         String documentID = "idWith\"DoubleQuote";
