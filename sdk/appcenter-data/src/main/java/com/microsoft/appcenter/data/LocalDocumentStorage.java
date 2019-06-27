@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -87,7 +88,7 @@ class LocalDocumentStorage {
     /**
      * Current version of the schema.
      */
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     /**
      * `Where` clause to select by partition and document ID.
@@ -104,7 +105,13 @@ class LocalDocumentStorage {
     private final DatabaseManager mDatabaseManager;
 
     LocalDocumentStorage(Context context, String userTable) {
-        mDatabaseManager = new DatabaseManager(context, DATABASE, READONLY_TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener());
+        mDatabaseManager = new DatabaseManager(
+                context,
+                DATABASE,
+                READONLY_TABLE,
+                VERSION,
+                SCHEMA,
+                new LocalDocumentStorageDatabaseListener(userTable));
         if (userTable != null) {
             createTableIfDoesNotExist(userTable);
         }
@@ -416,5 +423,37 @@ class LocalDocumentStorage {
         }
         AppCenterLog.debug(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
         return new DocumentWrapper<>(new DataException("Document was not found in the cache."));
+    }
+}
+
+class LocalDocumentStorageDatabaseListener implements DatabaseManager.Listener {
+
+    private String mUserTable;
+
+    LocalDocumentStorageDatabaseListener(String userTable) {
+        mUserTable = userTable;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        /*
+            Between versions 1 and 2 we need to drop both user and readonly tables
+            because we discovered we had been doing inserts instead of upserts into the cache in the original SDK release.
+            Dropping the table will allow to clean up what essentially are duplicate rows
+            (the same partition and document ID, but different `oid`).
+         */
+        if (oldVersion == 1 && mUserTable != null) {
+            SQLiteUtils.dropTable(db, mUserTable);
+
+            /* Returning false here so that the default table gets deleted by `DatabaseManager`. */
+            return false;
+        }
+
+        return true;
     }
 }
