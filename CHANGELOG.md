@@ -11,6 +11,7 @@
 ### App Center Data
 
 * **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
+* **[Fix]** Fix `isExpired` method in `LocalDocument` for incorrect handling `INFINITE` ttl situation. 
 
 ## Version 2.1.0
 
