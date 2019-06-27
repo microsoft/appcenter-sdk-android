@@ -627,7 +627,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                         if (items != null) {
                             for (DocumentWrapper<T> document : items) {
                                 if (document.getError() == null) {
-                                    mLocalDocumentStorage.writeOnline(tableName, document, new WriteOptions());
+                                    mLocalDocumentStorage.writeOnline(tableName, document, new WriteOptions(readOptions.getDeviceTimeToLive()));
                                 }
                             }
                         }

@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.microsoft.appcenter.data.TimeToLive;
+
 /**
  * Java object representation of a row in Local Document storage in a SqLite table.
  */
@@ -129,7 +131,10 @@ public class LocalDocument {
      * @return whether the document is expired
      */
     public boolean isExpired() {
-        return getExpirationTime() <= System.currentTimeMillis();
+        if (mExpirationTime == TimeToLive.INFINITE){
+            return false;
+        }
+        return mExpirationTime <= System.currentTimeMillis();
     }
 
     /**
