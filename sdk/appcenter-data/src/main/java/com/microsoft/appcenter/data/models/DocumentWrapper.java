@@ -115,18 +115,18 @@ public class DocumentWrapper<T> extends DocumentMetadata {
     }
 
     /**
-     * Get the document in its JSON form.
+     * Get the document value in its JSON form.
      *
-     * @return The document in its JSON form.
+     * @return The document value in its JSON form.
      */
     public String getJsonValue() {
         return mDocument == null ? null : Utils.getGson().toJson(mDocument);
     }
 
     /**
-     * Get the document in string.
+     * Get the document wrapper as a string.
      *
-     * @return Serialized document.
+     * @return Serialized document wrapper.
      */
     @NonNull
     @Override
