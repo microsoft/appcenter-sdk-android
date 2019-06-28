@@ -189,9 +189,6 @@ public class DataActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        showProgress();
-        mAppDocumentsLoading = true;
-        Data.list(Map.class, DefaultPartitions.APP_DOCUMENTS).thenAccept(mUploadApp);
 
         /* List the user documents. */
         mAdapterUser = new CustomItemAdapter(new ArrayList<DocumentWrapper<Map>>(), this);
@@ -222,7 +219,6 @@ public class DataActivity extends AppCompatActivity {
                 });
             }
         });
-        loadUserDocuments();
 
         /* Selector for App VS User documents. */
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, getResources().getStringArray(R.array.document_type_names));
@@ -260,6 +256,14 @@ public class DataActivity extends AppCompatActivity {
             intent.putExtra(DOCUMENT_DATE, document.getLastUpdatedDate().toString());
         }
         intent.putExtra(DOCUMENT_STATE, document.isFromDeviceCache());
+    }
+
+    private void loadAppDocuments() {
+
+        /* List readonly documents. */
+        mAppDocumentsLoading = true;
+        showProgress();
+        Data.list(Map.class, DefaultPartitions.APP_DOCUMENTS).thenAccept(mUploadApp);
     }
 
     private void loadUserDocuments() {
@@ -337,6 +341,7 @@ public class DataActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        loadAppDocuments();
         loadUserDocuments();
     }
 
