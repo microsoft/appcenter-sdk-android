@@ -14,6 +14,7 @@
 * **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
 * **[Fix]** Fix `isExpired` method in `LocalDocument` for incorrect handling of the `TimeToLive.INFINITE` value. 
 * **[Feature]** Add `ReadOptions` parameter to the `list` API.
+* **[Feature]** Serialize `null` document values.
 
 ## Version 2.1.0
 
