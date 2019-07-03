@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.client.CosmosDb;
@@ -88,7 +93,7 @@ public class DataReadTest extends AbstractDataTest {
     private void readEndToEndWithNetwork(String partition, String tokenExchangePayload) throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, partition);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, partition, null);
 
         /* Make cosmos db http call with exchanged token. */
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangePayload, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
@@ -112,7 +117,7 @@ public class DataReadTest extends AbstractDataTest {
 
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
-        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS, new ReadOptions());
         verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*

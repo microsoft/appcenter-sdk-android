@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.client.CosmosDb;
@@ -68,7 +73,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void replaceEndToEnd() throws JSONException {
 
         /* Mock http call to get token. */
-        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.replace(DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS);
+        AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.replace(DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS, null);
 
         /* Make the call. */
         verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);

@@ -183,7 +183,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<DocumentWrapper<T>> read(String documentId, Class<T> documentType, String partition, ReadOptions readOptions) {
-        return getInstance().instanceRead(documentId, documentType, partition, readOptions);
+        return getInstance().instanceRead(documentId, documentType, partition, ReadOptions.ensureNotNull(readOptions));
     }
 
     /**
@@ -211,7 +211,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<PaginatedDocuments<T>> list(Class<T> documentType, String partition, ReadOptions readOptions) {
-        return getInstance().instanceList(documentType, partition, readOptions);
+        return getInstance().instanceList(documentType, partition, ReadOptions.ensureNotNull(readOptions));
     }
 
     /**
@@ -242,7 +242,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
     public static <T> AppCenterFuture<DocumentWrapper<T>> create(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, null);
+        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, WriteOptions.ensureNotNull(writeOptions), null);
     }
 
     /**
@@ -267,7 +267,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      * If the operation fails, the error can be checked by reading {@link DocumentWrapper#getError()}.
      */
     public static AppCenterFuture<DocumentWrapper<Void>> delete(String documentId, String partition, WriteOptions writeOptions) {
-        return getInstance().instanceDelete(documentId, partition, writeOptions);
+        return getInstance().instanceDelete(documentId, partition, WriteOptions.ensureNotNull(writeOptions));
     }
 
     /**
@@ -299,7 +299,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
      */
     @SuppressWarnings({"WeakerAccess", "RedundantSuppression"})
     public static <T> AppCenterFuture<DocumentWrapper<T>> replace(String documentId, T document, Class<T> documentType, String partition, WriteOptions writeOptions) {
-        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, writeOptions, CosmosDb.getUpsertAdditionalHeader());
+        return getInstance().instanceCreateOrUpdate(documentId, document, documentType, partition, WriteOptions.ensureNotNull(writeOptions), CosmosDb.getUpsertAdditionalHeader());
     }
 
     /**
