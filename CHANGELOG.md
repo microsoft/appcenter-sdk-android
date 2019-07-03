@@ -8,6 +8,10 @@
 * **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
 * **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
 
+### App Center Crashes
+
+* **[Fix]** The in memory cache of error reports is now cleared when disabling Crashes.
+
 ### App Center Data
 
 * **[Feature]** Add support for offline list of documents.
