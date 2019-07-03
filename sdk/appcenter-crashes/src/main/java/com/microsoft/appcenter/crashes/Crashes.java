@@ -358,6 +358,8 @@ public class Crashes extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         initialize();
         if (!enabled) {
+
+            /* Delete all files. */
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
                 AppCenterLog.debug(LOG_TAG, "Deleting file " + file);
                 if (!file.delete()) {
@@ -365,6 +367,10 @@ public class Crashes extends AbstractAppCenterService {
                 }
             }
             AppCenterLog.info(LOG_TAG, "Deleted crashes local files");
+
+            /* Delete cache and in memory last session report. */
+            mErrorReportCache.clear();
+            mLastSessionErrorReport = null;
         }
     }
 
