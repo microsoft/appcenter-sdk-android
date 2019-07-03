@@ -194,6 +194,16 @@ public class CrashesAndroidTest {
         Throwable lastThrowable = errorReport.getThrowable();
         assertTrue(lastThrowable instanceof IllegalArgumentException);
         assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Disable SDK, that will clear the report. */
+        Crashes.setEnabled(false).get();
+        errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNull(errorReport);
+
+        /* The report must not be restored after re-enabling. */
+        Crashes.setEnabled(true).get();
+        errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNull(errorReport);
     }
 
     @Test
