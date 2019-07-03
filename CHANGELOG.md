@@ -19,6 +19,7 @@
 * **[Fix]** Fix `isExpired` method in `LocalDocument` for incorrect handling of the `TimeToLive.INFINITE` value. 
 * **[Feature]** Add `ReadOptions` parameter to the `list` API.
 * **[Feature]** Serialize `null` document values.
+* **[Fix]** Fix declaring `gson` as a build time dependency instead of runtime.
 
 ## Version 2.1.0
 
