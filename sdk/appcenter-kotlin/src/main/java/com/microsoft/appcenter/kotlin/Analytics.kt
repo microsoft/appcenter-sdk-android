@@ -21,7 +21,7 @@ object Analytics : AppCenterService {
 
     fun pause() = JavaAnalytics.pause()
 
-    fun resume() = JavaAnalytics.pause()
+    fun resume() = JavaAnalytics.resume()
 
     fun trackEvent(name: String) = JavaAnalytics.trackEvent(name)
 
