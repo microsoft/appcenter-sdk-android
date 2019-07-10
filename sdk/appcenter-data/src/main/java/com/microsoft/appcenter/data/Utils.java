@@ -21,7 +21,9 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
+import com.microsoft.appcenter.data.models.PaginatedDocuments;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
@@ -48,7 +50,7 @@ import static com.microsoft.appcenter.data.DefaultPartitions.USER_DOCUMENTS;
 
 public class Utils {
 
-    private static final Gson sGson = new GsonBuilder().registerTypeAdapter(Date.class, new DateAdapter()).create();
+    private static final Gson sGson = new GsonBuilder().registerTypeAdapter(Date.class, new DateAdapter()).serializeNulls().create();
 
     private static final JsonParser sParser = new JsonParser();
 
@@ -74,6 +76,33 @@ public class Utils {
                 throw new JsonParseException(e);
             }
         }
+    }
+
+    private static <T> DocumentWrapper<T> parseLocalDocument(LocalDocument localDocument, Class<T> documentType) {
+        DocumentWrapper<T> documentWrapper = parseDocument(
+                localDocument.getDocument(),
+                localDocument.getPartition(),
+                localDocument.getDocumentId(),
+                localDocument.getETag(),
+                localDocument.getOperationTime() / 1000L,
+                documentType);
+        documentWrapper.setFromCache(true);
+        documentWrapper.setPendingOperation(localDocument.getOperation());
+        return documentWrapper;
+    }
+
+    static <T> PaginatedDocuments<T> localDocumentsToNonExpiredPaginated(Iterable<LocalDocument> localDocuments, Class<T> documentType) {
+        PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<>();
+        Page<T> page = new Page<>();
+        ArrayList<DocumentWrapper<T>> documentWrappers = new ArrayList<>();
+        for (LocalDocument localDocument : localDocuments) {
+            if (!localDocument.isExpired()) {
+                documentWrappers.add(parseLocalDocument(localDocument, documentType));
+            }
+        }
+        page.setItems(documentWrappers);
+        paginatedDocuments.setCurrentPage(page);
+        return paginatedDocuments;
     }
 
     static <T> DocumentWrapper<T> parseDocument(String cosmosDbPayload, Class<T> documentType) {
@@ -110,14 +139,14 @@ public class Utils {
         JsonElement documentId = obj.get(ID_FIELD_NAME);
         JsonElement eTag = obj.get(ETAG_FIELD_NAME);
         JsonElement timestamp = obj.get(TIMESTAMP_FIELD_NAME);
-        if (partition == null || documentId == null || timestamp == null) {
+        if (isNullOrJsonNull(partition) || isNullOrJsonNull(documentId) || isNullOrJsonNull(timestamp)) {
             return new DocumentWrapper<>(new DataException("Failed to deserialize document."));
         }
         return parseDocument(
                 document,
                 partition.getAsString(),
                 documentId.getAsString(),
-                eTag != null ? eTag.getAsString() : null,
+                !isNullOrJsonNull(eTag) ? eTag.getAsString() : null,
                 timestamp.getAsLong(),
                 documentType);
     }
@@ -138,6 +167,10 @@ public class Utils {
                 documentId,
                 eTag,
                 lastUpdatedTime, error);
+    }
+
+    private static boolean isNullOrJsonNull(JsonElement value) {
+        return value == null || value.isJsonNull();
     }
 
     public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
@@ -174,6 +207,13 @@ public class Utils {
 
     public static Gson getGson() {
         return sGson;
+    }
+
+    static String getTableName(String partition) {
+        if (USER_DOCUMENTS.equals(partition)) {
+            return getUserTableName();
+        }
+        return READONLY_TABLE;
     }
 
     @NonNull

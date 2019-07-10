@@ -15,7 +15,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -31,6 +30,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -58,8 +58,8 @@ public class AbstractDefaultChannelTest {
 
     static final int MAX_PARALLEL_BATCHES = 3;
 
-    static final String MOCK_TOKEN = UUIDUtils.randomUUID().toString();
-    
+    static final String MOCK_TOKEN = UUID.randomUUID().toString();
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -87,7 +87,7 @@ public class AbstractDefaultChannelTest {
                         logs.add(mock(Log.class));
                     }
                 }
-                return length > 0 ? UUIDUtils.randomUUID().toString() : null;
+                return length > 0 ? UUID.randomUUID().toString() : null;
             }
         };
     }
@@ -115,7 +115,7 @@ public class AbstractDefaultChannelTest {
     @Before
     public void setUp() throws Exception {
         mockStatic(AppCenterLog.class);
-        mockStatic(IdHelper.class, new Returns(UUIDUtils.randomUUID()));
+        mockStatic(IdHelper.class, new Returns(UUID.randomUUID()));
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
         when(mAppCenterHandler.post(any(Runnable.class))).then(new Answer<Boolean>() {

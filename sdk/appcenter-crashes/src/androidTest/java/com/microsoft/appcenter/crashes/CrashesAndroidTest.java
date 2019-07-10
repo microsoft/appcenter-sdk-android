@@ -21,7 +21,6 @@ import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -43,6 +42,7 @@ import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import static com.microsoft.appcenter.Flags.CRITICAL;
@@ -194,6 +194,16 @@ public class CrashesAndroidTest {
         Throwable lastThrowable = errorReport.getThrowable();
         assertTrue(lastThrowable instanceof IllegalArgumentException);
         assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Disable SDK, that will clear the report. */
+        Crashes.setEnabled(false).get();
+        errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNull(errorReport);
+
+        /* The report must not be restored after re-enabling. */
+        Crashes.setEnabled(true).get();
+        errorReport = Crashes.getLastSessionCrashReport().get();
+        assertNull(errorReport);
     }
 
     @Test
@@ -292,8 +302,8 @@ public class CrashesAndroidTest {
 
     @Test
     public void clearInvalidFiles() throws Exception {
-        File invalidFile1 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
-        File invalidFile2 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUIDUtils.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        File invalidFile1 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUID.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+        File invalidFile2 = new File(ErrorLogHelper.getErrorStorageDirectory(), UUID.randomUUID() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
         assertTrue(invalidFile1.createNewFile());
         new FileWriter(invalidFile2).append("fake_data").close();
         assertEquals(2, ErrorLogHelper.getStoredErrorLogFiles().length);

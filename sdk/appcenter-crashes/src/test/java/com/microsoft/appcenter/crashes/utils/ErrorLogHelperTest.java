@@ -21,7 +21,6 @@ import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,6 +38,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
@@ -315,7 +315,7 @@ public class ErrorLogHelperTest {
         assertEquals(0, files.length);
 
         /* Test getStoredErrorLogFiles. */
-        File file = ErrorLogHelper.getStoredErrorLogFile(UUIDUtils.randomUUID());
+        File file = ErrorLogHelper.getStoredErrorLogFile(UUID.randomUUID());
         assertNull(file);
 
         /* Clean up. */

@@ -35,4 +35,8 @@ public class ReadOptions extends BaseOptions {
         }
         return System.currentTimeMillis() >= expiredAt;
     }
+
+    public static ReadOptions ensureNotNull(ReadOptions readOptions) {
+        return readOptions == null ? new ReadOptions() : readOptions;
+    }
 }

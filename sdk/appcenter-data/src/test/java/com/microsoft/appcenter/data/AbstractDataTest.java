@@ -15,6 +15,7 @@ import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.data.client.CosmosDb;
 import com.microsoft.appcenter.data.client.TokenExchange;
+import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
@@ -73,7 +74,10 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         NetworkStateHelper.class,
         LocalDocumentStorage.class,
         Utils.class,
-        AuthTokenContext.class
+        AuthTokenContext.class,
+        CosmosDb.class,
+        TokenExchange.class,
+        TokenManager.class
 })
 abstract public class AbstractDataTest {
 
@@ -93,9 +97,9 @@ abstract public class AbstractDataTest {
 
     static final long CURRENT_TIMESTAMP = System.currentTimeMillis();
 
-    static final long FUTURE_TIMESTAMP = CURRENT_TIMESTAMP + 2 * TimeToLive.DEFAULT * 1000L;
+    static final long FUTURE_TIMESTAMP = CURRENT_TIMESTAMP + 2 * 24 * 60 * 60 * 1000L;
 
-    static final long PAST_TIMESTAMP = CURRENT_TIMESTAMP - 2 * TimeToLive.DEFAULT * 1000L;
+    static final long PAST_TIMESTAMP = CURRENT_TIMESTAMP - 2 * 24 * 60 * 60 * 1000L;
 
     final static String COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD = String.format("{\n" +
             "    \"document\": {\n" +
@@ -109,6 +113,16 @@ abstract public class AbstractDataTest {
             "    \"_attachments\": \"attachments/\",\n" +
             "    \"_ts\": 1550881731\n" +
             "}", TEST_FIELD_VALUE, DOCUMENT_ID, RESOLVED_USER_PARTITION, ETAG);
+
+    static final String TOKEN_RESULT = String.format("{\n" +
+            "            \"partition\": \"%s\",\n" +
+            "            \"dbAccount\": \"lemmings-01-8f37d78902\",\n" +
+            "            \"dbName\": \"db\",\n" +
+            "            \"dbCollectionName\": \"collection\",\n" +
+            "            \"token\": \"%s\",\n" +
+            "            \"status\": \"Succeed\",\n" +
+            "            \"accountId\": \"%s\"\n" +
+            "}", RESOLVED_USER_PARTITION, "token", ACCOUNT_ID);
 
     static final String USER_TABLE_NAME = Utils.getUserTableName(AbstractDataTest.ACCOUNT_ID);
 
@@ -141,6 +155,9 @@ abstract public class AbstractDataTest {
 
     @Mock
     protected HttpClientRetryer mHttpClient;
+
+    @Mock
+    protected RemoteOperationListener mRemoteOperationListener;
 
     @Mock
     AppCenterHandler mAppCenterHandler;

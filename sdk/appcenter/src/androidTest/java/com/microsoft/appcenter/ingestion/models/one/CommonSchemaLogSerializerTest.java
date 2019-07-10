@@ -8,7 +8,6 @@ package com.microsoft.appcenter.ingestion.models.one;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,6 +15,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -46,7 +46,7 @@ public class CommonSchemaLogSerializerTest {
         /* Keep adding top level fields and test. */
         log.setPopSample(3.1415);
         checkSerialization(serializer, log);
-        log.setIKey(UUIDUtils.randomUUID().toString());
+        log.setIKey(UUID.randomUUID().toString());
         checkSerialization(serializer, log);
         log.setFlags(5L);
         checkSerialization(serializer, log);
@@ -119,11 +119,11 @@ public class CommonSchemaLogSerializerTest {
         checkSerialization(serializer, log);
         log.getExt().getSdk().setLibVer("appcenter.android-1.6.0");
         checkSerialization(serializer, log);
-        log.getExt().getSdk().setEpoch(UUIDUtils.randomUUID().toString());
+        log.getExt().getSdk().setEpoch(UUID.randomUUID().toString());
         checkSerialization(serializer, log);
         log.getExt().getSdk().setSeq(21L);
         checkSerialization(serializer, log);
-        log.getExt().getSdk().setInstallId(UUIDUtils.randomUUID());
+        log.getExt().getSdk().setInstallId(UUID.randomUUID());
         checkSerialization(serializer, log);
 
         /* Loc extension. */

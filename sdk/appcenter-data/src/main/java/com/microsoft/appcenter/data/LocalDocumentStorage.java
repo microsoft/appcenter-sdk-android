@@ -8,6 +8,7 @@ package com.microsoft.appcenter.data;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -15,7 +16,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.data.exception.DataException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
-import com.microsoft.appcenter.data.models.PendingOperation;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -45,12 +46,14 @@ class LocalDocumentStorage {
     /**
      * Partition column.
      */
-    private static final String PARTITION_COLUMN_NAME = "partition";
+    @VisibleForTesting
+    static final String PARTITION_COLUMN_NAME = "partition";
 
     /**
      * Document Id column.
      */
-    private static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
+    @VisibleForTesting
+    static final String DOCUMENT_ID_COLUMN_NAME = "document_id";
 
     /**
      * Document column.
@@ -85,7 +88,7 @@ class LocalDocumentStorage {
     /**
      * Current version of the schema.
      */
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     /**
      * `Where` clause to select by partition and document ID.
@@ -102,7 +105,13 @@ class LocalDocumentStorage {
     private final DatabaseManager mDatabaseManager;
 
     LocalDocumentStorage(Context context, String userTable) {
-        mDatabaseManager = new DatabaseManager(context, DATABASE, READONLY_TABLE, VERSION, SCHEMA, new DatabaseManager.DefaultListener());
+        mDatabaseManager = new DatabaseManager(
+                context,
+                DATABASE,
+                READONLY_TABLE,
+                VERSION,
+                SCHEMA,
+                new LocalDocumentStorageDatabaseListener(userTable));
         if (userTable != null) {
             createTableIfDoesNotExist(userTable);
         }
@@ -130,6 +139,28 @@ class LocalDocumentStorage {
         write(table, document, writeOptions, null);
     }
 
+    /**
+     * Check if local documents contains any pending operation.
+     *
+     * @param localDocuments list of documents to check.
+     * @return true if there is at least one document is in storage for the given partition
+     * and has pending operation on it.
+     */
+    static boolean hasPendingOperation(@NonNull List<LocalDocument> localDocuments) {
+        for (LocalDocument doc : localDocuments) {
+            if (doc.hasPendingOperation() && !doc.getOperation().equals(PENDING_OPERATION_DELETE_VALUE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        builder.appendWhere(BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE);
+        return builder;
+    }
+
     private <T> long write(String table, DocumentWrapper<T> document, WriteOptions writeOptions, String pendingOperationValue) {
         if (writeOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
             return 0;
@@ -143,36 +174,10 @@ class LocalDocumentStorage {
                 document.getETag(),
                 writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
                         TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
-                now,
-                now,
+                document.getLastUpdatedDate().getTime(),
+                document.getLastUpdatedDate().getTime(),
                 pendingOperationValue);
-        return mDatabaseManager.replace(table, values);
-    }
-
-    private static SQLiteQueryBuilder getPartitionAndDocumentIdQueryBuilder() {
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE);
-        return builder;
-    }
-
-    <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
-        DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
-        cachedDocument.setFromCache(true);
-        if (cachedDocument.getError() != null && cachedDocument.getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
-            return cachedDocument;
-        }
-
-        /* The document cache has been expired, or the document did not exists, create it. */
-        DocumentWrapper<T> writeDocument = new DocumentWrapper<>(document, partition, documentId, cachedDocument.getETag(), System.currentTimeMillis());
-        long rowId =
-                cachedDocument.getError() != null ?
-                        createOffline(table, writeDocument, writeOptions) :
-                        updateOffline(table, writeDocument, writeOptions);
-        if (rowId < 0) {
-            writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
-        }
-        writeDocument.setFromCache(true);
-        return writeDocument;
+        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
     }
 
     private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
@@ -232,31 +237,88 @@ class LocalDocumentStorage {
         }
     }
 
-    List<PendingOperation> getPendingOperations(String table) {
-        List<PendingOperation> result = new ArrayList<>();
+    <T> DocumentWrapper<T> createOrUpdateOffline(String table, String partition, String documentId, T document, Class<T> documentType, WriteOptions writeOptions) {
+        DocumentWrapper<T> cachedDocument = read(table, partition, documentId, documentType, null);
+        cachedDocument.setFromCache(true);
+        if (cachedDocument.getError() != null && cachedDocument.getError().getMessage().equals(FAILED_TO_READ_FROM_CACHE)) {
+            return cachedDocument;
+        }
+
+        /* The document cache has been expired, or the document did not exists, create it. */
+        DocumentWrapper<T> writeDocument =
+                new DocumentWrapper<>(
+                        document,
+                        partition,
+                        documentId,
+                        cachedDocument.getETag(),
+                        System.currentTimeMillis() / 1000L);
+        long rowId =
+                cachedDocument.getError() != null ?
+                        createOffline(table, writeDocument, writeOptions) :
+                        updateOffline(table, writeDocument, writeOptions);
+        if (rowId < 0) {
+            writeDocument = new DocumentWrapper<>(new DataException("Failed to write document into cache."));
+        }
+        writeDocument.setFromCache(true);
+        return writeDocument;
+    }
+
+    List<LocalDocument> getPendingOperations(String table) {
+        return queryLocalStorage(table, PENDING_OPERATION_COLUMN_NAME + " IS NOT NULL", null);
+    }
+
+    private List<LocalDocument> queryLocalStorage(String table, String whereClause, String[] selectionArgs) {
+        List<LocalDocument> result = new ArrayList<>();
         if (table == null) {
             return result;
         }
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(PENDING_OPERATION_COLUMN_NAME + "  IS NOT NULL");
-        Cursor cursor = mDatabaseManager.getCursor(table, builder, null, null, null);
+        builder.appendWhere(whereClause);
+        Cursor cursor = mDatabaseManager.getCursor(table, builder, null, selectionArgs, null);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
             while (cursor.moveToNext()) {
                 ContentValues values = mDatabaseManager.buildValues(cursor);
-                result.add(new PendingOperation(
+                String pendingOperation = values.getAsString(PENDING_OPERATION_COLUMN_NAME);
+                Long expirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
+                result.add(new LocalDocument(
                         table,
-                        values.getAsString(PENDING_OPERATION_COLUMN_NAME),
+                        pendingOperation,
                         values.getAsString(PARTITION_COLUMN_NAME),
                         values.getAsString(DOCUMENT_ID_COLUMN_NAME),
                         values.getAsString(DOCUMENT_COLUMN_NAME),
-                        values.getAsLong(EXPIRATION_TIME_COLUMN_NAME),
+                        expirationTime,
                         values.getAsLong(DOWNLOAD_TIME_COLUMN_NAME),
                         values.getAsLong(OPERATION_TIME_COLUMN_NAME)));
             }
         } finally {
             cursor.close();
+        }
+        return result;
+    }
+
+    List<LocalDocument> getDocumentsByPartition(String table, String partition, ReadOptions readOptions) {
+        List<LocalDocument> result = new ArrayList<>();
+        if (table == null) {
+            return result;
+        }
+        List<LocalDocument> localDocuments = queryLocalStorage(table, PARTITION_COLUMN_NAME + " = ?", new String[]{partition});
+        for (LocalDocument localDocument : localDocuments) {
+            String pendingOperation = localDocument.getOperation();
+            boolean isExpired = ReadOptions.isExpired(localDocument.getExpirationTime());
+            boolean isNotPendingDeleteOperation = pendingOperation != null && !pendingOperation.equals(PENDING_OPERATION_DELETE_VALUE);
+            boolean isDocumentWithoutPendingOperation = pendingOperation == null;
+            boolean notDeleteOrNonpendingDocument = isNotPendingDeleteOperation || isDocumentWithoutPendingOperation;
+            if ((isExpired && notDeleteOrNonpendingDocument) || readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
+                mDatabaseManager.delete(
+                        table,
+                        BY_PARTITION_AND_DOCUMENT_ID_WHERE_CLAUSE,
+                        new String[]{localDocument.getPartition(), localDocument.getDocumentId()});
+            }
+            if (!isExpired && notDeleteOrNonpendingDocument) {
+                result.add(localDocument);
+            }
         }
         return result;
     }
@@ -297,7 +359,7 @@ class LocalDocumentStorage {
      *
      * @param operation Pending operation to update.
      */
-    void updatePendingOperation(PendingOperation operation) {
+    void updatePendingOperation(LocalDocument operation) {
         ContentValues values = getContentValues(
                 operation.getPartition(),
                 operation.getDocumentId(),
@@ -343,7 +405,6 @@ class LocalDocumentStorage {
             DocumentWrapper<T> documentWrapper = Utils.parseDocument(document, partition, documentId, eTag, operationTime / 1000L, documentType);
             documentWrapper.setFromCache(true);
             documentWrapper.setPendingOperation(values.getAsString(PENDING_OPERATION_COLUMN_NAME));
-
             /*
              * Update the expiredAt time only when the readOptions is not null, otherwise keep updating it.
              */
@@ -362,5 +423,37 @@ class LocalDocumentStorage {
         }
         AppCenterLog.debug(LOG_TAG, "Document was found in the cache, but it was expired. The cached document has been invalidated.");
         return new DocumentWrapper<>(new DataException("Document was not found in the cache."));
+    }
+}
+
+class LocalDocumentStorageDatabaseListener implements DatabaseManager.Listener {
+
+    private String mUserTable;
+
+    LocalDocumentStorageDatabaseListener(String userTable) {
+        mUserTable = userTable;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+    }
+
+    @Override
+    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+        /*
+            Between versions 1 and 2 we need to drop both user and readonly tables
+            because we discovered we had been doing inserts instead of upserts into the cache in the original SDK release.
+            Dropping the table will allow to clean up what essentially are duplicate rows
+            (the same partition and document ID, but different `oid`).
+         */
+        if (oldVersion == 1 && mUserTable != null) {
+            SQLiteUtils.dropTable(db, mUserTable);
+
+            /* Returning false here so that the default table gets deleted by `DatabaseManager`. */
+            return false;
+        }
+
+        return true;
     }
 }

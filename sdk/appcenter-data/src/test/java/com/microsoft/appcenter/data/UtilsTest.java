@@ -8,12 +8,15 @@ package com.microsoft.appcenter.data;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.microsoft.appcenter.data.models.DocumentWrapper;
+import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.Page;
 import com.microsoft.appcenter.data.models.TokenResult;
 
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,9 +41,38 @@ public class UtilsTest {
     }
 
     @Test
-    public void canParseWhenDocumentNull() {
+    public void canParseWhenWrapperIsNull() {
         DocumentWrapper<TestDocument> document = Utils.parseDocument(null, TestDocument.class);
         assertNotNull(document.getError());
+    }
+
+    @Test
+    public void canParseWhenDocumentIsNull() {
+        DocumentWrapper<String> wrapper = new DocumentWrapper<>(null, "partition", "doc_id");
+        String serializedDocument = wrapper.getJsonValue();
+        String serializedWrapper = wrapper.toString();
+        DocumentWrapper<String> deserializedWrapper = Utils.parseDocument(serializedWrapper, String.class);
+
+        assertNull(serializedDocument);
+        assertTrue(serializedWrapper.contains("\"document\":null"));
+        assertNull(deserializedWrapper.getDeserializedValue());
+    }
+
+    @Test
+    public void canParseWhenDocumentHasNullValues() {
+        Map<String, String> doc = new HashMap<>();
+        //noinspection ConstantConditions
+        doc.put("key", null);
+        DocumentWrapper<Map<String, String>> wrapper = new DocumentWrapper<>(doc, "partition", "doc_id");
+        String serializedDocument = wrapper.getJsonValue();
+        String serializedWrapper = wrapper.toString();
+        DocumentWrapper<Map> deserializedWrapper = Utils.parseDocument(serializedWrapper, Map.class);
+        Map deserializedDoc = deserializedWrapper.getDeserializedValue();
+
+        assertEquals("{\"key\":null}", serializedDocument);
+        assertTrue(serializedWrapper.contains("\"document\":{\"key\":null}"));
+        assertEquals(doc, deserializedDoc);
+
     }
 
     @Test
@@ -76,6 +108,12 @@ public class UtilsTest {
         assertNull(Utils.getETag(null));
         assertNull(Utils.getETag(""));
         assertNull(Utils.getETag("{a:1}"));
+    }
+
+    @Test
+    public void localDocumentExpired() {
+        LocalDocument localDocument = new LocalDocument(DefaultPartitions.APP_DOCUMENTS, null, "user", "test", "test", TimeToLive.INFINITE, 0, 0);
+        assertFalse(localDocument.isExpired());
     }
 
     @Test

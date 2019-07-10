@@ -24,4 +24,8 @@ public class WriteOptions extends BaseOptions {
     public static WriteOptions createNoCacheOptions() {
         return new WriteOptions(TimeToLive.NO_CACHE);
     }
+
+    public static WriteOptions ensureNotNull(WriteOptions writeOptions) {
+        return writeOptions == null ? new WriteOptions() : writeOptions;
+    }
 }

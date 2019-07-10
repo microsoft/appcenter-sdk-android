@@ -5,10 +5,12 @@
 
 package com.microsoft.appcenter.data.models;
 
+import com.microsoft.appcenter.data.TimeToLive;
+
 /**
- * Pending operation.
+ * Java object representation of a row in Local Document storage in a SqLite table.
  */
-public class PendingOperation {
+public class LocalDocument {
 
     private final String mTable;
 
@@ -22,13 +24,22 @@ public class PendingOperation {
 
     private String mETag;
 
+    /**
+     * Expiration time in milliseconds.
+     */
     private final long mExpirationTime;
 
+    /**
+     * Download time in milliseconds.
+     */
     private final long mDownloadTime;
 
+    /**
+     * Operation time in milliseconds.
+     */
     private final long mOperationTime;
 
-    public PendingOperation(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
+    public LocalDocument(String table, String operation, String partition, String documentId, String document, long expirationTime, long downloadTime, long operationTime) {
         mTable = table;
         mOperation = operation;
         mPartition = partition;
@@ -114,5 +125,22 @@ public class PendingOperation {
      */
     public long getOperationTime() {
         return mOperationTime;
+    }
+
+    /**
+     * @return whether the document is expired
+     */
+    public boolean isExpired() {
+        if (mExpirationTime == TimeToLive.INFINITE) {
+            return false;
+        }
+        return mExpirationTime <= System.currentTimeMillis();
+    }
+
+    /**
+     * @return whether the document is a pending operation or has been synchronized with the DB
+     */
+    public boolean hasPendingOperation() {
+        return mOperation != null;
     }
 }

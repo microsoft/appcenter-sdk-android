@@ -13,7 +13,6 @@ import android.util.Pair;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.UUIDUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -217,7 +216,7 @@ public class DefaultHttpClientTest {
 
         /* Test calling code. Use shorter but valid app secret. */
         String appId = "SHORT";
-        UUID installId = UUIDUtils.randomUUID();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("App-Secret", appId);
         headers.put("Install-ID", installId.toString());
@@ -271,7 +270,7 @@ public class DefaultHttpClientTest {
 
         /* Test calling code. Use shorter but valid app secret. */
         String appId = "SHORT";
-        UUID installId = UUIDUtils.randomUUID();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("App-Secret", appId);
         headers.put("Install-ID", installId.toString());
@@ -314,8 +313,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("App-Secret", appSecret);
         headers.put("Install-ID", installId.toString());
@@ -418,8 +417,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("App-Secret", appSecret);
         headers.put("Install-ID", installId.toString());
@@ -607,8 +606,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("App-Secret", appSecret);
         headers.put("Install-ID", installId.toString());
@@ -1005,8 +1004,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -1070,8 +1069,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient(false);
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -1135,8 +1134,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -1207,8 +1206,8 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test calling code. */
-        String appSecret = UUIDUtils.randomUUID().toString();
-        UUID installId = UUIDUtils.randomUUID();
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "custom");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);

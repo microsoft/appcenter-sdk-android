@@ -1,5 +1,27 @@
 # App Center SDK for Android Change Log
 
+## Version 2.2.0
+
+### App Center
+
+* **[Fix]** Remove unsecure UUID fallback when UUID generation theorically fails, in reality it never fails.
+* **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
+* **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
+* **[Fix]** Allow null for `ReadOptions` and `WriteOptions` parameters.
+
+### App Center Crashes
+
+* **[Fix]** The in memory cache of error reports is now cleared when disabling Crashes.
+
+### App Center Data
+
+* **[Feature]** Add support for offline list of documents.
+* **[Feature]** Change the default time-to-live (TTL) from 1 day to infinite (never expire).
+* **[Fix]** Fix `isExpired` method in `LocalDocument` for incorrect handling of the `TimeToLive.INFINITE` value. 
+* **[Feature]** Add `ReadOptions` parameter to the `list` API.
+* **[Feature]** Serialize `null` document values.
+* **[Fix]** Fix declaring `gson` as a build time dependency instead of runtime.
+
 ## Version 2.1.0
 
 ### App Center
