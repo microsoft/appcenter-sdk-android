@@ -7,7 +7,6 @@
 * **[Fix]** Remove unsecure UUID fallback when UUID generation theorically fails, in reality it never fails.
 * **[Fix]** Check for running in App Center Test will now work when using AndroidX instead of the support library.
 * **[Feature]** Add `AppCenter.isRunningInAppCenterTestCloud` to provide method to check if the application is running in Test Cloud.
-* **[Fix]** Allow null for `ReadOptions` and `WriteOptions` parameters.
 
 ### App Center Crashes
 
@@ -21,6 +20,7 @@
 * **[Feature]** Add `ReadOptions` parameter to the `list` API.
 * **[Feature]** Serialize `null` document values.
 * **[Fix]** Fix declaring `gson` as a build time dependency instead of runtime.
+* **[Fix]** Allow null for `ReadOptions` and `WriteOptions` parameters.
 
 ## Version 2.1.0
 
