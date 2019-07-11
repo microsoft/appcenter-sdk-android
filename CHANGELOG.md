@@ -1,5 +1,9 @@
 # App Center SDK for Android Change Log
 
+## Version 2.2.1 (Under development)
+
+___
+
 ## Version 2.2.0
 
 ### App Center
@@ -21,6 +25,8 @@
 * **[Feature]** Add `ReadOptions` parameter to the `list` API.
 * **[Feature]** Serialize `null` document values.
 * **[Fix]** Fix declaring `gson` as a build time dependency instead of runtime.
+
+___
 
 ## Version 2.1.0
 
@@ -60,6 +66,8 @@
 
 * **[Fix]** Update Firebase dependency and AppCenter push logic to avoid a runtime issue with the latest Firebase messaging version 18.0.0.
 
+___
+
 ## Version 2.0.0
 
 Version 2 of the App Center SDK includes two new modules: Auth and Data.
@@ -84,6 +92,8 @@ The App Center Data service provides functionality enabling developers to persis
 
 * **[Feature]** After calling `Auth.signIn`, the push installation is associated to the signed in user with an `accountId` and can be pushed by using the `accountId` audience. This is a different field than the `userId` set by `AppCenter.setUserId`. The push installation is also updated on calling `Auth.signOut` to stop the association.
 * **[Fix]** Fix updating push installation when setting or unsetting the user identifier by calling `AppCenter.setUserId`.
+
+___
 
 ## Version 1.11.4
 
