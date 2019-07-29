@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 
+import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
@@ -20,8 +21,10 @@ import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +45,29 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
+        sTestFeatureModels.add(new TestFeature(R.string.title_had_memory_warning, hadMemoryWarning() ? R.string.description_had_memory_warning : R.string.description_didnt_have_memory_warning, new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // do not handle the click.
+            }
+        }));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.title_data));
         sTestFeatureModels.add(new TestFeature(R.string.title_data, R.string.description_data, DataActivity.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean hadMemoryWarning() {
+        // TODO: Replace with return Crashes.hadMemoryWarningInLastSession();
+        try {
+            @SuppressWarnings("unchecked") final Class<? extends AppCenterService> crashes = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.crashes.Crashes");
+            final Method hadMemoryWarning = crashes.getMethod("hadMemoryWarningInLastSession");
+            return ((AppCenterFuture<Boolean>) hadMemoryWarning.invoke(null)).get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static List<TestFeatureModel> getAvailableControls() {

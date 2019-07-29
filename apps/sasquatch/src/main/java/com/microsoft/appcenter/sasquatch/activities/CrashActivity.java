@@ -22,6 +22,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -157,6 +158,18 @@ public class CrashActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     nativeAbortCall();
+                }
+            }),
+            new Crash(R.string.title_oom, R.string.description_oom, new Runnable() {
+
+                @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "InfiniteLoopStatement"})
+                @Override
+                public void run() {
+                    int value = 5;
+                    List<Integer> list = new ArrayList<>();
+                    while (true) {
+                        list.add(value);
+                    }
                 }
             })
     );
