@@ -332,8 +332,8 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
      * @return
      * @see AppCenterFuture
      */
-    public static AppCenterFuture<Boolean> hasReceiveMemoryWarningInLastSession() {
-        return getInstance().hasInstanceReceiveMemoryWarningInLastSession();
+    public static AppCenterFuture<Boolean> hadMemoryWarningInLastSession() {
+        return getInstance().hadInstanceMemoryWarningInLastSession();
     }
 
     /**
@@ -367,9 +367,9 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
     }
 
     /**
-     * Implements {@link #hasReceiveMemoryWarningInLastSession()} at instance level.
+     * Implements {@link #hadMemoryWarningInLastSession()} at instance level.
      */
-    private synchronized AppCenterFuture<Boolean> hasInstanceReceiveMemoryWarningInLastSession() {
+    private synchronized AppCenterFuture<Boolean> hadInstanceMemoryWarningInLastSession() {
         final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
@@ -414,6 +414,7 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
             /* Delete cache and in memory last session report. */
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
+            mContext.unregisterComponentCallbacks(this);
             SharedPreferencesManager.remove(PREF_KEY_MEMORY_CRITICAL);
         }
     }
@@ -423,6 +424,7 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
         mContext = context;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
+            mContext.registerComponentCallbacks(this);
             processPendingErrors();
         }
     }
@@ -729,11 +731,6 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
                         AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         removeAllStoredErrorLogFiles(id);
                     }
-                    int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
-                    didReceiveMemoryWarningInLastSession = memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
-                            || memoryLevel == TRIM_MEMORY_RUNNING_LOW
-                            || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
-                            || memoryLevel == TRIM_MEMORY_COMPLETE;
                 } catch (JSONException e) {
                     AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
 
@@ -742,6 +739,11 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
                 }
             }
         }
+        int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
+        didReceiveMemoryWarningInLastSession = memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
+                || memoryLevel == TRIM_MEMORY_RUNNING_LOW
+                || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
+                || memoryLevel == TRIM_MEMORY_COMPLETE;
 
         /* If automatic processing is enabled. */
         if (mAutomaticProcessing) {
