@@ -6,7 +6,9 @@
 package com.microsoft.appcenter.crashes;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -57,7 +59,7 @@ import java.util.UUID;
 /**
  * Crashes service.
  */
-public class Crashes extends AbstractAppCenterService {
+public class Crashes extends AbstractAppCenterService implements ComponentCallbacks2 {
 
     /**
      * Constant for SEND crash report.
@@ -79,6 +81,12 @@ public class Crashes extends AbstractAppCenterService {
      */
     @VisibleForTesting
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.appcenter.crashes.always.send";
+
+    /**
+     * Preference storage key for MEMORY_CRITICAL.
+     */
+    @VisibleForTesting
+    public static final String PREF_KEY_MEMORY_CRITICAL = "pref_key_memory_critical";
 
     /**
      * Group for sending logs.
@@ -166,6 +174,16 @@ public class Crashes extends AbstractAppCenterService {
      * Automatic processing flag (automatic is the default).
      */
     private boolean mAutomaticProcessing = true;
+
+    /**
+     * Indicates if the app did receive a low memory warning in the last session
+     *
+     *  This property may be true in case of low memory kills.
+     *
+     *  This property only has a correct value, once `onStarted` was
+     *  invoked!
+     */
+    public boolean didReceiveMemoryWarningInLastSession = false;
 
     /**
      * Init.
@@ -371,6 +389,7 @@ public class Crashes extends AbstractAppCenterService {
             /* Delete cache and in memory last session report. */
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
+            SharedPreferencesManager.remove(PREF_KEY_MEMORY_CRITICAL);
         }
     }
 
@@ -685,6 +704,11 @@ public class Crashes extends AbstractAppCenterService {
                         AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
                         removeAllStoredErrorLogFiles(id);
                     }
+                    int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
+                    didReceiveMemoryWarningInLastSession = memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
+                            || memoryLevel == TRIM_MEMORY_RUNNING_LOW
+                            || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
+                            || memoryLevel == TRIM_MEMORY_COMPLETE;
                 } catch (JSONException e) {
                     AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
 
@@ -1094,6 +1118,25 @@ public class Crashes extends AbstractAppCenterService {
                 sendErrorAttachment(errorId, attachments);
             }
         });
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_CRITICAL, level);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            AppCenterLog.debug(LOG_TAG, "Orientation was changed on landscape.");
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Orientation was changed on portrait.");
+        }
+    }
+
+    @Override
+    public void onLowMemory() {
+        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_CRITICAL, TRIM_MEMORY_COMPLETE);
     }
 
     /**
