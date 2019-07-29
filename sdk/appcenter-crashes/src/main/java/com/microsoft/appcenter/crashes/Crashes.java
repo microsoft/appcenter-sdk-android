@@ -327,6 +327,16 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
     }
 
     /**
+     *  Check whether in the last session the memory warning.
+     *
+     * @return
+     * @see AppCenterFuture
+     */
+    public static AppCenterFuture<Boolean> hasReceiveMemoryWarningInLastSession() {
+        return getInstance().hasInstanceReceiveMemoryWarningInLastSession();
+    }
+
+    /**
      * Implements {@link #getMinidumpDirectory()} at instance level.
      */
     private synchronized AppCenterFuture<String> getNewMinidumpDirectoryAsync() {
@@ -351,6 +361,21 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
             @Override
             public void run() {
                 future.complete(mLastSessionErrorReport != null);
+            }
+        }, future, false);
+        return future;
+    }
+
+    /**
+     * Implements {@link #hasReceiveMemoryWarningInLastSession()} at instance level.
+     */
+    private synchronized AppCenterFuture<Boolean> hasInstanceReceiveMemoryWarningInLastSession() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(didReceiveMemoryWarningInLastSession);
             }
         }, future, false);
         return future;
