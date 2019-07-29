@@ -123,7 +123,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class, ErrorAttachmentLog.class, ComponentCallbacks2.class})
+@PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class, ErrorAttachmentLog.class})
 public class CrashesTest {
 
     private static final Exception EXCEPTION = new Exception("This is a test exception.");
@@ -1691,8 +1691,6 @@ public class CrashesTest {
                 /* Verify put data to preferences. */
                 verifyStatic();
                 SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_COMPLETE));
-
-
                 return null;
             }
         }).when(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
