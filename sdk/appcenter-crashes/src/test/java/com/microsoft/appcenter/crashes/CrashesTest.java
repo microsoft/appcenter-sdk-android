@@ -1674,18 +1674,6 @@ public class CrashesTest {
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 mockContext.registerComponentCallbacks(mockCallback);
 
-                /* Invoke callback onConfigurationChanged. */
-                Configuration config = new Configuration();
-                config.orientation = Configuration.ORIENTATION_LANDSCAPE;
-                mockCallback.onConfigurationChanged(config);
-
-                /* Verify invoke app center log. */
-                PowerMockito.verifyStatic();
-                AppCenterLog.debug(Crashes.LOG_TAG, anyString());
-
-                config.orientation = Configuration.ORIENTATION_PORTRAIT;
-                mockCallback.onConfigurationChanged(config);
-
                 /* Verify invoke app center log. */
                 PowerMockito.verifyStatic();
                 AppCenterLog.debug(Crashes.LOG_TAG, anyString());

@@ -56,10 +56,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+
 /**
  * Crashes service.
  */
-public class Crashes extends AbstractAppCenterService implements ComponentCallbacks2 {
+public class Crashes extends AbstractAppCenterService{
 
     /**
      * Constant for SEND crash report.
@@ -83,10 +88,10 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.appcenter.crashes.always.send";
 
     /**
-     * Preference storage key for MEMORY_CRITICAL.
+     * Preference storage key for memory running level.
      */
     @VisibleForTesting
-    public static final String PREF_KEY_MEMORY_CRITICAL = "pref_key_memory_critical";
+    public static final String PREF_KEY_MEMORY_CRITICAL = "com.microsoft.appcenter.crashes.memory";
 
     /**
      * Group for sending logs.
@@ -161,6 +166,11 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
     private CrashesListener mCrashesListener;
 
     /**
+     * Memory running level listener.
+     */
+    private ComponentCallbacks2 mComponentCallbacks2Listener;
+
+    /**
      * ErrorReport for the last session.
      */
     private ErrorReport mLastSessionErrorReport;
@@ -177,13 +187,8 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
 
     /**
      * Indicates if the app did receive a low memory warning in the last session
-     *
-     *  This property may be true in case of low memory kills.
-     *
-     *  This property only has a correct value, once `onStarted` was
-     *  invoked!
      */
-    public boolean didReceiveMemoryWarningInLastSession = false;
+    private boolean mHadMemoryWarningInLastSession = false;
 
     /**
      * Init.
@@ -327,9 +332,9 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
     }
 
     /**
-     *  Check whether in the last session the memory warning.
+     * Check whether in the last session the memory warning.
      *
-     * @return
+     * @return future with result being <code>true</code> if memory running was critical, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
     public static AppCenterFuture<Boolean> hadMemoryWarningInLastSession() {
@@ -375,7 +380,7 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
 
             @Override
             public void run() {
-                future.complete(didReceiveMemoryWarningInLastSession);
+                future.complete(mHadMemoryWarningInLastSession);
             }
         }, future, false);
         return future;
@@ -414,7 +419,7 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
             /* Delete cache and in memory last session report. */
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
-            mContext.unregisterComponentCallbacks(this);
+            mContext.unregisterComponentCallbacks(mComponentCallbacks2Listener);
             SharedPreferencesManager.remove(PREF_KEY_MEMORY_CRITICAL);
         }
     }
@@ -424,7 +429,23 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
         mContext = context;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
-            mContext.registerComponentCallbacks(this);
+            mComponentCallbacks2Listener = new ComponentCallbacks2() {
+                @Override
+                public void onTrimMemory(int level) {
+                    saveMemoryRunningLevel(level);
+                }
+
+                @Override
+                public void onConfigurationChanged(Configuration newConfig) {
+
+                }
+
+                @Override
+                public void onLowMemory() {
+                    saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
+                }
+            };
+            mContext.registerComponentCallbacks(mComponentCallbacks2Listener);
             processPendingErrors();
         }
     }
@@ -739,11 +760,7 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
                 }
             }
         }
-        int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
-        didReceiveMemoryWarningInLastSession = memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
-                || memoryLevel == TRIM_MEMORY_RUNNING_LOW
-                || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
-                || memoryLevel == TRIM_MEMORY_COMPLETE;
+        mHadMemoryWarningInLastSession = isMemoryRunningLevelCritical();
 
         /* If automatic processing is enabled. */
         if (mAutomaticProcessing) {
@@ -751,6 +768,14 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
             /* Proceed to check if user confirmation is needed. */
             sendCrashReportsOrAwaitUserConfirmation();
         }
+    }
+
+    private boolean isMemoryRunningLevelCritical() {
+        int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
+        return memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
+                || memoryLevel == TRIM_MEMORY_RUNNING_LOW
+                || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
+                || memoryLevel == TRIM_MEMORY_COMPLETE;
     }
 
     /**
@@ -1147,23 +1172,8 @@ public class Crashes extends AbstractAppCenterService implements ComponentCallba
         });
     }
 
-    @Override
-    public void onTrimMemory(int level) {
+    private void saveMemoryRunningLevel(int level) {
         SharedPreferencesManager.putInt(PREF_KEY_MEMORY_CRITICAL, level);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            AppCenterLog.debug(LOG_TAG, "Orientation was changed on landscape.");
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Orientation was changed on portrait.");
-        }
-    }
-
-    @Override
-    public void onLowMemory() {
-        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_CRITICAL, TRIM_MEMORY_COMPLETE);
     }
 
     /**
