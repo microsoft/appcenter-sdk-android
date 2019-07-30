@@ -1674,6 +1674,7 @@ public class CrashesTest {
         /* Instance crash module. */
         Crashes crashes = Crashes.getInstance();
         crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+        crashes.applyEnabledState(true);
         componentCallbacks2Captor.getValue().onConfigurationChanged(mock(Configuration.class));
 
         /* Invoke callback onTrimMemory. */
@@ -1704,7 +1705,10 @@ public class CrashesTest {
         /* Instance crash module. */
         Crashes crashes = Crashes.getInstance();
         crashes.onStarting(mAppCenterHandler);
+        crashes.setInstanceEnabled(true);
         crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
 
         /* Verify register callback. */
         verify(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
@@ -1716,7 +1720,7 @@ public class CrashesTest {
         verify(mockContext).unregisterComponentCallbacks(any(ComponentCallbacks2.class));
 
         /* Verify clear preferences. */
-        verifyStatic();
+        verifyStatic(times(2));
         SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
     }
 
