@@ -84,7 +84,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_CRITICAL;
+import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
@@ -1681,14 +1681,14 @@ public class CrashesTest {
 
         /* Verify put data to preferences. */
         verifyStatic();
-        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
 
         /* Invoke callback onLowMemory. */
         componentCallbacks2Captor.getValue().onLowMemory();
 
         /* Verify put data to preferences. */
         verifyStatic();
-        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_COMPLETE));
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_COMPLETE));
     }
 
     @Test
@@ -1717,12 +1717,12 @@ public class CrashesTest {
 
         /* Verify clear preferences. */
         verifyStatic();
-        SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_CRITICAL));
+        SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
     }
 
     @Test
     public void setReceiveMemoryWarningInLastSession() {
-        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_CRITICAL), anyInt()))
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
                 .thenReturn(TRIM_MEMORY_UI_HIDDEN)
                 .thenReturn(TRIM_MEMORY_RUNNING_LOW)
                 .thenReturn(TRIM_MEMORY_RUNNING_CRITICAL)

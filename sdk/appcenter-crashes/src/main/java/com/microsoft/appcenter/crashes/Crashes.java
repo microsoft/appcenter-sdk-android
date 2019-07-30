@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
@@ -64,7 +65,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 /**
  * Crashes service.
  */
-public class Crashes extends AbstractAppCenterService{
+public class Crashes extends AbstractAppCenterService {
 
     /**
      * Constant for SEND crash report.
@@ -91,7 +92,7 @@ public class Crashes extends AbstractAppCenterService{
      * Preference storage key for memory running level.
      */
     @VisibleForTesting
-    public static final String PREF_KEY_MEMORY_CRITICAL = "com.microsoft.appcenter.crashes.memory";
+    public static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
 
     /**
      * Group for sending logs.
@@ -166,9 +167,9 @@ public class Crashes extends AbstractAppCenterService{
     private CrashesListener mCrashesListener;
 
     /**
-     * Memory running level listener.
+     * Memory warning listener.
      */
-    private ComponentCallbacks2 mComponentCallbacks2Listener;
+    private ComponentCallbacks2 mMemoryWarningListener;
 
     /**
      * ErrorReport for the last session.
@@ -186,7 +187,7 @@ public class Crashes extends AbstractAppCenterService{
     private boolean mAutomaticProcessing = true;
 
     /**
-     * Indicates if the app did receive a low memory warning in the last session
+     * Indicates if the app did receive a low memory warning in the last session.
      */
     private boolean mHadMemoryWarningInLastSession = false;
 
@@ -419,8 +420,10 @@ public class Crashes extends AbstractAppCenterService{
             /* Delete cache and in memory last session report. */
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
-            mContext.unregisterComponentCallbacks(mComponentCallbacks2Listener);
-            SharedPreferencesManager.remove(PREF_KEY_MEMORY_CRITICAL);
+            mContext.unregisterComponentCallbacks(mMemoryWarningListener);
+            SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
+        } else {
+            mContext.registerComponentCallbacks(mMemoryWarningListener);
         }
     }
 
@@ -429,7 +432,7 @@ public class Crashes extends AbstractAppCenterService{
         mContext = context;
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
-            mComponentCallbacks2Listener = new ComponentCallbacks2() {
+            mMemoryWarningListener = new ComponentCallbacks2() {
                 @Override
                 public void onTrimMemory(int level) {
                     saveMemoryRunningLevel(level);
@@ -437,7 +440,6 @@ public class Crashes extends AbstractAppCenterService{
 
                 @Override
                 public void onConfigurationChanged(Configuration newConfig) {
-
                 }
 
                 @Override
@@ -445,7 +447,6 @@ public class Crashes extends AbstractAppCenterService{
                     saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
                 }
             };
-            mContext.registerComponentCallbacks(mComponentCallbacks2Listener);
             processPendingErrors();
         }
     }
@@ -760,7 +761,8 @@ public class Crashes extends AbstractAppCenterService{
                 }
             }
         }
-        mHadMemoryWarningInLastSession = isMemoryRunningLevelCritical();
+        mHadMemoryWarningInLastSession = isMemoryRunningLevelCritical(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
+        SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
 
         /* If automatic processing is enabled. */
         if (mAutomaticProcessing) {
@@ -770,8 +772,7 @@ public class Crashes extends AbstractAppCenterService{
         }
     }
 
-    private boolean isMemoryRunningLevelCritical() {
-        int memoryLevel = SharedPreferencesManager.getInt(PREF_KEY_MEMORY_CRITICAL, -1);
+    private static boolean isMemoryRunningLevelCritical(int memoryLevel) {
         return memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
                 || memoryLevel == TRIM_MEMORY_RUNNING_LOW
                 || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
@@ -1172,8 +1173,9 @@ public class Crashes extends AbstractAppCenterService{
         });
     }
 
+    @WorkerThread
     private void saveMemoryRunningLevel(int level) {
-        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_CRITICAL, level);
+        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_RUNNING_LEVEL, level);
     }
 
     /**
