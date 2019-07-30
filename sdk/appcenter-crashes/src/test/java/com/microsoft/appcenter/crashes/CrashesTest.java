@@ -1661,39 +1661,34 @@ public class CrashesTest {
     @Test
     public void handlerMemoryWarning() {
 
-        /* Mock. */
+        /* Mock classes. */
         final Context mockContext = mock(Context.class);
-        final ComponentCallbacks2 mockCallback = mock(ComponentCallbacks2.class);
-
-        /* Instance crash module. */
-        Crashes crashes = Crashes.getInstance();
-        crashes.onStarting(mAppCenterHandler);
-        crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+        ArgumentCaptor<ComponentCallbacks2> componentCallbacks2Captor = new ArgumentCaptor<>();
         doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                mockContext.registerComponentCallbacks(mockCallback);
-
-                /* Verify invoke app center log. */
-                PowerMockito.verifyStatic();
-                AppCenterLog.debug(Crashes.LOG_TAG, anyString());
-
-                /* Invoke callback onTrimMemory. */
-                mockCallback.onTrimMemory(TRIM_MEMORY_RUNNING_CRITICAL);
-
-                /* Verify put data to preferences. */
-                verifyStatic();
-                SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
-
-                /* Invoke callback onLowMemory. */
-                mockCallback.onLowMemory();
-
-                /* Verify put data to preferences. */
-                verifyStatic();
-                SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_COMPLETE));
                 return null;
             }
-        }).when(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
+        }).when(mockContext).registerComponentCallbacks(componentCallbacks2Captor.capture());
+
+        /* Instance crash module. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+        componentCallbacks2Captor.getValue().onConfigurationChanged(mock(Configuration.class));
+
+        /* Invoke callback onTrimMemory. */
+        componentCallbacks2Captor.getValue().onTrimMemory(TRIM_MEMORY_RUNNING_CRITICAL);
+
+        /* Verify put data to preferences. */
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
+
+        /* Invoke callback onLowMemory. */
+        componentCallbacks2Captor.getValue().onLowMemory();
+
+        /* Verify put data to preferences. */
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_CRITICAL), eq(TRIM_MEMORY_COMPLETE));
     }
 
     @Test
