@@ -61,7 +61,7 @@ public final class TestFeatures {
             @SuppressWarnings("unchecked") final Class<? extends AppCenterService> crashes = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.crashes.Crashes");
             final Method hadMemoryWarning = crashes.getMethod("hadMemoryWarningInLastSession");
             return ((AppCenterFuture<Boolean>) hadMemoryWarning.invoke(null)).get();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return false;
         }
     }
