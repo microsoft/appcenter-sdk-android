@@ -406,7 +406,9 @@ public class Crashes extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         initialize();
-        if (!enabled) {
+        if (enabled) {
+            mContext.registerComponentCallbacks(mMemoryWarningListener);
+        } else {
 
             /* Delete all files. */
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -422,8 +424,6 @@ public class Crashes extends AbstractAppCenterService {
             mLastSessionErrorReport = null;
             mContext.unregisterComponentCallbacks(mMemoryWarningListener);
             SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
-        } else {
-            mContext.registerComponentCallbacks(mMemoryWarningListener);
         }
     }
 
@@ -433,6 +433,7 @@ public class Crashes extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             mMemoryWarningListener = new ComponentCallbacks2() {
+
                 @Override
                 public void onTrimMemory(int level) {
                     saveMemoryRunningLevel(level);
@@ -1174,7 +1175,7 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @WorkerThread
-    private void saveMemoryRunningLevel(int level) {
+    private static void saveMemoryRunningLevel(int level) {
         SharedPreferencesManager.putInt(PREF_KEY_MEMORY_RUNNING_LEVEL, level);
     }
 
