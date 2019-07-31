@@ -1662,7 +1662,7 @@ public class CrashesTest {
     public void handlerMemoryWarning() {
 
         /* Mock classes. */
-        final Context mockContext = mock(Context.class);
+        Context mockContext = mock(Context.class);
         ArgumentCaptor<ComponentCallbacks2> componentCallbacks2Captor = new ArgumentCaptor<>();
         doAnswer(new Answer<Object>() {
             @Override
@@ -1696,7 +1696,7 @@ public class CrashesTest {
     public void registerAndUnregisterComponentCallbacks() {
 
         /* Mock classes. */
-        final Context mockContext = mock(Context.class);
+        Context mockContext = mock(Context.class);
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
@@ -1726,50 +1726,40 @@ public class CrashesTest {
 
     @Test
     public void setReceiveMemoryWarningInLastSession() {
-        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
-                .thenReturn(TRIM_MEMORY_UI_HIDDEN)
-                .thenReturn(TRIM_MEMORY_RUNNING_LOW)
-                .thenReturn(TRIM_MEMORY_RUNNING_CRITICAL)
-                .thenReturn(TRIM_MEMORY_COMPLETE)
-                .thenReturn(TRIM_MEMORY_RUNNING_MODERATE)
-                .thenReturn(TRIM_MEMORY_UI_HIDDEN);
-        mockStatic(ErrorLogHelper.class);
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(FileManager.read(any(File.class))).thenReturn("");
 
-        /* Instance crash module. */
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_UI_HIDDEN);
+        checkHasReceivedMemoryWarningInLastSession(false);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_LOW);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_CRITICAL);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_COMPLETE);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_MODERATE);
+        checkHasReceivedMemoryWarningInLastSession(true);
+    }
+
+    private void checkHasReceivedMemoryWarningInLastSession(boolean expected) {
         Crashes crashes = Crashes.getInstance();
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertFalse(Crashes.hadMemoryWarningInLastSession().get());
-        crashes.setInstanceEnabled(false);
-
         crashes.setInstanceEnabled(true);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertTrue(Crashes.hadMemoryWarningInLastSession().get());
-        crashes.setInstanceEnabled(false);
-
-        crashes.setInstanceEnabled(true);
-        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertTrue(Crashes.hadMemoryWarningInLastSession().get());
-        crashes.setInstanceEnabled(false);
-
-        crashes.setInstanceEnabled(true);
-        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertTrue(Crashes.hadMemoryWarningInLastSession().get());
-        crashes.setInstanceEnabled(false);
-
-        crashes.setInstanceEnabled(true);
-        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertTrue(Crashes.hadMemoryWarningInLastSession().get());
-        crashes.setInstanceEnabled(false);
-
-        crashes.setInstanceEnabled(true);
-        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertFalse(Crashes.hadMemoryWarningInLastSession().get());
+        assertEquals(expected, Crashes.receivedMemoryWarningInLastSession().get());
         crashes.setInstanceEnabled(false);
     }
 }
