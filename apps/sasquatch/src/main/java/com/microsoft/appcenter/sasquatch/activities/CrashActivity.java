@@ -160,7 +160,7 @@ public class CrashActivity extends AppCompatActivity {
                     nativeAbortCall();
                 }
             }),
-            new Crash(R.string.title_oom, R.string.description_oom, new Runnable() {
+            new Crash(R.string.title_low_memory_warning, R.string.description_oom, new Runnable() {
 
                 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "InfiniteLoopStatement"})
                 @Override

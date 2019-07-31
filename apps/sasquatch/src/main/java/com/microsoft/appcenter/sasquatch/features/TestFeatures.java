@@ -11,7 +11,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.AdapterView;
 
-import com.microsoft.appcenter.AppCenterService;
+import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
@@ -46,7 +46,7 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.crashes_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_crashes, R.string.description_crashes, CrashActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_error, R.string.description_error, ManagedErrorActivity.class));
-        sTestFeatureModels.add(new TestFeature(R.string.title_had_memory_warning, hadMemoryWarning() ? R.string.description_had_memory_warning : R.string.description_didnt_have_memory_warning));
+        sTestFeatureModels.add(new TestFeature(R.string.title_had_memory_warning, hadMemoryWarning() ? R.string.description_had_memory_warning : R.string.description_did_not_have_memory_warning));
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
