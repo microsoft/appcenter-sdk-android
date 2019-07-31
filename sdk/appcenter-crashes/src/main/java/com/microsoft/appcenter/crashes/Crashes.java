@@ -187,9 +187,9 @@ public class Crashes extends AbstractAppCenterService {
     private boolean mAutomaticProcessing = true;
 
     /**
-     * Indicates if the app did receive a low memory warning in the last session.
+     * Indicates if the app received a low memory warning in the last session.
      */
-    private boolean mHadMemoryWarningInLastSession = false;
+    private boolean mHasReceivedMemoryWarningInLastSession = false;
 
     /**
      * Init.
@@ -333,13 +333,13 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Check whether in the last session the memory warning.
+     * Check whether there was a memory warning in the last session.
      *
      * @return future with result being <code>true</code> if memory running was critical, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    public static AppCenterFuture<Boolean> hadMemoryWarningInLastSession() {
-        return getInstance().hadInstanceMemoryWarningInLastSession();
+    public static AppCenterFuture<Boolean> receivedMemoryWarningInLastSession() {
+        return getInstance().receivedInstanceMemoryWarningInLastSession();
     }
 
     /**
@@ -373,15 +373,15 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #hadMemoryWarningInLastSession()} at instance level.
+     * Implements {@link #receivedMemoryWarningInLastSession()} at instance level.
      */
-    private synchronized AppCenterFuture<Boolean> hadInstanceMemoryWarningInLastSession() {
+    private synchronized AppCenterFuture<Boolean> receivedInstanceMemoryWarningInLastSession() {
         final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
             @Override
             public void run() {
-                future.complete(mHadMemoryWarningInLastSession);
+                future.complete(mHasReceivedMemoryWarningInLastSession);
             }
         }, future, false);
         return future;
@@ -762,7 +762,7 @@ public class Crashes extends AbstractAppCenterService {
                 }
             }
         }
-        mHadMemoryWarningInLastSession = isMemoryRunningLevelCritical(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
+        mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
         SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
 
         /* If automatic processing is enabled. */
@@ -773,7 +773,7 @@ public class Crashes extends AbstractAppCenterService {
         }
     }
 
-    private static boolean isMemoryRunningLevelCritical(int memoryLevel) {
+    private static boolean isMemoryRunningLevelWasReceived(int memoryLevel) {
         return memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
                 || memoryLevel == TRIM_MEMORY_RUNNING_LOW
                 || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
