@@ -1755,7 +1755,7 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
         crashes.setInstanceEnabled(true);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-        assertEquals(expected, Crashes.receivedMemoryWarningInLastSession().get());
+        assertEquals(expected, Crashes.hasReceivedMemoryWarningInLastSession().get());
         crashes.setInstanceEnabled(false);
     }
 }

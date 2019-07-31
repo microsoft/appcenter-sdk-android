@@ -338,8 +338,8 @@ public class Crashes extends AbstractAppCenterService {
      * @return future with result being <code>true</code> if memory running was critical, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
-    public static AppCenterFuture<Boolean> receivedMemoryWarningInLastSession() {
-        return getInstance().receivedInstanceMemoryWarningInLastSession();
+    public static AppCenterFuture<Boolean> hasReceivedMemoryWarningInLastSession() {
+        return getInstance().hasInstanceReceivedMemoryWarningInLastSession();
     }
 
     /**
@@ -373,9 +373,9 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #receivedMemoryWarningInLastSession()} at instance level.
+     * Implements {@link #hasReceivedMemoryWarningInLastSession()} at instance level.
      */
-    private synchronized AppCenterFuture<Boolean> receivedInstanceMemoryWarningInLastSession() {
+    private synchronized AppCenterFuture<Boolean> hasInstanceReceivedMemoryWarningInLastSession() {
         final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
         postAsyncGetter(new Runnable() {
 
