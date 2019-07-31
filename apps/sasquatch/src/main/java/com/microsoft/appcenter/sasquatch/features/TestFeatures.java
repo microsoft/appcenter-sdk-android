@@ -56,10 +56,10 @@ public final class TestFeatures {
 
     @SuppressWarnings("unchecked")
     private static boolean hadMemoryWarning() {
-        // TODO: Replace with return Crashes.hadMemoryWarningInLastSession().get();
+
+        /* TODO: Replace with return Crashes.hadMemoryWarningInLastSession().get(); when updating the demo during release process. */
         try {
-            @SuppressWarnings("unchecked") final Class<? extends AppCenterService> crashes = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.crashes.Crashes");
-            final Method hadMemoryWarning = crashes.getMethod("hadMemoryWarningInLastSession");
+            Method hadMemoryWarning = Crashes.class.getMethod("hadMemoryWarningInLastSession");
             return ((AppCenterFuture<Boolean>) hadMemoryWarning.invoke(null)).get();
         } catch (Exception ignored) {
             return false;
