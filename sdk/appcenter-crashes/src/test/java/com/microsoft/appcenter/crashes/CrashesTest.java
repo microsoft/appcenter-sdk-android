@@ -106,6 +106,7 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -1663,13 +1664,8 @@ public class CrashesTest {
 
         /* Mock classes. */
         Context mockContext = mock(Context.class);
-        ArgumentCaptor<ComponentCallbacks2> componentCallbacks2Captor = new ArgumentCaptor<>();
-        doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return null;
-            }
-        }).when(mockContext).registerComponentCallbacks(componentCallbacks2Captor.capture());
+        ArgumentCaptor<ComponentCallbacks2> componentCallbacks2Captor = ArgumentCaptor.forClass(ComponentCallbacks2.class);
+        doNothing().when(mockContext).registerComponentCallbacks(componentCallbacks2Captor.capture());
 
         /* Instance crash module. */
         Crashes crashes = Crashes.getInstance();
