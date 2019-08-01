@@ -168,7 +168,6 @@ public class CrashActivity extends AppCompatActivity {
             }),
             new Crash(R.string.title_low_memory_warning, R.string.description_oom, new Runnable() {
 
-                @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
                 @Override
                 public void run() {
                     final AtomicInteger i = new AtomicInteger(0);
