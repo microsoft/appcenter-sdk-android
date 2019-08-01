@@ -59,7 +59,7 @@ public final class TestFeatures {
 
         /* TODO: Replace with return Crashes.hadMemoryWarningInLastSession().get(); when updating the demo during release process. */
         try {
-            Method hadMemoryWarning = Crashes.class.getMethod("hadMemoryWarningInLastSession");
+            Method hadMemoryWarning = Crashes.class.getMethod("hasReceivedMemoryWarningInLastSession");
             return ((AppCenterFuture<Boolean>) hadMemoryWarning.invoke(null)).get();
         } catch (Exception e) {
             return false;

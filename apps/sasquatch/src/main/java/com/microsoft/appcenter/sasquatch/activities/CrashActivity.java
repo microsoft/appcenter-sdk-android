@@ -6,11 +6,15 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -26,17 +30,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.microsoft.appcenter.sasquatch.activities.CrashSubActivity.INTENT_EXTRA_CRASH_TYPE;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class CrashActivity extends AppCompatActivity {
 
     private boolean mCrashSuperPauseNotCalled;
 
     private boolean mCrashSuperDestroyNotCalled;
-
-    @SuppressWarnings("FieldCanBeLocal")
-    private static List<Integer[]> sList;
 
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
@@ -168,13 +171,21 @@ public class CrashActivity extends AppCompatActivity {
                 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
                 @Override
                 public void run() {
-                    sList = new ArrayList<>();
-                    for (int i = 0; i < 10000000; i++) {
-                        sList.add(new Integer[10]);
-                    }
+                    final AtomicInteger i = new AtomicInteger(0);
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            nativeAllocateLargeBuffer();
+                            Log.d(LOG_TAG, "Memory allocated: " + i.addAndGet(128) + "MB");
+                            handler.post(this);
+                        }
+                    });
                 }
             })
     );
+
+    private native void nativeAllocateLargeBuffer();
 
     private native void nativeDereferenceNullPointer();
 
