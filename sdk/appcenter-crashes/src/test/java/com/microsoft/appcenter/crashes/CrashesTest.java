@@ -1700,20 +1700,23 @@ public class CrashesTest {
 
         /* Instance crash module. */
         Crashes crashes = Crashes.getInstance();
-        crashes.onStarting(mAppCenterHandler);
-        crashes.setInstanceEnabled(true);
+        crashes.setInstanceEnabled(false);
         crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+
+        /* Verify register callback. */
+        verify(mockContext, never()).registerComponentCallbacks(any(ComponentCallbacks2.class));
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
 
-        /* Verify register callback. */
+        /* Enable crashes. */
+        crashes.setInstanceEnabled(true);
         verify(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
 
         /* Disable crashes. */
-        crashes.applyEnabledState(false);
+        crashes.setInstanceEnabled(false);
 
         /* Verify unregister callback. */
-        verify(mockContext).unregisterComponentCallbacks(any(ComponentCallbacks2.class));
+        verify(mockContext, (times(2))).unregisterComponentCallbacks(any(ComponentCallbacks2.class));
 
         /* Verify clear preferences. */
         verifyStatic(times(2));
