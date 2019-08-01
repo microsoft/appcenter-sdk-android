@@ -335,7 +335,7 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Check whether there was a memory warning in the last session.
      *
-     * @return future with result being <code>true</code> if memory running was critical, <code>false</code> otherwise.
+     * @return future with result being <code>true</code> if memory was running critically low, <code>false</code> otherwise.
      * @see AppCenterFuture
      */
     public static AppCenterFuture<Boolean> hasReceivedMemoryWarningInLastSession() {
