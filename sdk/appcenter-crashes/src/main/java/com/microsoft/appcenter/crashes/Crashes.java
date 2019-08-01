@@ -430,24 +430,24 @@ public class Crashes extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        mMemoryWarningListener = new ComponentCallbacks2() {
+
+            @Override
+            public void onTrimMemory(int level) {
+                saveMemoryRunningLevel(level);
+            }
+
+            @Override
+            public void onConfigurationChanged(Configuration newConfig) {
+            }
+
+            @Override
+            public void onLowMemory() {
+                saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
+            }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
-            mMemoryWarningListener = new ComponentCallbacks2() {
-
-                @Override
-                public void onTrimMemory(int level) {
-                    saveMemoryRunningLevel(level);
-                }
-
-                @Override
-                public void onConfigurationChanged(Configuration newConfig) {
-                }
-
-                @Override
-                public void onLowMemory() {
-                    saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
-                }
-            };
             processPendingErrors();
         }
     }
@@ -1177,6 +1177,7 @@ public class Crashes extends AbstractAppCenterService {
     @WorkerThread
     private static void saveMemoryRunningLevel(int level) {
         SharedPreferencesManager.putInt(PREF_KEY_MEMORY_RUNNING_LEVEL, level);
+        AppCenterLog.debug(LOG_TAG, String.format("The memory running level (%s) was saved.", level));
     }
 
     /**
