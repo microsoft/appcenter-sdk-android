@@ -6,10 +6,13 @@
 package com.microsoft.appcenter.crashes;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
@@ -54,6 +57,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+
 /**
  * Crashes service.
  */
@@ -79,6 +87,12 @@ public class Crashes extends AbstractAppCenterService {
      */
     @VisibleForTesting
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.appcenter.crashes.always.send";
+
+    /**
+     * Preference storage key for memory running level.
+     */
+    @VisibleForTesting
+    public static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
 
     /**
      * Group for sending logs.
@@ -153,6 +167,11 @@ public class Crashes extends AbstractAppCenterService {
     private CrashesListener mCrashesListener;
 
     /**
+     * Memory warning listener.
+     */
+    private ComponentCallbacks2 mMemoryWarningListener;
+
+    /**
      * ErrorReport for the last session.
      */
     private ErrorReport mLastSessionErrorReport;
@@ -166,6 +185,11 @@ public class Crashes extends AbstractAppCenterService {
      * Automatic processing flag (automatic is the default).
      */
     private boolean mAutomaticProcessing = true;
+
+    /**
+     * Indicates if the app received a low memory warning in the last session.
+     */
+    private boolean mHasReceivedMemoryWarningInLastSession = false;
 
     /**
      * Init.
@@ -309,6 +333,16 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
+     * Check whether there was a memory warning in the last session.
+     *
+     * @return future with result being <code>true</code> if memory running was critical, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    public static AppCenterFuture<Boolean> hasReceivedMemoryWarningInLastSession() {
+        return getInstance().hasInstanceReceivedMemoryWarningInLastSession();
+    }
+
+    /**
      * Implements {@link #getMinidumpDirectory()} at instance level.
      */
     private synchronized AppCenterFuture<String> getNewMinidumpDirectoryAsync() {
@@ -339,6 +373,21 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
+     * Implements {@link #hasReceivedMemoryWarningInLastSession()} at instance level.
+     */
+    private synchronized AppCenterFuture<Boolean> hasInstanceReceivedMemoryWarningInLastSession() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(mHasReceivedMemoryWarningInLastSession);
+            }
+        }, future, false);
+        return future;
+    }
+
+    /**
      * Implements {@link #getLastSessionCrashReport()} at instance level.
      */
     private synchronized AppCenterFuture<ErrorReport> getInstanceLastSessionCrashReport() {
@@ -357,7 +406,9 @@ public class Crashes extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         initialize();
-        if (!enabled) {
+        if (enabled) {
+            mContext.registerComponentCallbacks(mMemoryWarningListener);
+        } else {
 
             /* Delete all files. */
             for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
@@ -371,12 +422,30 @@ public class Crashes extends AbstractAppCenterService {
             /* Delete cache and in memory last session report. */
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
+            mContext.unregisterComponentCallbacks(mMemoryWarningListener);
+            SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
         }
     }
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        mMemoryWarningListener = new ComponentCallbacks2() {
+
+            @Override
+            public void onTrimMemory(int level) {
+                saveMemoryRunningLevel(level);
+            }
+
+            @Override
+            public void onConfigurationChanged(Configuration newConfig) {
+            }
+
+            @Override
+            public void onLowMemory() {
+                saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
+            }
+        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
@@ -693,6 +762,8 @@ public class Crashes extends AbstractAppCenterService {
                 }
             }
         }
+        mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
+        SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
 
         /* If automatic processing is enabled. */
         if (mAutomaticProcessing) {
@@ -700,6 +771,13 @@ public class Crashes extends AbstractAppCenterService {
             /* Proceed to check if user confirmation is needed. */
             sendCrashReportsOrAwaitUserConfirmation();
         }
+    }
+
+    private static boolean isMemoryRunningLevelWasReceived(int memoryLevel) {
+        return memoryLevel == TRIM_MEMORY_RUNNING_MODERATE
+                || memoryLevel == TRIM_MEMORY_RUNNING_LOW
+                || memoryLevel == TRIM_MEMORY_RUNNING_CRITICAL
+                || memoryLevel == TRIM_MEMORY_COMPLETE;
     }
 
     /**
@@ -1094,6 +1172,12 @@ public class Crashes extends AbstractAppCenterService {
                 sendErrorAttachment(errorId, attachments);
             }
         });
+    }
+
+    @WorkerThread
+    private static void saveMemoryRunningLevel(int level) {
+        SharedPreferencesManager.putInt(PREF_KEY_MEMORY_RUNNING_LEVEL, level);
+        AppCenterLog.debug(LOG_TAG, String.format("The memory running level (%s) was saved.", level));
     }
 
     /**
