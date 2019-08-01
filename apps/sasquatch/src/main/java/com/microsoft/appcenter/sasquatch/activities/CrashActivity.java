@@ -35,6 +35,9 @@ public class CrashActivity extends AppCompatActivity {
 
     private boolean mCrashSuperDestroyNotCalled;
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private static List<Integer[]> sList;
+
     private final List<Crash> sCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -162,13 +165,12 @@ public class CrashActivity extends AppCompatActivity {
             }),
             new Crash(R.string.title_low_memory_warning, R.string.description_oom, new Runnable() {
 
-                @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "InfiniteLoopStatement"})
+                @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
                 @Override
                 public void run() {
-                    int value = 5;
-                    List<Integer> list = new ArrayList<>();
-                    while (true) {
-                        list.add(value);
+                    sList = new ArrayList<>();
+                    for (int i = 0; i < 10000000; i++) {
+                        sList.add(new Integer[10]);
                     }
                 }
             })
