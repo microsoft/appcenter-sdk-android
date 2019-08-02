@@ -189,7 +189,7 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Indicates if the app received a low memory warning in the last session.
      */
-    private boolean mHasReceivedMemoryWarningInLastSession = false;
+    private boolean mHasReceivedMemoryWarningInLastSession;
 
     /**
      * Init.
@@ -407,6 +407,22 @@ public class Crashes extends AbstractAppCenterService {
     protected synchronized void applyEnabledState(boolean enabled) {
         initialize();
         if (enabled) {
+            mMemoryWarningListener = new ComponentCallbacks2() {
+
+                @Override
+                public void onTrimMemory(int level) {
+                    saveMemoryRunningLevel(level);
+                }
+
+                @Override
+                public void onConfigurationChanged(Configuration newConfig) {
+                }
+
+                @Override
+                public void onLowMemory() {
+                    saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
+                }
+            };
             mContext.registerComponentCallbacks(mMemoryWarningListener);
         } else {
 
@@ -423,6 +439,7 @@ public class Crashes extends AbstractAppCenterService {
             mErrorReportCache.clear();
             mLastSessionErrorReport = null;
             mContext.unregisterComponentCallbacks(mMemoryWarningListener);
+            mMemoryWarningListener = null;
             SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
         }
     }
@@ -430,22 +447,6 @@ public class Crashes extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
-        mMemoryWarningListener = new ComponentCallbacks2() {
-
-            @Override
-            public void onTrimMemory(int level) {
-                saveMemoryRunningLevel(level);
-            }
-
-            @Override
-            public void onConfigurationChanged(Configuration newConfig) {
-            }
-
-            @Override
-            public void onLowMemory() {
-                saveMemoryRunningLevel(TRIM_MEMORY_COMPLETE);
-            }
-        };
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
@@ -762,6 +763,7 @@ public class Crashes extends AbstractAppCenterService {
                 }
             }
         }
+
         mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
         SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
 
