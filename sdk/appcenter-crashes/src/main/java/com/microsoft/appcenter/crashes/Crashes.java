@@ -766,6 +766,7 @@ public class Crashes extends AbstractAppCenterService {
 
         mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
         SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
+        AppCenterLog.debug(LOG_TAG, String.format("Has received memory warning in last session: %s", mHasReceivedMemoryWarningInLastSession));
 
         /* If automatic processing is enabled. */
         if (mAutomaticProcessing) {
