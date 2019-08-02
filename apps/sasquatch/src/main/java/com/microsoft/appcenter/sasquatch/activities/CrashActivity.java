@@ -166,7 +166,7 @@ public class CrashActivity extends AppCompatActivity {
                     nativeAbortCall();
                 }
             }),
-            new Crash(R.string.title_low_memory_warning, R.string.description_oom, new Runnable() {
+            new Crash(R.string.title_low_memory_warning, R.string.description_low_memory_warning, new Runnable() {
 
                 @Override
                 public void run() {
