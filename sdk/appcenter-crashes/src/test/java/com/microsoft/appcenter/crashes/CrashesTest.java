@@ -5,7 +5,9 @@
 
 package com.microsoft.appcenter.crashes;
 
+import android.content.ComponentCallbacks2;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Looper;
 import android.os.SystemClock;
 
@@ -75,10 +77,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -97,6 +106,7 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -108,6 +118,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -1646,5 +1657,108 @@ public class CrashesTest {
         /* Verify it didn't prevent saving the JSON file. */
         verifyStatic();
         FileManager.write(any(File.class), eq(jsonCrash));
+    }
+
+    @Test
+    public void handlerMemoryWarning() {
+
+        /* Mock classes. */
+        Context mockContext = mock(Context.class);
+        ArgumentCaptor<ComponentCallbacks2> componentCallbacks2Captor = ArgumentCaptor.forClass(ComponentCallbacks2.class);
+        doNothing().when(mockContext).registerComponentCallbacks(componentCallbacks2Captor.capture());
+
+        /* Instance crash module. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+        crashes.applyEnabledState(true);
+        componentCallbacks2Captor.getValue().onConfigurationChanged(mock(Configuration.class));
+
+        /* Invoke callback onTrimMemory. */
+        componentCallbacks2Captor.getValue().onTrimMemory(TRIM_MEMORY_RUNNING_CRITICAL);
+
+        /* Verify put data to preferences. */
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
+
+        /* Invoke callback onLowMemory. */
+        componentCallbacks2Captor.getValue().onLowMemory();
+
+        /* Verify put data to preferences. */
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_COMPLETE));
+    }
+
+    @Test
+    public void registerAndUnregisterComponentCallbacks() {
+
+        /* Mock classes. */
+        Context mockContext = mock(Context.class);
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+
+        /* Instance crash module. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.setInstanceEnabled(false);
+        crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
+
+        /* Verify register callback. */
+        verify(mockContext, never()).registerComponentCallbacks(any(ComponentCallbacks2.class));
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
+
+        /* Enable crashes. */
+        crashes.setInstanceEnabled(true);
+        verify(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
+
+        /* Disable crashes. */
+        crashes.setInstanceEnabled(false);
+
+        /* Verify unregister callback. */
+        verify(mockContext, (times(2))).unregisterComponentCallbacks(any(ComponentCallbacks2.class));
+
+        /* Verify clear preferences. */
+        verifyStatic(times(2));
+        SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
+    }
+
+    @Test
+    public void setReceiveMemoryWarningInLastSession() {
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(FileManager.read(any(File.class))).thenReturn("");
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_UI_HIDDEN);
+        checkHasReceivedMemoryWarningInLastSession(false);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_LOW);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_CRITICAL);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_COMPLETE);
+        checkHasReceivedMemoryWarningInLastSession(true);
+
+        when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
+                .thenReturn(TRIM_MEMORY_RUNNING_MODERATE);
+        checkHasReceivedMemoryWarningInLastSession(true);
+    }
+
+    private void checkHasReceivedMemoryWarningInLastSession(boolean expected) {
+        Crashes crashes = Crashes.getInstance();
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
+        crashes.setInstanceEnabled(true);
+        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
+        assertEquals(expected, Crashes.hasReceivedMemoryWarningInLastSession().get());
+        crashes.setInstanceEnabled(false);
     }
 }
