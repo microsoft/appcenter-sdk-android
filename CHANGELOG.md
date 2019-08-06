@@ -2,6 +2,10 @@
 
 ## Version 2.2.1 (Under development)
 
+### App Center Push
+
+* **[Fix]** Fixed incorrect logs' order
+
 ___
 
 ## Version 2.2.0
