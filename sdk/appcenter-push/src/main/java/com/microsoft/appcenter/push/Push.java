@@ -489,8 +489,8 @@ public class Push extends AbstractAppCenterService {
         try {
 
             /* Try to get token through firebase. */
-            AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
             firebaseInstanceId = FirebaseUtils.getFirebaseInstanceId();
+            AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
                     "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +
