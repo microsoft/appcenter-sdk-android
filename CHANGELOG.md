@@ -2,7 +2,7 @@
 
 ## Version 2.2.1 (Under development)
 
-### App Center
+### App Center Auth
 
 * **[Fix]** Redirect URIs are now hidden in logs.
 ___
