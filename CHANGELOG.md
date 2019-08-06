@@ -4,7 +4,7 @@
 
 ### App Center Push
 
-* **[Fix]** Fixed incorrect logs' order
+* **[Fix]** Fix confusing information log about the availability of the Firebase SDK.
 
 ___
 
