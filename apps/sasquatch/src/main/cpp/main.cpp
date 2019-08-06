@@ -89,6 +89,21 @@ Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDereferenc
 #pragma clang diagnostic pop
 
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma ide diagnostic ignored "OCDFAInspection"
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#pragma ide diagnostic ignored "cppcoreguidelines-avoid-magic-numbers"
+void
+Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeAllocateLargeBuffer(
+        JNIEnv *env,
+        jobject obj) {
+    size_t size = 128 * 1024 * 1024;
+    void *buffer = malloc(size);
+    memset(buffer, 42, size);
+}
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
 #pragma ide diagnostic ignored "InfiniteRecursion"
 void Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeStackOverflowCrash(
         JNIEnv *env, jobject obj) {

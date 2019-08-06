@@ -6,11 +6,15 @@
 package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -22,11 +26,14 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.microsoft.appcenter.sasquatch.activities.CrashSubActivity.INTENT_EXTRA_CRASH_TYPE;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class CrashActivity extends AppCompatActivity {
 
@@ -158,8 +165,26 @@ public class CrashActivity extends AppCompatActivity {
                 public void run() {
                     nativeAbortCall();
                 }
+            }),
+            new Crash(R.string.title_low_memory_warning, R.string.description_low_memory_warning, new Runnable() {
+
+                @Override
+                public void run() {
+                    final AtomicInteger i = new AtomicInteger(0);
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            nativeAllocateLargeBuffer();
+                            Log.d(LOG_TAG, "Memory allocated: " + i.addAndGet(128) + "MB");
+                            handler.post(this);
+                        }
+                    });
+                }
             })
     );
+
+    private native void nativeAllocateLargeBuffer();
 
     private native void nativeDereferenceNullPointer();
 
