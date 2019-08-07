@@ -6,6 +6,10 @@
 
 * **[Fix]** Fix confusing information log about the availability of the Firebase SDK.
 
+### App Center Auth
+
+* **[Fix]** Redirect URIs are now hidden in logs.
+
 ___
 
 ## Version 2.2.0

@@ -96,6 +96,11 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
      */
     private static final Pattern TOKEN_REGEX_JSON = Pattern.compile("token\":\"[^\"]+\"");
 
+    /**
+     * Pattern used to replace redirect URI in json responses.
+     */
+    private static final Pattern REDIRECT_URI_REGEX_JSON = Pattern.compile("redirect_uri\":\"[^\"]+\"");
+
     private final String mUrl;
 
     private final String mMethod;
@@ -295,6 +300,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
                 String logPayload;
                 if (contentType == null || contentType.startsWith("text/") || contentType.startsWith("application/")) {
                     logPayload = TOKEN_REGEX_JSON.matcher(response).replaceAll("token\":\"***\"");
+                    logPayload = REDIRECT_URI_REGEX_JSON.matcher(logPayload).replaceAll("redirect_uri\":\"***\"");
                 } else {
                     logPayload = "<binary>";
                 }
