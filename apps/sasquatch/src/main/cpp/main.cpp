@@ -27,6 +27,7 @@
 #include <string>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 #include "android/log.h"
 #include "google-breakpad/src/client/linux/handler/exception_handler.h"
 #include "google-breakpad/src/client/linux/handler/minidump_descriptor.h"
@@ -85,6 +86,25 @@ Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeDereferenc
         jobject obj) {
     volatile int *a = reinterpret_cast<volatile int *>(NULL);
     *a = 1;
+}
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma ide diagnostic ignored "OCDFAInspection"
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#pragma ide diagnostic ignored "cppcoreguidelines-avoid-magic-numbers"
+
+static std::vector<void*> data;
+
+void
+Java_com_microsoft_appcenter_sasquatch_activities_CrashActivity_nativeAllocateLargeBuffer(
+        JNIEnv *env,
+        jobject obj) {
+    size_t size = 128 * 1024 * 1024;
+    void *buffer = malloc(size);
+    memset(buffer, 42, size);
+    data.push_back(buffer);
 }
 #pragma clang diagnostic pop
 
