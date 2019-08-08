@@ -81,55 +81,68 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
      */
     @VisibleForTesting
     static final String TAG_DELIMITER = ":";
+
     /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
     private static Auth sInstance;
+
     /**
      * Current config base URL.
      */
     private String mConfigUrl = DEFAULT_CONFIG_URL;
+
     /**
      * Application context.
      */
     private Context mContext;
+
     /**
      * Application secret.
      */
     private String mAppSecret;
+
     /**
      * Authentication client.
      */
     private PublicClientApplication mAuthenticationClient;
+
     /**
      * Authority url for the authentication client.
      */
     private String mAuthorityUrl;
+
     /**
      * Scope we need to use when acquiring user ID tokens.
      */
     private String mIdentityScope;
+
     /**
      * HTTP client call, for cancellation.
      */
     private ServiceCall mGetConfigCall;
+
     /**
      * Current activity.
      */
     private Activity mActivity;
+
     /**
      * Last sign-in future. It's used to prevent concurrent requests.
      */
     private DefaultAppCenterFuture<SignInResult> mLastSignInFuture;
+
     /**
      * Last refresh future. It's used to prevent concurrent requests.
      */
     private DefaultAppCenterFuture<SignInResult> mLastRefreshFuture;
+
     /**
      * The home account id that should be used for refreshing token after coming back online.
      */
     private String mHomeAccountIdToRefresh;
+
     /**
      * The listener to catch if a token needs to be refreshed.
      */
