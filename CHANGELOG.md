@@ -2,6 +2,10 @@
 
 ## Version 2.2.1 (Under development)
 
+### App Center Push
+
+* **[Fix]** Fix sending the push installation log after delayed start.
+
 ___
 
 ## Version 2.2.0
