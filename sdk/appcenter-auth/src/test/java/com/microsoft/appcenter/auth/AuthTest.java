@@ -57,7 +57,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
+import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.auth.Auth.TAG_DELIMITER;
 import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
+import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
 import static com.microsoft.appcenter.auth.Constants.PREFERENCE_E_TAG_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -72,6 +75,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
@@ -147,6 +151,35 @@ public class AuthTest extends AbstractAuthTest {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
         serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+    }
+
+    @Test
+    public void forwardMsalLogging() {
+
+        AppCenterLog.setLogLevel(VERBOSE);
+        Auth.getInstance();
+        String tag = "msalTag", expectedTag = LOG_TAG + TAG_DELIMITER + tag, message = "Message from MSAL";
+        com.microsoft.identity.common.internal.logging.Logger.verbose(tag, message);
+        verifyStatic();
+        AppCenterLog.verbose(eq(expectedTag), contains(message));
+        com.microsoft.identity.common.internal.logging.Logger.info(tag, message);
+        verifyStatic();
+        AppCenterLog.info(eq(expectedTag), contains(message));
+        com.microsoft.identity.common.internal.logging.Logger.warn(tag, message);
+        verifyStatic();
+        AppCenterLog.warn(eq(expectedTag), contains(message));
+        com.microsoft.identity.common.internal.logging.Logger.error(tag, message, null);
+        verifyStatic();
+        AppCenterLog.error(eq(expectedTag), contains(message));
+    }
+
+    @Test
+    public void dontForwardPiiFromMsalLogging() {
+        AppCenterLog.setLogLevel(VERBOSE);
+        Auth.getInstance();
+        com.microsoft.identity.common.internal.logging.Logger.verbosePII("msalTag", "Message from MSAL");
+        verifyStatic(never());
+        AppCenterLog.verbose(anyString(), anyString());
     }
 
     @Test

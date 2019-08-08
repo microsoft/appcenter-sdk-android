@@ -34,6 +34,8 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
+import com.microsoft.identity.client.ILoggerCallback;
+import com.microsoft.identity.client.Logger;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
@@ -75,66 +77,59 @@ import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 public class Auth extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
     /**
+     * Delimiter between two tags.
+     */
+    @VisibleForTesting
+    static final String TAG_DELIMITER = ":";
+    /**
      * Shared instance.
      */
     @SuppressLint("StaticFieldLeak")
     private static Auth sInstance;
-
     /**
      * Current config base URL.
      */
     private String mConfigUrl = DEFAULT_CONFIG_URL;
-
     /**
      * Application context.
      */
     private Context mContext;
-
     /**
      * Application secret.
      */
     private String mAppSecret;
-
     /**
      * Authentication client.
      */
     private PublicClientApplication mAuthenticationClient;
-
     /**
      * Authority url for the authentication client.
      */
     private String mAuthorityUrl;
-
     /**
      * Scope we need to use when acquiring user ID tokens.
      */
     private String mIdentityScope;
-
     /**
      * HTTP client call, for cancellation.
      */
     private ServiceCall mGetConfigCall;
-
     /**
      * Current activity.
      */
     private Activity mActivity;
-
     /**
      * Last sign-in future. It's used to prevent concurrent requests.
      */
     private DefaultAppCenterFuture<SignInResult> mLastSignInFuture;
-
     /**
      * Last refresh future. It's used to prevent concurrent requests.
      */
     private DefaultAppCenterFuture<SignInResult> mLastRefreshFuture;
-
     /**
      * The home account id that should be used for refreshing token after coming back online.
      */
     private String mHomeAccountIdToRefresh;
-
     /**
      * The listener to catch if a token needs to be refreshed.
      */
@@ -146,6 +141,45 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             refreshToken(homeAccountId, networkConnected);
         }
     };
+
+    /**
+     * Init.
+     */
+    private Auth() {
+
+        /* Setup MSAL Logging. */
+        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
+
+        try {
+            Logger.getInstance().setExternalLogger(new ILoggerCallback() {
+                @Override
+                public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
+                    if (!containsPII) {
+                        String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
+                        switch (logLevel) {
+                            case VERBOSE:
+                                AppCenterLog.verbose(prefixedTag, message);
+                                break;
+                            case INFO:
+                                AppCenterLog.info(prefixedTag, message);
+                                break;
+                            case WARNING:
+                                AppCenterLog.warn(prefixedTag, message);
+                                break;
+                            case ERROR:
+                                AppCenterLog.error(prefixedTag, message);
+                                break;
+                        }
+                    }
+                }
+            });
+        } catch (Exception e) {
+
+            /* Should only happen in tests when resetting the external logger. */
+            AppCenterLog.error(LOG_TAG, "Enabling MSAL logging failed.", e);
+        }
+
+    }
 
     /**
      * Get shared instance.
