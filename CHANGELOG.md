@@ -12,6 +12,7 @@
 
 ### App Center Auth
 
+* **[Feature]** App Center Auth logging now includes MSAL logs.
 * **[Fix]** Redirect URIs are now hidden in logs.
 
 ___
