@@ -162,7 +162,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
         /* Setup MSAL Logging. */
         Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
-
         try {
             Logger.getInstance().setExternalLogger(new ILoggerCallback() {
                 @Override

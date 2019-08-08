@@ -155,7 +155,6 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void forwardMsalLogging() {
-
         AppCenterLog.setLogLevel(VERBOSE);
         Auth.getInstance();
         String tag = "msalTag", expectedTag = LOG_TAG + TAG_DELIMITER + tag, message = "Message from MSAL";
