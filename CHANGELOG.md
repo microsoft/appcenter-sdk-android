@@ -14,6 +14,10 @@
 
 * **[Fix]** Redirect URIs are now hidden in logs.
 
+### App Center Push
+
+* **[Fix]** Fix sending the push installation log after delayed start.
+
 ___
 
 ## Version 2.2.0
