@@ -271,16 +271,16 @@ public class Push extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess") /* protected so that Xamarin can use it. */
     protected synchronized void onTokenRefresh(final String pushToken) {
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                AppCenterLog.debug(LOG_TAG, "Push token refreshed before start/enabled, ignoring.");
-            }
-        };
         if (mContext == null) {
-            disabledRunnable.run();
+            AppCenterLog.debug(LOG_TAG, "Token refreshed before Push has been started, ignoring.");
         } else {
+            Runnable disabledRunnable = new Runnable() {
+
+                @Override
+                public void run() {
+                    AppCenterLog.debug(LOG_TAG, "Token refreshed while Push being disabled, ignoring.");
+                }
+            };
             post(new Runnable() {
 
                 @Override
