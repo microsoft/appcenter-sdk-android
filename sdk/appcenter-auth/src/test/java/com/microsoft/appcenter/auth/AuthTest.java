@@ -35,6 +35,7 @@ import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
+import com.microsoft.identity.common.internal.logging.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -156,18 +157,18 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void forwardMsalLogging() {
         AppCenterLog.setLogLevel(VERBOSE);
-        Auth.getInstance();
+        start(Auth.getInstance());
         String tag = "msalTag", expectedTag = LOG_TAG + TAG_DELIMITER + tag, message = "Message from MSAL";
-        com.microsoft.identity.common.internal.logging.Logger.verbose(tag, message);
+        Logger.verbose(tag, message);
         verifyStatic();
         AppCenterLog.verbose(eq(expectedTag), contains(message));
-        com.microsoft.identity.common.internal.logging.Logger.info(tag, message);
+        Logger.info(tag, message);
         verifyStatic();
         AppCenterLog.info(eq(expectedTag), contains(message));
-        com.microsoft.identity.common.internal.logging.Logger.warn(tag, message);
+        Logger.warn(tag, message);
         verifyStatic();
         AppCenterLog.warn(eq(expectedTag), contains(message));
-        com.microsoft.identity.common.internal.logging.Logger.error(tag, message, null);
+        Logger.error(tag, message, null);
         verifyStatic();
         AppCenterLog.error(eq(expectedTag), contains(message));
     }
@@ -175,10 +176,12 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void dontForwardPiiFromMsalLogging() {
         AppCenterLog.setLogLevel(VERBOSE);
-        Auth.getInstance();
-        com.microsoft.identity.common.internal.logging.Logger.verbosePII("msalTag", "Message from MSAL");
+        start(Auth.getInstance());
+        Logger.setAllowPii(true);
+        Logger.verbosePII("msalTag", "Message from MSAL");
         verifyStatic(never());
         AppCenterLog.verbose(anyString(), anyString());
+        Logger.setAllowPii(false);
     }
 
     @Test

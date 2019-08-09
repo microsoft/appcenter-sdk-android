@@ -156,44 +156,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     };
 
     /**
-     * Init.
-     */
-    private Auth() {
-
-        /* Setup MSAL Logging. */
-        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
-        try {
-            Logger.getInstance().setExternalLogger(new ILoggerCallback() {
-                @Override
-                public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
-                    if (!containsPII) {
-                        String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
-                        switch (logLevel) {
-                            case VERBOSE:
-                                AppCenterLog.verbose(prefixedTag, message);
-                                break;
-                            case INFO:
-                                AppCenterLog.info(prefixedTag, message);
-                                break;
-                            case WARNING:
-                                AppCenterLog.warn(prefixedTag, message);
-                                break;
-                            case ERROR:
-                                AppCenterLog.error(prefixedTag, message);
-                                break;
-                        }
-                    }
-                }
-            });
-        } catch (Exception e) {
-
-            /* Should only happen in tests when resetting the external logger. */
-            AppCenterLog.error(LOG_TAG, "Enabling MSAL logging failed.", e);
-        }
-
-    }
-
-    /**
      * Get shared instance.
      *
      * @return shared instance.
@@ -259,6 +221,32 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+
+        /* Setup MSAL Logging. */
+        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
+        try {
+            Logger.getInstance().setExternalLogger(new ILoggerCallback() {
+                @Override
+                public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
+                    if (!containsPII) {
+                        String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
+                        if (Logger.LogLevel.VERBOSE == logLevel) {
+                            AppCenterLog.verbose(prefixedTag, message);
+                        } else if (Logger.LogLevel.INFO == logLevel) {
+                            AppCenterLog.info(prefixedTag, message);
+                        } else if (Logger.LogLevel.WARNING == logLevel) {
+                            AppCenterLog.warn(prefixedTag, message);
+                        } else if (Logger.LogLevel.ERROR == logLevel) {
+                            AppCenterLog.error(prefixedTag, message);
+                        }
+                    }
+                }
+            });
+        } catch (Exception e) {
+
+            /* Should only happen in tests when resetting the external logger. */
+            AppCenterLog.error(LOG_TAG, "Enabling MSAL logging failed.", e);
+        }
 
         /* The auth token from the previous launch is required. */
         AuthTokenContext.getInstance().doNotResetAuthAfterStart();
