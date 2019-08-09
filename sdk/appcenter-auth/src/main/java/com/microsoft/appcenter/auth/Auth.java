@@ -190,7 +190,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             /* Should only happen in tests when resetting the external logger. */
             AppCenterLog.error(LOG_TAG, "Enabling MSAL logging failed.", e);
         }
-
     }
 
     /**
