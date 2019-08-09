@@ -76,6 +76,26 @@ import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
  */
 public class Auth extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
+    @VisibleForTesting
+    static final ILoggerCallback AUTHENTICATION_EXTERNAL_LOGGER = new ILoggerCallback() {
+
+        @Override
+        public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
+            if (!containsPII) {
+                String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
+                if (Logger.LogLevel.VERBOSE == logLevel) {
+                    AppCenterLog.verbose(prefixedTag, message);
+                } else if (Logger.LogLevel.INFO == logLevel) {
+                    AppCenterLog.info(prefixedTag, message);
+                } else if (Logger.LogLevel.WARNING == logLevel) {
+                    AppCenterLog.warn(prefixedTag, message);
+                } else if (Logger.LogLevel.ERROR == logLevel) {
+                    AppCenterLog.error(prefixedTag, message);
+                }
+            }
+        }
+    };
+
     /**
      * Delimiter between two tags.
      */
@@ -225,24 +245,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         /* Setup MSAL Logging. */
         Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
         try {
-            Logger.getInstance().setExternalLogger(new ILoggerCallback() {
-
-                @Override
-                public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
-                    if (!containsPII) {
-                        String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
-                        if (Logger.LogLevel.VERBOSE == logLevel) {
-                            AppCenterLog.verbose(prefixedTag, message);
-                        } else if (Logger.LogLevel.INFO == logLevel) {
-                            AppCenterLog.info(prefixedTag, message);
-                        } else if (Logger.LogLevel.WARNING == logLevel) {
-                            AppCenterLog.warn(prefixedTag, message);
-                        } else if (Logger.LogLevel.ERROR == logLevel) {
-                            AppCenterLog.error(prefixedTag, message);
-                        }
-                    }
-                }
-            });
+            Logger.getInstance().setExternalLogger(AUTHENTICATION_EXTERNAL_LOGGER);
         } catch (Exception e) {
 
             /* Should only happen in tests when resetting the external logger. */

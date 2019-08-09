@@ -31,11 +31,11 @@ import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
+import com.microsoft.identity.client.Logger;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
-import com.microsoft.identity.common.internal.logging.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,6 +59,7 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
 import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.auth.Auth.AUTHENTICATION_EXTERNAL_LOGGER;
 import static com.microsoft.appcenter.auth.Auth.TAG_DELIMITER;
 import static com.microsoft.appcenter.auth.Constants.HEADER_IF_NONE_MATCH;
 import static com.microsoft.appcenter.auth.Constants.LOG_TAG;
@@ -157,33 +158,51 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void forwardMsalLogging() {
         AppCenterLog.setLogLevel(VERBOSE);
-        start(Auth.getInstance());
         String tag = "msalTag";
         String expectedTag = LOG_TAG + TAG_DELIMITER + tag;
         String message = "Message from MSAL";
-        Logger.verbose(tag, message);
+        AUTHENTICATION_EXTERNAL_LOGGER.log(tag, Logger.LogLevel.VERBOSE, message, false);
         verifyStatic();
         AppCenterLog.verbose(eq(expectedTag), contains(message));
-        Logger.info(tag, message);
+        AUTHENTICATION_EXTERNAL_LOGGER.log(tag, Logger.LogLevel.INFO, message, false);
         verifyStatic();
         AppCenterLog.info(eq(expectedTag), contains(message));
-        Logger.warn(tag, message);
+        AUTHENTICATION_EXTERNAL_LOGGER.log(tag, Logger.LogLevel.WARNING, message, false);
         verifyStatic();
         AppCenterLog.warn(eq(expectedTag), contains(message));
-        Logger.error(tag, message, null);
+        AUTHENTICATION_EXTERNAL_LOGGER.log(tag, Logger.LogLevel.ERROR, message, false);
         verifyStatic();
         AppCenterLog.error(eq(expectedTag), contains(message));
+    }
+
+    @Test
+    public void dontForwardMsalLoggingForUnknownLoglevel() {
+        AppCenterLog.setLogLevel(VERBOSE);
+        String tag = "msalTag";
+        String expectedTag = LOG_TAG + TAG_DELIMITER + tag;
+        String message = "Message from MSAL";
+        AUTHENTICATION_EXTERNAL_LOGGER.log(tag, null, message, false);
+        verifyStatic(never());
+        AppCenterLog.verbose(eq(expectedTag), contains(message));
+        verifyStatic(never());
+        AppCenterLog.debug(eq(expectedTag), contains(message));
+        verifyStatic(never());
+        AppCenterLog.info(eq(expectedTag), contains(message));
+        verifyStatic(never());
+        AppCenterLog.warn(eq(expectedTag), contains(message));
+        verifyStatic(never());
+        AppCenterLog.error(eq(expectedTag), contains(message));
+        verifyStatic(never());
+        AppCenterLog.logAssert(eq(expectedTag), contains(message));
     }
 
     @Test
     public void dontForwardPiiFromMsalLogging() {
         AppCenterLog.setLogLevel(VERBOSE);
         start(Auth.getInstance());
-        Logger.setAllowPii(true);
-        Logger.verbosePII("msalTag", "Message from MSAL");
+        AUTHENTICATION_EXTERNAL_LOGGER.log("msalTag", Logger.LogLevel.VERBOSE, "Message from MSAL", true);
         verifyStatic(never());
         AppCenterLog.verbose(anyString(), anyString());
-        Logger.setAllowPii(false);
     }
 
     @Test
