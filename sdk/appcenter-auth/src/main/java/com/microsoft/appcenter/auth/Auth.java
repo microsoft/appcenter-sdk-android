@@ -164,6 +164,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
         try {
             Logger.getInstance().setExternalLogger(new ILoggerCallback() {
+
                 @Override
                 public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
                     if (!containsPII) {
