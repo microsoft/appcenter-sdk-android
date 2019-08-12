@@ -76,6 +76,12 @@ import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
  */
 public class Auth extends AbstractAppCenterService implements NetworkStateHelper.Listener {
 
+    /**
+     * Delimiter between two tags.
+     */
+    @VisibleForTesting
+    static final String TAG_DELIMITER = ":";
+
     @VisibleForTesting
     static final ILoggerCallback AUTHENTICATION_EXTERNAL_LOGGER = new ILoggerCallback() {
 
@@ -95,12 +101,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             }
         }
     };
-
-    /**
-     * Delimiter between two tags.
-     */
-    @VisibleForTesting
-    static final String TAG_DELIMITER = ":";
 
     /**
      * Shared instance.
@@ -249,7 +249,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         } catch (Exception e) {
 
             /* Should only happen in tests when resetting the external logger. */
-            AppCenterLog.error(LOG_TAG, "Enabling MSAL logging failed.", e);
+            AppCenterLog.warn(LOG_TAG, "Enabling MSAL logging failed.", e);
         }
 
         /* The auth token from the previous launch is required. */
