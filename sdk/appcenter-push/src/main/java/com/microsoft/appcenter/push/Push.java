@@ -271,16 +271,27 @@ public class Push extends AbstractAppCenterService {
      */
     @SuppressWarnings("WeakerAccess") /* protected so that Xamarin can use it. */
     protected synchronized void onTokenRefresh(final String pushToken) {
-        if (pushToken != null && !pushToken.equals(mLatestPushToken)) {
-            AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
-            mLatestPushToken = pushToken;
+        if (mContext == null) {
+            AppCenterLog.debug(LOG_TAG, "Token refreshed before Push has been started, ignoring.");
+        } else {
+            Runnable disabledRunnable = new Runnable() {
+
+                @Override
+                public void run() {
+                    AppCenterLog.debug(LOG_TAG, "Token refreshed while Push being disabled, ignoring.");
+                }
+            };
             post(new Runnable() {
 
                 @Override
                 public void run() {
-                    enqueuePushInstallationLog(pushToken);
+                    if (pushToken != null && !pushToken.equals(mLatestPushToken)) {
+                        AppCenterLog.debug(LOG_TAG, "Push token refreshed: " + pushToken);
+                        mLatestPushToken = pushToken;
+                        enqueuePushInstallationLog(pushToken);
+                    }
                 }
-            });
+            }, disabledRunnable, disabledRunnable);
         }
     }
 
@@ -489,8 +500,8 @@ public class Push extends AbstractAppCenterService {
         try {
 
             /* Try to get token through firebase. */
-            AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
             firebaseInstanceId = FirebaseUtils.getFirebaseInstanceId();
+            AppCenterLog.info(LOG_TAG, "Firebase SDK is available, using Firebase SDK registration.");
         } catch (FirebaseUtils.FirebaseUnavailableException e) {
             AppCenterLog.warn(LOG_TAG, "Firebase SDK is not available, using built in registration. " +
                     "For all the Android developers using App Center, there is a change coming where Firebase SDK is required " +

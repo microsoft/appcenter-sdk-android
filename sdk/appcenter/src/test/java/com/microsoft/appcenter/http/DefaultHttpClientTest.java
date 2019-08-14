@@ -497,6 +497,59 @@ public class DefaultHttpClientTest {
     }
 
     @Test
+    public void hideSecretsInResponse() throws Exception {
+        final String payload = "{\"client_id\":\"not deleted\",\"redirect_uri\":\"some redirect Uri\",\"token\":\"some token\"}";
+        final String expectedResponseString = "{\"client_id\":\"not deleted\",\"redirect_uri\":\"***\",\"token\":\"***\"}";
+        final String mimeType = "application/json";
+
+        /* Set log level to verbose to test shorter app secret as well. */
+        mockStatic(AppCenterLog.class);
+        when(AppCenterLog.getLogLevel()).thenReturn(Log.VERBOSE);
+
+        /* Configure mock HTTPS. */
+        String urlString = "https://mock/get";
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(200);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        when(urlConnection.getOutputStream()).thenReturn(buffer);
+        ByteArrayInputStream inputStream = spy(new ByteArrayInputStream(payload.getBytes()));
+        when(urlConnection.getInputStream()).thenReturn(inputStream);
+        when(urlConnection.getHeaderField("Content-Type")).thenReturn(mimeType);
+
+        /* Configure API client. */
+        HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        /* Test calling code. */
+        Map<String, String> headers = new HashMap<>();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        mockCall();
+        httpClient.callAsync(urlString, METHOD_GET, headers, callTemplate, serviceCallback);
+        verify(serviceCallback).onCallSucceeded(payload, Collections.<String, String>emptyMap());
+        verifyNoMoreInteractions(serviceCallback);
+        verify(urlConnection).setRequestMethod("GET");
+        verify(urlConnection, never()).setDoOutput(true);
+        verify(urlConnection).disconnect();
+        verify(inputStream).close();
+        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate, never()).buildRequestBody();
+        httpClient.close();
+
+        /* Test binary placeholder used in logging code instead of real payload. */
+        verifyStatic();
+        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return argument.toString().contains(expectedResponseString);
+            }
+        }));
+    }
+
+    @Test
     public void get200image() throws Exception {
 
         /* Mock verbose logs. */

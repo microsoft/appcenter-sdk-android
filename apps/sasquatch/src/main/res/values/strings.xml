@@ -24,6 +24,9 @@
     <string name="error_device_info" tools:ignore="MissingTranslation">Could not retrieve device information</string>
     <string name="title_error" tools:ignore="MissingTranslation">Errors</string>
     <string name="description_error" tools:ignore="MissingTranslation">Send an exception</string>
+    <string name="title_had_memory_warning" tools:ignore="MissingTranslation">Low memory warning</string>
+    <string name="description_had_memory_warning" tools:ignore="MissingTranslation">The application had a memory warning</string>
+    <string name="description_did_not_have_memory_warning" tools:ignore="MissingTranslation">The application didn\'t have a memory warning</string>
     <string name="title_event" tools:ignore="MissingTranslation">Events</string>
     <string name="description_event" tools:ignore="MissingTranslation">Send a custom event</string>
     <string name="title_event_properties" tools:ignore="MissingTranslation">Event properties</string>

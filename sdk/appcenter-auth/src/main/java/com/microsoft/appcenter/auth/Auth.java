@@ -34,6 +34,8 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import com.microsoft.identity.client.AuthenticationCallback;
 import com.microsoft.identity.client.IAccount;
 import com.microsoft.identity.client.IAuthenticationResult;
+import com.microsoft.identity.client.ILoggerCallback;
+import com.microsoft.identity.client.Logger;
 import com.microsoft.identity.client.PublicClientApplication;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
@@ -73,6 +75,32 @@ import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
  * Auth service.
  */
 public class Auth extends AbstractAppCenterService implements NetworkStateHelper.Listener {
+
+    /**
+     * Delimiter between two tags.
+     */
+    @VisibleForTesting
+    static final String TAG_DELIMITER = ":";
+
+    @VisibleForTesting
+    static final ILoggerCallback AUTHENTICATION_EXTERNAL_LOGGER = new ILoggerCallback() {
+
+        @Override
+        public void log(String tag, Logger.LogLevel logLevel, String message, boolean containsPII) {
+            if (!containsPII) {
+                String prefixedTag = LOG_TAG + TAG_DELIMITER + tag;
+                if (Logger.LogLevel.VERBOSE == logLevel) {
+                    AppCenterLog.verbose(prefixedTag, message);
+                } else if (Logger.LogLevel.INFO == logLevel) {
+                    AppCenterLog.info(prefixedTag, message);
+                } else if (Logger.LogLevel.WARNING == logLevel) {
+                    AppCenterLog.warn(prefixedTag, message);
+                } else if (Logger.LogLevel.ERROR == logLevel) {
+                    AppCenterLog.error(prefixedTag, message);
+                }
+            }
+        }
+    };
 
     /**
      * Shared instance.
@@ -213,6 +241,16 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
+
+        /* Setup MSAL Logging. */
+        Logger.getInstance().setLogLevel(Logger.LogLevel.VERBOSE);
+        try {
+            Logger.getInstance().setExternalLogger(AUTHENTICATION_EXTERNAL_LOGGER);
+        } catch (Exception e) {
+
+            /* Should only happen in tests when resetting the external logger. */
+            AppCenterLog.warn(LOG_TAG, "Enabling MSAL logging failed.", e);
+        }
 
         /* The auth token from the previous launch is required. */
         AuthTokenContext.getInstance().doNotResetAuthAfterStart();

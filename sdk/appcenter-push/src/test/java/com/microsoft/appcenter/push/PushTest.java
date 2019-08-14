@@ -1029,6 +1029,57 @@ public class PushTest {
         verify(authTokenContext).removeListener(any(AuthTokenContext.Listener.class));
     }
 
+    @Test
+    public void tokenReceivedBeforeStart() {
+
+        /* Get token via callback before start. */
+        String testToken = "TEST";
+        Push push = Push.getInstance();
+        push.onTokenRefresh(testToken);
+
+        /* Start. */
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        assertTrue(Push.isEnabled().get());
+
+        /* Check the token received before start has been ignored. */
+        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
+
+        /* Get token will be called and we send the token. */
+        verify(mFirebaseInstanceIdResult).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
+        InstanceIdResult result = mock(InstanceIdResult.class);
+        when(result.getToken()).thenReturn(testToken);
+        mFirebaseInstanceIdSuccessListener.getValue().onSuccess(result);
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
+    }
+
+    @Test
+    public void tokenReceivedWhileDisabled() {
+
+        /* Start and disable. */
+        Push push = Push.getInstance();
+        Channel channel = mock(Channel.class);
+        start(push, channel);
+        Push.setEnabled(false).get();
+
+        /* Get token via callback. */
+        String testToken = "TEST";
+        push.onTokenRefresh(testToken);
+
+        /* Check the token received while being disabled has been ignored. */
+        verify(channel, never()).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
+
+        /* Enable. */
+        Push.setEnabled(true);
+
+        /* Get token will be called and we send the token. */
+        verify(mFirebaseInstanceIdResult, times(2)).addOnSuccessListener(mFirebaseInstanceIdSuccessListener.capture());
+        InstanceIdResult result = mock(InstanceIdResult.class);
+        when(result.getToken()).thenReturn(testToken);
+        mFirebaseInstanceIdSuccessListener.getValue().onSuccess(result);
+        verify(channel).enqueue(any(PushInstallationLog.class), eq(push.getGroupName()), anyInt());
+    }
+
     private static Intent createPushIntent(String title, String message, final Map<String, String> customData) {
         mockStatic(PushIntentUtils.class);
         Intent pushIntentMock = mock(Intent.class);
