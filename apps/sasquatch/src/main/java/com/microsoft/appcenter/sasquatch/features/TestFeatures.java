@@ -22,10 +22,8 @@ import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,13 +54,7 @@ public final class TestFeatures {
 
     @SuppressWarnings("unchecked")
     private static boolean hadMemoryWarning() {
-
-        try {
-            Method hadMemoryWarning = Crashes.class.getMethod("hasReceivedMemoryWarningInLastSession");
-            return Crashes.hasReceivedMemoryWarningInLastSession().get();
-        } catch (Exception e) {
-            return false;
-        }
+        return Crashes.hasReceivedMemoryWarningInLastSession().get();
     }
 
     public static List<TestFeatureModel> getAvailableControls() {
