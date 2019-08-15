@@ -2,6 +2,11 @@
 
 ## Version 2.3.0
 
+### App Center Auth
+
+* **[Feature]** App Center Auth logging now includes MSAL logs.
+* **[Fix]** Redirect URIs are now hidden in logs.
+
 ### App Center Crashes
 
 * **[Feature]** Catch "low memory warning" and provide the API to check if it has happened in last session: `Crashes.hasReceivedMemoryWarningInLastSession()`.
@@ -9,14 +14,6 @@
 ### App Center Push
 
 * **[Fix]** Fix confusing information log about the availability of the Firebase SDK.
-
-### App Center Auth
-
-* **[Feature]** App Center Auth logging now includes MSAL logs.
-* **[Fix]** Redirect URIs are now hidden in logs.
-
-### App Center Push
-
 * **[Fix]** Fix sending the push installation log after delayed start.
 
 ___
