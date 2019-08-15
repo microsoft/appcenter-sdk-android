@@ -1,6 +1,15 @@
 # App Center SDK for Android Change Log
 
+## Version 2.3.1 (Under development)
+
+___
+
 ## Version 2.3.0
+
+### App Center Auth
+
+* **[Feature]** App Center Auth logging now includes MSAL logs.
+* **[Fix]** Redirect URIs are now hidden in logs.
 
 ### App Center Crashes
 
@@ -9,14 +18,6 @@
 ### App Center Push
 
 * **[Fix]** Fix confusing information log about the availability of the Firebase SDK.
-
-### App Center Auth
-
-* **[Feature]** App Center Auth logging now includes MSAL logs.
-* **[Fix]** Redirect URIs are now hidden in logs.
-
-### App Center Push
-
 * **[Fix]** Fix sending the push installation log after delayed start.
 
 ___
