@@ -21,6 +21,10 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.VisibleForTesting;
 
 import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -69,6 +73,10 @@ public class NetworkStateHelper implements Closeable {
      * Current network state.
      */
     private final AtomicBoolean mConnected = new AtomicBoolean();
+
+    private final String testHostName = "8.8.8.8";
+
+    private final int testPort = 53;
 
     /**
      * Init.
@@ -165,7 +173,7 @@ public class NetworkStateHelper implements Closeable {
     private boolean isAnyNetworkConnected() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Network[] networks = mConnectivityManager.getAllNetworks();
-            if (networks == null) {
+            if (networks == null || !isConnectionAvailable()) {
                 return false;
             }
             for (Network network : networks) {
@@ -178,7 +186,7 @@ public class NetworkStateHelper implements Closeable {
 
             @SuppressWarnings({"deprecation", "RedundantSuppression"})
             NetworkInfo[] networks = mConnectivityManager.getAllNetworkInfo();
-            if (networks == null) {
+            if (networks == null || !isConnectionAvailable()) {
                 return false;
             }
             for (NetworkInfo info : networks) {
@@ -196,7 +204,7 @@ public class NetworkStateHelper implements Closeable {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void onNetworkAvailable(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network " + network + " is available.");
-        if (mConnected.compareAndSet(false, true)) {
+        if (isConnectionAvailable() && mConnected.compareAndSet(false, true)) {
             notifyNetworkStateUpdated(true);
         }
     }
@@ -287,5 +295,16 @@ public class NetworkStateHelper implements Closeable {
         public void onReceive(Context context, Intent intent) {
             handleNetworkStateUpdate();
         }
+    }
+
+    private synchronized boolean isConnectionAvailable() {
+        try {
+            int timeoutMs = 1500;
+            Socket mSocket = new Socket();
+            SocketAddress testSocketAddress = new InetSocketAddress(testHostName, testPort);
+            mSocket.connect(testSocketAddress, timeoutMs);
+            mSocket.close();
+            return true;
+        } catch (IOException e) { return false; }
     }
 }

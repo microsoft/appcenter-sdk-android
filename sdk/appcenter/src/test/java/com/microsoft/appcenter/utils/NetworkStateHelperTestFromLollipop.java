@@ -176,4 +176,14 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         verify(builder).addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
         verify(builder, never()).addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
     }
+
+    @Test
+    public void verifyConnectionUnavailable() {
+        NetworkStateHelper helper = new NetworkStateHelper(mContext);
+        Network network = mock(Network.class);
+        ConnectivityManager.NetworkCallback callback = mock(ConnectivityManager.NetworkCallback.class);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
+        callback.onAvailable(network);
+        assertFalse(helper.isNetworkConnected());
+    }
 }
