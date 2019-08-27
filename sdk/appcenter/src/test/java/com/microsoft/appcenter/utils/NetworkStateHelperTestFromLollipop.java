@@ -25,12 +25,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -183,11 +183,13 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
     }
 
     @Test
-    public void verifyConnectionUnavailable() throws IOException {
+    public void verifyConnectionUnavailable() throws Exception {
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
         Socket socket = mock(Socket.class);
+        whenNew(Socket.class)
+                .withAnyArguments().thenReturn(socket);
         doThrow(new IOException())
-                .when(socket).connect(any(InetSocketAddress.class), any(int.class));
+                .when(socket).connect(any(InetSocketAddress.class), anyInt());
         when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { mock(Network.class) });
         assertFalse(helper.isNetworkConnected());
     }
