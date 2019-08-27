@@ -22,6 +22,11 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -178,12 +183,11 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
     }
 
     @Test
-    public void verifyConnectionUnavailable() {
+    public void verifyConnectionUnavailable() throws IOException {
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
-        Network network = mock(Network.class);
-        ConnectivityManager.NetworkCallback callback = mock(ConnectivityManager.NetworkCallback.class);
-        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
-        callback.onAvailable(network);
+        Socket socket = mock(Socket.class);
+        doThrow(new IOException())
+                .when(socket).connect(any(InetSocketAddress.class), any(int.class));
         assertFalse(helper.isNetworkConnected());
     }
 }
