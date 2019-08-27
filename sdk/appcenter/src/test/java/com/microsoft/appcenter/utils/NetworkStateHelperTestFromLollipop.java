@@ -188,6 +188,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         Socket socket = mock(Socket.class);
         doThrow(new IOException())
                 .when(socket).connect(any(InetSocketAddress.class), any(int.class));
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { mock(Network.class) });
         assertFalse(helper.isNetworkConnected());
     }
 }
