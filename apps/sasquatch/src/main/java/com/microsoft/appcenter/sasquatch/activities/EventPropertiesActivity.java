@@ -129,7 +129,7 @@ public class EventPropertiesActivity extends AppCompatActivity {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     private void updatePropertyList() {
         try {
             Field field = getSelectedTarget().getPropertyConfigurator().getClass().getDeclaredField("mEventProperties");
