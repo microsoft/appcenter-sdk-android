@@ -32,10 +32,12 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
+import com.microsoft.appcenter.utils.JwtClaims;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
@@ -214,6 +216,11 @@ public class AppCenter {
      * Redirect selected traffic to One Collector.
      */
     private OneCollectorChannelListener mOneCollectorChannelListener;
+
+    /**
+     * Token refresh listener for bring your own identity.
+     */
+    private AbstractTokenContextListener mAuthTokenRefreshListener;
 
     /**
      * Get unique instance.
@@ -445,6 +452,10 @@ public class AppCenter {
      */
     public static AppCenterFuture<Boolean> setMaxStorageSize(long storageSizeInBytes) {
         return getInstance().setInstanceMaxStorageSizeAsync(storageSizeInBytes);
+    }
+
+    public static void setAuthProvider(AuthProvider authProvider) {
+        getInstance().setInstanceAuthProvider(authProvider);
     }
 
     /**
@@ -1151,6 +1162,38 @@ public class AppCenter {
             future.complete(null);
         }
         return future;
+    }
+
+    private synchronized void setInstanceAuthProvider(final AuthProvider authProvider) {
+        final AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
+        if (authProvider != null) {
+            AppCenterLog.info(LOG_TAG, "Setting up auth token refresh listener.");
+            authTokenContext.doNotResetAuthAfterStart();
+            mAuthTokenRefreshListener = new AbstractTokenContextListener() {
+
+                @Override
+                public void onTokenRequiresRefresh(String homeAccountId) {
+                    authProvider.acquireToken(new AuthProvider.AuthCallback() {
+
+                        @Override
+                        public void onAuthenticationResult(String jwt) {
+                            JwtClaims claims = JwtClaims.parse(jwt);
+                            if (claims != null) {
+                                AppCenterLog.debug(LOG_TAG, "Token has been refreshed.");
+                                authTokenContext.setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+                            } else {
+                                authTokenContext.setAuthToken(null, null, null);
+                            }
+                        }
+                    });
+                }
+            };
+            authTokenContext.addListener(mAuthTokenRefreshListener);
+        } else if (mAuthTokenRefreshListener != null) {
+            AppCenterLog.info(LOG_TAG, "Removing auth token refresh listener.");
+            authTokenContext.removeListener(mAuthTokenRefreshListener);
+            authTokenContext.setAuthToken(null, null, null);
+        }
     }
 
     /**
