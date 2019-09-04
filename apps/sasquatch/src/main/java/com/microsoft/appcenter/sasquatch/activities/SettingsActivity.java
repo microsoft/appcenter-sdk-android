@@ -494,23 +494,23 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initEditText(R.string.app_secret_key, R.string.app_secret_title, APP_SECRET_KEY, getString(R.string.app_secret), new EditTextListener() {
+            final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, "9e0d97c1-7838-46d0-9dab-1a0ef66aec6e");
+            initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
                 @Override
-                public void onSave(String value) {
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (newValue == null) {
+                        return true;
+                    }
+                    String value = newValue.toString();
+
                     if (!TextUtils.isEmpty(value)) {
                         setKeyValue(APP_SECRET_KEY, value);
                         Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
                     }
-                }
-
-                @Override
-                public void onReset() {
-                    String defaultAppSecret = getString(R.string.app_secret);
-                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
-                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
+                    return true;
                 }
             });
 

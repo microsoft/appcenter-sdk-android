@@ -12,4 +12,12 @@
         <item>NO_SECRET</item>
         <item>SKIP_START</item>
     </string-array>
+    <string-array name="appcenter_secret_values" tools:ignore="MissingTranslation">
+        <item>B2C</item>
+        <item>AAD</item>
+    </string-array>
+    <string-array name="appcenter_secret_guids" tools:ignore="MissingTranslation">
+        <item>9e0d97c1-7838-46d0-9dab-1a0ef66aec6e</item>
+        <item>abcdabcd-abcd-abcd-abcd-abcdabcdabcd</item>
+    </string-array>
 </resources>
