@@ -2,3 +2,6 @@
 -keepclasseswithmembers class com.microsoft.appcenter.ingestion.models.Device {
    public ** get*();
 }
+-keepclasseswithmembers class com.microsoft.appcenter.analytics.PropertyConfigurator {
+   private ** get*();
+}
