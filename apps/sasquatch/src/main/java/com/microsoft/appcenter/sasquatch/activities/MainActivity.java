@@ -121,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         switch (StartType.valueOf(startType)) {
             case TARGET:
             case NO_SECRET:
+            case SKIP_START:
                 return context.getString(R.string.log_url_one_collector);
         }
         return context.getString(R.string.log_url);
