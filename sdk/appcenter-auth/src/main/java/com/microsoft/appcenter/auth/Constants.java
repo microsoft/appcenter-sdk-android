@@ -78,6 +78,11 @@ final class Constants {
     static final String AUTHORITY_TYPE_B2C = "B2C";
 
     /**
+     * JSON configuration value for aad authority within {@link #AUTHORITIES} array.
+     */
+    static final String AUTHORITY_TYPE_AAD = "AAD";
+
+    /**
      * JSON configuration key for authority url within {@link #AUTHORITIES} array.
      */
     static final String AUTHORITY_URL = "authority_url";
@@ -86,4 +91,39 @@ final class Constants {
      * JSON configuration key for identity scope.
      */
     static final String IDENTITY_SCOPE = "identity_scope";
+
+    /**
+     * JSON configuration key for audience within {@link #AUTHORITIES} array.
+     */
+    static final String Audience = "audience";
+
+    /**
+     * JSON configuration key for type within {@link #Audience} object.
+     */
+    static final String Audience_Type = "type";
+
+    /**
+     * JSON configuration value for None type within {@link #Audience} object.
+     */
+    static final String Audience_Type_None = "None";
+
+    /**
+     * JSON configuration value for AzureAdMyOrg type within {@link #Audience} object.
+     */
+    static final String Audience_Type_AzureAdMyOrg = "AzureAdMyOrg";
+
+    /**
+     * JSON configuration value for AzureAdAndPersonalMicrosoftAccount type within {@link #Audience} object.
+     */
+    static final String Audience_Type_AzureAdAndPersonalMicrosoftAccount = "AzureAdAndPersonalMicrosoftAccount";
+
+    /**
+     * JSON configuration value for AzureAdMultipleOrgs type within {@link #Audience} object.
+     */
+    static final String Audience_Type_AzureAdMultipleOrgs = "AzureAdMultipleOrgs";
+
+    /**
+     * JSON configuration value for AzureAdMultipleOrgs type within {@link #Audience} object.
+     */
+    static final String Audience_Type_PersonalMicrosoftAccount = "PersonalMicrosoftAccount";
 }
