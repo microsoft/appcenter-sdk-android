@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.utils;
 
+import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
 
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
@@ -29,7 +30,8 @@ public class JwtClaims {
 
     private Date mExpirationDate;
 
-    private JwtClaims(String subject, Date expirationDate) {
+    @VisibleForTesting
+    public JwtClaims(String subject, Date expirationDate) {
         mSubject = subject;
         mExpirationDate = expirationDate;
     }

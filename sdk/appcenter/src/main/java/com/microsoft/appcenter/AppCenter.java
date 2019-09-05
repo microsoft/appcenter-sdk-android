@@ -1173,10 +1173,10 @@ public class AppCenter {
 
                 @Override
                 public void onTokenRequiresRefresh(String homeAccountId) {
-                    authProvider.acquireToken(new AuthProvider.AuthCallback() {
+                    authProvider.acquireToken(new AuthProvider.Callback() {
 
                         @Override
-                        public void onAuthenticationResult(String jwt) {
+                        public void onAuthResult(String jwt) {
                             JwtClaims claims = JwtClaims.parse(jwt);
                             if (claims != null) {
                                 AppCenterLog.debug(LOG_TAG, "Token has been refreshed.");

@@ -13,15 +13,15 @@ public interface AuthProvider {
      *
      * @param callback callback to provide the result.
      */
-    void acquireToken(AuthCallback callback);
+    void acquireToken(Callback callback);
 
-    interface AuthCallback {
+    interface Callback {
 
         /**
          * Notify SDK that authentication completed.
          *
          * @param jwt token value or null if authentication failed.
          */
-        void onAuthenticationResult(String jwt);
+        void onAuthResult(String jwt);
     }
 }
