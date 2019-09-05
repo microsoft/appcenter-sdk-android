@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter;
 
 import com.microsoft.appcenter.utils.JwtClaims;
@@ -11,7 +16,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Date;
 
-import static com.microsoft.appcenter.utils.context.AuthTokenContext.*;
+import static com.microsoft.appcenter.utils.context.AuthTokenContext.Listener;
+import static com.microsoft.appcenter.utils.context.AuthTokenContext.getInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
