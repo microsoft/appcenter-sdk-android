@@ -484,10 +484,8 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 if (audience != null) {
                     audienceType = audience.getString(Audience_Type);
                 }
-
                 authorityUrl = authority.optString(AUTHORITY_URL);
             }
-
             if (type.equals(AUTHORITY_TYPE_B2C)) {
                 if (authorityUrl == null) {
                     throw new IllegalStateException("B2C authority is configured incorrectly. Authority url is mandatory.");
@@ -515,12 +513,10 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             } else {
                 throw new IllegalStateException("Cannot find a b2c or aad authority configured to be the default.");
             }
-
             mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
             mAuthorityUrl = authorityUrl;
             mIdentityScope = identityScope;
             AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
-
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
