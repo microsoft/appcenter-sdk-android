@@ -61,12 +61,12 @@ import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
 import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
 import static com.microsoft.appcenter.auth.Constants.Audience;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type_AzureAdAndPersonalMicrosoftAccount;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type_AzureAdMultipleOrgs;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type_AzureAdMyOrg;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type_None;
-import static com.microsoft.appcenter.auth.Constants.Audience_Type_PersonalMicrosoftAccount;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE;
+import static com.microsoft.appcenter.auth.Constants.AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE_AZURE_AD_MY_ORG;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE_NONE;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE_PERSONAL_MICROSOFT_ACCOUNT;
 import static com.microsoft.appcenter.auth.Constants.CONFIG_URL_FORMAT;
 import static com.microsoft.appcenter.auth.Constants.DEFAULT_CONFIG_URL;
 import static com.microsoft.appcenter.auth.Constants.FILE_PATH;
@@ -482,7 +482,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
                 JSONObject audience = authority.optJSONObject(Audience);
                 if (audience != null) {
-                    audienceType = audience.getString(Audience_Type);
+                    audienceType = audience.getString(AUDIENCE_TYPE);
                 }
                 authorityUrl = authority.optString(AUTHORITY_URL);
             }
@@ -503,11 +503,11 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                     throw new IllegalStateException("AAD authority is configured incorrectly. Audience type is mandatory.");
                 }
 
-                if (!audienceType.equals(Audience_Type_None)
-                        && !audienceType.equals(Audience_Type_AzureAdMyOrg)
-                        && !audienceType.equals(Audience_Type_AzureAdMultipleOrgs)
-                        && !audienceType.equals(Audience_Type_AzureAdAndPersonalMicrosoftAccount)
-                        && !audienceType.equals(Audience_Type_PersonalMicrosoftAccount)) {
+                if (!audienceType.equals(AUDIENCE_TYPE_NONE)
+                        && !audienceType.equals(AUDIENCE_TYPE_AZURE_AD_MY_ORG)
+                        && !audienceType.equals(AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS)
+                        && !audienceType.equals(AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT)
+                        && !audienceType.equals(AUDIENCE_TYPE_PERSONAL_MICROSOFT_ACCOUNT)) {
                     throw new IllegalStateException(String.format("AAD authority is configured incorrectly. Audience type=%s is unknown.", audienceType));
                 }
             } else {

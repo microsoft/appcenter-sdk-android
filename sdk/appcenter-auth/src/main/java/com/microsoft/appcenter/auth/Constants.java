@@ -100,30 +100,30 @@ final class Constants {
     /**
      * JSON configuration key for type within {@link #Audience} object.
      */
-    static final String Audience_Type = "type";
+    static final String AUDIENCE_TYPE = "type";
 
     /**
      * JSON configuration value for None type within {@link #Audience} object.
      */
-    static final String Audience_Type_None = "None";
+    static final String AUDIENCE_TYPE_NONE = "None";
 
     /**
      * JSON configuration value for AzureAdMyOrg type within {@link #Audience} object.
      */
-    static final String Audience_Type_AzureAdMyOrg = "AzureAdMyOrg";
+    static final String AUDIENCE_TYPE_AZURE_AD_MY_ORG = "AzureAdMyOrg";
 
     /**
      * JSON configuration value for AzureAdAndPersonalMicrosoftAccount type within {@link #Audience} object.
      */
-    static final String Audience_Type_AzureAdAndPersonalMicrosoftAccount = "AzureAdAndPersonalMicrosoftAccount";
+    static final String AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT = "AzureAdAndPersonalMicrosoftAccount";
 
     /**
      * JSON configuration value for AzureAdMultipleOrgs type within {@link #Audience} object.
      */
-    static final String Audience_Type_AzureAdMultipleOrgs = "AzureAdMultipleOrgs";
+    static final String AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS = "AzureAdMultipleOrgs";
 
     /**
      * JSON configuration value for AzureAdMultipleOrgs type within {@link #Audience} object.
      */
-    static final String Audience_Type_PersonalMicrosoftAccount = "PersonalMicrosoftAccount";
+    static final String AUDIENCE_TYPE_PERSONAL_MICROSOFT_ACCOUNT = "PersonalMicrosoftAccount";
 }
