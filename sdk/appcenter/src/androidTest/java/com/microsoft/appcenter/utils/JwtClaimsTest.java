@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.utils;
 
 import android.util.Base64;
@@ -12,7 +17,7 @@ import static org.junit.Assert.assertNull;
 
 public class JwtClaimsTest {
 
-    private static final String JWT_FORMAT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.%s";
+    private static final String JWT_FORMAT = "mockHeaders.%s.mockSignature";
 
     @Test
     public void getValidJwt() throws JSONException {
