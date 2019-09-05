@@ -479,7 +479,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 } else if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_AAD.equals(authority.getString(AUTHORITY_TYPE))) {
                     type = AUTHORITY_TYPE_AAD;
                 }
-
                 JSONObject audience = authority.optJSONObject(Audience);
                 if (audience != null) {
                     audienceType = audience.getString(AUDIENCE_TYPE);
