@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
@@ -44,7 +45,7 @@ public class JwtClaims {
             String claimsPart = new String(Base64.decode(base64ClaimsPart, Base64.DEFAULT));
             JSONObject claims = new JSONObject(claimsPart);
             String subject = claims.getString(SUBJECT);
-            Date expirationDate = JSONDateUtils.toDate(claims.getString(EXPIRATION));
+            Date expirationDate = new Date(TimeUnit.SECONDS.toMillis(claims.getInt(EXPIRATION)));
             return new JwtClaims(subject, expirationDate);
         } catch (JSONException | IllegalArgumentException e) {
             AppCenterLog.error(LOG_TAG, "Failed to parse JWT", e);
