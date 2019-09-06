@@ -506,7 +506,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     if (!TextUtils.isEmpty(value)) {
                         if (value.equals("Custom")) {
-                            // If user selected custom, popup a text editor so they can enter whatever they want
+                            /* If user selected custom, popup a text editor so they can enter whatever they want */
                             ShowPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, getString(R.string.app_secret), new EditTextListener() {
                                 @Override
                                 public void onSave(String value) {
@@ -774,6 +774,7 @@ public class SettingsActivity extends AppCompatActivity {
             input.setInputType(InputType.TYPE_CLASS_TEXT);
             input.setText(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
 
+            /* Actually show the text entry dialog */
             new AlertDialog.Builder(getActivity()).setTitle(title).setView(input)
                     .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
                         @Override
