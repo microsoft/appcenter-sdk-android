@@ -165,7 +165,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * The listener to catch if a token needs to be refreshed.
      */
-    private final AuthTokenContext.RefreshListener mAuthTokenContextUpdateListener = new AuthTokenContext.RefreshListener() {
+    private final AuthTokenContext.RefreshListener mAuthTokenContextRefreshListener = new AuthTokenContext.RefreshListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
@@ -264,7 +264,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().setRefreshListener(mAuthTokenContextUpdateListener);
+            AuthTokenContext.getInstance().setRefreshListener(mAuthTokenContextRefreshListener);
             NetworkStateHelper.getSharedInstance(mContext).addListener(this);
 
             /* Load cached configuration in case APIs are called early. */
@@ -273,7 +273,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
-            AuthTokenContext.getInstance().unsetRefreshListener(mAuthTokenContextUpdateListener);
+            AuthTokenContext.getInstance().unsetRefreshListener(mAuthTokenContextRefreshListener);
             NetworkStateHelper.getSharedInstance(mContext).removeListener(this);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();

@@ -60,13 +60,14 @@ public class AuthTokenContext {
     private static AuthTokenContext sInstance;
 
     /**
-     * Update listeners collection.
-     */
-    private final Set<UpdateListener> mUpdateListeners = Collections.newSetFromMap(new ConcurrentHashMap<UpdateListener, Boolean>());
-    /**
      * Refresh token listener.
      */
     private AtomicReference<RefreshListener> mRefreshListener = new AtomicReference<>();
+
+    /**
+     * Update listeners collection.
+     */
+    private final Set<UpdateListener> mUpdateListeners = Collections.newSetFromMap(new ConcurrentHashMap<UpdateListener, Boolean>());
 
     /**
      * {@link Context} instance.
