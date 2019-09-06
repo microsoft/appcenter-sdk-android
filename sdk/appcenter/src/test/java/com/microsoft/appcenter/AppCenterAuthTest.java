@@ -18,7 +18,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Date;
 
-import static com.microsoft.appcenter.utils.context.AuthTokenContext.UpdateListener;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -76,14 +75,14 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     public void setAuthProviderWhenPreviouslySet() {
         AuthTokenContext.RefreshListener refreshListener = testSetAuthProvider();
         AppCenter.setAuthProvider(null);
-        verify(mAuthTokenContext).setRefreshListener(refreshListener);
+        verify(mAuthTokenContext).unsetRefreshListener(refreshListener);
         verify(mAuthTokenContext).setAuthToken(null, null, null);
     }
 
     @Test
     public void setNullAuthProviderWhenNoneExists() {
         AppCenter.setAuthProvider(null);
-        verify(mAuthTokenContext, never()).removeUpdateListener(any(UpdateListener.class));
+        verify(mAuthTokenContext, never()).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
     }
 
