@@ -18,8 +18,8 @@
         <item>Custom</item>
     </string-array>
     <string-array name="appcenter_secret_guids" tools:ignore="MissingTranslation">
-        <item>9e0d97c1-7838-46d0-9dab-1a0ef66aec6e</item>
-        <item>abcdabcd-abcd-abcd-abcd-abcdabcdabcd</item>
+        <item>45d1d9f6-2492-4e68-bd44-7190351eb5f3</item>
+        <item>ee754946-037c-40cd-9946-4709903e858c</item>
         <item>Custom</item>
     </string-array>
 </resources>
