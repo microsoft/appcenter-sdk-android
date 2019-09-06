@@ -352,14 +352,15 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
-        if (mRefreshListener.get() == null) {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire()) {
             return;
         }
-        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
-        if (lastEntry != null && authTokenInfo.getAuthToken() != null &&
-                authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) &&
-                authTokenInfo.isAboutToExpire()) {
-            mRefreshListener.get().onTokenRequiresRefresh(lastEntry.getHomeAccountId());
+        RefreshListener refreshListener = mRefreshListener.get();
+        if (refreshListener != null) {
+            refreshListener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
     }
 
