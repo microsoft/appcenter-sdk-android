@@ -60,7 +60,7 @@ import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_AAD;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
 import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
-import static com.microsoft.appcenter.auth.Constants.Audience;
+import static com.microsoft.appcenter.auth.Constants.AUDIENCE;
 import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE;
 import static com.microsoft.appcenter.auth.Constants.AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT;
 import static com.microsoft.appcenter.auth.Constants.AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS;
@@ -479,7 +479,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 } else if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_AAD.equals(authority.getString(AUTHORITY_TYPE))) {
                     type = AUTHORITY_TYPE_AAD;
                 }
-                JSONObject audience = authority.optJSONObject(Audience);
+                JSONObject audience = authority.optJSONObject(AUDIENCE);
                 if (audience != null) {
                     audienceType = audience.getString(AUDIENCE_TYPE);
                 }
@@ -491,7 +491,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 }
 
                 if (audienceType != null) {
-                    throw new IllegalStateException("B2C authority is configured incorrectly. Audience type is not allowed.");
+                    throw new IllegalStateException("B2C authority is configured incorrectly. AUDIENCE type is not allowed.");
                 }
             } else if (type.equals(AUTHORITY_TYPE_AAD)) {
                 if (authorityUrl != null) {
@@ -499,7 +499,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 }
 
                 if (audienceType == null) {
-                    throw new IllegalStateException("AAD authority is configured incorrectly. Audience type is mandatory.");
+                    throw new IllegalStateException("AAD authority is configured incorrectly. AUDIENCE type is mandatory.");
                 }
 
                 if (!audienceType.equals(AUDIENCE_TYPE_NONE)
@@ -507,7 +507,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                         && !audienceType.equals(AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS)
                         && !audienceType.equals(AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT)
                         && !audienceType.equals(AUDIENCE_TYPE_PERSONAL_MICROSOFT_ACCOUNT)) {
-                    throw new IllegalStateException(String.format("AAD authority is configured incorrectly. Audience type=%s is unknown.", audienceType));
+                    throw new IllegalStateException(String.format("AAD authority is configured incorrectly. AUDIENCE type=%s is unknown.", audienceType));
                 }
             } else {
                 throw new IllegalStateException("Cannot find a b2c or aad authority configured to be the default.");
