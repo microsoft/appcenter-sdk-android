@@ -91,39 +91,4 @@ final class Constants {
      * JSON configuration key for identity scope.
      */
     static final String IDENTITY_SCOPE = "identity_scope";
-
-    /**
-     * JSON configuration key for audience within {@link #AUTHORITIES} array.
-     */
-    static final String AUDIENCE = "audience";
-
-    /**
-     * JSON configuration key for type within {@link #AUDIENCE} object.
-     */
-    static final String AUDIENCE_TYPE = "type";
-
-    /**
-     * JSON configuration value for None type within {@link #AUDIENCE} object.
-     */
-    static final String AUDIENCE_TYPE_NONE = "None";
-
-    /**
-     * JSON configuration value for AzureAdMyOrg type within {@link #AUDIENCE} object.
-     */
-    static final String AUDIENCE_TYPE_AZURE_AD_MY_ORG = "AzureAdMyOrg";
-
-    /**
-     * JSON configuration value for AzureAdAndPersonalMicrosoftAccount type within {@link #AUDIENCE} object.
-     */
-    static final String AZURE_AD_AND_PERSONAL_MICROSOFT_ACCOUNT = "AzureAdAndPersonalMicrosoftAccount";
-
-    /**
-     * JSON configuration value for AzureAdMultipleOrgs type within {@link #AUDIENCE} object.
-     */
-    static final String AUDIENCE_TYPE_AZURE_AD_MULTIPLE_ORGS = "AzureAdMultipleOrgs";
-
-    /**
-     * JSON configuration value for AzureAdMultipleOrgs type within {@link #AUDIENCE} object.
-     */
-    static final String AUDIENCE_TYPE_PERSONAL_MICROSOFT_ACCOUNT = "PersonalMicrosoftAccount";
 }
