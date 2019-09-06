@@ -494,7 +494,8 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, "9e0d97c1-7838-46d0-9dab-1a0ef66aec6e");
+            final String defaultAppSecret = MainActivity.GetDefaultAppSecret(getActivity().getResources());
+            final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, defaultAppSecret);
             initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
                 @Override
@@ -508,7 +509,7 @@ public class SettingsActivity extends AppCompatActivity {
                         if (value.equals("Custom")) {
 
                             /* If user selected custom, popup a text editor so they can enter whatever they want. */
-                            ShowPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, getString(R.string.app_secret), new EditTextListener() {
+                            ShowPreferenceTextEditor(getPreferenceManager().findPreference(APP_SECRET_KEY), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
 
                                 @Override
                                 public void onSave(String value) {
@@ -522,7 +523,6 @@ public class SettingsActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onReset() {
-                                    String defaultAppSecret = getString(R.string.app_secret);
                                     setKeyValue(APP_SECRET_KEY, defaultAppSecret);
                                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                 }

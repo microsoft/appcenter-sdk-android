@@ -7,6 +7,7 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.content.res.Resources;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         if (startType == StartType.SKIP_START) {
             return;
         }
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, GetDefaultAppSecret(application.getResources()));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -382,6 +383,12 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    /* Get the default app secret from the app secret array. */
+    protected static String GetDefaultAppSecret(Resources resources) {
+        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secret_values);
+        return secretValuesArray[0];
     }
 
     private void setDistributeEnabledForDebuggableBuild() {
