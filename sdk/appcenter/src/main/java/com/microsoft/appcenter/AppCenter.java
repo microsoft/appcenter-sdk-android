@@ -37,7 +37,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
@@ -220,7 +219,7 @@ public class AppCenter {
     /**
      * Token refresh listener for bring your own identity.
      */
-    private AbstractTokenContextListener mAuthTokenRefreshListener;
+    private AuthTokenContext.RefreshListener mAuthTokenRefreshListener;
 
     /**
      * Get unique instance.
@@ -1179,7 +1178,7 @@ public class AppCenter {
         if (authProvider != null) {
             AppCenterLog.info(LOG_TAG, "Setting up auth token refresh listener.");
             authTokenContext.doNotResetAuthAfterStart();
-            mAuthTokenRefreshListener = new AbstractTokenContextListener() {
+            mAuthTokenRefreshListener = new AuthTokenContext.RefreshListener() {
 
                 @Override
                 public void onTokenRequiresRefresh(String homeAccountId) {
@@ -1198,10 +1197,10 @@ public class AppCenter {
                     });
                 }
             };
-            authTokenContext.addListener(mAuthTokenRefreshListener);
+            authTokenContext.setRefreshListener(mAuthTokenRefreshListener);
         } else if (mAuthTokenRefreshListener != null) {
             AppCenterLog.info(LOG_TAG, "Removing auth token refresh listener.");
-            authTokenContext.removeListener(mAuthTokenRefreshListener);
+            authTokenContext.unsetRefreshListener(mAuthTokenRefreshListener);
             authTokenContext.setAuthToken(null, null, null);
         }
     }

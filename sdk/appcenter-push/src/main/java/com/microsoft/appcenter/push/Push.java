@@ -30,7 +30,7 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextUpdateListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 
@@ -119,7 +119,7 @@ public class Push extends AbstractAppCenterService {
     /**
      * Authorization listener for {@link AuthTokenContext}.
      */
-    private AuthTokenContext.Listener mAuthListener;
+    private AuthTokenContext.UpdateListener mAuthListener;
 
     /**
      * User id context listener for {@link UserIdContext}.
@@ -303,11 +303,11 @@ public class Push extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(mAuthListener);
+            AuthTokenContext.getInstance().addUpdateListener(mAuthListener);
             UserIdContext.getInstance().addListener(mUserListener);
             registerPushToken();
         } else {
-            AuthTokenContext.getInstance().removeListener(mAuthListener);
+            AuthTokenContext.getInstance().removeUpdateListener(mAuthListener);
             UserIdContext.getInstance().removeListener(mUserListener);
         }
     }
@@ -340,7 +340,7 @@ public class Push extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
-        mAuthListener = new AbstractTokenContextListener() {
+        mAuthListener = new AbstractTokenContextUpdateListener() {
 
             @Override
             public void onNewUser(String accountId) {

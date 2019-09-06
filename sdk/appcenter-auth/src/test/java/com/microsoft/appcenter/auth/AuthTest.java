@@ -235,7 +235,7 @@ public class AuthTest extends AbstractAuthTest {
         Channel channel = start(auth);
         verify(channel).removeGroup(eq(auth.getGroupName()));
         verify(channel).addGroup(eq(auth.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
 
         /* Now we can see the service enabled. */
@@ -244,7 +244,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Disable. Testing to wait setEnabled to finish while we are at it. */
         Auth.setEnabled(false).get();
         assertFalse(Auth.isEnabled().get());
-        verify(mAuthTokenContext).removeListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mNetworkStateHelper).removeListener(any(NetworkStateHelper.Listener.class));
         verify(mAuthTokenContext).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
     }
@@ -1250,9 +1250,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void signOutCancelsCanceledSignIn() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1287,9 +1287,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void signOutCancelsFailedSignIn() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1324,9 +1324,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void signOutCancelsSignIn() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1361,8 +1361,8 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void signOutWithoutNetworkCancelsPendingRefresh() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(authTokenContextListenerCaptor.capture());
         ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
         doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
 
@@ -1375,7 +1375,7 @@ public class AuthTest extends AbstractAuthTest {
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         when(mAuthTokenContext.getAuthToken()).thenReturn(mockAccessToken);
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
 
         /* Simulate offline. */
@@ -1404,14 +1404,14 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshTokenWithoutAccount() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
 
         /* Request token refresh. */
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1422,15 +1422,15 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshToken() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
 
         /* Request token refresh. */
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1442,8 +1442,8 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshTokenWithoutNetwork() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(authTokenContextListenerCaptor.capture());
         ArgumentCaptor<NetworkStateHelper.Listener> networkStateListenerCaptor = ArgumentCaptor.forClass(NetworkStateHelper.Listener.class);
         doNothing().when(mNetworkStateHelper).addListener(networkStateListenerCaptor.capture());
 
@@ -1453,7 +1453,7 @@ public class AuthTest extends AbstractAuthTest {
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mNetworkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
 
         /* Request token refresh. */
@@ -1473,8 +1473,8 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshTokenDoesNotHaveUiFallback() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(authTokenContextListenerCaptor.capture());
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
@@ -1490,7 +1490,7 @@ public class AuthTest extends AbstractAuthTest {
         }).when(publicClientApplication).acquireTokenSilentAsync(
                 notNull(String[].class), any(IAccount.class), any(String.class), eq(true), notNull(AuthenticationCallback.class));
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
 
         /* Request token refresh. */
         authTokenContextListenerCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1502,15 +1502,15 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshTokenMultipleTimes() throws Exception {
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication lib. */
         PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
         when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
         mockReadyToSignIn();
-        verify(mAuthTokenContext).addListener(any(AuthTokenContext.Listener.class));
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
 
         /* Request token refresh multiple times. */
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
@@ -1524,8 +1524,8 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void refreshTokenWithoutConfig() {
-        ArgumentCaptor<AuthTokenContext.Listener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(authTokenContextListenerCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(authTokenContextListenerCaptor.capture());
 
         /* Start auth service. */
         Auth auth = Auth.getInstance();
@@ -1544,9 +1544,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void refreshTokenDuringSignIn() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1591,9 +1591,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void signInDuringRefreshToken() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock authentication result. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1642,9 +1642,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void signOutDuringRefreshToken() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock auth token. */
         String mockAccessToken = UUID.randomUUID().toString();
@@ -1681,9 +1681,9 @@ public class AuthTest extends AbstractAuthTest {
     @Test
     public void disableDuringRefreshToken() throws Exception {
 
-        /* Capture Listener to call onTokenRequiresRefresh later. */
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        /* Capture RefreshListener to call onTokenRequiresRefresh later. */
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
 
         /* Mock auth token. */
         String mockAccessToken = UUID.randomUUID().toString();
