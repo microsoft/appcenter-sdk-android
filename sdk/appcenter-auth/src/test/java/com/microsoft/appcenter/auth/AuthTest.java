@@ -125,6 +125,11 @@ public class AuthTest extends AbstractAuthTest {
         mockHttpCallSuccess(jsonConfig, serviceCallback);
     }
 
+    private static void mockMsalPublicClientApplication() throws Exception {
+        PublicClientApplication application = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withParameterTypes(Context.class, File.class).withArguments(any(Context.class), any(File.class)).thenReturn(application);
+    }
+
     private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
 
         /* Intercept parameters. */
@@ -284,17 +289,41 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
+        /* mock public client application*/
+        mockMsalPublicClientApplication();
+
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
-        /* We didn't attempt to even save. */
+        /* We saved after we downloaded the file. */
+        verifyStatic();
+        FileManager.write(any(File.class), anyString());
+
+        /* We cleared the cache since the file was invalid. */
+        verifyStatic();
+        FileManager.delete(any(File.class));
+    }
+
+    private void testValidConfig(JSONObject jsonConfig) throws Exception {
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* mock public client application for msal*/
+        mockMsalPublicClientApplication();
+
+        /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
+
+        /* We saved after we downloaded the file. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
     }
 
     @Test
     public void downloadInvalidForMSALConfiguration() throws Exception {
-        testInvalidConfig(mockValidForAppCenterConfig());
+        testValidConfig(mockValidForAppCenterConfig());
     }
 
     @Test
@@ -338,6 +367,21 @@ public class AuthTest extends AbstractAuthTest {
         when(authorities.getJSONObject(0)).thenReturn(authority);
         when(authority.optBoolean("default")).thenReturn(true);
         testInvalidConfig(jsonConfig);
+    }
+
+    @Test
+    public void downloadConfigurationWithAAD() throws Exception {
+        JSONObject jsonConfig = mock(JSONObject.class);
+        when(jsonConfig.toString()).thenReturn("mockConfig");
+        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
+        JSONArray authorities = mock(JSONArray.class);
+        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
+        when(authorities.length()).thenReturn(1);
+        JSONObject authority = mock(JSONObject.class);
+        when(authorities.getJSONObject(0)).thenReturn(authority);
+        when(authority.optBoolean("default")).thenReturn(true);
+        when(authority.getString("type")).thenReturn("AAD");
+        testValidConfig(jsonConfig);
     }
 
     @Test
