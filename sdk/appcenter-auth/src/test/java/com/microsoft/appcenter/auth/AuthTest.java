@@ -278,9 +278,13 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(serviceCallback);
         serviceCallback.onCallSucceeded("invalid", new HashMap<String, String>());
 
-        /* We didn't attempt to even save. */
+        /* We saved after we downloaded the file. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
+
+        /* We cleared the cache since the file was invalid. */
+        verifyStatic();
+        FileManager.delete(any(File.class));
     }
 
     private void testInvalidConfig(JSONObject jsonConfig) throws Exception {
@@ -289,7 +293,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
-        /* mock public client application*/
+        /* Mock public client application*/
         mockMsalPublicClientApplication();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
@@ -319,6 +323,10 @@ public class AuthTest extends AbstractAuthTest {
         /* We saved after we downloaded the file. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
+
+        /* We did not delete the file from the cache */
+        verifyStatic(never());
+        FileManager.delete(any(File.class));
     }
 
     @Test
