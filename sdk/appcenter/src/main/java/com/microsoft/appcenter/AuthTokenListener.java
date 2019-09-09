@@ -17,5 +17,5 @@ public interface AuthTokenListener {
      *
      * @param callback callback to provide the result.
      */
-    void acquireToken(AuthTokenCallback callback);
+    void acquireAuthToken(AuthTokenCallback callback);
 }

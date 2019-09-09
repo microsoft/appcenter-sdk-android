@@ -13,7 +13,7 @@ public interface AuthTokenCallback {
     /**
      * Notify SDK that authentication completed.
      *
-     * @param jwt token value (in JWT format) or null if authentication failed.
+     * @param authToken token value (in JWT format) or null if authentication failed.
      */
-    void onAuthResult(String jwt);
+    void onAuthTokenResult(String authToken);
 }
