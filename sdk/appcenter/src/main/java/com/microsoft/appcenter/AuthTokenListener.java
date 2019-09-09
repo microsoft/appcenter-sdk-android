@@ -6,10 +6,10 @@
 package com.microsoft.appcenter;
 
 /**
- * Authentication provider used to refresh authentication tokens.
+ * Authentication token listener used to refresh authentication tokens.
  * The implementation is defined by applications.
  */
-public interface AuthProvider {
+public interface AuthTokenListener {
 
     /**
      * Implement this method and pass a fresh authentication token using the callback.
@@ -17,18 +17,5 @@ public interface AuthProvider {
      *
      * @param callback callback to provide the result.
      */
-    void acquireToken(Callback callback);
-
-    /**
-     * Authentication callback.
-     */
-    interface Callback {
-
-        /**
-         * Notify SDK that authentication completed.
-         *
-         * @param jwt token value (in JWT format) or null if authentication failed.
-         */
-        void onAuthResult(String jwt);
-    }
+    void acquireAuthToken(AuthTokenCallback callback);
 }

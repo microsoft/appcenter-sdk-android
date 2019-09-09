@@ -454,14 +454,14 @@ public class AppCenter {
     }
 
     /**
-     * Set an authentication provider to refresh authentication tokens when they are about to expire or are already expired.
+     * Set an authentication listener to refresh authentication tokens when they are about to expire or are already expired.
      *
-     * @param authProvider authentication provider defined by the application or null to remove it.
+     * @param authTokenListener authentication listener defined by the application or null to remove it.
      */
     // TODO Remove when used in the app without reflection (after release).
     @SuppressWarnings("WeakerAccess")
-    public static void setAuthProvider(AuthProvider authProvider) {
-        getInstance().setInstanceAuthProvider(authProvider);
+    public static void setAuthTokenListener(AuthTokenListener authTokenListener) {
+        getInstance().setInstanceAuthTokenListener(authTokenListener);
     }
 
     /**
@@ -1171,25 +1171,25 @@ public class AppCenter {
     }
 
     /**
-     * Implements {@link #setAuthProvider(AuthProvider)} at instance level.
+     * Implements {@link #setAuthTokenListener(AuthTokenListener)} at instance level.
      */
-    private synchronized void setInstanceAuthProvider(final AuthProvider authProvider) {
+    private synchronized void setInstanceAuthTokenListener(final AuthTokenListener authTokenListener) {
         final AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        if (authProvider != null) {
+        if (authTokenListener != null) {
             AppCenterLog.info(LOG_TAG, "Setting up auth token refresh listener.");
             authTokenContext.doNotResetAuthAfterStart();
             mAuthTokenRefreshListener = new AuthTokenContext.RefreshListener() {
 
                 @Override
                 public void onTokenRequiresRefresh(String homeAccountId) {
-                    authProvider.acquireToken(new AuthProvider.Callback() {
+                    authTokenListener.acquireAuthToken(new AuthTokenCallback() {
 
                         @Override
-                        public void onAuthResult(String jwt) {
-                            JwtClaims claims = JwtClaims.parse(jwt);
+                        public void onAuthTokenResult(String authToken) {
+                            JwtClaims claims = JwtClaims.parse(authToken);
                             if (claims != null) {
                                 AppCenterLog.debug(LOG_TAG, "Token has been refreshed.");
-                                authTokenContext.setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+                                authTokenContext.setAuthToken(authToken, claims.getSubject(), claims.getExpirationDate());
                             } else {
                                 authTokenContext.setAuthToken(null, null, null);
                             }
