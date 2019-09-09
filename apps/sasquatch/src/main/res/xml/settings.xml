@@ -122,7 +122,7 @@
             android:title="@string/install_id_title" />
         <ListPreference
             android:entries="@array/appcenter_secret_values"
-            android:entryValues="@array/appcenter_secret_guids"
+            android:entryValues="@array/appcenter_secrets"
             android:key="@string/app_secret_key"
             android:title="@string/app_secret_title" />
     </PreferenceCategory>

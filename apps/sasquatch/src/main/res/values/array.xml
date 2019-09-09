@@ -17,7 +17,7 @@
         <item>AAD</item>
         <item>Custom</item>
     </string-array>
-    <string-array name="appcenter_secret_guids" tools:ignore="MissingTranslation">
+    <string-array name="appcenter_secrets" tools:ignore="MissingTranslation">
         <item>45d1d9f6-2492-4e68-bd44-7190351eb5f3</item>
         <item>ee754946-037c-40cd-9946-4709903e858c</item>
         <item>Custom</item>

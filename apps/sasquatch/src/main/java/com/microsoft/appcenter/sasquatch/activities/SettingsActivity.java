@@ -494,7 +494,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            final String defaultAppSecret = MainActivity.GetDefaultAppSecret(getActivity().getResources());
+            final String defaultAppSecret = MainActivity.getDefaultAppSecret(getActivity().getResources());
             final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, defaultAppSecret);
             initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
@@ -509,7 +509,7 @@ public class SettingsActivity extends AppCompatActivity {
                         if (value.equals("Custom")) {
 
                             /* If user selected custom, popup a text editor so they can enter whatever they want. */
-                            ShowPreferenceTextEditor(getPreferenceManager().findPreference(APP_SECRET_KEY), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
+                            ShowPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
 
                                 @Override
                                 public void onSave(String value) {

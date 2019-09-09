@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         if (startType == StartType.SKIP_START) {
             return;
         }
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, GetDefaultAppSecret(application.getResources()));
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -386,8 +386,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Get the default app secret from the app secret array. */
-    protected static String GetDefaultAppSecret(Resources resources) {
-        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secret_values);
+    static String getDefaultAppSecret(Resources resources) {
+        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
         return secretValuesArray[0];
     }
 
