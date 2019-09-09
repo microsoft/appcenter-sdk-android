@@ -52,8 +52,8 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
             @Override
-            public void acquireToken(Callback callback) {
-                callback.onAuthResult(jwt);
+            public void acquireAuthToken(AuthTokenCallback callback) {
+                callback.onAuthTokenResult(jwt);
             }
         });
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
@@ -94,8 +94,8 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
             @Override
-            public void acquireToken(Callback callback) {
-                callback.onAuthResult(invalidJwt);
+            public void acquireAuthToken(AuthTokenCallback callback) {
+                callback.onAuthTokenResult(invalidJwt);
             }
         });
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
