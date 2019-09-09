@@ -28,7 +28,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextUpdateListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -230,7 +230,7 @@ public class DefaultChannel implements Channel {
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
         /* Listen for token refreshed to unblock sending logs after waiting for the token update. */
-        AuthTokenContext.getInstance().addListener(groupState);
+        AuthTokenContext.getInstance().addUpdateListener(groupState);
 
         /*
          * If no app secret, don't resume sending App Center logs from storage.
@@ -255,7 +255,7 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
-            AuthTokenContext.getInstance().removeListener(groupState);
+            AuthTokenContext.getInstance().removeUpdateListener(groupState);
         }
 
         /* Call listeners so that they can react on group removed. */
@@ -860,7 +860,7 @@ public class DefaultChannel implements Channel {
      * State for a specific log group.
      */
     @VisibleForTesting
-    class GroupState extends AbstractTokenContextListener {
+    class GroupState extends AbstractTokenContextUpdateListener {
 
         /**
          * Group name.

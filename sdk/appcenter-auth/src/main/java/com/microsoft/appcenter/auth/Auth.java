@@ -27,7 +27,6 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -166,7 +165,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * The listener to catch if a token needs to be refreshed.
      */
-    private final AuthTokenContext.Listener mAuthTokenContextListener = new AbstractTokenContextListener() {
+    private final AuthTokenContext.RefreshListener mAuthTokenContextRefreshListener = new AuthTokenContext.RefreshListener() {
 
         @Override
         public void onTokenRequiresRefresh(String homeAccountId) {
@@ -265,7 +264,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(mAuthTokenContextListener);
+            AuthTokenContext.getInstance().setRefreshListener(mAuthTokenContextRefreshListener);
             NetworkStateHelper.getSharedInstance(mContext).addListener(this);
 
             /* Load cached configuration in case APIs are called early. */
@@ -274,7 +273,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             /* Download the latest configuration in background. */
             downloadConfiguration();
         } else {
-            AuthTokenContext.getInstance().removeListener(mAuthTokenContextListener);
+            AuthTokenContext.getInstance().unsetRefreshListener(mAuthTokenContextRefreshListener);
             NetworkStateHelper.getSharedInstance(mContext).removeListener(this);
             if (mGetConfigCall != null) {
                 mGetConfigCall.cancel();
@@ -493,6 +492,8 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
     @WorkerThread
     private void saveConfigFile(String payload, String eTag) {
         File file = getConfigFile();
+
+        //noinspection ConstantConditions it's never the root directory so there is always a parent.
         FileManager.mkdir(file.getParent());
         try {
             FileManager.write(file, payload);

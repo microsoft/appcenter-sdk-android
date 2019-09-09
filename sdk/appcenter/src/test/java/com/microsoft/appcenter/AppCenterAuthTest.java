@@ -18,7 +18,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Date;
 
-import static com.microsoft.appcenter.utils.context.AuthTokenContext.Listener;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -44,7 +43,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     }
 
     @NonNull
-    private Listener testSetAuthProvider() {
+    private AuthTokenContext.RefreshListener testSetAuthProvider() {
         final String jwt = "jwt";
         JwtClaims claims = mock(JwtClaims.class);
         when(claims.getSubject()).thenReturn("someId");
@@ -57,14 +56,14 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthResult(jwt);
             }
         });
-        ArgumentCaptor<Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(Listener.class);
-        verify(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
-        Listener listener = listenerArgumentCaptor.getValue();
-        assertNotNull(listener);
-        listener.onTokenRequiresRefresh(claims.getSubject());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
+        AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
+        assertNotNull(refreshListener);
+        refreshListener.onTokenRequiresRefresh(claims.getSubject());
         verify(mAuthTokenContext).doNotResetAuthAfterStart();
         verify(mAuthTokenContext).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
-        return listener;
+        return refreshListener;
     }
 
     @Test
@@ -74,16 +73,16 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
 
     @Test
     public void setAuthProviderWhenPreviouslySet() {
-        Listener listener = testSetAuthProvider();
+        AuthTokenContext.RefreshListener refreshListener = testSetAuthProvider();
         AppCenter.setAuthProvider(null);
-        verify(mAuthTokenContext).removeListener(listener);
+        verify(mAuthTokenContext).unsetRefreshListener(refreshListener);
         verify(mAuthTokenContext).setAuthToken(null, null, null);
     }
 
     @Test
     public void setNullAuthProviderWhenNoneExists() {
         AppCenter.setAuthProvider(null);
-        verify(mAuthTokenContext, never()).removeListener(any(Listener.class));
+        verify(mAuthTokenContext, never()).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
     }
 
@@ -99,9 +98,10 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthResult(invalidJwt);
             }
         });
-        ArgumentCaptor<Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(Listener.class);
-        verify(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
-        assertNotNull(listenerArgumentCaptor.getValue());
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
+        AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
+        assertNotNull(refreshListener);
         listenerArgumentCaptor.getValue().onTokenRequiresRefresh("some account id");
         verify(mAuthTokenContext).doNotResetAuthAfterStart();
         verify(mAuthTokenContext).setAuthToken(null, null, null);

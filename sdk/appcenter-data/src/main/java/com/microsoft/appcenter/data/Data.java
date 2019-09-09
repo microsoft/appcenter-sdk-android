@@ -38,7 +38,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
+import com.microsoft.appcenter.utils.context.AbstractTokenContextUpdateListener;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     /**
      * Authorization listener for {@link AuthTokenContext}.
      */
-    private AuthTokenContext.Listener mAuthListener;
+    private AuthTokenContext.UpdateListener mAuthUpdateListener;
 
     private NetworkStateHelper mNetworkStateHelper;
 
@@ -334,7 +334,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mTokenManager = TokenManager.getInstance(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
-        mAuthListener = new AbstractTokenContextListener() {
+        mAuthUpdateListener = new AbstractTokenContextUpdateListener() {
 
             @Override
             public void onNewUser(String accountId) {
@@ -400,7 +400,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(mAuthListener);
+            AuthTokenContext.getInstance().addUpdateListener(mAuthUpdateListener);
             mNetworkStateHelper.addListener(this);
             if (mNetworkStateHelper.isNetworkConnected()) {
                 processPendingOperations();
@@ -410,7 +410,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 call.getKey().complete(null);
                 call.getValue().cancel();
             }
-            AuthTokenContext.getInstance().removeListener(mAuthListener);
+            AuthTokenContext.getInstance().removeUpdateListener(mAuthUpdateListener);
             mNetworkStateHelper.removeListener(this);
             mPendingCalls.clear();
             for (Map.Entry<String, ServiceCall> call : mOutgoingPendingOperationCalls.entrySet()) {

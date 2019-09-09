@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -59,9 +60,14 @@ public class AuthTokenContext {
     private static AuthTokenContext sInstance;
 
     /**
-     * Global listeners collection.
+     * Refresh token listener.
      */
-    private final Set<Listener> mListeners = Collections.newSetFromMap(new ConcurrentHashMap<Listener, Boolean>());
+    private AtomicReference<RefreshListener> mRefreshListener = new AtomicReference<>();
+
+    /**
+     * Update listeners collection.
+     */
+    private final Set<UpdateListener> mUpdateListeners = Collections.newSetFromMap(new ConcurrentHashMap<UpdateListener, Boolean>());
 
     /**
      * {@link Context} instance.
@@ -110,21 +116,37 @@ public class AuthTokenContext {
     }
 
     /**
-     * Adds listener to token context.
-     *
-     * @param listener listener to be notified of changes.
+     * Set or unset the refresh token update listener. There can be only 1 active.
      */
-    public void addListener(@NonNull Listener listener) {
-        mListeners.add(listener);
+    public void setRefreshListener(@NonNull RefreshListener refreshListener) {
+        if (!mRefreshListener.compareAndSet(null, refreshListener)) {
+            AppCenterLog.error(LOG_TAG, "Cannot use 2 authentication modules at the same time.");
+        }
     }
 
     /**
-     * Removes a specific listener.
-     *
-     * @param listener listener to be removed.
+     * Unset the refresh token update listener.
      */
-    public void removeListener(@NonNull Listener listener) {
-        mListeners.remove(listener);
+    public void unsetRefreshListener(@NonNull RefreshListener refreshListener) {
+        mRefreshListener.compareAndSet(refreshListener, null);
+    }
+
+    /**
+     * Register a token update listener.
+     *
+     * @param updateListener updateListener to be notified of changes.
+     */
+    public void addUpdateListener(@NonNull UpdateListener updateListener) {
+        mUpdateListeners.add(updateListener);
+    }
+
+    /**
+     * Unregister a token update listener.
+     *
+     * @param updateListener updateListener to be removed.
+     */
+    public void removeUpdateListener(@NonNull UpdateListener updateListener) {
+        mUpdateListeners.remove(updateListener);
     }
 
     /**
@@ -166,11 +188,11 @@ public class AuthTokenContext {
         }
 
         /* Call listeners so that they can react on new token. */
-        for (Listener listener : mListeners) {
-            listener.onNewAuthToken(authToken);
+        for (UpdateListener updateListener : mUpdateListeners) {
+            updateListener.onNewAuthToken(authToken);
             if (isNewUser) {
                 String accountId = homeAccountId == null ? null : homeAccountId.substring(0, Math.min(ACCOUNT_ID_LENGTH, homeAccountId.length()));
-                listener.onNewUser(accountId);
+                updateListener.onNewUser(accountId);
             }
         }
     }
@@ -336,8 +358,9 @@ public class AuthTokenContext {
                 !authTokenInfo.isAboutToExpire()) {
             return;
         }
-        for (Listener listener : mListeners) {
-            listener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
+        RefreshListener refreshListener = mRefreshListener.get();
+        if (refreshListener != null) {
+            refreshListener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
     }
 
@@ -417,9 +440,9 @@ public class AuthTokenContext {
     }
 
     /**
-     * Token context global listener specification.
+     * Listener to get updates on tokens or users.
      */
-    public interface Listener {
+    public interface UpdateListener {
 
         /**
          * Called whenever a new token is set.
@@ -434,6 +457,12 @@ public class AuthTokenContext {
          * @param accountId account id.
          */
         void onNewUser(String accountId);
+    }
+
+    /**
+     * Listener to refresh tokens.
+     */
+    public interface RefreshListener {
 
         /**
          * Called whenever token needs to be refreshed.

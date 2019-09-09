@@ -77,10 +77,10 @@ public class AuthTokenTests extends AbstractDataTest {
         when(TokenManager.getInstance(notNull(Context.class))).thenReturn(mTokenManager);
 
         /* Mock context listener. */
-        AuthTokenContext.Listener mockListener = mock(AuthTokenContext.Listener.class);
+        AuthTokenContext.UpdateListener mockUpdateListener = mock(AuthTokenContext.UpdateListener.class);
 
         /* Set new auth token. */
-        AuthTokenContext.getInstance().addListener(mockListener);
+        AuthTokenContext.getInstance().addUpdateListener(mockUpdateListener);
         AuthTokenContext.getInstance().setAuthToken("mock-token", "mock-user", new Date(Long.MAX_VALUE));
 
         /* Verify. */

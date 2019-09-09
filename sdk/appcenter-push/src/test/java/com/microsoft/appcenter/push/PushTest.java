@@ -989,9 +989,9 @@ public class PushTest {
 
         /* When we start push being enabled. */
         ArgumentCaptor<UserIdContext.Listener> userIdContextArgument = ArgumentCaptor.forClass(UserIdContext.Listener.class);
-        ArgumentCaptor<AuthTokenContext.Listener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
+        ArgumentCaptor<AuthTokenContext.UpdateListener> authTokenArgument = ArgumentCaptor.forClass(AuthTokenContext.UpdateListener.class);
         UserIdContext.Listener currentUserIdContextListener;
-        AuthTokenContext.Listener currentAuthTokenContextListener;
+        AuthTokenContext.UpdateListener currentAuthTokenContextListener;
         UserIdContext userIdContext = mock(UserIdContext.class);
         AuthTokenContext authTokenContext = mock(AuthTokenContext.class);
         mockStatic(UserIdContext.class);
@@ -1006,8 +1006,8 @@ public class PushTest {
         verify(userIdContext).addListener(userIdContextArgument.capture());
         verify(userIdContext, never()).removeListener(any(UserIdContext.Listener.class));
         currentUserIdContextListener = userIdContextArgument.getValue();
-        verify(authTokenContext).addListener(authTokenArgument.capture());
-        verify(authTokenContext, never()).removeListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext).addUpdateListener(authTokenArgument.capture());
+        verify(authTokenContext, never()).removeUpdateListener(any(AuthTokenContext.UpdateListener.class));
         currentAuthTokenContextListener = authTokenArgument.getValue();
 
         /* When push is disabled. */
@@ -1016,8 +1016,8 @@ public class PushTest {
         /* Then listeners are removed. (And thus not added more than once in total). */
         verify(userIdContext).addListener(any(UserIdContext.Listener.class));
         verify(userIdContext).removeListener(eq(currentUserIdContextListener));
-        verify(authTokenContext).addListener(any(AuthTokenContext.Listener.class));
-        verify(authTokenContext).removeListener(eq(currentAuthTokenContextListener));
+        verify(authTokenContext).addUpdateListener(any(AuthTokenContext.UpdateListener.class));
+        verify(authTokenContext).removeUpdateListener(eq(currentAuthTokenContextListener));
 
         /* When re-enabling push. */
         push.applyEnabledState(true);
@@ -1025,8 +1025,8 @@ public class PushTest {
         /* Then we re-register listener (thus twice in total). And thus we didn't remove more than once total. */
         verify(userIdContext, times(2)).addListener(any(UserIdContext.Listener.class));
         verify(userIdContext).removeListener(any(UserIdContext.Listener.class));
-        verify(authTokenContext, times(2)).addListener(any(AuthTokenContext.Listener.class));
-        verify(authTokenContext).removeListener(any(AuthTokenContext.Listener.class));
+        verify(authTokenContext, times(2)).addUpdateListener(any(AuthTokenContext.UpdateListener.class));
+        verify(authTokenContext).removeUpdateListener(any(AuthTokenContext.UpdateListener.class));
     }
 
     @Test

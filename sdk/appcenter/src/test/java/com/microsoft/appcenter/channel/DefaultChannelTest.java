@@ -1032,8 +1032,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
     @Test
     public void scheduleLogsWithNewToken() {
-        ArgumentCaptor<AuthTokenContext.Listener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.Listener.class);
-        doNothing().when(mAuthTokenContext).addListener(listenerArgumentCaptor.capture());
+        ArgumentCaptor<AuthTokenContext.UpdateListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.UpdateListener.class);
+        doNothing().when(mAuthTokenContext).addUpdateListener(listenerArgumentCaptor.capture());
 
         /* Create channel. Verify scheduling logs. */
         Persistence mockPersistence = mock(Persistence.class);
