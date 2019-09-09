@@ -466,11 +466,13 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             JSONArray authorities = configuration.getJSONArray(AUTHORITIES);
             for (int i = 0; i < authorities.length(); i++) {
                 JSONObject authority = authorities.getJSONObject(i);
-                if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_B2C.equals(authority.getString(AUTHORITY_TYPE))) {
-                    type = AUTHORITY_TYPE_B2C;
-                    authorityUrl = authority.getString(AUTHORITY_URL);
-                } else if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_AAD.equals(authority.getString(AUTHORITY_TYPE))) {
-                    type = AUTHORITY_TYPE_AAD;
+                if (authority.optBoolean(AUTHORITY_DEFAULT)) {
+                    if (AUTHORITY_TYPE_B2C.equals(authority.getString(AUTHORITY_TYPE))) {
+                        type = AUTHORITY_TYPE_B2C;
+                        authorityUrl = authority.getString(AUTHORITY_URL);
+                    } else if (AUTHORITY_TYPE_AAD.equals(authority.getString(AUTHORITY_TYPE))) {
+                        type = AUTHORITY_TYPE_AAD;
+                    }
                 }
             }
             if (type == null) {
