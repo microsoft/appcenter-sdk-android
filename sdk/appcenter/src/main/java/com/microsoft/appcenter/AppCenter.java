@@ -458,8 +458,8 @@ public class AppCenter {
      *
      * @param authTokenListener authentication provider defined by the application or null to remove it.
      */
-    @SuppressWarnings("WeakerAccess")
     // TODO Remove when used in the app without reflection (after release).
+    @SuppressWarnings("WeakerAccess")
     public static void setAuthTokenListener(AuthTokenListener authTokenListener) {
         getInstance().setInstanceAuthTokenListener(authTokenListener);
     }
