@@ -506,10 +506,10 @@ public class SettingsActivity extends AppCompatActivity {
                     String value = newValue.toString();
 
                     if (!TextUtils.isEmpty(value)) {
-                        if (value.equals("Custom")) {
+                        if (value.equals(MainActivity.getCustomAppSecretString(getActivity().getResources()))) {
 
                             /* If user selected custom, popup a text editor so they can enter whatever they want. */
-                            ShowPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
+                            showPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
 
                                 @Override
                                 public void onSave(String value) {
@@ -527,8 +527,7 @@ public class SettingsActivity extends AppCompatActivity {
                                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                 }
                             });
-                        }
-                        else {
+                        } else {
                             setKeyValue(APP_SECRET_KEY, value);
                             Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
                         }
@@ -765,13 +764,12 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
-                    return ShowPreferenceTextEditor(preference, title, preferencesKey, defaultValue, listener);
+                    return showPreferenceTextEditor(preference, title, preferencesKey, defaultValue, listener);
                 }
             });
         }
 
-        private boolean ShowPreferenceTextEditor(final Preference preference, final int title, final String preferencesKey, final String defaultValue, final EditTextListener listener)
-        {
+        private boolean showPreferenceTextEditor(final Preference preference, final int title, final String preferencesKey, final String defaultValue, final EditTextListener listener) {
             final EditText input = new EditText(getActivity());
             input.setInputType(InputType.TYPE_CLASS_TEXT);
             input.setText(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));

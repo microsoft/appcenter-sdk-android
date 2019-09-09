@@ -391,6 +391,11 @@ public class MainActivity extends AppCompatActivity {
         return secretValuesArray[0];
     }
 
+    static String getCustomAppSecretString(Resources resources) {
+        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        return secretValuesArray[secretValuesArray.length - 1];
+    }
+
     private void setDistributeEnabledForDebuggableBuild() {
         boolean enabledForDebuggableBuild = sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false);
         Distribute.setEnabledForDebuggableBuild(enabledForDebuggableBuild);
