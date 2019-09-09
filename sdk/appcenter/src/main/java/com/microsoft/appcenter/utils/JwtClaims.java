@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.utils;
 
+import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
 
@@ -44,7 +45,11 @@ public class JwtClaims {
      * @param jwt Token in JWT format.
      * @return Claims or null if parsing failed.
      */
-    public static JwtClaims parse(String jwt) {
+    public static JwtClaims parse(@Nullable String jwt) {
+        if (jwt == null) {
+            AppCenterLog.error(LOG_TAG, "Cannot parse null JWT.");
+            return null;
+        }
         String[] parts = jwt.split(JWT_PARTS_SEPARATOR_REGEX);
         if (parts.length < 2) {
             AppCenterLog.error(LOG_TAG, "Failed to parse JWT, not enough parts.");
