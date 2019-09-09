@@ -81,11 +81,4 @@ public class JwtClaimsTest {
         JwtClaims jwtClaims = JwtClaims.parse(token);
         assertNull(jwtClaims);
     }
-
-    @Test
-    public void nullToken() {
-        String token = null;
-        JwtClaims jwtClaims = JwtClaims.parse(token);
-        assertNull(jwtClaims);
-    }
 }

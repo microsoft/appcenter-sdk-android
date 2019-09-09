@@ -1183,16 +1183,19 @@ public class AppCenter {
     }
 
     /**
-     * Implements @link #setAuthToken} at instance level.
+     * Implements {@link #setAuthToken} at instance level.
      */
     private void setInstanceAuthToken(String authToken) {
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        JwtClaims claims = JwtClaims.parse(authToken);
+        JwtClaims claims = null;
+        if (authToken != null) {
+            claims = JwtClaims.parse(authToken);
+        }
         if (claims != null) {
             AppCenterLog.debug(LOG_TAG, "Token has been refreshed.");
             authTokenContext.setAuthToken(authToken, claims.getSubject(), claims.getExpirationDate());
         } else {
-
+            AppCenterLog.debug(LOG_TAG, "Removing authentication token (sign out).");
             authTokenContext.setAuthToken(null, null, null);
         }
     }
