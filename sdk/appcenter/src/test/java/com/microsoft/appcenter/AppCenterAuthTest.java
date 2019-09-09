@@ -43,13 +43,13 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     }
 
     @NonNull
-    private AuthTokenContext.RefreshListener testSetAuthProvider() {
+    private AuthTokenContext.RefreshListener testSetAuthTokenListener() {
         final String jwt = "jwt";
         JwtClaims claims = mock(JwtClaims.class);
         when(claims.getSubject()).thenReturn("someId");
         when(claims.getExpirationDate()).thenReturn(new Date(123L));
         when(JwtClaims.parse(jwt)).thenReturn(claims);
-        AppCenter.setAuthProvider(new AuthProvider() {
+        AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
             @Override
             public void acquireToken(Callback callback) {
@@ -67,31 +67,31 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     }
 
     @Test
-    public void setAuthProvider() {
-        testSetAuthProvider();
+    public void setAuthTokenListener() {
+        testSetAuthTokenListener();
     }
 
     @Test
-    public void setAuthProviderWhenPreviouslySet() {
-        AuthTokenContext.RefreshListener refreshListener = testSetAuthProvider();
-        AppCenter.setAuthProvider(null);
+    public void setAuthTokenListenerWhenPreviouslySet() {
+        AuthTokenContext.RefreshListener refreshListener = testSetAuthTokenListener();
+        AppCenter.setAuthTokenListener(null);
         verify(mAuthTokenContext).unsetRefreshListener(refreshListener);
         verify(mAuthTokenContext).setAuthToken(null, null, null);
     }
 
     @Test
-    public void setNullAuthProviderWhenNoneExists() {
-        AppCenter.setAuthProvider(null);
+    public void setNullAuthTokenListenerWhenNoneExists() {
+        AppCenter.setAuthTokenListener(null);
         verify(mAuthTokenContext, never()).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
     }
 
     @Test
-    public void setAuthProviderWithNullClaims() {
+    public void setAuthTokenListenerWithNullClaims() {
         final String invalidJwt = "invalid jwt";
         mockStatic(JwtClaims.class);
         when(JwtClaims.parse(invalidJwt)).thenReturn(null);
-        AppCenter.setAuthProvider(new AuthProvider() {
+        AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
             @Override
             public void acquireToken(Callback callback) {

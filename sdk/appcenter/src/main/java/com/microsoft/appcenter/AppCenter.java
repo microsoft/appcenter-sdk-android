@@ -456,12 +456,12 @@ public class AppCenter {
     /**
      * Set an authentication provider to refresh authentication tokens when they are about to expire or are already expired.
      *
-     * @param authProvider authentication provider defined by the application or null to remove it.
+     * @param authTokenListener authentication provider defined by the application or null to remove it.
      */
     @SuppressWarnings("WeakerAccess")
     // TODO Remove when used in the app without reflection (after release).
-    public static void setAuthProvider(AuthProvider authProvider) {
-        getInstance().setInstanceAuthProvider(authProvider);
+    public static void setAuthTokenListener(AuthTokenListener authTokenListener) {
+        getInstance().setInstanceAuthTokenListener(authTokenListener);
     }
 
     /**
@@ -1171,18 +1171,18 @@ public class AppCenter {
     }
 
     /**
-     * Implements {@link #setAuthProvider(AuthProvider)} at instance level.
+     * Implements {@link #setAuthTokenListener(AuthTokenListener)} at instance level.
      */
-    private synchronized void setInstanceAuthProvider(final AuthProvider authProvider) {
+    private synchronized void setInstanceAuthTokenListener(final AuthTokenListener authTokenListener) {
         final AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        if (authProvider != null) {
+        if (authTokenListener != null) {
             AppCenterLog.info(LOG_TAG, "Setting up auth token refresh listener.");
             authTokenContext.doNotResetAuthAfterStart();
             mAuthTokenRefreshListener = new AuthTokenContext.RefreshListener() {
 
                 @Override
                 public void onTokenRequiresRefresh(String homeAccountId) {
-                    authProvider.acquireToken(new AuthProvider.Callback() {
+                    authTokenListener.acquireToken(new AuthTokenListener.Callback() {
 
                         @Override
                         public void onAuthResult(String jwt) {
