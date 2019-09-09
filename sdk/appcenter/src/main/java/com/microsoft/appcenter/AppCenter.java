@@ -1182,7 +1182,7 @@ public class AppCenter {
 
                 @Override
                 public void onTokenRequiresRefresh(String homeAccountId) {
-                    authTokenListener.acquireToken(new AuthTokenListener.Callback() {
+                    authTokenListener.acquireToken(new AuthTokenCallback() {
 
                         @Override
                         public void onAuthResult(String jwt) {
