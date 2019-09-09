@@ -477,8 +477,6 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             }
             if (type == null) {
                 throw new IllegalStateException("Cannot find a default b2c or aad authority configured to be the default.");
-            } else if (type.equals(AUTHORITY_TYPE_B2C) && authorityUrl == null) {
-                throw new IllegalStateException("Cannot find authority url for b2c.");
             }
             mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
             mAuthorityUrl = authorityUrl;

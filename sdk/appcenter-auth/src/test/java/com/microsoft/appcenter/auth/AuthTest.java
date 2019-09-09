@@ -346,6 +346,7 @@ public class AuthTest extends AbstractAuthTest {
         when(authorities.getJSONObject(0)).thenReturn(authority);
         when(authority.optBoolean("default")).thenReturn(true);
         when(authority.getString("type")).thenReturn("B2C");
+        when(authority.getString("authority_url")).thenThrow(new JSONException("missing"));
         testInvalidConfig(jsonConfig);
     }
 
