@@ -68,6 +68,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_DELEGATE);
             }
         }));
+        mFeatureList.add(new TestFeatures.TestFeatureTitle(R.string.auth_title));
         mFeatureList.add(new TestFeatures.TestFeature(R.string.sign_in_title, R.string.sign_in_description, new View.OnClickListener() {
 
             @Override
