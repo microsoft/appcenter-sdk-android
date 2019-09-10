@@ -42,6 +42,44 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
     }
 
+    @Test
+    public void setAuthToken() {
+
+        /* Given a valid JWT token. */
+        final String jwt = "jwt";
+        JwtClaims claims = mock(JwtClaims.class);
+        when(claims.getSubject()).thenReturn("someId");
+        when(claims.getExpirationDate()).thenReturn(new Date(123L));
+        when(JwtClaims.parse(jwt)).thenReturn(claims);
+
+        /* When we set auth token. */
+        AppCenter.setAuthToken(jwt);
+
+        /* Then it's stored. */
+        verify(mAuthTokenContext).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+    }
+
+    @Test
+    public void unsetAuthToken() {
+
+        /* When we unset auth token. */
+        AppCenter.setAuthToken(null);
+
+        /* Then it's removed. */
+        verify(mAuthTokenContext).setAuthToken(null, null, null);
+    }
+
+    @Test
+    public void setInvalidAuthToken() {
+
+        /* When we set an invalid auth token. */
+        when(JwtClaims.parse("invalidJwt")).thenReturn(null);
+        AppCenter.setAuthToken("invalidJwt");
+
+        /* Then it's removed. */
+        verify(mAuthTokenContext).setAuthToken(null, null, null);
+    }
+
     @NonNull
     private AuthTokenContext.RefreshListener testSetAuthTokenListener() {
         final String jwt = "jwt";
@@ -89,7 +127,6 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     @Test
     public void setAuthTokenListenerWithNullClaims() {
         final String invalidJwt = "invalid jwt";
-        mockStatic(JwtClaims.class);
         when(JwtClaims.parse(invalidJwt)).thenReturn(null);
         AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
