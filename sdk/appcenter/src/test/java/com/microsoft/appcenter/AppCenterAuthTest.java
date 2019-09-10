@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({JwtClaims.class, AuthTokenContext.class})
@@ -67,6 +68,10 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
 
         /* Then it's removed. */
         verify(mAuthTokenContext).setAuthToken(null, null, null);
+
+        /* We didn't try to parse. */
+        verifyStatic(never());
+        JwtClaims.parse(anyString());
     }
 
     @Test
