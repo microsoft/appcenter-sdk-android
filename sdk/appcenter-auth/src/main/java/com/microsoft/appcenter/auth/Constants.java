@@ -78,6 +78,11 @@ final class Constants {
     static final String AUTHORITY_TYPE_B2C = "B2C";
 
     /**
+     * JSON configuration value for aad authority within {@link #AUTHORITIES} array.
+     */
+    static final String AUTHORITY_TYPE_AAD = "AAD";
+
+    /**
      * JSON configuration key for authority url within {@link #AUTHORITIES} array.
      */
     static final String AUTHORITY_URL = "authority_url";
