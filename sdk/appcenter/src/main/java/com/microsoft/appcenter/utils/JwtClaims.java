@@ -5,8 +5,7 @@
 
 package com.microsoft.appcenter.utils;
 
-import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
+import android.support.annotation.NonNull;
 import android.util.Base64;
 
 import org.json.JSONException;
@@ -33,8 +32,7 @@ public class JwtClaims {
 
     private Date mExpirationDate;
 
-    @VisibleForTesting
-    public JwtClaims(String subject, Date expirationDate) {
+    private JwtClaims(String subject, Date expirationDate) {
         mSubject = subject;
         mExpirationDate = expirationDate;
     }
@@ -45,11 +43,7 @@ public class JwtClaims {
      * @param jwt Token in JWT format.
      * @return Claims or null if parsing failed.
      */
-    public static JwtClaims parse(@Nullable String jwt) {
-        if (jwt == null) {
-            AppCenterLog.error(LOG_TAG, "Cannot parse null JWT.");
-            return null;
-        }
+    public static JwtClaims parse(@NonNull String jwt) {
         String[] parts = jwt.split(JWT_PARTS_SEPARATOR_REGEX);
         if (parts.length < 2) {
             AppCenterLog.error(LOG_TAG, "Failed to parse JWT, not enough parts.");

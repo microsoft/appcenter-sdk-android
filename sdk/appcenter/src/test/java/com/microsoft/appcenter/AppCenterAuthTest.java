@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({JwtClaims.class, AuthTokenContext.class})
@@ -40,6 +41,48 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         mockStatic(AuthTokenContext.class);
         mockStatic(JwtClaims.class);
         when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
+    }
+
+    @Test
+    public void setAuthToken() {
+
+        /* Given a valid JWT token. */
+        final String jwt = "jwt";
+        JwtClaims claims = mock(JwtClaims.class);
+        when(claims.getSubject()).thenReturn("someId");
+        when(claims.getExpirationDate()).thenReturn(new Date(123L));
+        when(JwtClaims.parse(jwt)).thenReturn(claims);
+
+        /* When we set auth token. */
+        AppCenter.setAuthToken(jwt);
+
+        /* Then it's stored. */
+        verify(mAuthTokenContext).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+    }
+
+    @Test
+    public void unsetAuthToken() {
+
+        /* When we unset auth token. */
+        AppCenter.setAuthToken(null);
+
+        /* Then it's removed. */
+        verify(mAuthTokenContext).setAuthToken(null, null, null);
+
+        /* We didn't try to parse. */
+        verifyStatic(never());
+        JwtClaims.parse(anyString());
+    }
+
+    @Test
+    public void setInvalidAuthToken() {
+
+        /* When we set an invalid auth token. */
+        when(JwtClaims.parse("invalidJwt")).thenReturn(null);
+        AppCenter.setAuthToken("invalidJwt");
+
+        /* Then it's removed. */
+        verify(mAuthTokenContext).setAuthToken(null, null, null);
     }
 
     @NonNull
@@ -89,7 +132,6 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     @Test
     public void setAuthTokenListenerWithNullClaims() {
         final String invalidJwt = "invalid jwt";
-        mockStatic(JwtClaims.class);
         when(JwtClaims.parse(invalidJwt)).thenReturn(null);
         AppCenter.setAuthTokenListener(new AuthTokenListener() {
 
