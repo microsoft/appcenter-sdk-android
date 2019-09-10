@@ -1192,7 +1192,7 @@ public class AppCenter {
             claims = JwtClaims.parse(authToken);
         }
         if (claims != null) {
-            AppCenterLog.debug(LOG_TAG, "Token has been refreshed.");
+            AppCenterLog.debug(LOG_TAG, "Authentication token has been refreshed.");
             authTokenContext.setAuthToken(authToken, claims.getSubject(), claims.getExpirationDate());
         } else {
             AppCenterLog.debug(LOG_TAG, "Removing authentication token (sign out).");
