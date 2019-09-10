@@ -499,7 +499,7 @@ public class SettingsActivity extends AppCompatActivity {
             initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
                 @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                public boolean onPreferenceChange(final Preference preference, Object newValue) {
                     if (newValue == null) {
                         return true;
                     }
@@ -524,11 +524,13 @@ public class SettingsActivity extends AppCompatActivity {
                                 @Override
                                 public void onReset() {
                                     setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
                                 }
                             });
                         } else {
                             setKeyValue(APP_SECRET_KEY, value);
+                            preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
                             Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
                         }
                     } else {
