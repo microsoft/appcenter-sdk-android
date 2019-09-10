@@ -293,7 +293,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
-        /* Mock public client application*/
+        /* Mock public client application. */
         mockMsalPublicClientApplication();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
