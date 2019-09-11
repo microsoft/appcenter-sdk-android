@@ -33,9 +33,11 @@ import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.Logger;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.PublicClientApplicationConfiguration;
 import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
+import com.microsoft.identity.common.internal.authorities.Authority;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,8 +54,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -128,6 +132,13 @@ public class AuthTest extends AbstractAuthTest {
     private static void mockMsalPublicClientApplication() throws Exception {
         PublicClientApplication application = mock(PublicClientApplication.class);
         whenNew(PublicClientApplication.class).withParameterTypes(Context.class, File.class).withArguments(any(Context.class), any(File.class)).thenReturn(application);
+        PublicClientApplicationConfiguration configuration = mock(PublicClientApplicationConfiguration.class);
+        when(application.getConfiguration()).thenReturn(configuration);
+        Authority authority = mock(Authority.class);
+        List<Authority> authorities = new ArrayList<>();
+        authorities.add(authority);
+        when(configuration.getAuthorities()).thenReturn(authorities);
+        when(authority.getAuthorityURL()).thenReturn(new URL("https://login.microsoft.com/"));
     }
 
     private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {

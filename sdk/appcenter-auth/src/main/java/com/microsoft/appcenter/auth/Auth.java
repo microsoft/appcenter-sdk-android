@@ -479,7 +479,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
                 throw new IllegalStateException("Cannot find a default b2c or aad authority configured to be the default.");
             }
             mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
-            mAuthorityUrl = mAuthenticationClient.getConfiguration().getAuthorities().get(0).getAuthorityUri().toString();
+            mAuthorityUrl = (authorityUrl != null) ? authorityUrl : mAuthenticationClient.getConfiguration().getAuthorities().get(0).getAuthorityURL().toString();
             mIdentityScope = identityScope;
             AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
         } catch (JSONException | RuntimeException e) {
