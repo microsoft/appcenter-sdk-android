@@ -377,7 +377,7 @@ public class LocalDocumentStorageAndroidTest {
 
         DocumentWrapper<String> readDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, USER_DOCUMENTS, ID, String.class, new ReadOptions());
         assertEquals(readDocument.getId(), documents.get(0).getDocumentId());
-        assertEquals(readDocument.getLastUpdatedDate().getTime(), documents.get(0).getOperationTime());
+        assertEquals(readDocument.getJsonValue(),documents.get(0).getDocument());
     }
 
 
