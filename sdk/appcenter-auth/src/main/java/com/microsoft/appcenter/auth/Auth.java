@@ -480,6 +480,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             }
             mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
             mAuthorityUrl = (authorityUrl != null) ? authorityUrl : mAuthenticationClient.getConfiguration().getAuthorities().get(0).getAuthorityURL().toString();
+            AppCenterLog.debug(LOG_TAG, "Authority url=" + mAuthorityUrl);
             mIdentityScope = identityScope;
             AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
         } catch (JSONException | RuntimeException e) {
