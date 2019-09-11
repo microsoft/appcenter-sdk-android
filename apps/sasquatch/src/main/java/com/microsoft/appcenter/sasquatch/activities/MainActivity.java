@@ -7,10 +7,10 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.res.Resources;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -25,7 +25,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.AppCenterService;
+import com.microsoft.appcenter.AuthTokenCallback;
+import com.microsoft.appcenter.AuthTokenListener;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -90,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
 
     static SasquatchPushListener sPushListener;
 
+    static AuthType sAuthType;
+
     static {
         System.loadLibrary("SasquatchBreakpad");
     }
@@ -148,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
+        configureBYOI(application, appId);
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -161,10 +172,51 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class, getAuthModule(), Data.class);
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, getAuthModule(), Data.class);
+    }
+
+    private static Class<? extends AppCenterService> getAuthModule() {
+        switch (MainActivity.sAuthType) {
+            case AAD:
+            case B2C:
+                return Auth.class;
+        }
+        return null;
+    }
+
+    private static void configureBYOI(Application application, String appId) {
+        loadAuthType(application.getResources(), appId);
+        if (sAuthType == AuthType.FIREBASE) {
+            AppCenter.setAuthTokenListener(new AuthTokenListener() {
+
+                @Override
+                public void acquireAuthToken(final AuthTokenCallback callback) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user == null) {
+                        Log.e(LOG_TAG, "Failed to refresh Firebase token as user is signed out");
+                        callback.onAuthTokenResult(null);
+                    } else {
+                        user.getIdToken(true).addOnSuccessListener(new OnSuccessListener<GetTokenResult>() {
+                            @Override
+                            public void onSuccess(GetTokenResult getTokenResult) {
+                                Log.i(LOG_TAG, "Refreshed Firebase token " + getTokenResult.getToken());
+                                callback.onAuthTokenResult(getTokenResult.getToken());
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.e(LOG_TAG, "Failed to refresh Firebase token", e);
+                                callback.onAuthTokenResult(null);
+                            }
+                        });
+                    }
+                }
+            });
+        }
     }
 
     public static void setUserId(String userId) {
@@ -388,13 +440,25 @@ public class MainActivity extends AppCompatActivity {
 
     /* Get the default app secret from the app secret array. */
     static String getDefaultAppSecret(Resources resources) {
-        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
         return secretValuesArray[0];
     }
 
     static String getCustomAppSecretString(Resources resources) {
-        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
         return secretValuesArray[secretValuesArray.length - 1];
+    }
+
+    static void loadAuthType(Resources resources, String appSecret) {
+        String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        for (int i = 0; i < secretValuesArray.length; i++) {
+            if (secretValuesArray[i].equals(appSecret)) {
+                sAuthType = AuthType.values()[i];
+            }
+        }
+        if (sAuthType == null) {
+            sAuthType = AuthType.B2C;
+        }
     }
 
     private void setDistributeEnabledForDebuggableBuild() {
@@ -408,5 +472,11 @@ public class MainActivity extends AppCompatActivity {
         BOTH,
         NO_SECRET,
         SKIP_START
+    }
+
+    public enum AuthType {
+        B2C,
+        AAD,
+        FIREBASE
     }
 }

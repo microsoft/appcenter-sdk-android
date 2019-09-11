@@ -66,6 +66,11 @@ dependencies {
     implementation "com.android.support:customtabs:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
 
+    // BYOI Firebase Auth
+    implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
+    //noinspection TODO GradleDependency we would need to move to Android X to use latest
+    implementation 'com.google.firebase:firebase-auth:17.0.0'
+
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
     projectDependencyImplementation project(':sdk:appcenter-distribute')
@@ -92,13 +97,3 @@ def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
 if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
     apply plugin: 'com.google.gms.google-services'
 }
-
-/*
- * Project and jcenter conflict since they are not using same version of Push and
- * somehow affects the plugin when building.
- * If we build project alone (commenting jcenter dependencies), the problem is solved.
- * So until we release the SDK with the push update, disable version check.
- * TODO remove this after SDK release.
- */
-//noinspection UnnecessaryQualifiedReference
-com.google.gms.googleservices.GoogleServicesPlugin.config.disableVersionCheck = true
