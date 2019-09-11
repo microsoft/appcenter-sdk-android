@@ -61,7 +61,7 @@ public class UserInformationActivity extends AppCompatActivity {
             Map<String, Object> claims = parsedIdToken.getJWTClaimsSet().getClaims();
             return new JSONObject(claims);
         } catch (ParseException ex) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, getString(R.string.b2c_jwt_parse_error));
+            AppCenterLog.error(AppCenterLog.LOG_TAG, getString(R.string.jwt_parse_error));
         }
         return null;
     }
@@ -80,7 +80,7 @@ public class UserInformationActivity extends AppCompatActivity {
                 final TextView valueView = view.findViewById(R.id.info_content);
                 titleView.setText(list.get(position).mTitle);
                 valueView.setText(list.get(position).mValue);
-                if (list.get(position).mTitle.equals(getString(R.string.b2c_user_info_id_token_title))) {
+                if (list.get(position).mTitle.equals(getString(R.string.user_info_id_token_title))) {
                     view.setOnClickListener(new View.OnClickListener() {
 
                         @Override
@@ -89,7 +89,7 @@ public class UserInformationActivity extends AppCompatActivity {
                         }
                     });
                 }
-                if (list.get(position).mTitle.equals(getString(R.string.b2c_user_info_access_token_title))) {
+                if (list.get(position).mTitle.equals(getString(R.string.user_info_access_token_title))) {
                     view.setOnClickListener(new View.OnClickListener() {
 
                         @Override
@@ -106,15 +106,15 @@ public class UserInformationActivity extends AppCompatActivity {
 
     private List<UserInfoDisplayModel> getOnlyAccountIdDisplayModel(String accountId) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
-        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), accountId));
+        list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
         return list;
     }
 
     private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, JSONObject idTokenJSON, JSONObject accessTokenJSON) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
-        list.add(new UserInfoDisplayModel(getString(R.string.b2c_user_info_id_title), accountId));
-        mFullIdToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_id_token_title), idTokenJSON, list);
-        mFullAccessToken = parseAndAddTokenToList(getString(R.string.b2c_user_info_access_token_title), accessTokenJSON, list);
+        list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
+        mFullIdToken = parseAndAddTokenToList(getString(R.string.user_info_id_token_title), idTokenJSON, list);
+        mFullAccessToken = parseAndAddTokenToList(getString(R.string.user_info_access_token_title), accessTokenJSON, list);
         return list;
     }
 
@@ -123,13 +123,13 @@ public class UserInformationActivity extends AppCompatActivity {
         String tokenPreview;
         try {
             if (tokenJSON == null) {
-                fullToken = tokenPreview = getString(R.string.b2c_jwt_parse_error);
+                fullToken = tokenPreview = getString(R.string.jwt_parse_error);
             } else {
                 fullToken = tokenJSON.toString(4).replace("\\", "");
                 tokenPreview = tokenJSON.toString();
             }
         } catch (JSONException e) {
-            fullToken = tokenPreview = getString(R.string.b2c_jwt_parse_json_error);
+            fullToken = tokenPreview = getString(R.string.jwt_parse_json_error);
         }
         if (tokenPreview.length() > MAX_CONTENT_LENGTH) {
             tokenPreview = tokenPreview.substring(0, MAX_CONTENT_LENGTH) + "...";
