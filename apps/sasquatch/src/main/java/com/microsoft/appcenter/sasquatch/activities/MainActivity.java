@@ -25,15 +25,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterService;
-import com.microsoft.appcenter.AuthTokenCallback;
-import com.microsoft.appcenter.AuthTokenListener;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
@@ -158,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
-        configureBYOI(application, appId);
+        loadAuthType(application.getResources(), appId);
+        BYOIUtils.setAuthTokenListener();
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -185,38 +179,6 @@ public class MainActivity extends AppCompatActivity {
                 return Auth.class;
         }
         return null;
-    }
-
-    private static void configureBYOI(Application application, String appId) {
-        loadAuthType(application.getResources(), appId);
-        if (sAuthType == AuthType.FIREBASE) {
-            AppCenter.setAuthTokenListener(new AuthTokenListener() {
-
-                @Override
-                public void acquireAuthToken(final AuthTokenCallback callback) {
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    if (user == null) {
-                        Log.e(LOG_TAG, "Failed to refresh Firebase token as user is signed out");
-                        callback.onAuthTokenResult(null);
-                    } else {
-                        user.getIdToken(true).addOnSuccessListener(new OnSuccessListener<GetTokenResult>() {
-                            @Override
-                            public void onSuccess(GetTokenResult getTokenResult) {
-                                Log.i(LOG_TAG, "Refreshed Firebase token " + getTokenResult.getToken());
-                                callback.onAuthTokenResult(getTokenResult.getToken());
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.e(LOG_TAG, "Failed to refresh Firebase token", e);
-                                callback.onAuthTokenResult(null);
-                            }
-                        });
-                    }
-                }
-            });
-        }
     }
 
     public static void setUserId(String userId) {
@@ -449,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
         return secretValuesArray[secretValuesArray.length - 1];
     }
 
-    static void loadAuthType(Resources resources, String appSecret) {
+    private static void loadAuthType(Resources resources, String appSecret) {
         String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
         for (int i = 0; i < secretValuesArray.length; i++) {
             if (secretValuesArray[i].equals(appSecret)) {

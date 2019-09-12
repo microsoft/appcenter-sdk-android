@@ -24,7 +24,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GetTokenResult;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.auth.SignInResult;
@@ -278,8 +277,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                             public void onSuccess(GetTokenResult getTokenResult) {
                                 sFirebaseUser = user;
                                 sFirebaseIdToken = getTokenResult.getToken();
-                                Log.i(LOG_TAG, "Got Firebase token " + sFirebaseIdToken);
-                                AppCenter.setAuthToken(sFirebaseIdToken);
+                                Log.i(LOG_TAG, "Got Firebase token");
+                                BYOIUtils.setAuthToken(sFirebaseIdToken);
                                 loadAuthStatus(false);
                                 String accountId = user.getUid();
                                 SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
@@ -307,7 +306,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     private void unsetFirebaseAuth() {
-        AppCenter.setAuthToken(null);
+        BYOIUtils.setAuthToken(null);
         sFirebaseUser = null;
         sFirebaseIdToken = null;
         SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
