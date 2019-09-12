@@ -57,3 +57,6 @@ localization/unzip/
 
 /Configure
 /.vs
+
+# Google-services.json can contain creds
+google-services.json
