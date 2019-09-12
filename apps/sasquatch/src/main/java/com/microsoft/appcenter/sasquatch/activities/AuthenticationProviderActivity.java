@@ -47,8 +47,6 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private static final int FIREBASE_ACTIVITY_RESULT_CODE = 123;
 
-    private boolean mUserLeaving;
-
     private static UserInformation sUserInformation;
 
     private static FirebaseUser sFirebaseUser;
@@ -108,10 +106,12 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                         List<AuthUI.IdpConfig> providers = Arrays.asList(
                                 new AuthUI.IdpConfig.EmailBuilder().build(),
                                 new AuthUI.IdpConfig.GoogleBuilder().build());
+                        String accountId = MainActivity.sSharedPreferences.getString(ACCOUNT_ID, null);
                         startActivityForResult(
                                 AuthUI.getInstance()
                                         .createSignInIntentBuilder()
                                         .setAvailableProviders(providers)
+                                        .setIsSmartLockEnabled(accountId != null)
                                         .build(),
                                 FIREBASE_ACTIVITY_RESULT_CODE);
                         break;
@@ -131,7 +131,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                     loadAuthStatus(false);
                                     String accountId = sUserInformation.getAccountId();
                                     SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
-                                    edit.putString("accountId", accountId);
+                                    edit.putString(ACCOUNT_ID, accountId);
                                     edit.apply();
                                     Log.i(LOG_TAG, "Auth.signIn succeeded, accountId=" + accountId);
                                 } catch (Exception e) {
@@ -244,23 +244,9 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onUserLeaveHint() {
-        mUserLeaving = true;
-    }
-
-    @Override
-    protected void onRestart() {
-
-        /* When coming back from browser, finish this intermediate menu screen too. */
-        super.onRestart();
-        if (mUserLeaving) {
-            finish();
-        }
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(LOG_TAG, "AuthProviderActivity.onActivityResult(" + requestCode + "," + resultCode + ")");
         if (requestCode == FIREBASE_ACTIVITY_RESULT_CODE) {
             IdpResponse response = IdpResponse.fromResultIntent(data);
             if (response != null) {
@@ -282,7 +268,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                 loadAuthStatus(false);
                                 String accountId = user.getUid();
                                 SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
-                                edit.putString("accountId", accountId);
+                                edit.putString(ACCOUNT_ID, accountId);
                                 edit.apply();
                             }
                         }).addOnFailureListener(new OnFailureListener() {
@@ -310,7 +296,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         sFirebaseUser = null;
         sFirebaseIdToken = null;
         SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
-        edit.remove("accountId");
+        edit.remove(ACCOUNT_ID);
         edit.apply();
         loadAuthStatus(false);
     }
