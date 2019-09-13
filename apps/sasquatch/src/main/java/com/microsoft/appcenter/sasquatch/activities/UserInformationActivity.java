@@ -67,9 +67,7 @@ public class UserInformationActivity extends AppCompatActivity {
     }
 
     private void fillInfo(String accountId, String idToken, String accessToken) {
-        final List<UserInfoDisplayModel> list = (idToken == null || accessToken == null) ?
-                getOnlyAccountIdDisplayModel(accountId) :
-                getUserInfoDisplayModelList(accountId, getParsedToken(idToken), getParsedToken(accessToken));
+        final List<UserInfoDisplayModel> list = getUserInfoDisplayModelList(accountId, idToken, accessToken);
         ArrayAdapter<UserInfoDisplayModel> adapter = new ArrayAdapter<UserInfoDisplayModel>(this, R.layout.info_list_item, R.id.info_title, list) {
 
             @NonNull
@@ -104,17 +102,17 @@ public class UserInformationActivity extends AppCompatActivity {
         mListView.setAdapter(adapter);
     }
 
-    private List<UserInfoDisplayModel> getOnlyAccountIdDisplayModel(String accountId) {
+    private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, String idToken, String accessToken) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
         list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
-        return list;
-    }
-
-    private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, JSONObject idTokenJSON, JSONObject accessTokenJSON) {
-        List<UserInfoDisplayModel> list = new ArrayList<>();
-        list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
-        mFullIdToken = parseAndAddTokenToList(getString(R.string.user_info_id_token_title), idTokenJSON, list);
-        mFullAccessToken = parseAndAddTokenToList(getString(R.string.user_info_access_token_title), accessTokenJSON, list);
+        if (idToken != null) {
+            JSONObject idTokenJSON = getParsedToken(idToken);
+            mFullIdToken = parseAndAddTokenToList(getString(R.string.user_info_id_token_title), idTokenJSON, list);
+        }
+        if (accessToken != null) {
+            JSONObject accessTokenJSON = getParsedToken(accessToken);
+            mFullAccessToken = parseAndAddTokenToList(getString(R.string.user_info_access_token_title), accessTokenJSON, list);
+        }
         return list;
     }
 
