@@ -10,24 +10,21 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.microsoft.appcenter.sasquatch.JwtUtils;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.utils.AppCenterLog;
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ACCESS_TOKEN;
 import static com.microsoft.appcenter.sasquatch.SasquatchConstants.USER_INFORMATION_ID;
@@ -53,17 +50,6 @@ public class UserInformationActivity extends AppCompatActivity {
         String accessToken = intent.getStringExtra(USER_INFORMATION_ACCESS_TOKEN);
         mListView = findViewById(R.id.user_info_list_view);
         fillInfo(accountId, idToken, accessToken);
-    }
-
-    private JSONObject getParsedToken(String rawToken) {
-        try {
-            JWT parsedIdToken = JWTParser.parse(rawToken);
-            Map<String, Object> claims = parsedIdToken.getJWTClaimsSet().getClaims();
-            return new JSONObject(claims);
-        } catch (ParseException ex) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, getString(R.string.jwt_parse_error));
-        }
-        return null;
     }
 
     private void fillInfo(String accountId, String idToken, String accessToken) {
@@ -104,15 +90,18 @@ public class UserInformationActivity extends AppCompatActivity {
 
     private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, String idToken, String accessToken) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
-        if (accountId != null) {
+        JSONObject idTokenJSON = idToken == null ? null : JwtUtils.getParsedToken(this, idToken);
+        if (accountId == null && idTokenJSON != null) {
+            accountId = idTokenJSON.optString("sub");
+        }
+        if (!TextUtils.isEmpty(accountId)) {
             list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
         }
         if (idToken != null) {
-            JSONObject idTokenJSON = getParsedToken(idToken);
             mFullIdToken = parseAndAddTokenToList(getString(R.string.user_info_id_token_title), idTokenJSON, list);
         }
         if (accessToken != null) {
-            JSONObject accessTokenJSON = getParsedToken(accessToken);
+            JSONObject accessTokenJSON = JwtUtils.getParsedToken(this, accessToken);
             mFullAccessToken = parseAndAddTokenToList(getString(R.string.user_info_access_token_title), accessTokenJSON, list);
         }
         return list;
