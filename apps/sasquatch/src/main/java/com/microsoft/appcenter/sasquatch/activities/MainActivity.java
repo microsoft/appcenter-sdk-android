@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
         loadAuthType(application.getResources(), appId);
-        BYOIUtils.setAuthTokenListener();
+        BYOIUtils.setAuthTokenListener(application);
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -439,6 +439,7 @@ public class MainActivity extends AppCompatActivity {
     public enum AuthType {
         B2C,
         AAD,
-        FIREBASE
+        FIREBASE,
+        AUTH0
     }
 }

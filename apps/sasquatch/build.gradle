@@ -20,6 +20,7 @@ android {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
         }
+        manifestPlaceholders = [auth0Domain: "@string/com_auth0_domain", auth0Scheme: "demo"]
     }
 
     productFlavors {
@@ -70,6 +71,7 @@ dependencies {
     implementation 'com.firebaseui:firebase-ui-auth:4.3.1'
     //noinspection TODO GradleDependency we would need to move to Android X to use latest
     implementation 'com.google.firebase:firebase-auth:17.0.0'
+    implementation 'com.auth0.android:auth0:1.19.0'
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')

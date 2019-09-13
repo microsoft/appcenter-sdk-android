@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +18,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
+import com.auth0.android.authentication.AuthenticationException;
+import com.auth0.android.provider.AuthCallback;
+import com.auth0.android.provider.WebAuthProvider;
+import com.auth0.android.result.Credentials;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -31,6 +36,7 @@ import com.microsoft.appcenter.auth.UserInformation;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.ArrayList;
@@ -53,16 +59,21 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private static String sFirebaseIdToken;
 
+    private static Credentials sAuth0User;
+
     private TestFeatures.TestFeature mAuthInfoTestFeature;
 
     private List<TestFeatures.TestFeatureModel> mFeatureList;
 
     private ListView mListView;
 
-    private static boolean isAuthenticated() {
+    private boolean isAuthenticated() {
         switch (MainActivity.sAuthType) {
             case FIREBASE:
                 return sFirebaseUser != null;
+
+            case AUTH0:
+                return sAuth0User != null;
 
             case AAD:
             case B2C:
@@ -115,6 +126,9 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                                         .build(),
                                 FIREBASE_ACTIVITY_RESULT_CODE);
                         break;
+                    case AUTH0:
+                        loginWithAuth0();
+                        break;
                     case B2C:
                     case AAD:
                     default:
@@ -154,6 +168,12 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                         unsetFirebaseAuth();
                         break;
 
+                    case AUTH0:
+                        BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).clearCredentials();
+                        sAuth0User = null;
+                        processBYOISignOut();
+                        break;
+
                     case B2C:
                     case AAD:
                     default:
@@ -169,6 +189,40 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         mListView = findViewById(R.id.list);
         loadAuthStatus(sUserInformation == null && sFirebaseUser == null);
         mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    private void loginWithAuth0() {
+        WebAuthProvider.login(BYOIUtils.getAuth0Client(this))
+                .withScheme("demo")
+                .withScope("openid offline_access")
+                .withAudience(String.format("https://%s/userinfo", getString(R.string.com_auth0_domain)))
+                .start(this, new AuthCallback() {
+
+                    @Override
+                    public void onFailure(@NonNull Dialog dialog) {
+                    }
+
+                    @Override
+                    public void onFailure(AuthenticationException exception) {
+                        Log.e(LOG_TAG, "Auth0 login failed", exception);
+                        sAuth0User = null;
+                        processBYOISignOut();
+                    }
+
+                    @Override
+                    public void onSuccess(@NonNull Credentials credentials) {
+                        Log.i(LOG_TAG, "Auth0 login succeeded");
+                        BYOIUtils.setAuthToken(credentials.getIdToken());
+                        sAuth0User = credentials;
+                        BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).saveCredentials(credentials);
+                        HandlerUtils.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadAuthStatus(false);
+                            }
+                        });
+                    }
+                });
     }
 
     private void loadAuthStatus(boolean loadDefaultStatus) {
@@ -233,6 +287,10 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 intent.putExtra(USER_INFORMATION_ID_TOKEN, sFirebaseIdToken);
                 break;
 
+            case AUTH0:
+                intent.putExtra(USER_INFORMATION_ID_TOKEN, sAuth0User.getIdToken());
+                break;
+
             case B2C:
             case AAD:
             default:
@@ -292,9 +350,13 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     private void unsetFirebaseAuth() {
-        BYOIUtils.setAuthToken(null);
         sFirebaseUser = null;
         sFirebaseIdToken = null;
+        processBYOISignOut();
+    }
+
+    private void processBYOISignOut() {
+        BYOIUtils.setAuthToken(null);
         SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
         edit.remove(ACCOUNT_ID);
         edit.apply();

@@ -104,7 +104,9 @@ public class UserInformationActivity extends AppCompatActivity {
 
     private List<UserInfoDisplayModel> getUserInfoDisplayModelList(String accountId, String idToken, String accessToken) {
         List<UserInfoDisplayModel> list = new ArrayList<>();
-        list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
+        if (accountId != null) {
+            list.add(new UserInfoDisplayModel(getString(R.string.user_info_id_title), accountId));
+        }
         if (idToken != null) {
             JSONObject idTokenJSON = getParsedToken(idToken);
             mFullIdToken = parseAndAddTokenToList(getString(R.string.user_info_id_token_title), idTokenJSON, list);
