@@ -187,7 +187,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }
         }));
         mListView = findViewById(R.id.list);
-        loadAuthStatus(sUserInformation == null && sFirebaseUser == null);
+        loadAuthStatus(sUserInformation == null && sFirebaseUser == null && sAuth0User == null);
         mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
@@ -214,8 +214,12 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                         Log.i(LOG_TAG, "Auth0 login succeeded");
                         BYOIUtils.setAuthToken(credentials.getIdToken());
                         sAuth0User = credentials;
+                        SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
+                        edit.putString(ACCOUNT_ID, "auth0");
+                        edit.apply();
                         BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).saveCredentials(credentials);
                         HandlerUtils.runOnUiThread(new Runnable() {
+
                             @Override
                             public void run() {
                                 loadAuthStatus(false);
