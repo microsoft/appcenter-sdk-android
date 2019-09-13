@@ -61,7 +61,6 @@ public class UtilsTest {
     @Test
     public void canParseWhenDocumentHasNullValues() {
         Map<String, String> doc = new HashMap<>();
-        //noinspection ConstantConditions
         doc.put("key", null);
         DocumentWrapper<Map<String, String>> wrapper = new DocumentWrapper<>(doc, "partition", "doc_id");
         String serializedDocument = wrapper.getJsonValue();
@@ -72,7 +71,6 @@ public class UtilsTest {
         assertEquals("{\"key\":null}", serializedDocument);
         assertTrue(serializedWrapper.contains("\"document\":{\"key\":null}"));
         assertEquals(doc, deserializedDoc);
-
     }
 
     @Test
@@ -238,6 +236,15 @@ public class UtilsTest {
         assertFalse(Utils.isValidTokenResult(result));
         result.setToken("token");
         assertTrue(Utils.isValidTokenResult(result));
+    }
+
+    @Test
+    public void sanitizeTableName() {
+        String table = Utils.getUserTableName("google-auth|12345");
+        assertEquals("user_googleauth12345_documents", table);
+
+        table = Utils.getUserTableName("0A424651-F9A7-4F60-AAFC-E2DF2111CFE0");
+        assertEquals("user_0A424651F9A74F60AAFCE2DF2111CFE0_documents", table);
     }
 
     private class DateDocument {
