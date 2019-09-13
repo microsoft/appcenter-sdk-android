@@ -263,7 +263,9 @@ public class DataReadTest extends AbstractDataTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         DocumentWrapper<String> document = Data.read(DOCUMENT_ID, String.class, USER_DOCUMENTS).get();
         assertNotNull(document.getError());
-        assertTrue(document.getError().getMessage().contains(failedMessage));
+        String message = document.getError().getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains(failedMessage));
     }
 
     @Test
@@ -276,6 +278,7 @@ public class DataReadTest extends AbstractDataTest {
                 .setToken("tokenResult")
                 .setDbAccount("dbAccount")
                 .setDbCollectionName("collectionName")
+                .setAccountId("accountId")
                 .setDbName("dbName");
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(Utils.getGson().toJson(tokenResult));
         DocumentWrapper<String> outDatedDocument = new DocumentWrapper<>();
