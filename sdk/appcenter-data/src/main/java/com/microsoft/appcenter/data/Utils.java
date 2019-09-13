@@ -173,7 +173,7 @@ public class Utils {
         return value == null || value.isJsonNull();
     }
 
-    public static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
+    static <T> Page<T> parseDocuments(String cosmosDbPayload, Class<T> documentType) {
         JsonArray array;
         try {
             JsonObject objects = sParser.parse(cosmosDbPayload).getAsJsonObject();
@@ -238,7 +238,9 @@ public class Utils {
     }
 
     static String getUserTableName(String accountId) {
-        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "");
+
+        /* TODO a better fix would be to hash if not a guid? Instead of removing Auth0 | character. */
+        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "").replace("|", "");
     }
 
     static String getOutgoingId(String partition, String documentId) {

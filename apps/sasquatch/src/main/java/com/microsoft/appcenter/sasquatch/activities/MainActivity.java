@@ -439,6 +439,7 @@ public class MainActivity extends AppCompatActivity {
     public enum AuthType {
         B2C,
         AAD,
-        FIREBASE
+        FIREBASE,
+        AUTH0
     }
 }
