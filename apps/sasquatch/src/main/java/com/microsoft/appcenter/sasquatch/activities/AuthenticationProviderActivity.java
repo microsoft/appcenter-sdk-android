@@ -18,7 +18,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import com.auth0.android.Auth0;
 import com.auth0.android.authentication.AuthenticationException;
 import com.auth0.android.provider.AuthCallback;
 import com.auth0.android.provider.WebAuthProvider;
@@ -62,21 +61,19 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
     private static Credentials sAuth0User;
 
-    private static Auth0 sAuth0;
-
     private TestFeatures.TestFeature mAuthInfoTestFeature;
 
     private List<TestFeatures.TestFeatureModel> mFeatureList;
 
     private ListView mListView;
 
-    private static boolean isAuthenticated() {
+    private boolean isAuthenticated() {
         switch (MainActivity.sAuthType) {
             case FIREBASE:
                 return sFirebaseUser != null;
 
             case AUTH0:
-                return sAuth0 != null;
+                return sAuth0User != null;
 
             case AAD:
             case B2C:
@@ -172,6 +169,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                         break;
 
                     case AUTH0:
+                        BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).clearCredentials();
+                        sAuth0User = null;
                         processBYOISignOut();
                         break;
 
@@ -192,17 +191,10 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
         mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
-    private Auth0 getAuth0() {
-        if (sAuth0 == null) {
-            sAuth0 = new Auth0(this);
-            sAuth0.setOIDCConformant(true);
-        }
-        return sAuth0;
-    }
-
     private void loginWithAuth0() {
-        WebAuthProvider.login(getAuth0())
+        WebAuthProvider.login(BYOIUtils.getAuth0Client(this))
                 .withScheme("demo")
+                .withScope("openid offline_access")
                 .withAudience(String.format("https://%s/userinfo", getString(R.string.com_auth0_domain)))
                 .start(this, new AuthCallback() {
 
@@ -219,8 +211,10 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(@NonNull Credentials credentials) {
+                        Log.i(LOG_TAG, "Auth0 login succeeded");
                         BYOIUtils.setAuthToken(credentials.getIdToken());
                         sAuth0User = credentials;
+                        BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).saveCredentials(credentials);
                         HandlerUtils.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
