@@ -87,7 +87,7 @@ abstract public class AbstractDataTest {
 
     static final String ACCOUNT_ID = "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
 
-    static final String RESOLVED_USER_PARTITION = DefaultPartitions.USER_DOCUMENTS + "_" + ACCOUNT_ID;
+    static final String RESOLVED_USER_PARTITION = DefaultPartitions.USER_DOCUMENTS + "-" + ACCOUNT_ID;
 
     static final String DOCUMENT_ID = "document-id";
 
