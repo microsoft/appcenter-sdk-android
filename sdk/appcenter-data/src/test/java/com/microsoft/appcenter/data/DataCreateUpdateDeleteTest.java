@@ -156,6 +156,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
                 .setDbName("db")
                 .setDbAccount("dbAccount")
                 .setDbCollectionName("collection")
+                .setAccountId("accountId")
                 .setToken(TOKEN));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
         mockStatic(CosmosDb.class);

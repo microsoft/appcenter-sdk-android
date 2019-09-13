@@ -238,9 +238,8 @@ public class Utils {
     }
 
     static String getUserTableName(String accountId) {
-
-        /* TODO a better fix would be to hash if not a guid? Instead of removing Auth0 | character. */
-        return String.format(USER_TABLE_FORMAT, accountId).replace("-", "").replace("|", "");
+        String sanitizedAccountId = accountId.replaceAll("[^0-9A-Za-z_]", "");
+        return String.format(USER_TABLE_FORMAT, sanitizedAccountId);
     }
 
     static String getOutgoingId(String partition, String documentId) {

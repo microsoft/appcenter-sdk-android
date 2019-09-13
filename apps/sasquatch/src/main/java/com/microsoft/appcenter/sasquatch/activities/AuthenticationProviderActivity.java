@@ -33,11 +33,15 @@ import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.auth.SignInResult;
 import com.microsoft.appcenter.auth.UserInformation;
+import com.microsoft.appcenter.sasquatch.JwtUtils;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -187,7 +191,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
             }
         }));
         mListView = findViewById(R.id.list);
-        loadAuthStatus(sUserInformation == null && sFirebaseUser == null);
+        loadAuthStatus(sUserInformation == null && sFirebaseUser == null && sAuth0User == null);
         mListView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
     }
 
@@ -212,10 +216,24 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(@NonNull Credentials credentials) {
                         Log.i(LOG_TAG, "Auth0 login succeeded");
-                        BYOIUtils.setAuthToken(credentials.getIdToken());
+                        String idToken = credentials.getIdToken();
+                        BYOIUtils.setAuthToken(idToken);
                         sAuth0User = credentials;
+                        try {
+                            SharedPreferences.Editor edit = MainActivity.sSharedPreferences.edit();
+                            JSONObject parsedToken = JwtUtils.getParsedToken(getApplicationContext(), idToken);
+                            if (parsedToken == null) {
+                                throw new JSONException("Invalid JSON");
+                            }
+                            String accountId = parsedToken.getString("sub");
+                            edit.putString(ACCOUNT_ID, accountId);
+                            edit.apply();
+                        } catch (JSONException e) {
+                            Log.e(LOG_TAG, "Auth0 id token invalid", e);
+                        }
                         BYOIUtils.getAuth0CredentialsManager(getApplicationContext()).saveCredentials(credentials);
                         HandlerUtils.runOnUiThread(new Runnable() {
+
                             @Override
                             public void run() {
                                 loadAuthStatus(false);

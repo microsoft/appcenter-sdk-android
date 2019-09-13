@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.data;
 
 import com.microsoft.appcenter.data.exception.DataException;
@@ -109,32 +114,32 @@ public class DataListTest extends AbstractDataTest {
                 CURRENT_TIMESTAMP,
                 CURRENT_TIMESTAMP),
                 expiredDocument = new LocalDocument(
-                USER_TABLE_NAME,
-                PENDING_OPERATION_REPLACE_VALUE,
-                RESOLVED_USER_PARTITION,
-                "expiredDocument",
-                document,
-                PAST_TIMESTAMP,
-                CURRENT_TIMESTAMP,
+                        USER_TABLE_NAME,
+                        PENDING_OPERATION_REPLACE_VALUE,
+                        RESOLVED_USER_PARTITION,
+                        "expiredDocument",
+                        document,
+                        PAST_TIMESTAMP,
+                        CURRENT_TIMESTAMP,
                         CURRENT_TIMESTAMP),
                 notPendingDocument = new LocalDocument(
-                USER_TABLE_NAME,
-                null,
-                RESOLVED_USER_PARTITION,
-                "notPendingDocument",
-                document,
-                PAST_TIMESTAMP,
-                CURRENT_TIMESTAMP,
+                        USER_TABLE_NAME,
+                        null,
+                        RESOLVED_USER_PARTITION,
+                        "notPendingDocument",
+                        document,
+                        PAST_TIMESTAMP,
+                        CURRENT_TIMESTAMP,
                         CURRENT_TIMESTAMP),
                 notPendingNotExpiredDocument = new LocalDocument(
-                USER_TABLE_NAME,
-                null,
-                RESOLVED_USER_PARTITION,
-                "notPendingNotExpiredDocument",
-                document,
-                FUTURE_TIMESTAMP,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP);
+                        USER_TABLE_NAME,
+                        null,
+                        RESOLVED_USER_PARTITION,
+                        "notPendingNotExpiredDocument",
+                        document,
+                        FUTURE_TIMESTAMP,
+                        CURRENT_TIMESTAMP,
+                        CURRENT_TIMESTAMP);
         List<LocalDocument> storedDocuments = new ArrayList<LocalDocument>() {{
             add(localDocument);
             add(expiredDocument);
@@ -315,7 +320,9 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(docCancel);
         assertNull(docCancel.getCurrentPage().getItems());
         assertNotNull(docCancel.getCurrentPage().getError());
-        assertEquals(IllegalStateException.class, docCancel.getCurrentPage().getError().getCause().getClass());
+        Throwable cause = docCancel.getCurrentPage().getError().getCause();
+        assertNotNull(cause);
+        assertEquals(IllegalStateException.class, cause.getClass());
     }
 
     @Test
@@ -330,6 +337,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
+                .setAccountId("accountId")
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -392,6 +400,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
+                .setAccountId("accountId")
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -475,6 +484,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
+                .setAccountId("accountId")
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -602,6 +612,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
+                .setAccountId("accountId")
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -665,6 +676,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbCollectionName("collectionName")
                 .setPartition(RESOLVED_USER_PARTITION)
                 .setExpirationDate(expirationDate.getTime())
+                .setAccountId("accountId")
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -716,6 +728,7 @@ public class DataListTest extends AbstractDataTest {
                 .setDbAccount("accountName")
                 .setDbName("dbName")
                 .setDbAccount("dbAccount")
+                .setAccountId("accountId")
                 .setDbCollectionName("collectionName"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
@@ -759,6 +772,8 @@ public class DataListTest extends AbstractDataTest {
         DataException error = currentPage.getError();
         assertNull(currentPage.getItems());
         assertNotNull(error);
-        assertTrue(error.getMessage().contains("List operation requested on user partition, but the user is not logged in."));
+        String message = error.getMessage();
+        assertNotNull(message);
+        assertTrue(message.contains("List operation requested on user partition, but the user is not logged in."));
     }
 }
