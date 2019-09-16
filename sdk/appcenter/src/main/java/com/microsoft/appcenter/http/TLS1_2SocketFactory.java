@@ -8,6 +8,7 @@ package com.microsoft.appcenter.http;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
@@ -31,6 +32,11 @@ class TLS1_2SocketFactory extends SSLSocketFactory {
      * Protocols that we allow.
      */
     private static final String[] ENABLED_PROTOCOLS = { TLS1_2_PROTOCOL };
+
+    /**
+     * Socket timeout
+     */
+    private static final int SO_TIMEOUT = 5000;
 
     /**
      * Socket factory.
@@ -61,8 +67,9 @@ class TLS1_2SocketFactory extends SSLSocketFactory {
      * @param socket socket.
      * @return that same socket for chaining calls.
      */
-    private SSLSocket forceTLS1_2(Socket socket) {
+    private SSLSocket forceTLS1_2(Socket socket) throws SocketException {
         SSLSocket sslSocket = (SSLSocket) socket;
+        sslSocket.setSoTimeout(SO_TIMEOUT);
         sslSocket.setEnabledProtocols(ENABLED_PROTOCOLS);
         return sslSocket;
     }
