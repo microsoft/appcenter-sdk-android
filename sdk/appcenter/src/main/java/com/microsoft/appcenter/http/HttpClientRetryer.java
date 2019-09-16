@@ -12,6 +12,8 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Random;
@@ -28,10 +30,20 @@ public class HttpClientRetryer extends HttpClientDecorator {
      * Retry intervals to use, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
      */
     @VisibleForTesting
-    static final long[] RETRY_INTERVALS = new long[]{
+    static final long[] GENERAL_RETRY_INTERVALS = new long[]{
             TimeUnit.SECONDS.toMillis(10),
             TimeUnit.MINUTES.toMillis(5),
             TimeUnit.MINUTES.toMillis(20)
+    };
+
+    /**
+     * Retry intervals to use for networking events, array index is to use the value for each retry. When we used all the array values, we give up and forward the last error.
+     */
+    @VisibleForTesting
+    static final long[] NETWORKING_RETRY_INTERVALS = new long[]{
+            TimeUnit.SECONDS.toMillis(5),
+            TimeUnit.SECONDS.toMillis(10),
+            TimeUnit.SECONDS.toMillis(20)
     };
 
     /**
@@ -44,13 +56,15 @@ public class HttpClientRetryer extends HttpClientDecorator {
      */
     private final Random mRandom = new Random();
 
+    private final boolean mShortRetriesOnNetworkException;
+
     /**
      * Init with default retry policy.
      *
      * @param decoratedApi API to decorate.
      */
-    HttpClientRetryer(HttpClient decoratedApi) {
-        this(decoratedApi, new Handler(Looper.getMainLooper()));
+    HttpClientRetryer(boolean ShortRetriesOnNetworkException, HttpClient decoratedApi) {
+        this(ShortRetriesOnNetworkException, decoratedApi, new Handler(Looper.getMainLooper()));
     }
 
     /**
@@ -60,16 +74,17 @@ public class HttpClientRetryer extends HttpClientDecorator {
      * @param handler      handler for timed retries.
      */
     @VisibleForTesting
-    HttpClientRetryer(HttpClient decoratedApi, Handler handler) {
+    HttpClientRetryer(boolean shortRetriesOnNetworkException, HttpClient decoratedApi, Handler handler) {
         super(decoratedApi);
         mHandler = handler;
+        mShortRetriesOnNetworkException = shortRetriesOnNetworkException;
     }
 
     @Override
     public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
 
         /* Wrap the call with the retry logic and call delegate. */
-        RetryableCall retryableCall = new RetryableCall(mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
+        RetryableCall retryableCall = new RetryableCall(mShortRetriesOnNetworkException, mDecoratedApi, url, method, headers, callTemplate, serviceCallback);
         retryableCall.run();
         return retryableCall;
     }
@@ -79,13 +94,23 @@ public class HttpClientRetryer extends HttpClientDecorator {
      */
     private class RetryableCall extends HttpClientCallDecorator {
 
+        private final boolean mShortRetriesOnNetworkException;
+
         /**
          * Current retry counter. 0 means its the first try.
          */
         private int mRetryCount;
 
-        RetryableCall(HttpClient decoratedApi, String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
+        RetryableCall(
+                boolean shortRetriesOnNetworkException,
+                HttpClient decoratedApi,
+                String url,
+                String method,
+                Map<String, String> headers,
+                CallTemplate callTemplate,
+                ServiceCallback serviceCallback) {
             super(decoratedApi, url, method, headers, callTemplate, serviceCallback);
+            mShortRetriesOnNetworkException = shortRetriesOnNetworkException;
         }
 
         @Override
@@ -96,7 +121,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
 
         @Override
         public void onCallFailed(Exception e) {
-            if (mRetryCount < RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
+            if (mRetryCount < GENERAL_RETRY_INTERVALS.length && HttpUtils.isRecoverableError(e)) {
                 long delay = 0;
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
@@ -106,7 +131,10 @@ public class HttpClientRetryer extends HttpClientDecorator {
                     }
                 }
                 if (delay == 0) {
-                    delay = RETRY_INTERVALS[mRetryCount++] / 2;
+                    long[] retryIntervals =
+                            isRetryingNetworkingFailure(e) ?
+                                    NETWORKING_RETRY_INTERVALS : GENERAL_RETRY_INTERVALS;
+                    delay = retryIntervals[mRetryCount++] / 2;
                     delay += mRandom.nextInt((int) delay);
                 }
                 String message = "Try #" + mRetryCount + " failed and will be retried in " + delay + " ms";
@@ -118,6 +146,11 @@ public class HttpClientRetryer extends HttpClientDecorator {
             } else {
                 mServiceCallback.onCallFailed(e);
             }
+        }
+
+        private boolean isRetryingNetworkingFailure(Exception e) {
+            return mShortRetriesOnNetworkException &&
+                    (e instanceof SocketTimeoutException || e instanceof ConnectException);
         }
     }
 }

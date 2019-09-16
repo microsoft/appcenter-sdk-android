@@ -174,11 +174,18 @@ public class HttpUtils {
     }
 
     public static HttpClient createHttpClient(@NonNull Context context, boolean compressionEnabled) {
+        return createHttpClient(context, compressionEnabled, false);
+    }
+
+    public static HttpClient createHttpClient(
+            @NonNull Context context,
+            boolean compressionEnabled,
+            boolean shortRetriesOnNetworkException) {
         HttpClient httpClient = new DefaultHttpClient(compressionEnabled);
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
 
         /* Retryer should be applied last to avoid retries in offline. */
-        return new HttpClientRetryer(httpClient);
+        return new HttpClientRetryer(shortRetriesOnNetworkException, httpClient);
     }
 }

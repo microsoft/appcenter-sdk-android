@@ -51,7 +51,7 @@ public class HttpClientRetryerTest {
             @Override
             public boolean matches(Object argument) {
                 long interval = (Long) argument;
-                long retryInterval = HttpClientRetryer.RETRY_INTERVALS[retryIndex];
+                long retryInterval = HttpClientRetryer.GENERAL_RETRY_INTERVALS[retryIndex];
                 return interval >= retryInterval / 2 && interval <= retryInterval;
             }
         }));
