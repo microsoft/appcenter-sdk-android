@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -194,18 +195,16 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         return pendingIntent.getIntentSender();
     }
 
-
     private IntentSender createStatusReceiver() {
-        try {
-            //todo: remove explicit activity declaration
-            Intent intent = new Intent(mContext, Class.forName("com.microsoft.appcenter.sasquatch.activities.MainActivity"));
+        PackageManager pm = mContext.getPackageManager();
+        String packageName = mContext.getPackageName();
+        Intent intent = pm.getLaunchIntentForPackage(packageName);
+        if (intent != null) {
             intent.setAction(PACKAGE_INSTALLED_ACTION);
-            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-            return pendingIntent.getIntentSender();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
-        return null;
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        return pendingIntent.getIntentSender();
     }
 
     @SuppressLint("NewApi")
