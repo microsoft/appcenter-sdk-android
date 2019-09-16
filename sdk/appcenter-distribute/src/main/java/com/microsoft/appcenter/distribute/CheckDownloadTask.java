@@ -7,8 +7,11 @@ package com.microsoft.appcenter.distribute;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageInstaller;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -18,6 +21,9 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -32,6 +38,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
  * This uses APIs that would trigger strict mode exception if used in U.I. thread.
  */
 class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
+
+    private static final String PACKAGE_INSTALLED_ACTION =
+            "com.microsoft.appcenter.distribute.SESSION_API_PACKAGE_INSTALLED";
 
     /**
      * Context.
@@ -130,43 +139,12 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 /* Build install intent. */
                 String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
                 AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
-                Intent intent = DistributeUtils.getInstallIntent(Uri.parse(localUri));
-                boolean installerFound = false;
-                if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                        intent = DistributeUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
-                        installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
-                    }
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    updateThroughIntent(localUri, cursor, distribute);
                 } else {
-                    installerFound = true;
-                }
-                if (!installerFound) {
-                    AppCenterLog.error(LOG_TAG, "Installer not found");
-                    distribute.completeWorkflow(mReleaseDetails);
-                    return null;
+                    updateThroughPackageInstaller(downloadManager.getUriForDownloadedFile(mDownloadId));
                 }
 
-                /* Check if a should install now. */
-                if (!distribute.notifyDownload(mReleaseDetails, intent)) {
-
-                    /*
-                     * This start call triggers strict mode in U.I. thread so it
-                     * needs to be done here without synchronizing
-                     * (not to block methods waiting on synchronized on U.I. thread)
-                     * so yes we could launch install and SDK being disabled...
-                     *
-                     * This corner case cannot be avoided without triggering
-                     * strict mode exception.
-                     */
-                    AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
-                    mContext.startActivity(intent);
-                    if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
-                        distribute.setInstalling(mReleaseDetails);
-                    } else {
-                        distribute.completeWorkflow(mReleaseDetails);
-                    }
-                    storeDownloadedReleaseDetails();
-                }
             } finally {
                 cursor.close();
             }
@@ -175,6 +153,135 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             distribute.completeWorkflow(mReleaseDetails);
         }
         return null;
+    }
+
+    @SuppressLint("NewApi")
+    private void updateThroughPackageInstaller(Uri localUri) {
+        PackageInstaller.Session session = null;
+        PackageInstaller packageInstaller = mContext.getPackageManager().getPackageInstaller();
+        try {
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            int sessionId = packageInstaller.createSession(params);
+            session = packageInstaller.openSession(sessionId);
+            int writeResult = writeSession(session, localUri);
+            if (writeResult == PackageInstaller.STATUS_FAILURE){
+                packageInstaller.abandonSession(sessionId);
+                return;
+            }
+
+            // Commit the session (this will start the installation workflow).
+            session.commit(createStatusReceiver());
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't install package", e);
+        } catch (RuntimeException e) {
+            if (session != null) {
+                session.abandon();
+            }
+            throw e;
+        }
+    }
+
+    private IntentSender commitSession(int sessionId) {
+        Intent broadcastIntent = new Intent(PACKAGE_INSTALLED_ACTION);
+        broadcastIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        broadcastIntent.setPackage("com.microsoft.appcenter.sasquatch.project");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                mContext,
+                sessionId,
+                broadcastIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        return pendingIntent.getIntentSender();
+    }
+
+
+    private IntentSender createStatusReceiver() {
+        try {
+            //todo: remove explicit activity declaration
+            Intent intent = new Intent(mContext, Class.forName("com.microsoft.appcenter.sasquatch.activities.MainActivity"));
+            intent.setAction(PACKAGE_INSTALLED_ACTION);
+            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+            return pendingIntent.getIntentSender();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @SuppressLint("NewApi")
+    private int writeSession(PackageInstaller.Session session, Uri uri) {
+        session.setStagingProgress(0);
+        try {
+            try (InputStream in = mContext.getContentResolver().openInputStream(uri)) {
+                long sizeBytes = 0;
+                if (in != null) {
+                    sizeBytes = in.available();
+                }
+                try (OutputStream out = session
+                        .openWrite("base.apk", 0, sizeBytes)) {
+                    byte[] buffer = new byte[1024 * 1024];
+                    while (true) {
+                        int numRead = in.read(buffer);
+                        if (numRead == -1) {
+                            out.flush();
+                            session.fsync(out);
+                            break;
+                        }
+                        out.write(buffer, 0, numRead);
+                        if (sizeBytes > 0) {
+                            float fraction = ((float) numRead / (float) sizeBytes);
+                            session.setStagingProgress(fraction);
+                        }
+                    }
+                }
+            }
+            AppCenterLog.debug(LOG_TAG, "writeSession success");
+            return PackageInstaller.STATUS_SUCCESS;
+        } catch (IOException | SecurityException e) {
+            AppCenterLog.debug(LOG_TAG, String.format("Could not write package %s", e));
+            session.close();
+            return PackageInstaller.STATUS_FAILURE;
+        }
+    }
+
+    private void updateThroughIntent(String localUri, Cursor cursor, Distribute distribute) {
+        Intent intent = DistributeUtils.getInstallIntent(Uri.parse(localUri));
+        boolean installerFound = false;
+        if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                intent = DistributeUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
+                installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
+            }
+        } else {
+            installerFound = true;
+        }
+        if (!installerFound) {
+            AppCenterLog.error(LOG_TAG, "Installer not found");
+            distribute.completeWorkflow(mReleaseDetails);
+            return;
+        }
+
+        /* Check if a should install now. */
+        if (!distribute.notifyDownload(mReleaseDetails, intent)) {
+
+            /*
+             * This start call triggers strict mode in U.I. thread so it
+             * needs to be done here without synchronizing
+             * (not to block methods waiting on synchronized on U.I. thread)
+             * so yes we could launch install and SDK being disabled...
+             *
+             * This corner case cannot be avoided without triggering
+             * strict mode exception.
+             */
+            AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
+            mContext.startActivity(intent);
+            if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
+                distribute.setInstalling(mReleaseDetails);
+            } else {
+                distribute.completeWorkflow(mReleaseDetails);
+            }
+            storeDownloadedReleaseDetails();
+        }
     }
 
     @Override

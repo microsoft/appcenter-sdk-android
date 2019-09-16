@@ -7,14 +7,17 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.res.Resources;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInstaller;
+import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -225,8 +228,46 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            handlePackageUpdate(intent);
+        }
         Log.d(LOG_TAG, "onNewIntent triggered");
         Push.checkLaunchedFromNotification(this, intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    protected void handlePackageUpdate(Intent intent) {
+        Bundle extras = intent.getExtras();
+        if ("com.microsoft.appcenter.distribute.SESSION_API_PACKAGE_INSTALLED".equals(intent.getAction())) {
+            int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
+            String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
+
+            switch (status) {
+                case PackageInstaller.STATUS_PENDING_USER_ACTION:
+                    // This test app isn't privileged, so the user has to confirm the install.
+                    Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
+                    startActivity(confirmIntent);
+                    break;
+
+                case PackageInstaller.STATUS_SUCCESS:
+                    Toast.makeText(this, "Install succeeded!", Toast.LENGTH_SHORT).show();
+                    break;
+
+                case PackageInstaller.STATUS_FAILURE:
+                case PackageInstaller.STATUS_FAILURE_ABORTED:
+                case PackageInstaller.STATUS_FAILURE_BLOCKED:
+                case PackageInstaller.STATUS_FAILURE_CONFLICT:
+                case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
+                case PackageInstaller.STATUS_FAILURE_INVALID:
+                case PackageInstaller.STATUS_FAILURE_STORAGE:
+                    Toast.makeText(this, "Install failed! " + status + ", " + message,
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                default:
+                    Toast.makeText(this, "Unrecognized status received from installer: " + status,
+                            Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @NonNull
