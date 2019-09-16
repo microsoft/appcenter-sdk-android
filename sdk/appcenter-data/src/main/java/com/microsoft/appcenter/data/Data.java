@@ -330,7 +330,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = createHttpClient(context, false, true);
+        mHttpClient = createHttpClient(context, false, false);
         mTokenManager = TokenManager.getInstance(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
