@@ -61,6 +61,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClientWithoutRetryer;
 
 /**
  * Data service.
@@ -87,7 +88,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     private final Map<DefaultAppCenterFuture<?>, ServiceCall> mPendingCalls = new HashMap<>();
 
-    private HttpClient mHttpClient;
+    private HttpClient mHttpClientWithRetryer;
+
+    private HttpClient mHttpClientNoRetryer;
 
     private TokenManager mTokenManager;
 
@@ -330,7 +333,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mNetworkStateHelper = NetworkStateHelper.getSharedInstance(context);
-        mHttpClient = createHttpClient(context, false);
+        mHttpClientWithRetryer = createHttpClient(context, false);
+        mHttpClientNoRetryer = createHttpClientWithoutRetryer(context, false);
         mTokenManager = TokenManager.getInstance(context);
         mAppSecret = appSecret;
         mLocalDocumentStorage = new LocalDocumentStorage(context, Utils.getUserTableName());
@@ -569,7 +573,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
-                mHttpClient,
+                mHttpClientNoRetryer,
                 METHOD_GET,
                 null,
                 new ServiceCallback() {
@@ -616,7 +620,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbListApi(
                 tokenResult,
                 continuationToken,
-                mHttpClient,
+                mHttpClientNoRetryer,
                 new ServiceCallback() {
 
                     @Override
@@ -763,7 +767,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
-                mHttpClient,
+                mHttpClientNoRetryer,
                 METHOD_POST,
                 new DocumentWrapper<>(document, partition, documentId).toString(),
                 additionalHeaders,
@@ -806,7 +810,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 null,
-                mHttpClient,
+                mHttpClientWithRetryer,
                 METHOD_POST,
                 documentWrapper.toString(),
                 pendingOperation.getOperation().equals(Constants.PENDING_OPERATION_CREATE_VALUE) ? null : CosmosDb.getUpsertAdditionalHeader(),
@@ -905,7 +909,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         ServiceCall cosmosDbCall = CosmosDb.callCosmosDbApi(
                 tokenResult,
                 documentId,
-                mHttpClient,
+                mHttpClientNoRetryer,
                 METHOD_DELETE,
                 null,
                 new ServiceCallback() {
@@ -937,7 +941,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         mOutgoingPendingOperationCalls.put(outgoingId, CosmosDb.callCosmosDbApi(
                 tokenResult,
                 operation.getDocumentId(),
-                mHttpClient,
+                mHttpClientWithRetryer,
                 METHOD_DELETE,
                 null,
                 new ServiceCallback() {
@@ -970,7 +974,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             ServiceCall tokenExchangeServiceCall =
                     TokenExchange.getDbToken(
                             partition,
-                            mHttpClient,
+                            mHttpClientNoRetryer,
                             mTokenExchangeUrl,
                             mAppSecret,
                             callback);

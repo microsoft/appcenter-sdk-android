@@ -74,12 +74,12 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * HTTP connection timeout.
      */
-    private static final int CONNECT_TIMEOUT = 60000;
+    private static final int CONNECT_TIMEOUT = 10000;
 
     /**
      * HTTP read timeout.
      */
-    private static final int READ_TIMEOUT = 20000;
+    private static final int READ_TIMEOUT = 10000;
 
     /**
      * Maximum payload length to use prettify for logging.
