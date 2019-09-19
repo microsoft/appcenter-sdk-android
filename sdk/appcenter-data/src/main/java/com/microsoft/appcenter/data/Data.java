@@ -476,6 +476,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                     if (mNetworkStateHelper.isNetworkConnected()) {
                         getTokenAndCallCosmosDbApi(
                                 partition,
+                                mHttpClientNoRetryer,
                                 result,
                                 new TokenExchangeServiceCallback(mTokenManager) {
 
@@ -710,6 +711,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 }
                 getTokenAndCallCosmosDbApi(
                         partition,
+                        mHttpClientNoRetryer,
                         result,
                         new TokenExchangeServiceCallback(mTokenManager) {
 
@@ -736,6 +738,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             final LocalDocument pendingOperation) {
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
+                mHttpClientWithRetryer,
                 null,
                 new TokenExchangeServiceCallback(mTokenManager) {
 
@@ -850,6 +853,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 if (mNetworkStateHelper.isNetworkConnected()) {
                     getTokenAndCallCosmosDbApi(
                             partition,
+                            mHttpClientNoRetryer,
                             result,
                             new TokenExchangeServiceCallback(mTokenManager) {
 
@@ -882,6 +886,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void instanceDelete(final LocalDocument pendingOperation) {
         getTokenAndCallCosmosDbApi(
                 Utils.removeAccountIdFromPartitionName(pendingOperation.getPartition()),
+                mHttpClientWithRetryer,
                 null,
                 new TokenExchange.TokenExchangeServiceCallback(mTokenManager) {
 
@@ -965,6 +970,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
     synchronized void getTokenAndCallCosmosDbApi(
             String partition,
+            HttpClient tokenExchangeHttpClient,
             DefaultAppCenterFuture result,
             TokenExchangeServiceCallback callback) {
         TokenResult cachedTokenResult = mTokenManager.getCachedToken(partition);
@@ -974,7 +980,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             ServiceCall tokenExchangeServiceCall =
                     TokenExchange.getDbToken(
                             partition,
-                            mHttpClientNoRetryer,
+                            tokenExchangeHttpClient,
                             mTokenExchangeUrl,
                             mAppSecret,
                             callback);
