@@ -122,7 +122,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
             assertEquals("document", capturedOperation.getDocument());
             assertNull(capturedOperation.getOperation());
         }
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertEquals(ETAG, capturedOperation.getETag());
         assertEquals("document", capturedOperation.getDocument());
 
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mRemoteOperationListener);
     }
 
@@ -221,14 +221,14 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                             CURRENT_TIMESTAMP));
                 }});
         mData.onNetworkStateUpdated(true);
-        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mRemoteOperationListener);
     }
 
     @Test
     public void networkGoesOfflineDoesNothing() {
         mData.onNetworkStateUpdated(false);
-        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mLocalDocumentStorage);
         verifyZeroInteractions(mRemoteOperationListener);
     }

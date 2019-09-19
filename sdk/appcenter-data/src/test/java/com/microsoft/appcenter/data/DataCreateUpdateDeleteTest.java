@@ -335,7 +335,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         TestDocument testDocument = new TestDocument("test");
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
         Data.create(DOCUMENT_ID, testDocument, TestDocument.class, USER_DOCUMENTS);
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(USER_TABLE_NAME),
                 eq(RESOLVED_USER_PARTITION),
@@ -355,7 +355,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -374,7 +374,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -408,7 +408,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -427,7 +427,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -448,7 +448,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(cachedDocument), refEq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNull(result.get().getError());
     }
 
@@ -463,7 +463,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS, writeOptions);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), refEq(cachedDocument), eq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(result.get().getError());
     }
 
@@ -474,7 +474,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertFalse(result.get().hasFailed());
         assertNull(result.get().getError());
     }
@@ -486,7 +486,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(false);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertTrue(result.get().hasFailed());
         assertNotNull(result.get().getError());
     }

@@ -171,7 +171,7 @@ public class DataTest extends AbstractDataTest {
         String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
         when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new DocumentWrapper<TestDocument>(new Exception("read error.")));
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -201,7 +201,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void failFastForInvalidDocumentId() {
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -418,7 +418,7 @@ public class DataTest extends AbstractDataTest {
         ServiceCall serviceCallMock1 = mock(ServiceCall.class);
         ServiceCall serviceCallMock2 = mock(ServiceCall.class);
         ServiceCall serviceCallMock3 = mock(ServiceCall.class);
-        when(mHttpClient.callAsync(anyString(), anyString(),
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(serviceCallMock1).thenReturn(serviceCallMock2).thenReturn(serviceCallMock3);
 
@@ -514,7 +514,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Return null service call to simulate a partially saved pending operation. */
-        when(mHttpClient.callAsync(anyString(), anyString(),
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(null);
 
@@ -541,7 +541,7 @@ public class DataTest extends AbstractDataTest {
 
         /* Then we'll refresh token online. */
         ArgumentCaptor<ServiceCallback> captor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
+        verify(mHttpClientWithRetryer).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
 
         /* If we also get corrupted json online for token. */
         captor.getValue().onCallSucceeded("garbage", new HashMap<String, String>());

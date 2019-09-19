@@ -18,6 +18,7 @@ import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -154,7 +155,10 @@ abstract public class AbstractDataTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    protected HttpClientRetryer mHttpClient;
+    protected HttpClientRetryer mHttpClientWithRetryer;
+
+    @Mock
+    protected HttpClientNetworkStateHandler mHttpClientNoRetryer;
 
     @Mock
     protected RemoteOperationListener mRemoteOperationListener;
@@ -223,8 +227,10 @@ abstract public class AbstractDataTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
-        mHttpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
+        mHttpClientWithRetryer = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClientWithRetryer);
+        mHttpClientWithRetryer = mock(HttpClientRetryer.class);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClientWithRetryer);
         when(SharedPreferencesManager.getBoolean(DATA_ENABLED_KEY, true)).thenReturn(true);
         mockStatic(NetworkStateHelper.class);
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
@@ -296,7 +302,7 @@ abstract public class AbstractDataTest {
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        verify(mHttpClientWithRetryer).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentId)),
                 eq(cosmosCallApiMethod),
                 anyMapOf(String.class, String.class),
@@ -323,7 +329,7 @@ abstract public class AbstractDataTest {
                 ArgumentCaptor.forClass(AbstractAppCallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        verify(mHttpClientWithRetryer).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
