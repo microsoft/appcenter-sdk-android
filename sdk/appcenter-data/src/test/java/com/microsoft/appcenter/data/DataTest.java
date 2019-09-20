@@ -43,7 +43,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
@@ -278,7 +277,8 @@ public class DataTest extends AbstractDataTest {
         /* Local storage create document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getError());
-        assertTrue(Objects.requireNonNull(doc.getError().getMessage()).contains(failedMessage));
+        assertNotNull(doc.getError().getMessage());
+        assertTrue(doc.getError().getMessage().contains(failedMessage));
 
         /* Make the call to read local document from local storage. */
         doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS).get();
@@ -286,7 +286,8 @@ public class DataTest extends AbstractDataTest {
         /* Local storage read document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getError());
-        assertTrue(Objects.requireNonNull(doc.getError().getMessage()).contains(failedMessage));
+        assertNotNull(doc.getError().getMessage());
+        assertTrue(doc.getError().getMessage().contains(failedMessage));
 
         /* Make the call to delete local document from local storage. */
         DocumentWrapper<Void> deleteDocument = Data.delete(DOCUMENT_ID, USER_DOCUMENTS).get();
@@ -294,7 +295,8 @@ public class DataTest extends AbstractDataTest {
         /* Local storage delete document should complete with not find partition error. */
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getError());
-        assertTrue(Objects.requireNonNull(deleteDocument.getError().getMessage()).contains(failedMessage));
+        assertNotNull(deleteDocument.getError().getMessage());
+        assertTrue(deleteDocument.getError().getMessage().contains(failedMessage));
     }
 
 
@@ -553,8 +555,10 @@ public class DataTest extends AbstractDataTest {
         future.get();
         assertNull(future.get().getDeserializedValue());
         assertNotNull(future.get().getError());
-        assertTrue(future.get().getError().getCause() instanceof DataException);
-        assertTrue(Objects.requireNonNull(future.get().getError().getCause()).getCause() instanceof JsonSyntaxException);
+        Throwable cause = future.get().getError().getCause();
+        assertNotNull(cause);
+        assertTrue(cause instanceof DataException);
+        assertTrue(cause.getCause() instanceof JsonSyntaxException);
     }
 
     @Test
@@ -588,30 +592,35 @@ public class DataTest extends AbstractDataTest {
         DocumentWrapper<TestDocument> createDoc = Data.create("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(createDoc.getDeserializedValue());
         assertNotNull(createDoc.getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(createDoc.getError().getCause()).getClass());
+        assertNotNull(createDoc.getError().getCause());
+        assertEquals(IllegalStateException.class, createDoc.getError().getCause().getClass());
 
         /* Test `replace` before module started */
         DocumentWrapper<TestDocument> replaceDoc = Data.replace("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(replaceDoc.getDeserializedValue());
         assertNotNull(replaceDoc.getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(replaceDoc.getError().getCause()).getClass());
+        assertNotNull(replaceDoc.getError().getCause());
+        assertEquals(IllegalStateException.class, replaceDoc.getError().getCause().getClass());
 
         /* Test `read` before module started */
         DocumentWrapper<TestDocument> readDoc = Data.read("id", TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(readDoc.getDeserializedValue());
         assertNotNull(readDoc.getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(readDoc.getError().getCause()).getClass());
+        assertNotNull(readDoc.getError().getCause());
+        assertEquals(IllegalStateException.class, readDoc.getError().getCause().getClass());
 
         /* Test `list` before module started */
         PaginatedDocuments<TestDocument> listDoc = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS).get();
         assertNull(listDoc.getCurrentPage().getItems());
         assertNotNull(listDoc.getCurrentPage().getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(listDoc.getCurrentPage().getError().getCause()).getClass());
+        assertNotNull(listDoc.getCurrentPage().getError().getCause());
+        assertEquals(IllegalStateException.class, listDoc.getCurrentPage().getError().getCause().getClass());
 
         /* Test `delete` before module started */
         DocumentWrapper<Void> deleteDoc = Data.delete("id", DefaultPartitions.USER_DOCUMENTS).get();
         assertNull(deleteDoc.getDeserializedValue());
         assertNotNull(deleteDoc.getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(deleteDoc.getError().getCause()).getClass());
+        assertNotNull(deleteDoc.getError().getCause());
+        assertEquals(IllegalStateException.class, deleteDoc.getError().getCause().getClass());
     }
 }

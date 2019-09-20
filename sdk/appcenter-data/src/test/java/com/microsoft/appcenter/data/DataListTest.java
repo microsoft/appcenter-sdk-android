@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
@@ -316,7 +315,8 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(docCancel);
         assertNull(docCancel.getCurrentPage().getItems());
         assertNotNull(docCancel.getCurrentPage().getError());
-        assertEquals(IllegalStateException.class, Objects.requireNonNull(docCancel.getCurrentPage().getError().getCause()).getClass());
+        assertNotNull(docCancel.getCurrentPage().getError().getCause());
+        assertEquals(IllegalStateException.class, docCancel.getCurrentPage().getError().getCause().getClass());
         verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
@@ -767,6 +767,7 @@ public class DataListTest extends AbstractDataTest {
         DataException error = currentPage.getError();
         assertNull(currentPage.getItems());
         assertNotNull(error);
-        assertTrue(Objects.requireNonNull(error.getMessage()).contains("List operation requested on user partition, but the user is not logged in."));
+        assertNotNull(error.getMessage());
+        assertTrue(error.getMessage().contains("List operation requested on user partition, but the user is not logged in."));
     }
 }
