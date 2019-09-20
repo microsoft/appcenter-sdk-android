@@ -183,7 +183,7 @@ public class ReleaseDetails {
      * @return the downloadUrl value
      */
     @NonNull
-    Uri getDownloadUrl() {
+    public Uri getDownloadUrl() {
         return downloadUrl;
     }
 

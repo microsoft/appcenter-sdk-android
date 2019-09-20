@@ -1,17 +1,9 @@
 package com.microsoft.appcenter.distribute;
 
-import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
-import com.microsoft.appcenter.distribute.CheckDownloadTask;
-import com.microsoft.appcenter.distribute.DistributeConstants;
-import com.microsoft.appcenter.distribute.DistributeUtils;
-import com.microsoft.appcenter.distribute.DownloadTask;
-import com.microsoft.appcenter.distribute.InstallerUtils;
-import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.RemoveDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -53,7 +45,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     private PackageInfo mPackageInfo;
 
 
-    DownloadManagerReleaseDownloader(Context context) {
+    public DownloadManagerReleaseDownloader(Context context) {
         mContext = context;
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);

@@ -13,7 +13,7 @@ import com.microsoft.appcenter.AppCenter;
 /**
  * Distribute constants.
  */
-final class DistributeConstants {
+public final class DistributeConstants {
 
     /**
      * Distribute service name.
@@ -23,7 +23,7 @@ final class DistributeConstants {
     /**
      * Log tag for this service.
      */
-    static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
+    public static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
 
     /**
      * Used for deep link intent from browser, string field for update token.
