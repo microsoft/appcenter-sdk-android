@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 2.3.1
+## Version 2.3.1 (Under development)
 
 ### App Center Data
 
