@@ -3,6 +3,8 @@ package com.microsoft.appcenter.distribute.download;
 import android.content.Context;
 import android.os.Build;
 
+import com.microsoft.appcenter.distribute.DownloadManagerReleaseDownloader;
+
 public class ReleaseDownloaderFactory {
 
     private ReleaseDownloaderFactory() {
