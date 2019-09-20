@@ -76,7 +76,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.replace(DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS, null);
 
         /* Make the call. */
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(false, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify token. */
         assertNotNull(doc);
@@ -99,7 +99,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, DefaultPartitions.USER_DOCUMENTS, new WriteOptions());
 
         /* Mock for cosmos return payload that cannot be deserialized. Will fail in the `onSuccess` callback of `create`. */
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, "", null);
+        verifyTokenExchangeToCosmosDbFlow(false, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, "", null);
 
         /* Verify document error. Confirm the cache was not touched. */
         assertNotNull(doc);
@@ -114,7 +114,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         WriteOptions writeOptions = new WriteOptions(12476);
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(DOCUMENT_ID, new TestDocument(TEST_FIELD_VALUE), TestDocument.class, USER_DOCUMENTS, writeOptions);
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(false, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
         assertNotNull(doc);
         DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
@@ -335,7 +335,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         TestDocument testDocument = new TestDocument("test");
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
         Data.create(DOCUMENT_ID, testDocument, TestDocument.class, USER_DOCUMENTS);
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         verify(mLocalDocumentStorage).createOrUpdateOffline(
                 eq(USER_TABLE_NAME),
                 eq(RESOLVED_USER_PARTITION),
@@ -350,12 +350,12 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void createTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(DOCUMENT_ID, new TestDocument("test"), TestDocument.class, USER_DOCUMENTS);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(false, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -369,12 +369,12 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void createCosmosDbCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(DOCUMENT_ID, new TestDocument("test"), TestDocument.class, USER_DOCUMENTS);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, null, new Exception(exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(false, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, null, new Exception(exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -388,7 +388,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void deleteEndToEnd() throws JSONException {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID), eq(Void.class), notNull(ReadOptions.class))).thenReturn(new DocumentWrapper<Void>(new DataException("not found")));
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
         verifyNoMoreInteractions(mLocalDocumentStorage);
         DocumentWrapper<Void> wrapper = doc.get();
@@ -403,12 +403,12 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void deleteTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeFlow(null, new SSLException(exceptionMessage));
+        verifyTokenExchangeFlow(false, null, new SSLException(exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -422,12 +422,12 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void deleteCosmosDbCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -448,7 +448,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), eq(cachedDocument), refEq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNull(result.get().getError());
     }
 
@@ -463,7 +463,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS, writeOptions);
         verify(mLocalDocumentStorage).deleteOffline(eq(USER_TABLE_NAME), refEq(cachedDocument), eq(writeOptions));
         verify(mLocalDocumentStorage, never()).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(result.get().getError());
     }
 
@@ -474,7 +474,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(true);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertFalse(result.get().hasFailed());
         assertNull(result.get().getError());
     }
@@ -486,7 +486,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         when(mLocalDocumentStorage.deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID))).thenReturn(false);
         AppCenterFuture<DocumentWrapper<Void>> result = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(USER_DOCUMENTS + "-" + ACCOUNT_ID), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertTrue(result.get().hasFailed());
         assertNotNull(result.get().getError());
     }
