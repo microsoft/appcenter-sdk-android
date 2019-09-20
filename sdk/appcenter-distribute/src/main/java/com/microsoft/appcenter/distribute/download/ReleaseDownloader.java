@@ -3,24 +3,24 @@ package com.microsoft.appcenter.distribute.download;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 
 /**
- *
+ * Interface for downloading release.
  */
 public interface ReleaseDownloader {
 
     /**
-     * Download the file for current release.
+     * Start or resume downloading the installer for the release.
      *
      * @param releaseDetails
      */
     void download(ReleaseDetails releaseDetails);
 
     /**
-     * Remove previously file.
+     * Remove previously downloaded release.
      */
     void delete();
 
     /**
-     * Listener for download states.
+     * Set listener for download state.
      *
      * @param listener Download listener.
      */
@@ -32,7 +32,7 @@ public interface ReleaseDownloader {
     interface Listener {
 
         /**
-         * Shows current status of the downloading.
+         * Called periodically during download to display current progress.
          *
          * @param downloadedBytes
          * @param totalBytes
@@ -40,14 +40,14 @@ public interface ReleaseDownloader {
         void onProgress(long downloadedBytes, long totalBytes);
 
         /**
-         * Implement this method to handle successful REST call results.
+         * Called when the downloading is completed.
          *
          * @param localUri The local URI of the file.
          */
         void onComplete(String localUri);
 
         /**
-         * Implement this method to handle REST call failures.
+         * Called when an error occurs during the downloading.
          *
          * @param errorMessage The message of the exception.
          */
