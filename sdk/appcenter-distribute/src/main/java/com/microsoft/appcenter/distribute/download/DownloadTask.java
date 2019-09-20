@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.download;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -11,6 +11,8 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 
+import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import static android.content.Context.DOWNLOAD_SERVICE;

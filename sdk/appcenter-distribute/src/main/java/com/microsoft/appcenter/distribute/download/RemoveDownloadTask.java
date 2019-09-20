@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.download;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;

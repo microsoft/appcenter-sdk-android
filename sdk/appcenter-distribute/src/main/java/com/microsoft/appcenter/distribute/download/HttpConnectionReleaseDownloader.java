@@ -13,6 +13,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private Context mContext;
     private Listener mListener;
     private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
+    private DownloadFileTask downloadFileTask;
 
 
     HttpConnectionReleaseDownloader(Context context) {
@@ -21,11 +22,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void download(ReleaseDetails releaseDetails) {
-        AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(mContext, releaseDetails, mListener));
+        downloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(mContext, releaseDetails, mListener));
     }
 
     @Override
-    public void delete() {
+    public void delete(long downloadId) {
         String localFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADING_FILE);
         if(localFilePath == null){
             return;
@@ -37,6 +38,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     @Override
     public void setListener(Listener listener) {
         mListener = listener;
+    }
+
+    @Override
+    public void cancel(boolean state) {
+        downloadFileTask.cancel(state);
     }
 
 }

@@ -39,6 +39,9 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
+import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -248,7 +251,8 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Current task inspecting the latest release details that we fetched from server.
      */
-    private DownloadTask mDownloadTask;
+    //private DownloadTask mDownloadTask;
+    private ReleaseDownloader mReleaseDownloader;
 
     /**
      * Current task to check download state and act on it.
@@ -550,7 +554,7 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mReleaseDownloader != null) {
                     AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
@@ -624,9 +628,9 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
-        if (mDownloadTask != null) {
-            mDownloadTask.cancel(true);
-            mDownloadTask = null;
+        if (mReleaseDownloader != null) {
+            mReleaseDownloader.cancel(true);
+            mReleaseDownloader = null;
         }
         if (mCheckDownloadTask != null) {
             mCheckDownloadTask.cancel(true);
@@ -776,7 +780,7 @@ public class Distribute extends AbstractAppCenterService {
                  * Or restore update dialog if that's the last thing we did before being paused.
                  * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
                  */
-                else if (mDownloadTask == null) {
+                else if (mReleaseDownloader == null) {
                     showUpdateDialog();
                 }
 
@@ -1578,7 +1582,9 @@ public class Distribute extends AbstractAppCenterService {
                     showDownloadProgress();
                 }
                 mCheckedDownload = true;
-                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+                //mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+                mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
+
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1617,10 +1623,10 @@ public class Distribute extends AbstractAppCenterService {
      * @param enqueueTime     time just before enqueuing download.
      */
     @WorkerThread
-    synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
+    synchronized void storeDownloadRequestId(DownloadManager downloadManager, ReleaseDownloader task, long downloadId, long enqueueTime) {
 
         /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task && mReleaseDetails != null) {
+        if (mReleaseDownloader == task && mReleaseDetails != null) {
 
             /* Delete previous download. */
             long previousDownloadId = DistributeUtils.getStoredDownloadId();
@@ -1765,7 +1771,8 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressLint("VisibleForTests")
     private synchronized void removeDownload(long downloadId) {
         cancelNotification();
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
+        ReleaseDownloaderFactory.create(mContext).delete(downloadId);
+       // AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
     }
 
     /**

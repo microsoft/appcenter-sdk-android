@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.download;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -14,6 +14,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 
+import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.distribute.DownloadProgress;
+import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -92,7 +95,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         }
 
         /* Check intent data is what we expected. */
-        long expectedDownloadId = DistributeUtils.getStoredDownloadId();
+        long expectedDownloadId = DownloadUtils.getStoredDownloadId();
         if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
             AppCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
             return null;
@@ -130,11 +133,11 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 /* Build install intent. */
                 String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
                 AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
-                Intent intent = DistributeUtils.getInstallIntent(Uri.parse(localUri));
+                Intent intent = DownloadUtils.getInstallIntent(Uri.parse(localUri));
                 boolean installerFound = false;
                 if (intent.resolveActivity(mContext.getPackageManager()) == null) {
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                        intent = DistributeUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
+                        intent = DownloadUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
                         installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
                     }
                 } else {

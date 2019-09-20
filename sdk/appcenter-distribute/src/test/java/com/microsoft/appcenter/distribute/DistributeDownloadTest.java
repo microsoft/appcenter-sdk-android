@@ -21,6 +21,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 
+import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;

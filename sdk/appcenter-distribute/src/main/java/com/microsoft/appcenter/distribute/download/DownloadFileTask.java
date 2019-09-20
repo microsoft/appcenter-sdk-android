@@ -172,4 +172,4 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
         }
         return connection;
     }
-}
+ }

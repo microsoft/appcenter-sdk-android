@@ -17,7 +17,7 @@ public interface ReleaseDownloader {
     /**
      * Remove previously downloaded release.
      */
-    void delete();
+    void delete(long downloadId);
 
     /**
      * Set listener for download state.
@@ -25,6 +25,13 @@ public interface ReleaseDownloader {
      * @param listener Download listener.
      */
     void setListener(Listener listener);
+
+    /**
+     * Cancel the current task.
+     *
+     * @param state Interrupt the task.
+     */
+    void cancel(boolean state);
 
     /**
      *
