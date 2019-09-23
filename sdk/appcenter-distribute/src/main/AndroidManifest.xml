@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.microsoft.appcenter.distribute.download.DownloadManagerReceiver">
+        <receiver android:name="com.microsoft.appcenter.distribute.download.manager.DownloadManagerReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
                 <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />

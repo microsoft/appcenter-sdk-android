@@ -8,7 +8,7 @@ package com.microsoft.appcenter.distribute;
 import android.app.Activity;
 import android.content.Intent;
 
-import com.microsoft.appcenter.distribute.download.DownloadManagerReceiver;
+import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReceiver;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;

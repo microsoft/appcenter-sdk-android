@@ -1,16 +1,18 @@
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute.download.manager;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
-class DownloadManagerReleaseDownloader implements ReleaseDownloader {
+public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     private Context mContext;
     private Listener mListener;
 
@@ -35,7 +37,7 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     private PackageInfo mPackageInfo;
 
 
-    DownloadManagerReleaseDownloader(Context context) {
+    public DownloadManagerReleaseDownloader(Context context) {
         this.mContext = context;
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
@@ -60,8 +62,8 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }*/
 
     @Override
-    public void delete(long downloadId) {
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
+    public void delete() {
+//        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
     }
 
     @Override
@@ -69,13 +71,11 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         this.mListener = listener;
     }
 
-    @Override
     public void removeListener() {
         mListener = null;
         mCheckDownloadTask.detachListener();
     }
 
-    @Override
     public void cancel(boolean state) {
         this.mDownloadTask.cancel(state);
     }

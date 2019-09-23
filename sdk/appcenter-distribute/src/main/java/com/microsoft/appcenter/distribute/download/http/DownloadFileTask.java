@@ -1,4 +1,4 @@
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute.download.http;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

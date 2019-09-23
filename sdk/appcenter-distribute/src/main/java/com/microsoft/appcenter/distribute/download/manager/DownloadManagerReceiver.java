@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute.download.manager;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;

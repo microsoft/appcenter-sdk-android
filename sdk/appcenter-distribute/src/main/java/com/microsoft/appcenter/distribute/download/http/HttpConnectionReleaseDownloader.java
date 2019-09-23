@@ -1,8 +1,9 @@
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute.download.http;
 
 import android.content.Context;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -15,7 +16,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
     private DownloadFileTask downloadFileTask;
 
-    HttpConnectionReleaseDownloader(Context context) {
+    public HttpConnectionReleaseDownloader(Context context) {
         mContext = context;
     }
 
@@ -26,7 +27,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void delete(long downloadId) {
+    public void delete() {
         String localFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADING_FILE);
         if(localFilePath == null){
             return;
@@ -40,13 +41,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         mListener = listener;
     }
 
-    @Override
     public void removeListener() {
         mListener = null;
         downloadFileTask.detachListener();
     }
 
-    @Override
     public void cancel(boolean state) {
         downloadFileTask.cancel(state);
     }

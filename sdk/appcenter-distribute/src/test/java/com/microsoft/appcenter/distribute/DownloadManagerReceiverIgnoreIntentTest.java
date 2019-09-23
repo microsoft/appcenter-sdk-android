@@ -8,7 +8,7 @@ package com.microsoft.appcenter.distribute;
 import android.content.Context;
 import android.content.Intent;
 
-import com.microsoft.appcenter.distribute.download.DownloadManagerReceiver;
+import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReceiver;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
