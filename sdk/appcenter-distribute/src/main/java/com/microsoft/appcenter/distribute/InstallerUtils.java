@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * Installer utils.
  */
-class InstallerUtils {
+public class InstallerUtils {
 
     /**
      * Value when {@link Settings.Secure#INSTALL_NON_MARKET_APPS} setting is enabled.
@@ -76,7 +76,7 @@ class InstallerUtils {
      * @return true if installation via unknown sources is enabled, false otherwise.
      */
     @SuppressWarnings("deprecation")
-    static boolean isUnknownSourcesEnabled(@NonNull Context context) {
+    public static boolean isUnknownSourcesEnabled(@NonNull Context context) {
 
         /*
          * On Android 8 with applications targeting lower versions,

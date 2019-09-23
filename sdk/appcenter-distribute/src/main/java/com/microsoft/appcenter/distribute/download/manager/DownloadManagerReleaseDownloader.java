@@ -47,7 +47,8 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void download(ReleaseDetails releaseDetails) {
+    public void download(ReleaseDetails releaseDetails, Listener listener) {
+        //todo handle listener
         // TODO CheckDownloadTask
 
         mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
@@ -64,11 +65,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     @Override
     public void delete() {
 //        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
-    }
-
-    @Override
-    public void setListener(Listener listener) {
-        this.mListener = listener;
     }
 
     public void removeListener() {

@@ -13,20 +13,14 @@ public interface ReleaseDownloader {
      * Start or resume downloading the installer for the release.
      *
      * @param releaseDetails
+     * @param listener Download listener.
      */
-    void download(ReleaseDetails releaseDetails);
+    void download(ReleaseDetails releaseDetails, Listener listener);
 
     /**
      * Remove previously downloaded release.
      */
     void delete();
-
-    /**
-     * Set listener for download state.
-     *
-     * @param listener Download listener.
-     */
-    void setListener(Listener listener);
 
     /**
      *
