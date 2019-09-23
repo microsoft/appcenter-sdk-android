@@ -80,7 +80,11 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 //      }
         if (!installerFound) {
             AppCenterLog.error(LOG_TAG, "Installer not found");
+//            distribute.completeWorkflow(mReleaseDetails);
+//            return null;
         }
+
+        // TODO Check if a should install now.
 
         AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
         mContext.startActivity(intent);

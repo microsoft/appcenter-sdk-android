@@ -4,15 +4,14 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
+
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
-import com.microsoft.appcenter.distribute.download.RemoveDownloadTask;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {

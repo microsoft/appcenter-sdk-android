@@ -9,11 +9,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DownloadManager;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,13 +21,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
-import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -39,8 +34,6 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
-import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
-import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloadListener;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
@@ -54,7 +47,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -69,14 +61,12 @@ import org.json.JSONException;
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -89,8 +79,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
@@ -101,7 +89,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
@@ -516,7 +503,6 @@ public class Distribute extends AbstractAppCenterService {
                 }
             });
             mReleaseDownloaderListener = new ReleaseDownloadListener(mContext);
-            //mReleaseDownloader.setListener(mReleaseDownloaderListener);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -720,8 +706,15 @@ public class Distribute extends AbstractAppCenterService {
                 /* Otherwise check currently processed release. */
                 else {
 
-                    /* If app restarted, check if download completed to bring install U.I. */
-                    // todo update comment
+                    /*
+                     * If app restarted, try to resume (or restart if not available) download.
+                     * Install UI will be shown by listener once download will be completed.
+                     */
+                    mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
+
+
+                    // TODO mReleaseDetails is null we need to load it before that.
+
                     mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
@@ -750,6 +743,8 @@ public class Distribute extends AbstractAppCenterService {
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
                         showDownloadProgress();
+
+                        /* Resume (or restart if not available) download. */
                         mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
                     }
                 }
@@ -1310,7 +1305,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
 
-    /**`
+    /**
      * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
      * (it could be resumed in another activity covering the previous one).
      */
@@ -1572,6 +1567,7 @@ public class Distribute extends AbstractAppCenterService {
                     showDownloadProgress();
                 }
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
+                mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1712,7 +1708,8 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
 
-            // todo install
+            // TODO get APK path
+            // TODO Install APK
         } else {
             showDisabledToast();
         }
