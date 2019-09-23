@@ -2,10 +2,7 @@ package com.microsoft.appcenter.distribute.download.http;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.InstallerUtils;
@@ -59,13 +56,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             return false;
         }
         if (!InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
-                intent.setData(Uri.parse("package:" + mContext.getPackageName()));
-                mContext.startActivity(intent);
-            } else {
-                listener.onError("Install from unknown sources disabled.");
-            }
+            listener.onError("Install from unknown sources disabled.");
             return false;
         }
         return true;
