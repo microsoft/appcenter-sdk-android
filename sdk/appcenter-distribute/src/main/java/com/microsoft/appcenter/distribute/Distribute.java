@@ -526,22 +526,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            mReleaseDownloaderListener = new ReleaseDownloader.Listener() {
-                @Override
-                public void onProgress(long downloadedBytes, long totalBytes) {
-
-                }
-
-                @Override
-                public void onComplete(String localUri) {
-
-                }
-
-                @Override
-                public void onError(String errorMessage) {
-
-                }
-            };
+            mReleaseDownloaderListener = new ReleaseDownloadListener();
             mReleaseDownloader.setListener(mReleaseDownloaderListener);
         } else {
 
