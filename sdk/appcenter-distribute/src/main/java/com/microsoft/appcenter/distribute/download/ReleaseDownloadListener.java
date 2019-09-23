@@ -35,11 +35,6 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         return Uri.parse("file://" + localUrl);
     }
 
-    @Override
-    public void onProgress(long downloadedBytes, long totalBytes) {
-
-    }
-
     static void storeReleaseDetails(@org.jetbrains.annotations.NotNull ReleaseDetails releaseDetails) {
         String groupId = releaseDetails.getDistributionGroupId();
         String releaseHash = releaseDetails.getReleaseHash();
@@ -64,6 +59,11 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return intent;
+    }
+
+    @Override
+    public void onProgress(long downloadedBytes, long totalBytes) {
+        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + downloadedBytes + " totalBytes=" + totalBytes);
     }
 
     @Override

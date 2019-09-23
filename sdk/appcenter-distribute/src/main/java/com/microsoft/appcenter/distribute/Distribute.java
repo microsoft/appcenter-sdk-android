@@ -1340,7 +1340,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
 
-    /**
+    /**`
      * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
      * (it could be resumed in another activity covering the previous one).
      */
@@ -1775,18 +1775,6 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
         return new Notification.Builder(mContext);
-    }
-
-    /**
-     * Used to avoid querying download manager on every activity change.
-     *
-     * @param releaseDetails release details to check state.
-     */
-    synchronized void markDownloadStillInProgress(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
-            AppCenterLog.verbose(LOG_TAG, "Download is still in progress...");
-            mCheckedDownload = true;
-        }
     }
 
     /**
