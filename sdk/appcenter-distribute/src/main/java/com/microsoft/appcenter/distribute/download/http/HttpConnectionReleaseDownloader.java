@@ -22,7 +22,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void download(ReleaseDetails releaseDetails) {
-        downloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(mContext, releaseDetails));
+        downloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(releaseDetails));
         downloadFileTask.attachListener(mListener);
     }
 
