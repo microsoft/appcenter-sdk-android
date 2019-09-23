@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,6 +24,7 @@ import javax.net.ssl.HttpsURLConnection;
 import static com.microsoft.appcenter.distribute.BuildConfig.SDK_NAME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
+import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADING_FILE;
 
 /**
  * <h3>Description</h3>
@@ -42,8 +44,9 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     private File mApkFilePath;
     private ReleaseDetails mReleaseDetails;
 
-    DownloadFileTask(ReleaseDetails releaseDetails) {
+    DownloadFileTask(ReleaseDetails releaseDetails, Listener listener) {
         mReleaseDetails = releaseDetails;
+        mListener = listener;
         mApkFilePath = resolveApkFilePath();
     }
 
@@ -81,7 +84,8 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     @Override
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
-            mListener.onComplete(mApkFilePath.getAbsolutePath());
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADING_FILE, mApkFilePath.getAbsolutePath());
+            mListener.onComplete(mApkFilePath.getAbsolutePath(), mReleaseDetails);
         }
     }
 
@@ -115,14 +119,6 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             } catch (IOException ignored) {
             }
         }
-    }
-
-    void attachListener(Listener listener) {
-        mListener = listener;
-    }
-
-    void detachListener() {
-        mListener = null;
     }
 
     private File resolveApkFilePath() {
