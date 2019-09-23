@@ -11,7 +11,6 @@ import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.ArrayList;
 
@@ -20,7 +19,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     private Context mContext;
-    static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
+    static final String PREFERENCE_KEY_DOWNLOADED_FILE = "PREFERENCE_KEY_DOWNLOADED_FILE";
 
     public HttpConnectionReleaseDownloader(Context context) {
         mContext = context;
@@ -36,12 +35,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void delete() {
-        String localFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADING_FILE);
-        if(localFilePath == null){
-            return;
-        }
-        mContext.deleteFile(localFilePath);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADING_FILE);
+        AsyncTaskUtils.execute(LOG_TAG, new RemoveHttpDownloadTask(mContext));
     }
 
     private boolean prepareDownload(Listener listener) {

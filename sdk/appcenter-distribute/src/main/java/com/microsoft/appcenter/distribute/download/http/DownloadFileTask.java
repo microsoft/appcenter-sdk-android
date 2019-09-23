@@ -17,14 +17,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
 
 import static com.microsoft.appcenter.distribute.BuildConfig.SDK_NAME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
-import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADING_FILE;
+import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
 
 /**
  * <h3>Description</h3>
@@ -70,6 +69,9 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             if (!result && !DOWNLOAD_FILES_PATH.exists()) {
                 throw new IOException("Could not create the dir(s):" + DOWNLOAD_FILES_PATH.getAbsolutePath());
             }
+            if (mApkFilePath.exists()){
+                mApkFilePath.delete();
+            }
 
             /* Download the release file. */
             return downloadReleaseFile(connection);
@@ -84,7 +86,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     @Override
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADING_FILE, mApkFilePath.getAbsolutePath());
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_FILE, mApkFilePath.getAbsolutePath());
             mListener.onComplete(mApkFilePath.getAbsolutePath(), mReleaseDetails);
         }
     }
@@ -122,7 +124,8 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     }
 
     private File resolveApkFilePath() {
-        return new File(DOWNLOAD_FILES_PATH, UUID.randomUUID() + ".apk");
+        String apkFileName = mReleaseDetails.getReleaseHash() + ".apk";
+        return new File(DOWNLOAD_FILES_PATH, apkFileName);
     }
 
     /**
