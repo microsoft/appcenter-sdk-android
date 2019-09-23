@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.distribute.download;
 
+import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 
 /**
@@ -44,7 +46,7 @@ public interface ReleaseDownloader {
          *
          * @param localUri The local URI of the file.
          */
-        void onComplete(String localUri);
+        void onComplete(@NonNull String localUri, @NonNull ReleaseDetails releaseDetails);
 
         /**
          * Called when an error occurs during the downloading.

@@ -131,6 +131,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                 }
 
                 /* Build install intent. */
+
                 String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
                 AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
                 Intent intent = DownloadUtils.getInstallIntent(Uri.parse(localUri));

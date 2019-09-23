@@ -53,19 +53,5 @@ class DownloadUtils {
         return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
 
-    /**
-     * Get the intent used to open installation U.I.
-     *
-     * @param fileUri downloaded file URI from the download manager.
-     * @return intent to open installation U.I.
-     */
-    @NonNull
-    static Intent getInstallIntent(Uri fileUri) {
-        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-        intent.setData(fileUri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return intent;
-    }
+
 }

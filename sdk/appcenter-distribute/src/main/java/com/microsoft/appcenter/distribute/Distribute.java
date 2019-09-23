@@ -41,6 +41,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.DownloadProgress;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloadListener;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
@@ -526,7 +527,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            mReleaseDownloaderListener = new ReleaseDownloadListener();
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext);
             mReleaseDownloader.setListener(mReleaseDownloaderListener);
         } else {
 
@@ -1928,7 +1929,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    synchronized void setInstalling(ReleaseDetails releaseDetails) {
+    public synchronized void setInstalling(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             cancelNotification();
             SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
