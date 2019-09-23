@@ -13,7 +13,7 @@ public interface ReleaseDownloader {
      * Start or resume downloading the installer for the release.
      *
      * @param releaseDetails
-     * @param listener Download listener.
+     * @param listener       Download listener.
      */
     void download(ReleaseDetails releaseDetails, Listener listener);
 
@@ -30,10 +30,9 @@ public interface ReleaseDownloader {
         /**
          * Called periodically during download to display current progress.
          *
-         * @param downloadedBytes
-         * @param totalBytes
+         * @param downloadProgress
          */
-        void onProgress(long downloadedBytes, long totalBytes);
+        void onProgress(@NonNull DownloadProgress downloadProgress);
 
         /**
          * Called when the downloading is completed.
@@ -47,7 +46,7 @@ public interface ReleaseDownloader {
          *
          * @param errorMessage The message of the exception.
          */
-        void onError(String errorMessage);
+        void onError(@NonNull String errorMessage);
     }
 
 }
