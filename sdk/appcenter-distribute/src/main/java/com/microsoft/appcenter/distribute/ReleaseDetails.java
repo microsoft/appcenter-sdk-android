@@ -202,7 +202,7 @@ public class ReleaseDetails {
      * @return the releaseHash value
      */
     @NonNull
-    String getReleaseHash() {
+    public String getReleaseHash() {
         return releaseHash;
     }
 
@@ -211,7 +211,7 @@ public class ReleaseDetails {
      *
      * @return the distributionGroupId value.
      */
-    String getDistributionGroupId() {
+    public String getDistributionGroupId() {
         return distributionGroupId;
     }
 }

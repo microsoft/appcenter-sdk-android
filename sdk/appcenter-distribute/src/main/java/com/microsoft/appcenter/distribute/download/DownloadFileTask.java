@@ -30,47 +30,34 @@ import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.List
 /**
  * <h3>Description</h3>
  * <p>
- * Internal helper class. Downloads an .apk from HockeyApp and stores
+ * Internal helper class. Downloads an .apk from AppCenter and stores
  * it on external storage. If the download was successful, the file
  * is then opened to trigger the installation.
  **/
 @SuppressLint("StaticFieldLeak")
 public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
-    protected static final int MAX_REDIRECTS = 6;
-    protected static final int TIMEOUT = 60000;
+    private static final int MAX_REDIRECTS = 6;
+    private static final int TIMEOUT = 60000;
     private static final int THREAD_STATS_TAG = SDK_NAME.hashCode();
     private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
     private static final String SDK_USER_AGENT = "AppCenter/Android " + BuildConfig.VERSION_NAME;
-
-    protected Context mContext;
-    protected Listener mListener;
-    protected File mApkFilePath;
-    protected File mDirectory;
-    protected ProgressDialog mProgressDialog;
+    private Context mContext;
+    private Listener mListener;
+    private File mApkFilePath;
+    private File mDirectory;
     private ReleaseDetails mReleaseDetails;
 
-    public DownloadFileTask(Context context, ReleaseDetails releaseDetails, Listener listener) {
-        this.mContext = context;
-        this.mReleaseDetails = releaseDetails;
-        this.mDirectory = new File(context.getExternalFilesDir(null), "Download");
-        this.mApkFilePath = resolveApkFilePath(context);
-        this.mListener = listener;
-    }
-
-    public void attach(Context context) {
-        this.mContext = context;
-    }
-
-    public void detach() {
-        mContext = null;
-        mProgressDialog = null;
+    DownloadFileTask(Context context, ReleaseDetails releaseDetails) {
+        mContext = context;
+        mReleaseDetails = releaseDetails;
+        mDirectory = new File(context.getExternalFilesDir(null), "Download");
+        mApkFilePath = resolveApkFilePath(context);
     }
 
     @Override
     protected Long doInBackground(Void... args) {
         InputStream input = null;
         OutputStream output = null;
-
         try {
             URL url = new URL(mReleaseDetails.getDownloadUrl().toString());
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
@@ -80,7 +67,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             String contentType = connection.getContentType();
             if (contentType != null && contentType.contains("text")) {
 
-                // This is not the expected APK file. Maybe the redirect could not be resolved.
+                /* This is not the expected APK file. Maybe the redirect could not be resolved. */
                 if (mListener != null) {
                     mListener.onError("The requested download does not appear to be a file.");
                 }
@@ -91,7 +78,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
                 throw new IOException("Could not create the dir(s):" + mDirectory.getAbsolutePath());
             }
 
-            // Download the release file.
+            /* Download the release file. */
             input = new BufferedInputStream(connection.getInputStream());
             output = new FileOutputStream(mApkFilePath);
             byte data[] = new byte[1024];
@@ -123,13 +110,20 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
         }
     }
 
-
     @Override
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADING_FILE, mApkFilePath.getAbsolutePath());
             mListener.onComplete(mApkFilePath.getAbsolutePath());
         }
+    }
+
+    void attachListener(Listener listener) {
+        mListener = listener;
+    }
+
+    void detachListener() {
+        mListener = null;
     }
 
     private File resolveApkFilePath(Context context){
@@ -158,14 +152,14 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
                 code == HttpsURLConnection.HTTP_SEE_OTHER) {
             if (remainingRedirects == 0) {
 
-                // Stop redirecting.
+                /*  Stop redirecting. */
                 return connection;
             }
             URL movedUrl = new URL(connection.getHeaderField("Location"));
             if (!url.getProtocol().equals(movedUrl.getProtocol())) {
 
-                // HttpsURLConnection doesn't handle redirects across schemes, so handle it manually, see
-                // http://code.google.com/p/android/issues/detail?id=41651
+                /*  HttpsURLConnection doesn't handle redirects across schemes, so handle it manually, see
+                    http://code.google.com/p/android/issues/detail?id=41651 */
                 connection.disconnect();
                 return createConnection(movedUrl, --remainingRedirects); // Recursion
             }

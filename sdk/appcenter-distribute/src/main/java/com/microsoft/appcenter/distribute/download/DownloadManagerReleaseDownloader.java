@@ -11,7 +11,6 @@ import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 class DownloadManagerReleaseDownloader implements ReleaseDownloader {
-
     private Context mContext;
     private Listener mListener;
 
@@ -36,7 +35,7 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     private PackageInfo mPackageInfo;
 
 
-    public DownloadManagerReleaseDownloader(Context context) {
+    DownloadManagerReleaseDownloader(Context context) {
         this.mContext = context;
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
@@ -50,11 +49,12 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
     }
 
-   /* private void startCheckDownloadTask(ReleaseDetails releaseDetails) {
+    /*private void startCheckDownloadTask(ReleaseDetails releaseDetails) {
         boolean checkProgress = true;
 
         *//* Querying download manager and even the start intent are detected by strict mode so we do that in background. *//*
         mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, checkProgress, releaseDetails));
+        mCheckDownloadTask.attachListener(mListener);
     }*/
 
     @Override
@@ -65,6 +65,12 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     @Override
     public void setListener(Listener listener) {
         this.mListener = listener;
+    }
+
+    @Override
+    public void removeListener() {
+        mListener = null;
+        mCheckDownloadTask.detachListener();
     }
 
     @Override

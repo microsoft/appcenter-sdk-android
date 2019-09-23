@@ -15,14 +15,14 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
     private DownloadFileTask downloadFileTask;
 
-
     HttpConnectionReleaseDownloader(Context context) {
         mContext = context;
     }
 
     @Override
     public void download(ReleaseDetails releaseDetails) {
-        downloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(mContext, releaseDetails, mListener));
+        downloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(mContext, releaseDetails));
+        downloadFileTask.attachListener(mListener);
     }
 
     @Override
@@ -38,6 +38,12 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     @Override
     public void setListener(Listener listener) {
         mListener = listener;
+    }
+
+    @Override
+    public void removeListener() {
+        mListener = null;
+        downloadFileTask.detachListener();
     }
 
     @Override

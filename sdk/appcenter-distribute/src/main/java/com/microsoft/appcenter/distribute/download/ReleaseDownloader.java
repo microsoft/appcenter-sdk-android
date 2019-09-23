@@ -27,6 +27,11 @@ public interface ReleaseDownloader {
     void setListener(Listener listener);
 
     /**
+     * Remove listener for download state.
+     */
+    void removeListener();
+
+    /**
      * Cancel the current task.
      *
      * @param state Interrupt the task.

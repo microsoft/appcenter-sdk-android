@@ -34,7 +34,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
  * Inspect a pending or completed download.
  * This uses APIs that would trigger strict mode exception if used in U.I. thread.
  */
-class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
+public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
     /**
      * Context.
@@ -59,6 +59,11 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     private ReleaseDetails mReleaseDetails;
 
     /**
+     *  Listener for download states.
+     */
+    private ReleaseDownloader.Listener mListener;
+
+    /**
      * Init.
      *
      * @param context        context.
@@ -66,7 +71,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      * @param checkProgress  check progress only.
      * @param releaseDetails release details.
      */
-    CheckDownloadTask(Context context, long downloadId, boolean checkProgress, ReleaseDetails releaseDetails) {
+    public CheckDownloadTask(Context context, long downloadId, boolean checkProgress, ReleaseDetails releaseDetails) {
         mContext = context.getApplicationContext();
         mDownloadId = downloadId;
         mCheckProgress = checkProgress;
@@ -96,7 +101,7 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
         /* Check intent data is what we expected. */
         long expectedDownloadId = DownloadUtils.getStoredDownloadId();
-        if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
+        if (expectedDownloadId == DownloadUtils.INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
             AppCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
             return null;
         }
@@ -195,6 +200,14 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         }
     }
 
+    public void attachListener(ReleaseDownloader.Listener listener) {
+        mListener = listener;
+    }
+
+    public void detachListener() {
+        mListener = null;
+    }
+
     /**
      * Store details about downloaded release.
      * After app update and restart, this info is used to report new download and to update group ID (if it's changed).
@@ -208,8 +221,8 @@ class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         String releaseHash = mReleaseDetails.getReleaseHash();
         int releaseId = mReleaseDetails.getId();
         AppCenterLog.debug(LOG_TAG, "Store downloaded group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
+        SharedPreferencesManager.putString(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }

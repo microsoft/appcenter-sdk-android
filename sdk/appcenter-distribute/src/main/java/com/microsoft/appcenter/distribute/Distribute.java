@@ -286,6 +286,11 @@ public class Distribute extends AbstractAppCenterService {
     private DistributeListener mListener;
 
     /**
+     * Download release listener.
+     */
+    private ReleaseDownloader.Listener mReleaseDownloaderListener;
+
+    /**
      * Flag to remember whether update dialog was customized or not.
      * Value is null when the current state is not {@link DistributeConstants#DOWNLOAD_STATE_AVAILABLE}
      * or was never in foreground after new release detected.
@@ -517,6 +522,23 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
+            mReleaseDownloaderListener = new ReleaseDownloader.Listener() {
+                @Override
+                public void onProgress(long downloadedBytes, long totalBytes) {
+
+                }
+
+                @Override
+                public void onComplete(String localUri) {
+
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+
+                }
+            };
+            mReleaseDownloader.setListener(mReleaseDownloaderListener);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -532,7 +554,9 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
+            mReleaseDownloader.removeListener();
             mDistributeInfoTracker = null;
+            mReleaseDownloaderListener = null;
         }
     }
 

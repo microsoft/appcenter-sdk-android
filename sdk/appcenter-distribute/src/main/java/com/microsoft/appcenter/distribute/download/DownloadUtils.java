@@ -11,23 +11,38 @@ class DownloadUtils {
     /**
      * Distribute service name.
      */
-    private static final String SERVICE_NAME = "Distribute";
+    static final String SERVICE_NAME = "Distribute";
 
     /**
      * Base key for stored preferences.
      */
-    private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+    static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
 
     /**
      * Preference key to store the current/last download identifier (we keep download until a next
      * one is scheduled as the file can be opened from device downloads U.I.).
      */
-    private static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
+    static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
 
     /**
      * Invalid download identifier.
      */
-    private static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
+    static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
+
+    /**
+     * Preference key to store latest downloaded release hash.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + "downloaded_release_hash";
+
+    /**
+     * Preference key to store latest downloaded release id.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_ID = PREFERENCE_PREFIX + "downloaded_release_id";
+
+    /**
+     * Preference key to store distribution group identifier of latest downloaded release.
+     */
+    static final String PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + "downloaded_distribution_group_id";
 
     /**
      * Get download identifier from storage.

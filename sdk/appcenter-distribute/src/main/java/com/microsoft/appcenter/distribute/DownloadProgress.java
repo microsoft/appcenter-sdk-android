@@ -8,7 +8,7 @@ package com.microsoft.appcenter.distribute;
 /**
  * Class to hold current download progress status.
  */
-class DownloadProgress {
+public class DownloadProgress {
 
     /**
      * Number of bytes downloaded so far.
@@ -23,7 +23,7 @@ class DownloadProgress {
     /**
      * Init.
      */
-    DownloadProgress(long currentSize, long totalSize) {
+    public DownloadProgress(long currentSize, long totalSize) {
         mCurrentSize = currentSize;
         mTotalSize = totalSize;
     }
