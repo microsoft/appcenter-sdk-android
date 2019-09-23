@@ -82,17 +82,6 @@ class DistributeUtils {
     }
 
     /**
-     * Get download identifier from storage.
-     *
-     * @return download identifier or negative value if not found.
-     */
-
-    // TODO Use only in DownloadManagerReleaseDownloader
-    static long getStoredDownloadId() {
-        return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
-    }
-
-    /**
      * Get download state from storage.
      *
      * @return download state (completed by default).

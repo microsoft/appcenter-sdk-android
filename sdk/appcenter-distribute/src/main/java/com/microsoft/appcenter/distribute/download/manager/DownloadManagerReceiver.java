@@ -35,7 +35,8 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          */
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            Distribute.getInstance().checkDownload(context, downloadId, false);
+            //Distribute.getInstance().checkDownload(context, downloadId);
+            //todo handel download check progress listener
         }
     }
 }

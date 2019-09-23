@@ -32,7 +32,7 @@ public class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
      * @param context    context.
      * @param downloadId download identifier to remove.
      */
-    RemoveDownloadTask(Context context, long downloadId) {
+    public RemoveDownloadTask(Context context, long downloadId) {
         mContext = context;
         mDownloadId = downloadId;
     }

@@ -13,7 +13,6 @@ import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -35,7 +34,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         return Uri.parse("file://" + localUrl);
     }
 
-    static void storeReleaseDetails(@org.jetbrains.annotations.NotNull ReleaseDetails releaseDetails) {
+    static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
         String groupId = releaseDetails.getDistributionGroupId();
         String releaseHash = releaseDetails.getReleaseHash();
         int releaseId = releaseDetails.getId();

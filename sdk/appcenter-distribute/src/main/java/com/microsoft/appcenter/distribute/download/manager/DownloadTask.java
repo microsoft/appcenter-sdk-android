@@ -10,19 +10,15 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-
-import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.distribute.DistributeUtils;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloadListener;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.PREFERENCE_PREFIX;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.getStoredDownloadId;
 
 /**
  * The download manager API triggers strict mode exception in U.I. thread.
@@ -36,9 +32,40 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
     private final Context mContext;
 
     /**
+     * We are waiting to hear back from download manager, we may poll status on process restart.
+     */
+    static final int DOWNLOAD_STATE_ENQUEUED = 2;
+
+    /**
+     * Preference key to store the current/last download identifier (we keep download until a next
+     * one is scheduled as the file can be opened from device downloads U.I.).
+     */
+    static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
+
+    /**
+     * Preference key to store the SDK state related to {@link #PREFERENCE_KEY_DOWNLOAD_ID} when not null.
+     */
+    static final String PREFERENCE_KEY_DOWNLOAD_STATE = PREFERENCE_PREFIX + "download_state";
+
+    /**
+     * Preference key to store download start time. Used to avoid showing install U.I. of a completed
+     * download if we already updated (the download workflow can work across process restarts).
+     * <p>
+     * We can't use {@link DownloadManager#COLUMN_LAST_MODIFIED_TIMESTAMP} as we could have a corner case
+     * where we install upgrade from email or another mean while waiting download triggered by SDK.
+     * So the time we store as a reference needs to be before download time.
+     */
+    static final String PREFERENCE_KEY_DOWNLOAD_TIME = PREFERENCE_PREFIX + "download_time";
+
+    /**
      * Release details to check.
      */
     private final ReleaseDetails mReleaseDetails;
+
+    /**
+     * Listener for download states.
+     */
+    private ReleaseDownloader.Listener mListener;
 
     /**
      * Init.
@@ -46,9 +73,10 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
      * @param context        context.
      * @param releaseDetails release details associated to this check.
      */
-    DownloadTask(Context context, ReleaseDetails releaseDetails) {
+    DownloadTask(Context context, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
         mContext = context;
         mReleaseDetails = releaseDetails;
+        mListener = listener;
     }
 
     @Override
@@ -72,13 +100,7 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
 
         /* Check for if state changed and task not canceled in time. */
         if (mReleaseDetails != null) {
-
-            /* Delete previous download. */
-            long previousDownloadId = DistributeUtils.getStoredDownloadId();
-            if (previousDownloadId >= 0) {
-                AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
-                downloadManager.remove(previousDownloadId);
-            }
+            DownloadManagerReleaseDownloader.removePreviousDownloadId(downloadManager);
 
             /* Store new download identifier. */
             SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
@@ -87,7 +109,8 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
 
             /* Start monitoring progress for mandatory update. */
             if (mReleaseDetails.isMandatoryUpdate()) {
-                checkDownload(mContext, previousDownloadId, true);
+                // todo handle listener check progress
+
             }
         } else {
 
