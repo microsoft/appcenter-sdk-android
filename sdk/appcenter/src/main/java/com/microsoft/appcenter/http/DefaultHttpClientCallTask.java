@@ -38,6 +38,11 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_ENCODING_VA
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
+import static com.microsoft.appcenter.http.HttpUtils.READ_BUFFER_SIZE;
+import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
+import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
+import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -45,11 +50,6 @@ import static java.lang.Math.min;
  * Async task for default HTTP client.
  */
 class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
-
-    /**
-     * Thread stats tag for App Center HTTP calls.
-     */
-    private static final int THREAD_STATS_TAG = 0xD83DDC19;
 
     /**
      * Default string builder capacity.
@@ -60,26 +60,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
      * Minimum payload length in bytes to use gzip.
      */
     private static final int MIN_GZIP_LENGTH = 1400;
-
-    /**
-     * Read buffer size.
-     */
-    private static final int READ_BUFFER_SIZE = 1024;
-
-    /**
-     * Write buffer size.
-     */
-    private static final int WRITE_BUFFER_SIZE = 1024;
-
-    /**
-     * HTTP connection timeout.
-     */
-    private static final int CONNECT_TIMEOUT = 60000;
-
-    /**
-     * HTTP read timeout.
-     */
-    private static final int READ_TIMEOUT = 20000;
 
     /**
      * Maximum payload length to use prettify for logging.

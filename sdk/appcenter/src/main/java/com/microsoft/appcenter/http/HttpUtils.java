@@ -29,6 +29,31 @@ import javax.net.ssl.SSLException;
 public class HttpUtils {
 
     /**
+     * Thread stats tag for App Center HTTP calls.
+     */
+    public static final int THREAD_STATS_TAG = 0xD83DDC19;
+
+    /**
+     * Read buffer size.
+     */
+    public static final int READ_BUFFER_SIZE = 1024;
+
+    /**
+     * Write buffer size.
+     */
+    public static final int WRITE_BUFFER_SIZE = 1024;
+
+    /**
+     * HTTP connection timeout.
+     */
+    public static final int CONNECT_TIMEOUT = 60000;
+
+    /**
+     * HTTP read timeout.
+     */
+    public static final int READ_TIMEOUT = 20000;
+
+    /**
      * Maximum characters to be displayed in a log for application secret.
      */
     @VisibleForTesting

@@ -286,11 +286,6 @@ public final class DistributeConstants {
     static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     /**
-     * Http user agent.
-     */
-    static final String SDK_USER_AGENT = "AppCenter/Android " + BuildConfig.VERSION_NAME;
-
-    /**
      * Path where crash logs and temporary files are stored.
      */
     public static File DOWNLOAD_FILES_PATH = null;

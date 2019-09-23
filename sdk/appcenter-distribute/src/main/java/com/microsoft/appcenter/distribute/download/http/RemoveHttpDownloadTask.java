@@ -27,7 +27,7 @@ public class RemoveHttpDownloadTask extends AsyncTask<Void, Void, Void> {
     /**
      * Init.
      *
-     * @param context    context.
+     * @param context context.
      */
     RemoveHttpDownloadTask(Context context) {
         mContext = context;
@@ -36,7 +36,7 @@ public class RemoveHttpDownloadTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         String localFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_FILE);
-        if(localFilePath == null){
+        if (localFilePath == null) {
             return null;
         }
         mContext.deleteFile(localFilePath);

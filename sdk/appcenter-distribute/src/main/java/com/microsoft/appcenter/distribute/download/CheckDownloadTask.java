@@ -8,18 +8,14 @@ package com.microsoft.appcenter.distribute.download;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.util.NoSuchElementException;
 
@@ -173,15 +169,23 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     @Override
     protected void onPostExecute(final DownloadProgress result) {
         if (result != null) {
-            mListener.onProgress(result.getCurrentSize(), result.getTotalSize());
             /* onPostExecute is not always called on UI thread due to an old Android bug. */
-
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
-                    // todo invoke check download task
-                    Distribute.getInstance().updateProgressDialog(mReleaseDetails, result);
+                    mListener.onProgress(result);
+
+                    /* And schedule the next check. */
+                    if (mReleaseDetails.isMandatoryUpdate()) {
+                        HandlerUtils.getMainHandler().postAtTime(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                checkDownload(mContext, DistributeUtils.getStoredDownloadId(), true);
+                            }
+                        }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
+                    }
                 }
             });
         }

@@ -27,7 +27,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void download(ReleaseDetails releaseDetails, @NonNull Listener listener) {
-        if (!prepareDownload(listener)){
+        if (!prepareDownload(listener)) {
             return;
         }
         AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(releaseDetails, listener));

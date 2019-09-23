@@ -5,6 +5,7 @@ import android.net.TrafficStats;
 import android.os.AsyncTask;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -20,10 +21,13 @@ import java.net.URLConnection;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static com.microsoft.appcenter.distribute.BuildConfig.SDK_NAME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
 import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
+import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
+import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
+import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
+import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 
 /**
  * <h3>Description</h3>
@@ -34,13 +38,13 @@ import static com.microsoft.appcenter.distribute.download.http.HttpConnectionRel
  **/
 @SuppressLint("StaticFieldLeak")
 public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
-    private static final int MAX_REDIRECTS = 6;
-    private static final int TIMEOUT = 60000;
 
-    // TODO Reuse from Core
-    private static final int THREAD_STATS_TAG = SDK_NAME.hashCode();
+    private static final int MAX_REDIRECTS = 6;
+
     private Listener mListener;
+
     private File mApkFilePath;
+
     private ReleaseDetails mReleaseDetails;
 
     DownloadFileTask(ReleaseDetails releaseDetails, Listener listener) {
@@ -69,7 +73,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             if (!result && !DOWNLOAD_FILES_PATH.exists()) {
                 throw new IOException("Could not create the dir(s):" + DOWNLOAD_FILES_PATH.getAbsolutePath());
             }
-            if (mApkFilePath.exists()){
+            if (mApkFilePath.exists()) {
                 mApkFilePath.delete();
             }
 
@@ -98,15 +102,18 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
         try {
             input = new BufferedInputStream(connection.getInputStream());
             output = new FileOutputStream(mApkFilePath);
-            byte[] data = new byte[1024];
+            byte[] data = new byte[WRITE_BUFFER_SIZE];
             int count;
             long total = 0;
             while ((count = input.read(data)) != -1) {
                 total += count;
                 if (mListener != null) {
-                    mListener.onProgress(Math.round(total * 100.0f / lengthOfFile), total);
+                    mListener.onProgress(new DownloadProgress(Math.round(total * 100.0f / lengthOfFile), total));
                 }
                 output.write(data, 0, count);
+                if (isCancelled()) {
+                    break;
+                }
             }
             output.flush();
             return total;
@@ -139,11 +146,12 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     private URLConnection createConnection(URL url, int remainingRedirects) throws IOException {
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         connection.setSSLSocketFactory(new TLS1_2SocketFactory());
-        // TODO check if we need it:
-        //connection.addRequestProperty("User-Agent", SDK_USER_AGENT);
         connection.setInstanceFollowRedirects(true);
-        connection.setConnectTimeout(TIMEOUT);
-        connection.setReadTimeout(TIMEOUT);
+
+        /* Configure connection timeouts. */
+        connection.setConnectTimeout(CONNECT_TIMEOUT);
+        connection.setReadTimeout(READ_TIMEOUT);
+
         int code = connection.getResponseCode();
         if (code == HttpsURLConnection.HTTP_MOVED_PERM ||
                 code == HttpsURLConnection.HTTP_MOVED_TEMP ||

@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.distribute.download;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -29,8 +28,7 @@ import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFEREN
 
 public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
-    @SuppressLint("StaticFieldLeak")
-    private static Context mContext;
+    private Context mContext;
 
     /**
      * Last download progress dialog that was shown.
@@ -43,10 +41,6 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     public ReleaseDownloadListener(@NonNull Context context) {
         mContext = context;
-    }
-
-    private static Uri getFileUriOnOldDevices(String localUrl) {
-        return Uri.parse("file://" + localUrl);
     }
 
     static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
