@@ -1,7 +1,6 @@
 package com.microsoft.appcenter.distribute.download;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
@@ -10,7 +9,6 @@ import com.microsoft.appcenter.distribute.BuildConfig;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -38,8 +36,11 @@ import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.List
 public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     private static final int MAX_REDIRECTS = 6;
     private static final int TIMEOUT = 60000;
+
+    // TODO Reuse from Core
     private static final int THREAD_STATS_TAG = SDK_NAME.hashCode();
-    private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
+    //private static final String PREFERENCE_KEY_DOWNLOADING_FILE = "PREFERENCE_KEY_DOWNLOADING_FILE";
+    // TODO Move to const
     private static final String SDK_USER_AGENT = "AppCenter/Android " + BuildConfig.VERSION_NAME;
     private Context mContext;
     private Listener mListener;
@@ -50,6 +51,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     DownloadFileTask(Context context, ReleaseDetails releaseDetails) {
         mContext = context;
         mReleaseDetails = releaseDetails;
+        // Move to Const
         mDirectory = new File(context.getExternalFilesDir(null), "Download");
         mApkFilePath = resolveApkFilePath(context);
     }
@@ -79,6 +81,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             }
 
             /* Download the release file. */
+            // TODO Move to function
             input = new BufferedInputStream(connection.getInputStream());
             output = new FileOutputStream(mApkFilePath);
             byte data[] = new byte[1024];
@@ -113,7 +116,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     @Override
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADING_FILE, mApkFilePath.getAbsolutePath());
+            //SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADING_FILE, mApkFilePath.getAbsolutePath());
             mListener.onComplete(mApkFilePath.getAbsolutePath());
         }
     }
@@ -126,8 +129,10 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
         mListener = null;
     }
 
-    private File resolveApkFilePath(Context context){
+    private File resolveApkFilePath(Context context) {
+        // TODO Reuse?
         this.mDirectory = new File(context.getExternalFilesDir(null), "Download");
+        // TODO ".apk" get from URL?
         return new File(mDirectory, UUID.randomUUID() + ".apk");
     }
 
@@ -142,7 +147,8 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     private URLConnection createConnection(URL url, int remainingRedirects) throws IOException {
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
         connection.setSSLSocketFactory(new TLS1_2SocketFactory());
-        connection.addRequestProperty("User-Agent", SDK_USER_AGENT);
+        // ??
+        //connection.addRequestProperty("User-Agent", SDK_USER_AGENT);
         connection.setInstanceFollowRedirects(true);
         connection.setConnectTimeout(TIMEOUT);
         connection.setReadTimeout(TIMEOUT);
@@ -166,4 +172,4 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
         }
         return connection;
     }
- }
+}

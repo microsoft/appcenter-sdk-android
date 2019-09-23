@@ -15,7 +15,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.distribute.DownloadProgress;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -24,11 +23,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 
 /**
  * Inspect a pending or completed download.
@@ -59,7 +54,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     private ReleaseDetails mReleaseDetails;
 
     /**
-     *  Listener for download states.
+     * Listener for download states.
      */
     private ReleaseDownloader.Listener mListener;
 

@@ -40,6 +40,7 @@ import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
+import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
@@ -252,17 +253,20 @@ public class Distribute extends AbstractAppCenterService {
      * Current task inspecting the latest release details that we fetched from server.
      */
     //private DownloadTask mDownloadTask;
+
+    // TODO Doc
     private ReleaseDownloader mReleaseDownloader;
 
     /**
      * Current task to check download state and act on it.
      */
-    private CheckDownloadTask mCheckDownloadTask;
+    // TODO Move to DownloadManagerReleaseDownloader
+    //private CheckDownloadTask mCheckDownloadTask;
 
     /**
      * Remember if we checked download since our own process restarted.
      */
-    private boolean mCheckedDownload;
+    //private boolean mCheckedDownload;
 
     /**
      * True when distribute workflow reached final state.
@@ -661,11 +665,16 @@ public class Distribute extends AbstractAppCenterService {
             mCheckDownloadTask = null;
         }
         mCheckedDownload = false;
+
+
+        // TODO Move to DownloadManagerReleaseDownloader
         long downloadId = DistributeUtils.getStoredDownloadId();
         if (downloadId >= 0) {
             AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             removeDownload(downloadId);
         }
+
+
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -756,6 +765,7 @@ public class Distribute extends AbstractAppCenterService {
 
                     /* If app restarted, check if download completed to bring install U.I. */
                     mCheckedDownload = true;
+                    // TODO Move to DownloadManagerReleaseDownloader
                     checkDownload(mContext, DistributeUtils.getStoredDownloadId(), false);
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
@@ -1605,6 +1615,7 @@ public class Distribute extends AbstractAppCenterService {
                 if (releaseDetails.isMandatoryUpdate()) {
                     showDownloadProgress();
                 }
+
                 mCheckedDownload = true;
                 //mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
@@ -1646,6 +1657,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param downloadId      download identifier.
      * @param enqueueTime     time just before enqueuing download.
      */
+    // TODO Move to DownloadManagerReleaseDownloader
     @WorkerThread
     synchronized void storeDownloadRequestId(DownloadManager downloadManager, ReleaseDownloader task, long downloadId, long enqueueTime) {
 
@@ -1703,6 +1715,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param downloadId    download identifier from DownloadManager.
      * @param checkProgress true to only check progress, false to also process install if done.
      */
+    // TODO REMOVE
     synchronized void checkDownload(@NonNull Context context, long downloadId, boolean checkProgress) {
 
         /* Querying download manager and even the start intent are detected by strict mode so we do that in background. */
@@ -1718,6 +1731,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param intent         prepared install intent.
      * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
      */
+    // TODO Move to Listener
     synchronized boolean notifyDownload(ReleaseDetails releaseDetails, Intent intent) {
 
         /* Check state. */
@@ -1792,11 +1806,11 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Remove a previously downloaded file and any notification.
      */
+    // TODO Move to DownloadManagerReleaseDownloader
     @SuppressLint("VisibleForTests")
     private synchronized void removeDownload(long downloadId) {
         cancelNotification();
-        ReleaseDownloaderFactory.create(mContext).delete(downloadId);
-       // AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
+        //AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
     }
 
     /**
@@ -1842,6 +1856,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Update progress dialog for mandatory update.
      */
+    // TODO Move to Listener
     synchronized void updateProgressDialog(ReleaseDetails releaseDetails, DownloadProgress downloadProgress) {
 
         /* If not canceled and U.I. context did not change. */

@@ -21,6 +21,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
+import com.microsoft.appcenter.distribute.download.DownloadManagerReceiver;
 import com.microsoft.appcenter.distribute.download.DownloadTask;
 import com.microsoft.appcenter.distribute.download.RemoveDownloadTask;
 import com.microsoft.appcenter.http.HttpClient;

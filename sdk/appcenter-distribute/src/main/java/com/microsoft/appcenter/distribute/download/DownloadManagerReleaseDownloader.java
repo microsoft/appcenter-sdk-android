@@ -46,6 +46,8 @@ class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void download(ReleaseDetails releaseDetails) {
+        // TODO CheckDownloadTask
+
         mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
     }
 
