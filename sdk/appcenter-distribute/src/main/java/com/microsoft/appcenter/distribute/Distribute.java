@@ -9,8 +9,11 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DownloadManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -76,9 +79,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
@@ -213,15 +216,6 @@ public class Distribute extends AbstractAppCenterService {
     private Dialog mUnknownSourcesDialog;
 
     /**
-     * Last download progress dialog that was shown.
-     * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
-     * progress indicator while we actually use it to be a modal dialog for forced update.
-     * They will always keep this dialog to remain compatible but just mark it deprecated.
-     */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private android.app.ProgressDialog mProgressDialog;
-
-    /**
      * Mandatory download completed in app notification.
      */
     private Dialog mCompletedDownloadDialog;
@@ -237,9 +231,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private WeakReference<Activity> mLastActivityWithDialog = new WeakReference<>(null);
 
-    // TODO Doc
     /**
-     *
+     * Release downloader. It can use {@link DownloadManager} or direct HTTPS downloading.
      */
     private ReleaseDownloader mReleaseDownloader;
 
@@ -483,7 +476,8 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
-        hideProgressDialog();
+        // TODO
+        // hideProgressDialog();
     }
 
     @Override
@@ -609,7 +603,6 @@ public class Distribute extends AbstractAppCenterService {
         }
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
-        mProgressDialog = null;
         mCompletedDownloadDialog = null;
         mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
@@ -714,6 +707,7 @@ public class Distribute extends AbstractAppCenterService {
 
 
                     // TODO mReleaseDetails is null we need to load it before that.
+                    // TODO startFromBackground ?
 
                     mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
 
@@ -742,7 +736,8 @@ public class Distribute extends AbstractAppCenterService {
 
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
-                        showDownloadProgress();
+                        // TODO
+                        // showDownloadProgress();
 
                         /* Resume (or restart if not available) download. */
                         mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
@@ -913,7 +908,8 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        hideProgressDialog();
+        // TODO
+        // hideProgressDialog();
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
@@ -1564,7 +1560,8 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 if (releaseDetails.isMandatoryUpdate()) {
-                    showDownloadProgress();
+                    // TODO showDownloadProgress
+                    //showDownloadProgress();
                 }
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
                 mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
@@ -1602,7 +1599,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param context any application context.
      */
-   public synchronized void resumeApp(@NonNull Context context) {
+    public synchronized void resumeApp(@NonNull Context context) {
 
         /* Nothing to do if already in foreground. */
         if (mForegroundActivity == null) {
@@ -1617,6 +1614,69 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
+    /**
+     * Post notification about a completed download if we are in background when download completes.
+     * If this method is called on app process restart or if application is in foreground
+     * when download completes, it will not notify and return that the install U.I. should be shown now.
+     *
+     * @param releaseDetails release details to check state.
+     * @param intent         prepared install intent.
+     * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
+     */
+    synchronized boolean notifyDownload(ReleaseDetails releaseDetails, Intent intent) {
+
+        /* Check state. */
+        if (releaseDetails != mReleaseDetails) {
+            return true;
+        }
+
+        /*
+         * If we already notified, that means this check was triggered by application being resumed,
+         * thus in foreground at the moment the check download async task was started.
+         *
+         * We should not hold the install any longer now, even if the async task was long enough
+         * for app to be in background again, we should show install U.I. now.
+         */
+        if (mForegroundActivity != null || getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+            return false;
+        }
+
+        /* Post notification. */
+        AppCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
+        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            /* Create or update notification channel (mandatory on Android 8 target). */
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                    mContext.getString(R.string.appcenter_distribute_notification_category),
+                    NotificationManager.IMPORTANCE_DEFAULT);
+
+            //noinspection ConstantConditions
+            notificationManager.createNotificationChannel(channel);
+            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
+        } else {
+            builder = getOldNotificationBuilder();
+        }
+        builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
+                .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
+                .setContentText(getInstallReadyMessage())
+                .setSmallIcon(mContext.getApplicationInfo().icon)
+                .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
+        builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
+        Notification notification = builder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+        //noinspection ConstantConditions
+        notificationManager.notify(DistributeUtils.getNotificationId(), notification);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+
+        /* Reset check download flag to show install U.I. on resume if notification ignored. */
+        // TODO mCheckedDownload?
+        //mCheckedDownload = false;
+        return true;
+    }
+
     @NonNull
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
@@ -1624,42 +1684,15 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Show download progress.
+     * Used to avoid querying download manager on every activity change.
+     *
+     * @param releaseDetails release details to check state.
      */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private void showDownloadProgress() {
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
-            return;
-        }
-        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
-        mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setProgressNumberFormat(null);
-        mProgressDialog.setProgressPercentFormat(null);
-        showAndRememberDialogActivity(mProgressDialog);
-    }
-
-    /**
-     * Hide progress dialog and stop updating.
-     */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private synchronized void hideProgressDialog() {
-        if (mProgressDialog != null) {
-            final android.app.ProgressDialog progressDialog = mProgressDialog;
-            mProgressDialog = null;
-
-            /* This can be called from background check download task. */
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    progressDialog.hide();
-                }
-            });
-            HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
+    synchronized void markDownloadStillInProgress(ReleaseDetails releaseDetails) {
+        if (releaseDetails == mReleaseDetails) {
+            AppCenterLog.verbose(LOG_TAG, "Download is still in progress...");
+            // TODO mCheckedDownload?
+            //mCheckedDownload = true;
         }
     }
 
