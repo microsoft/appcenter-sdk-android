@@ -16,6 +16,7 @@ import android.os.Build;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -125,7 +126,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                         AppCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
                         return new DownloadProgress(currentSize, totalSize);
                     } else {
-                        distribute.markDownloadStillInProgress(mReleaseDetails);
+                        DownloadManagerReleaseDownloader.markDownloadStillInProgress(mReleaseDetails);
                         return null;
                     }
                 }
@@ -176,7 +177,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
-            distribute.completeWorkflow(mReleaseDetails);
+            distribute.setDownloadState(mReleaseDetails, true);
         }
         return null;
     }

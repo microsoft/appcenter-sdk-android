@@ -12,11 +12,17 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.distribute.DistributeUtils;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 
 /**
  * The download manager API triggers strict mode exception in U.I. thread.
@@ -63,7 +69,32 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
 
         @SuppressWarnings("ConstantConditions")
         long downloadRequestId = downloadManager.enqueue(request);
-        Distribute.getInstance().storeDownloadRequestId(downloadManager, this, downloadRequestId, enqueueTime);
+
+        /* Check for if state changed and task not canceled in time. */
+        if (mReleaseDetails != null) {
+
+            /* Delete previous download. */
+            long previousDownloadId = DistributeUtils.getStoredDownloadId();
+            if (previousDownloadId >= 0) {
+                AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
+                downloadManager.remove(previousDownloadId);
+            }
+
+            /* Store new download identifier. */
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadRequestId);
+            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+
+            /* Start monitoring progress for mandatory update. */
+            if (mReleaseDetails.isMandatoryUpdate()) {
+                checkDownload(mContext, previousDownloadId, true);
+            }
+        } else {
+
+            /* State changed quickly, cancel download. */
+            AppCenterLog.debug(LOG_TAG, "State changed while downloading, cancel id=" + downloadRequestId);
+            downloadManager.remove(downloadRequestId);
+        }
         return null;
     }
 }
