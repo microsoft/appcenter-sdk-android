@@ -76,17 +76,23 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
         /* If file size is known update downloadProgress bar. */
         if (mProgressDialog != null && downloadProgress.getTotalSize() >= 0) {
+            HandlerUtils.runOnUiThread(new Runnable() {
 
-            /* When we switch from indeterminate to determinate */
-            if (mProgressDialog.isIndeterminate()) {
+                @Override
+                public void run() {
 
-                /* Configure the progress dialog determinate style. */
-                mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
-                mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
-            }
-            mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
+                    /* When we switch from indeterminate to determinate */
+                    if (mProgressDialog.isIndeterminate()) {
+
+                        /* Configure the progress dialog determinate style. */
+                        mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
+                        mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
+                        mProgressDialog.setIndeterminate(false);
+                        mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
+                    }
+                    mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
+                }
+            });
         }
     }
 

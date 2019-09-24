@@ -40,7 +40,7 @@ public interface ReleaseDownloader {
          *
          * @param downloadProgress //todo
          */
-        void onProgress(long currentSize, long totalSize);
+        boolean onProgress(long currentSize, long totalSize);
 
         /**
          * Called when the downloading is completed.

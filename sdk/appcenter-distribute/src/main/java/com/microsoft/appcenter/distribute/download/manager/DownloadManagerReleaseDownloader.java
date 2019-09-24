@@ -46,9 +46,9 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     private DownloadManagerRequestTask mRequestTask;
 
     public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
-        this.mContext = context;
-        this.mReleaseDetails = releaseDetails;
-        this.mListener = listener;
+        mContext = context;
+        mReleaseDetails = releaseDetails;
+        mListener = listener;
     }
 
     private DownloadManager getDownloadManager() {
@@ -64,25 +64,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
     public ReleaseDetails getReleaseDetails() {
         return mReleaseDetails;
-    }
-
-    /**
-     * Start new download.
-     */
-    private void request() {
-        mRequestTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRequestTask(this));
-    }
-
-    /**
-     * Update the state on current download.
-     */
-    private void update() {
-        mUpdateTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerUpdateTask(this));
-    }
-
-    private void remove(long downloadId) {
-        AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
-        AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRemoveTask(mContext, downloadId));
     }
 
     @Override
@@ -112,6 +93,25 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
             remove(downloadId);
         }
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+    }
+
+    /**
+     * Start new download.
+     */
+    private void request() {
+        mRequestTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRequestTask(this));
+    }
+
+    /**
+     * Update the state on current download.
+     */
+    private void update() {
+        mUpdateTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerUpdateTask(this));
+    }
+
+    private void remove(long downloadId) {
+        AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
+        AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRemoveTask(mContext, downloadId));
     }
 
     @WorkerThread
@@ -179,7 +179,17 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
                 if (status != DownloadManager.STATUS_SUCCESSFUL) {
                     long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
                     long currentSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                    onProgress(currentSize, totalSize);
+                    if (mListener.onProgress(currentSize, totalSize)) {
+
+                        /* Schedule the next check if more updates are needed. */
+                        HandlerUtils.getMainHandler().postAtTime(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                update();
+                            }
+                        }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
+                    }
                     return;
                 }
 
@@ -204,27 +214,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
             AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
             mListener.onError(e.getMessage());
         }
-    }
-
-    private void onProgress(final long currentSize, final long totalSize) {
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                mListener.onProgress(currentSize, totalSize);
-
-                /* And schedule the next check. */
-                if (mReleaseDetails.isMandatoryUpdate()) {
-                    HandlerUtils.getMainHandler().postAtTime(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            update();
-                        }
-                    }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
-                }
-            }
-        });
     }
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"})

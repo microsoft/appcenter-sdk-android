@@ -288,7 +288,7 @@ public final class DistributeConstants {
     /**
      * Preference key to store the downloading release file uri.
      */
-    static final String PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE = PREFERENCE_PREFIX + "downloading_release_apk_file";
+    public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
 
     /**
      * Path where downloaded files are stored.
