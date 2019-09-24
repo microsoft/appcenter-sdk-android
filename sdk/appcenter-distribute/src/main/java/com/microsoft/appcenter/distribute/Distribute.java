@@ -67,6 +67,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
@@ -474,8 +475,7 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
-        // TODO
-        // hideProgressDialog();
+        mReleaseDownloaderListener.hideProgressDialog();
     }
 
     @Override
@@ -702,11 +702,9 @@ public class Distribute extends AbstractAppCenterService {
                      * Install UI will be shown by listener once download will be completed.
                      */
                     mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
-
-
-                    // TODO mReleaseDetails is null we need to load it before that.
-                    // TODO startFromBackground ?
-
+                    if (mReleaseDetails == null) {
+                        startFromBackground(mContext);
+                    }
                     mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
@@ -734,8 +732,7 @@ public class Distribute extends AbstractAppCenterService {
 
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
-                        // TODO
-                        // showDownloadProgress();
+                        showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
 
                         /* Resume (or restart if not available) download. */
                         mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
@@ -906,8 +903,6 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        // TODO
-        // hideProgressDialog();
         mReleaseDownloaderListener.hideProgressDialog();
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
@@ -1300,15 +1295,6 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
 
-   /* public void showDownloadProgress(Activity foregroundActivity) {
-        if (foregroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
-            return;
-        }
-        mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity)
-        showAndRememberDialogActivity(mProgressDialog);
-    }*/
-
     /**
      * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
      * (it could be resumed in another activity covering the previous one).
@@ -1568,8 +1554,7 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 if (releaseDetails.isMandatoryUpdate()) {
-                    // TODO showDownloadProgress
-                    //showDownloadProgress();
+                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
                 }
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
                 mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
@@ -1678,10 +1663,6 @@ public class Distribute extends AbstractAppCenterService {
         //noinspection ConstantConditions
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
-
-        /* Reset check download flag to show install U.I. on resume if notification ignored. */
-        // TODO mCheckedDownload?
-        //mCheckedDownload = false;
         return true;
     }
 
@@ -1689,19 +1670,6 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
         return new Notification.Builder(mContext);
-    }
-
-    /**
-     * Used to avoid querying download manager on every activity change.
-     *
-     * @param releaseDetails release details to check state.
-     */
-    synchronized void markDownloadStillInProgress(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
-            AppCenterLog.verbose(LOG_TAG, "Download is still in progress...");
-            // TODO mCheckedDownload?
-            //mCheckedDownload = true;
-        }
     }
 
     /**
@@ -1748,9 +1716,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-
+            //mReleaseDownloaderListener.onComplete(releaseDetails);
             // TODO get APK path
             // TODO Install APK
+            Distribute.getInstance().setInstalling(releaseDetails);
         } else {
             showDisabledToast();
         }

@@ -88,21 +88,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
 
-   /* *//**//**
-     * Set context, used when need to manipulate context before onStarted.
-     * For example when download completes after application process exited.
-     *//**//*
-    synchronized ReleaseDetails startFromBackground(Context context) {
-        if (mAppSecret == null) {
-            AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
-            mContext = context;
-            SharedPreferencesManager.initialize(mContext);
-            mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
-            mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
-        }
-        return mReleaseDetails;
-    }*/
-
     synchronized static void removePreviousDownloadId(DownloadManager downloadManager) {
         long previousDownloadId = getStoredDownloadId();
         if (previousDownloadId >= 0) {

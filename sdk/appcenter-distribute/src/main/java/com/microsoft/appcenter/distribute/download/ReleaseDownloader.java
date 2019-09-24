@@ -31,9 +31,10 @@ public interface ReleaseDownloader {
         /**
          * Called periodically during download to display current progress.
          *
-         * @param downloadProgress
+         * @param totalSize todo
+         * @param currentSize todo
          */
-        void onProgress(@NonNull DownloadProgress downloadProgress);
+        void onProgress(long totalSize, long currentSize);
 
         /**
          * Called when the downloading is completed.

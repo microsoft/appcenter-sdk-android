@@ -30,11 +30,15 @@ public class DownloadUtils {
      */
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
 
-
     /**
      * How often to check download progress in millis.
      */
     static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
+
+    /**
+     * Preference key to store the downloading release file uri.
+     */
+    static final String PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE = PREFERENCE_PREFIX + "downloading_release_apk_file";
 
     /**
      * Get download identifier from storage.
@@ -44,5 +48,4 @@ public class DownloadUtils {
     static long getStoredDownloadId() {
         return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
-
 }

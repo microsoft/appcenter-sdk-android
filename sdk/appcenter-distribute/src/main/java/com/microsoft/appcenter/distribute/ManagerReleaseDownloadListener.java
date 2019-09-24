@@ -10,18 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-
-import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import java.text.NumberFormat;
-
+import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_PREFIX;
 
 public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listener {
@@ -84,11 +80,11 @@ public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listene
     }
 
     @Override
-    public void onProgress(@NonNull DownloadProgress downloadProgress) {
-        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + downloadProgress.getCurrentSize() + " totalBytes=" + downloadProgress.getTotalSize());
+    public void onProgress(long totalSize, long currentSize) {
+        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + currentSize + " totalBytes=" + totalSize);
 
         /* If file size is known update downloadProgress bar. */
-        if (mProgressDialog != null && downloadProgress.getTotalSize() >= 0) {
+        if (mProgressDialog != null && totalSize >= 0) {
 
             /* When we switch from indeterminate to determinate */
             if (mProgressDialog.isIndeterminate()) {
@@ -97,39 +93,42 @@ public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listene
                 mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                 mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
                 mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
+                mProgressDialog.setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
             }
-            mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
+            mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
         }
     }
 
     @Override
     public void onComplete(@NonNull String localUri, @NonNull ReleaseDetails releaseDetails) {
+        Distribute distribute = Distribute.getInstance();
         AppCenterLog.debug(LOG_TAG, "Download was successful uri=" + localUri);
         Intent intent = getInstallIntent(Uri.parse(localUri));
-        boolean installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
-//      if (!installerFound) {
-//          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-//              intent = DownloadUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
-//              installerFound = intent.resolveActivity(mContext.getPackageManaWger()) != null;
-//          }
-//      } else {
-//          installerFound = true;
-//      }
-        if (!installerFound) {
+        if (intent.resolveActivity(mContext.getPackageManager()) == null) {
             AppCenterLog.error(LOG_TAG, "Installer not found");
-//            distribute.completeWorkflow(mReleaseDetails);
-//            return null;
+            distribute.completeWorkflow(releaseDetails);
+            return;
         }
 
-        // TODO Check if a should install now.
+        /* Check if a should install now. */
+        if (!distribute.notifyDownload(releaseDetails, intent)) {
 
-        AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
-        mContext.startActivity(intent);
-        if (releaseDetails.isMandatoryUpdate()) {
-            Distribute.getInstance().setInstalling(releaseDetails);
+            /*
+             * This start call triggers strict mode in U.I. thread so it
+             * needs to be done here without synchronizing
+             * (not to block methods waiting on synchronized on U.I. thread)
+             * so yes we could launch install and SDK being disabled...
+             *
+             * This corner case cannot be avoided without triggering
+             * strict mode exception.
+             */
+            AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
+            mContext.startActivity(intent);
+            if (releaseDetails.isMandatoryUpdate()) {
+                Distribute.getInstance().setInstalling(releaseDetails);
+            }
+            storeReleaseDetails(releaseDetails);
         }
-        storeReleaseDetails(releaseDetails);
     }
 
     @Override

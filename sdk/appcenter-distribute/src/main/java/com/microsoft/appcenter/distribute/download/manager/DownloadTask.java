@@ -11,14 +11,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.ReleaseDownloadListener;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.PREFERENCE_PREFIX;
-import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.getStoredDownloadId;
 
 /**
  * The download manager API triggers strict mode exception in U.I. thread.

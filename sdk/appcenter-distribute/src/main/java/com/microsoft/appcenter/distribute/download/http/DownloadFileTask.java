@@ -3,13 +3,10 @@ package com.microsoft.appcenter.distribute.download.http;
 import android.annotation.SuppressLint;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
-
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,9 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-
 import javax.net.ssl.HttpsURLConnection;
-
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
 import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
@@ -108,7 +103,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             while ((count = input.read(data)) != -1) {
                 total += count;
                 if (mListener != null) {
-                    mListener.onProgress(new DownloadProgress(total, lengthOfFile));
+                    mListener.onProgress(Math.round(total * 100.0f / lengthOfFile), total);
                 }
                 output.write(data, 0, count);
                 if (isCancelled()) {

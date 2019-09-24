@@ -16,9 +16,9 @@ import java.io.File;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
-public class HttpReleaseDownloadListener extends ManagerReleaseDownloadListener {
+public class HttpManagerReleaseDownloadListener extends ManagerReleaseDownloadListener {
 
-    public HttpReleaseDownloadListener(@NonNull Context context) {
+    public HttpManagerReleaseDownloadListener(@NonNull Context context) {
         super(context);
     }
 

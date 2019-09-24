@@ -9,21 +9,20 @@ import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.SystemClock;
-
+import android.os.Build;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import java.util.NoSuchElementException;
-
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE;
 
 /**
  * Inspect a pending or completed download.
@@ -52,6 +51,9 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      */
     private ReleaseDownloader.Listener mListener;
 
+    /**
+     * TODO desc
+     */
     private ReleaseDownloader mManager;
 
     /**
@@ -67,11 +69,6 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         mReleaseDetails = releaseDetails;
         mListener = listener;
         mManager = manager;
-    }
-
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
-        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
     }
 
     @Override
@@ -120,50 +117,15 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     AppCenterLog.verbose(LOG_TAG, "currentSize=" + currentSize + " totalSize=" + totalSize);
                     return new DownloadProgress(currentSize, totalSize);
                 }
-
-                /* Build install intent. */
-                String localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
-                //todo
+                String localUri;
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                    localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME));
+                } else {
+                    localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
+                }
+                SharedPreferencesManager.putString(PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE, localUri);
                 mListener.onComplete(localUri, mReleaseDetails);
-//                AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId + " uri=" + localUri);
-//                Intent intent = DownloadUtils.getInstallIntent(Uri.parse(localUri));
-//                boolean installerFound = false;
-//                if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-//                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-//                        intent = DownloadUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
-//                        installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
-//                    }
-//                } else {
-//                    installerFound = true;
-//                }
-//                if (!installerFound) {
-//                    AppCenterLog.error(LOG_TAG, "Installer not found");
-//                    distribute.completeWorkflow(mReleaseDetails);
-//                    return null;
-//                }
-//
-//                /* Check if a should install now. */
-//                if (!distribute.notifyDownload(mReleaseDetails, intent)) {
-//
-//                    /*
-//                     * This start call triggers strict mode in U.I. thread so it
-//                     * needs to be done here without synchronizing
-//                     * (not to block methods waiting on synchronized on U.I. thread)
-//                     * so yes we could launch install and SDK being disabled...
-//                     *
-//                     * This corner case cannot be avoided without triggering
-//                     * strict mode exception.
-//                     */
-//                    AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
-//                    mContext.startActivity(intent);
-//                    if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
-//                        distribute.setInstalling(mReleaseDetails);
-//                    } else {
-//                        distribute.completeWorkflow(mReleaseDetails);
-//                    }
-//                    storeDownloadedReleaseDetails();
                 return null;
-
             } finally {
                 cursor.close();
             }
@@ -183,7 +145,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                 @Override
                 public void run() {
-                    mListener.onProgress(result);
+                    mListener.onProgress(result.getTotalSize(), result.getCurrentSize());
 
                     /* And schedule the next check. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
@@ -199,22 +161,4 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             });
         }
     }
-
-//    /**
-//     * Store details about downloaded release.
-//     * After app update and restart, this info is used to report new download and to update group ID (if it's changed).
-//     */
-//    private void storeDownloadedReleaseDetails() {
-//        if (mReleaseDetails == null) {
-//            AppCenterLog.debug(LOG_TAG, "Downloaded release details are missing or broken, won't store.");
-//            return;
-//        }
-//        String groupId = mReleaseDetails.getDistributionGroupId();
-//        String releaseHash = mReleaseDetails.getReleaseHash();
-//        int releaseId = mReleaseDetails.getId();
-//        AppCenterLog.debug(LOG_TAG, "Store downloaded group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-//        SharedPreferencesManager.putString(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-//        SharedPreferencesManager.putString(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-//        SharedPreferencesManager.putInt(DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
-//    }
 }

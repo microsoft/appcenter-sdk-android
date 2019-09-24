@@ -164,7 +164,6 @@ class DistributeUtils {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
-
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */
