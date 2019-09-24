@@ -37,7 +37,6 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
-import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
@@ -50,7 +49,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -840,13 +838,6 @@ public class Distribute extends AbstractAppCenterService {
             return false;
         }
         return true;
-    }
-
-    //todo
-    public synchronized void checkDownload(@NonNull Context context, long downloadId) {
-
-        /* Querying download manager and even the start intent are detected by strict mode so we do that in background. */
-        AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(context, downloadId, mReleaseDetails, mReleaseDownloader, mReleaseDownloaderListener));
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {

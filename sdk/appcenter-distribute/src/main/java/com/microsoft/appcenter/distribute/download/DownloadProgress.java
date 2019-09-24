@@ -31,14 +31,14 @@ public class DownloadProgress {
     /**
      * @return Number of bytes downloaded so far.
      */
-    long getCurrentSize() {
+    public long getCurrentSize() {
         return mCurrentSize;
     }
 
     /**
      * @return Expected file size.
      */
-    long getTotalSize() {
+    public long getTotalSize() {
         return mTotalSize;
     }
 }

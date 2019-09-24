@@ -3,6 +3,8 @@ package com.microsoft.appcenter.distribute.download;
 import android.content.Context;
 import android.os.Build;
 
+import com.microsoft.appcenter.distribute.HttpReleaseDownloadListener;
+import com.microsoft.appcenter.distribute.ManagerReleaseDownloadListener;
 import com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 

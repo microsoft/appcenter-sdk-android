@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.File;
