@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.distribute.download;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
@@ -47,6 +48,16 @@ public interface ReleaseDownloader {
          * @param errorMessage The message of the exception.
          */
         void onError(@NonNull String errorMessage);
+
+        /**
+         * Show download progress.
+         */
+        android.app.ProgressDialog showDownloadProgress(Activity foregraundActivity);
+
+        /**
+         * Hide progress dialog and stop updating.
+         */
+        void hideProgressDialog();
     }
 
 }

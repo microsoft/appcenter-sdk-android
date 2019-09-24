@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.distribute.download;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -19,12 +20,12 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.text.NumberFormat;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
 
 public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
@@ -123,31 +124,26 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     }
 
-
     /**
      * Show download progress.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    public void showDownloadProgress() {
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
-            return;
-        }
-        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
+    public android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
+        mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressNumberFormat(null);
         mProgressDialog.setProgressPercentFormat(null);
-        showAndRememberDialogActivity(mProgressDialog);
+        return mProgressDialog;
     }
 
     /**
      * Hide progress dialog and stop updating.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private synchronized void hideProgressDialog() {
+    public synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;

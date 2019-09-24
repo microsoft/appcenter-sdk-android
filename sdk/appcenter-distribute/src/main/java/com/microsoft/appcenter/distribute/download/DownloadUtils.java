@@ -25,6 +25,11 @@ class DownloadUtils {
     static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
 
     /**
+     * Token used for handler callbacks to check download progress.
+     */
+    static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
+
+    /**
      * Invalid download identifier.
      */
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
@@ -45,6 +50,11 @@ class DownloadUtils {
     static final String PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + "downloaded_distribution_group_id";
 
     /**
+     * How often to check download progress in millis.
+     */
+    static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
+
+    /**
      * Get download identifier from storage.
      *
      * @return download identifier or negative value if not found.
@@ -52,6 +62,5 @@ class DownloadUtils {
     static long getStoredDownloadId() {
         return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
-
 
 }

@@ -11,6 +11,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
@@ -21,6 +22,8 @@ import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
 
 /**
  * Inspect a pending or completed download.
@@ -49,6 +52,8 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      */
     private ReleaseDownloader.Listener mListener;
 
+    private ReleaseDownloader mManager;
+
     /**
      * Init.
      *
@@ -56,11 +61,12 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      * @param downloadId     download identifier.
      * @param releaseDetails release details.
      */
-    public CheckDownloadTask(Context context, long downloadId, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
+    public CheckDownloadTask(Context context, long downloadId, ReleaseDetails releaseDetails, ReleaseDownloader manager, ReleaseDownloader.Listener listener) {
         mContext = context.getApplicationContext();
         mDownloadId = downloadId;
         mReleaseDetails = releaseDetails;
         mListener = listener;
+        mManager = manager;
     }
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
@@ -161,7 +167,8 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
-            distribute.setDownloadState(mReleaseDetails, true);
+            mManager.delete();
+
         }
         return null;
     }
@@ -182,7 +189,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                             @Override
                             public void run() {
-                                checkDownload(mContext, DistributeUtils.getStoredDownloadId(), true);
+                                mManager.download(mReleaseDetails, mListener);
                             }
                         }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
                     }

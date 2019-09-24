@@ -2,16 +2,12 @@ package com.microsoft.appcenter.distribute.download.manager;
 
 import android.app.DownloadManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
@@ -31,11 +27,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
      * Current task inspecting the latest release details that we fetched from server.
      */
     private DownloadTask mDownloadTask;
-
-    /**
-     * Package info.
-     */
-    private PackageInfo mPackageInfo;
 
     /**
      * Distribute service name.
@@ -60,11 +51,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
     public DownloadManagerReleaseDownloader(Context context) {
         this.mContext = context;
-        try {
-            mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
-        }
     }
 
     @Override
@@ -73,9 +59,9 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
         long downloadId = getStoredDownloadId();
         if (releaseDetails.isMandatoryUpdate() || mCheckedDownload) {
-            mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, releaseDetails, listener));
+            mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, releaseDetails, this, listener));
         } else {
-            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails, listener));
+            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails, this, listener));
             mCheckedDownload = true;
         }
     }
@@ -83,10 +69,14 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     @Override
     public void delete() {
         long downloadId = getStoredDownloadId();
-        mDownloadTask.cancel(true);
-        mCheckDownloadTask.cancel(true);
-        mDownloadTask = null;
-        mCheckDownloadTask = null;
+        if(mDownloadTask != null) {
+            mDownloadTask.cancel(true);
+            mDownloadTask = null;
+        }
+        if(mCheckDownloadTask != null) {
+            mCheckDownloadTask.cancel(true);
+            mCheckDownloadTask = null;
+        }
         if (downloadId >= 0) {
             AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
             AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
@@ -97,6 +87,21 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     static long getStoredDownloadId() {
         return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
     }
+
+   /* *//**//**
+     * Set context, used when need to manipulate context before onStarted.
+     * For example when download completes after application process exited.
+     *//**//*
+    synchronized ReleaseDetails startFromBackground(Context context) {
+        if (mAppSecret == null) {
+            AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
+            mContext = context;
+            SharedPreferencesManager.initialize(mContext);
+            mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
+            mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+        }
+        return mReleaseDetails;
+    }*/
 
     synchronized static void removePreviousDownloadId(DownloadManager downloadManager) {
         long previousDownloadId = getStoredDownloadId();

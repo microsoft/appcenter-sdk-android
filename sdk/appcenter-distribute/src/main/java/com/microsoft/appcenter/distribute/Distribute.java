@@ -910,6 +910,7 @@ public class Distribute extends AbstractAppCenterService {
         mUnknownSourcesDialog = null;
         // TODO
         // hideProgressDialog();
+        mReleaseDownloaderListener.hideProgressDialog();
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
@@ -1300,6 +1301,15 @@ public class Distribute extends AbstractAppCenterService {
         dialog.show();
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
+
+   /* public void showDownloadProgress(Activity foregroundActivity) {
+        if (foregroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
+            return;
+        }
+        mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity)
+        showAndRememberDialogActivity(mProgressDialog);
+    }*/
 
     /**
      * Show update dialog. This can be called multiple times if clicking on HOME and app resumed
