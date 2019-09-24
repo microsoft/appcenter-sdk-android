@@ -7,10 +7,10 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.File;
 
@@ -286,35 +286,13 @@ public final class DistributeConstants {
     static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     /**
-     * Path where crash logs and temporary files are stored.
-     */
-    // TODO Use getter instead
-    public static File DOWNLOAD_FILES_PATH = null;
-
-    /**
-     * Initializes constants from the given context. The context is used to set
-     * the package name, version code, and the files path.
+     * Path where downloaded files are stored.
      *
      * @param context The context to use. Usually your Activity object.
+     * @return app specific "Downloads" folder.
      */
-    public static void loadFromContext(Context context) {
-        loadDownloadFilesPath(context);
-    }
-
-    /**
-     * Helper method to set the files path. If an exception occurs, the files
-     * path will be null!
-     *
-     * @param context The context to use. Usually your Activity object.
-     */
-    private static void loadDownloadFilesPath(Context context) {
-        if (context != null) {
-            try {
-                DistributeConstants.DOWNLOAD_FILES_PATH = new File(context.getExternalFilesDir(null), "Download");
-            } catch (Exception e) {
-                AppCenterLog.error(AppCenter.LOG_TAG, "Exception thrown when accessing the application filesystem", e);
-            }
-        }
+    public static File getDownloadFilesPath(@NonNull Context context) {
+        return new File(context.getExternalFilesDir(null), "Download");
     }
 
 

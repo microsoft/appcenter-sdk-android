@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download;
 
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -13,6 +18,11 @@ public class DownloadUtils {
      * Base key for stored preferences.
      */
     public static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
+
+    /**
+     * Preference key to store a path to a downloaded .apk file.
+     */
+    public static final String PREFERENCE_KEY_DOWNLOADED_FILE = "PREFERENCE_KEY_DOWNLOADED_FILE";
 
     /**
      * Preference key to store the current/last download identifier (we keep download until a next

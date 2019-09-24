@@ -11,7 +11,7 @@ import android.os.AsyncTask;
 
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_FILE;
 
 /**
  * Removes a downloaded apk.

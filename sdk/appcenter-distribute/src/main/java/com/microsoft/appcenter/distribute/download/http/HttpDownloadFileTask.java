@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download.http;
 
-import android.annotation.SuppressLint;
+import android.content.Context;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
 
@@ -20,9 +25,9 @@ import java.net.URLConnection;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.getDownloadFilesPath;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_FILE;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
-import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
 import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
@@ -35,20 +40,37 @@ import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
  * it on external storage. If the download was successful, the file
  * is then opened to trigger the installation.
  **/
-@SuppressLint("StaticFieldLeak")
 public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
 
+    /**
+     * Maximal number of allowed redirects.
+     */
     private static final int MAX_REDIRECTS = 6;
 
+    /**
+     * Download callback.
+     */
     private Listener mListener;
 
+    /**
+     * Path to the downloading apk.
+     */
     private File mApkFilePath;
 
+    /**
+     * Path to the application specific "Downloads" folder.
+     */
+    private File mDownloadFilesPath;
+
+    /**
+     * Information about the downloading release.
+     */
     private ReleaseDetails mReleaseDetails;
 
-    HttpDownloadFileTask(ReleaseDetails releaseDetails, Listener listener) {
+    HttpDownloadFileTask(ReleaseDetails releaseDetails, Listener listener, Context context) {
         mReleaseDetails = releaseDetails;
         mListener = listener;
+        mDownloadFilesPath = getDownloadFilesPath(context);
         mApkFilePath = resolveApkFilePath();
     }
 
@@ -68,9 +90,9 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
                 }
                 return 0L;
             }
-            boolean result = DOWNLOAD_FILES_PATH.mkdirs();
-            if (!result && !DOWNLOAD_FILES_PATH.exists()) {
-                throw new IOException("Could not create the dir(s):" + DOWNLOAD_FILES_PATH.getAbsolutePath());
+            boolean result = mDownloadFilesPath.mkdirs();
+            if (!result && !mDownloadFilesPath.exists()) {
+                throw new IOException("Could not create the dir(s):" + mDownloadFilesPath.getAbsolutePath());
             }
             if (mApkFilePath.exists()) {
                 mApkFilePath.delete();
@@ -94,6 +116,14 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
         }
     }
 
+    /**
+     * Performs IO operation to download .apk file through HttpConnection.
+     * Saves .apk file to the mApkFilePath.
+     *
+     * @param connection URLConnection instance
+     * @return total number of downloaded bytes.
+     * @throws IOException if connection fails
+     */
     private Long downloadReleaseFile(URLConnection connection) throws IOException {
         InputStream input = null;
         OutputStream output = null;
@@ -131,7 +161,7 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
 
     private File resolveApkFilePath() {
         String apkFileName = mReleaseDetails.getReleaseHash() + ".apk";
-        return new File(DOWNLOAD_FILES_PATH, apkFileName);
+        return new File(mDownloadFilesPath, apkFileName);
     }
 
     /**
