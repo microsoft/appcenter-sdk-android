@@ -22,14 +22,14 @@ import java.text.NumberFormat;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
+import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
 
-public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
+public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listener {
 
-    private Context mContext;
+    protected Context mContext;
 
     /**
      * Last download progress dialog that was shown.
@@ -40,7 +40,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
-    public ReleaseDownloadListener(@NonNull Context context) {
+    public ManagerReleaseDownloadListener(@NonNull Context context) {
         mContext = context;
     }
 
@@ -61,7 +61,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * @return intent to open installation U.I.
      */
     @NonNull
-    static Intent getInstallIntent(Uri fileUri) {
+    protected Intent getInstallIntent(Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         intent.setData(fileUri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -98,7 +98,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 //      if (!installerFound) {
 //          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
 //              intent = DownloadUtils.getInstallIntent(getFileUriOnOldDevices(cursor));
-//              installerFound = intent.resolveActivity(mContext.getPackageManager()) != null;
+//              installerFound = intent.resolveActivity(mContext.getPackageManaWger()) != null;
 //          }
 //      } else {
 //          installerFound = true;

@@ -37,7 +37,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
-import com.microsoft.appcenter.distribute.download.ReleaseDownloadListener;
+import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
@@ -50,6 +50,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -68,7 +69,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
@@ -429,7 +429,7 @@ public class Distribute extends AbstractAppCenterService {
      * Set context, used when need to manipulate context before onStarted.
      * For example when download completes after application process exited.
      */
-    synchronized ReleaseDetails startFromBackground(Context context) {
+    public synchronized ReleaseDetails startFromBackground(Context context) {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
@@ -496,7 +496,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext);
+            mReleaseDownloaderListener = ReleaseDownloaderFactory.createListener(mContext);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -840,6 +840,13 @@ public class Distribute extends AbstractAppCenterService {
             return false;
         }
         return true;
+    }
+
+    //todo
+    public synchronized void checkDownload(@NonNull Context context, long downloadId) {
+
+        /* Querying download manager and even the start intent are detected by strict mode so we do that in background. */
+        AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(context, downloadId, mReleaseDetails, mReleaseDownloader, mReleaseDownloaderListener));
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
