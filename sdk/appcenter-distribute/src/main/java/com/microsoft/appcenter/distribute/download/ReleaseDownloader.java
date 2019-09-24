@@ -9,6 +9,7 @@ import com.microsoft.appcenter.distribute.ReleaseDetails;
  */
 public interface ReleaseDownloader {
 
+    // TODO rename download to ?
     /**
      * Start or resume downloading the installer for the release.
      *

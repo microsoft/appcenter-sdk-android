@@ -104,7 +104,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         Intent intent = getInstallIntent(Uri.parse(localUri));
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
 
-            // Call onError, which will also call completeWorkflow().
+            /*
+             * Call onError, which will also call completeWorkflow().
+             */
             onError("Installer not found");
             return;
         }
