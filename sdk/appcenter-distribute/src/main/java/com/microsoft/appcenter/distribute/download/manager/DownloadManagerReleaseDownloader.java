@@ -2,94 +2,233 @@ package com.microsoft.appcenter.distribute.download.manager;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
+
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import java.util.NoSuchElementException;
+
+import static android.content.Context.DOWNLOAD_SERVICE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
-    private Context mContext;
 
-    /**
-     * Remember if we checked download since our own process restarted.
-     */
-    private boolean mCheckedDownload;
+    private final Context mContext;
+
+    private final ReleaseDetails mReleaseDetails;
+
+    private final ReleaseDownloader.Listener mListener;
+
+    private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
 
     /**
      * Current task to check download state and act on it.
      */
-    private CheckDownloadTask mCheckDownloadTask;
+    private DownloadManagerUpdateTask mUpdateTask;
 
     /**
      * Current task inspecting the latest release details that we fetched from server.
      */
-    private DownloadTask mDownloadTask;
+    private DownloadManagerRequestTask mRequestTask;
 
-    /**
-     * Distribute service name.
-     */
-    static final String SERVICE_NAME = "Distribute";
-
-    /**
-     * Base key for stored preferences.
-     */
-    static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
-
-    /**
-     * Preference key to store the current/last download identifier (we keep download until a next
-     * one is scheduled as the file can be opened from device downloads U.I.).
-     */
-    static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
-
-    /**
-     * Invalid download identifier.
-     */
-    static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
-
-    public DownloadManagerReleaseDownloader(Context context) {
+    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
         this.mContext = context;
+        this.mReleaseDetails = releaseDetails;
+        this.mListener = listener;
+    }
+
+    private DownloadManager getDownloadManager() {
+        return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+    }
+
+    private long getDownloadId() {
+        if (mDownloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+            mDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+        }
+        return mDownloadId;
+    }
+
+    public ReleaseDetails getReleaseDetails() {
+        return mReleaseDetails;
+    }
+
+    /**
+     * Start new download.
+     */
+    private void request() {
+        mRequestTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRequestTask(this));
+    }
+
+    /**
+     * Update the state on current download.
+     */
+    private void update() {
+        mUpdateTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerUpdateTask(this));
+    }
+
+    private void remove(long downloadId) {
+        AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
+        AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRemoveTask(mContext, downloadId));
     }
 
     @Override
-    public void download(ReleaseDetails releaseDetails, Listener listener) {
-        long downloadId = getStoredDownloadId();
-        if (releaseDetails.isMandatoryUpdate() || mCheckedDownload) {
-            mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, releaseDetails, listener));
+    public void resume() {
+
+        /* If there is active downloads. */
+        long downloadId = getDownloadId();
+        if (downloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+            update();
         } else {
-            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails, listener));
-            mCheckedDownload = true;
+            request();
         }
     }
 
     @Override
     public void delete() {
-        long downloadId = getStoredDownloadId();
-        if(mDownloadTask != null) {
-            mDownloadTask.cancel(true);
-            mDownloadTask = null;
+        if (mRequestTask != null) {
+            mRequestTask.cancel(true);
+            mRequestTask = null;
         }
-        if(mCheckDownloadTask != null) {
-            mCheckDownloadTask.cancel(true);
-            mCheckDownloadTask = null;
+        if (mUpdateTask != null) {
+            mUpdateTask.cancel(true);
+            mUpdateTask = null;
         }
-        if (downloadId >= 0) {
-            AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
-            AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
+        long downloadId = getDownloadId();
+        if (downloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+            remove(downloadId);
         }
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
     }
 
-    static long getStoredDownloadId() {
-        return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+    @WorkerThread
+    void onRequest(DownloadManagerRequestTask task) {
+
+        /* Download file. */
+        Uri downloadUrl = mReleaseDetails.getDownloadUrl();
+        AppCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
+        DownloadManager downloadManager = getDownloadManager();
+        DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+
+        /* Hide mandatory download to prevent canceling via notification cancel or download U.I. delete. */
+        if (mReleaseDetails.isMandatoryUpdate()) {
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+            request.setVisibleInDownloadsUi(false);
+        }
+        long enqueueTime = System.currentTimeMillis();
+        long downloadId = downloadManager.enqueue(request);
+
+        /* Check for if state changed and task not canceled in time. */
+        if (mRequestTask == task) {
+
+            /* Delete previous download. */
+            long previousDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+            if (previousDownloadId >= 0) {
+                AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
+                downloadManager.remove(previousDownloadId);
+            }
+
+            /* Store new download identifier. */
+            mDownloadId = downloadId;
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
+            mListener.onStart(enqueueTime);
+
+            /* Start monitoring progress for mandatory update. */
+            if (mReleaseDetails.isMandatoryUpdate()) {
+                update();
+            }
+        } else {
+
+            /* State changed quickly, cancel download. */
+            AppCenterLog.debug(LOG_TAG, "State changed while downloading, cancel id=" + downloadId);
+            downloadManager.remove(downloadId);
+        }
     }
 
-    synchronized static void removePreviousDownloadId(DownloadManager downloadManager) {
-        long previousDownloadId = getStoredDownloadId();
-        if (previousDownloadId >= 0) {
-            AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
-            downloadManager.remove(previousDownloadId);
+    @WorkerThread
+    void onUpdate() {
+
+        /* Query download manager. */
+        DownloadManager downloadManager = getDownloadManager();
+        try {
+            Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(mDownloadId));
+            if (cursor == null) {
+                throw new NoSuchElementException();
+            }
+            try {
+                if (!cursor.moveToFirst()) {
+                    throw new NoSuchElementException();
+                }
+                int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                if (status == DownloadManager.STATUS_FAILED) {
+                    throw new IllegalStateException();
+                }
+                if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                    long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                    long currentSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                    onProgress(currentSize, totalSize);
+                    return;
+                }
+
+                /* Complete download. */
+                AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
+                Uri localUri = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)));
+                boolean installerFound = false;
+                if (!mListener.onComplete(localUri)) {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                        installerFound = mListener.onComplete(getFileUriOnOldDevices(cursor));
+                    }
+                } else {
+                    installerFound = true;
+                }
+                if (!installerFound) {
+                    mListener.onError("Installer not found");
+                }
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
+            mListener.onError(e.getMessage());
         }
+    }
+
+    private void onProgress(final long currentSize, final long totalSize) {
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                mListener.onProgress(currentSize, totalSize);
+
+                /* And schedule the next check. */
+                if (mReleaseDetails.isMandatoryUpdate()) {
+                    HandlerUtils.getMainHandler().postAtTime(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            update();
+                        }
+                    }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
+        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
     }
 }

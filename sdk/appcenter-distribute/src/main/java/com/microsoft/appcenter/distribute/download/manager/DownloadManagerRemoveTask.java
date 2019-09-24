@@ -13,7 +13,7 @@ import android.os.AsyncTask;
 /**
  * Removing a download triggers strict mode exception in U.I. thread.
  */
-public class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
+class DownloadManagerRemoveTask extends AsyncTask<Void, Void, Void> {
 
     /**
      * Context.
@@ -32,7 +32,7 @@ public class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
      * @param context    context.
      * @param downloadId download identifier to remove.
      */
-    public RemoveDownloadTask(Context context, long downloadId) {
+    DownloadManagerRemoveTask(Context context, long downloadId) {
         mContext = context;
         mDownloadId = downloadId;
     }

@@ -706,9 +706,19 @@ public class Distribute extends AbstractAppCenterService {
                     mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
 
                     // TODO Move from background thread (task?)
+
+                    /*
+                     * Completion might be triggered in background before AppCenter.start
+                     * if application was killed after starting download.
+                     *
+                     * We still want to generate the notification: if we can find the data in preferences
+                     * that means they were not deleted, and thus that the sdk was not disabled.
+                     */
+                    Distribute distribute = Distribute.getInstance();
                     if (mReleaseDetails == null) {
-                        startFromBackground(mContext);
+                        mReleaseDetails = distribute.startFromBackground(mContext);
                     }
+
                     mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
@@ -1603,7 +1613,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param context any application context.
      */
-    public synchronized void resumeApp(@NonNull Context context) {
+    synchronized void resumeApp(@NonNull Context context) {
 
         /* Nothing to do if already in foreground. */
         if (mForegroundActivity == null) {
@@ -1734,17 +1744,31 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
+            installDownloadedUpdate();
 
-            /*
-             * We have to find filepath asyncronously which was downloaded already, and install
-             * update with resolved URI.
-             */
+            /* We have to find already downloaded update asynchronously, and install it with resolved URI. */
+            // TODO mReleaseDownloader == null?
             mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
-            // TODO get APK path and Install APK
-            // mReleaseDownloader.download() again to get path async?
         } else {
             showDisabledToast();
         }
+    }
+
+    synchronized void installDownloadedUpdate(Context context) {
+
+        /*
+         * Completion might be triggered in background before AppCenter.start
+         * if application was killed after starting download.
+         *
+         * We still want to generate the notification: if we can find the data in preferences
+         * that means they were not deleted, and thus that the sdk was not disabled.
+         */
+        // TODO Move to background.
+        if (mReleaseDetails == null) {
+            mReleaseDetails = startFromBackground(mContext);
+        }
+
+        mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
     }
 
     /**
@@ -1752,7 +1776,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    public synchronized void setInstalling(ReleaseDetails releaseDetails) {
+    synchronized void setInstalling(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
             cancelNotification();
             SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);

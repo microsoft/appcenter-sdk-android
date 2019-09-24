@@ -20,9 +20,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.download.manager.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.DownloadTask;
-import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReceiver;
+import com.microsoft.appcenter.distribute.download.manager.DownloadManagerUpdateTask;
 import com.microsoft.appcenter.distribute.download.manager.RemoveDownloadTask;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -68,7 +67,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
-@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, DownloadTask.class, CheckDownloadTask.class, RemoveDownloadTask.class})
+@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, DownloadTask.class, DownloadManagerUpdateTask.class, RemoveDownloadTask.class})
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
     static final long DOWNLOAD_ID = 42;
@@ -91,7 +90,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
     Semaphore mCheckDownloadAfterSemaphore;
 
-    AtomicReference<CheckDownloadTask> mCompletionTask;
+    AtomicReference<DownloadManagerUpdateTask> mCompletionTask;
 
     private Semaphore mDownloadBeforeSemaphore;
 
@@ -225,11 +224,11 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         mCheckDownloadBeforeSemaphore = new Semaphore(0);
         mCheckDownloadAfterSemaphore = new Semaphore(0);
         mCompletionTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<CheckDownloadTask>() {
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadManagerUpdateTask>() {
 
             @Override
-            public CheckDownloadTask answer(InvocationOnMock invocation) {
-                final CheckDownloadTask task = spy((CheckDownloadTask) invocation.getArguments()[1]);
+            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
+                final DownloadManagerUpdateTask task = spy((DownloadManagerUpdateTask) invocation.getArguments()[1]);
                 mCompletionTask.set(task);
                 new Thread() {
 

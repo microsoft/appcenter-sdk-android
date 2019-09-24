@@ -1,8 +1,7 @@
 package com.microsoft.appcenter.distribute.download;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
-
-import com.microsoft.appcenter.distribute.ReleaseDetails;
 
 /**
  * Interface for downloading release.
@@ -10,13 +9,14 @@ import com.microsoft.appcenter.distribute.ReleaseDetails;
 public interface ReleaseDownloader {
 
     // TODO rename download to ?
+
     /**
      * Start or resume downloading the installer for the release.
      *
      * @param releaseDetails TODO
      * @param listener       Download listener.
      */
-    void download(ReleaseDetails releaseDetails, Listener listener);
+    void resume();
 
     /**
      * Remove previously downloaded release.
@@ -29,25 +29,32 @@ public interface ReleaseDownloader {
     interface Listener {
 
         /**
+         * Called when the downloading is starter.
+         *
+         * @param enqueueTime time just before enqueuing download.
+         */
+        void onStart(long enqueueTime);
+
+        /**
          * Called periodically during download to display current progress.
          *
          * @param downloadProgress //todo
          */
-        void onProgress(DownloadProgress downloadProgress);
+        void onProgress(long currentSize, long totalSize);
 
         /**
          * Called when the downloading is completed.
          *
          * @param localUri The local URI of the file.
          */
-        void onComplete(@NonNull String localUri);
+        boolean onComplete(@NonNull Uri localUri);
 
         /**
          * Called when an error occurs during the downloading.
          *
          * @param errorMessage The message of the exception.
          */
-        void onError(@NonNull String errorMessage);
+        void onError(String errorMessage);
     }
 
 }

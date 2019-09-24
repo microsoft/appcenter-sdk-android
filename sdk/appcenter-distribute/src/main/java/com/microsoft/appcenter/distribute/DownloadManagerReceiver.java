@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute.download.manager;
+package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import com.microsoft.appcenter.distribute.Distribute;
+
+import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 
 /**
  * Process download manager callbacks.
@@ -34,8 +40,15 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          */
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            //todo handel download check progress listener
-//            Distribute.getInstance().checkDownload(context, downloadId);
+
+
+            /* Check intent data is what we expected. */
+            long expectedDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+            if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != downloadId) {
+                AppCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + downloadId);
+                return;
+            }
+            Distribute.getInstance().installDownloadedUpdate(context);
         }
     }
 }

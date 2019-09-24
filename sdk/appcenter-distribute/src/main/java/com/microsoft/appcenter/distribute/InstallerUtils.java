@@ -6,6 +6,8 @@
 package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -51,6 +53,22 @@ public class InstallerUtils {
     InstallerUtils() {
 
         /* Hide constructor in utils pattern. */
+    }
+
+    /**
+     * Get the intent used to open installation U.I.
+     *
+     * @param fileUri downloaded file URI from the download manager.
+     * @return intent to open installation U.I.
+     */
+    @NonNull
+    public static Intent getInstallIntent(Uri fileUri) {
+        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        intent.setData(fileUri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return intent;
     }
 
     /**
