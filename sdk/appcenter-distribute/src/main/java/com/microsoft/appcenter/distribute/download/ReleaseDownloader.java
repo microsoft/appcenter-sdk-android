@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download;
 
 import android.net.Uri;
@@ -49,5 +54,4 @@ public interface ReleaseDownloader {
          */
         void onError(String errorMessage);
     }
-
 }

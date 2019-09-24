@@ -610,6 +610,7 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloader.delete();
             mReleaseDownloader = null;
         }
+        mReleaseDownloaderListener = null;
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_TIME);

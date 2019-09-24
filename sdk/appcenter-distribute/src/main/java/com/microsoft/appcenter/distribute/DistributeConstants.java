@@ -187,7 +187,7 @@ public final class DistributeConstants {
     /**
      * 1 MiB in bytes (this not a megabyte).
      */
-    public static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
+    static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
 
     /**
      * Time to wait for installing optional updates if user postponed, in millis.

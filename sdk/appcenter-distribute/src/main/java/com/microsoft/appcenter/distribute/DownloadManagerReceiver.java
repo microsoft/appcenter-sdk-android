@@ -41,7 +41,6 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
 
-
             /* Check intent data is what we expected. */
             long expectedDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
             if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != downloadId) {
