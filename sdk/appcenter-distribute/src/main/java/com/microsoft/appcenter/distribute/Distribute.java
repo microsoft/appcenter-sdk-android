@@ -475,6 +475,7 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
+        // TODO null check
         mReleaseDownloaderListener.hideProgressDialog();
     }
 
@@ -494,7 +495,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            mReleaseDownloaderListener = ReleaseDownloaderFactory.createListener(mContext);
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -702,6 +703,8 @@ public class Distribute extends AbstractAppCenterService {
                      * Install UI will be shown by listener once download will be completed.
                      */
                     mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
+
+                    // TODO Move from background thread (task?)
                     if (mReleaseDetails == null) {
                         startFromBackground(mContext);
                     }
@@ -732,6 +735,7 @@ public class Distribute extends AbstractAppCenterService {
 
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
+                        // TODO onStart callback?
                         showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
 
                         /* Resume (or restart if not available) download. */
@@ -903,6 +907,7 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
+        // TODO null check
         mReleaseDownloaderListener.hideProgressDialog();
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
@@ -1554,8 +1559,10 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 if (releaseDetails.isMandatoryUpdate()) {
+                    // TODO onStart?
                     showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
                 }
+                // TODO we are sure the mReleaseDownloader == null?
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
                 mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
 
@@ -1663,6 +1670,11 @@ public class Distribute extends AbstractAppCenterService {
         //noinspection ConstantConditions
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
+
+        /* Reset check download flag to show install U.I. on resume if notification ignored. */
+        //mCheckedDownload = false;
+        // TODO Handle this case
+
         return true;
     }
 
@@ -1716,10 +1728,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            //mReleaseDownloaderListener.onComplete(releaseDetails);
-            // TODO get APK path
-            // TODO Install APK
-            Distribute.getInstance().setInstalling(releaseDetails);
+            // TODO get APK path and Install APK
+            // mReleaseDownloader.download() again to get path async?
         } else {
             showDisabledToast();
         }

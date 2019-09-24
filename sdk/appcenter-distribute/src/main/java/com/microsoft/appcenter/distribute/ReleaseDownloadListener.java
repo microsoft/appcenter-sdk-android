@@ -23,8 +23,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_PREFIX;
 
-public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
+// TODO JavaDoc
+class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
+    // TODO Move back to consts
     /**
      * Preference key to store latest downloaded release hash.
      */
@@ -40,7 +42,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      */
     private static final String PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + "downloaded_distribution_group_id";
 
-
+    // TODO JavaDoc
     protected Context mContext;
 
     /**
@@ -108,6 +110,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         AppCenterLog.debug(LOG_TAG, "Download was successful uri=" + localUri);
         Intent intent = getInstallIntent(Uri.parse(localUri));
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+            // OnError?
             AppCenterLog.error(LOG_TAG, "Installer not found");
             distribute.completeWorkflow(releaseDetails);
             return;
@@ -136,7 +139,7 @@ public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     public void onError(@NonNull String errorMessage) {
-
+        // TODO
     }
 
     /**

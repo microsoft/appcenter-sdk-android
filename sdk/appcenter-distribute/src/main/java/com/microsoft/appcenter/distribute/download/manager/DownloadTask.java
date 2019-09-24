@@ -10,10 +10,12 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.PREFERENCE_PREFIX;
@@ -110,6 +112,8 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
 
             /* Start monitoring progress for mandatory update. */
             if (mReleaseDetails.isMandatoryUpdate()) {
+
+                // TODO Replace download to some callback or internal method
                 mManager.download(mReleaseDetails, mListener);
             }
         } else {

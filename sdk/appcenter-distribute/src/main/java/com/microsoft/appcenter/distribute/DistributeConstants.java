@@ -288,6 +288,7 @@ public final class DistributeConstants {
     /**
      * Path where crash logs and temporary files are stored.
      */
+    // TODO Use getter instead
     public static File DOWNLOAD_FILES_PATH = null;
 
     /**

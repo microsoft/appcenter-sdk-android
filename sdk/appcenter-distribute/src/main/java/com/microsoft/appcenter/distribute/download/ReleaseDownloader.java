@@ -13,7 +13,7 @@ public interface ReleaseDownloader {
     /**
      * Start or resume downloading the installer for the release.
      *
-     * @param releaseDetails
+     * @param releaseDetails TODO
      * @param listener       Download listener.
      */
     void download(ReleaseDetails releaseDetails, Listener listener);
@@ -24,16 +24,17 @@ public interface ReleaseDownloader {
     void delete();
 
     /**
-     *
+     * TODO
      */
     interface Listener {
 
         /**
          * Called periodically during download to display current progress.
          *
-         * @param totalSize todo
+         * @param totalSize   todo
          * @param currentSize todo
          */
+        // TODO pass one DownloadProgress parameter
         void onProgress(long totalSize, long currentSize);
 
         /**
@@ -49,6 +50,9 @@ public interface ReleaseDownloader {
          * @param errorMessage The message of the exception.
          */
         void onError(@NonNull String errorMessage);
+
+
+        // TODO REMOVE THIS METHODS
 
         /**
          * Show download progress.

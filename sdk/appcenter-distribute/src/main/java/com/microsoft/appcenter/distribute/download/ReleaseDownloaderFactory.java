@@ -7,15 +7,13 @@ import com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDow
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 
 
+// TODO JavaDoc
 public class ReleaseDownloaderFactory {
-
-    private ReleaseDownloaderFactory() {
-    }
 
     /**
      * Create release downloader.
      *
-     * @param context
+     * @param context TODO
      * @return Release downloader.
      */
     public static ReleaseDownloader create(Context context) {

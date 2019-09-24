@@ -10,14 +10,17 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
-import android.os.SystemClock;
 import android.os.Build;
+import android.os.SystemClock;
+
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import java.util.NoSuchElementException;
+
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
@@ -28,6 +31,7 @@ import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFEREN
  * Inspect a pending or completed download.
  * This uses APIs that would trigger strict mode exception if used in U.I. thread.
  */
+// TODO Move to manager package
 public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
     /**
@@ -84,6 +88,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         AppCenterLog.debug(LOG_TAG, "Check download id=" + mDownloadId);
         Distribute distribute = Distribute.getInstance();
         if (mReleaseDetails == null) {
+            // TODO this is required in HTTP as well
             mReleaseDetails = distribute.startFromBackground(mContext);
         }
 
@@ -118,6 +123,8 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     return new DownloadProgress(currentSize, totalSize);
                 }
                 String localUri;
+
+                // TODO Use COLUMN_LOCAL_URI if possible
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                     localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME));
                 } else {
@@ -132,7 +139,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
             mManager.delete();
-
+            // TODO onError
         }
         return null;
     }
@@ -140,6 +147,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     @Override
     protected void onPostExecute(final DownloadProgress result) {
         if (result != null) {
+
             /* onPostExecute is not always called on UI thread due to an old Android bug. */
             HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -153,6 +161,8 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                             @Override
                             public void run() {
+
+                                // TODO call update progress directly
                                 mManager.download(mReleaseDetails, mListener);
                             }
                         }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);

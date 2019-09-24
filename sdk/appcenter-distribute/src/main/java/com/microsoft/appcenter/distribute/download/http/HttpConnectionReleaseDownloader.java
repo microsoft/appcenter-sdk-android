@@ -16,9 +16,12 @@ import java.util.ArrayList;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
+// TODO JavaDoc
 public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     private Context mContext;
+
+    // TODO Move it to const
     static final String PREFERENCE_KEY_DOWNLOADED_FILE = "PREFERENCE_KEY_DOWNLOADED_FILE";
 
     public HttpConnectionReleaseDownloader(Context context) {
@@ -49,6 +52,8 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             listener.onError("No external storage permission.");
             return false;
         }
+
+        // TODO it should be already enabled
         if (!InstallerUtils.isUnknownSourcesEnabled(mContext)) {
             listener.onError("Install from unknown sources disabled.");
             return false;
