@@ -3,7 +3,6 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.content.Context;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -55,13 +54,11 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void download(ReleaseDetails releaseDetails, Listener listener) {
-        // todo handle listener
-
         long downloadId = getStoredDownloadId();
         if (releaseDetails.isMandatoryUpdate() || mCheckedDownload) {
-            mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, releaseDetails, this, listener));
+            mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(mContext, downloadId, releaseDetails, listener));
         } else {
-            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails, this, listener));
+            mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails, listener));
             mCheckedDownload = true;
         }
     }

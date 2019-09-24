@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.distribute.download;
 
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 public class DownloadUtils {
 
     /**
@@ -31,31 +29,7 @@ public class DownloadUtils {
     private static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
 
     /**
-     * Token used for handler callbacks to check download progress.
-     */
-    public static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
-
-    /**
      * Invalid download identifier.
      */
     static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
-
-    /**
-     * How often to check download progress in millis.
-     */
-    static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
-
-    /**
-     * Preference key to store the downloading release file uri.
-     */
-    static final String PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE = PREFERENCE_PREFIX + "downloading_release_apk_file";
-
-    /**
-     * Get download identifier from storage.
-     *
-     * @return download identifier or negative value if not found.
-     */
-    static long getStoredDownloadId() {
-        return SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
-    }
 }

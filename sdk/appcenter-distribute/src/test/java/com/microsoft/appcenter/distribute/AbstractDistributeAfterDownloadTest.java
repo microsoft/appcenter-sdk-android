@@ -20,7 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.download.CheckDownloadTask;
+import com.microsoft.appcenter.distribute.download.manager.CheckDownloadTask;
 import com.microsoft.appcenter.distribute.download.DownloadTask;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReceiver;
 import com.microsoft.appcenter.distribute.download.manager.RemoveDownloadTask;

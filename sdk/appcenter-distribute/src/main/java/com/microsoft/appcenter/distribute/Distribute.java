@@ -259,7 +259,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Download release listener.
      */
-    private ReleaseDownloader.Listener mReleaseDownloaderListener;
+    private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
      * Flag to remember whether update dialog was customized or not.
@@ -475,8 +475,9 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
-        // TODO null check
-        mReleaseDownloaderListener.hideProgressDialog();
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+        }
     }
 
     @Override
@@ -907,8 +908,9 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        // TODO null check
-        mReleaseDownloaderListener.hideProgressDialog();
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+        }
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
@@ -1674,6 +1676,8 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         //mCheckedDownload = false;
         // TODO Handle this case
+        // mReleaseDownloader == null;
+
 
         return true;
     }

@@ -10,37 +10,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-
+import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import java.text.NumberFormat;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_PREFIX;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 
 // TODO JavaDoc
 class ReleaseDownloadListener implements ReleaseDownloader.Listener {
-
-    // TODO Move back to consts
-    /**
-     * Preference key to store latest downloaded release hash.
-     */
-    private static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH = PREFERENCE_PREFIX + "downloaded_release_hash";
-
-    /**
-     * Preference key to store latest downloaded release id.
-     */
-    private static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_ID = PREFERENCE_PREFIX + "downloaded_release_id";
-
-    /**
-     * Preference key to store distribution group identifier of latest downloaded release.
-     */
-    private static final String PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID = PREFERENCE_PREFIX + "downloaded_distribution_group_id";
 
     // TODO JavaDoc
     protected Context mContext;
@@ -85,11 +70,11 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     }
 
     @Override
-    public void onProgress(long totalSize, long currentSize) {
-        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + currentSize + " totalBytes=" + totalSize);
+    public void onProgress(DownloadProgress downloadProgress) {
+        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + downloadProgress.getCurrentSize() + " totalBytes=" + downloadProgress.getTotalSize());
 
         /* If file size is known update downloadProgress bar. */
-        if (mProgressDialog != null && totalSize >= 0) {
+        if (mProgressDialog != null && downloadProgress.getTotalSize() >= 0) {
 
             /* When we switch from indeterminate to determinate */
             if (mProgressDialog.isIndeterminate()) {
@@ -98,9 +83,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                 mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                 mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
                 mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+                mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
             }
-            mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
+            mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
         }
     }
 
@@ -110,8 +95,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         AppCenterLog.debug(LOG_TAG, "Download was successful uri=" + localUri);
         Intent intent = getInstallIntent(Uri.parse(localUri));
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-            // OnError?
-            AppCenterLog.error(LOG_TAG, "Installer not found");
+            onError("Installer not found");
             distribute.completeWorkflow(releaseDetails);
             return;
         }
@@ -139,7 +123,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     public void onError(@NonNull String errorMessage) {
-        // TODO
+        AppCenterLog.error(LOG_TAG, errorMessage);
+        Distribute distribute = Distribute.getInstance();
+//        distribute.completeWorkflow(releaseDetails);
     }
 
     /**

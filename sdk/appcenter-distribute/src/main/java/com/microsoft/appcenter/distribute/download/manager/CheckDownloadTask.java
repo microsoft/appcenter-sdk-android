@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute.download;
+package com.microsoft.appcenter.distribute.download.manager;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -15,6 +15,9 @@ import android.os.SystemClock;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.DownloadProgress;
+import com.microsoft.appcenter.distribute.download.DownloadUtils;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -23,15 +26,15 @@ import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.HANDLER_TOKEN_CHECK_PROGRESS;
-import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.PREFERENCE_PREFIX;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.SERVICE_NAME;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.getStoredDownloadId;
 
 /**
  * Inspect a pending or completed download.
  * This uses APIs that would trigger strict mode exception if used in U.I. thread.
  */
-// TODO Move to manager package
 public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
     /**
@@ -56,9 +59,20 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
     private ReleaseDownloader.Listener mListener;
 
     /**
-     * TODO desc
+     * How often to check download progress in millis.
      */
-    private ReleaseDownloader mManager;
+    static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
+
+    /**
+     * Preference key to store the downloading release file uri.
+     */
+    static final String PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE = PREFERENCE_PREFIX + "downloading_release_apk_file";
+
+
+    /**
+     * Token used for handler callbacks to check download progress.
+     */
+    public static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
 
     /**
      * Init.
@@ -67,12 +81,11 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
      * @param downloadId     download identifier.
      * @param releaseDetails release details.
      */
-    public CheckDownloadTask(Context context, long downloadId, ReleaseDetails releaseDetails, ReleaseDownloader manager, ReleaseDownloader.Listener listener) {
+    public CheckDownloadTask(Context context, long downloadId, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
         mContext = context.getApplicationContext();
         mDownloadId = downloadId;
         mReleaseDetails = releaseDetails;
         mListener = listener;
-        mManager = manager;
     }
 
     @Override
@@ -93,8 +106,8 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
         }
 
         /* Check intent data is what we expected. */
-        long expectedDownloadId = DownloadUtils.getStoredDownloadId();
-        if (expectedDownloadId == DownloadUtils.INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
+        long expectedDownloadId = getStoredDownloadId();
+        if (expectedDownloadId == INVALID_DOWNLOAD_IDENTIFIER || expectedDownloadId != mDownloadId) {
             AppCenterLog.debug(LOG_TAG, "Ignoring download identifier we didn't expect, id=" + mDownloadId);
             return null;
         }
@@ -138,8 +151,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
             }
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
-            mManager.delete();
-            // TODO onError
+            mListener.onError(e.getMessage());
         }
         return null;
     }
@@ -153,7 +165,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                 @Override
                 public void run() {
-                    mListener.onProgress(result.getTotalSize(), result.getCurrentSize());
+                    mListener.onProgress(result);
 
                     /* And schedule the next check. */
                     if (mReleaseDetails.isMandatoryUpdate()) {
@@ -161,9 +173,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
 
                             @Override
                             public void run() {
-
                                 // TODO call update progress directly
-                                mManager.download(mReleaseDetails, mListener);
                             }
                         }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
                     }

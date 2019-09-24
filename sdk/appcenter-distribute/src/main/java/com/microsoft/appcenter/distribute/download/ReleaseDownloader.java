@@ -31,11 +31,9 @@ public interface ReleaseDownloader {
         /**
          * Called periodically during download to display current progress.
          *
-         * @param totalSize   todo
-         * @param currentSize todo
+         * @param downloadProgress //todo
          */
-        // TODO pass one DownloadProgress parameter
-        void onProgress(long totalSize, long currentSize);
+        void onProgress(DownloadProgress downloadProgress);
 
         /**
          * Called when the downloading is completed.
@@ -50,19 +48,6 @@ public interface ReleaseDownloader {
          * @param errorMessage The message of the exception.
          */
         void onError(@NonNull String errorMessage);
-
-
-        // TODO REMOVE THIS METHODS
-
-        /**
-         * Show download progress.
-         */
-        android.app.ProgressDialog showDownloadProgress(Activity foregraundActivity);
-
-        /**
-         * Hide progress dialog and stop updating.
-         */
-        void hideProgressDialog();
     }
 
 }

@@ -67,19 +67,16 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
      */
     private ReleaseDownloader.Listener mListener;
 
-    private ReleaseDownloader mManager;
-
     /**
      * Init.
      *
      * @param context        context.
      * @param releaseDetails release details associated to this check.
      */
-    DownloadTask(Context context, ReleaseDetails releaseDetails, ReleaseDownloader manager, ReleaseDownloader.Listener listener) {
+    DownloadTask(Context context, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
         mContext = context;
         mReleaseDetails = releaseDetails;
         mListener = listener;
-        mManager = manager;
     }
 
     @Override
@@ -114,7 +111,6 @@ class DownloadTask extends AsyncTask<Void, Void, Void> {
             if (mReleaseDetails.isMandatoryUpdate()) {
 
                 // TODO Replace download to some callback or internal method
-                mManager.download(mReleaseDetails, mListener);
             }
         } else {
 
