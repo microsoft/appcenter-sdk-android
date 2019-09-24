@@ -84,7 +84,9 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             mListener.onError("No external storage permission.");
             return;
         }
+        long enqueueTime = System.currentTimeMillis();
         AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, mReleaseDetails.getDownloadUrl(), targetFile));
+        mListener.onStart(enqueueTime);
     }
 
     @Override

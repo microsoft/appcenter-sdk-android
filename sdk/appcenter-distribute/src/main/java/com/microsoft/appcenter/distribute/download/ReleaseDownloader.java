@@ -8,13 +8,8 @@ import android.support.annotation.NonNull;
  */
 public interface ReleaseDownloader {
 
-    // TODO rename download to ?
-
     /**
      * Start or resume downloading the installer for the release.
-     *
-     * @param releaseDetails TODO
-     * @param listener       Download listener.
      */
     void resume();
 
@@ -37,8 +32,6 @@ public interface ReleaseDownloader {
 
         /**
          * Called periodically during download to display current progress.
-         *
-         * @param downloadProgress //todo
          */
         boolean onProgress(long currentSize, long totalSize);
 

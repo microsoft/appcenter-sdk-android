@@ -49,6 +49,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -427,7 +428,7 @@ public class Distribute extends AbstractAppCenterService {
      * Set context, used when need to manipulate context before onStarted.
      * For example when download completes after application process exited.
      */
-    public synchronized ReleaseDetails startFromBackground(Context context) {
+    synchronized ReleaseDetails startFromBackground(Context context) {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
@@ -495,8 +496,6 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            // TODO mReleaseDetails is null at this point. Move init to proper location.
-            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -513,7 +512,6 @@ public class Distribute extends AbstractAppCenterService {
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
             mDistributeInfoTracker = null;
-            mReleaseDownloaderListener = null;
         }
     }
 
@@ -703,23 +701,7 @@ public class Distribute extends AbstractAppCenterService {
                      * If app restarted, try to resume (or restart if not available) download.
                      * Install UI will be shown by listener once download will be completed.
                      */
-                    mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
-
-                    // TODO Move from background thread (task?)
-
-                    /*
-                     * Completion might be triggered in background before AppCenter.start
-                     * if application was killed after starting download.
-                     *
-                     * We still want to generate the notification: if we can find the data in preferences
-                     * that means they were not deleted, and thus that the sdk was not disabled.
-                     */
-                    Distribute distribute = Distribute.getInstance();
-                    if (mReleaseDetails == null) {
-                        mReleaseDetails = distribute.startFromBackground(mContext);
-                    }
-
-                    mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
+                    resumeDownload();
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
                     if (mReleaseDetails == null || !mReleaseDetails.isMandatoryUpdate() || downloadState != DOWNLOAD_STATE_ENQUEUED) {
@@ -744,13 +726,11 @@ public class Distribute extends AbstractAppCenterService {
                 /* If we are still downloading. */
                 else if (downloadState == DOWNLOAD_STATE_ENQUEUED) {
 
-                    /* Refresh mandatory dialog progress or do nothing otherwise. */
-                    // TODO onStart callback?
-                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
-
                     /* Resume (or restart if not available) download. */
-                    mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
+                    resumeDownload();
 
+                    /* Refresh mandatory dialog progress or do nothing otherwise. */
+                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
                 }
 
                 /* If we were showing unknown sources dialog, restore it. */
@@ -908,7 +888,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
-    private synchronized void completeWorkflow() {
+    synchronized void completeWorkflow() {
         cancelNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -919,6 +899,7 @@ public class Distribute extends AbstractAppCenterService {
         mUnknownSourcesDialog = null;
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
+            mReleaseDownloaderListener = null;
         }
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
@@ -1572,13 +1553,10 @@ public class Distribute extends AbstractAppCenterService {
         if (releaseDetails == mReleaseDetails) {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
+                resumeDownload();
                 if (releaseDetails.isMandatoryUpdate()) {
-                    // TODO onStart?
                     showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
                 }
-                // TODO we are sure the mReleaseDownloader == null?
-                mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
-                mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1685,12 +1663,8 @@ public class Distribute extends AbstractAppCenterService {
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
-        /* Reset check download flag to show install U.I. on resume if notification ignored. */
-        //mCheckedDownload = false;
-        // TODO Handle this case
-        // mReleaseDownloader == null;
-
-
+        /* Reset downloader to show install U.I. on resume if notification ignored. */
+        mReleaseDownloader = null;
         return true;
     }
 
@@ -1744,11 +1718,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            installDownloadedUpdate();
-
-            /* We have to find already downloaded update asynchronously, and install it with resolved URI. */
-            // TODO mReleaseDownloader == null?
-            mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
+            resumeDownload();
         } else {
             showDisabledToast();
         }
@@ -1763,12 +1733,22 @@ public class Distribute extends AbstractAppCenterService {
          * We still want to generate the notification: if we can find the data in preferences
          * that means they were not deleted, and thus that the sdk was not disabled.
          */
-        // TODO Move to background.
         if (mReleaseDetails == null) {
-            mReleaseDetails = startFromBackground(mContext);
+            AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(context));
+        } else {
+            resumeDownload();
         }
+    }
 
-        mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
+
+    synchronized void resumeDownload() {
+        if (mReleaseDetails != null && mReleaseDownloader == null) {
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
+            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
+        }
+        if (mReleaseDownloader != null) {
+            mReleaseDownloader.resume();
+        }
     }
 
     /**

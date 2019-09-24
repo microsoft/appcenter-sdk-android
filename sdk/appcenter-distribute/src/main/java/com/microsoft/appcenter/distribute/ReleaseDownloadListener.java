@@ -6,12 +6,12 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -28,6 +28,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
 
 // TODO JavaDoc
 class ReleaseDownloadListener implements ReleaseDownloader.Listener {
@@ -54,16 +55,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         mReleaseDetails = releaseDetails;
     }
 
-    private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
-        String groupId = releaseDetails.getDistributionGroupId();
-        String releaseHash = releaseDetails.getReleaseHash();
-        int releaseId = releaseDetails.getId();
-        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
-    }
-
     @Override
     public void onStart(long enqueueTime) {
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
@@ -71,11 +62,11 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     }
 
     @Override
-    public void onProgress(DownloadProgress downloadProgress) {
-        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + downloadProgress.getCurrentSize() + " totalBytes=" + downloadProgress.getTotalSize());
+    public boolean onProgress(final long currentSize, final long totalSize) {
+        AppCenterLog.verbose(LOG_TAG, "downloadedBytes=" + currentSize + " totalBytes=" + totalSize);
 
         /* If file size is known update downloadProgress bar. */
-        if (mProgressDialog != null && downloadProgress.getTotalSize() >= 0) {
+        if (mProgressDialog != null && totalSize >= 0) {
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
@@ -88,30 +79,25 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                         mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                         mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
                         mProgressDialog.setIndeterminate(false);
-                        mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
+                        mProgressDialog.setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
                     }
-                    mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
+                    mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
                 }
             });
+            return true;
         }
+        return false;
     }
 
     @Override
-    public void onComplete(@NonNull String localUri) {
-        Distribute distribute = Distribute.getInstance();
-        AppCenterLog.debug(LOG_TAG, "Download was successful uri=" + localUri);
-        Intent intent = getInstallIntent(Uri.parse(localUri));
+    public boolean onComplete(@NonNull Uri localUri) {
+        Intent intent = getInstallIntent(localUri);
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-
-            /*
-             * Call onError, which will also call completeWorkflow().
-             */
-            onError("Installer not found");
-            return;
+            return false;
         }
 
         /* Check if app should install now. */
-        if (!distribute.notifyDownload(mReleaseDetails, intent)) {
+        if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
 
             /*
              * This start call triggers strict mode in U.I. thread so it
@@ -130,6 +116,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             }
             storeReleaseDetails(mReleaseDetails);
         }
+        return true;
     }
 
     @Override
@@ -142,7 +129,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * Show download progress. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    public android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
+    ProgressDialog showDownloadProgress(Activity foregroundActivity) {
         if (!mReleaseDetails.isMandatoryUpdate()) {
             return null;
         }
@@ -160,9 +147,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * Hide progress dialog and stop updating. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    public synchronized void hideProgressDialog() {
+    synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final android.app.ProgressDialog progressDialog = mProgressDialog;
+            final ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
 
             /* This can be called from background check download task. */
@@ -175,5 +162,15 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
         }
+    }
+
+    private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
+        String groupId = releaseDetails.getDistributionGroupId();
+        String releaseHash = releaseDetails.getReleaseHash();
+        int releaseId = releaseDetails.getId();
+        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }
