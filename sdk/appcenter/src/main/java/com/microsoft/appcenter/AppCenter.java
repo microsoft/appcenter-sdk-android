@@ -1186,6 +1186,9 @@ public class AppCenter {
      * Implements {@link #setAuthToken} at instance level.
      */
     private void setInstanceAuthToken(String authToken) {
+        if (!checkPrecondition()) {
+            return;
+        }
         AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
         JwtClaims claims = null;
         if (authToken != null) {

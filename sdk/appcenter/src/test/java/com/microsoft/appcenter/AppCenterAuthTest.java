@@ -46,6 +46,9 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     @Test
     public void setAuthToken() {
 
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+
         /* Given a valid JWT token. */
         final String jwt = "jwt";
         JwtClaims claims = mock(JwtClaims.class);
@@ -59,6 +62,24 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         /* Then it's stored. */
         verify(mAuthTokenContext).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
     }
+
+    @Test
+    public void setAuthTokenBeforeStart() {
+
+        /* Given a valid JWT token. */
+        final String jwt = "jwt";
+        JwtClaims claims = mock(JwtClaims.class);
+        when(claims.getSubject()).thenReturn("someId");
+        when(claims.getExpirationDate()).thenReturn(new Date(123L));
+        when(JwtClaims.parse(jwt)).thenReturn(claims);
+
+        /* When we set auth token. */
+        AppCenter.setAuthToken(jwt);
+
+        /* Nothing happens. */
+        verify(mAuthTokenContext, never()).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+    }
+
 
     @Test
     public void unsetAuthToken() {
