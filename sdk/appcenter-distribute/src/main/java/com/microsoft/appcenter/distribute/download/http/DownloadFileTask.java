@@ -108,7 +108,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
             while ((count = input.read(data)) != -1) {
                 total += count;
                 if (mListener != null) {
-                    mListener.onProgress(new DownloadProgress(Math.round(total * 100.0f / lengthOfFile), total));
+                    mListener.onProgress(new DownloadProgress(total, lengthOfFile));
                 }
                 output.write(data, 0, count);
                 if (isCancelled()) {
