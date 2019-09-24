@@ -286,6 +286,11 @@ public final class DistributeConstants {
     static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     /**
+     * Preference key to store the downloading release file uri.
+     */
+    static final String PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE = PREFERENCE_PREFIX + "downloading_release_apk_file";
+
+    /**
      * Path where downloaded files are stored.
      *
      * @param context The context to use. Usually your Activity object.

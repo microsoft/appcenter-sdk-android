@@ -69,6 +69,7 @@ import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.Constants.loadFromContext;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -96,6 +97,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
@@ -103,6 +105,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
+import static com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader.PREFERENCE_PREFIX;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
@@ -409,7 +412,7 @@ public class Distribute extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        DistributeConstants.loadFromContext(context);
+        loadFromContext(context);
         mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
@@ -1567,6 +1570,9 @@ public class Distribute extends AbstractAppCenterService {
                     showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
                 }
                 // TODO we are sure the mReleaseDownloader == null?
+                if (mReleaseDownloader != null) {
+                    mReleaseDownloader.delete();
+                }
                 mReleaseDownloader = ReleaseDownloaderFactory.create(mContext);
                 mReleaseDownloader.download(releaseDetails, mReleaseDownloaderListener);
 
@@ -1678,7 +1684,7 @@ public class Distribute extends AbstractAppCenterService {
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         //mCheckedDownload = false;
         // TODO Handle this case
-        // mReleaseDownloader == null;
+        mReleaseDownloader = null;
 
 
         return true;
@@ -1733,8 +1739,10 @@ public class Distribute extends AbstractAppCenterService {
      * @param releaseDetails release details.
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
+        String localUri = SharedPreferencesManager.getString(PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE);
+        if (releaseDetails == mReleaseDetails && localUri != null) {
             // TODO get APK path and Install APK
+            mReleaseDownloaderListener.onComplete(localUri);
             // mReleaseDownloader.download() again to get path async?
         } else {
             showDisabledToast();
