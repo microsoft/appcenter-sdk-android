@@ -3,10 +3,12 @@ package com.microsoft.appcenter.distribute.download.http;
 import android.annotation.SuppressLint;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
+
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,7 +17,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+
 import javax.net.ssl.HttpsURLConnection;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_FILES_PATH;
 import static com.microsoft.appcenter.distribute.download.ReleaseDownloader.Listener;
 import static com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader.PREFERENCE_KEY_DOWNLOADED_FILE;
@@ -32,7 +36,7 @@ import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
  * is then opened to trigger the installation.
  **/
 @SuppressLint("StaticFieldLeak")
-public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
+public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
 
     private static final int MAX_REDIRECTS = 6;
 
@@ -42,7 +46,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
 
     private ReleaseDetails mReleaseDetails;
 
-    DownloadFileTask(ReleaseDetails releaseDetails, Listener listener) {
+    HttpDownloadFileTask(ReleaseDetails releaseDetails, Listener listener) {
         mReleaseDetails = releaseDetails;
         mListener = listener;
         mApkFilePath = resolveApkFilePath();
@@ -86,7 +90,7 @@ public class DownloadFileTask extends AsyncTask<Void, Integer, Long> {
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_FILE, mApkFilePath.getAbsolutePath());
-            mListener.onComplete(mApkFilePath.getAbsolutePath(), mReleaseDetails);
+            mListener.onComplete("file://" + mApkFilePath.getAbsolutePath(), mReleaseDetails);
         }
     }
 

@@ -10,17 +10,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import java.text.NumberFormat;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.download.DownloadUtils.PREFERENCE_PREFIX;
 
-public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listener {
+public class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     /**
      * Preference key to store latest downloaded release hash.
@@ -49,11 +52,11 @@ public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listene
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
-    public ManagerReleaseDownloadListener(@NonNull Context context) {
+    ReleaseDownloadListener(@NonNull Context context) {
         mContext = context;
     }
 
-    static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
+    private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
         String groupId = releaseDetails.getDistributionGroupId();
         String releaseHash = releaseDetails.getReleaseHash();
         int releaseId = releaseDetails.getId();
@@ -70,7 +73,7 @@ public class ManagerReleaseDownloadListener implements ReleaseDownloader.Listene
      * @return intent to open installation U.I.
      */
     @NonNull
-    protected Intent getInstallIntent(Uri fileUri) {
+    private Intent getInstallIntent(Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         intent.setData(fileUri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

@@ -30,12 +30,12 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         if (!prepareDownload(listener)) {
             return;
         }
-        AsyncTaskUtils.execute(LOG_TAG, new DownloadFileTask(releaseDetails, listener));
+        AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(releaseDetails, listener));
     }
 
     @Override
     public void delete() {
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveHttpDownloadTask(mContext));
+        AsyncTaskUtils.execute(LOG_TAG, new HttpRemoveDownloadTask(mContext));
     }
 
     private boolean prepareDownload(Listener listener) {

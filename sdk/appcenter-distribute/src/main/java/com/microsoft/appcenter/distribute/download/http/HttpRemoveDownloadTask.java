@@ -16,7 +16,7 @@ import static com.microsoft.appcenter.distribute.download.http.HttpConnectionRel
 /**
  * Removes a downloaded apk.
  */
-public class RemoveHttpDownloadTask extends AsyncTask<Void, Void, Void> {
+public class HttpRemoveDownloadTask extends AsyncTask<Void, Void, Void> {
 
     /**
      * Context.
@@ -29,7 +29,7 @@ public class RemoveHttpDownloadTask extends AsyncTask<Void, Void, Void> {
      *
      * @param context context.
      */
-    RemoveHttpDownloadTask(Context context) {
+    HttpRemoveDownloadTask(Context context) {
         mContext = context;
     }
 
