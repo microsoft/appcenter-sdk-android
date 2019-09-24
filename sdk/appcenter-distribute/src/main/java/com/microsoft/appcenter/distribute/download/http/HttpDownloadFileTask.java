@@ -10,6 +10,7 @@ import android.net.TrafficStats;
 import android.os.AsyncTask;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -112,7 +113,7 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
     protected void onPostExecute(Long result) {
         if (result > 0L && mListener != null) {
             SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_FILE, mApkFilePath.getAbsolutePath());
-            mListener.onComplete("file://" + mApkFilePath.getAbsolutePath(), mReleaseDetails);
+            mListener.onComplete("file://" + mApkFilePath.getAbsolutePath());
         }
     }
 
@@ -133,11 +134,11 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
             output = new FileOutputStream(mApkFilePath);
             byte[] data = new byte[WRITE_BUFFER_SIZE];
             int count;
-            long total = 0;
+            long totalBytesDownloaded = 0;
             while ((count = input.read(data)) != -1) {
-                total += count;
+                totalBytesDownloaded += count;
                 if (mListener != null) {
-                    mListener.onProgress(Math.round(total * 100.0f / lengthOfFile), total);
+                    mListener.onProgress(new DownloadProgress(totalBytesDownloaded, lengthOfFile));
                 }
                 output.write(data, 0, count);
                 if (isCancelled()) {
@@ -145,7 +146,7 @@ public class HttpDownloadFileTask extends AsyncTask<Void, Integer, Long> {
                 }
             }
             output.flush();
-            return total;
+            return totalBytesDownloaded;
         } finally {
             try {
                 if (output != null) {

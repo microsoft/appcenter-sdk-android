@@ -10,11 +10,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+
 import com.microsoft.appcenter.distribute.download.DownloadProgress;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
 import java.text.NumberFormat;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
@@ -39,8 +41,14 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
-    ReleaseDownloadListener(@NonNull Context context) {
+    /**
+     * Private field to store information about release we are currently working with.
+     */
+    private ReleaseDetails mReleaseDetails;
+
+    ReleaseDownloadListener(@NonNull Context context, @NonNull ReleaseDetails releaseDetails) {
         mContext = context;
+        mReleaseDetails = releaseDetails;
     }
 
     private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
@@ -90,18 +98,19 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     }
 
     @Override
-    public void onComplete(@NonNull String localUri, @NonNull ReleaseDetails releaseDetails) {
+    public void onComplete(@NonNull String localUri) {
         Distribute distribute = Distribute.getInstance();
         AppCenterLog.debug(LOG_TAG, "Download was successful uri=" + localUri);
         Intent intent = getInstallIntent(Uri.parse(localUri));
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
+
+            // Call onError, which will also call completeWorkflow().
             onError("Installer not found");
-            distribute.completeWorkflow(releaseDetails);
             return;
         }
 
-        /* Check if a should install now. */
-        if (!distribute.notifyDownload(releaseDetails, intent)) {
+        /* Check if app should install now. */
+        if (!distribute.notifyDownload(mReleaseDetails, intent)) {
 
             /*
              * This start call triggers strict mode in U.I. thread so it
@@ -112,27 +121,30 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
              * This corner case cannot be avoided without triggering
              * strict mode exception.
              */
+
             AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
             mContext.startActivity(intent);
-            if (releaseDetails.isMandatoryUpdate()) {
-                Distribute.getInstance().setInstalling(releaseDetails);
+            if (mReleaseDetails.isMandatoryUpdate()) {
+                Distribute.getInstance().setInstalling(mReleaseDetails);
             }
-            storeReleaseDetails(releaseDetails);
+            storeReleaseDetails(mReleaseDetails);
         }
     }
 
     @Override
     public void onError(@NonNull String errorMessage) {
         AppCenterLog.error(LOG_TAG, errorMessage);
-        Distribute distribute = Distribute.getInstance();
-//        distribute.completeWorkflow(releaseDetails);
+        Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
     /**
-     * Show download progress.
+     * Show download progress. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
+        if (!mReleaseDetails.isMandatoryUpdate()) {
+            return null;
+        }
         mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
         mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
         mProgressDialog.setCancelable(false);
@@ -144,7 +156,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     }
 
     /**
-     * Hide progress dialog and stop updating.
+     * Hide progress dialog and stop updating. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public synchronized void hideProgressDialog() {

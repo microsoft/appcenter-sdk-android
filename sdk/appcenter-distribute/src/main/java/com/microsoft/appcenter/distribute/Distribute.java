@@ -496,7 +496,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDistributeWorkflow();
                 }
             });
-            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext);
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -735,13 +735,12 @@ public class Distribute extends AbstractAppCenterService {
                 else if (downloadState == DOWNLOAD_STATE_ENQUEUED) {
 
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
-                    if (mReleaseDetails.isMandatoryUpdate()) {
-                        // TODO onStart callback?
-                        showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
+                    // TODO onStart callback?
+                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
 
-                        /* Resume (or restart if not available) download. */
-                        mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
-                    }
+                    /* Resume (or restart if not available) download. */
+                    mReleaseDownloader.download(mReleaseDetails, mReleaseDownloaderListener);
+
                 }
 
                 /* If we were showing unknown sources dialog, restore it. */
@@ -899,7 +898,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
-    synchronized void completeWorkflow() {
+    private synchronized void completeWorkflow() {
         cancelNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -1297,7 +1296,10 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param dialog dialog.
      */
-    private void showAndRememberDialogActivity(Dialog dialog) {
+    private void showAndRememberDialogActivity(@Nullable Dialog dialog) {
+        if (dialog == null) {
+            return;
+        }
         dialog.show();
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }

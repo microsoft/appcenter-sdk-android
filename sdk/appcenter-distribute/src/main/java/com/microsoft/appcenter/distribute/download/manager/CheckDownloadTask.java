@@ -16,7 +16,6 @@ import android.os.SystemClock;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.DownloadProgress;
-import com.microsoft.appcenter.distribute.download.DownloadUtils;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -144,7 +143,7 @@ public class CheckDownloadTask extends AsyncTask<Void, Void, DownloadProgress> {
                     localUri = cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
                 }
                 SharedPreferencesManager.putString(PREFERENCE_KEY_STORE_DOWNLOADING_RELEASE_APK_FILE, localUri);
-                mListener.onComplete(localUri, mReleaseDetails);
+                mListener.onComplete(localUri);
                 return null;
             } finally {
                 cursor.close();
