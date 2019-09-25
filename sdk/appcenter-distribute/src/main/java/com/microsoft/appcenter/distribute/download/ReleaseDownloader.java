@@ -24,7 +24,7 @@ public interface ReleaseDownloader {
     void delete();
 
     /**
-     * TODO
+     * Listener for downloading progress.
      */
     interface Listener {
 
@@ -37,6 +37,10 @@ public interface ReleaseDownloader {
 
         /**
          * Called periodically during download to display current progress.
+         *
+         * @param currentSize count of already downloaded bytes.
+         * @param totalSize   total size of downloading file.
+         * @return true if the listener are interested on more progress updates, false otherwise.
          */
         boolean onProgress(long currentSize, long totalSize);
 
@@ -44,6 +48,7 @@ public interface ReleaseDownloader {
          * Called when the downloading is completed.
          *
          * @param localUri The local URI of the file.
+         * @return true if this file can be installed, false otherwise.
          */
         boolean onComplete(@NonNull Uri localUri);
 
