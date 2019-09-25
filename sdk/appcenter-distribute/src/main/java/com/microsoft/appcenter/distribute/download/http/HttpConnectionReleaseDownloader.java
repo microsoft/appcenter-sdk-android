@@ -18,6 +18,7 @@ import com.microsoft.appcenter.distribute.PermissionUtils;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -43,6 +44,8 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private File mTargetFile;
 
     private Notification.Builder mNotificationBuilder;
+
+    private HttpDownloadFileTask mHttpDownloadFileTask;
 
     public HttpConnectionReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
         mContext = context;
@@ -102,10 +105,14 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             mListener.onError("No external storage permission.");
             return;
         }
-        long enqueueTime = System.currentTimeMillis();
-        AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, mReleaseDetails.getDownloadUrl(), targetFile));
-        mListener.onStart(enqueueTime);
-        showProgressNotification(0, 0);
+        if (mHttpDownloadFileTask == null) {
+            long enqueueTime = System.currentTimeMillis();
+            mHttpDownloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, mReleaseDetails.getDownloadUrl(), targetFile));
+            mListener.onStart(enqueueTime);
+            showProgressNotification(0, 0);
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Downloading of " + targetFile.getPath() + " is already in progress.");
+        }
     }
 
     @Override
