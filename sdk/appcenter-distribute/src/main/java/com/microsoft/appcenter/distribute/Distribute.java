@@ -240,6 +240,12 @@ public class Distribute extends AbstractAppCenterService {
     private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
+     * Remember if we checked download since our own process restarted.
+     * Download release listener.
+     */
+    private boolean mCheckedDownload;
+
+    /**
      * True when distribute workflow reached final state.
      * This can be reset to check update again when app restarts.
      */
@@ -605,6 +611,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
+        mCheckedDownload = false;
         if (mReleaseDownloader != null) {
             mReleaseDownloader.delete();
             mReleaseDownloader = null;
@@ -689,7 +696,7 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /* If process restarted during workflow. */
-            if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && mReleaseDownloader == null) {
+            if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && !mCheckedDownload) {
 
                 /* Discard release if application updated. Then immediately check release. */
                 if (mPackageInfo.lastUpdateTime > SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
@@ -704,6 +711,7 @@ public class Distribute extends AbstractAppCenterService {
                      * If app restarted, try to resume (or restart if not available) download.
                      * Install UI will be shown by listener once download will be completed.
                      */
+                    mCheckedDownload = true;
                     resumeDownload();
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
@@ -1671,8 +1679,8 @@ public class Distribute extends AbstractAppCenterService {
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
-        /* Reset downloader to show install U.I. on resume if notification ignored. */
-        mReleaseDownloader = null;
+        /* Reset check download flag to show install U.I. on resume if notification ignored. */
+        mCheckedDownload = false;
         return true;
     }
 
@@ -1764,6 +1772,7 @@ public class Distribute extends AbstractAppCenterService {
         }
         if (mReleaseDownloader != null) {
             mReleaseDownloader.resume();
+            mCheckedDownload = true;
         }
     }
 
