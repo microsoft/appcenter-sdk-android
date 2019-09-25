@@ -84,6 +84,9 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     @Test
     public void unsetAuthToken() {
 
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+
         /* When we unset auth token. */
         AppCenter.setAuthToken(null);
 
@@ -97,6 +100,9 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
 
     @Test
     public void setInvalidAuthToken() {
+
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
 
         /* When we set an invalid auth token. */
         when(JwtClaims.parse("invalidJwt")).thenReturn(null);
@@ -120,6 +126,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthTokenResult(jwt);
             }
         });
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
         verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
         AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
@@ -161,6 +168,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthTokenResult(invalidJwt);
             }
         });
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
         verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
         AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
