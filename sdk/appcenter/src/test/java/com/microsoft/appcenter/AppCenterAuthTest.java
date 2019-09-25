@@ -21,6 +21,7 @@ import java.util.Date;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,6 +47,9 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     @Test
     public void setAuthToken() {
 
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+
         /* Given a valid JWT token. */
         final String jwt = "jwt";
         JwtClaims claims = mock(JwtClaims.class);
@@ -61,7 +65,27 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setAuthTokenBeforeStart() {
+
+        /* Given a valid JWT token. */
+        final String jwt = "jwt";
+        JwtClaims claims = mock(JwtClaims.class);
+        when(claims.getSubject()).thenReturn("someId");
+        when(claims.getExpirationDate()).thenReturn(new Date(123L));
+        when(JwtClaims.parse(jwt)).thenReturn(claims);
+
+        /* When we set auth token. */
+        AppCenter.setAuthToken(jwt);
+
+        /* Nothing happens. */
+        verify(mAuthTokenContext, never()).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
+    }
+
+    @Test
     public void unsetAuthToken() {
+
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
 
         /* When we unset auth token. */
         AppCenter.setAuthToken(null);
@@ -76,6 +100,9 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
 
     @Test
     public void setInvalidAuthToken() {
+
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
 
         /* When we set an invalid auth token. */
         when(JwtClaims.parse("invalidJwt")).thenReturn(null);
@@ -99,6 +126,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthTokenResult(jwt);
             }
         });
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
         verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
         AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
@@ -123,7 +151,22 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setAuthTokenListenerWhenPreviouslySetBeforeStart() {
+        AuthTokenListener listener = new AuthTokenListener() {
+
+            @Override
+            public void acquireAuthToken(AuthTokenCallback callback) {
+            }
+        };
+        AppCenter.setAuthTokenListener(listener);
+        AppCenter.setAuthTokenListener(null);
+        verify(mAuthTokenContext).unsetRefreshListener(notNull(AuthTokenContext.RefreshListener.class));
+        verify(mAuthTokenContext, never()).setAuthToken(null, null, null);
+    }
+
+    @Test
     public void setNullAuthTokenListenerWhenNoneExists() {
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         AppCenter.setAuthTokenListener(null);
         verify(mAuthTokenContext, never()).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
@@ -140,6 +183,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
                 callback.onAuthTokenResult(invalidJwt);
             }
         });
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
         verify(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
         AuthTokenContext.RefreshListener refreshListener = listenerArgumentCaptor.getValue();
