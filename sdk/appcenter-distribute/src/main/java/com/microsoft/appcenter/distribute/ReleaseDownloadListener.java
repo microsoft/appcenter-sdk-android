@@ -30,10 +30,14 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
 
-// TODO JavaDoc
+/**
+ * Listener for downloading progress.
+ */
 class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
-    // TODO JavaDoc
+    /**
+     * Context.
+     */
     protected Context mContext;
 
     /**
@@ -108,7 +112,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
              * This corner case cannot be avoided without triggering
              * strict mode exception.
              */
-
             AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
             mContext.startActivity(intent);
             if (mReleaseDetails.isMandatoryUpdate()) {
