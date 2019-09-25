@@ -81,7 +81,6 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         verify(mAuthTokenContext, never()).setAuthToken(jwt, claims.getSubject(), claims.getExpirationDate());
     }
 
-
     @Test
     public void unsetAuthToken() {
 
