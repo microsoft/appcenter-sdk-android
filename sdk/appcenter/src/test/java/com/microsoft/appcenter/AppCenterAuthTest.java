@@ -152,6 +152,7 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
 
     @Test
     public void setNullAuthTokenListenerWhenNoneExists() {
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
         AppCenter.setAuthTokenListener(null);
         verify(mAuthTokenContext, never()).unsetRefreshListener(any(AuthTokenContext.RefreshListener.class));
         verify(mAuthTokenContext, never()).setAuthToken(anyString(), anyString(), any(Date.class));
