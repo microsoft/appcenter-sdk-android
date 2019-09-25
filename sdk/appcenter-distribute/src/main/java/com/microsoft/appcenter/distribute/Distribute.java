@@ -68,6 +68,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
