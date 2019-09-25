@@ -470,8 +470,6 @@ public class AppCenter {
      *
      * @param authTokenListener authentication listener defined by the application or null to remove it.
      */
-    // TODO Remove when used in the app without reflection (after release).
-    @SuppressWarnings("WeakerAccess")
     public static void setAuthTokenListener(AuthTokenListener authTokenListener) {
         getInstance().setInstanceAuthTokenListener(authTokenListener);
     }
@@ -1228,7 +1226,11 @@ public class AppCenter {
         } else if (mAuthTokenRefreshListener != null) {
             AppCenterLog.info(LOG_TAG, "Removing auth token refresh listener.");
             authTokenContext.unsetRefreshListener(mAuthTokenRefreshListener);
-            authTokenContext.setAuthToken(null, null, null);
+
+            /* If removed after start, unset token. */
+            if (mApplication != null) {
+                authTokenContext.setAuthToken(null, null, null);
+            }
         }
     }
 

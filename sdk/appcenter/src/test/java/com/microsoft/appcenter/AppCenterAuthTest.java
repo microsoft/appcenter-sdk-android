@@ -21,6 +21,7 @@ import java.util.Date;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -148,6 +149,20 @@ public class AppCenterAuthTest extends AbstractAppCenterTest {
         AppCenter.setAuthTokenListener(null);
         verify(mAuthTokenContext).unsetRefreshListener(refreshListener);
         verify(mAuthTokenContext).setAuthToken(null, null, null);
+    }
+
+    @Test
+    public void setAuthTokenListenerWhenPreviouslySetBeforeStart() {
+        AuthTokenListener listener = new AuthTokenListener() {
+
+            @Override
+            public void acquireAuthToken(AuthTokenCallback callback) {
+            }
+        };
+        AppCenter.setAuthTokenListener(listener);
+        AppCenter.setAuthTokenListener(null);
+        verify(mAuthTokenContext).unsetRefreshListener(notNull(AuthTokenContext.RefreshListener.class));
+        verify(mAuthTokenContext, never()).setAuthToken(null, null, null);
     }
 
     @Test
