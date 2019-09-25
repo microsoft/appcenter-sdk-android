@@ -68,7 +68,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
@@ -106,7 +105,6 @@ import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseH
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-
 
 /**
  * Distribute service.
@@ -237,6 +235,11 @@ public class Distribute extends AbstractAppCenterService {
     private ReleaseDownloader mReleaseDownloader;
 
     /**
+     * Download release listener.
+     */
+    private ReleaseDownloadListener mReleaseDownloaderListener;
+
+    /**
      * True when distribute workflow reached final state.
      * This can be reset to check update again when app restarts.
      */
@@ -256,11 +259,6 @@ public class Distribute extends AbstractAppCenterService {
      * Custom listener if any.
      */
     private DistributeListener mListener;
-
-    /**
-     * Download release listener.
-     */
-    private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
      * Flag to remember whether update dialog was customized or not.
@@ -428,7 +426,7 @@ public class Distribute extends AbstractAppCenterService {
      * Set context, used when need to manipulate context before onStarted.
      * For example when download completes after application process exited.
      */
-    synchronized ReleaseDetails startFromBackground(Context context) {
+    synchronized void startFromBackground(Context context) {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
@@ -436,7 +434,6 @@ public class Distribute extends AbstractAppCenterService {
             mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
             mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
         }
-        return mReleaseDetails;
     }
 
     @Override
@@ -475,6 +472,8 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
+
+        /* Hide mandatory update progress dialog if exists. */
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
         }
@@ -610,7 +609,10 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloader.delete();
             mReleaseDownloader = null;
         }
-        mReleaseDownloaderListener = null;
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+            mReleaseDownloaderListener = null;
+        }
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
@@ -898,6 +900,10 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
+        if (mReleaseDownloader != null) {
+            mReleaseDownloader.delete();
+            mReleaseDownloader = null;
+        }
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
             mReleaseDownloaderListener = null;
@@ -1286,7 +1292,8 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show dialog and remember which activity displayed it for later U.I. state change.
      *
-     * @param dialog dialog.
+     * @param dialog A dialog. It can be null in cases when it wasn't been created
+     *               (for example progress dialog is required only for mandatory updates).
      */
     private void showAndRememberDialogActivity(@Nullable Dialog dialog) {
         if (dialog == null) {
@@ -1555,9 +1562,9 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 resumeDownload();
-                if (releaseDetails.isMandatoryUpdate()) {
-                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
-                }
+
+                /* Refresh mandatory dialog progress or do nothing otherwise. */
+                showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1725,6 +1732,12 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
+    /**
+     * Install downloaded package when the event from DownloadManager has been received.
+     *
+     * @param context context.
+     * @see DownloadManagerReceiver
+     */
     synchronized void installDownloadedUpdate(Context context) {
 
         /*
@@ -1741,7 +1754,9 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-
+    /**
+     * Resume downloading installer for current {@link ReleaseDetails}.
+     */
     synchronized void resumeDownload() {
         if (mReleaseDetails != null && mReleaseDownloader == null) {
             mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);

@@ -42,6 +42,8 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final int MAX_REDIRECTS = 6;
 
+    private static final int UPDATE_PROGRESS_BYTES_COUNT = 128 * 1024;
+
     private final WeakReference<HttpConnectionReleaseDownloader> mDownloader;
 
     private Uri mDownloadUri;
@@ -60,6 +62,17 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... args) {
         try {
+            File directory = mTargetFile.getParentFile();
+            if (directory == null || !(directory.exists() || directory.mkdirs())) {
+                throw new IOException("Could not create the directory for file:" + mTargetFile.getAbsolutePath());
+            }
+            if (mTargetFile.exists()) {
+
+                //noinspection ResultOfMethodCallIgnored
+                mTargetFile.delete();
+            }
+
+            /* Create connection */
             URL url = new URL(mDownloadUri.toString());
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             URLConnection connection = createConnection(url, MAX_REDIRECTS);
@@ -69,15 +82,6 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
 
                 /* This is not the expected APK file. Maybe the redirect could not be resolved. */
                 throw new IOException("The requested download does not appear to be a file.");
-            }
-            File directory = mTargetFile.getParentFile();
-            if (directory == null || !directory.mkdirs() || !directory.exists()) {
-                throw new IOException("Could not create the directory for file:" + mTargetFile.getAbsolutePath());
-            }
-            if (mTargetFile.exists()) {
-
-                //noinspection ResultOfMethodCallIgnored
-                mTargetFile.delete();
             }
 
             /* Download the release file. */
@@ -117,17 +121,26 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
             output = new FileOutputStream(mTargetFile);
             byte[] data = new byte[WRITE_BUFFER_SIZE];
             int count;
-            long totalBytesDownloaded = 0;
+            long totalBytesDownloaded = 0, reported = 0;
             while ((count = input.read(data)) != -1) {
                 totalBytesDownloaded += count;
                 output.write(data, 0, count);
 
-                /* Update the progress. */
-                HttpConnectionReleaseDownloader downloader = mDownloader.get();
-                if (downloader == null) {
-                    break;
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                downloader.onDownloadProgress(totalBytesDownloaded, lengthOfFile);
+
+                /* Update the progress. */
+                if (totalBytesDownloaded >= reported + UPDATE_PROGRESS_BYTES_COUNT || totalBytesDownloaded == lengthOfFile) {
+                    HttpConnectionReleaseDownloader downloader = mDownloader.get();
+                    if (downloader == null) {
+                        break;
+                    }
+                    downloader.onDownloadProgress(totalBytesDownloaded, lengthOfFile);
+                    reported += UPDATE_PROGRESS_BYTES_COUNT;
+                }
                 if (isCancelled()) {
                     break;
                 }

@@ -286,7 +286,7 @@ public final class DistributeConstants {
     static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
 
     /**
-     * Preference key to store the downloading release file uri.
+     * Preference key to store the downloading release file path.
      */
     public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
 
@@ -299,7 +299,6 @@ public final class DistributeConstants {
     public static File getDownloadFilesPath(@NonNull Context context) {
         return new File(context.getExternalFilesDir(null), "Download");
     }
-
 
     @VisibleForTesting
     DistributeConstants() {

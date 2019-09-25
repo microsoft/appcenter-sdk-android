@@ -9,6 +9,17 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 
+    <!--
+        Do not add the WRITE_EXTERNAL_STORAGE permission with custom attributes to library's manifest file
+        to avoid manifest merging issues. If an application requires this permission for all versions this
+        will lead to silently removing it for versions bigger than 18.
+        It should be added manually by developers to support old Android devices.
+
+        <uses-permission
+            android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+            android:maxSdkVersion="18" />
+    -->
+
     <application>
         <activity
             android:name="com.microsoft.appcenter.distribute.DeepLinkActivity"
