@@ -20,9 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.download.DownloadTask;
-import com.microsoft.appcenter.distribute.download.manager.DownloadManagerUpdateTask;
-import com.microsoft.appcenter.distribute.download.manager.RemoveDownloadTask;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -67,7 +65,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
-@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, DownloadTask.class, DownloadManagerUpdateTask.class, RemoveDownloadTask.class})
+@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class})
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
     static final long DOWNLOAD_ID = 42;
@@ -84,13 +82,13 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     @Mock
     DownloadManager.Request mDownloadRequest;
 
-    AtomicReference<DownloadTask> mDownloadTask;
+    AtomicReference<ReleaseDownloader> mDownloadTask;
 
     Semaphore mCheckDownloadBeforeSemaphore;
 
     Semaphore mCheckDownloadAfterSemaphore;
 
-    AtomicReference<DownloadManagerUpdateTask> mCompletionTask;
+    AtomicReference<ReleaseDownloader> mCompletionTask;
 
     private Semaphore mDownloadBeforeSemaphore;
 

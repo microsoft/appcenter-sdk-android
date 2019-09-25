@@ -21,7 +21,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 
-import com.microsoft.appcenter.distribute.download.manager.DownloadManagerUpdateTask;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -53,7 +53,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -103,7 +102,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDownloadTask.get()).cancel(true);
+        verify(mDownloadTask.get()).delete();
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verify(mNotificationManager, never()).notify(anyInt(), any(Notification.class));
     }
@@ -120,7 +119,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDownloadTask.get()).cancel(true);
+        verify(mDownloadTask.get());
         verify(mDownloadManager).enqueue(mDownloadRequest);
         verifyNew(DownloadManager.Request.class).withArguments(mDownloadUrl);
         verify(mDownloadManager).remove(DOWNLOAD_ID);
@@ -149,7 +148,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         waitCheckDownloadTask();
 
         /* Verify cancellation. */
-        verify(mCompletionTask.get()).cancel(true);
+        verify(mCompletionTask.get()).delete();
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verifyZeroInteractions(mNotificationManager);
 
@@ -373,13 +372,15 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* No download check yet. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        //AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        Distribute.getInstance().resumeDownload();
 
         /* Foreground: check still in progress. */
         Distribute.getInstance().onActivityResumed(mActivity);
         waitCheckDownloadTask();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        //AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        Distribute.getInstance().resumeDownload();
         verify(cursor).close();
 
         /* Restart launcher. */
@@ -388,7 +389,8 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify we don't run the check again. (Only once). */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        //AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        Distribute.getInstance().resumeDownload();
 
         /* Download eventually fails. */
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_FAILED);
