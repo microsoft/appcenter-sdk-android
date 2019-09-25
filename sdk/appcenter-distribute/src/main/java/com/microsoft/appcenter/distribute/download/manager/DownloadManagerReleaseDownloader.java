@@ -61,7 +61,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     private long getDownloadId() {
-        if (mDownloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+        if (mDownloadId == INVALID_DOWNLOAD_IDENTIFIER) {
             mDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
         }
         return mDownloadId;
