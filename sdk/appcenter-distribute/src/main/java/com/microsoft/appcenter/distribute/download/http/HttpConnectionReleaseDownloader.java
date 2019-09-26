@@ -125,7 +125,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         cancelProgressNotification();
     }
 
-    private void showProgressNotification(long currentSize, long totalSize) {
+    void showProgressNotification(long currentSize, long totalSize) {
         Notification.Builder builder = getNotificationBuilder();
 
         // TODO Use the different string.
