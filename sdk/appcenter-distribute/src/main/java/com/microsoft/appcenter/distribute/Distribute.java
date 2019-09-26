@@ -242,7 +242,6 @@ public class Distribute extends AbstractAppCenterService {
 
     /**
      * Remember if we checked download since our own process restarted.
-     * Download release listener.
      */
     private boolean mCheckedDownload;
 
@@ -742,7 +741,7 @@ public class Distribute extends AbstractAppCenterService {
                     resumeDownload();
 
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
-                    showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
+                    showDownloadProgress();
                 }
 
                 /* If we were showing unknown sources dialog, restore it. */
@@ -1301,13 +1300,9 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show dialog and remember which activity displayed it for later U.I. state change.
      *
-     * @param dialog A dialog. It can be null in cases when it wasn't been created
-     *               (for example progress dialog is required only for mandatory updates).
+     * @param dialog Dialog.
      */
-    private void showAndRememberDialogActivity(@Nullable Dialog dialog) {
-        if (dialog == null) {
-            return;
-        }
+    private void showAndRememberDialogActivity(Dialog dialog) {
         dialog.show();
         mLastActivityWithDialog = new WeakReference<>(mForegroundActivity);
     }
@@ -1573,7 +1568,7 @@ public class Distribute extends AbstractAppCenterService {
                 resumeDownload();
 
                 /* Refresh mandatory dialog progress or do nothing otherwise. */
-                showAndRememberDialogActivity(mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity));
+                showDownloadProgress();
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1689,6 +1684,25 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getOldNotificationBuilder() {
         return new Notification.Builder(mContext);
+    }
+
+    /**
+     * Show download progress (used only for mandatory updates).
+     */
+    private void showDownloadProgress() {
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
+            return;
+        }
+        Dialog progressDialog = mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity);
+
+        /*
+         * It can be null in cases when it wasn't been created
+         * (for example progress dialog is required only for mandatory updates).
+         */
+        if (progressDialog != null) {
+            showAndRememberDialogActivity(progressDialog);
+        }
     }
 
     /**

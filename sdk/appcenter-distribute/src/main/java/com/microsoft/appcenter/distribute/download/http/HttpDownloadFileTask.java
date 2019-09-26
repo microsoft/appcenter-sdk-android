@@ -126,12 +126,6 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
                 totalBytesDownloaded += count;
                 output.write(data, 0, count);
 
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
                 /* Update the progress. */
                 if (totalBytesDownloaded >= reported + UPDATE_PROGRESS_BYTES_COUNT || totalBytesDownloaded == lengthOfFile) {
                     HttpConnectionReleaseDownloader downloader = mDownloader.get();
