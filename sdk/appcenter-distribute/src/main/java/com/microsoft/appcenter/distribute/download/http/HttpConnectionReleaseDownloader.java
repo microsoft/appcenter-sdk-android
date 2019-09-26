@@ -131,7 +131,6 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         // TODO Use the different string.
         builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_mandatory_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setPriority(Notification.PRIORITY_LOW)
                 .setProgress((int) (totalSize / 1024), (int) (currentSize / 1024), totalSize <= 0);
         getNotificationManager().notify(getNotificationId(), builder.build());
     }

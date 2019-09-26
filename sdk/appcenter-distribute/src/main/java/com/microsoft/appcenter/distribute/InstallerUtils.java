@@ -62,7 +62,7 @@ public class InstallerUtils {
      * @return intent to open installation U.I.
      */
     @NonNull
-    public static Intent getInstallIntent(Uri fileUri) {
+    static Intent getInstallIntent(Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         intent.setData(fileUri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
