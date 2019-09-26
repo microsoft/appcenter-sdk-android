@@ -60,10 +60,6 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... args) {
         try {
-            File directory = mTargetFile.getParentFile();
-            if (directory == null || !(directory.exists() || directory.mkdirs())) {
-                throw new IOException("Could not create the directory for file:" + mTargetFile.getAbsolutePath());
-            }
             if (mTargetFile.exists()) {
 
                 //noinspection ResultOfMethodCallIgnored
