@@ -114,8 +114,11 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
              */
             AppCenterLog.info(LOG_TAG, "Show install UI now intentUri=" + intent.getData());
             mContext.startActivity(intent);
+            Distribute distribute = Distribute.getInstance();
             if (mReleaseDetails.isMandatoryUpdate()) {
-                Distribute.getInstance().setInstalling(mReleaseDetails);
+                distribute.setInstalling(mReleaseDetails);
+            } else {
+                distribute.completeWorkflow(mReleaseDetails);
             }
             storeReleaseDetails(mReleaseDetails);
         }
