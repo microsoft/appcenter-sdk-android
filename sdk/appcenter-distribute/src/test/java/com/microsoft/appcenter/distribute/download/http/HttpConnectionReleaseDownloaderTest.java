@@ -24,6 +24,8 @@ import org.mockito.internal.stubbing.answers.Returns;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.File;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -57,6 +59,15 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
+    public void testNoTargetFile() {
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE)).thenReturn(null);
+        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        releaseDownloader.resume();
+        verify(mockListener).onError(anyString());
+    }
+
+    @Test
     public void testNoNetwork() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE)).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -78,15 +89,30 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testNormal() {
+    public void testDownloadStart() {
+        File value = new File("/folder/folder/file");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE)).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
         doNothing().when(releaseDownloader).showProgressNotification(anyLong(), anyLong());
+        when(releaseDownloader.getTargetFile()).thenReturn(value);
         releaseDownloader.resume();
         verify(mockListener).onStart(anyLong());
+    }
+
+    @Test
+    public void testDownloadComplete() {
+//        File value = new File("/folder/folder/file.apk");
+//        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE)).thenReturn("/folder/folder/file.apk");
+//        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+//        when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
+//        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
+//        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+//        when(releaseDownloader.getTargetFile()).thenReturn(value);
+//        releaseDownloader.resume();
+//        verify(releaseDownloader).onDownloadComplete(any(File.class));
     }
 
 }

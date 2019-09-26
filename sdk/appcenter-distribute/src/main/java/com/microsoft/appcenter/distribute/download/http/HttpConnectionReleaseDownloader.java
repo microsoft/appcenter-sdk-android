@@ -55,7 +55,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @Nullable
-    private File getTargetFile() {
+    File getTargetFile() {
         if (mTargetFile == null) {
             File downloadsDirectory = mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             if (downloadsDirectory != null) {
