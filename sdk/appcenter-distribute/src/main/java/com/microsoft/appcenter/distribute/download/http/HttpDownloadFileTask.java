@@ -29,8 +29,6 @@ import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 
 /**
- * <h3>Description</h3>
- * <p>
  * Internal helper class. Downloads an .apk from AppCenter and stores
  * it on external storage. If the download was successful, the file
  * is then opened to trigger the installation.

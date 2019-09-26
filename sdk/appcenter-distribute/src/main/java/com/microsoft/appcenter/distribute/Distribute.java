@@ -1300,7 +1300,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show dialog and remember which activity displayed it for later U.I. state change.
      *
-     * @param dialog Dialog.
+     * @param dialog dialog.
      */
     private void showAndRememberDialogActivity(Dialog dialog) {
         dialog.show();
