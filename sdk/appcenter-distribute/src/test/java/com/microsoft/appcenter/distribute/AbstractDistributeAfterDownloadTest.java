@@ -64,44 +64,19 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, ReleaseDownloadListener.class})
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
-    static final long DOWNLOAD_ID = 42;
-
     @Mock
     Uri mDownloadUrl;
-
-    @Mock
-    DownloadManager mDownloadManager;
 
     @Mock
     NotificationManager mNotificationManager;
 
     @Mock
-    DownloadManager.Request mDownloadRequest;
-
-    @Mock
     ReleaseDownloadListener mReleaseListener;
-
-    ReleaseDownloader mReleaseDownloader;
-
-    Semaphore mCheckDownloadBeforeSemaphore;
-
-    Semaphore mCheckDownloadAfterSemaphore;
-
-    //AtomicReference<DownloadManagerUpdateTask> mCompletionTask;
-
-    private Semaphore mDownloadBeforeSemaphore;
-
-    private Semaphore mDownloadAfterSemaphore;
 
     void setUpDownload(boolean mandatoryUpdate) throws Exception {
 
         /* Allow unknown sources. */
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
-
-        /* Mock download manager. */
-        when(mContext.getSystemService(Context.DOWNLOAD_SERVICE)).thenReturn(mDownloadManager);
-        whenNew(DownloadManager.Request.class).withAnyArguments().thenReturn(mDownloadRequest);
-        when(mDownloadManager.enqueue(mDownloadRequest)).thenReturn(DOWNLOAD_ID);
 
         /* Mock notification manager. */
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
@@ -184,7 +159,7 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Mock release listener. */
-        whenNew(ReleaseDownloadListener.class).withArguments(mReleaseDownloader).thenReturn(mReleaseListener);
+        whenNew(ReleaseDownloadListener.class).withAnyArguments().thenReturn(mReleaseListener);
 
         /* Click on dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -192,33 +167,11 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
     }
 
-    void waitDownloadTask() {
-        mDownloadBeforeSemaphore.release();
-        mDownloadAfterSemaphore.acquireUninterruptibly();
-    }
-
-    void waitCheckDownloadTask() {
-        mCheckDownloadBeforeSemaphore.release();
-        mCheckDownloadAfterSemaphore.acquireUninterruptibly();
-    }
-
     void completeDownload() {
         Intent completionIntent = mock(Intent.class);
         when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        //FIXME: when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
         new DownloadManagerReceiver().onReceive(mContext, completionIntent);
-    }
-
-    @NonNull
-    Cursor mockSuccessCursor() {
-        Cursor cursor = mock(Cursor.class);
-        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(cursor);
-        when(cursor.moveToFirst()).thenReturn(true);
-        when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)).thenReturn(0);
-        when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_SUCCESSFUL);
-        when(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)).thenReturn(1);
-        when(cursor.getString(1)).thenReturn("content://downloads/all_downloads/" + DOWNLOAD_ID);
-        return cursor;
     }
 
     @NonNull
@@ -253,14 +206,5 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
-        checkSemaphoreSanity(mCheckDownloadBeforeSemaphore);
-        checkSemaphoreSanity(mCheckDownloadAfterSemaphore);
-        checkSemaphoreSanity(mDownloadBeforeSemaphore);
-        checkSemaphoreSanity(mDownloadAfterSemaphore);
-    }
-
-    void checkSemaphoreSanity(Semaphore semaphore) {
-        assertEquals(0, semaphore.availablePermits());
-        assertEquals(0, semaphore.getQueueLength());
     }
 }

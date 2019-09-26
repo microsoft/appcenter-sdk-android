@@ -20,6 +20,8 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -72,6 +74,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         InstallerUtils.class,
         NetworkStateHelper.class,
         ReleaseDetails.class,
+        ReleaseDownloaderFactory.class,
         SharedPreferencesManager.class,
         TextUtils.class,
         Toast.class
@@ -134,6 +137,9 @@ public class AbstractDistributeTest {
 
     @Mock
     HttpClient mHttpClient;
+
+    @Mock
+    ReleaseDownloader mReleaseDownloader;
 
     @Before
     @SuppressLint("ShowToast")
@@ -274,6 +280,10 @@ public class AbstractDistributeTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
+
+        /* Mock Relese Downloader. */
+        mockStatic(ReleaseDownloaderFactory.class);
+        when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
     }
 
     void restartProcessAndSdk() {
