@@ -12,17 +12,25 @@ import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 
-
-// TODO JavaDoc
+/**
+ * The factory that can be used to create an instance of a {@link HttpConnectionReleaseDownloader} or a {@link DownloadManagerReleaseDownloader}.
+ */
 public class ReleaseDownloaderFactory {
 
     /**
-     * Create release downloader.
+     * Create release downloader instance.
      *
-     * @param context TODO
-     * @return Release downloader.
+     * @param context        android context.
+     * @param releaseDetails release to download.
+     * @param listener       listener to be notified of status.
+     * @return release downloader instance.
      */
     public static ReleaseDownloader create(Context context, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
+
+        /*
+         * DownloadManager on Android 4.x doesn't enable TLS 1.2 so the download keeps retry in SSL handshake failure.
+         * Switch to direct downloading via HttpsURLConnection for Android versions prior to 5.0 because TLS 1.2 is enforced now.
+         */
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return new HttpConnectionReleaseDownloader(context, releaseDetails, listener);
         }

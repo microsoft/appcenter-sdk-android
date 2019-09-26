@@ -291,7 +291,7 @@ public final class DistributeConstants {
      *
      * @see com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader
      */
-    static final String DOWNLOADS_FOLDER_NAME = "Download"
+    static final String DOWNLOADS_FOLDER_NAME = "Download";
 
     @VisibleForTesting
     DistributeConstants() {
