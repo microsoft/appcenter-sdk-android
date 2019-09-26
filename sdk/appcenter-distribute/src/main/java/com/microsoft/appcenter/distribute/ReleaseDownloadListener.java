@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -74,6 +73,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             HandlerUtils.runOnUiThread(new Runnable() {
 
                 @Override
+                @SuppressWarnings({"deprecation", "RedundantSuppression"})
                 public void run() {
 
                     /* When we switch from indeterminate to determinate */
@@ -132,7 +132,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * Show download progress. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    ProgressDialog showDownloadProgress(Activity foregroundActivity) {
+    android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
         if (!mReleaseDetails.isMandatoryUpdate()) {
             return null;
         }
@@ -152,7 +152,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     synchronized void hideProgressDialog() {
         if (mProgressDialog != null) {
-            final ProgressDialog progressDialog = mProgressDialog;
+            final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
 
             /* This can be called from background check download task. */

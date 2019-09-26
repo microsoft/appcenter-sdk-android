@@ -286,13 +286,6 @@ public final class DistributeConstants {
      */
     public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
 
-    /**
-     * Folder name for release downloads (used only on Android prior 5.0).
-     *
-     * @see com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader
-     */
-    static final String DOWNLOADS_FOLDER_NAME = "Download";
-
     @VisibleForTesting
     DistributeConstants() {
 

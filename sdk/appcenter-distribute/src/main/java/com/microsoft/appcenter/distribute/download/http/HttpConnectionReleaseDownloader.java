@@ -11,9 +11,10 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
-import com.microsoft.appcenter.distribute.DistributeUtils;
 import com.microsoft.appcenter.distribute.PermissionUtils;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
@@ -53,9 +54,13 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         mListener = listener;
     }
 
+    @Nullable
     private File getTargetFile() {
         if (mTargetFile == null) {
-            mTargetFile = new File(DistributeUtils.getDownloadFilesPath(mContext), mReleaseDetails.getReleaseHash() + ".apk");
+            File downloadsDirectory = mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (downloadsDirectory != null) {
+                mTargetFile = new File(downloadsDirectory, mReleaseDetails.getReleaseHash() + ".apk");
+            }
         }
         return mTargetFile;
     }
@@ -76,6 +81,10 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     @Override
     public void resume() {
         File targetFile = getTargetFile();
+        if (targetFile == null) {
+            mListener.onError("Cannot access to downloads folder. Shared storage is not currently available.");
+            return;
+        }
 
         /* Check if we have already downloaded the release. */
         String downloadedReleaseFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
@@ -131,7 +140,6 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         // TODO Use the different string.
         builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_mandatory_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setPriority(Notification.PRIORITY_LOW)
                 .setProgress((int) (totalSize / 1024), (int) (currentSize / 1024), totalSize <= 0);
         getNotificationManager().notify(getNotificationId(), builder.build());
     }
