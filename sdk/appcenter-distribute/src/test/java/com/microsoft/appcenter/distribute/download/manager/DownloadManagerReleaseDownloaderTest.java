@@ -121,7 +121,7 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Prepare data and call. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(1L);
-        releaseDownloader.delete();
+        releaseDownloader.cancel();
 
         /* Verify that it is call. */
         verify(mockDownloadManagerRequestTask).cancel(eq(true));
@@ -132,7 +132,7 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Prepare data and call. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(-1L);
-        releaseDownloader.delete();
+        releaseDownloader.cancel();
 
         /* Verify that it is not call. */
         verify(mockDownloadManagerRequestTask.cancel(eq(true)));

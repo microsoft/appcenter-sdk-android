@@ -613,7 +613,7 @@ public class Distribute extends AbstractAppCenterService {
         mReleaseDetails = null;
         mCheckedDownload = false;
         if (mReleaseDownloader != null) {
-            mReleaseDownloader.delete();
+            mReleaseDownloader.cancel();
             mReleaseDownloader = null;
         }
         if (mReleaseDownloaderListener != null) {
@@ -909,7 +909,7 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
         if (mReleaseDownloader != null) {
-            mReleaseDownloader.delete();
+            mReleaseDownloader.cancel();
             mReleaseDownloader = null;
         }
         if (mReleaseDownloaderListener != null) {

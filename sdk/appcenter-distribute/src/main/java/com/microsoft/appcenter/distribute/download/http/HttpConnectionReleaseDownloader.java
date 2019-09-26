@@ -147,7 +147,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void delete() {
+    public synchronized void cancel() {
         String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
         if (filePath != null) {
             AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(mContext, filePath));
@@ -171,20 +171,20 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @WorkerThread
-    void onDownloadProgress(final long currentSize, final long totalSize) {
+    synchronized void onDownloadProgress(final long currentSize, final long totalSize) {
         showProgressNotification(currentSize, totalSize);
         mListener.onProgress(currentSize, totalSize);
     }
 
     @WorkerThread
-    void onDownloadComplete(File targetFile) {
+    synchronized void onDownloadComplete(File targetFile) {
         cancelProgressNotification();
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
         SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 
-    void onDownloadError(String errorMessage) {
+    synchronized void onDownloadError(String errorMessage) {
         mListener.onError(errorMessage);
     }
 
