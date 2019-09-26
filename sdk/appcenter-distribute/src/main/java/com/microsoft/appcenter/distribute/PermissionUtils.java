@@ -16,11 +16,10 @@ public class PermissionUtils {
     /**
      * Fills an array with app's permissions' states regarding passed permissions array.
      *
-     * @param context     Context
-     * @param permissions an array with specified permissions
+     * @param context     context.
+     * @param permissions an array with specified permissions.
      * @return an array with either {@link PackageManager#PERMISSION_GRANTED} if the calling
-     * pid/uid is allowed that permission, or
-     * {@link PackageManager#PERMISSION_DENIED} if it is not.
+     * pid/uid is allowed that permission, or {@link PackageManager#PERMISSION_DENIED} if it is not.
      */
     public static int[] permissionsState(Context context, String... permissions) {
         if (permissions == null) {

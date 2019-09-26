@@ -181,6 +181,11 @@ public final class DistributeConstants {
     public static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
 
     /**
+     * 1 KiB in bytes (this not a kilobyte).
+     */
+    static final float KIBIBYTE_IN_BYTES = 1024;
+
+    /**
      * 1 MiB in bytes (this not a megabyte).
      */
     static final float MEBIBYTE_IN_BYTES = 1024 * 1024;

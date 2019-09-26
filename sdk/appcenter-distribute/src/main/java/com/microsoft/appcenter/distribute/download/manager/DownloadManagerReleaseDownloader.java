@@ -32,10 +32,19 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
+    /**
+     * Context.
+     */
     private final Context mContext;
 
+    /**
+     * Release to download.
+     */
     private final ReleaseDetails mReleaseDetails;
 
+    /**
+     * Listener of download status.
+     */
     private final ReleaseDownloader.Listener mListener;
 
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;

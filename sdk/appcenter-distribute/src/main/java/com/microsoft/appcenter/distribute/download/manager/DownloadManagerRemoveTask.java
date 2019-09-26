@@ -22,7 +22,7 @@ class DownloadManagerRemoveTask extends AsyncTask<Void, Void, Void> {
     private final Context mContext;
 
     /**
-     * Download identifier to inspect.
+     * Download identifier to delete.
      */
     private final long mDownloadId;
 
