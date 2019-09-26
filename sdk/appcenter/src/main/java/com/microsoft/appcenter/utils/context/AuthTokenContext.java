@@ -85,11 +85,6 @@ public class AuthTokenContext {
     private boolean mResetAuthTokenRequired = true;
 
     /**
-     * The last token to be refreshed. Saved to ensure that it is not refreshed more than once.
-     */
-    private String mLastTokenRefreshed;
-
-    /**
      * Initializes AuthTokenContext class.
      *
      * @param context {@link Context} instance.
@@ -123,10 +118,8 @@ public class AuthTokenContext {
     /**
      * Set or unset the refresh token update listener. There can be only 1 active.
      */
-    public synchronized void setRefreshListener(@NonNull RefreshListener refreshListener) {
-        if (mRefreshListener.compareAndSet(null, refreshListener)) {
-            mLastTokenRefreshed = null;
-        } else {
+    public void setRefreshListener(@NonNull RefreshListener refreshListener) {
+        if (!mRefreshListener.compareAndSet(null, refreshListener)) {
             AppCenterLog.error(LOG_TAG, "Cannot use 2 authentication modules at the same time.");
         }
     }
@@ -359,18 +352,13 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
-        RefreshListener refreshListener;
-        AuthTokenHistoryEntry lastEntry;
-        synchronized(this) {
-            lastEntry = getLastHistoryEntry();
-            if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
-                    !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
-                    !authTokenInfo.isAboutToExpire() || authTokenInfo.getAuthToken().equals(mLastTokenRefreshed)) {
-                return;
-            }
-            mLastTokenRefreshed = authTokenInfo.getAuthToken();
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire()) {
+            return;
         }
-        refreshListener = mRefreshListener.get();
+        RefreshListener refreshListener = mRefreshListener.get();
         if (refreshListener != null) {
             refreshListener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
         }
