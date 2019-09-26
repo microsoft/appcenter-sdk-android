@@ -46,12 +46,12 @@ public class HttpUtils {
     /**
      * HTTP connection timeout.
      */
-    public static final int CONNECT_TIMEOUT = 60000;
+    public static final int CONNECT_TIMEOUT = 10000;
 
     /**
      * HTTP read timeout.
      */
-    public static final int READ_TIMEOUT = 20000;
+    public static final int READ_TIMEOUT = 10000;
 
     /**
      * Maximum characters to be displayed in a log for application secret.
@@ -199,11 +199,15 @@ public class HttpUtils {
     }
 
     public static HttpClient createHttpClient(@NonNull Context context, boolean compressionEnabled) {
+
+        /* Retryer should be applied last to avoid retries in offline. */
+        return new HttpClientRetryer(createHttpClientWithoutRetryer(context, compressionEnabled));
+    }
+
+    public static HttpClient createHttpClientWithoutRetryer(@NonNull Context context, boolean compressionEnabled) {
         HttpClient httpClient = new DefaultHttpClient(compressionEnabled);
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
-
-        /* Retryer should be applied last to avoid retries in offline. */
-        return new HttpClientRetryer(httpClient);
+        return httpClient;
     }
 }

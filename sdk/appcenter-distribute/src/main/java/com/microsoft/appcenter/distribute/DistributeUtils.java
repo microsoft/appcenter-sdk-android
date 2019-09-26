@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
@@ -20,8 +21,10 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 
+import java.io.File;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOADS_FOLDER_NAME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
@@ -40,7 +43,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETU
 /**
  * Some static util methods to avoid the main file getting too big.
  */
-class DistributeUtils {
+public class DistributeUtils {
 
     /**
      * Scheme used to open the native Android tester app.
@@ -63,6 +66,17 @@ class DistributeUtils {
      */
     static int getStoredDownloadState() {
         return SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
+    }
+
+    /**
+     * Path where downloaded files are stored.
+     *
+     * @param context The context to use. Usually your Activity object.
+     * @return app specific "Downloads" folder.
+     */
+    public static File getDownloadFilesPath(@NonNull Context context) {
+        File applicationDirectory = context.getExternalFilesDir(null);
+        return new File(applicationDirectory, DOWNLOADS_FOLDER_NAME);
     }
 
     @NonNull

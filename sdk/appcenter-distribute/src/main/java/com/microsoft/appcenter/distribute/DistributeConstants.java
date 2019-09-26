@@ -6,13 +6,9 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
-import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
-
-import java.io.File;
 
 /**
  * Distribute constants.
@@ -291,14 +287,11 @@ public final class DistributeConstants {
     public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
 
     /**
-     * Path where downloaded files are stored.
+     * Folder name for release downloads (used only on Android prior 5.0).
      *
-     * @param context The context to use. Usually your Activity object.
-     * @return app specific "Downloads" folder.
+     * @see com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader
      */
-    public static File getDownloadFilesPath(@NonNull Context context) {
-        return new File(context.getExternalFilesDir(null), "Download");
-    }
+    static final String DOWNLOADS_FOLDER_NAME = "Download"
 
     @VisibleForTesting
     DistributeConstants() {
