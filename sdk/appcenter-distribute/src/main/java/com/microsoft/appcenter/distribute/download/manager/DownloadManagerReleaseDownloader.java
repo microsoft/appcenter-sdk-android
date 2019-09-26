@@ -32,10 +32,19 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
+    /**
+     * Context.
+     */
     private final Context mContext;
 
+    /**
+     * Release to download.
+     */
     private final ReleaseDetails mReleaseDetails;
 
+    /**
+     * Listener of download status.
+     */
     private final ReleaseDownloader.Listener mListener;
 
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
@@ -128,7 +137,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         DownloadManager downloadManager = getDownloadManager();
         DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
 
-        /* Hide mandatory download to prevent canceling via notification cancel or download U.I. delete. */
+        /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (mReleaseDetails.isMandatoryUpdate()) {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
             request.setVisibleInDownloadsUi(false);

@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.PermissionUtils;
 import com.microsoft.appcenter.distribute.R;
@@ -27,23 +28,39 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import java.io.File;
 import java.util.ArrayList;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
 
 /**
- * Downloads new releases on Android SDK versions prior to Lollipop.
- * Uses HttpConnection and AsyncTasks.
+ * Downloads new releases directly via HttpsURLConnection for Android versions prior to 5.0.
  */
 public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
+    /**
+     * Context.
+     */
     private final Context mContext;
 
+    /**
+     * Release to download.
+     */
     private final ReleaseDetails mReleaseDetails;
 
+    /**
+     * Listener of download status.
+     */
     private final ReleaseDownloader.Listener mListener;
 
+    /**
+     * A file that used to write downloaded package.
+     */
     private File mTargetFile;
 
+    /**
+     * Progress notification builder.
+     * It must be stored to avoid notification flickering.
+     */
     private Notification.Builder mNotificationBuilder;
 
     private HttpDownloadFileTask mHttpDownloadFileTask;
@@ -69,6 +86,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         return (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
+    /**
+     * Get progress notification builder.
+     *
+     * @see #mNotificationBuilder
+     */
     @NonNull
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private Notification.Builder getNotificationBuilder() {
@@ -137,10 +159,10 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     void showProgressNotification(long currentSize, long totalSize) {
         Notification.Builder builder = getNotificationBuilder();
 
-        // TODO Use the different string.
+        /* TODO: We should not reuse "mandatory" string here. */
         builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_mandatory_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setProgress((int) (totalSize / 1024), (int) (currentSize / 1024), totalSize <= 0);
+                .setProgress((int) (totalSize / KIBIBYTE_IN_BYTES), (int) (currentSize / KIBIBYTE_IN_BYTES), totalSize <= 0);
         getNotificationManager().notify(getNotificationId(), builder.build());
     }
 
@@ -148,11 +170,13 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         getNotificationManager().cancel(getNotificationId());
     }
 
+    @WorkerThread
     void onDownloadProgress(final long currentSize, final long totalSize) {
         showProgressNotification(currentSize, totalSize);
         mListener.onProgress(currentSize, totalSize);
     }
 
+    @WorkerThread
     void onDownloadComplete(File targetFile) {
         cancelProgressNotification();
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
@@ -180,5 +204,4 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private static int getNotificationId() {
         return HttpConnectionReleaseDownloader.class.getName().hashCode();
     }
-
 }
