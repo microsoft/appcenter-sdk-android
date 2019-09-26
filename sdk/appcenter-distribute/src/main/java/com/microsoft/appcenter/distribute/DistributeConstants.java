@@ -183,7 +183,7 @@ public final class DistributeConstants {
     /**
      * 1 KiB in bytes (this not a kilobyte).
      */
-    static final float KIBIBYTE_IN_BYTES = 1024;
+    public static final float KIBIBYTE_IN_BYTES = 1024;
 
     /**
      * 1 MiB in bytes (this not a megabyte).

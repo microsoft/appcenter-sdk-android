@@ -8,8 +8,10 @@ package com.microsoft.appcenter.distribute.download.http;
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -17,21 +19,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLConnection;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 
 /**
- * Internal helper class. Downloads an .apk from App Center and stores
- * it on external storage. If the download was successful, the file
- * is then opened to trigger the installation.
+ * Downloads an update and stores it on specified file.
  **/
 class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
 
@@ -40,19 +40,25 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final int MAX_REDIRECTS = 6;
 
+    /**
+     * The download progress will be reported every time this number of bytes is downloaded.
+     */
     private static final int UPDATE_PROGRESS_BYTES_COUNT = 128 * 1024;
 
-    private final WeakReference<HttpConnectionReleaseDownloader> mDownloader;
+    private final HttpConnectionReleaseDownloader mDownloader;
 
+    /**
+     * The URI that hosts the binary to download.
+     */
     private Uri mDownloadUri;
 
     /**
-     * Path to the downloading apk.
+     * The file that used to write downloaded package.
      */
     private File mTargetFile;
 
     HttpDownloadFileTask(HttpConnectionReleaseDownloader downloader, Uri downloadUri, File targetFile) {
-        mDownloader = new WeakReference<>(downloader);
+        mDownloader = downloader;
         mDownloadUri = downloadUri;
         mTargetFile = targetFile;
     }
@@ -62,8 +68,10 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
         try {
             if (mTargetFile.exists()) {
 
-                //noinspection ResultOfMethodCallIgnored
-                mTargetFile.delete();
+                /* Delete previously downloaded file if exists. */
+                if (!mTargetFile.delete()) {
+                    AppCenterLog.warn(LOG_TAG, "Cannot delete previously downloaded file: " + mTargetFile);
+                }
             }
 
             /* Create connection. */
@@ -79,18 +87,12 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
             }
 
             /* Download the release file. */
-            long totalBytesDownloaded = downloadFile(connection.getInputStream(), connection.getContentLength());
+            long totalBytesDownloaded = downloadFile(connection);
             if (totalBytesDownloaded > 0) {
-                HttpConnectionReleaseDownloader downloader = mDownloader.get();
-                if (downloader != null) {
-                    downloader.onDownloadComplete(mTargetFile);
-                }
+                mDownloader.onDownloadComplete(mTargetFile);
             }
         } catch (IOException e) {
-            HttpConnectionReleaseDownloader downloader = mDownloader.get();
-            if (downloader != null) {
-                downloader.onDownloadError(e.getMessage());
-            }
+            mDownloader.onDownloadError(e.getMessage());
         } finally {
             TrafficStats.clearThreadStatsTag();
         }
@@ -98,43 +100,21 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     }
 
     /**
-     * Performs IO operation to download .apk file through HttpConnection.
-     * Saves .apk file to the mApkFilePath.
+     * Performs IO operation to download file through {@link URLConnection}.
+     * Saves the file to the {@link #mTargetFile).
      *
-     * @param inputStream  TODO
-     * @param lengthOfFile TODO
+     * @param connection network connection,
      * @return total number of downloaded bytes.
      * @throws IOException if connection fails.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    private long downloadFile(InputStream inputStream, long lengthOfFile) throws IOException {
+    private long downloadFile(URLConnection connection) throws IOException {
         InputStream input = null;
         OutputStream output = null;
         try {
-            input = new BufferedInputStream(inputStream);
+            input = new BufferedInputStream(connection.getInputStream());
             output = new FileOutputStream(mTargetFile);
-            byte[] data = new byte[WRITE_BUFFER_SIZE];
-            int count;
-            long totalBytesDownloaded = 0, reported = 0;
-            while ((count = input.read(data)) != -1) {
-                totalBytesDownloaded += count;
-                output.write(data, 0, count);
-
-                /* Update the progress. */
-                if (totalBytesDownloaded >= reported + UPDATE_PROGRESS_BYTES_COUNT || totalBytesDownloaded == lengthOfFile) {
-                    HttpConnectionReleaseDownloader downloader = mDownloader.get();
-                    if (downloader == null) {
-                        break;
-                    }
-                    downloader.onDownloadProgress(totalBytesDownloaded, lengthOfFile);
-                    reported += UPDATE_PROGRESS_BYTES_COUNT;
-                }
-                if (isCancelled()) {
-                    break;
-                }
-            }
-            output.flush();
-            return totalBytesDownloaded;
+            return copyStream(input, output, connection.getContentLength());
         } finally {
             try {
                 if (output != null) {
@@ -148,13 +128,44 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
         }
     }
 
+    /**
+     * Copies one stream into another and reports the progress.
+     *
+     * @param inputStream  the input stream.
+     * @param outputStream the output stream.
+     * @param lengthOfFile total number of bytes in the input stream. Used only for progress reporting.
+     * @return total number of processed bytes.
+     * @throws IOException if an I/O error occurs when reading or writing.
+     */
+    private long copyStream(@NonNull InputStream inputStream, @NonNull OutputStream outputStream, long lengthOfFile) throws IOException {
+        byte[] data = new byte[WRITE_BUFFER_SIZE];
+        int count;
+        long totalBytesDownloaded = 0, reported = 0;
+        while ((count = inputStream.read(data)) != -1) {
+            totalBytesDownloaded += count;
+            outputStream.write(data, 0, count);
+
+            /* Update the progress each UPDATE_PROGRESS_BYTES_COUNT bytes. */
+            if (totalBytesDownloaded >= reported + UPDATE_PROGRESS_BYTES_COUNT || totalBytesDownloaded == lengthOfFile) {
+                mDownloader.onDownloadProgress(totalBytesDownloaded, lengthOfFile);
+                reported += UPDATE_PROGRESS_BYTES_COUNT;
+            }
+
+            /* Check if the task is cancelled. */
+            if (isCancelled()) {
+                break;
+            }
+        }
+        outputStream.flush();
+        return totalBytesDownloaded;
+    }
 
     /**
      * Recursive method for resolving redirects. Resolves at most MAX_REDIRECTS times.
      *
-     * @param url                a URL
-     * @param remainingRedirects loop counter
-     * @return instance of URLConnection
+     * @param url                a URL.
+     * @param remainingRedirects redirects counter.
+     * @return instance of {@link URLConnection}.
      * @throws IOException if connection fails
      */
     private static URLConnection createConnection(URL url, int remainingRedirects) throws IOException {

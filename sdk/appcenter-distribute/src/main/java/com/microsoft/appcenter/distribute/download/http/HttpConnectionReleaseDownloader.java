@@ -28,6 +28,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import java.io.File;
 import java.util.ArrayList;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
 
@@ -161,7 +162,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         /* TODO: We should not reuse "mandatory" string here. */
         builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_mandatory_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setProgress((int) (totalSize / 1024), (int) (currentSize / 1024), totalSize <= 0);
+                .setProgress((int) (totalSize / KIBIBYTE_IN_BYTES), (int) (currentSize / KIBIBYTE_IN_BYTES), totalSize <= 0);
         getNotificationManager().notify(getNotificationId(), builder.build());
     }
 
