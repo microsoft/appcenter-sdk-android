@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.microsoft.appcenter.data.Constants.PREFERENCE_PARTITION_PREFIX;
@@ -50,6 +51,7 @@ import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -69,8 +71,8 @@ public class DataReadTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<String>> doc = Data.read(DOCUMENT_ID, String.class, DefaultPartitions.USER_DOCUMENTS);
 
         /* Make cosmos db http call with exchanged token. */
-        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
-        verifyCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeFlow(false, TOKEN_EXCHANGE_USER_PAYLOAD, null);
+        verifyCosmosDbFlow(false, DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify document. Confirm the cache was not touched. */
         assertNotNull(doc);
@@ -96,8 +98,8 @@ public class DataReadTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, partition, null);
 
         /* Make cosmos db http call with exchanged token. */
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, tokenExchangePayload, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
-        verifyCosmosDbFlow(DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, tokenExchangePayload, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        verifyCosmosDbFlow(false, DOCUMENT_ID, METHOD_GET, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         /* Get and verify token. */
         assertNotNull(doc);
@@ -118,12 +120,12 @@ public class DataReadTest extends AbstractDataTest {
     @Test
     public void readFailedCosmosDbCallFailed() throws JSONException {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS, new ReadOptions());
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new Exception("Cosmos db exception."));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -137,7 +139,7 @@ public class DataReadTest extends AbstractDataTest {
     public void readCosmosDbCallEncodeDocumentId() throws JSONException, UnsupportedEncodingException {
         String documentID = "TestDocument";
         Data.read(documentID, TestDocument.class, USER_DOCUMENTS);
-        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+        verifyTokenExchangeFlow(false, TOKEN_EXCHANGE_USER_PAYLOAD, null);
 
         /* Verify that document base Uri is properly constructed by CosmosDb.getDocumentBaseUrl method. */
         String expectedUri = String.format("dbs/%s", DATABASE_NAME) + "/" +
@@ -146,12 +148,13 @@ public class DataReadTest extends AbstractDataTest {
         assertEquals(expectedUri, CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID));
 
         /* Now verify that actual call was properly encoded. */
-        verify(mHttpClient).callAsync(
+        verify(mHttpClientNoRetryer).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID)),
                 eq(METHOD_GET),
                 anyMapOf(String.class, String.class),
                 any(HttpClient.CallTemplate.class),
                 notNull(ServiceCallback.class));
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -159,7 +162,7 @@ public class DataReadTest extends AbstractDataTest {
         String documentID = "idWith\"DoubleQuote";
         String encodedDocumentId = "idWith%22DoubleQuote";
         Data.delete(documentID, USER_DOCUMENTS);
-        verifyTokenExchangeFlow(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+        verifyTokenExchangeFlow(false, TOKEN_EXCHANGE_USER_PAYLOAD, null);
 
         /* Verify that document base Uri is properly constructed by CosmosDb.getDocumentBaseUrl method. */
         String expectedUri = String.format("dbs/%s", DATABASE_NAME) + "/" +
@@ -168,7 +171,7 @@ public class DataReadTest extends AbstractDataTest {
         assertEquals(expectedUri, CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID));
 
         /* Now verify that actual call was properly encoded. */
-        verify(mHttpClient).callAsync(
+        verify(mHttpClientNoRetryer).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentID)),
                 eq(METHOD_DELETE),
                 anyMapOf(String.class, String.class),
@@ -183,7 +186,7 @@ public class DataReadTest extends AbstractDataTest {
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
         verifyNoMoreInteractions(mLocalDocumentStorage);
-        verify(mHttpClient).callAsync(
+        verify(mHttpClientNoRetryer).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),
@@ -208,7 +211,7 @@ public class DataReadTest extends AbstractDataTest {
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientNoRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -216,6 +219,7 @@ public class DataReadTest extends AbstractDataTest {
         assertThat(
                 doc.get().getError().getMessage(),
                 CoreMatchers.containsString(tokenExchangeFailedResponsePayload));
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -223,12 +227,12 @@ public class DataReadTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(doc);
         assertNotNull(doc.get());
         assertNull(doc.get().getDeserializedValue());
@@ -244,7 +248,7 @@ public class DataReadTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(TOKEN_RESULT);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new DocumentWrapper<TestDocument>(new Exception("document not set")));
         Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS);
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         verify(mLocalDocumentStorage).read(
                 eq(USER_TABLE_NAME),
                 eq(RESOLVED_USER_PARTITION),
@@ -263,7 +267,7 @@ public class DataReadTest extends AbstractDataTest {
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(deletedDocument);
         DocumentWrapper<String> document = Data.read(DOCUMENT_ID, String.class, USER_DOCUMENTS).get();
         assertNotNull(document.getError());
-        assertTrue(document.getError().getMessage().contains(failedMessage));
+        assertTrue(Objects.requireNonNull(document.getError().getMessage()).contains(failedMessage));
     }
 
     @Test
@@ -282,7 +286,7 @@ public class DataReadTest extends AbstractDataTest {
         DocumentWrapper<String> expectedDocument = new DocumentWrapper<>("123", RESOLVED_USER_PARTITION, DOCUMENT_ID);
         final String expectedResponse = Utils.getGson().toJson(expectedDocument);
         when(mLocalDocumentStorage.read(eq(Utils.getTableName(tokenResult)), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(outDatedDocument);
-        when(mHttpClient.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -291,9 +295,10 @@ public class DataReadTest extends AbstractDataTest {
             }
         });
         DocumentWrapper<String> document = Data.read(DOCUMENT_ID, String.class, USER_DOCUMENTS).get();
-        verify(mHttpClient);
+        verify(mHttpClientNoRetryer).callAsync(contains(DOCUMENT_ID), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         assertNotNull(document.getDeserializedValue());
         assertEquals(expectedDocument.getDeserializedValue(), document.getDeserializedValue());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -303,7 +308,7 @@ public class DataReadTest extends AbstractDataTest {
         createdDocument.setPendingOperation(Constants.PENDING_OPERATION_CREATE_VALUE);
         when(mLocalDocumentStorage.read(eq(USER_TABLE_NAME), anyString(), anyString(), eq(String.class), any(ReadOptions.class))).thenReturn(createdDocument);
         DocumentWrapper<String> document = Data.read(DOCUMENT_ID, String.class, USER_DOCUMENTS).get();
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertEquals(createdDocument.getDeserializedValue(), document.getDeserializedValue());
     }
 }

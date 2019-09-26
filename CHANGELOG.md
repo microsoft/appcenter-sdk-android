@@ -2,6 +2,10 @@
 
 ## Version 2.3.1 (Under development)
 
+### App Center Data
+
+* **[Fix]** Reduced retries on Data-related operations to fail fast and avoid the perception of calls "hanging".
+
 ___
 
 ## Version 2.3.0
