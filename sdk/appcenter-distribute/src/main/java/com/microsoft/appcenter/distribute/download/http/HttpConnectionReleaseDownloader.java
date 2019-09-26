@@ -13,7 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.distribute.DistributeConstants;
+import com.microsoft.appcenter.distribute.DistributeUtils;
 import com.microsoft.appcenter.distribute.PermissionUtils;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
@@ -55,7 +55,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     private File getTargetFile() {
         if (mTargetFile == null) {
-            mTargetFile = new File(DistributeConstants.getDownloadFilesPath(mContext), mReleaseDetails.getReleaseHash() + ".apk");
+            mTargetFile = new File(DistributeUtils.getDownloadFilesPath(mContext), mReleaseDetails.getReleaseHash() + ".apk");
         }
         return mTargetFile;
     }
