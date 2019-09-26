@@ -908,13 +908,8 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        if (mReleaseDownloader != null) {
-            mReleaseDownloader.cancel();
-            mReleaseDownloader = null;
-        }
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
-            mReleaseDownloaderListener = null;
         }
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
