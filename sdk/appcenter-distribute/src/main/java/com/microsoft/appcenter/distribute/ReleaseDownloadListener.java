@@ -104,10 +104,10 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
 
             /*
-             * This start call triggers strict mode in U.I. thread so it
+             * This start call triggers strict mode in UI thread so it
              * needs to be done here without synchronizing
-             * (not to block methods waiting on synchronized on U.I. thread)
-             * so yes we could launch install and SDK being disabled...
+             * (not to block methods waiting on synchronized on UI thread)
+             * so yes we could launch install and SDK being disabled.
              *
              * This corner case cannot be avoided without triggering
              * strict mode exception.

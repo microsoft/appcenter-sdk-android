@@ -56,10 +56,10 @@ public class InstallerUtils {
     }
 
     /**
-     * Get the intent used to open installation U.I.
+     * Get the intent used to open installation UI
      *
      * @param fileUri downloaded file URI from the download manager.
-     * @return intent to open installation U.I.
+     * @return intent to open installation UI
      */
     @NonNull
     static Intent getInstallIntent(Uri fileUri) {

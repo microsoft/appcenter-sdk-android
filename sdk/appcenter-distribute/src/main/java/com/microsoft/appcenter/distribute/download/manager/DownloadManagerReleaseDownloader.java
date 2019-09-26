@@ -128,7 +128,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         DownloadManager downloadManager = getDownloadManager();
         DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
 
-        /* Hide mandatory download to prevent canceling via notification cancel or download U.I. delete. */
+        /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (mReleaseDetails.isMandatoryUpdate()) {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
             request.setVisibleInDownloadsUi(false);

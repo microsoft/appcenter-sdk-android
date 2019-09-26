@@ -29,7 +29,7 @@ import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 
 /**
- * Internal helper class. Downloads an .apk from AppCenter and stores
+ * Internal helper class. Downloads an .apk from App Center and stores
  * it on external storage. If the download was successful, the file
  * is then opened to trigger the installation.
  **/
@@ -66,7 +66,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
                 mTargetFile.delete();
             }
 
-            /* Create connection */
+            /* Create connection. */
             URL url = new URL(mDownloadUri.toString());
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             URLConnection connection = createConnection(url, MAX_REDIRECTS);
@@ -104,7 +104,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      * @param inputStream  TODO
      * @param lengthOfFile TODO
      * @return total number of downloaded bytes.
-     * @throws IOException if connection fails
+     * @throws IOException if connection fails.
      */
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     private long downloadFile(InputStream inputStream, long lengthOfFile) throws IOException {

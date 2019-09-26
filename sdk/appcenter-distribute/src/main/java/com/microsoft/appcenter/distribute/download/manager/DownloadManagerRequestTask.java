@@ -10,7 +10,7 @@ import android.os.AsyncTask;
 import java.lang.ref.WeakReference;
 
 /**
- * The download manager API triggers strict mode exception in U.I. thread.
+ * The download manager API triggers strict mode exception in UI thread.
  */
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 

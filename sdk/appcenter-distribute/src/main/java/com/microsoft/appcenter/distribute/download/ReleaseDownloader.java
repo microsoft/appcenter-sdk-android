@@ -40,7 +40,7 @@ public interface ReleaseDownloader {
          *
          * @param currentSize count of already downloaded bytes.
          * @param totalSize   total size of downloading file.
-         * @return true if the listener are interested on more progress updates, false otherwise.
+         * @return <code>true</code> if the listener are interested on more progress updates, <code>false</code> otherwise.
          */
         boolean onProgress(long currentSize, long totalSize);
 
@@ -48,7 +48,7 @@ public interface ReleaseDownloader {
          * Called when the downloading is completed.
          *
          * @param localUri The local URI of the file.
-         * @return true if this file can be installed, false otherwise.
+         * @return <code>true</code> if this file can be installed, <code>false</code> otherwise.
          */
         boolean onComplete(@NonNull Uri localUri);
 

@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 
 /**
  * Inspect a pending or completed download.
- * This uses APIs that would trigger strict mode exception if used in U.I. thread.
+ * This uses APIs that would trigger strict mode exception if used in UI thread.
  */
 class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
 

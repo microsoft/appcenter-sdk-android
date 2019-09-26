@@ -180,5 +180,4 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private static int getNotificationId() {
         return HttpConnectionReleaseDownloader.class.getName().hashCode();
     }
-
 }
