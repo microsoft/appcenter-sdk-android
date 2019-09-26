@@ -31,13 +31,11 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.After;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -55,9 +53,7 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -65,7 +61,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
-@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class})
+@PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, ReleaseDownloadListener.class})
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
     static final long DOWNLOAD_ID = 42;
@@ -82,13 +78,16 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     @Mock
     DownloadManager.Request mDownloadRequest;
 
-    AtomicReference<ReleaseDownloader> mDownloadTask;
+    @Mock
+    ReleaseDownloadListener mReleaseListener;
+
+    ReleaseDownloader mReleaseDownloader;
 
     Semaphore mCheckDownloadBeforeSemaphore;
 
     Semaphore mCheckDownloadAfterSemaphore;
 
-    AtomicReference<ReleaseDownloader> mCompletionTask;
+    //AtomicReference<DownloadManagerUpdateTask> mCompletionTask;
 
     private Semaphore mDownloadBeforeSemaphore;
 
@@ -184,62 +183,8 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Mock download asyncTask. */
-        mDownloadBeforeSemaphore = new Semaphore(0);
-        mDownloadAfterSemaphore = new Semaphore(0);
-        mDownloadTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), isA(DownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadTask>() {
-
-            @Override
-            public DownloadTask answer(InvocationOnMock invocation) {
-                final DownloadTask task = spy((DownloadTask) invocation.getArguments()[1]);
-                mDownloadTask.set(task);
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        mDownloadBeforeSemaphore.acquireUninterruptibly();
-                        task.doInBackground(null);
-                        mDownloadAfterSemaphore.release();
-                    }
-                }.start();
-                return task;
-            }
-        });
-
-        /* Mock remove download async task. */
-        when(AsyncTaskUtils.execute(anyString(), isA(RemoveDownloadTask.class), Mockito.<Void>anyVararg())).then(new Answer<RemoveDownloadTask>() {
-
-            @Override
-            public RemoveDownloadTask answer(InvocationOnMock invocation) {
-                final RemoveDownloadTask task = (RemoveDownloadTask) invocation.getArguments()[1];
-                task.doInBackground();
-                return task;
-            }
-        });
-
-        /* Mock download completion async task. */
-        mCheckDownloadBeforeSemaphore = new Semaphore(0);
-        mCheckDownloadAfterSemaphore = new Semaphore(0);
-        mCompletionTask = new AtomicReference<>();
-        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg())).then(new Answer<DownloadManagerUpdateTask>() {
-
-            @Override
-            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
-                final DownloadManagerUpdateTask task = spy((DownloadManagerUpdateTask) invocation.getArguments()[1]);
-                mCompletionTask.set(task);
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        mCheckDownloadBeforeSemaphore.acquireUninterruptibly();
-                        task.onPostExecute(task.doInBackground());
-                        mCheckDownloadAfterSemaphore.release();
-                    }
-                }.start();
-                return task;
-            }
-        });
+        /* Mock release listener. */
+        whenNew(ReleaseDownloadListener.class).withArguments(mReleaseDownloader).thenReturn(mReleaseListener);
 
         /* Click on dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);

@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.distribute.download.DownloadTask;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -573,7 +572,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify no download scheduled. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg());
+        Distribute.getInstance().resumeDownload();
     }
 
     @Test
@@ -621,7 +620,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify that download is scheduled. */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), any(DownloadTask.class), Mockito.<Void>anyVararg());
+        Distribute.getInstance().resumeDownload();
     }
 
     @Test

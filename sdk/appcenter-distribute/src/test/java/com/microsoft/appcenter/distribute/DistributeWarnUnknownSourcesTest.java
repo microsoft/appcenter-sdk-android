@@ -343,13 +343,8 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mUnknownSourcesDialog).show();
         verify(mUnknownSourcesDialog, never()).hide();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), argThat(new ArgumentMatcher<AsyncTask<Object, ?, ?>>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof DownloadTask;
-            }
-        }), anyVararg());
+        Distribute.getInstance().resumeDownload();
+        
     }
 
     @Test

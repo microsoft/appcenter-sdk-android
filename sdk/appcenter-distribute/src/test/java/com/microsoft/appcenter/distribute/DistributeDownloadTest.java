@@ -102,7 +102,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDownloadTask.get()).delete();
+        verify(mReleaseDownloader).delete();
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verify(mNotificationManager, never()).notify(anyInt(), any(Notification.class));
     }
@@ -119,7 +119,6 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDownloadTask.get());
         verify(mDownloadManager).enqueue(mDownloadRequest);
         verifyNew(DownloadManager.Request.class).withArguments(mDownloadUrl);
         verify(mDownloadManager).remove(DOWNLOAD_ID);
@@ -148,7 +147,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         waitCheckDownloadTask();
 
         /* Verify cancellation. */
-        verify(mCompletionTask.get()).delete();
+        verify(mReleaseDownloader).delete();
         verify(mDownloadManager).remove(DOWNLOAD_ID);
         verifyZeroInteractions(mNotificationManager);
 
