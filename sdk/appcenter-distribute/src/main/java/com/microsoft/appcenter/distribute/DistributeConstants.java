@@ -183,12 +183,12 @@ public final class DistributeConstants {
     /**
      * 1 KiB in bytes (this not a kilobyte).
      */
-    public static final float KIBIBYTE_IN_BYTES = 1024;
+    public static final long KIBIBYTE_IN_BYTES = 1024;
 
     /**
      * 1 MiB in bytes (this not a megabyte).
      */
-    static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
+    static final long MEBIBYTE_IN_BYTES = 1024 * 1024;
 
     /**
      * Time to wait for installing optional updates if user postponed, in millis.

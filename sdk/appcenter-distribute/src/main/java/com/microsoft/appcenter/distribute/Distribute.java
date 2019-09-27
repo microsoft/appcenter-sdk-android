@@ -908,12 +908,15 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
+        mLastActivityWithDialog.clear();
+
+        /* Cleaning (but not cancel) release downloader is required on release details changes. */
+        mReleaseDetails = null;
+        mReleaseDownloader = null;
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
+            mReleaseDownloaderListener = null;
         }
-        mLastActivityWithDialog.clear();
-        mUsingDefaultUpdateDialog = null;
-        mReleaseDetails = null;
         mWorkflowCompleted = true;
     }
 
@@ -1684,9 +1687,12 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show download progress (used only for mandatory updates).
      */
-    private void showDownloadProgress() {
+    private synchronized void showDownloadProgress() {
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
+            return;
+        }
+        if (mReleaseDownloaderListener == null) {
             return;
         }
         Dialog progressDialog = mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity);

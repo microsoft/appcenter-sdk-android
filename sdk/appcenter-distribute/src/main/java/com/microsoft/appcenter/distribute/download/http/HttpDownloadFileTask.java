@@ -41,21 +41,28 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     private static final int MAX_REDIRECTS = 6;
 
     /**
-     * The download progress will be reported every time this number of bytes is downloaded.
+     * The download progress will be reported after loading this number of bytes.
      */
-    private static final int UPDATE_PROGRESS_BYTES_COUNT = 128 * 1024;
+    private static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 128 * 1024;
+
+    /**
+     * The download progress will be reported not more often than this number of milliseconds.
+     */
+    private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 200;
+
+    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     private final HttpConnectionReleaseDownloader mDownloader;
 
     /**
      * The URI that hosts the binary to download.
      */
-    private Uri mDownloadUri;
+    private final Uri mDownloadUri;
 
     /**
      * The file that used to write downloaded package.
      */
-    private File mTargetFile;
+    private final File mTargetFile;
 
     HttpDownloadFileTask(HttpConnectionReleaseDownloader downloader, Uri downloadUri, File targetFile) {
         mDownloader = downloader;
@@ -79,11 +86,11 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             URLConnection connection = createConnection(url, MAX_REDIRECTS);
             connection.connect();
-            String contentType = connection.getContentType();
-            if (contentType != null && contentType.contains("text")) {
 
-                /* This is not the expected APK file. Maybe the redirect could not be resolved. */
-                throw new IOException("The requested download does not appear to be a file.");
+            /* Content type check. Produce only warning if it doesn't match. */
+            String contentType = connection.getContentType();
+            if (contentType == null || !contentType.equals(APK_CONTENT_TYPE)) {
+                AppCenterLog.warn(LOG_TAG, "The requested download has not expected content type.");
             }
 
             /* Download the release file. */
@@ -140,15 +147,20 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     private long copyStream(@NonNull InputStream inputStream, @NonNull OutputStream outputStream, long lengthOfFile) throws IOException {
         byte[] data = new byte[WRITE_BUFFER_SIZE];
         int count;
-        long totalBytesDownloaded = 0, reported = 0;
+        long totalBytesDownloaded = 0;
+        long lastReportedBytes = 0;
+        long lastReportedTime = 0;
         while ((count = inputStream.read(data)) != -1) {
             totalBytesDownloaded += count;
             outputStream.write(data, 0, count);
 
             /* Update the progress each UPDATE_PROGRESS_BYTES_COUNT bytes. */
-            if (totalBytesDownloaded >= reported + UPDATE_PROGRESS_BYTES_COUNT || totalBytesDownloaded == lengthOfFile) {
+            long now = System.currentTimeMillis();
+            if (totalBytesDownloaded >= lastReportedBytes + UPDATE_PROGRESS_BYTES_THRESHOLD || totalBytesDownloaded == lengthOfFile ||
+                    now >= lastReportedTime + UPDATE_PROGRESS_TIME_THRESHOLD) {
                 mDownloader.onDownloadProgress(totalBytesDownloaded, lengthOfFile);
-                reported += UPDATE_PROGRESS_BYTES_COUNT;
+                lastReportedBytes = totalBytesDownloaded;
+                lastReportedTime = now;
             }
 
             /* Check if the task is cancelled. */

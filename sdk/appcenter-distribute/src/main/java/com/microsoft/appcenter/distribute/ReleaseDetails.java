@@ -24,6 +24,8 @@ public class ReleaseDetails {
 
     private static final String SHORT_VERSION = "short_version";
 
+    private static final String SIZE = "size";
+
     private static final String RELEASE_NOTES = "release_notes";
 
     private static final String RELEASE_NOTES_URL = "release_notes_url";
@@ -56,6 +58,11 @@ public class ReleaseDetails {
      * For Android: android:versionName from AppManifest.xml.
      */
     private String shortVersion;
+
+    /**
+     * The release's installer size.
+     */
+    private long size;
 
     /**
      * The release's release notes.
@@ -105,6 +112,7 @@ public class ReleaseDetails {
         releaseDetails.id = object.getInt(ID);
         releaseDetails.version = object.getInt(VERSION);
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
+        releaseDetails.size = object.getLong(SIZE);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
         releaseDetails.releaseNotesUrl = object.isNull(RELEASE_NOTES_URL) ? null : Uri.parse(object.getString(RELEASE_NOTES_URL));
         releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
@@ -135,6 +143,15 @@ public class ReleaseDetails {
      */
     public int getVersion() {
         return version;
+    }
+
+    /**
+     * Get the release's installer size.
+     *
+     * @return the release's installer size.
+     */
+    public long getSize() {
+        return size;
     }
 
     /**

@@ -40,7 +40,17 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     /**
      * Context.
      */
-    protected Context mContext;
+    private final Context mContext;
+
+    /**
+     * Private field to store information about release we are currently working with.
+     */
+    private final ReleaseDetails mReleaseDetails;
+
+    ReleaseDownloadListener(@NonNull Context context, @NonNull ReleaseDetails releaseDetails) {
+        mContext = context;
+        mReleaseDetails = releaseDetails;
+    }
 
     /**
      * Last download progress dialog that was shown.
@@ -50,16 +60,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
-
-    /**
-     * Private field to store information about release we are currently working with.
-     */
-    private ReleaseDetails mReleaseDetails;
-
-    ReleaseDownloadListener(@NonNull Context context, @NonNull ReleaseDetails releaseDetails) {
-        mContext = context;
-        mReleaseDetails = releaseDetails;
-    }
 
     @Override
     public void onStart(long enqueueTime) {
@@ -74,7 +74,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     public boolean onProgress(final long currentSize, final long totalSize) {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
-                (int) (currentSize / KIBIBYTE_IN_BYTES), (int) (totalSize / KIBIBYTE_IN_BYTES)));
+                currentSize / KIBIBYTE_IN_BYTES, totalSize / KIBIBYTE_IN_BYTES));
 
         /* If file size is known update downloadProgress bar. */
         if (mProgressDialog != null && totalSize >= 0) {
