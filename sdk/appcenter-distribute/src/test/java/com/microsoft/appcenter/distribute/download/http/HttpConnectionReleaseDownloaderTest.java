@@ -105,6 +105,24 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
+    public void testDownloadInProgress() throws Exception {
+        ReleaseDetails mockReleaseDetails = mockTargetFile();
+        HttpDownloadFileTask mockHttpTask = mock(HttpDownloadFileTask.class);
+        mockStatic(AsyncTaskUtils.class);
+        when(AsyncTaskUtils.execute(anyString(), any(HttpDownloadFileTask.class))).thenReturn(mockHttpTask);
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
+        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+        doNothing().when(releaseDownloader).showProgressNotification(anyLong(), anyLong());
+        releaseDownloader.resume();
+        releaseDownloader.resume();
+
+        /* Verify that was called once. */
+        verify(mockListener).onStart(anyLong());
+    }
+
+    @Test
     public void testDownloadComplete() throws Exception {
         String directoryPath = "folder/folder/";
         String fileName = "file";
@@ -146,6 +164,61 @@ public class HttpConnectionReleaseDownloaderTest {
         HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
         releaseDownloader.resume();
         verify(releaseDownloader).onDownloadComplete(any(File.class));
+    }
+
+    @Test
+    public void testDownloadedFileNotEqual() throws Exception {
+        String directoryPath = "folder/folder/";
+        String fileName = "file";
+        String fileExt = ".apk";
+        String filePath = fileName + fileExt;
+        String oldFilePath = "old" + fileName + fileExt;
+
+        /* Mock Release Details. */
+        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
+        when(mockReleaseDetails.getReleaseHash()).thenReturn(fileName);
+
+        /* Mock Directory file. */
+        File mockDirectoryFile = mock(File.class);
+        when(mockDirectoryFile.getAbsolutePath()).thenReturn(directoryPath);
+        when(mockContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
+
+        /* Mock Target file. */
+        File mockFile = mock(File.class);
+        when(mockFile.getAbsolutePath()).thenReturn(filePath);
+        when(mockFile.exists()).thenReturn(true);
+        whenNew(File.class)
+                .withParameterTypes(File.class, String.class)
+                .withArguments(mockDirectoryFile, "file.apk")
+                .thenReturn(mockFile);
+
+        /* Mock if Target file exists. */
+        whenNew(File.class)
+                .withParameterTypes(String.class)
+                .withArguments(filePath)
+                .thenReturn(mockFile);
+
+        /* Mock if Target file exists. */
+        File mockOldFile = mock(File.class);
+        when(mockOldFile.getAbsolutePath()).thenReturn(oldFilePath);
+        whenNew(File.class)
+                .withParameterTypes(String.class)
+                .withArguments(oldFilePath)
+                .thenReturn(mockOldFile);
+
+        /* Mock other calls. */
+        when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(oldFilePath);
+        when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
+        when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
+        NotificationManager mockNotificationManager = mock(NotificationManager.class);
+        when(mockContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
+
+        /* Run and verify. */
+        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+        doNothing().when(releaseDownloader).showProgressNotification(anyLong(), anyLong());
+        releaseDownloader.resume();
+        verify(mockListener).onStart(anyLong());
+        releaseDownloader.resume();
     }
 
     private ReleaseDetails mockTargetFile() throws Exception {
