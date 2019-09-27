@@ -52,6 +52,12 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
      */
     private final ReleaseDownloader.Listener mListener;
 
+    public HttpConnectionReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
+        mContext = context;
+        mReleaseDetails = releaseDetails;
+        mListener = listener;
+    }
+
     /**
      * A file that used to write downloaded package.
      */
@@ -64,12 +70,6 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private Notification.Builder mNotificationBuilder;
 
     private HttpDownloadFileTask mHttpDownloadFileTask;
-
-    public HttpConnectionReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
-        mContext = context;
-        mReleaseDetails = releaseDetails;
-        mListener = listener;
-    }
 
     @Nullable
     private File getTargetFile() {
@@ -183,12 +183,21 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     @WorkerThread
     synchronized void onDownloadComplete(File targetFile) {
         cancelProgressNotification();
+
+        /* Check downloaded file size. */
+        if (mReleaseDetails.getSize() != targetFile.length()) {
+            mListener.onError("Downloaded file has incorrect size.");
+            return;
+        }
+
+        /* Store that the release file has been downloaded. */
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
         SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 
     synchronized void onDownloadError(String errorMessage) {
+        cancelProgressNotification();
         mListener.onError(errorMessage);
     }
 

@@ -50,17 +50,19 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 200;
 
+    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+
     private final HttpConnectionReleaseDownloader mDownloader;
 
     /**
      * The URI that hosts the binary to download.
      */
-    private Uri mDownloadUri;
+    private final Uri mDownloadUri;
 
     /**
      * The file that used to write downloaded package.
      */
-    private File mTargetFile;
+    private final File mTargetFile;
 
     HttpDownloadFileTask(HttpConnectionReleaseDownloader downloader, Uri downloadUri, File targetFile) {
         mDownloader = downloader;
@@ -84,11 +86,11 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
             TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
             URLConnection connection = createConnection(url, MAX_REDIRECTS);
             connection.connect();
-            String contentType = connection.getContentType();
-            if (contentType != null && contentType.contains("text")) {
 
-                /* This is not the expected APK file. Maybe the redirect could not be resolved. */
-                throw new IOException("The requested download does not appear to be a file.");
+            /* Content type check. Produce only warning if it doesn't match. */
+            String contentType = connection.getContentType();
+            if (contentType == null || !contentType.equals(APK_CONTENT_TYPE)) {
+                AppCenterLog.warn(LOG_TAG, "The requested download has not expected content type.");
             }
 
             /* Download the release file. */
