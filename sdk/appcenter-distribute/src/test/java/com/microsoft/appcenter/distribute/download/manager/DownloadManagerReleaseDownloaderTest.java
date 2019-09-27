@@ -36,7 +36,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
@@ -52,7 +51,6 @@ public class DownloadManagerReleaseDownloaderTest {
     private Context mockContext;
     private ReleaseDownloader.Listener mockListener;
     private DownloadManager mockDownloadManager;
-    private Handler mAppCenterHandler;
 
     @Before
     public void setUp() throws Exception {
@@ -68,7 +66,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callDeleteWhenValidDownloadIdTest() throws Exception {
+    public void callDeleteWhenValidDownloadIdTest() {
 
         /* Prepare data. */
         long validDownloadId = 1;
@@ -124,7 +122,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void deleteWhenInvalidDownloadIdTest() throws Exception {
+    public void deleteWhenInvalidDownloadIdTest() {
 
         /* Prepare data. */
         long invalidDownloadId = -1;
@@ -141,7 +139,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callOnRequestWhenMandatoryUpdateReturnTrueTest() throws Exception {
+    public void callOnRequestWhenMandatoryUpdateReturnTrueTest() {
 
         /* Mock release details. */
         long mockPreviousDownloadId = -1L;
@@ -182,7 +180,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callOnRequestWhenMandatoryUpdateReturnFalseTest() throws Exception {
+    public void callOnRequestWhenMandatoryUpdateReturnFalseTest() {
 
         /* Mock release details. */
         long mockPreviousDownloadId = -1L;
@@ -223,7 +221,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callOnRequestChangeWhenThreadNotEqualsTest() throws Exception {
+    public void callOnRequestChangeWhenThreadNotEqualsTest() {
 
         /* Mock release details. */
         long mockPreviousDownloadId = -1L;
@@ -351,21 +349,15 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callOnUpdateWhenCursorReturnStatusNotSuccessfulAndProgressReturnTrue() throws Exception {
+    public void callOnUpdateWhenCursorReturnStatusNotSuccessfulAndProgressReturnTrue() {
 
         /* Prepare data. */
         long validDownloadId = 1;
         long mockSize = 1;
         final DownloadManagerUpdateTask[] task = {null};
+        Handler mockHandel = mock(Handler.class);
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         Cursor mockCursor = mock(Cursor.class);
-        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class))).then(new Answer<DownloadManagerUpdateTask>() {
-            @Override
-            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
-                task[0] = spy((DownloadManagerUpdateTask) invocation.getArguments()[1]);
-                return task[0];
-            }
-        });
         when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(1L);
         when(mockDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(mockCursor);
         when(mockCursor.moveToFirst()).thenReturn(true);
@@ -373,14 +365,28 @@ public class DownloadManagerReleaseDownloaderTest {
         when(mockCursor.getLong(anyInt())).thenReturn(mockSize);
         when(mockListener.onProgress(anyInt(), anyInt())).thenReturn(true);
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(validDownloadId);
+        when(HandlerUtils.getMainHandler()).thenReturn(mockHandel);
+        when(HandlerUtils.getMainHandler().postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                invocation.getArgumentAt(0, Runnable.class).run();
+                return null;
+            }
+        });
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class))).then(new Answer<DownloadManagerUpdateTask>() {
+            @Override
+            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
+                task[0] = spy((DownloadManagerUpdateTask) invocation.getArguments()[1]);
+                return task[0];
+            }
+        });
 
         /* Verify. */
         ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
         task[0].doInBackground(null);
-        verifyStatic(times(1));
+        verifyStatic(times(2));
         AsyncTaskUtils.execute(anyString(), any(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
-        //todo call handler
     }
 
 
