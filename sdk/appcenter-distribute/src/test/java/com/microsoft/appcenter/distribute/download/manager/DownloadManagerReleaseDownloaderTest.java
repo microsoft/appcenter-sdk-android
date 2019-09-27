@@ -191,7 +191,9 @@ public class DownloadManagerReleaseDownloaderTest {
         when(mockReleaseDetails.isMandatoryUpdate()).thenReturn(false);
 
         /* Prepare data. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(mockPreviousDownloadId);
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(mockPreviousDownloadId)
+                .thenReturn(mockNewDownloadId);
         DownloadManagerReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
 
         /* Mock download manager request. */
@@ -216,6 +218,7 @@ public class DownloadManagerReleaseDownloaderTest {
         verifyStatic();
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(mockNewDownloadId));
         verify(mockDownloadManager).enqueue(eq(downloadRequest));
+        verify(mockDownloadManager).remove(eq(mockNewDownloadId));
         verifyStatic(times(1));
         AsyncTaskUtils.execute(anyString(), any(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
     }
@@ -389,6 +392,46 @@ public class DownloadManagerReleaseDownloaderTest {
         AsyncTaskUtils.execute(anyString(), any(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
     }
 
+    @Test
+    public void callOnUpdateWhenCursorReturnStatusNotSuccessfulAndProgressReturnFalse() {
+
+        /* Prepare data. */
+        long validDownloadId = 1;
+        long mockSize = 1;
+        final DownloadManagerUpdateTask[] task = {null};
+        Handler mockHandel = mock(Handler.class);
+        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
+        Cursor mockCursor = mock(Cursor.class);
+        when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(1L);
+        when(mockDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(mockCursor);
+        when(mockCursor.moveToFirst()).thenReturn(true);
+        when(mockCursor.getInt(anyInt())).thenReturn(DownloadManager.STATUS_PAUSED);
+        when(mockCursor.getLong(anyInt())).thenReturn(mockSize);
+        when(mockListener.onProgress(anyInt(), anyInt())).thenReturn(false);
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(validDownloadId);
+        when(HandlerUtils.getMainHandler()).thenReturn(mockHandel);
+        when(HandlerUtils.getMainHandler().postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                invocation.getArgumentAt(0, Runnable.class).run();
+                return null;
+            }
+        });
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class))).then(new Answer<DownloadManagerUpdateTask>() {
+            @Override
+            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
+                task[0] = spy((DownloadManagerUpdateTask) invocation.getArguments()[1]);
+                return task[0];
+            }
+        });
+
+        /* Verify. */
+        ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        releaseDownloader.resume();
+        task[0].doInBackground(null);
+        verifyStatic(times(1));
+        AsyncTaskUtils.execute(anyString(), any(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
 
     @Test
     public void callOnUpdateWhenCursorReturnStatusSuccessfulAndOnCompleteReturnTrue() {
@@ -424,7 +467,16 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void callOnUpdateWhenCursorReturnStatusSuccessfulAndOnCompleteReturnFalse() {
+    public void callForSDK16() {
+        callOnUpdateWhenCursorReturnStatusSuccessfulAndOnCompleteReturnFalseForSDKVersion(16);
+    }
+
+    @Test
+    public void callForSDK28() {
+        callOnUpdateWhenCursorReturnStatusSuccessfulAndOnCompleteReturnFalseForSDKVersion(28);
+    }
+
+    private void callOnUpdateWhenCursorReturnStatusSuccessfulAndOnCompleteReturnFalseForSDKVersion(int versionSdk) {
 
         /* Prepare data. */
         long validDownloadId = 1;
@@ -448,7 +500,7 @@ public class DownloadManagerReleaseDownloaderTest {
         when(mockListener.onComplete(any(Uri.class))).thenReturn(false);
 
         /* Mock sdk build version. */
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 16);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", versionSdk);
 
         /* Verify. */
         ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
