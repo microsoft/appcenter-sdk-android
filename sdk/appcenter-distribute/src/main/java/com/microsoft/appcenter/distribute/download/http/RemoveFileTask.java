@@ -5,32 +5,26 @@
 
 package com.microsoft.appcenter.distribute.download.http;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+
+import java.io.File;
 
 /**
  * Removes a downloaded file.
  */
 class RemoveFileTask extends AsyncTask<Void, Void, Void> {
 
-    /**
-     * Context.
-     */
-    @SuppressLint("StaticFieldLeak")
-    private final Context mContext;
+    private final File mFile;
 
-    private final String mFilePath;
-
-    RemoveFileTask(@NonNull Context context, @NonNull String filePath) {
-        mContext = context;
-        mFilePath = filePath;
+    RemoveFileTask(@NonNull File file) {
+        mFile = file;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     protected Void doInBackground(Void... params) {
-        mContext.deleteFile(mFilePath);
+        mFile.delete();
         return null;
     }
 }

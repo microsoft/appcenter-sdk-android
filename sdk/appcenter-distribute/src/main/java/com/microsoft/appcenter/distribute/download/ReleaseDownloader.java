@@ -19,9 +19,9 @@ public interface ReleaseDownloader {
     void resume();
 
     /**
-     * Remove previously downloaded release.
+     * Cancel download and remove previously downloaded release.
      */
-    void delete();
+    void cancel();
 
     /**
      * Listener for downloading progress.

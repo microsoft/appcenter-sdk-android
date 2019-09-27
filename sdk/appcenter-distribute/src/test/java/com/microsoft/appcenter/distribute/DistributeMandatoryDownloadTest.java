@@ -218,7 +218,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         when(mPackageManager.getPackageInfo(mContext.getPackageName(), 0)).thenReturn(packageInfo);
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mReleaseDownloader).delete();
+        verify(mReleaseDownloader).cancel();
 
         /* Check no more dialog displayed. */
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
@@ -257,7 +257,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
 
         /* Verify disabled. */
-        verify(mReleaseDownloader).delete();
+        verify(mReleaseDownloader).cancel();
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
     }
