@@ -110,7 +110,7 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Call delete. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(validDownloadId);
-        releaseDownloader.delete();
+        releaseDownloader.cancel();
 
         /* Verify that it is call. */
         verify(mockDownloadManagerRequestTask).cancel(eq(true));
@@ -129,7 +129,7 @@ public class DownloadManagerReleaseDownloaderTest {
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(invalidDownloadId);
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
-        releaseDownloader.delete();
+        releaseDownloader.cancel();
 
         /* Verify. */
         verifyStatic(never());
