@@ -123,10 +123,8 @@ public class AuthTokenContext {
     /**
      * Set or unset the refresh token update listener. There can be only 1 active.
      */
-    public synchronized void setRefreshListener(@NonNull RefreshListener refreshListener) {
-        if (mRefreshListener.compareAndSet(null, refreshListener)) {
-            mLastTokenRefreshed = null;
-        } else {
+    public void setRefreshListener(@NonNull RefreshListener refreshListener) {
+        if (!mRefreshListener.compareAndSet(null, refreshListener)) {
             AppCenterLog.error(LOG_TAG, "Cannot use 2 authentication modules at the same time.");
         }
     }
@@ -359,21 +357,25 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
-        RefreshListener refreshListener;
-        AuthTokenHistoryEntry lastEntry;
-        synchronized(this) {
-            lastEntry = getLastHistoryEntry();
-            if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
-                    !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
-                    !authTokenInfo.isAboutToExpire() || authTokenInfo.getAuthToken().equals(mLastTokenRefreshed)) {
-                return;
+        String accountId = getAccountIdToRefreshAndUpdateCache(authTokenInfo);
+        if (accountId != null) {
+            RefreshListener refreshListener = mRefreshListener.get();
+            if (refreshListener != null) {
+                refreshListener.onTokenRequiresRefresh(accountId);
             }
-            mLastTokenRefreshed = authTokenInfo.getAuthToken();
         }
-        refreshListener = mRefreshListener.get();
-        if (refreshListener != null) {
-            refreshListener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
+    }
+
+    private synchronized String getAccountIdToRefreshAndUpdateCache(@NonNull AuthTokenInfo authTokenInfo) {
+        AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
+        if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
+                !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
+                !authTokenInfo.isAboutToExpire() ||
+                authTokenInfo.getAuthToken().equals(mLastTokenRefreshed)) {
+            return null;
         }
+        mLastTokenRefreshed = authTokenInfo.getAuthToken();
+        return lastEntry.getHomeAccountId();
     }
 
     /**
