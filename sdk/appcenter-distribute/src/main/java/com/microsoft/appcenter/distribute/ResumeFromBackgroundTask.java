@@ -5,6 +5,9 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
+/**
+ * Starts distribute service resumes installing downloaded update.
+ */
 class ResumeFromBackgroundTask extends AsyncTask<Void, Void, Void> {
 
     /**

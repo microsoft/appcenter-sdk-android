@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -140,6 +141,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     @Override
     public void onError(@NonNull String errorMessage) {
         AppCenterLog.error(LOG_TAG, errorMessage);
+        Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 

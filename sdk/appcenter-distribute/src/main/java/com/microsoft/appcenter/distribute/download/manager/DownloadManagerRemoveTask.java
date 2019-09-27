@@ -11,7 +11,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 /**
- * Removing a download triggers strict mode exception in U.I. thread.
+ * Removing a download triggers strict mode exception in UI thread.
  */
 class DownloadManagerRemoveTask extends AsyncTask<Void, Void, Void> {
 
