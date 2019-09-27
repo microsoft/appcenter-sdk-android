@@ -100,6 +100,10 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         return mNotificationBuilder;
     }
 
+    private void removeFile(File file) {
+        AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(file));
+    }
+
     @Override
     public void resume() {
         File targetFile = getTargetFile();
@@ -113,8 +117,8 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         if (downloadedReleaseFilePath != null) {
 
             /* Check if it's the same release. */
+            File downloadedReleaseFile = new File(downloadedReleaseFilePath);
             if (downloadedReleaseFilePath.equals(targetFile.getAbsolutePath())) {
-                File downloadedReleaseFile = new File(downloadedReleaseFilePath);
                 if (downloadedReleaseFile.exists()) {
                     onDownloadComplete(targetFile);
                     return;
@@ -122,7 +126,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             } else {
 
                 /* Remove previously downloaded release. */
-                mContext.deleteFile(downloadedReleaseFilePath);
+                removeFile(downloadedReleaseFile);
                 SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
             }
         }
@@ -147,10 +151,10 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void delete() {
+    public synchronized void cancel() {
         String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
         if (filePath != null) {
-            AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(mContext, filePath));
+            removeFile(new File(filePath));
             SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
         }
         cancelProgressNotification();
@@ -171,20 +175,20 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @WorkerThread
-    void onDownloadProgress(final long currentSize, final long totalSize) {
+    synchronized void onDownloadProgress(final long currentSize, final long totalSize) {
         showProgressNotification(currentSize, totalSize);
         mListener.onProgress(currentSize, totalSize);
     }
 
     @WorkerThread
-    void onDownloadComplete(File targetFile) {
+    synchronized void onDownloadComplete(File targetFile) {
         cancelProgressNotification();
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
         SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 
-    void onDownloadError(String errorMessage) {
+    synchronized void onDownloadError(String errorMessage) {
         mListener.onError(errorMessage);
     }
 

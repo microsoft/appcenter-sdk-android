@@ -69,15 +69,11 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
     }
 
-    private long getDownloadId() {
+    private synchronized long getDownloadId() {
         if (mDownloadId == INVALID_DOWNLOAD_IDENTIFIER) {
             mDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
         }
         return mDownloadId;
-    }
-
-    public ReleaseDetails getReleaseDetails() {
-        return mReleaseDetails;
     }
 
     @Override
@@ -93,7 +89,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void delete() {
+    public void cancel() {
         if (mRequestTask != null) {
             mRequestTask.cancel(true);
             mRequestTask = null;
@@ -129,7 +125,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     @WorkerThread
-    void onRequest(DownloadManagerRequestTask task) {
+    synchronized void onRequest(DownloadManagerRequestTask task) {
 
         /* Download file. */
         Uri downloadUrl = mReleaseDetails.getDownloadUrl();
@@ -150,7 +146,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
             /* Delete previous download. */
             long previousDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
-            if (previousDownloadId >= 0) {
+            if (previousDownloadId != INVALID_DOWNLOAD_IDENTIFIER) {
                 AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
                 downloadManager.remove(previousDownloadId);
             }
@@ -173,7 +169,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     @WorkerThread
-    void onUpdate() {
+    synchronized void onUpdate() {
 
         /* Query download manager. */
         DownloadManager downloadManager = getDownloadManager();
