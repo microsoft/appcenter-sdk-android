@@ -102,7 +102,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mReleaseDownloader).delete();
+        verify(mReleaseDownloader).cancel();
         //FIXME: verify(mDownloadManager).remove(DOWNLOAD_ID);
         verify(mNotificationManager, never()).notify(anyInt(), any(Notification.class));
     }
@@ -147,7 +147,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
         //FIXME: waitCheckDownloadTask();
 
         /* Verify cancellation. */
-        verify(mReleaseDownloader).delete();
+        verify(mReleaseDownloader).cancel();
         //FIXME: verify(mDownloadManager).remove(DOWNLOAD_ID);
         verifyZeroInteractions(mNotificationManager);
 
