@@ -74,7 +74,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     public boolean onProgress(final long currentSize, final long totalSize) {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
-                (int) (currentSize / KIBIBYTE_IN_BYTES), (int) (totalSize / KIBIBYTE_IN_BYTES)));
+                currentSize / KIBIBYTE_IN_BYTES, totalSize / KIBIBYTE_IN_BYTES));
 
         /* If file size is known update downloadProgress bar. */
         if (mProgressDialog != null && totalSize >= 0) {
