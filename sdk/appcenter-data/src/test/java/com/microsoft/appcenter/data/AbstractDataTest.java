@@ -18,6 +18,7 @@ import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -54,6 +55,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.endsWith;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -154,7 +156,10 @@ abstract public class AbstractDataTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    protected HttpClientRetryer mHttpClient;
+    protected HttpClientRetryer mHttpClientWithRetryer;
+
+    @Mock
+    protected HttpClientNetworkStateHandler mHttpClientNoRetryer;
 
     @Mock
     protected RemoteOperationListener mRemoteOperationListener;
@@ -223,8 +228,8 @@ abstract public class AbstractDataTest {
 
         /* Mock file storage. */
         mockStatic(FileManager.class);
-        mHttpClient = mock(HttpClientRetryer.class);
-        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClient);
+        whenNew(HttpClientRetryer.class).withAnyArguments().thenReturn(mHttpClientWithRetryer);
+        whenNew(HttpClientNetworkStateHandler.class).withAnyArguments().thenReturn(mHttpClientNoRetryer);
         when(SharedPreferencesManager.getBoolean(DATA_ENABLED_KEY, true)).thenReturn(true);
         mockStatic(NetworkStateHelper.class);
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
@@ -282,21 +287,25 @@ abstract public class AbstractDataTest {
     }
 
     String verifyTokenExchangeToCosmosDbFlow(
+            boolean retryHttpCalls,
             String documentId,
             String tokenExchangePayload,
             String cosmosCallApiMethod,
             String cosmosSuccessPayload,
             Exception cosmosFailureException) throws JSONException {
-        verifyTokenExchangeFlow(tokenExchangePayload, null);
-        return verifyCosmosDbFlow(documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
+        verifyTokenExchangeFlow(retryHttpCalls, tokenExchangePayload, null);
+        return verifyCosmosDbFlow(retryHttpCalls, documentId, cosmosCallApiMethod, cosmosSuccessPayload, cosmosFailureException);
     }
 
-    String verifyCosmosDbFlow(String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
+    String verifyCosmosDbFlow(boolean retryHttpCalls, String documentId, String cosmosCallApiMethod, String cosmosSuccessPayload, Exception cosmosFailureException) throws JSONException {
         ArgumentCaptor<HttpClient.CallTemplate> cosmosDbCallTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         ArgumentCaptor<ServiceCallback> cosmosDbServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        HttpClient callHttpClient = retryHttpCalls ? mHttpClientWithRetryer : mHttpClientNoRetryer;
+        HttpClient unusedHttpClient = !retryHttpCalls ? mHttpClientWithRetryer : mHttpClientNoRetryer;
+        verifyZeroInteractions(unusedHttpClient);
+        verify(callHttpClient).callAsync(
                 endsWith(CosmosDb.getDocumentBaseUrl(DATABASE_NAME, COLLECTION_NAME, documentId)),
                 eq(cosmosCallApiMethod),
                 anyMapOf(String.class, String.class),
@@ -317,13 +326,16 @@ abstract public class AbstractDataTest {
     }
 
     void verifyTokenExchangeFlow(
-            String tokenExchangeSuccessResponsePayload,
+            boolean retryHttpCalls, String tokenExchangeSuccessResponsePayload,
             Exception tokenExchangeFailureResponse) throws JSONException {
         ArgumentCaptor<AbstractAppCallTemplate> tokenExchangeTemplateCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(AbstractAppCallTemplate.class);
         ArgumentCaptor<TokenExchange.TokenExchangeServiceCallback> tokenExchangeServiceCallbackArgumentCaptor =
                 ArgumentCaptor.forClass(TokenExchange.TokenExchangeServiceCallback.class);
-        verify(mHttpClient).callAsync(
+        HttpClient callHttpClient = retryHttpCalls ? mHttpClientWithRetryer : mHttpClientNoRetryer;
+        HttpClient unusedHttpClient = !retryHttpCalls ? mHttpClientWithRetryer : mHttpClientNoRetryer;
+        verifyZeroInteractions(unusedHttpClient);
+        verify(callHttpClient).callAsync(
                 endsWith(TokenExchange.GET_TOKEN_PATH_FORMAT),
                 eq(METHOD_POST),
                 anyMapOf(String.class, String.class),

@@ -67,6 +67,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -171,7 +172,7 @@ public class DataTest extends AbstractDataTest {
         String tokenResult = Utils.getGson().toJson(new TokenResult().setPartition(RESOLVED_USER_PARTITION).setExpirationDate(expirationDate.getTime()).setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + RESOLVED_USER_PARTITION)).thenReturn(tokenResult);
         when(mLocalDocumentStorage.read(anyString(), anyString(), anyString(), eq(TestDocument.class), any(ReadOptions.class))).thenReturn(new DocumentWrapper<TestDocument>(new Exception("read error.")));
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -201,7 +202,7 @@ public class DataTest extends AbstractDataTest {
 
     @Test
     public void failFastForInvalidDocumentId() {
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -276,6 +277,7 @@ public class DataTest extends AbstractDataTest {
         /* Local storage create document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getError());
+        assertNotNull(doc.getError().getMessage());
         assertTrue(doc.getError().getMessage().contains(failedMessage));
 
         /* Make the call to read local document from local storage. */
@@ -284,6 +286,7 @@ public class DataTest extends AbstractDataTest {
         /* Local storage read document should complete with not find partition error. */
         assertNotNull(doc);
         assertNotNull(doc.getError());
+        assertNotNull(doc.getError().getMessage());
         assertTrue(doc.getError().getMessage().contains(failedMessage));
 
         /* Make the call to delete local document from local storage. */
@@ -292,6 +295,7 @@ public class DataTest extends AbstractDataTest {
         /* Local storage delete document should complete with not find partition error. */
         assertNotNull(deleteDocument);
         assertNotNull(deleteDocument.getError());
+        assertNotNull(deleteDocument.getError().getMessage());
         assertTrue(deleteDocument.getError().getMessage().contains(failedMessage));
     }
 
@@ -322,7 +326,7 @@ public class DataTest extends AbstractDataTest {
         mChannel = start(mData);
 
         /* Verify pending operation get processed. */
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
@@ -418,7 +422,7 @@ public class DataTest extends AbstractDataTest {
         ServiceCall serviceCallMock1 = mock(ServiceCall.class);
         ServiceCall serviceCallMock2 = mock(ServiceCall.class);
         ServiceCall serviceCallMock3 = mock(ServiceCall.class);
-        when(mHttpClient.callAsync(anyString(), anyString(),
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(serviceCallMock1).thenReturn(serviceCallMock2).thenReturn(serviceCallMock3);
 
@@ -471,7 +475,7 @@ public class DataTest extends AbstractDataTest {
         mChannel = start(mData);
 
         /* Verify only one pending operation has been executed. */
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
                 documentMetadataArgumentCaptor.capture(),
@@ -514,7 +518,7 @@ public class DataTest extends AbstractDataTest {
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
 
         /* Return null service call to simulate a partially saved pending operation. */
-        when(mHttpClient.callAsync(anyString(), anyString(),
+        when(mHttpClientWithRetryer.callAsync(anyString(), anyString(),
                 anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class)))
                 .thenReturn(null);
 
@@ -541,7 +545,8 @@ public class DataTest extends AbstractDataTest {
 
         /* Then we'll refresh token online. */
         ArgumentCaptor<ServiceCallback> captor = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
+        verifyZeroInteractions(mHttpClientWithRetryer);
+        verify(mHttpClientNoRetryer).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
 
         /* If we also get corrupted json online for token. */
         captor.getValue().onCallSucceeded("garbage", new HashMap<String, String>());
@@ -550,8 +555,10 @@ public class DataTest extends AbstractDataTest {
         future.get();
         assertNull(future.get().getDeserializedValue());
         assertNotNull(future.get().getError());
-        assertTrue(future.get().getError().getCause() instanceof DataException);
-        assertTrue(future.get().getError().getCause().getCause() instanceof JsonSyntaxException);
+        Throwable cause = future.get().getError().getCause();
+        assertNotNull(cause);
+        assertTrue(cause instanceof DataException);
+        assertTrue(cause.getCause() instanceof JsonSyntaxException);
     }
 
     @Test
@@ -585,30 +592,35 @@ public class DataTest extends AbstractDataTest {
         DocumentWrapper<TestDocument> createDoc = Data.create("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(createDoc.getDeserializedValue());
         assertNotNull(createDoc.getError());
+        assertNotNull(createDoc.getError().getCause());
         assertEquals(IllegalStateException.class, createDoc.getError().getCause().getClass());
 
         /* Test `replace` before module started */
         DocumentWrapper<TestDocument> replaceDoc = Data.replace("id", new TestDocument("a"), TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(replaceDoc.getDeserializedValue());
         assertNotNull(replaceDoc.getError());
+        assertNotNull(replaceDoc.getError().getCause());
         assertEquals(IllegalStateException.class, replaceDoc.getError().getCause().getClass());
 
         /* Test `read` before module started */
         DocumentWrapper<TestDocument> readDoc = Data.read("id", TestDocument.class, DefaultPartitions.APP_DOCUMENTS).get();
         assertNull(readDoc.getDeserializedValue());
         assertNotNull(readDoc.getError());
+        assertNotNull(readDoc.getError().getCause());
         assertEquals(IllegalStateException.class, readDoc.getError().getCause().getClass());
 
         /* Test `list` before module started */
         PaginatedDocuments<TestDocument> listDoc = Data.list(TestDocument.class, DefaultPartitions.USER_DOCUMENTS).get();
         assertNull(listDoc.getCurrentPage().getItems());
         assertNotNull(listDoc.getCurrentPage().getError());
+        assertNotNull(listDoc.getCurrentPage().getError().getCause());
         assertEquals(IllegalStateException.class, listDoc.getCurrentPage().getError().getCause().getClass());
 
         /* Test `delete` before module started */
         DocumentWrapper<Void> deleteDoc = Data.delete("id", DefaultPartitions.USER_DOCUMENTS).get();
         assertNull(deleteDoc.getDeserializedValue());
         assertNotNull(deleteDoc.getError());
+        assertNotNull(deleteDoc.getError().getCause());
         assertEquals(IllegalStateException.class, deleteDoc.getError().getCause().getClass());
     }
 }

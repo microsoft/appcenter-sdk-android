@@ -163,7 +163,7 @@ public class TokenTest extends AbstractDataTest {
         doNothing().when(callBack).callCosmosDb(tokenResultCapture.capture());
 
         /* Make the call. */
-        Data.getInstance().getTokenAndCallCosmosDbApi(APP_DOCUMENTS, new DefaultAppCenterFuture(), callBack);
+        Data.getInstance().getTokenAndCallCosmosDbApi(APP_DOCUMENTS, mHttpClient, new DefaultAppCenterFuture(), callBack);
 
         /* Verify the token values. */
         assertEquals(TOKEN, tokenResultCapture.getValue().getToken());
@@ -189,7 +189,7 @@ public class TokenTest extends AbstractDataTest {
 
         /* Make the call. */
         Data.getInstance()
-                .getTokenAndCallCosmosDbApi(APP_DOCUMENTS, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+                .getTokenAndCallCosmosDbApi(APP_DOCUMENTS, mHttpClient, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */
         verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
@@ -214,7 +214,7 @@ public class TokenTest extends AbstractDataTest {
 
         /* Make the call. */
         Data.getInstance()
-                .getTokenAndCallCosmosDbApi(APP_DOCUMENTS, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
+                .getTokenAndCallCosmosDbApi(APP_DOCUMENTS, mHttpClient, new DefaultAppCenterFuture(), mTokenExchangeServiceCallback);
 
         /* Verify. */
         verify(mTokenExchangeServiceCallback, times(0)).callCosmosDb(any(TokenResult.class));
