@@ -438,7 +438,7 @@ public class Distribute extends AbstractAppCenterService {
             mContext = context;
             SharedPreferencesManager.initialize(mContext);
             mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
-            mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+            updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
         }
     }
 
@@ -538,7 +538,8 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mReleaseDownloader != null) {
+                boolean isDownloading = mReleaseDownloader != null && mReleaseDownloader.isDownloading();
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
                     AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
@@ -610,16 +611,8 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
-        mReleaseDetails = null;
         mCheckedDownload = false;
-        if (mReleaseDownloader != null) {
-            mReleaseDownloader.cancel();
-            mReleaseDownloader = null;
-        }
-        if (mReleaseDownloaderListener != null) {
-            mReleaseDownloaderListener.hideProgressDialog();
-            mReleaseDownloaderListener = null;
-        }
+        updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
@@ -685,7 +678,7 @@ public class Distribute extends AbstractAppCenterService {
             /* Load cached release details if process restarted and we have such a cache. */
             int downloadState = getStoredDownloadState();
             if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
-                mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+                updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
                 /* If cached release is optional and we have network, we should not reuse it. */
                 if (mReleaseDetails != null && !mReleaseDetails.isMandatoryUpdate() &&
@@ -760,7 +753,7 @@ public class Distribute extends AbstractAppCenterService {
                  * Or restore update dialog if that's the last thing we did before being paused.
                  * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
                  */
-                else if (mReleaseDownloader == null) {
+                else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
                     showUpdateDialog();
                 }
 
@@ -909,13 +902,9 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
         mLastActivityWithDialog.clear();
-
-        /* Cleaning (but not cancel) release downloader is required on release details changes. */
         mReleaseDetails = null;
-        mReleaseDownloader = null;
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
-            mReleaseDownloaderListener = null;
         }
         mWorkflowCompleted = true;
     }
@@ -1101,7 +1090,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Handle API call success.
      */
-    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails) {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
@@ -1139,7 +1128,7 @@ public class Distribute extends AbstractAppCenterService {
                     }
 
                     /* Show update dialog. */
-                    mReleaseDetails = releaseDetails;
+                    updateReleaseDetails(releaseDetails);
                     AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
                     SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
@@ -1153,6 +1142,28 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If update dialog was not shown or scheduled, complete workflow. */
             completeWorkflow();
+        }
+    }
+
+    private synchronized void updateReleaseDetails(ReleaseDetails releaseDetails) {
+        if (mReleaseDownloader != null) {
+
+            /* Cancel previous release downloading. */
+            if (releaseDetails == null || releaseDetails.getId() != mReleaseDownloader.getReleaseDetails().getId()) {
+                mReleaseDownloader.cancel();
+            }
+            mReleaseDownloader = null;
+        }
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+            mReleaseDownloaderListener = null;
+        }
+        mReleaseDetails = releaseDetails;
+        if (mReleaseDetails != null) {
+
+            /* Create release downloader here to be able correctly cancel downloading from previous runs. */
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
+            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
         }
     }
 
@@ -1782,10 +1793,6 @@ public class Distribute extends AbstractAppCenterService {
      * Resume downloading installer for current {@link ReleaseDetails}.
      */
     synchronized void resumeDownload() {
-        if (mReleaseDetails != null && mReleaseDownloader == null) {
-            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
-            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
-        }
         if (mReleaseDownloader != null) {
             mReleaseDownloader.resume();
             mCheckedDownload = true;

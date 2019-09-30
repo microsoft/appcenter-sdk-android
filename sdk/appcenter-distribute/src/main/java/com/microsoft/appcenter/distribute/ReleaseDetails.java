@@ -106,6 +106,7 @@ public class ReleaseDetails {
      * @return parsed release details.
      * @throws JSONException if JSON is invalid.
      */
+    @NonNull
     static ReleaseDetails parse(String json) throws JSONException {
         JSONObject object = new JSONObject(json);
         ReleaseDetails releaseDetails = new ReleaseDetails();

@@ -47,6 +47,12 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
      */
     private final ReleaseDownloader.Listener mListener;
 
+    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
+        mContext = context;
+        mReleaseDetails = releaseDetails;
+        mListener = listener;
+    }
+
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
 
     /**
@@ -59,11 +65,6 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
      */
     private DownloadManagerRequestTask mRequestTask;
 
-    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
-        mContext = context;
-        mReleaseDetails = releaseDetails;
-        mListener = listener;
-    }
 
     private DownloadManager getDownloadManager() {
         return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
@@ -74,6 +75,17 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
             mDownloadId = SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
         }
         return mDownloadId;
+    }
+
+    @Override
+    public synchronized boolean isDownloading() {
+        return mDownloadId != INVALID_DOWNLOAD_IDENTIFIER;
+    }
+
+    @NonNull
+    @Override
+    public ReleaseDetails getReleaseDetails() {
+        return mReleaseDetails;
     }
 
     @Override
@@ -102,6 +114,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         if (downloadId != INVALID_DOWNLOAD_IDENTIFIER) {
             remove(downloadId);
         }
+        mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
     }
 
@@ -129,7 +142,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
         /* Download file. */
         Uri downloadUrl = mReleaseDetails.getDownloadUrl();
-        AppCenterLog.debug(LOG_TAG, "Start downloading new release, url=" + downloadUrl);
+        AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
         DownloadManager downloadManager = getDownloadManager();
         DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
 
