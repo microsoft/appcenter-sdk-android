@@ -204,7 +204,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
         //FIXME: waitCheckDownloadTask();
-        verify(mContext, times(2)).startActivity(installIntent);
+        verify(mContext, times(2)).startActivity(mInstallIntent);
         verifyStatic(times(2));
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         Distribute.getInstance().onActivityPaused(mActivity);
