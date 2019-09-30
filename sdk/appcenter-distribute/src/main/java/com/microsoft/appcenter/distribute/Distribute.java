@@ -1773,20 +1773,8 @@ public class Distribute extends AbstractAppCenterService {
      * @param context context.
      * @see DownloadManagerReceiver
      */
-    synchronized void installDownloadedUpdate(Context context) {
-
-        /*
-         * Completion might be triggered in background before AppCenter.start
-         * if application was killed after starting download.
-         *
-         * We still want to generate the notification: if we can find the data in preferences
-         * that means they were not deleted, and thus that the sdk was not disabled.
-         */
-        if (mReleaseDetails == null) {
-            AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(context));
-        } else {
-            resumeDownload();
-        }
+    synchronized void installDownloadedUpdate(Context context, long downloadedId) {
+        AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(context, downloadedId));
     }
 
     /**
