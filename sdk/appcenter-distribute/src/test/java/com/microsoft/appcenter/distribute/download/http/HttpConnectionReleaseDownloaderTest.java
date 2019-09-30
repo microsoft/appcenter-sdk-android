@@ -45,7 +45,16 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({HttpConnectionReleaseDownloader.class, SharedPreferencesManager.class, PermissionUtils.class, NetworkStateHelper.class, AsyncTaskUtils.class, DownloadManager.Request.class, Uri.class, Build.VERSION.class})
+@PrepareForTest({
+    HttpConnectionReleaseDownloader.class,
+    SharedPreferencesManager.class,
+    PermissionUtils.class,
+    NetworkStateHelper.class,
+    AsyncTaskUtils.class,
+    DownloadManager.Request.class,
+    Uri.class,
+    Build.VERSION.class
+})
 public class HttpConnectionReleaseDownloaderTest {
 
     private static String STUB_DIRECTORY_PATH = "folder/folder/";
@@ -55,13 +64,16 @@ public class HttpConnectionReleaseDownloaderTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
-    private Context mockContext;
+
+    private Context mContext;
+
     private ReleaseDownloader.Listener mockListener;
+
     private NetworkStateHelper mNetworkStateHelper;
 
     @Before
     public void setUp() {
-        mockContext = mock(Context.class);
+        mContext = mock(Context.class);
         mockListener = mock(ReleaseDownloader.Listener.class);
         mockStatic(NetworkStateHelper.class);
         mNetworkStateHelper = mock(NetworkStateHelper.class, new Returns(true));
@@ -78,13 +90,13 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testNoTargetFile() {
+    public void targetFile() {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-        when(mockContext.getExternalFilesDir(anyString())).thenReturn(null);
+        when(mContext.getExternalFilesDir(anyString())).thenReturn(null);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
 
         /* Start downloader. */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
 
         /* Verify an error. */
@@ -92,7 +104,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testNoNetwork() throws Exception {
+    public void noNetwork() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
 
@@ -100,7 +112,7 @@ public class HttpConnectionReleaseDownloaderTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
 
         /* Start downloader. */
-        ReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        ReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
 
         /* Verify an error. */
@@ -108,17 +120,17 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testNoExternalStoragePermissionApi19() throws Exception {
+    public void noExternalStoragePermissionApi19() throws Exception {
         testNoExternalStoragePermission(19);
     }
 
     @Test
-    public void testNoExternalStoragePermissionApi16() throws Exception {
+    public void noExternalStoragePermissionApi16() throws Exception {
         testNoExternalStoragePermission(16);
     }
 
     @Test
-    public void testDownloadStart() throws Exception {
+    public void downloadStart() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -126,7 +138,7 @@ public class HttpConnectionReleaseDownloaderTest {
         mockShowProgress();
 
         /* Start downloader. */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
 
         /* Verify onStart() was called. */
@@ -134,7 +146,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testDownloadInProgress() throws Exception {
+    public void downloadInProgress() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
         HttpDownloadFileTask mockHttpTask = mock(HttpDownloadFileTask.class);
         mockStatic(AsyncTaskUtils.class);
@@ -144,9 +156,11 @@ public class HttpConnectionReleaseDownloaderTest {
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
         mockShowProgress();
 
-        /* Start downloader twice. */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
+
+        /* Start downloading twice. */
         releaseDownloader.resume();
+        verify(mockListener).onStart(anyLong());
         releaseDownloader.resume();
 
         /* Verify that onStart() was called once. */
@@ -154,12 +168,12 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testOnDownloadProgress() throws Exception {
+    public void onDownloadProgress() throws Exception {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         mockShowProgress();
 
         /* Call onDownloadProgress(). */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.onDownloadProgress((long) 1, (long) 100);
 
         /* Verify Listener was called. */
@@ -167,13 +181,13 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testOnDownloadError() {
+    public void onDownloadError() {
         String someError = "Some error";
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         mockCancelProgress();
 
         /* Call onDownloadError(). */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.onDownloadError(someError);
 
         /* Verify onError() was called. */
@@ -181,7 +195,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testOnDownloadComplete() {
+    public void onDownloadComplete() {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         when(mockReleaseDetails.getSize()).thenReturn(100L);
         File mockTargetFile = mock(File.class);
@@ -190,7 +204,7 @@ public class HttpConnectionReleaseDownloaderTest {
         mockCancelProgress();
 
         /* Call onDownloadComplete(). */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.onDownloadComplete(mockTargetFile);
 
         /* Verify onComplete() was called. */
@@ -198,7 +212,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testOnDownloadCompleteError() {
+    public void onDownloadCompleteError() {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         when(mockReleaseDetails.getSize()).thenReturn(150L);
         File targetFile = mock(File.class);
@@ -206,7 +220,7 @@ public class HttpConnectionReleaseDownloaderTest {
         mockCancelProgress();
 
         /* Call onDownloadComplete() when the releaseDetails has different file size than downloaded file. */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.onDownloadComplete(targetFile);
 
         /* Verify onError() was called. */
@@ -214,7 +228,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testDownloadComplete() throws Exception {
+    public void downloadComplete() throws Exception {
 
         /* Mock Release Details. */
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
@@ -223,7 +237,7 @@ public class HttpConnectionReleaseDownloaderTest {
         /* Mock Directory file. */
         File mockDirectoryFile = mock(File.class);
         when(mockDirectoryFile.getAbsolutePath()).thenReturn(STUB_DIRECTORY_PATH);
-        when(mockContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
+        when(mContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
 
         /* Mock Target file. */
         File mockFile = mock(File.class);
@@ -245,10 +259,10 @@ public class HttpConnectionReleaseDownloaderTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
         NotificationManager mockNotificationManager = mock(NotificationManager.class);
-        when(mockContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
+        when(mContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
 
         /* Start downloader. */
-        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener));
         releaseDownloader.resume();
 
         /* Verify. */
@@ -256,7 +270,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testDownloadedFileNotEqual() throws Exception {
+    public void downloadedFileNotEqual() throws Exception {
         String oldFilePath = "old" + STUB_FILENAME + STUB_FILE_EXTENSION;
 
         /* Mock Release Details. */
@@ -266,7 +280,7 @@ public class HttpConnectionReleaseDownloaderTest {
         /* Mock Directory file. */
         File mockDirectoryFile = mock(File.class);
         when(mockDirectoryFile.getAbsolutePath()).thenReturn(STUB_DIRECTORY_PATH);
-        when(mockContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
+        when(mContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
 
         /* Mock Target file. */
         File mockFile = mock(File.class);
@@ -296,11 +310,11 @@ public class HttpConnectionReleaseDownloaderTest {
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
         NotificationManager mockNotificationManager = mock(NotificationManager.class);
-        when(mockContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
+        when(mContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
         mockShowProgress();
 
         /* Start downloader. */
-        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        HttpConnectionReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
 
         /* Verify onStart() was called. */
@@ -311,12 +325,12 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testCancel() {
+    public void cancel() {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
         NotificationManager mockNotificationManager = mockCancelProgress();
 
         /* Call cancel() downloading. */
-        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener));
         releaseDownloader.cancel();
 
         /* Verify that notification was cancelled. */
@@ -324,7 +338,7 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void testCancelRemovingFile() {
+    public void cancelRemovingFile() {
         NotificationManager mockNotificationManager = mockCancelProgress();
 
         /* Mock the file was downloaded. */
@@ -332,7 +346,7 @@ public class HttpConnectionReleaseDownloaderTest {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
 
         /* Call cancel() downloading. */
-        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener));
+        HttpConnectionReleaseDownloader releaseDownloader = spy(new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener));
         releaseDownloader.cancel();
 
         /* Verify that notification was cancelled. */
@@ -349,7 +363,7 @@ public class HttpConnectionReleaseDownloaderTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
 
         /* Start downloader. */
-        ReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
+        ReleaseDownloader releaseDownloader = new HttpConnectionReleaseDownloader(mContext, mockReleaseDetails, mockListener);
         releaseDownloader.resume();
 
         /* Verify onError() was called. */
@@ -366,7 +380,7 @@ public class HttpConnectionReleaseDownloaderTest {
         /* Mock Directory file. */
         File mockDirectoryFile = mock(File.class);
         when(mockDirectoryFile.getAbsolutePath()).thenReturn(STUB_DIRECTORY_PATH);
-        when(mockContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
+        when(mContext.getExternalFilesDir(anyString())).thenReturn(mockDirectoryFile);
 
         /* Mock Target file. */
         File mockFile = mock(File.class);
@@ -379,25 +393,26 @@ public class HttpConnectionReleaseDownloaderTest {
         return mockReleaseDetails;
     }
 
+
     private void mockShowProgress() throws Exception {
         ApplicationInfo mockApplicationInfo = mock(ApplicationInfo.class);
         mockApplicationInfo.icon = 1;
-        when(mockContext.getApplicationInfo()).thenReturn(mockApplicationInfo);
+        when(mContext.getApplicationInfo()).thenReturn(mockApplicationInfo);
         Notification.Builder mockNotificationBuilder = mock(Notification.Builder.class);
         whenNew(Notification.Builder.class)
                 .withParameterTypes(Context.class)
-                .withArguments(mockContext)
+                .withArguments(mContext)
                 .thenReturn(mockNotificationBuilder);
         when(mockNotificationBuilder.setContentTitle(anyString())).thenReturn(mockNotificationBuilder);
         when(mockNotificationBuilder.setSmallIcon(anyInt())).thenReturn(mockNotificationBuilder);
         when(mockNotificationBuilder.setProgress(anyInt(), anyInt(), anyBoolean())).thenReturn(mockNotificationBuilder);
         NotificationManager mockNotificationManager = mock(NotificationManager.class);
-        when(mockContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
+        when(mContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
     }
 
     private NotificationManager mockCancelProgress() {
         NotificationManager mockNotificationManager = mock(NotificationManager.class);
-        when(mockContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
+        when(mContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
         return mockNotificationManager;
     }
 

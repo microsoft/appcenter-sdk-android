@@ -344,7 +344,6 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mUnknownSourcesDialog, never()).hide();
         verifyStatic();
         Distribute.getInstance().resumeDownload();
-        
     }
 
     @Test

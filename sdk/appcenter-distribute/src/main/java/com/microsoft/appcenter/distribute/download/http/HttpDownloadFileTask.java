@@ -9,6 +9,7 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -50,7 +51,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
 
-    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     private final HttpConnectionReleaseDownloader mDownloader;
 

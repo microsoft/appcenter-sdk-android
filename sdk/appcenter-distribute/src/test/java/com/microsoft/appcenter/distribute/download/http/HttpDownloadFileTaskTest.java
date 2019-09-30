@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download.http;
 
 import android.net.TrafficStats;
@@ -16,6 +21,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import static com.microsoft.appcenter.distribute.download.http.HttpDownloadFileTask.APK_CONTENT_TYPE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -41,7 +47,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-@PrepareForTest({AsyncTaskUtils.class, AppCenterLog.class, HttpDownloadFileTask.class, TrafficStats.class, System.class})
+@PrepareForTest({
+    AsyncTaskUtils.class,
+    AppCenterLog.class,
+    HttpDownloadFileTask.class,
+    TrafficStats.class,
+    System.class
+})
 public class HttpDownloadFileTaskTest {
 
     @Mock
@@ -57,11 +69,6 @@ public class HttpDownloadFileTaskTest {
      * Log tag for this service.
      */
     private static final String LOG_TAG = AppCenter.LOG_TAG + "Distribute";
-
-    /**
-     * The download progress will be reported not more often than this number of milliseconds.
-     */
-    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
@@ -183,7 +190,6 @@ public class HttpDownloadFileTaskTest {
         verifyStatic();
         TrafficStats.clearThreadStatsTag();
         verify(mMockHttpDownloader, never()).onDownloadComplete(eq(mMockTargetFile));
-
     }
 
     @Test
@@ -278,6 +284,7 @@ public class HttpDownloadFileTaskTest {
         HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
+        /* Verify. */
         AppCenterLog.warn(anyString(), anyString());
         verify(urlConnection, never()).disconnect();
         verify(mockBufferedInputStream).close();
@@ -329,6 +336,7 @@ public class HttpDownloadFileTaskTest {
         HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
+        /* Verify. */
         AppCenterLog.warn(anyString(), anyString());
         verify(urlConnection, never()).disconnect();
         verify(mockBufferedInputStream).close();

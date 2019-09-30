@@ -65,12 +65,14 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({AsyncTaskUtils.class, DistributeUtils.class, ReleaseDownloadListener.class})
 public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest {
 
+    /**
+     * Has to be mocked since it is a part of Android SDK.
+     */
     @Mock
     Uri mDownloadUrl;
 
     @Mock
     NotificationManager mNotificationManager;
-
 
     void setUpDownload(boolean mandatoryUpdate) throws Exception {
 

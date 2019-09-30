@@ -69,27 +69,25 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
 @PrepareForTest({
-        AppCenter.class,
-        AppCenterLog.class,
-        AppNameHelper.class,
-        BrowserUtils.class,
-        CryptoUtils.class,
-        Distribute.class,
-        HandlerUtils.class,
-        HttpUtils.class,
-        InstallerUtils.class,
-        NetworkStateHelper.class,
-        ReleaseDetails.class,
-        ReleaseDownloaderFactory.class,
-        SharedPreferencesManager.class,
-        TextUtils.class,
-        Toast.class
+    AppCenter.class,
+    AppCenterLog.class,
+    AppNameHelper.class,
+    BrowserUtils.class,
+    CryptoUtils.class,
+    Distribute.class,
+    HandlerUtils.class,
+    HttpUtils.class,
+    InstallerUtils.class,
+    NetworkStateHelper.class,
+    ReleaseDetails.class,
+    ReleaseDownloaderFactory.class,
+    SharedPreferencesManager.class,
+    TextUtils.class,
+    Toast.class
 })
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
-
-    static final long DOWNLOAD_ID = 123;
 
     private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
@@ -328,8 +326,6 @@ public class AbstractDistributeTest {
     void completeDownload() {
         Intent completionIntent = mock(Intent.class);
         PowerMockito.when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
-        new DownloadManagerReceiver().onReceive(mContext, completionIntent);
         mReleaseDownloaderListener.onComplete(mUri);
     }
 
