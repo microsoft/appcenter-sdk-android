@@ -77,6 +77,15 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         return mDownloadId;
     }
 
+    private synchronized void setDownloadId(long downloadId) {
+        mDownloadId = downloadId;
+        if (mDownloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
+        }
+    }
+
     @Override
     public synchronized boolean isDownloading() {
         return mDownloadId != INVALID_DOWNLOAD_IDENTIFIER;
@@ -101,7 +110,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
     }
 
     @Override
-    public void cancel() {
+    public synchronized void cancel() {
         if (mRequestTask != null) {
             mRequestTask.cancel(true);
             mRequestTask = null;
@@ -113,9 +122,8 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
         long downloadId = getDownloadId();
         if (downloadId != INVALID_DOWNLOAD_IDENTIFIER) {
             remove(downloadId);
+            setDownloadId(INVALID_DOWNLOAD_IDENTIFIER);
         }
-        mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
     }
 
     /**
@@ -165,8 +173,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
             }
 
             /* Store new download identifier. */
-            mDownloadId = downloadId;
-            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
+            setDownloadId(downloadId);
             mListener.onStart(enqueueTime);
 
             /* Start monitoring progress for mandatory update. */
