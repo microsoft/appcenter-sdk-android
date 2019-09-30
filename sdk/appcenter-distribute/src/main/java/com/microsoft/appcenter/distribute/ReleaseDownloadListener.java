@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -140,8 +139,13 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     public void onError(@NonNull String errorMessage) {
+
+        /*
+         * TODO: Add a generic error message to resources (with translations) to show the toast.
+         * We can’t show any not-translated messages on UI.
+         * Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
+         */
         AppCenterLog.error(LOG_TAG, errorMessage);
-        Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 

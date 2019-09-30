@@ -60,7 +60,7 @@ public class ReleaseDetails {
     private String shortVersion;
 
     /**
-     * The release's installer size.
+     * The release's package size.
      */
     private long size;
 
@@ -146,9 +146,9 @@ public class ReleaseDetails {
     }
 
     /**
-     * Get the release's installer size.
+     * Get the release's package size.
      *
-     * @return the release's installer size.
+     * @return the release's package size.
      */
     public long getSize() {
         return size;

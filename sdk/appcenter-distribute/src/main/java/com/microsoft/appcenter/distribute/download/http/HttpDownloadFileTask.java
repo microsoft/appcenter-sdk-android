@@ -43,12 +43,12 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     /**
      * The download progress will be reported after loading this number of bytes.
      */
-    private static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 128 * 1024;
+    private static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 512 * 1024;
 
     /**
      * The download progress will be reported not more often than this number of milliseconds.
      */
-    private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 200;
+    private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
 
     private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
@@ -89,7 +89,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
 
             /* Content type check. Produce only warning if it doesn't match. */
             String contentType = connection.getContentType();
-            if (contentType == null || !contentType.equals(APK_CONTENT_TYPE)) {
+            if (!APK_CONTENT_TYPE.equals(contentType)) {
                 AppCenterLog.warn(LOG_TAG, "The requested download has not expected content type.");
             }
 
