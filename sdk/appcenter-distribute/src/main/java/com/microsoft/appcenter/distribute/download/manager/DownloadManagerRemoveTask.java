@@ -39,7 +39,7 @@ class DownloadManagerRemoveTask extends AsyncTask<Void, Void, Void> {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Void doInBackground(Void[] params) {
 
         /* This special cleanup task does not require any cancellation on state change as a previous download will never be reused. */
         DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);

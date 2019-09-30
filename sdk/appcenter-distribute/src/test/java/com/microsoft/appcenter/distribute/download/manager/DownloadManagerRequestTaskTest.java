@@ -3,30 +3,27 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute.download.http;
+package com.microsoft.appcenter.distribute.download.manager;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.File;
-
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RemoveFileTaskTest {
+public class DownloadManagerRequestTaskTest {
 
     @Mock
-    private File mFile;
+    private DownloadManagerReleaseDownloader mDownloader;
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Test
     public void doInBackground() {
-        RemoveFileTask task = new RemoveFileTask(mFile);
+        DownloadManagerRequestTask task = new DownloadManagerRequestTask(mDownloader);
         task.doInBackground(null);
 
         /* Verify. */
-        verify(mFile).delete();
+        verify(mDownloader).onRequest(task);
     }
 }
