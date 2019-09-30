@@ -21,6 +21,16 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+
 import static com.microsoft.appcenter.distribute.download.http.HttpDownloadFileTask.APK_CONTENT_TYPE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -37,15 +47,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import javax.net.ssl.HttpsURLConnection;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 
 @PrepareForTest({
     AsyncTaskUtils.class,
@@ -116,7 +117,6 @@ public class HttpDownloadFileTaskTest {
         whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
         when(urlConnection.getInputStream()).thenReturn(mockInputStream);
         when(mockBufferedInputStream.read(any(byte[].class))).thenReturn(1).thenReturn(-1);
-        doThrow(new IOException()).when(mockBufferedInputStream).close();
 
         /* Start. */
         startDoInBackground();
@@ -277,7 +277,6 @@ public class HttpDownloadFileTaskTest {
         whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
         when(urlConnection.getInputStream()).thenReturn(mockInputStream);
         when(mockBufferedInputStream.read(any(byte[].class))).thenReturn(0).thenReturn(-1);
-        doThrow(new IOException()).when(mockBufferedInputStream).close();
 
         /* Start. */
         startDoInBackground();
@@ -346,6 +345,267 @@ public class HttpDownloadFileTaskTest {
         verify(mMockHttpDownloader, never()).onDownloadComplete(eq(mMockTargetFile));
         verify(mMockHttpDownloader).onDownloadError(anyString());
     }
+
+    @Test
+    public void doInBackgroundWhenTotalBytesDownloadedMoreThanUpdateThreshold() throws Exception {
+
+        /* Prepare data. */
+        URL url = mock(URL.class);
+        InputStream mockInputStream = mock(InputStream.class);
+        URL movedUrl = mock(URL.class);
+        FileOutputStream mockFileOutputStream = mock(FileOutputStream.class);
+        BufferedInputStream mockBufferedInputStream = mock(BufferedInputStream.class);
+        String urlString = "https://mock";
+        String movedUrlString = "https://mock2";
+
+        /* Mock file. */
+        when(mMockTargetFile.exists()).thenReturn(true);
+        when(mMockTargetFile.delete()).thenReturn(false);
+
+        /* Mock url. */
+        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
+        whenNew(URL.class).withArguments(eq(movedUrlString)).thenReturn(movedUrl);
+        when(url.getProtocol()).thenReturn("https");
+        when(movedUrl.getProtocol()).thenReturn("https");
+        when(mMockDownloadUri.toString()).thenReturn(urlString);
+
+        /* Mock https connection. */
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(1);
+        when(urlConnection.getHeaderField(anyString())).thenReturn(movedUrlString);
+        when(urlConnection.getContentType()).thenReturn(null);
+
+        /* Mock stream. */
+        int bytesThreshold = 512 * 1024;
+        whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mockFileOutputStream);
+        whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        when(mockBufferedInputStream.read(any(byte[].class))).thenReturn(bytesThreshold)
+                .thenReturn(2 * (bytesThreshold))
+                .thenReturn(-1);
+
+        /* Start. */
+        startDoInBackground();
+        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        AppCenterLog.warn(anyString(), anyString());
+        verify(urlConnection, never()).disconnect();
+        verify(mockBufferedInputStream).close();
+        verify(mockFileOutputStream).close();
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+        verify(mMockHttpDownloader).onDownloadComplete(eq(mMockTargetFile));
+    }
+
+    @Test
+    public void doInBackgroundWhenTotalTimeMoreThanUpdateTimeThreshold() throws Exception {
+
+        /* Prepare data. */
+        URL url = mock(URL.class);
+        InputStream mockInputStream = mock(InputStream.class);
+        URL movedUrl = mock(URL.class);
+        FileOutputStream mockFileOutputStream = mock(FileOutputStream.class);
+        BufferedInputStream mockBufferedInputStream = mock(BufferedInputStream.class);
+        String urlString = "https://mock";
+        String movedUrlString = "https://mock2";
+
+        /* Mock file. */
+        when(mMockTargetFile.exists()).thenReturn(true);
+        when(mMockTargetFile.delete()).thenReturn(false);
+
+        /* Mock url. */
+        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
+        whenNew(URL.class).withArguments(eq(movedUrlString)).thenReturn(movedUrl);
+        when(url.getProtocol()).thenReturn("https");
+        when(movedUrl.getProtocol()).thenReturn("https");
+        when(mMockDownloadUri.toString()).thenReturn(urlString);
+
+        /* Mock https connection. */
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(1);
+        when(urlConnection.getHeaderField(anyString())).thenReturn(movedUrlString);
+        when(urlConnection.getContentType()).thenReturn(null);
+
+        /* Mock stream. */
+        mockStatic(System.class);
+        when(System.currentTimeMillis()).thenReturn(600L);
+        whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mockFileOutputStream);
+        whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        when(mockBufferedInputStream.read(any(byte[].class))).thenReturn(1).thenReturn(-1);
+
+        /* Start. */
+        startDoInBackground();
+        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        AppCenterLog.warn(anyString(), anyString());
+        verify(urlConnection, never()).disconnect();
+        verify(mockBufferedInputStream).close();
+        verify(mockFileOutputStream).close();
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+        verify(mMockHttpDownloader).onDownloadComplete(eq(mMockTargetFile));
+    }
+
+    @Test
+    public void doInBackgroundInputStreamNull() throws Exception {
+
+        /* Prepare data. */
+        URL url = mock(URL.class);
+        InputStream mockInputStream = mock(InputStream.class);
+        URL movedUrl = mock(URL.class);
+        String urlString = "https://mock";
+        String movedUrlString = "https://mock2";
+
+        /* Mock file. */
+        when(mMockTargetFile.exists()).thenReturn(true);
+        when(mMockTargetFile.delete()).thenReturn(false);
+
+        /* Mock url. */
+        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
+        whenNew(URL.class).withArguments(eq(movedUrlString)).thenReturn(movedUrl);
+        when(url.getProtocol()).thenReturn("https");
+        when(movedUrl.getProtocol()).thenReturn("https");
+        when(mMockDownloadUri.toString()).thenReturn(urlString);
+
+        /* Mock https connection. */
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(1);
+        when(urlConnection.getHeaderField(anyString())).thenReturn(movedUrlString);
+        when(urlConnection.getContentType()).thenReturn(null);
+
+        /* Mock stream. */
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        whenNew(BufferedInputStream.class)
+                .withParameterTypes(InputStream.class)
+                .withArguments(mockInputStream).thenThrow(new FileNotFoundException("test"));
+
+        /* Start. */
+        startDoInBackground();
+        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        AppCenterLog.warn(anyString(), anyString());
+        verify(urlConnection, never()).disconnect();
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+        verify(mMockHttpDownloader).onDownloadError("test");
+    }
+
+    @Test
+    public void doInBackgroundOutputStreamNull() throws Exception {
+
+        /* Prepare data. */
+        URL url = mock(URL.class);
+        InputStream mockInputStream = mock(InputStream.class);
+        BufferedInputStream mockBufferedInputStream = mock(BufferedInputStream.class);
+        URL movedUrl = mock(URL.class);
+        String urlString = "https://mock";
+        String movedUrlString = "https://mock2";
+
+        /* Mock file. */
+        when(mMockTargetFile.exists()).thenReturn(true);
+        when(mMockTargetFile.delete()).thenReturn(false);
+
+        /* Mock url. */
+        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
+        whenNew(URL.class).withArguments(eq(movedUrlString)).thenReturn(movedUrl);
+        when(url.getProtocol()).thenReturn("https");
+        when(movedUrl.getProtocol()).thenReturn("https");
+        when(mMockDownloadUri.toString()).thenReturn(urlString);
+
+        /* Mock https connection. */
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(1);
+        when(urlConnection.getHeaderField(anyString())).thenReturn(movedUrlString);
+        when(urlConnection.getContentType()).thenReturn(null);
+
+        /* Mock stream. */
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        whenNew(FileOutputStream.class)
+                .withParameterTypes(File.class)
+                .withArguments(mMockTargetFile).thenThrow(new FileNotFoundException("test"));
+
+        /* Start. */
+        startDoInBackground();
+        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        AppCenterLog.warn(anyString(), anyString());
+        verify(urlConnection, never()).disconnect();
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+        verify(mMockHttpDownloader).onDownloadError("test");
+    }
+
+    @Test
+    public void doInBackgroundIgnoredIOException() throws Exception {
+
+        /* Prepare data. */
+        URL url = mock(URL.class);
+        InputStream mockInputStream = mock(InputStream.class);
+        URL movedUrl = mock(URL.class);
+        FileOutputStream mockFileOutputStream = mock(FileOutputStream.class);
+        BufferedInputStream mockBufferedInputStream = mock(BufferedInputStream.class);
+        String urlString = "https://mock";
+        String movedUrlString = "https://mock2";
+
+        /* Mock file. */
+        when(mMockTargetFile.exists()).thenReturn(true);
+        when(mMockTargetFile.delete()).thenReturn(false);
+
+        /* Mock url. */
+        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
+        whenNew(URL.class).withArguments(eq(movedUrlString)).thenReturn(movedUrl);
+        when(url.getProtocol()).thenReturn("https");
+        when(movedUrl.getProtocol()).thenReturn("https");
+        when(mMockDownloadUri.toString()).thenReturn(urlString);
+
+        /* Mock https connection. */
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getResponseCode()).thenReturn(1);
+        when(urlConnection.getHeaderField(anyString())).thenReturn(movedUrlString);
+        when(urlConnection.getContentType()).thenReturn(null);
+
+        /* Mock stream. */
+        whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mockFileOutputStream);
+        whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mockBufferedInputStream);
+        when(urlConnection.getInputStream()).thenReturn(mockInputStream);
+        when(mockBufferedInputStream.read(any(byte[].class))).thenReturn(1).thenReturn(-1);
+        doThrow(new IOException()).when(mockFileOutputStream).close();
+
+        /* Start. */
+        startDoInBackground();
+        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        AppCenterLog.warn(anyString(), anyString());
+        verify(urlConnection, never()).disconnect();
+        verify(mockFileOutputStream).close();
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
+        verify(mMockHttpDownloader).onDownloadComplete(mMockTargetFile);
+    }
+
 
     private void startDoInBackground() {
         final HttpDownloadFileTask[] task = {null};
