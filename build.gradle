@@ -58,6 +58,10 @@ subprojects {
                 config.testInstrumentationRunner ext.testInstrumentationRunner
         }
     }
+
+    tasks.withType(Test) {
+        maxParallelForks = Runtime.runtime.availableProcessors()
+    }
 }
 
 ext {
