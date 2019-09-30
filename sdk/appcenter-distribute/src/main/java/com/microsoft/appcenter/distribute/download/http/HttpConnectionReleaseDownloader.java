@@ -186,9 +186,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     private void showProgressNotification(long currentSize, long totalSize) {
         Notification.Builder builder = getNotificationBuilder();
-
-        /* TODO: We should not reuse "mandatory" string here. */
-        builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_mandatory_update))
+        builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)
                 .setProgress((int) (totalSize / KIBIBYTE_IN_BYTES), (int) (currentSize / KIBIBYTE_IN_BYTES), totalSize <= 0);
         getNotificationManager().notify(getNotificationId(), builder.build());
