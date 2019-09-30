@@ -139,6 +139,12 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     public void onError(@NonNull String errorMessage) {
+
+        /*
+         * TODO: Add a generic error message to resources (with translations) to show the toast.
+         * We can’t show any not-translated messages on UI.
+         * Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
+         */
         AppCenterLog.error(LOG_TAG, errorMessage);
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
