@@ -3,7 +3,7 @@
   ~ Licensed under the MIT License.
   -->
 
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="appcenter_distribute_update_dialog_title">App update available</string>
     <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) is available to download and install.</string>
     <string name="appcenter_distribute_update_dialog_message_mandatory">The developers of this app require you to update to %1$s %2$s (%3$d).</string>
@@ -13,12 +13,11 @@
     <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">Distribute was disabled</string>
     <string name="appcenter_distribute_unknown_sources_dialog_message">For security, your device is set to block installation of apps obtained from unknown sources.</string>
     <string name="appcenter_distribute_unknown_sources_dialog_settings">Settings</string>
-    <!-- TODO: Add translations for the alias. -->
-    <string name="appcenter_distribute_downloading_update" translatable="false">@string/appcenter_distribute_downloading_mandatory_update</string>
-    <!-- {@deprecated Use appcenter_distribute_downloading_update instead.} -->
+    <string name="appcenter_distribute_downloading_update" tools:ignore="MissingTranslation">@string/appcenter_distribute_downloading_mandatory_update</string>
+    <!-- TODO: Deprecated. Remove this key and move the translated strings to appcenter_distribute_downloading_update. -->
     <string name="appcenter_distribute_downloading_mandatory_update">Downloading update</string>
     <!-- TODO: Add translations. -->
-    <string name="appcenter_distribute_downloading_error" translatable="false">Failed to download app update</string>
+    <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation">Failed to download app update</string>
     <string name="appcenter_distribute_download_progress_number_format">%1$d MB of %2$d MB</string>
     <string name="appcenter_distribute_install_ready_title">App update downloaded</string>
     <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) has been downloaded and is ready to be installed.</string>
