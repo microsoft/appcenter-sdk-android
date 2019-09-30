@@ -120,8 +120,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
-        DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
@@ -189,8 +187,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
-        DistributeUtils.getStoredDownloadState();
         verifyStatic(times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 

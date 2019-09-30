@@ -36,7 +36,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
@@ -304,15 +303,17 @@ public class AbstractDistributeTest {
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
+        /* Mock Release Details. */
+        when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
+
         /* Mock Release Downloader. */
         mockStatic(ReleaseDownloaderFactory.class);
         when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
+        when(mReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Mock Release Downloader Listener. */
         mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
-        whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class),any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
-
-
+        whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
 
         mUri = mock(Uri.class);
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
@@ -322,13 +323,6 @@ public class AbstractDistributeTest {
         mInstallIntent = mock(Intent.class);
         when(mInstallIntent.getData()).thenReturn(mUri);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
-    }
-
-    void prepareAndStartDownload(boolean isMandatory) throws JSONException {
-        mReleaseDetails = mock(ReleaseDetails.class);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(isMandatory);
-        when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
-        mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
     }
 
     void completeDownload() {

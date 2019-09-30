@@ -5,14 +5,10 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.app.DownloadManager;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.database.Cursor;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -27,27 +23,19 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
-import java.util.concurrent.Semaphore;
-
-import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -111,7 +99,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void disabledBeforeClickOnDialogInstall() throws Exception {
 
         /* Unblock download. */
-        prepareAndStartDownload(true);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
         /* Complete download. */
         completeDownload();
@@ -190,8 +178,8 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void newOptionalUpdateWhileInstallingMandatory() throws Exception {
 
         /* Mock mandatory download and showing install U.I. */
-        prepareAndStartDownload(true);
-        
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+
         completeDownload();
         verify(mContext).startActivity(mInstallIntent);
         verifyStatic();
@@ -236,7 +224,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void newMandatoryUpdateWhileInstallingMandatory() throws Exception {
 
         /* Mock mandatory download and showing install U.I. */
-        prepareAndStartDownload(true);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
         completeDownload();
         //FIXME: mockSuccessCursor();
         Intent installIntent = mockInstallIntent();
