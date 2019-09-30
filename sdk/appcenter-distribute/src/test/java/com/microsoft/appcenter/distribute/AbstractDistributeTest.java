@@ -36,6 +36,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
@@ -159,6 +160,9 @@ public class AbstractDistributeTest {
 
     @Mock
     Uri mUri;
+
+    @Mock
+    Intent mInstallIntent;
 
     @Before
     @SuppressLint("ShowToast")
@@ -308,18 +312,23 @@ public class AbstractDistributeTest {
         mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class),any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
 
-        mReleaseDetails = mock(ReleaseDetails.class);
-        when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
+
 
         mUri = mock(Uri.class);
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getEncodedPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
+
+        mInstallIntent = mock(Intent.class);
+        when(mInstallIntent.getData()).thenReturn(mUri);
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
     }
 
-    void prepareAndStartDownload() {
+    void prepareAndStartDownload(boolean isMandatory) throws JSONException {
+        mReleaseDetails = mock(ReleaseDetails.class);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(isMandatory);
+        when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
         mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
-        mReleaseDownloader.resume();
     }
 
     void completeDownload() {

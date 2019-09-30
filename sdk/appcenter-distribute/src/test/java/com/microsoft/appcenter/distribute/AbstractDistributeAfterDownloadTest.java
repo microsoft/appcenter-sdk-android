@@ -180,10 +180,9 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
 
     @NonNull
     Intent mockInstallIntent() throws Exception {
-        Intent installIntent = mock(Intent.class);
-        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(installIntent);
-        when(installIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
-        return installIntent;
+        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
+        when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
+        return mInstallIntent;
     }
 
     void restartActivity() {

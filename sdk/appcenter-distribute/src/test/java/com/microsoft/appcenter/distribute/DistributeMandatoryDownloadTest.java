@@ -108,138 +108,15 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
 
     @Test
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    public void longMandatoryDownloadAndInstallAcrossRestarts() throws Exception {
-
-        /* Make timer goes off only while updating progress, 3 times here. */
-        final Answer<Boolean> simulateTimeReached = new Answer<Boolean>() {
-
-            @Override
-            public Boolean answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return true;
-            }
-        };
-        when(mHandler.postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), anyLong())).then(simulateTimeReached).then(simulateTimeReached).then(simulateTimeReached).thenReturn(true);
-
-        /* Dialog shown upon clicking on download. */
-        verify(mProgressDialog).setCancelable(false);
-        verify(mProgressDialog).show();
-
-        /* Mock initial progress where file size is still unknown. */
-        //FIXME: Cursor cursor = mockProgressCursor(-1);
-        //FIXME: waitDownloadTask();
-        //FIXME: waitCheckDownloadTask();
-        //FIXME: verify(cursor).close();
-        verify(mHandler).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS + 1));
-        verify(mProgressDialog, never()).setProgress(anyInt());
-
-        /* Mock some progress. */
-        //FIXME: mockProgressCursor((long) (17 * MEBIBYTE_IN_BYTES));
-        //FIXME: waitCheckDownloadTask();
-        verify(mProgressDialog).setProgress(17);
-
-        /* Mock further progress. */
-        //FIXME: mockProgressCursor((long) (42 * MEBIBYTE_IN_BYTES));
-        //FIXME: waitCheckDownloadTask();
-        verify(mProgressDialog).setProgress(42);
-
-        /* Pause hides dialog and pauses updates. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-        verify(mProgressDialog).hide();
-        verify(mHandler).removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
-
-        /*
-         * Simulate that removeCallbackAndMessages did not cancel in due time,
-         * that can happen if the timer already went off and the runnable is in the looper queue.
-         * There is a double check that will skip updating progress.
-         */
-        //FIXME: waitCheckDownloadTask();
-
-        /* Check no more timer and progress update while paused. */
-        verify(mProgressDialog).setProgress(42);
-        verify(mHandler, times(3)).postAtTime(any(Runnable.class), eq(HANDLER_TOKEN_CHECK_PROGRESS), eq(CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS + 1));
-
-        /* Reusing dialog on resume. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mProgressDialog, times(2)).show();
-        //FIXME: waitCheckDownloadTask();
-
-        /* On restart progress is restored. */
-        mProgressDialog = mock(android.app.ProgressDialog.class);
-        whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
-        restartProcessAndSdk();
-
-        /* Resume shows a new dialog as process restarted. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mProgressDialog).show();
-        //FIXME: waitCheckDownloadTask();
-        //FIXME: waitCheckDownloadTask();
-        verify(mProgressDialog).setProgress(42);
-
-        /* Download eventually completes: show install U.I. */
-        completeDownload();
-        //FIXME: mockSuccessCursor();
-        Intent installIntent = mockInstallIntent();
-        //FIXME: waitCheckDownloadTask();
-        verify(mContext).startActivity(installIntent);
-        verifyStatic();
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
-        verifyNoMoreInteractions(mNotificationManager);
-
-        /* Start activity paused the app. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-
-        /* We also display mandatory install dialog if user goes back to app. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Check dialog shown. */
-        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
-        clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
-        //FIXME: waitCheckDownloadTask();
-        verify(mContext, times(2)).startActivity(installIntent);
-
-        /* Showing install U.I. pauses app. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-
-        /* Pause/resume leave existing dialog intact. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
-
-        /* If we restart the app process, it will display install U.I. again skipping dialog. */
-        restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mActivity);
-        //FIXME: waitCheckDownloadTask();
-        verify(mContext, times(3)).startActivity(installIntent);
-
-        /* Eventually discard download only if application updated. */
-        PackageInfo packageInfo = mock(PackageInfo.class);
-        packageInfo.lastUpdateTime = Long.MAX_VALUE;
-        when(mPackageManager.getPackageInfo(mContext.getPackageName(), 0)).thenReturn(packageInfo);
-        restartProcessAndSdk();
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mReleaseDownloader).cancel();
-
-        /* Check no more dialog displayed. */
-        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_install), clickListener.capture());
-
-        /* And that we don't prompt install anymore. */
-        verify(mContext, times(3)).startActivity(installIntent);
-    }
-
-    @Test
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     public void disabledBeforeClickOnDialogInstall() throws Exception {
 
         /* Unblock download. */
-        //FIXME: waitDownloadTask();
+        prepareAndStartDownload(true);
 
         /* Complete download. */
         completeDownload();
-        //FIXME: mockSuccessCursor();
+
         Intent installIntent = mockInstallIntent();
-        //FIXME: waitCheckDownloadTask();
-        //FIXME: waitCheckDownloadTask();
         verify(mContext).startActivity(installIntent);
 
         /* Cancel install to go back to app. */
@@ -313,13 +190,10 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void newOptionalUpdateWhileInstallingMandatory() throws Exception {
 
         /* Mock mandatory download and showing install U.I. */
-        //FIXME: waitDownloadTask();
+        prepareAndStartDownload(true);
+        
         completeDownload();
-        //FIXME: mockSuccessCursor();
-        Intent installIntent = mockInstallIntent();
-        //FIXME: waitCheckDownloadTask();
-        //FIXME: waitCheckDownloadTask();
-        verify(mContext).startActivity(installIntent);
+        verify(mContext).startActivity(mInstallIntent);
         verifyStatic();
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
         verifyStatic();
@@ -362,7 +236,7 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     public void newMandatoryUpdateWhileInstallingMandatory() throws Exception {
 
         /* Mock mandatory download and showing install U.I. */
-        //FIXME: waitDownloadTask();
+        prepareAndStartDownload(true);
         completeDownload();
         //FIXME: mockSuccessCursor();
         Intent installIntent = mockInstallIntent();
