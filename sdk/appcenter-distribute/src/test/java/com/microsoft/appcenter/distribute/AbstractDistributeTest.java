@@ -8,7 +8,9 @@ package com.microsoft.appcenter.distribute;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -40,10 +42,12 @@ import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -51,6 +55,7 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -82,6 +87,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
+
+    static final long DOWNLOAD_ID = 123;
 
     private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
@@ -140,6 +147,12 @@ public class AbstractDistributeTest {
 
     @Mock
     ReleaseDownloader mReleaseDownloader;
+
+    @Mock
+    ReleaseDownloadListener mReleaseDownloaderListener;
+
+    @Mock
+    ReleaseDetails testReleaseDetails;
 
     @Before
     @SuppressLint("ShowToast")
@@ -281,9 +294,28 @@ public class AbstractDistributeTest {
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
-        /* Mock Relese Downloader. */
+        /* Mock Release Downloader. */
         mockStatic(ReleaseDownloaderFactory.class);
         when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
+
+        /* Mock Release Downloader Listener. */
+        mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
+        whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class),any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
+
+        testReleaseDetails = mock(ReleaseDetails.class);
+        when(ReleaseDetails.parse(anyString())).thenReturn(testReleaseDetails);
+    }
+
+    void prepareAndStartDownload() {
+        mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, testReleaseDetails, mReleaseDownloaderListener);
+        mReleaseDownloader.resume();
+    }
+
+    void completeDownload() {
+        Intent completionIntent = mock(Intent.class);
+        PowerMockito.when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
+        new DownloadManagerReceiver().onReceive(mContext, completionIntent);
     }
 
     void restartProcessAndSdk() {

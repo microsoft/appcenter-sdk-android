@@ -80,7 +80,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
     public void startDownloadThenDisable() throws Exception {
 
         /* Simulate async task. */
-        //FIXME: waitDownloadTask();
+
 
         /* Verify. */
         //FIXME: verify(mDownloadManager).enqueue(mDownloadRequest);

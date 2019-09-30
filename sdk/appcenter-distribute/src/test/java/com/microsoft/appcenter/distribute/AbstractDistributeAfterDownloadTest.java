@@ -21,6 +21,7 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -70,8 +71,6 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
     @Mock
     NotificationManager mNotificationManager;
 
-    @Mock
-    ReleaseDownloadListener mReleaseListener;
 
     void setUpDownload(boolean mandatoryUpdate) throws Exception {
 
@@ -158,21 +157,12 @@ public class AbstractDistributeAfterDownloadTest extends AbstractDistributeTest 
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Mock release listener. */
-        whenNew(ReleaseDownloadListener.class).withAnyArguments().thenReturn(mReleaseListener);
-
         /* Click on dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
     }
 
-    void completeDownload() {
-        Intent completionIntent = mock(Intent.class);
-        when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        //FIXME: when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
-        new DownloadManagerReceiver().onReceive(mContext, completionIntent);
-    }
 
     @NonNull
     @SuppressLint("NewApi")
