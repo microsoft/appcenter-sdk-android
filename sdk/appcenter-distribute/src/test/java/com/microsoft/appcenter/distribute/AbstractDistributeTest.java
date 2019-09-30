@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -92,6 +93,8 @@ public class AbstractDistributeTest {
 
     private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
+    private static final String LOCAL_FILENAME_PATH_MOCK = "ANSWER_IS_42";
+
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -152,7 +155,10 @@ public class AbstractDistributeTest {
     ReleaseDownloadListener mReleaseDownloaderListener;
 
     @Mock
-    ReleaseDetails testReleaseDetails;
+    ReleaseDetails mReleaseDetails;
+
+    @Mock
+    Uri mUri;
 
     @Before
     @SuppressLint("ShowToast")
@@ -302,12 +308,17 @@ public class AbstractDistributeTest {
         mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class),any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
 
-        testReleaseDetails = mock(ReleaseDetails.class);
-        when(ReleaseDetails.parse(anyString())).thenReturn(testReleaseDetails);
+        mReleaseDetails = mock(ReleaseDetails.class);
+        when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
+
+        mUri = mock(Uri.class);
+        when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
+        when(mUri.getPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
+        when(mUri.getEncodedPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
     }
 
     void prepareAndStartDownload() {
-        mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, testReleaseDetails, mReleaseDownloaderListener);
+        mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
         mReleaseDownloader.resume();
     }
 
@@ -316,6 +327,7 @@ public class AbstractDistributeTest {
         PowerMockito.when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         when(completionIntent.getLongExtra(eq(EXTRA_DOWNLOAD_ID), anyLong())).thenReturn(DOWNLOAD_ID);
         new DownloadManagerReceiver().onReceive(mContext, completionIntent);
+        mReleaseDownloaderListener.onComplete(mUri);
     }
 
     void restartProcessAndSdk() {
