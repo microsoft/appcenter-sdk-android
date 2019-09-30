@@ -28,6 +28,7 @@ public class ReleaseDetailsTest {
                 "release_notes_url: 'https://mock/'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -41,6 +42,7 @@ public class ReleaseDetailsTest {
         assertEquals(Uri.parse("https://mock/"), releaseDetails.getReleaseNotesUrl());
         assertEquals(19, releaseDetails.getMinApiLevel());
         assertEquals(Uri.parse("http://download.thinkbroadband.com/1GB.zip"), releaseDetails.getDownloadUrl());
+        assertEquals(4242, releaseDetails.getSize());
         assertFalse(releaseDetails.isMandatoryUpdate());
         assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
         assertEquals("fd37a4b1-4937-45ef-97fb-b864154371f0", releaseDetails.getDistributionGroupId());
@@ -54,6 +56,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -70,6 +73,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -86,6 +90,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -111,6 +116,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -127,6 +133,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -142,6 +149,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -157,6 +165,7 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "android_min_api_level: 19," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -183,6 +192,7 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "short_version: '2.1.5'," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -211,6 +221,7 @@ public class ReleaseDetailsTest {
                 "android_min_api_level: 19," +
                 "short_version: '2.1.5'," +
                 "download_url: 'https://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -236,6 +247,7 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -252,6 +264,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: '19'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -278,6 +291,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: '4.0.3'," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -292,7 +306,9 @@ public class ReleaseDetailsTest {
                 "version: '14'," +
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
-                "android_min_api_level: 19" +
+                "android_min_api_level: 19," +
+                "size: 4242," +
+                "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
@@ -308,6 +324,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'someFile'," +
+                "size: 4242" +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -324,6 +341,23 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'ftp://someFile'," +
+                "size: 4242" +
+                "mandatory_update: false," +
+                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
+                "}";
+        ReleaseDetails.parse(json);
+    }
+
+    @Test(expected = JSONException.class)
+    public void missingSize() throws JSONException {
+        String json = "{" +
+                "id: 42," +
+                "version: '14'," +
+                "short_version: '2.1.5'," +
+                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
+                "android_min_api_level: 19" +
+                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -340,6 +374,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: true," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -365,6 +400,7 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
+                "size: 4242," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -380,6 +416,7 @@ public class ReleaseDetailsTest {
                 "short_version: '2.1.5'," +
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'" +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -396,6 +433,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: []," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -412,6 +450,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: '9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60'" +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -429,6 +468,7 @@ public class ReleaseDetailsTest {
                 "release_notes_url: 'https://mock/'," +
                 "android_min_api_level: 19," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
