@@ -72,7 +72,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     private HttpDownloadFileTask mHttpDownloadFileTask;
 
     @Nullable
-    File getTargetFile() {
+    private File getTargetFile() {
         if (mTargetFile == null) {
             File downloadsDirectory = mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             if (downloadsDirectory != null) {
@@ -160,7 +160,7 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         cancelProgressNotification();
     }
 
-    void showProgressNotification(long currentSize, long totalSize) {
+    private void showProgressNotification(long currentSize, long totalSize) {
         Notification.Builder builder = getNotificationBuilder();
 
         /* TODO: We should not reuse "mandatory" string here. */
