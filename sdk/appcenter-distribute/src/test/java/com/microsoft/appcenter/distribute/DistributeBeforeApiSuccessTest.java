@@ -66,7 +66,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
@@ -349,8 +348,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
@@ -380,8 +377,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
@@ -690,8 +685,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
@@ -715,8 +708,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -737,8 +728,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -814,8 +803,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
@@ -840,8 +827,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -864,8 +849,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
@@ -942,8 +925,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
@@ -967,8 +948,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
         verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
-        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -991,8 +970,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDistributeInfoTracker).updateDistributionGroupId("g");
@@ -1132,8 +1109,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
