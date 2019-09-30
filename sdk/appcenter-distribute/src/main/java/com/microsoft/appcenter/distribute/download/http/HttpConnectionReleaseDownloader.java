@@ -100,8 +100,15 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         return mNotificationBuilder;
     }
 
-    private void removeFile(File file) {
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(file));
+    @Override
+    public synchronized boolean isDownloading() {
+        return mHttpDownloadFileTask != null;
+    }
+
+    @NonNull
+    @Override
+    public ReleaseDetails getReleaseDetails() {
+        return mReleaseDetails;
     }
 
     @Override
@@ -140,9 +147,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             mListener.onError("No external storage permission.");
             return;
         }
-        if (mHttpDownloadFileTask == null) {
+        if (!isDownloading()) {
+
+            /* Start download the release package file. */
             long enqueueTime = System.currentTimeMillis();
-            mHttpDownloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, mReleaseDetails.getDownloadUrl(), targetFile));
+            downloadFile(targetFile);
             mListener.onStart(enqueueTime);
             showProgressNotification(0, 0);
         } else {
@@ -152,12 +161,27 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public synchronized void cancel() {
+        if (mHttpDownloadFileTask != null) {
+            mHttpDownloadFileTask.cancel(true);
+            mHttpDownloadFileTask = null;
+        }
         String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
         if (filePath != null) {
             removeFile(new File(filePath));
             SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
         }
         cancelProgressNotification();
+    }
+
+    private void downloadFile(File file) {
+        Uri downloadUrl = mReleaseDetails.getDownloadUrl();
+        AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
+        mHttpDownloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, downloadUrl, file));
+    }
+
+    private void removeFile(File file) {
+        AppCenterLog.debug(LOG_TAG, "Removing downloaded file from " + file.getAbsolutePath());
+        AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(file));
     }
 
     private void showProgressNotification(long currentSize, long totalSize) {

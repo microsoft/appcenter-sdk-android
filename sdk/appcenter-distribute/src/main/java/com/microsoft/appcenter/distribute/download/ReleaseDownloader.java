@@ -8,10 +8,30 @@ package com.microsoft.appcenter.distribute.download;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.distribute.ReleaseDetails;
+
 /**
  * Interface for downloading release.
  */
 public interface ReleaseDownloader {
+
+    /**
+     * Check if downloading was already started (during the current session).
+     * <p>
+     * Note: It's NOT supposed to check status after app process restart.
+     * </p>
+     *
+     * @return <code>true</code> if download progress is already started, <code>false</code> otherwise.
+     */
+    boolean isDownloading();
+
+    /**
+     * Get release details.
+     *
+     * @return release details.
+     */
+    @NonNull
+    ReleaseDetails getReleaseDetails();
 
     /**
      * Start or resume downloading the installer for the release.
