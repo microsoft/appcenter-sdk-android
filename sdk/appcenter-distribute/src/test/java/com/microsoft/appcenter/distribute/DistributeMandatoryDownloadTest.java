@@ -263,69 +263,6 @@ public class DistributeMandatoryDownloadTest extends AbstractDistributeAfterDown
     }
 
     @Test
-    public void startActivityButDisabledAfterCheckpoint() throws Exception {
-
-        /* Simulate async task. */
-        //FIXME: waitDownloadTask();
-
-        /* Process download completion. */
-        //FIXME: mockSuccessCursor();
-        final Intent installIntent = mockInstallIntent();
-        final Semaphore beforeStartingActivityLock = new Semaphore(0);
-        final Semaphore disabledLock = new Semaphore(0);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                beforeStartingActivityLock.release();
-                disabledLock.acquireUninterruptibly();
-                return null;
-            }
-        }).when(mContext).startActivity(installIntent);
-        doAnswer(new Answer<Void>() {
-
-            boolean firstCall = true;
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-
-                /* First call is update progress dialog, second is hide. */
-                if (firstCall) {
-                    firstCall = false;
-                    beforeStartingActivityLock.release();
-                    disabledLock.acquireUninterruptibly();
-                }
-                (((Runnable) invocation.getArguments()[0])).run();
-                return null;
-            }
-        }).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
-
-        /* Complete download, unblock the first check progress. */
-        completeDownload();
-
-        /* Disable between check notification and start activity. */
-        //FIXME: mCheckDownloadBeforeSemaphore.release(2);
-        beforeStartingActivityLock.acquireUninterruptibly(2);
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.setEnabled(false);
-        disabledLock.release(2);
-        //FIXME: mCheckDownloadAfterSemaphore.acquireUninterruptibly(2);
-
-        /* Verify start activity and complete workflow skipped, e.g. clean behavior happened only once. */
-        verify(mContext).startActivity(installIntent);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyStatic(never());
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
-        verifyZeroInteractions(mNotificationManager);
-
-        /* Check semaphores. */
-        //FIXME: checkSemaphoreSanity(beforeStartingActivityLock);
-        //FIXME: checkSemaphoreSanity(disabledLock);
-    }
-
-    @Test
     public void jsonCorruptedWhenRestarting() throws Exception {
 
         /* Simulate async task. */
