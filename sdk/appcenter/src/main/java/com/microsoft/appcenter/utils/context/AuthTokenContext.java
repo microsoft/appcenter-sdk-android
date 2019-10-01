@@ -87,7 +87,7 @@ public class AuthTokenContext {
     /**
      * The last token to be refreshed. Saved to ensure that it is not refreshed more than once.
      */
-    private String mLastTokenRefreshed;
+    private String mLastTokenRefreshRequest;
 
     /**
      * Initializes AuthTokenContext class.
@@ -371,10 +371,10 @@ public class AuthTokenContext {
         if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
                 !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
                 !authTokenInfo.isAboutToExpire() ||
-                authTokenInfo.getAuthToken().equals(mLastTokenRefreshed)) {
+                authTokenInfo.getAuthToken().equals(mLastTokenRefreshRequest)) {
             return null;
         }
-        mLastTokenRefreshed = authTokenInfo.getAuthToken();
+        mLastTokenRefreshRequest = authTokenInfo.getAuthToken();
         return lastEntry.getHomeAccountId();
     }
 
