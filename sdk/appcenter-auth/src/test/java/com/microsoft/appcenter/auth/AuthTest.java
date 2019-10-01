@@ -328,7 +328,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Mock public client application for MSAL*/
         mockMsalPublicClientApplication();
 
-        /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
+        /* When we get a valid payload for App Center fields but an invalid payload for MSAL ones. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* We saved after we downloaded the file. */
