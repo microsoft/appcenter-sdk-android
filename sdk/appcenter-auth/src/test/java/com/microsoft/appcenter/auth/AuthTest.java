@@ -307,7 +307,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Mock public client application. */
         mockMsalPublicClientApplication();
 
-        /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
+        /* When we get a valid payload for App Center fields but an invalid payload for Microsoft Authentication Library (MSAL) ones. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
         /* We saved after we downloaded the file. */
@@ -325,7 +325,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
-        /* mock public client application for msal*/
+        /* Mock public client application for MSAL*/
         mockMsalPublicClientApplication();
 
         /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
