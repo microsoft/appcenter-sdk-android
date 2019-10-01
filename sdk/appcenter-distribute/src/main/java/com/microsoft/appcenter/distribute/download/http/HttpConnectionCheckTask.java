@@ -13,7 +13,7 @@ import java.io.File;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
 
-public class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
+class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
 
     private final HttpConnectionReleaseDownloader mDownloader;
 
