@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.widget.Toast;
 
@@ -62,6 +63,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
+    @WorkerThread
     @Override
     public void onStart(long enqueueTime) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Start download %s (%d) update.",
@@ -70,8 +72,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
     }
 
-    @Override
     @WorkerThread
+    @Override
     public synchronized boolean onProgress(final long currentSize, final long totalSize) {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
@@ -86,8 +88,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         return mProgressDialog != null;
     }
 
-    @Override
     @WorkerThread
+    @Override
     public boolean onComplete(@NonNull Uri localUri) {
         Intent intent = getInstallIntent(localUri);
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
@@ -122,10 +124,17 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         return true;
     }
 
+    @WorkerThread
     @Override
     public void onError(@NonNull String errorMessage) {
         AppCenterLog.error(LOG_TAG, errorMessage);
-        Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
+            }
+        });
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
@@ -169,6 +178,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     }
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    @UiThread
     private synchronized void updateProgressDialog(final long currentSize, final long totalSize) {
 
         /* If file size is known update downloadProgress bar. */

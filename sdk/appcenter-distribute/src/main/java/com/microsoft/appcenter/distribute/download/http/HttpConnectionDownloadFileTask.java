@@ -35,7 +35,7 @@ import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 /**
  * Downloads an update and stores it on specified file.
  **/
-class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
+class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
 
     /**
      * Maximal number of allowed redirects.
@@ -66,7 +66,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private final File mTargetFile;
 
-    HttpDownloadFileTask(HttpConnectionReleaseDownloader downloader, Uri downloadUri, File targetFile) {
+    HttpConnectionDownloadFileTask(HttpConnectionReleaseDownloader downloader, Uri downloadUri, File targetFile) {
         mDownloader = downloader;
         mDownloadUri = downloadUri;
         mTargetFile = targetFile;
@@ -75,13 +75,8 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void[] args) {
         try {
-            if (mTargetFile.exists()) {
-
-                /* Delete previously downloaded file if exists. */
-                if (!mTargetFile.delete()) {
-                    AppCenterLog.warn(LOG_TAG, "Cannot delete previously downloaded file: " + mTargetFile);
-                }
-            }
+            long enqueueTime = System.currentTimeMillis();
+            mDownloader.onDownloadStarted(enqueueTime);
 
             /* Create connection. */
             URL url = new URL(mDownloadUri.toString());

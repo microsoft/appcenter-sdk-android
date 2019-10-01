@@ -6,7 +6,9 @@
 package com.microsoft.appcenter.distribute.download;
 
 import android.net.Uri;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 
@@ -36,6 +38,7 @@ public interface ReleaseDownloader {
     /**
      * Start or resume downloading the installer for the release.
      */
+    @AnyThread
     void resume();
 
     /**
@@ -53,6 +56,7 @@ public interface ReleaseDownloader {
          *
          * @param enqueueTime timestamp in milliseconds just before enqueuing download.
          */
+        @WorkerThread
         void onStart(long enqueueTime);
 
         /**
@@ -62,6 +66,7 @@ public interface ReleaseDownloader {
          * @param totalSize   total size in bytes of downloading file.
          * @return <code>true</code> if the listener are interested on more progress updates, <code>false</code> otherwise.
          */
+        @WorkerThread
         boolean onProgress(long currentSize, long totalSize);
 
         /**
@@ -70,6 +75,7 @@ public interface ReleaseDownloader {
          * @param localUri The local URI of the file.
          * @return <code>true</code> if this file can be installed, <code>false</code> otherwise.
          */
+        @WorkerThread
         boolean onComplete(@NonNull Uri localUri);
 
         /**

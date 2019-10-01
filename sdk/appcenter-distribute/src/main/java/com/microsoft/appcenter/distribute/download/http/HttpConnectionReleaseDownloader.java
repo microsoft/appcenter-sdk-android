@@ -12,6 +12,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -19,7 +20,7 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.distribute.PermissionUtils;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.AbstractReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -35,27 +36,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 /**
  * Downloads new releases directly via HttpsURLConnection for Android versions prior to 5.0.
  */
-public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
+public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
 
-    /**
-     * Context.
-     */
-    private final Context mContext;
-
-    /**
-     * Release to download.
-     */
-    private final ReleaseDetails mReleaseDetails;
-
-    /**
-     * Listener of download status.
-     */
-    private final ReleaseDownloader.Listener mListener;
-
-    public HttpConnectionReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
-        mContext = context;
-        mReleaseDetails = releaseDetails;
-        mListener = listener;
+    public HttpConnectionReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
+        super(context, releaseDetails, listener);
     }
 
     /**
@@ -69,10 +53,13 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
      */
     private Notification.Builder mNotificationBuilder;
 
-    private HttpDownloadFileTask mHttpDownloadFileTask;
+    private HttpConnectionCheckTask mCheckTask;
+
+    private HttpConnectionDownloadFileTask mDownloadTask;
 
     @Nullable
-    private File getTargetFile() {
+    @WorkerThread
+    File getTargetFile() {
         if (mTargetFile == null) {
             File downloadsDirectory = mContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             if (downloadsDirectory != null) {
@@ -102,40 +89,14 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public synchronized boolean isDownloading() {
-        return mHttpDownloadFileTask != null;
+        return mDownloadTask != null;
     }
 
-    @NonNull
+    @AnyThread
     @Override
-    public ReleaseDetails getReleaseDetails() {
-        return mReleaseDetails;
-    }
-
-    @Override
-    public void resume() {
-        File targetFile = getTargetFile();
-        if (targetFile == null) {
-            mListener.onError("Cannot access to downloads folder. Shared storage is not currently available.");
+    public synchronized void resume() {
+        if (isCancelled()) {
             return;
-        }
-
-        /* Check if we have already downloaded the release. */
-        String downloadedReleaseFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
-        if (downloadedReleaseFilePath != null) {
-
-            /* Check if it's the same release. */
-            File downloadedReleaseFile = new File(downloadedReleaseFilePath);
-            if (downloadedReleaseFilePath.equals(targetFile.getAbsolutePath())) {
-                if (downloadedReleaseFile.exists()) {
-                    onDownloadComplete(targetFile);
-                    return;
-                }
-            } else {
-
-                /* Remove previously downloaded release. */
-                removeFile(downloadedReleaseFile);
-                SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
-            }
         }
         if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
             mListener.onError("No network connection, abort downloading.");
@@ -147,23 +108,24 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
             mListener.onError("No external storage permission.");
             return;
         }
-        if (!isDownloading()) {
 
-            /* Start download the release package file. */
-            long enqueueTime = System.currentTimeMillis();
-            downloadFile(targetFile);
-            mListener.onStart(enqueueTime);
-            showProgressNotification(0, 0);
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Downloading of " + targetFile.getPath() + " is already in progress.");
-        }
+        /* Do all file-system related checks in the background. */
+        check();
     }
 
     @Override
     public synchronized void cancel() {
-        if (mHttpDownloadFileTask != null) {
-            mHttpDownloadFileTask.cancel(true);
-            mHttpDownloadFileTask = null;
+        if (isCancelled()) {
+            return;
+        }
+        super.cancel();
+        if (mCheckTask != null) {
+            mCheckTask.cancel(true);
+            mCheckTask = null;
+        }
+        if (mDownloadTask != null) {
+            mDownloadTask.cancel(true);
+            mDownloadTask = null;
         }
         String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
         if (filePath != null) {
@@ -173,15 +135,32 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         cancelProgressNotification();
     }
 
-    private void downloadFile(File file) {
+    private synchronized void check() {
+        if (isCancelled()) {
+            return;
+        }
+        if (mCheckTask != null) {
+            return;
+        }
+        mCheckTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionCheckTask(this));
+    }
+
+    private synchronized void downloadFile(File file) {
+        if (isCancelled()) {
+            return;
+        }
+        if (mDownloadTask != null) {
+            AppCenterLog.debug(LOG_TAG, "Downloading of " + file.getPath() + " is already in progress.");
+            return;
+        }
         Uri downloadUrl = mReleaseDetails.getDownloadUrl();
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
-        mHttpDownloadFileTask = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(this, downloadUrl, file));
+        mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(this, downloadUrl, file));
     }
 
     private void removeFile(File file) {
         AppCenterLog.debug(LOG_TAG, "Removing downloaded file from " + file.getAbsolutePath());
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveFileTask(file));
+        AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionRemoveFileTask(file));
     }
 
     private void showProgressNotification(long currentSize, long totalSize) {
@@ -197,13 +176,36 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
     }
 
     @WorkerThread
+    synchronized void onStart(File targetFile) {
+        if (isCancelled()) {
+            return;
+        }
+        downloadFile(targetFile);
+    }
+
+    @WorkerThread
+    synchronized void onDownloadStarted(long enqueueTime) {
+        if (isCancelled()) {
+            return;
+        }
+        mListener.onStart(enqueueTime);
+        showProgressNotification(0, 0);
+    }
+
+    @WorkerThread
     synchronized void onDownloadProgress(final long currentSize, final long totalSize) {
+        if (isCancelled()) {
+            return;
+        }
         showProgressNotification(currentSize, totalSize);
         mListener.onProgress(currentSize, totalSize);
     }
 
     @WorkerThread
     synchronized void onDownloadComplete(File targetFile) {
+        if (isCancelled()) {
+            return;
+        }
         cancelProgressNotification();
 
         /* Check downloaded file size. */
@@ -218,7 +220,11 @@ public class HttpConnectionReleaseDownloader implements ReleaseDownloader {
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 
+    @WorkerThread
     synchronized void onDownloadError(String errorMessage) {
+        if (isCancelled()) {
+            return;
+        }
         cancelProgressNotification();
         mListener.onError(errorMessage);
     }
