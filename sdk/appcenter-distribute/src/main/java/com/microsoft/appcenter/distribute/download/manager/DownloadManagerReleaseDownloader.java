@@ -79,7 +79,8 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     public synchronized void resume() {
 
         /*
-         *
+         * Just update the current downloading status.
+         * All checks will be performed in the background thread.
          */
         update();
     }
