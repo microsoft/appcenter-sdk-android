@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -70,7 +71,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         ReleaseDetails.class,
         ReleaseDownloadListener.class,
         SharedPreferencesManager.class,
-        SystemClock.class
+        SystemClock.class,
+        Toast.class
 })
 public class ReleaseDownloadListenerTest  {
 
@@ -106,6 +108,9 @@ public class ReleaseDownloadListenerTest  {
     @Mock
     private PackageManager mPackageManager;
 
+    @Mock
+    private Toast mToast;
+
     @Before
     public void setUp() throws Exception {
         mockHandler();
@@ -113,6 +118,12 @@ public class ReleaseDownloadListenerTest  {
         mockStorage();
         mockInstallIntent();
         mockDistribute();
+        mockToast();
+    }
+
+    private void mockToast() {
+        mockStatic(Toast.class);
+        Mockito.when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
     }
 
     private void mockDistribute() {
@@ -281,9 +292,9 @@ public class ReleaseDownloadListenerTest  {
 
         /*
         * Verify that progressDialog is not set up with invalid values
-        * and the method returns false.
+        * and the method returns true since the dialog is not null.
         */
-        assertFalse(releaseDownloadListener.onProgress(currentSize, totalSize));
+        assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
         verify(mProgressDialog, never()).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
         verify(mProgressDialog, never()).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
     }

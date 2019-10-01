@@ -15,6 +15,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -32,9 +33,9 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 @PrepareForTest({
         AsyncTaskUtils.class,
         AppCenterLog.class,
+        Distribute.class,
         ResumeFromBackgroundTask.class,
-        SharedPreferencesManager.class,
-        Distribute.class
+        SharedPreferencesManager.class
 })
 public class ResumeFromBackgroundTaskTest {
 
@@ -46,14 +47,14 @@ public class ResumeFromBackgroundTaskTest {
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
 
+    @Mock
     private Context mockContext;
 
+    @Mock
     private Distribute mockDistribute;
 
     @Before
     public void setUp() {
-        mockContext = mock(Context.class);
-        mockDistribute = mock(Distribute.class);
         mockStatic(AsyncTaskUtils.class);
         mockStatic(Distribute.class);
         mockStatic(SharedPreferencesManager.class);

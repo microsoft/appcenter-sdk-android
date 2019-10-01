@@ -17,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -26,18 +27,14 @@ import static org.mockito.Mockito.mock;
 @RunWith(PowerMockRunner.class)
 public class ReleaseDownloaderFactoryTest {
 
+    @Mock
     private Context mockContext;
 
+    @Mock
     private ReleaseDetails mockReleaseDetails;
 
+    @Mock
     private ReleaseDownloader.Listener mockReleaseDownloaderListener;
-
-    @Before
-    public void setUp() {
-        mockContext = mock(Context.class);
-        mockReleaseDetails = mock(ReleaseDetails.class);
-        mockReleaseDownloaderListener = mock(ReleaseDownloader.Listener.class);
-    }
 
     @After
     public void tearDown() throws Exception {
