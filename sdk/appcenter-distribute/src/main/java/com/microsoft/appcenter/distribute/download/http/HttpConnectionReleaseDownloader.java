@@ -164,6 +164,9 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
     }
 
     private void showProgressNotification(long currentSize, long totalSize) {
+        if (mReleaseDetails.isMandatoryUpdate()) {
+            return;
+        }
         Notification.Builder builder = getNotificationBuilder();
         builder.setContentTitle(mContext.getString(R.string.appcenter_distribute_downloading_update))
                 .setSmallIcon(mContext.getApplicationInfo().icon)

@@ -1780,15 +1780,43 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Update download state to downloading if state did not change.
+     *
+     * @param releaseDetails to check state change.
+     * @param enqueueTime    timestamp in milliseconds just before enqueuing download.
+     */
+    @WorkerThread
+    synchronized void setDownloading(@NonNull ReleaseDetails releaseDetails, long enqueueTime) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+    }
+
+    /**
      * Update download state to installing if state did not change.
      *
      * @param releaseDetails to check state change.
      */
-    synchronized void setInstalling(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
+    @WorkerThread
+    synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        if (releaseDetails.isMandatoryUpdate()) {
             cancelNotification();
             SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        } else {
+            completeWorkflow(releaseDetails);
         }
+        String groupId = releaseDetails.getDistributionGroupId();
+        String releaseHash = releaseDetails.getReleaseHash();
+        int releaseId = releaseDetails.getId();
+        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 
     /**

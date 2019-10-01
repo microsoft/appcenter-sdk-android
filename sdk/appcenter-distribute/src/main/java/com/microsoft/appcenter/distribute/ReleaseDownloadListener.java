@@ -17,21 +17,14 @@ import android.widget.Toast;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
 
 /**
@@ -68,8 +61,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     public void onStart(long enqueueTime) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Start download %s (%d) update.",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion()));
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
-        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+        Distribute.getInstance().setDownloading(mReleaseDetails, enqueueTime);
     }
 
     @WorkerThread
@@ -113,13 +105,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
              */
             AppCenterLog.info(LOG_TAG, "Show install UI for " + localUri);
             mContext.startActivity(intent);
-            Distribute distribute = Distribute.getInstance();
-            if (mReleaseDetails.isMandatoryUpdate()) {
-                distribute.setInstalling(mReleaseDetails);
-            } else {
-                distribute.completeWorkflow(mReleaseDetails);
-            }
-            storeReleaseDetails(mReleaseDetails);
+            Distribute.getInstance().setInstalling(mReleaseDetails);
         }
         return true;
     }
@@ -195,15 +181,5 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             }
             mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
         }
-    }
-
-    private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
-        String groupId = releaseDetails.getDistributionGroupId();
-        String releaseHash = releaseDetails.getReleaseHash();
-        int releaseId = releaseDetails.getId();
-        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }
