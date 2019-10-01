@@ -357,10 +357,10 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
-        String accountId = getAccountIdToRefreshAndUpdateCache(authTokenInfo);
-        if (accountId != null) {
-            RefreshListener refreshListener = mRefreshListener.get();
-            if (refreshListener != null) {
+        RefreshListener refreshListener = mRefreshListener.get();
+        if (refreshListener != null) {
+            String accountId = getAccountIdToRefreshAndUpdateCache(authTokenInfo);
+            if (accountId != null) {
                 refreshListener.onTokenRequiresRefresh(accountId);
             }
         }
