@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -33,7 +34,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         Uri downloadUrl = releaseDetails.getDownloadUrl();
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
         DownloadManager downloadManager = mDownloader.getDownloadManager();
-        DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+        DownloadManager.Request request = createRequest(downloadUrl);
 
         /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (releaseDetails.isMandatoryUpdate()) {
@@ -47,5 +48,10 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         }
         mDownloader.onDownloadStarted(downloadId, enqueueTime);
         return null;
+    }
+
+    @VisibleForTesting
+    DownloadManager.Request createRequest(Uri Uri) {
+        return new DownloadManager.Request(Uri);
     }
 }
