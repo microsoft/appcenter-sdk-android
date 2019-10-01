@@ -9,6 +9,7 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -41,18 +42,9 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
      * Maximal number of allowed redirects.
      */
     private static final int MAX_REDIRECTS = 6;
-    
-    /**
-     * The download progress will be reported after loading this number of bytes.
-     */
-    private static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 512 * 1024;
 
-    /**
-     * The download progress will be reported not more often than this number of milliseconds.
-     */
-    private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
-
-    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    @VisibleForTesting
+    static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     private final HttpConnectionReleaseDownloader mDownloader;
 

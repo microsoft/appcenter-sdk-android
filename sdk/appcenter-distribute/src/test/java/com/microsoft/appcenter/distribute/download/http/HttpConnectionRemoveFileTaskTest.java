@@ -15,7 +15,7 @@ import java.io.File;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RemoveFileTaskTest {
+public class HttpConnectionRemoveFileTaskTest {
 
     @Mock
     private File mFile;
@@ -23,7 +23,7 @@ public class RemoveFileTaskTest {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Test
     public void doInBackground() {
-        RemoveFileTask task = new RemoveFileTask(mFile);
+        HttpConnectionRemoveFileTask task = new HttpConnectionRemoveFileTask(mFile);
         task.doInBackground(null);
 
         /* Verify. */

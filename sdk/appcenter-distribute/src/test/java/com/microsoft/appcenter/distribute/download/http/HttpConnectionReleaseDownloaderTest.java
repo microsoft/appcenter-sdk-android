@@ -155,9 +155,9 @@ public class HttpConnectionReleaseDownloaderTest {
     @Test
     public void downloadInProgress() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
-        HttpDownloadFileTask mockHttpTask = mock(HttpDownloadFileTask.class);
+        HttpConnectionDownloadFileTask mockHttpTask = mock(HttpConnectionDownloadFileTask.class);
         mockStatic(AsyncTaskUtils.class);
-        when(AsyncTaskUtils.execute(anyString(), any(HttpDownloadFileTask.class))).thenReturn(mockHttpTask);
+        when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionDownloadFileTask.class))).thenReturn(mockHttpTask);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
@@ -412,9 +412,9 @@ public class HttpConnectionReleaseDownloaderTest {
     @Test
     public void cancelDownloading() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
-        HttpDownloadFileTask mockHttpTask = mock(HttpDownloadFileTask.class);
+        HttpConnectionDownloadFileTask mockHttpTask = mock(HttpConnectionDownloadFileTask.class);
         mockStatic(AsyncTaskUtils.class);
-        when(AsyncTaskUtils.execute(anyString(), any(HttpDownloadFileTask.class))).thenReturn(mockHttpTask);
+        when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionDownloadFileTask.class))).thenReturn(mockHttpTask);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);

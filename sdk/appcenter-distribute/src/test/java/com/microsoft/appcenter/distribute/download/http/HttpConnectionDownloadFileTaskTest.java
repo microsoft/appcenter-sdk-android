@@ -31,7 +31,7 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static com.microsoft.appcenter.distribute.download.http.HttpDownloadFileTask.APK_CONTENT_TYPE;
+import static com.microsoft.appcenter.distribute.download.http.HttpConnectionDownloadFileTask.APK_CONTENT_TYPE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -49,13 +49,13 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
-    AsyncTaskUtils.class,
-    AppCenterLog.class,
-    HttpDownloadFileTask.class,
-    TrafficStats.class,
-    System.class
+        AsyncTaskUtils.class,
+        AppCenterLog.class,
+        HttpConnectionDownloadFileTask.class,
+        TrafficStats.class,
+        System.class
 })
-public class HttpDownloadFileTaskTest {
+public class HttpConnectionDownloadFileTaskTest {
 
     @Mock
     private Uri mMockDownloadUri;
@@ -120,7 +120,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -178,7 +178,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -227,7 +227,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackgroundWithSpy();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -280,7 +280,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -332,7 +332,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -387,7 +387,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -441,7 +441,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -491,7 +491,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -542,7 +542,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -593,7 +593,7 @@ public class HttpDownloadFileTaskTest {
 
         /* Start. */
         startDoInBackground();
-        HttpDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
+        HttpConnectionDownloadFileTask task = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile));
         task.doInBackground(null);
 
         /* Verify. */
@@ -608,22 +608,22 @@ public class HttpDownloadFileTaskTest {
 
 
     private void startDoInBackground() {
-        final HttpDownloadFileTask[] task = {null};
-        when(AsyncTaskUtils.execute(anyString(), isA(HttpDownloadFileTask.class))).then(new Answer<HttpDownloadFileTask>() {
+        final HttpConnectionDownloadFileTask[] task = {null};
+        when(AsyncTaskUtils.execute(anyString(), isA(HttpConnectionDownloadFileTask.class))).then(new Answer<HttpConnectionDownloadFileTask>() {
             @Override
-            public HttpDownloadFileTask answer(InvocationOnMock invocation) {
-                task[0] = (HttpDownloadFileTask) invocation.getArguments()[1];
+            public HttpConnectionDownloadFileTask answer(InvocationOnMock invocation) {
+                task[0] = (HttpConnectionDownloadFileTask) invocation.getArguments()[1];
                 return task[0];
             }
         });
     }
 
     private void startDoInBackgroundWithSpy() {
-        final HttpDownloadFileTask[] task = {null};
-        when(AsyncTaskUtils.execute(anyString(), isA(HttpDownloadFileTask.class))).then(new Answer<HttpDownloadFileTask>() {
+        final HttpConnectionDownloadFileTask[] task = {null};
+        when(AsyncTaskUtils.execute(anyString(), isA(HttpConnectionDownloadFileTask.class))).then(new Answer<HttpConnectionDownloadFileTask>() {
             @Override
-            public HttpDownloadFileTask answer(InvocationOnMock invocation) {
-                task[0] = spy((HttpDownloadFileTask) invocation.getArguments()[1]);
+            public HttpConnectionDownloadFileTask answer(InvocationOnMock invocation) {
+                task[0] = spy((HttpConnectionDownloadFileTask) invocation.getArguments()[1]);
                 doReturn(true).when(task[0]).isCancelled();
                 return task[0];
             }
