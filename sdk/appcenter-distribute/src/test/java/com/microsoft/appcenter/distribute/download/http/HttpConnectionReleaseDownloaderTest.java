@@ -156,8 +156,10 @@ public class HttpConnectionReleaseDownloaderTest {
     public void downloadInProgress() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
         HttpConnectionDownloadFileTask mockHttpTask = mock(HttpConnectionDownloadFileTask.class);
+        HttpConnectionCheckTask mockHttpCheckTask = mock(HttpConnectionCheckTask.class);
         mockStatic(AsyncTaskUtils.class);
         when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionDownloadFileTask.class))).thenReturn(mockHttpTask);
+        when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionCheckTask.class))).thenReturn(mockHttpCheckTask);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
@@ -318,7 +320,8 @@ public class HttpConnectionReleaseDownloaderTest {
         releaseDownloader.resume();
 
         /* Verify. */
-        verify(mockListener).onStart(anyLong());
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), any(HttpConnectionDownloadFileTask.class));
     }
 
     @Test
@@ -413,8 +416,10 @@ public class HttpConnectionReleaseDownloaderTest {
     public void cancelDownloading() throws Exception {
         ReleaseDetails mockReleaseDetails = mockTargetFile();
         HttpConnectionDownloadFileTask mockHttpTask = mock(HttpConnectionDownloadFileTask.class);
+        HttpConnectionCheckTask mockCheckTask = mock(HttpConnectionCheckTask.class);
         mockStatic(AsyncTaskUtils.class);
         when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionDownloadFileTask.class))).thenReturn(mockHttpTask);
+        when(AsyncTaskUtils.execute(anyString(), any(HttpConnectionCheckTask.class))).thenReturn(mockCheckTask);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString())).thenReturn(null);
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
         when(PermissionUtils.permissionsAreGranted(any(int[].class))).thenReturn(true);
@@ -491,5 +496,4 @@ public class HttpConnectionReleaseDownloaderTest {
         when(mContext.getSystemService(Context.NOTIFICATION_SERVICE)).thenReturn(mockNotificationManager);
         return mockNotificationManager;
     }
-
 }
