@@ -24,7 +24,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,31 +47,45 @@ public class ResumeFromBackgroundTaskTest {
     public PowerMockRule mRule = new PowerMockRule();
 
     @Mock
-    private Context mockContext;
+    private Context mContext;
 
     @Mock
-    private Distribute mockDistribute;
+    private Distribute mDistribute;
 
     @Before
     public void setUp() {
         mockStatic(AsyncTaskUtils.class);
         mockStatic(Distribute.class);
         mockStatic(SharedPreferencesManager.class);
-        when(Distribute.getInstance()).thenReturn(mockDistribute);
+        when(Distribute.getInstance()).thenReturn(mDistribute);
     }
 
     @Test
-    public void doInBackgroundNotExpectedId() {
+    public void doInBackgroundInvalidId() {
         when(SharedPreferencesManager.getLong(anyString(), anyLong())).thenReturn(-1L);
 
         /* Start. */
         startDoInBackground();
-        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mockContext, 1L));
+        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 1L));
         task.doInBackground(null);
 
         /* Verify. */
-        verify(mockDistribute).startFromBackground(mockContext);
-        verify(mockDistribute, never()).resumeDownload();
+        verify(mDistribute).startFromBackground(mContext);
+        verify(mDistribute, never()).resumeDownload();
+    }
+
+    @Test
+    public void doInBackgroundNotExpectedId() {
+        when(SharedPreferencesManager.getLong(anyString(), anyLong())).thenReturn(2L);
+
+        /* Start. */
+        startDoInBackground();
+        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 4L));
+        task.doInBackground(null);
+
+        /* Verify. */
+        verify(mDistribute).startFromBackground(mContext);
+        verify(mDistribute, never()).resumeDownload();
     }
 
     @Test
@@ -82,12 +95,12 @@ public class ResumeFromBackgroundTaskTest {
 
         /* Start. */
         startDoInBackground();
-        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mockContext, downloadedId));
+        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, downloadedId));
         task.doInBackground(null);
 
         /* Verify. */
-        verify(mockDistribute).startFromBackground(mockContext);
-        verify(mockDistribute).resumeDownload();
+        verify(mDistribute).startFromBackground(mContext);
+        verify(mDistribute).resumeDownload();
     }
 
     private void startDoInBackground() {
