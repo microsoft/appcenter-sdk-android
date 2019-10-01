@@ -1,6 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 2.3.1 (Under development)
+## Version 2.4.0 (Under development)
+
+### App Center Auth
+
+* **[Feature]** Add authentication support for Azure Active Directory (AAD) applications. Users can now connect an [AAD tenant and AAD single tenant (AzureADMyOrg), multi-tenant (AzureADMultipleOrgs) and multi-tenant and personal Microsoft account (AzureADandPersonalMicrosoftAccount)](https://docs.microsoft.com/en-us/azure/active-directory/develop/single-and-multi-tenant-apps) applications.
 
 ### App Center Data
 

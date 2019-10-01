@@ -33,9 +33,11 @@ import com.microsoft.identity.client.IAccountIdentifier;
 import com.microsoft.identity.client.IAuthenticationResult;
 import com.microsoft.identity.client.Logger;
 import com.microsoft.identity.client.PublicClientApplication;
+import com.microsoft.identity.client.PublicClientApplicationConfiguration;
 import com.microsoft.identity.client.exception.MsalClientException;
 import com.microsoft.identity.client.exception.MsalException;
 import com.microsoft.identity.client.exception.MsalUiRequiredException;
+import com.microsoft.identity.common.internal.authorities.Authority;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,8 +54,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -123,6 +127,18 @@ public class AuthTest extends AbstractAuthTest {
     private static void mockSuccessfulHttpCall(JSONObject jsonConfig, HttpClient httpClient) throws JSONException {
         ServiceCallback serviceCallback = mockHttpCallStarted(httpClient);
         mockHttpCallSuccess(jsonConfig, serviceCallback);
+    }
+
+    private static void mockMsalPublicClientApplication() throws Exception {
+        PublicClientApplication application = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withParameterTypes(Context.class, File.class).withArguments(any(Context.class), any(File.class)).thenReturn(application);
+        PublicClientApplicationConfiguration configuration = mock(PublicClientApplicationConfiguration.class);
+        when(application.getConfiguration()).thenReturn(configuration);
+        Authority authority = mock(Authority.class);
+        List<Authority> authorities = new ArrayList<>();
+        authorities.add(authority);
+        when(configuration.getAuthorities()).thenReturn(authorities);
+        when(authority.getAuthorityURL()).thenReturn(new URL("https://login.microsoft.com/"));
     }
 
     private static ServiceCallback mockHttpCallStarted(HttpClient httpClient) throws JSONException {
@@ -273,9 +289,13 @@ public class AuthTest extends AbstractAuthTest {
         assertNotNull(serviceCallback);
         serviceCallback.onCallSucceeded("invalid", new HashMap<String, String>());
 
-        /* We didn't attempt to even save. */
+        /* We saved after we downloaded the file. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
+
+        /* We cleared the cache since the file was invalid. */
+        verifyStatic();
+        FileManager.delete(any(File.class));
     }
 
     private void testInvalidConfig(JSONObject jsonConfig) throws Exception {
@@ -284,17 +304,45 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
-        /* When we get a payload valid for AppCenter fields but invalid for msal ones. */
+        /* Mock public client application. */
+        mockMsalPublicClientApplication();
+
+        /* When we get a valid payload for App Center fields but an invalid payload for Microsoft Authentication Library (MSAL) ones. */
         mockSuccessfulHttpCall(jsonConfig, mHttpClient);
 
-        /* We didn't attempt to even save. */
+        /* We saved after we downloaded the file. */
         verifyStatic();
         FileManager.write(any(File.class), anyString());
+
+        /* We cleared the cache since the file was invalid. */
+        verifyStatic();
+        FileManager.delete(any(File.class));
+    }
+
+    private void testValidConfig(JSONObject jsonConfig) throws Exception {
+
+        /* Start auth service. */
+        Auth auth = Auth.getInstance();
+        start(auth);
+
+        /* Mock public client application for MSAL. */
+        mockMsalPublicClientApplication();
+
+        /* When we get a valid payload for App Center fields but an invalid payload for MSAL ones. */
+        mockSuccessfulHttpCall(jsonConfig, mHttpClient);
+
+        /* We saved after we downloaded the file. */
+        verifyStatic();
+        FileManager.write(any(File.class), anyString());
+
+        /* We did not delete the file from the cache. */
+        verifyStatic(never());
+        FileManager.delete(any(File.class));
     }
 
     @Test
     public void downloadInvalidForMSALConfiguration() throws Exception {
-        testInvalidConfig(mockValidForAppCenterConfig());
+        testValidConfig(mockValidForAppCenterConfig());
     }
 
     @Test
@@ -309,6 +357,7 @@ public class AuthTest extends AbstractAuthTest {
         when(authorities.getJSONObject(0)).thenReturn(authority);
         when(authority.optBoolean("default")).thenReturn(true);
         when(authority.getString("type")).thenReturn("B2C");
+        when(authority.getString("authority_url")).thenThrow(new JSONException("missing"));
         testInvalidConfig(jsonConfig);
     }
 
@@ -337,6 +386,36 @@ public class AuthTest extends AbstractAuthTest {
         JSONObject authority = mock(JSONObject.class);
         when(authorities.getJSONObject(0)).thenReturn(authority);
         when(authority.optBoolean("default")).thenReturn(true);
+        testInvalidConfig(jsonConfig);
+    }
+
+    @Test
+    public void downloadConfigurationWithAAD() throws Exception {
+        JSONObject jsonConfig = mock(JSONObject.class);
+        when(jsonConfig.toString()).thenReturn("mockConfig");
+        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
+        JSONArray authorities = mock(JSONArray.class);
+        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
+        when(authorities.length()).thenReturn(1);
+        JSONObject authority = mock(JSONObject.class);
+        when(authorities.getJSONObject(0)).thenReturn(authority);
+        when(authority.optBoolean("default")).thenReturn(true);
+        when(authority.getString("type")).thenReturn("AAD");
+        testValidConfig(jsonConfig);
+    }
+
+    @Test
+    public void downloadConfigurationWithInvalidAuthenticationType() throws Exception {
+        JSONObject jsonConfig = mock(JSONObject.class);
+        when(jsonConfig.toString()).thenReturn("mockConfig");
+        whenNew(JSONObject.class).withArguments("mockConfig").thenReturn(jsonConfig);
+        JSONArray authorities = mock(JSONArray.class);
+        when(jsonConfig.getJSONArray("authorities")).thenReturn(authorities);
+        when(authorities.length()).thenReturn(1);
+        JSONObject authority = mock(JSONObject.class);
+        when(authorities.getJSONObject(0)).thenReturn(authority);
+        when(authority.optBoolean("default")).thenReturn(true);
+        when(authority.getString("type")).thenReturn("InvalidType");
         testInvalidConfig(jsonConfig);
     }
 
