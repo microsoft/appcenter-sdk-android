@@ -5,7 +5,14 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
+import android.app.DownloadManager;
+import android.net.Uri;
 import android.os.AsyncTask;
+
+import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 /**
  * The download manager API triggers strict mode exception in UI thread.
@@ -20,7 +27,25 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void[] params) {
-        mDownloader.onRequest(this);
+
+        /* Download file. */
+        ReleaseDetails releaseDetails = mDownloader.getReleaseDetails();
+        Uri downloadUrl = releaseDetails.getDownloadUrl();
+        AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
+        DownloadManager downloadManager = mDownloader.getDownloadManager();
+        DownloadManager.Request request = new DownloadManager.Request(downloadUrl);
+
+        /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
+        if (releaseDetails.isMandatoryUpdate()) {
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+            request.setVisibleInDownloadsUi(false);
+        }
+        long enqueueTime = System.currentTimeMillis();
+        long downloadId = downloadManager.enqueue(request);
+        if (isCancelled()) {
+            return null;
+        }
+        mDownloader.onDownloadStarted(downloadId, enqueueTime);
         return null;
     }
 }

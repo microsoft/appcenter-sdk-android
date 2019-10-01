@@ -13,17 +13,17 @@ import java.io.File;
 /**
  * Removes a downloaded file.
  */
-class RemoveFileTask extends AsyncTask<Void, Void, Void> {
+class HttpConnectionRemoveFileTask extends AsyncTask<Void, Void, Void> {
 
     private final File mFile;
 
-    RemoveFileTask(@NonNull File file) {
+    HttpConnectionRemoveFileTask(@NonNull File file) {
         mFile = file;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Void doInBackground(Void[] params) {
         mFile.delete();
         return null;
     }

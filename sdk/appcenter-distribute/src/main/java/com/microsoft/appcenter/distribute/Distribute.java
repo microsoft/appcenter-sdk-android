@@ -29,6 +29,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -431,6 +432,7 @@ public class Distribute extends AbstractAppCenterService {
      * Set context, used when need to manipulate context before onStarted.
      * For example when download completes after application process exited.
      */
+    @WorkerThread
     synchronized void startFromBackground(Context context) {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
@@ -620,6 +622,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Method that triggers the distribute workflow or proceed to the next step.
      */
+    @UiThread
     private synchronized void resumeDistributeWorkflow() {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 

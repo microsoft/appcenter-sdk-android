@@ -5,7 +5,13 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
+import android.app.DownloadManager;
+import android.database.Cursor;
 import android.os.AsyncTask;
+
+import java.util.NoSuchElementException;
+
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 
 /**
  * Inspect a pending or completed download.
@@ -21,7 +27,43 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void[] params) {
-        mDownloader.onUpdate();
+
+        /* Query download manager. */
+        DownloadManager downloadManager = mDownloader.getDownloadManager();
+        long downloadId = mDownloader.getDownloadId();
+        if (downloadId == INVALID_DOWNLOAD_IDENTIFIER) {
+            mDownloader.onStart();
+            return null;
+        }
+        try {
+            Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
+            if (cursor == null) {
+                throw new NoSuchElementException();
+            }
+            try {
+                if (!cursor.moveToFirst()) {
+                    throw new NoSuchElementException();
+                }
+                if (isCancelled()) {
+                    return null;
+                }
+                int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                if (status == DownloadManager.STATUS_FAILED) {
+                    throw new IllegalStateException();
+                }
+                if (status != DownloadManager.STATUS_SUCCESSFUL) {
+                    mDownloader.onDownloadProgress(cursor);
+                    return null;
+                }
+
+                /* Complete download. */
+                mDownloader.onDownloadComplete(cursor);
+            } finally {
+                cursor.close();
+            }
+        } catch (RuntimeException e) {
+            mDownloader.onDownloadError(e);
+        }
         return null;
     }
 }
