@@ -211,6 +211,7 @@ public class AuthTokenContext {
      * @return true if it is a new user.
      */
     private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
+        mLastTokenRefreshRequest = null;
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null) {
             history = new ArrayList<>();

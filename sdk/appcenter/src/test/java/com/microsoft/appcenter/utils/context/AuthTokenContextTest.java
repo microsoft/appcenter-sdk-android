@@ -392,4 +392,27 @@ public class AuthTokenContextTest {
         mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
         verify(refreshListener, times(1)).onTokenRequiresRefresh(eq("accountId2"));
     }
+
+    @Test
+    public void refreshingTokenAgainIfPassingTheSameExpiredOne() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, -60);
+        mAuthTokenContext.setAuthToken("authToken1", "accountId1", calendar.getTime());
+        calendar.add(Calendar.SECOND, 1);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId2", calendar.getTime());
+        List<AuthTokenInfo> tokenInfoList = mAuthTokenContext.getAuthTokenValidityList();
+        AuthTokenInfo authTokenInfo = tokenInfoList.get(tokenInfoList.size() - 1);
+        AuthTokenContext.RefreshListener refreshListener = mock(AuthTokenContext.RefreshListener.class);
+        mAuthTokenContext.setRefreshListener(refreshListener);
+
+        /* Check that we try to refresh again if we update with same expired token (that would block SDK sending otherwise). */
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        mAuthTokenContext.setAuthToken("authToken2", "accountId2", calendar.getTime());
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        verify(refreshListener, times(2)).onTokenRequiresRefresh(eq("accountId2"));
+
+        /* But if we don't refresh, don't ask more. */
+        mAuthTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
+        verify(refreshListener, times(2)).onTokenRequiresRefresh(eq("accountId2"));
+    }
 }
