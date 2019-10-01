@@ -27,9 +27,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOK
 import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
@@ -113,13 +110,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
              */
             AppCenterLog.info(LOG_TAG, "Show install UI for " + localUri);
             mContext.startActivity(intent);
-            Distribute distribute = Distribute.getInstance();
-            if (mReleaseDetails.isMandatoryUpdate()) {
-                distribute.setInstalling(mReleaseDetails);
-            } else {
-                distribute.completeWorkflow(mReleaseDetails);
-            }
-            storeReleaseDetails(mReleaseDetails);
+            Distribute.getInstance().setInstalling(mReleaseDetails);
         }
         return true;
     }
@@ -195,15 +186,5 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             }
             mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
         }
-    }
-
-    private static void storeReleaseDetails(@NonNull ReleaseDetails releaseDetails) {
-        String groupId = releaseDetails.getDistributionGroupId();
-        String releaseHash = releaseDetails.getReleaseHash();
-        int releaseId = releaseDetails.getId();
-        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 }

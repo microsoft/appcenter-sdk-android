@@ -1784,11 +1784,23 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    synchronized void setInstalling(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
+    synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        if (releaseDetails.isMandatoryUpdate()) {
             cancelNotification();
             SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        } else {
+            completeWorkflow(releaseDetails);
         }
+        String groupId = releaseDetails.getDistributionGroupId();
+        String releaseHash = releaseDetails.getReleaseHash();
+        int releaseId = releaseDetails.getId();
+        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 
     /**
