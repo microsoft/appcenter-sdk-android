@@ -49,7 +49,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -1764,28 +1763,6 @@ public class Distribute extends AbstractAppCenterService {
             resumeDownload();
         } else {
             showDisabledToast();
-        }
-    }
-
-    /**
-     * Install downloaded package when the event from DownloadManager has been received.
-     *
-     * @param context context.
-     * @see DownloadManagerReceiver
-     */
-    synchronized void installDownloadedUpdate(Context context) {
-
-        /*
-         * Completion might be triggered in background before AppCenter.start
-         * if application was killed after starting download.
-         *
-         * We still want to generate the notification: if we can find the data in preferences
-         * that means they were not deleted, and thus that the sdk was not disabled.
-         */
-        if (mReleaseDetails == null) {
-            AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(context));
-        } else {
-            resumeDownload();
         }
     }
 

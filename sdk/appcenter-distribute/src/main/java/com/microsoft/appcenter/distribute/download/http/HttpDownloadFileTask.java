@@ -25,6 +25,8 @@ import java.net.URLConnection;
 import javax.net.ssl.HttpsURLConnection;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_BYTES_THRESHOLD;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
 import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
@@ -39,7 +41,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      * Maximal number of allowed redirects.
      */
     private static final int MAX_REDIRECTS = 6;
-
+    
     /**
      * The download progress will be reported after loading this number of bytes.
      */
@@ -50,7 +52,7 @@ class HttpDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
 
-    static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     private final HttpConnectionReleaseDownloader mDownloader;
 

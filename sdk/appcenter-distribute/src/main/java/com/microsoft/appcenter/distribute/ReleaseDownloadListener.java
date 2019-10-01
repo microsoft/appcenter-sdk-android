@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -71,34 +72,18 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     @WorkerThread
-    public boolean onProgress(final long currentSize, final long totalSize) {
+    public synchronized boolean onProgress(final long currentSize, final long totalSize) {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
                 currentSize / KIBIBYTE_IN_BYTES, totalSize / KIBIBYTE_IN_BYTES));
+        HandlerUtils.runOnUiThread(new Runnable() {
 
-        /* If file size is known update downloadProgress bar. */
-        if (mProgressDialog != null && totalSize >= 0) {
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                @SuppressWarnings({"deprecation", "RedundantSuppression"})
-                public void run() {
-
-                    /* When we switch from indeterminate to determinate */
-                    if (mProgressDialog.isIndeterminate()) {
-
-                        /* Configure the progress dialog determinate style. */
-                        mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                        mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
-                        mProgressDialog.setIndeterminate(false);
-                        mProgressDialog.setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
-                    }
-                    mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
-                }
-            });
-            return true;
-        }
-        return false;
+            @Override
+            public void run() {
+                updateProgressDialog(currentSize, totalSize);
+            }
+        });
+        return mProgressDialog != null;
     }
 
     @Override
@@ -139,13 +124,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @Override
     public void onError(@NonNull String errorMessage) {
-
-        /*
-         * TODO: Add a generic error message to resources (with translations) to show the toast.
-         * We can’t show any not-translated messages on UI.
-         * Toast.makeText(mContext, errorMessage, Toast.LENGTH_SHORT).show();
-         */
         AppCenterLog.error(LOG_TAG, errorMessage);
+        Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
@@ -153,12 +133,12 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * Show download progress. Only used for mandatory updates.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
+    synchronized android.app.ProgressDialog showDownloadProgress(Activity foregroundActivity) {
         if (!mReleaseDetails.isMandatoryUpdate()) {
             return null;
         }
         mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
-        mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
+        mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_update);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setIndeterminate(true);
@@ -185,6 +165,25 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                 }
             });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
+        }
+    }
+
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    private synchronized void updateProgressDialog(final long currentSize, final long totalSize) {
+
+        /* If file size is known update downloadProgress bar. */
+        if (mProgressDialog != null && totalSize >= 0) {
+
+            /* When we switch from indeterminate to determinate */
+            if (mProgressDialog.isIndeterminate()) {
+
+                /* Configure the progress dialog determinate style. */
+                mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
+                mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_download_progress_number_format));
+                mProgressDialog.setIndeterminate(false);
+                mProgressDialog.setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+            }
+            mProgressDialog.setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
         }
     }
 

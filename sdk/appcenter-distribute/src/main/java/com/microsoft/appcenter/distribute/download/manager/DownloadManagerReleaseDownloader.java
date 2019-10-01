@@ -24,11 +24,11 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import java.util.NoSuchElementException;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
 
 public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
 
@@ -218,7 +218,7 @@ public class DownloadManagerReleaseDownloader implements ReleaseDownloader {
                             public void run() {
                                 update();
                             }
-                        }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
+                        }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + UPDATE_PROGRESS_TIME_THRESHOLD);
                     }
                     return;
                 }
