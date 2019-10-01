@@ -17,18 +17,14 @@ import android.widget.Toast;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.text.NumberFormat;
 import java.util.Locale;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
 
 /**
@@ -65,8 +61,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     public void onStart(long enqueueTime) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Start download %s (%d) update.",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion()));
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
-        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+        Distribute.getInstance().setDownloading(mReleaseDetails, enqueueTime);
     }
 
     @WorkerThread

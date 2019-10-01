@@ -1780,10 +1780,26 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Update download state to downloading if state did not change.
+     *
+     * @param releaseDetails to check state change.
+     * @param enqueueTime    timestamp in milliseconds just before enqueuing download.
+     */
+    @WorkerThread
+    synchronized void setDownloading(@NonNull ReleaseDetails releaseDetails, long enqueueTime) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
+    }
+
+    /**
      * Update download state to installing if state did not change.
      *
      * @param releaseDetails to check state change.
      */
+    @WorkerThread
     synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
         if (releaseDetails != mReleaseDetails) {
             return;
