@@ -12,10 +12,11 @@ import android.content.Intent;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -27,18 +28,20 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Distribute.class, AsyncTaskUtils.class, DownloadManagerReceiver.class})
+@PrepareForTest({AsyncTaskUtils.class, Distribute.class, DownloadManagerReceiver.class})
 public class DownloadManagerReceiverTest {
 
-    private Distribute mockDistribute;
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    Distribute mDistribute;
 
     @Before
     public void setUp() {
-        mockDistribute = mock(Distribute.class);
         mockStatic(Distribute.class);
         mockStatic(AsyncTaskUtils.class);
-        when(Distribute.getInstance()).thenReturn(mockDistribute);
+        when(Distribute.getInstance()).thenReturn(mDistribute);
     }
 
     @Test
@@ -52,7 +55,7 @@ public class DownloadManagerReceiverTest {
         downloadManagerReceiver.onReceive(mockContext, mockIntent);
 
         /* Verify. */
-        verify(mockDistribute).resumeApp(mockContext);
+        verify(mDistribute).resumeApp(mockContext);
     }
 
     @Test
