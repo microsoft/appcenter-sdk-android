@@ -66,10 +66,10 @@ public class DownloadManagerReleaseDownloaderTest {
     private Context mContext;
 
     @Mock
-    private ReleaseDownloader.Listener mListener;
+    private ReleaseDetails mReleaseDetails;
 
     @Mock
-    private ReleaseDetails mReleaseDetails;
+    private ReleaseDownloader.Listener mListener;
 
     @Mock
     private DownloadManagerUpdateTask mUpdateTask;
