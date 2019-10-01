@@ -325,7 +325,7 @@ public class AuthTest extends AbstractAuthTest {
         Auth auth = Auth.getInstance();
         start(auth);
 
-        /* Mock public client application for MSAL*/
+        /* Mock public client application for MSAL. */
         mockMsalPublicClientApplication();
 
         /* When we get a valid payload for App Center fields but an invalid payload for MSAL ones. */
@@ -335,7 +335,7 @@ public class AuthTest extends AbstractAuthTest {
         verifyStatic();
         FileManager.write(any(File.class), anyString());
 
-        /* We did not delete the file from the cache */
+        /* We did not delete the file from the cache. */
         verifyStatic(never());
         FileManager.delete(any(File.class));
     }
