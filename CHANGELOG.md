@@ -2,10 +2,13 @@
 
 ## Version 2.3.1 (Under development)
 
+### App Center Auth
+
+* **[Feature]** Add support for Azure Active Directory (AAD) type authentication. Users with AAD apps on Azure can authenticate using one of three audiences viz. AzureADMyOrg (Single Tenant), AzureADMultipleOrgs (Multi Tenant) and AzureADandPersonalMicrosoftAccount (Multi Tenant and Personal Microsoft accounts).
+
 ### App Center Data
 
 * **[Fix]** Reduced retries on Data-related operations to fail fast and avoid the perception of calls "hanging".
-* **[Feature]** Add support for Azure Active Directory (AAD) type authentication. Users with AAD apps on Azure can authenticate using one of three audiences viz. AzureADMyOrg (Single Tenant), AzureADMultipleOrgs (Multi Tenant) and AzureADandPersonalMicrosoftAccount (Multi Tenant and Personal Microsoft accounts).
 
 ___
 
