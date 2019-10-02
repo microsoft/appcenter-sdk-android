@@ -14,15 +14,14 @@ import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleas
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
 public class ReleaseDownloaderFactoryTest {
@@ -41,16 +40,24 @@ public class ReleaseDownloaderFactoryTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
+    @SuppressWarnings("ObviousNullCheck")
+    @Test
+    public void generatedConstructor() {
+
+        /* Coverage fix. */
+        assertNotNull(new ReleaseDownloaderFactory());
+    }
+
     @Test
     public void createOnLollipop() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 21);
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
         ReleaseDownloader releaseDownloader = ReleaseDownloaderFactory.create(mockContext, mockReleaseDetails, mockReleaseDownloaderListener);
         assertThat(releaseDownloader, instanceOf(DownloadManagerReleaseDownloader.class));
     }
 
     @Test
-    public void createOn4thAndroid() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 16);
+    public void createOnJellyBean() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
         ReleaseDownloader releaseDownloader = ReleaseDownloaderFactory.create(mockContext, mockReleaseDetails, mockReleaseDownloaderListener);
         assertThat(releaseDownloader, instanceOf(HttpConnectionReleaseDownloader.class));
     }

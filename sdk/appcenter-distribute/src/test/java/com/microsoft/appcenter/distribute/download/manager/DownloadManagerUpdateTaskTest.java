@@ -17,8 +17,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.ignoreStubs;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -88,6 +91,18 @@ public class DownloadManagerUpdateTaskTest {
         /* Verify. */
         verify(mDownloader).onDownloadError(any(RuntimeException.class));
         verify(mCursor).close();
+    }
+
+    @Test
+    public void doNothingAfterCancellation() {
+        mUpdateTask = spy(mUpdateTask);
+        when(mUpdateTask.isCancelled()).thenReturn(true);
+
+        /* Perform background task. */
+        mUpdateTask.doInBackground(null);
+
+        /* Verify. */
+        verifyZeroInteractions(ignoreStubs(mDownloader));
     }
 
     @Test

@@ -141,6 +141,34 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
+    public void setDownloadedReleaseFilePath() {
+        String downloadedReleaseFile = "/path/to/file";
+
+        /* Set a new value. */
+        mReleaseDownloader.setDownloadedReleaseFilePath(downloadedReleaseFile);
+        verifyStatic();
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), eq(downloadedReleaseFile));
+
+        /* Clear. */
+        mReleaseDownloader.setDownloadedReleaseFilePath(null);
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE));
+    }
+
+    @Test
+    public void setDownloadedReleaseFilePathAfterCancellation() {
+        String downloadedReleaseFile = "/path/to/file";
+
+        /* Try to set a new value after cancellation. */
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.setDownloadedReleaseFilePath(downloadedReleaseFile);
+        verifyStatic(never());
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE), anyString());
+        verifyStatic(never());
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE));
+    }
+
+    @Test
     public void getNotificationBuilder() {
 
         /* Second call uses cached value. */
