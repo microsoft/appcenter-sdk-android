@@ -282,13 +282,13 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void updateReleaseDetailsFromBackground() {
-            mockStatic(DistributeUtils.class);
-            when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-            Distribute.getInstance().startFromBackground(mContext);
-            verifyStatic();
-            ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloader.Listener.class));
-            when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
-            Distribute.getInstance().startFromBackground(mContext);
-            verify(mReleaseDownloader).cancel();
-        }
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        Distribute.getInstance().startFromBackground(mContext);
+        verifyStatic();
+        ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloader.Listener.class));
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
+        Distribute.getInstance().startFromBackground(mContext);
+        verify(mReleaseDownloader).cancel();
+    }
 }
