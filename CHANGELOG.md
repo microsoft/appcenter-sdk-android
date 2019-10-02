@@ -6,6 +6,12 @@
 
 * **[Fix]** Reduced retries on Data-related operations to fail fast and avoid the perception of calls "hanging".
 
+### App Center Distribute
+
+* **[Breaking change]** `DownloadManager` on Android versions prior to 5.0 does not enable TLS 1.2, so AppCenter SDK uses direct HTTPS download to enforce secure connection on these Android versions.
+
+   If your `minSdkVersion` is lower than `19`, Android requires the `WRITE_EXTERNAL_STORAGE` permission to store new downloaded updates.
+
 ___
 
 ## Version 2.3.0

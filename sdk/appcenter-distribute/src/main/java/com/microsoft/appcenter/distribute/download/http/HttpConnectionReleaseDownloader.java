@@ -74,6 +74,23 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         return (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
+    @WorkerThread
+    synchronized String getDownloadedReleaseFilePath() {
+        return SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
+    }
+
+    @WorkerThread
+    synchronized void setDownloadedReleaseFilePath(String downloadedReleaseFilePath) {
+        if (isCancelled()) {
+            return;
+        }
+        if (downloadedReleaseFilePath != null) {
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
+        }
+    }
+
     /**
      * Get progress notification builder.
      *
@@ -129,18 +146,15 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
             mDownloadTask.cancel(true);
             mDownloadTask = null;
         }
-        String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
+        String filePath = getDownloadedReleaseFilePath();
         if (filePath != null) {
             removeFile(new File(filePath));
-            SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
+            setDownloadedReleaseFilePath(null);
         }
         cancelProgressNotification();
     }
 
     private synchronized void check() {
-        if (mCheckTask != null) {
-            return;
-        }
         mCheckTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionCheckTask(this));
     }
 
@@ -215,7 +229,7 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
 
         /* Store that the release file has been downloaded. */
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
+        setDownloadedReleaseFilePath(downloadedReleaseFilePath);
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 

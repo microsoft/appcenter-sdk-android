@@ -7,13 +7,9 @@ package com.microsoft.appcenter.distribute.download.http;
 
 import android.os.AsyncTask;
 
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import java.io.File;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
-
-public class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
+class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
 
     private final HttpConnectionReleaseDownloader mDownloader;
 
@@ -30,7 +26,7 @@ public class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
         }
 
         /* Check if we have already downloaded the release. */
-        String downloadedReleaseFilePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
+        String downloadedReleaseFilePath = mDownloader.getDownloadedReleaseFilePath();
         if (downloadedReleaseFilePath != null) {
 
             /* Check if it's the same release. */
@@ -45,7 +41,7 @@ public class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
                 /* Remove previously downloaded release. */
                 //noinspection ResultOfMethodCallIgnored
                 downloadedReleaseFile.delete();
-                SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
+                mDownloader.setDownloadedReleaseFilePath(null);
             }
         }
         if (isCancelled()) {
