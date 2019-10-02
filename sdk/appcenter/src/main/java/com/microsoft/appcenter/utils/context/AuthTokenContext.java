@@ -371,7 +371,7 @@ public class AuthTokenContext {
      * Check if the last/current token needs a refresh because expiring soon.
      *
      * @param authTokenInfo Auth token to check.
-     * @return Home accountId with last token about to expire or already expired.
+     * @return Home accountId with last token about to expire or already expired, or null if the token does not need to be refreshed.
      */
     private synchronized String getHomeAccountIdToRefreshToken(@NonNull AuthTokenInfo authTokenInfo) {
         AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
