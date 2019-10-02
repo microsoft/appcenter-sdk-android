@@ -139,9 +139,6 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         if (isCancelled()) {
             return;
         }
-        if (mCheckTask != null) {
-            return;
-        }
         mCheckTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionCheckTask(this));
     }
 
