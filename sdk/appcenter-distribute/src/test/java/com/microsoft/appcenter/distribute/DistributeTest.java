@@ -5,20 +5,24 @@
 
 package com.microsoft.appcenter.distribute;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.After;
 import org.junit.Test;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
@@ -35,6 +39,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -44,7 +49,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -57,6 +61,11 @@ public class DistributeTest extends AbstractDistributeTest {
     private String mMockGroupId = "group_id";
     private String mMockReleaseHash = "release_hash";
     private int mReleaseId = 123;
+
+    @After
+    public void tearDown() throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+    }
 
     @Test
     public void singleton() {
@@ -91,7 +100,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* No exceptions. */
     }
-    
+
     @Test
     public void recreateLauncherActivityBeforeFullInitialization() {
 
@@ -285,18 +294,73 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void firstDownloadNotification() throws Exception {
+    public void firstDownloadNotificationApi26() throws Exception {
+        firstDownloadNotification(Build.VERSION_CODES.O);
+    }
+
+    @Test
+    public void firstDownloadNotificationApi19() throws Exception {
+        firstDownloadNotification(Build.VERSION_CODES.KITKAT);
+    }
+
+    @Test
+    public void notifyDownloadNoReleaseDetails() throws Exception {
         mockStatic(DistributeUtils.class);
-        NotificationManager manager = mock(NotificationManager.class);
         Notification.Builder notificationBuilder = mockNotificationBuilderChain();
         when(notificationBuilder.build()).thenReturn(mock(Notification.class));
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(DistributeUtils.getNotificationId()).thenReturn(0);
-        when(mContext.getSystemService(mContext.NOTIFICATION_SERVICE)).thenReturn(manager);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
         Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
-        Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
-        verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+
+        /* Mock another ReleaseDetails. */
+        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
+
+        /* Call notify download. */
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails, mInstallIntent);
+
+        /* Verify. */
+        assertTrue(notifyDownloadResult);
+        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+    }
+
+    @Test
+    public void notifyDownloadStateNotified() throws Exception {
+        mockStatic(DistributeUtils.class);
+        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* Mock notified state. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
+
+        /* Call notify download. */
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+
+        /* Verify. */
+        assertFalse(notifyDownloadResult);
+        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+    }
+
+    @Test
+    public void notifyDownloadForegroundActivity() throws Exception {
+        mockStatic(DistributeUtils.class);
+        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* Mock foreground activity. */
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Call notify download. */
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+
+        /* Verify. */
+        assertFalse(notifyDownloadResult);
+        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 
     @Test
@@ -309,6 +373,21 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
         Distribute.getInstance().startFromBackground(mContext);
         verify(mReleaseDownloader).cancel();
+    }
+
+    private void firstDownloadNotification(int apiLevel) throws Exception {
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
+        mockStatic(DistributeUtils.class);
+        NotificationManager manager = mock(NotificationManager.class);
+        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(DistributeUtils.getNotificationId()).thenReturn(0);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+        Distribute.getInstance().startFromBackground(mContext);
+        Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
+        Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+        verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 
     private Notification.Builder mockNotificationBuilderChain() throws Exception {
