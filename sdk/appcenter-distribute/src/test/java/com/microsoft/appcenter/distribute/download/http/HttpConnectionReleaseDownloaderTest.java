@@ -200,10 +200,15 @@ public class HttpConnectionReleaseDownloaderTest {
     }
 
     @Test
-    public void resumeDoesNotCheckingStatusTwice() {
+    public void resumeDoesCheckingStatusEachTime() {
+
+        /* Check status multiple times. */
         mReleaseDownloader.resume();
         mReleaseDownloader.resume();
-        verifyStatic();
+        mReleaseDownloader.resume();
+
+        /* Verify. */
+        verifyStatic(times(3));
         AsyncTaskUtils.execute(anyString(), isA(HttpConnectionCheckTask.class), Mockito.<Void>anyVararg());
     }
 
