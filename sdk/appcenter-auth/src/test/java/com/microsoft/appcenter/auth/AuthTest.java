@@ -1441,6 +1441,28 @@ public class AuthTest extends AbstractAuthTest {
     }
 
     @Test
+    public void refreshCanRetryAfterClientApplicationSet() throws Exception {
+        ArgumentCaptor<AuthTokenContext.RefreshListener> listenerArgumentCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
+        doNothing().when(mAuthTokenContext).setRefreshListener(listenerArgumentCaptor.capture());
+
+        /* Mock authentication lib. */
+        PublicClientApplication publicClientApplication = mock(PublicClientApplication.class);
+        whenNew(PublicClientApplication.class).withAnyArguments().thenReturn(publicClientApplication);
+        when(publicClientApplication.getAccount(eq("accountId"), anyString())).thenReturn(mock(IAccount.class));
+        mockReadyToSignIn();
+        verify(mAuthTokenContext).setRefreshListener(any(AuthTokenContext.RefreshListener.class));
+
+        /* Request token refresh multiple times. */
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+        listenerArgumentCaptor.getValue().onTokenRequiresRefresh("accountId");
+
+        /* Check that we acquire new token only once. */
+        verify(publicClientApplication).acquireTokenSilentAsync(any(String[].class), any(IAccount.class), anyString(), anyBoolean(), any(AuthenticationCallback.class));
+        verify(mAuthTokenContext, never()).setAuthToken(isNull(String.class), isNull(String.class), isNull(Date.class));
+    }
+
+    @Test
     public void refreshTokenWithoutNetwork() throws Exception {
         ArgumentCaptor<AuthTokenContext.RefreshListener> authTokenContextListenerCaptor = ArgumentCaptor.forClass(AuthTokenContext.RefreshListener.class);
         doNothing().when(mAuthTokenContext).setRefreshListener(authTokenContextListenerCaptor.capture());

@@ -85,6 +85,11 @@ public class AuthTokenContext {
     private boolean mResetAuthTokenRequired = true;
 
     /**
+     * The last token to be refreshed. Saved to ensure that it is not refreshed more than once.
+     */
+    private String mLastTokenRefreshRequest;
+
+    /**
      * Initializes AuthTokenContext class.
      *
      * @param context {@link Context} instance.
@@ -206,6 +211,7 @@ public class AuthTokenContext {
      * @return true if it is a new user.
      */
     private synchronized Boolean addTokenHistory(String authToken, String homeAccountId, Date expiresOn) {
+        mLastTokenRefreshRequest = null;
         List<AuthTokenHistoryEntry> history = getHistory();
         if (history == null) {
             history = new ArrayList<>();
@@ -352,16 +358,31 @@ public class AuthTokenContext {
      * @param authTokenInfo auth token to check for expiration.
      */
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
+        RefreshListener refreshListener = mRefreshListener.get();
+        if (refreshListener != null) {
+            String accountId = getHomeAccountIdToRefreshToken(authTokenInfo);
+            if (accountId != null) {
+                refreshListener.onTokenRequiresRefresh(accountId);
+            }
+        }
+    }
+
+    /**
+     * Check if the last/current token needs a refresh because expiring soon.
+     *
+     * @param authTokenInfo Auth token to check.
+     * @return Home accountId with last token about to expire or already expired.
+     */
+    private synchronized String getHomeAccountIdToRefreshToken(@NonNull AuthTokenInfo authTokenInfo) {
         AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
         if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
                 !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
-                !authTokenInfo.isAboutToExpire()) {
-            return;
+                !authTokenInfo.isAboutToExpire() ||
+                authTokenInfo.getAuthToken().equals(mLastTokenRefreshRequest)) {
+            return null;
         }
-        RefreshListener refreshListener = mRefreshListener.get();
-        if (refreshListener != null) {
-            refreshListener.onTokenRequiresRefresh(lastEntry.getHomeAccountId());
-        }
+        mLastTokenRefreshRequest = authTokenInfo.getAuthToken();
+        return lastEntry.getHomeAccountId();
     }
 
     /**
