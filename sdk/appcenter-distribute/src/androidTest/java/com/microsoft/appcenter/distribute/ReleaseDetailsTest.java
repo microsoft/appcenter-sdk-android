@@ -324,7 +324,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'someFile'," +
-                "size: 4242" +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
@@ -341,7 +341,7 @@ public class ReleaseDetailsTest {
                 "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
                 "android_min_api_level: 19," +
                 "download_url: 'ftp://someFile'," +
-                "size: 4242" +
+                "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
