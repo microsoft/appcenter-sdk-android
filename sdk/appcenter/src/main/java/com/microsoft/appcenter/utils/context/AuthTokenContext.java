@@ -360,14 +360,20 @@ public class AuthTokenContext {
     public void checkIfTokenNeedsToBeRefreshed(@NonNull AuthTokenInfo authTokenInfo) {
         RefreshListener refreshListener = mRefreshListener.get();
         if (refreshListener != null) {
-            String accountId = getAccountIdToRefreshAndUpdateCache(authTokenInfo);
+            String accountId = getHomeAccountIdToRefreshToken(authTokenInfo);
             if (accountId != null) {
                 refreshListener.onTokenRequiresRefresh(accountId);
             }
         }
     }
 
-    private synchronized String getAccountIdToRefreshAndUpdateCache(@NonNull AuthTokenInfo authTokenInfo) {
+    /**
+     * Check if the last/current token needs a refresh because expiring soon.
+     *
+     * @param authTokenInfo Auth token to check.
+     * @return Home accountId with last token about to expire or already expired.
+     */
+    private synchronized String getHomeAccountIdToRefreshToken(@NonNull AuthTokenInfo authTokenInfo) {
         AuthTokenHistoryEntry lastEntry = getLastHistoryEntry();
         if (lastEntry == null || authTokenInfo.getAuthToken() == null ||
                 !authTokenInfo.getAuthToken().equals(lastEntry.getAuthToken()) ||
