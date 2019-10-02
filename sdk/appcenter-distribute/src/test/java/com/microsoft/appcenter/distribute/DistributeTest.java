@@ -5,7 +5,9 @@
 
 package com.microsoft.appcenter.distribute;
 
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -42,10 +44,12 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(DistributeUtils.class)
 public class DistributeTest extends AbstractDistributeTest {
@@ -281,6 +285,21 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void firstDownloadNotification() throws Exception {
+        mockStatic(DistributeUtils.class);
+        NotificationManager manager = mock(NotificationManager.class);
+        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
+        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(DistributeUtils.getNotificationId()).thenReturn(0);
+        when(mContext.getSystemService(mContext.NOTIFICATION_SERVICE)).thenReturn(manager);
+        Distribute.getInstance().startFromBackground(mContext);
+        Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
+        Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+        verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+    }
+
+    @Test
     public void updateReleaseDetailsFromBackground() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
@@ -290,5 +309,17 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
         Distribute.getInstance().startFromBackground(mContext);
         verify(mReleaseDownloader).cancel();
+    }
+
+    private Notification.Builder mockNotificationBuilderChain() throws Exception {
+        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
+        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
+        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
+        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
+        when(notificationBuilder.setChannelId(anyString())).thenReturn(notificationBuilder);
+        return notificationBuilder;
     }
 }
