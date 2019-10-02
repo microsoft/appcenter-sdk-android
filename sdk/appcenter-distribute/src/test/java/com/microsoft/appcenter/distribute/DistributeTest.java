@@ -364,6 +364,14 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void checkNotificationState() {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        Distribute.getInstance().startFromBackground(mContext);
+        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class), mInstallIntent));
+    }
+
+    @Test
     public void updateReleaseDetailsFromBackground() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
