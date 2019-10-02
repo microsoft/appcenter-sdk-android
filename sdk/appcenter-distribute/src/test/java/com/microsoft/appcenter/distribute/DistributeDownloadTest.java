@@ -21,6 +21,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 
+import com.microsoft.appcenter.distribute.download.manager.DownloadManagerUpdateTask;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -372,13 +373,13 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* No download check yet. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
 
         /* Foreground: check still in progress. */
         Distribute.getInstance().onActivityResumed(mActivity);
         waitCheckDownloadTask();
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
         verify(cursor).close();
 
         /* Restart launcher. */
@@ -387,7 +388,7 @@ public class DistributeDownloadTest extends AbstractDistributeAfterDownloadTest 
 
         /* Verify we don't run the check again. (Only once). */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), isA(CheckDownloadTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
 
         /* Download eventually fails. */
         when(cursor.getInt(0)).thenReturn(DownloadManager.STATUS_FAILED);

@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
 
+import com.microsoft.appcenter.distribute.download.DownloadTask;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;

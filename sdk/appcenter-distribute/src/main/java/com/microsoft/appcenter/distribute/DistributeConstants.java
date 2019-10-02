@@ -13,7 +13,7 @@ import com.microsoft.appcenter.AppCenter;
 /**
  * Distribute constants.
  */
-final class DistributeConstants {
+public final class DistributeConstants {
 
     /**
      * Distribute service name.
@@ -23,7 +23,7 @@ final class DistributeConstants {
     /**
      * Log tag for this service.
      */
-    static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
+    public static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
 
     /**
      * Used for deep link intent from browser, string field for update token.
@@ -139,7 +139,7 @@ final class DistributeConstants {
     /**
      * Invalid download identifier.
      */
-    static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
+    public static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
 
     /**
      * After we show install U.I, the download is mark completed but we keep the file.
@@ -173,17 +173,27 @@ final class DistributeConstants {
     /**
      * Token used for handler callbacks to check download progress.
      */
-    static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
+    public static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
 
     /**
-     * How often to check download progress in millis.
+     * The download progress will be reported after loading this number of bytes.
      */
-    static final long CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS = 1000;
+    public static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 512 * 1024;
+
+    /**
+     * The download progress will be reported not more often than this number of milliseconds.
+     */
+    public static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
+
+    /**
+     * 1 KiB in bytes (this not a kilobyte).
+     */
+    public static final long KIBIBYTE_IN_BYTES = 1024;
 
     /**
      * 1 MiB in bytes (this not a megabyte).
      */
-    static final float MEBIBYTE_IN_BYTES = 1024 * 1024;
+    static final long MEBIBYTE_IN_BYTES = 1024 * 1024;
 
     /**
      * Time to wait for installing optional updates if user postponed, in millis.
@@ -209,7 +219,7 @@ final class DistributeConstants {
      * Preference key to store the current/last download identifier (we keep download until a next
      * one is scheduled as the file can be opened from device downloads U.I.).
      */
-    static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
+    public static final String PREFERENCE_KEY_DOWNLOAD_ID = PREFERENCE_PREFIX + "download_id";
 
     /**
      * Preference key to store the SDK state related to {@link #PREFERENCE_KEY_DOWNLOAD_ID} when not null.
@@ -280,6 +290,11 @@ final class DistributeConstants {
      * Preference key for tester app update setup failure error message.
      */
     static final String PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY = PREFERENCE_PREFIX + "tester_app_update_setup_failed_message";
+
+    /**
+     * Preference key to store the downloading release file path.
+     */
+    public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
 
     @VisibleForTesting
     DistributeConstants() {

@@ -24,7 +24,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -39,6 +38,8 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -49,7 +50,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -64,14 +64,12 @@ import org.json.JSONException;
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -81,10 +79,8 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
@@ -96,7 +92,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
@@ -111,7 +106,6 @@ import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseH
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
-
 
 /**
  * Distribute service.
@@ -221,15 +215,6 @@ public class Distribute extends AbstractAppCenterService {
     private Dialog mUnknownSourcesDialog;
 
     /**
-     * Last download progress dialog that was shown.
-     * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
-     * progress indicator while we actually use it to be a modal dialog for forced update.
-     * They will always keep this dialog to remain compatible but just mark it deprecated.
-     */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private android.app.ProgressDialog mProgressDialog;
-
-    /**
      * Mandatory download completed in app notification.
      */
     private Dialog mCompletedDownloadDialog;
@@ -246,14 +231,14 @@ public class Distribute extends AbstractAppCenterService {
     private WeakReference<Activity> mLastActivityWithDialog = new WeakReference<>(null);
 
     /**
-     * Current task inspecting the latest release details that we fetched from server.
+     * Release downloader. It can use {@link DownloadManager} or direct HTTPS downloading.
      */
-    private DownloadTask mDownloadTask;
+    private ReleaseDownloader mReleaseDownloader;
 
     /**
-     * Current task to check download state and act on it.
+     * Download release listener.
      */
-    private CheckDownloadTask mCheckDownloadTask;
+    private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
      * Remember if we checked download since our own process restarted.
@@ -447,15 +432,15 @@ public class Distribute extends AbstractAppCenterService {
      * Set context, used when need to manipulate context before onStarted.
      * For example when download completes after application process exited.
      */
-    synchronized ReleaseDetails startFromBackground(Context context) {
+    @WorkerThread
+    synchronized void startFromBackground(Context context) {
         if (mAppSecret == null) {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             SharedPreferencesManager.initialize(mContext);
             mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
-            mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+            updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
         }
-        return mReleaseDetails;
     }
 
     @Override
@@ -494,7 +479,11 @@ public class Distribute extends AbstractAppCenterService {
     @Override
     public synchronized void onActivityPaused(Activity activity) {
         mForegroundActivity = null;
-        hideProgressDialog();
+
+        /* Hide mandatory update progress dialog if exists. */
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+        }
     }
 
     @Override
@@ -550,7 +539,8 @@ public class Distribute extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Distribute is disabled");
                     return;
                 }
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || mDownloadTask != null) {
+                boolean isDownloading = mReleaseDownloader != null && mReleaseDownloader.isDownloading();
+                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
                     AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
@@ -618,28 +608,13 @@ public class Distribute extends AbstractAppCenterService {
         }
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
-        mProgressDialog = null;
         mCompletedDownloadDialog = null;
         mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
-        mReleaseDetails = null;
-        if (mDownloadTask != null) {
-            mDownloadTask.cancel(true);
-            mDownloadTask = null;
-        }
-        if (mCheckDownloadTask != null) {
-            mCheckDownloadTask.cancel(true);
-            mCheckDownloadTask = null;
-        }
         mCheckedDownload = false;
-        long downloadId = DistributeUtils.getStoredDownloadId();
-        if (downloadId >= 0) {
-            AppCenterLog.debug(LOG_TAG, "Removing download and notification id=" + downloadId);
-            removeDownload(downloadId);
-        }
+        updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_TIME);
     }
@@ -647,6 +622,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Method that triggers the distribute workflow or proceed to the next step.
      */
+    @UiThread
     private synchronized void resumeDistributeWorkflow() {
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
@@ -704,7 +680,7 @@ public class Distribute extends AbstractAppCenterService {
             /* Load cached release details if process restarted and we have such a cache. */
             int downloadState = getStoredDownloadState();
             if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
-                mReleaseDetails = DistributeUtils.loadCachedReleaseDetails();
+                updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
                 /* If cached release is optional and we have network, we should not reuse it. */
                 if (mReleaseDetails != null && !mReleaseDetails.isMandatoryUpdate() &&
@@ -726,9 +702,12 @@ public class Distribute extends AbstractAppCenterService {
                 /* Otherwise check currently processed release. */
                 else {
 
-                    /* If app restarted, check if download completed to bring install U.I. */
+                    /*
+                     * If app restarted, try to resume (or restart if not available) download.
+                     * Install UI will be shown by listener once download will be completed.
+                     */
                     mCheckedDownload = true;
-                    checkDownload(mContext, DistributeUtils.getStoredDownloadId(), false);
+                    resumeDownload();
 
                     /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
                     if (mReleaseDetails == null || !mReleaseDetails.isMandatoryUpdate() || downloadState != DOWNLOAD_STATE_ENQUEUED) {
@@ -753,11 +732,11 @@ public class Distribute extends AbstractAppCenterService {
                 /* If we are still downloading. */
                 else if (downloadState == DOWNLOAD_STATE_ENQUEUED) {
 
+                    /* Resume (or restart if not available) download. */
+                    resumeDownload();
+
                     /* Refresh mandatory dialog progress or do nothing otherwise. */
-                    if (mReleaseDetails.isMandatoryUpdate()) {
-                        showDownloadProgress();
-                        checkDownload(mContext, DistributeUtils.getStoredDownloadId(), true);
-                    }
+                    showDownloadProgress();
                 }
 
                 /* If we were showing unknown sources dialog, restore it. */
@@ -776,7 +755,7 @@ public class Distribute extends AbstractAppCenterService {
                  * Or restore update dialog if that's the last thing we did before being paused.
                  * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
                  */
-                else if (mDownloadTask == null) {
+                else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
                     showUpdateDialog();
                 }
 
@@ -924,10 +903,11 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        hideProgressDialog();
         mLastActivityWithDialog.clear();
-        mUsingDefaultUpdateDialog = null;
         mReleaseDetails = null;
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+        }
         mWorkflowCompleted = true;
     }
 
@@ -1112,7 +1092,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Handle API call success.
      */
-    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails) {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
@@ -1150,7 +1130,7 @@ public class Distribute extends AbstractAppCenterService {
                     }
 
                     /* Show update dialog. */
-                    mReleaseDetails = releaseDetails;
+                    updateReleaseDetails(releaseDetails);
                     AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
                     SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
@@ -1164,6 +1144,28 @@ public class Distribute extends AbstractAppCenterService {
 
             /* If update dialog was not shown or scheduled, complete workflow. */
             completeWorkflow();
+        }
+    }
+
+    private synchronized void updateReleaseDetails(ReleaseDetails releaseDetails) {
+        if (mReleaseDownloader != null) {
+
+            /* Cancel previous release downloading. */
+            if (releaseDetails == null || releaseDetails.getId() != mReleaseDownloader.getReleaseDetails().getId()) {
+                mReleaseDownloader.cancel();
+            }
+            mReleaseDownloader = null;
+        }
+        if (mReleaseDownloaderListener != null) {
+            mReleaseDownloaderListener.hideProgressDialog();
+            mReleaseDownloaderListener = null;
+        }
+        mReleaseDetails = releaseDetails;
+        if (mReleaseDetails != null) {
+
+            /* Create release downloader here to be able correctly cancel downloading from previous runs. */
+            mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
+            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
         }
     }
 
@@ -1574,11 +1576,10 @@ public class Distribute extends AbstractAppCenterService {
         if (releaseDetails == mReleaseDetails) {
             if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
-                if (releaseDetails.isMandatoryUpdate()) {
-                    showDownloadProgress();
-                }
-                mCheckedDownload = true;
-                mDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadTask(mContext, releaseDetails));
+                resumeDownload();
+
+                /* Refresh mandatory dialog progress or do nothing otherwise. */
+                showDownloadProgress();
 
                 /*
                  * If we restored a cached dialog, we also started a new check release call.
@@ -1609,44 +1610,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Persist download state.
-     *
-     * @param downloadManager download manager.
-     * @param task            current task to check state change.
-     * @param downloadId      download identifier.
-     * @param enqueueTime     time just before enqueuing download.
-     */
-    @WorkerThread
-    synchronized void storeDownloadRequestId(DownloadManager downloadManager, DownloadTask task, long downloadId, long enqueueTime) {
-
-        /* Check for if state changed and task not canceled in time. */
-        if (mDownloadTask == task && mReleaseDetails != null) {
-
-            /* Delete previous download. */
-            long previousDownloadId = DistributeUtils.getStoredDownloadId();
-            if (previousDownloadId >= 0) {
-                AppCenterLog.debug(LOG_TAG, "Delete previous download id=" + previousDownloadId);
-                downloadManager.remove(previousDownloadId);
-            }
-
-            /* Store new download identifier. */
-            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_ID, downloadId);
-            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
-            SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
-
-            /* Start monitoring progress for mandatory update. */
-            if (mReleaseDetails.isMandatoryUpdate()) {
-                checkDownload(mContext, downloadId, true);
-            }
-        } else {
-
-            /* State changed quickly, cancel download. */
-            AppCenterLog.debug(LOG_TAG, "State changed while downloading, cancel id=" + downloadId);
-            downloadManager.remove(downloadId);
-        }
-    }
-
-    /**
      * Bring app to foreground if in background.
      *
      * @param context any application context.
@@ -1664,19 +1627,6 @@ public class Distribute extends AbstractAppCenterService {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         }
-    }
-
-    /**
-     * Check a download state and take action depending on that state.
-     *
-     * @param context       any application context.
-     * @param downloadId    download identifier from DownloadManager.
-     * @param checkProgress true to only check progress, false to also process install if done.
-     */
-    synchronized void checkDownload(@NonNull Context context, long downloadId, boolean checkProgress) {
-
-        /* Querying download manager and even the start intent are detected by strict mode so we do that in background. */
-        mCheckDownloadTask = AsyncTaskUtils.execute(LOG_TAG, new CheckDownloadTask(context, downloadId, checkProgress, mReleaseDetails));
     }
 
     /**
@@ -1748,97 +1698,24 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Used to avoid querying download manager on every activity change.
-     *
-     * @param releaseDetails release details to check state.
+     * Show download progress (used only for mandatory updates).
      */
-    synchronized void markDownloadStillInProgress(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
-            AppCenterLog.verbose(LOG_TAG, "Download is still in progress...");
-            mCheckedDownload = true;
-        }
-    }
-
-    /**
-     * Remove a previously downloaded file and any notification.
-     */
-    @SuppressLint("VisibleForTests")
-    private synchronized void removeDownload(long downloadId) {
-        cancelNotification();
-        AsyncTaskUtils.execute(LOG_TAG, new RemoveDownloadTask(mContext, downloadId));
-    }
-
-    /**
-     * Show download progress.
-     */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private void showDownloadProgress() {
+    private synchronized void showDownloadProgress() {
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
             return;
         }
-        mProgressDialog = new android.app.ProgressDialog(mForegroundActivity);
-        mProgressDialog.setTitle(R.string.appcenter_distribute_downloading_mandatory_update);
-        mProgressDialog.setCancelable(false);
-        mProgressDialog.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setProgressNumberFormat(null);
-        mProgressDialog.setProgressPercentFormat(null);
-        showAndRememberDialogActivity(mProgressDialog);
-    }
-
-    /**
-     * Hide progress dialog and stop updating.
-     */
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private synchronized void hideProgressDialog() {
-        if (mProgressDialog != null) {
-            final android.app.ProgressDialog progressDialog = mProgressDialog;
-            mProgressDialog = null;
-
-            /* This can be called from background check download task. */
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    progressDialog.hide();
-                }
-            });
-            HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);
+        if (mReleaseDownloaderListener == null) {
+            return;
         }
-    }
+        Dialog progressDialog = mReleaseDownloaderListener.showDownloadProgress(mForegroundActivity);
 
-    /**
-     * Update progress dialog for mandatory update.
-     */
-    synchronized void updateProgressDialog(ReleaseDetails releaseDetails, DownloadProgress downloadProgress) {
-
-        /* If not canceled and U.I. context did not change. */
-        if (releaseDetails == mReleaseDetails && mProgressDialog != null) {
-
-            /* If file size is known update downloadProgress bar. */
-            if (downloadProgress.getTotalSize() >= 0) {
-
-                /* When we switch from indeterminate to determinate */
-                if (mProgressDialog.isIndeterminate()) {
-
-                    /* Configure the progress dialog determinate style. */
-                    mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
-                    mProgressDialog.setProgressNumberFormat(mForegroundActivity.getString(R.string.appcenter_distribute_download_progress_number_format));
-                    mProgressDialog.setIndeterminate(false);
-                    mProgressDialog.setMax((int) (downloadProgress.getTotalSize() / MEBIBYTE_IN_BYTES));
-                }
-                mProgressDialog.setProgress((int) (downloadProgress.getCurrentSize() / MEBIBYTE_IN_BYTES));
-            }
-
-            /* And schedule the next check. */
-            HandlerUtils.getMainHandler().postAtTime(new Runnable() {
-
-                @Override
-                public void run() {
-                    checkDownload(mContext, DistributeUtils.getStoredDownloadId(), true);
-                }
-            }, HANDLER_TOKEN_CHECK_PROGRESS, SystemClock.uptimeMillis() + CHECK_PROGRESS_TIME_INTERVAL_IN_MILLIS);
+        /*
+         * It can be null in cases when it wasn't been created
+         * (for example progress dialog is required only for mandatory updates).
+         */
+        if (progressDialog != null) {
+            showAndRememberDialogActivity(progressDialog);
         }
     }
 
@@ -1886,10 +1763,35 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void installMandatoryUpdate(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            checkDownload(mContext, DistributeUtils.getStoredDownloadId(), false);
+            resumeDownload();
         } else {
             showDisabledToast();
         }
+    }
+
+    /**
+     * Resume downloading installer for current {@link ReleaseDetails}.
+     */
+    synchronized void resumeDownload() {
+        if (mReleaseDownloader != null) {
+            mReleaseDownloader.resume();
+            mCheckedDownload = true;
+        }
+    }
+
+    /**
+     * Update download state to downloading if state did not change.
+     *
+     * @param releaseDetails to check state change.
+     * @param enqueueTime    timestamp in milliseconds just before enqueuing download.
+     */
+    @WorkerThread
+    synchronized void setDownloading(@NonNull ReleaseDetails releaseDetails, long enqueueTime) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_ENQUEUED);
+        SharedPreferencesManager.putLong(PREFERENCE_KEY_DOWNLOAD_TIME, enqueueTime);
     }
 
     /**
@@ -1897,11 +1799,24 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    synchronized void setInstalling(ReleaseDetails releaseDetails) {
-        if (releaseDetails == mReleaseDetails) {
+    @WorkerThread
+    synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+        if (releaseDetails.isMandatoryUpdate()) {
             cancelNotification();
             SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        } else {
+            completeWorkflow(releaseDetails);
         }
+        String groupId = releaseDetails.getDistributionGroupId();
+        String releaseHash = releaseDetails.getReleaseHash();
+        int releaseId = releaseDetails.getId();
+        AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID, releaseId);
     }
 
     /**

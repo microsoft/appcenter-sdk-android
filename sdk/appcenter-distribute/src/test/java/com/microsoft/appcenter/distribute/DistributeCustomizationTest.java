@@ -10,6 +10,7 @@ import android.app.DownloadManager;
 import android.content.DialogInterface;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.download.DownloadTask;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
