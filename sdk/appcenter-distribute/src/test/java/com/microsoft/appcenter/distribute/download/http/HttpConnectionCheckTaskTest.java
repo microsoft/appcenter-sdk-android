@@ -1,158 +1,128 @@
 package com.microsoft.appcenter.distribute.download.http;
 
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
-import java.nio.file.Files;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
+import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.ignoreStubs;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest({
-        HttpConnectionCheckTask.class,
-        File.class,
-        SharedPreferencesManager.class
-})
+@RunWith(MockitoJUnitRunner.class)
 public class HttpConnectionCheckTaskTest {
-
-    @Rule
-    public PowerMockRule mRule = new PowerMockRule();
 
     @Rule
     public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
-    private HttpConnectionCheckTask mTask;
-
-    @Mock
-    private File mTargetFile;
-
     @Mock
     private HttpConnectionReleaseDownloader mDownloader;
 
+    private HttpConnectionCheckTask mCheckTask;
+
     @Before
     public void setUp() {
-        mTask = new HttpConnectionCheckTask(mDownloader);
+        mCheckTask = new HttpConnectionCheckTask(mDownloader);
     }
 
     @Test
     public void errorIfTargetFileIsNull() {
         when(mDownloader.getTargetFile()).thenReturn(null);
-        mTask.doInBackground(null);
+
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
 
         /* Verify that onDownloadError callback is called. */
         verify(mDownloader).onDownloadError(anyString());
-        verify(mDownloader, never()).onStart(any(File.class));
+        verifyNoMoreInteractions(ignoreStubs(mDownloader));
     }
 
     @Test
     public void downloadedFileExists() throws Exception {
-        when(mDownloader.getTargetFile()).thenReturn(mTargetFile);
-        mockStatic(SharedPreferencesManager.class);
-        String downloadedReleaseFilePath = "test_path";
+        File targetFile = mTemporaryFolder.newFile();
+        when(mDownloader.getTargetFile()).thenReturn(targetFile);
+        when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(targetFile.getAbsolutePath());
 
-        /* Mock target file path equals to the downloaded file path. */
-        File downloadFile = mTemporaryFolder.newFile(downloadedReleaseFilePath);
-        when(mTargetFile.getAbsolutePath()).thenReturn(downloadFile.getPath());
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadFile.getPath());
-
-        mTask.doInBackground(null);
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
 
         /* Verify that onDownloadComplete callback is called with the right target file. */
-        verify(mDownloader).onDownloadComplete(mTargetFile);
-        verify(mDownloader, never()).onStart(mTargetFile);
+        verify(mDownloader).onDownloadComplete(targetFile);
+        verifyNoMoreInteractions(ignoreStubs(mDownloader));
     }
 
     @Test
-    public void downloadedFilePathEqualToTargetButNotExist() throws Exception {
-        when(mDownloader.getTargetFile()).thenReturn(mTargetFile);
-        mockStatic(SharedPreferencesManager.class);
-        String downloadedReleaseFilePath = "test_path";
+    public void downloadedFilePathDoesNotExist() {
+        File targetFile = new File("/this/file/does/not/exist");
+        when(mDownloader.getTargetFile()).thenReturn(targetFile);
+        when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(targetFile.getAbsolutePath());
 
-        /* Mock target file path equals to the downloaded file path. */
-        when(mTargetFile.getAbsolutePath()).thenReturn(downloadedReleaseFilePath);
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadedReleaseFilePath);
-
-        mTask.doInBackground(null);
-
-        /* Verify that onDownloadComplete callback is not called. */
-        verify(mDownloader, never()).onDownloadComplete(mTargetFile);
-        verify(mDownloader).onStart(mTargetFile);
-    }
-
-    @Test
-    public void downloadedFilePathNotEqualToTargetFilePath() throws Exception {
-        when(mDownloader.getTargetFile()).thenReturn(mTargetFile);
-        mockStatic(SharedPreferencesManager.class);
-        String downloadedReleaseFilePath = "test_path";
-        String targetFilePath = "test_path-2";
-        File downloadFile = mTemporaryFolder.newFile(downloadedReleaseFilePath);
-
-        /* Mock target file path equals to the downloaded file path. */
-        when(mTargetFile.getAbsolutePath()).thenReturn(targetFilePath);
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadFile.getPath());
-
-        mTask.doInBackground(null);
-
-        /* Verify that the previous file is deleted. */
-        verifyStatic();
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE));
-        assertFalse(Files.exists(downloadFile.toPath()));
-
-        /* Verify that onDownloadComplete callback is not called. */
-        verify(mDownloader, never()).onDownloadComplete(any(File.class));
-        verify(mDownloader).onStart(mTargetFile);
-    }
-
-    @Test
-    public void connectionCheckTaskIsCancelled() {
-        when(mDownloader.getTargetFile()).thenReturn(mTargetFile);
-        mockStatic(SharedPreferencesManager.class);
-
-        /* Mock returning null path to file. */
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(null);
-
-        HttpConnectionCheckTask task = new HttpConnectionCheckTask(mDownloader);
-        task = spy(task);
-        doReturn(true).when(task).isCancelled();
-        task.doInBackground(null);
-
-        /* Verify that onStart/onDownloadComplete is never called if the task is cancelled. */
-        verify(mDownloader, never()).onDownloadComplete(any(File.class));
-        verify(mDownloader, never()).onStart(any(File.class));
-    }
-
-    @Test
-    public void downloadedFilePathIsNull() {
-        when(mDownloader.getTargetFile()).thenReturn(mTargetFile);
-        mockStatic(SharedPreferencesManager.class);
-
-        /* Mock returning null path to file. */
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(null);
-
-        mTask.doInBackground(null);
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
 
         /* Verify that onStart is called. */
-        verify(mDownloader, never()).onDownloadComplete(any(File.class));
-        verify(mDownloader).onStart(mTargetFile);
+        verify(mDownloader).onStart(targetFile);
+        verifyNoMoreInteractions(ignoreStubs(mDownloader));
+    }
+
+    @Test
+    public void downloadedFileIsNotEqualToTargetFile() throws Exception {
+        File downloadedFile = mTemporaryFolder.newFile();
+        File targetFile = mTemporaryFolder.newFile();
+        when(mDownloader.getTargetFile()).thenReturn(targetFile);
+        when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(downloadedFile.getAbsolutePath());
+
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
+
+        /* Verify that the previous file is deleted. */
+        assertFalse(downloadedFile.exists());
+        verify(mDownloader).setDownloadedReleaseFilePath(isNull(String.class));
+
+        /* Verify that onStart is called. */
+        verify(mDownloader).onStart(targetFile);
+        verifyNoMoreInteractions(ignoreStubs(mDownloader));
+    }
+
+    @Test
+    public void downloadedFilePathIsNull() throws Exception {
+        File targetFile = mTemporaryFolder.newFile();
+        when(mDownloader.getTargetFile()).thenReturn(targetFile);
+        when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(null);
+
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
+
+        /* Verify that onStart is called. */
+        verify(mDownloader).onStart(targetFile);
+        verifyNoMoreInteractions(ignoreStubs(mDownloader));
+    }
+
+    @Test
+    public void connectionCheckTaskIsCancelled() throws Exception {
+        File targetFile = mTemporaryFolder.newFile();
+        when(mDownloader.getTargetFile()).thenReturn(targetFile);
+        when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(null);
+
+        /* Cancel during execution. */
+        mCheckTask = spy(mCheckTask);
+        when(mCheckTask.isCancelled()).thenReturn(true);
+
+        /* Perform background task. */
+        mCheckTask.doInBackground(null);
+
+        /* Verify */
+        verifyZeroInteractions(ignoreStubs(mDownloader));
     }
 }
