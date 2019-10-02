@@ -75,6 +75,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
     BrowserUtils.class,
     CryptoUtils.class,
     Distribute.class,
+    DistributeUtils.class,
     HandlerUtils.class,
     HttpUtils.class,
     InstallerUtils.class,

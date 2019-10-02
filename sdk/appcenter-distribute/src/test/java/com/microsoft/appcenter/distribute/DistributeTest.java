@@ -17,15 +17,32 @@ import org.junit.Test;
 
 import java.util.Map;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class DistributeTest extends AbstractDistributeTest {
+
+    private String mMockGroupId = "group_id";
+    private String mMockReleaseHash = "release_hash";
+    private int mReleaseId = 123;
 
     @Test
     public void singleton() {
@@ -58,5 +75,91 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
         /* No exceptions. */
+    }
+
+    @Test
+    public void setDownloadingReleaseDetailsEqualTest() {
+
+        /* Moc release details and startFromBackground to apply it. */
+        mockReleaseDetails(true);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        long mockTime = 1000000;
+        Distribute.getInstance().setDownloading(mReleaseDetails, mockTime);
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
+    }
+
+    @Test
+    public void setDownloadingReleaseDetailsNotEqualTest() {
+        long mockTime = 1000000;
+        Distribute.getInstance().setDownloading(mReleaseDetails, mockTime);
+        verifyStatic(never());
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
+    }
+
+    @Test
+    public void setInstallingReleaseDetailsNotEqualTest() {
+        Distribute.getInstance().setInstalling(mReleaseDetails);
+        verifyStatic(never());
+        SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED));
+        verifyStatic(never());
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
+    }
+
+    @Test
+    public void setInstallingTest() {
+
+        /* Moc release details and startFromBackground to apply it. */
+        mockReleaseDetails(false);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        Distribute.getInstance().setInstalling(mReleaseDetails);
+
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_STATE));
+        verifyStatic(never());
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
+        verifyReleaseDetailsAreStored();
+    }
+
+    @Test
+    public void setInstallingMandatoryReleaseDetailsTest() {
+
+        /* Moc release details and startFromBackground to apply it. */
+        mockReleaseDetails(true);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        Distribute.getInstance().setInstalling(mReleaseDetails);
+
+        verifyStatic();
+        DistributeUtils.getStoredDownloadState();
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
+        verifyReleaseDetailsAreStored();
+    }
+
+    private void mockReleaseDetails(boolean mandatoryUpdate) {
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(mandatoryUpdate);
+        when(mReleaseDetails.getDistributionGroupId()).thenReturn(mMockGroupId);
+        when(mReleaseDetails.getReleaseHash()).thenReturn(mMockReleaseHash);
+        when(mReleaseDetails.getId()).thenReturn(mReleaseId);
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+    }
+
+    private void verifyReleaseDetailsAreStored() {
+        verifyStatic();
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), eq(mMockGroupId));
+        verifyStatic();
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), eq(mMockReleaseHash));
+        verifyStatic();
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), eq(mReleaseId));
     }
 }
