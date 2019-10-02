@@ -149,7 +149,7 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         String filePath = getDownloadedReleaseFilePath();
         if (filePath != null) {
             removeFile(new File(filePath));
-            setDownloadedReleaseFilePath(null);
+            SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
         }
         cancelProgressNotification();
     }
