@@ -68,6 +68,27 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void recreateActivityTwice() {
+
+        /* SharedPreferencesManager isn't initialized yet. */
+        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
+                .thenThrow(new NullPointerException());
+
+        /* Our activity is launch one. */
+        Intent intent = mock(Intent.class);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        ComponentName componentName = mock(ComponentName.class);
+        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
+        when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
+
+        /* Callback. */
+        Distribute.getInstance().onActivityCreated(mActivity, null);
+        Distribute.getInstance().onActivityCreated(mActivity, null);
+
+        /* No exceptions. */
+    }
+    
+    @Test
     public void recreateLauncherActivityBeforeFullInitialization() {
 
         /* SharedPreferencesManager isn't initialized yet. */
@@ -88,6 +109,72 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void recreateLauncherActivityBeforeFullInitializationNullIntent() {
+
+        /* SharedPreferencesManager isn't initialized yet. */
+        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
+                .thenThrow(new NullPointerException());
+
+        /* Our activity is launch one. */
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(null);
+        ComponentName componentName = mock(ComponentName.class);
+        when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
+
+        /* Callback. */
+        Distribute.getInstance().onActivityCreated(mActivity, null);
+
+        /* No exceptions. */
+    }
+
+    @Test
+    public void recreateLauncherActivityBeforeFullInitializationChannelNotNull() {
+
+        /* SharedPreferencesManager isn't initialized yet. */
+        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
+                .thenThrow(new NullPointerException());
+
+        /* Our activity is launch one. */
+        Intent intent = mock(Intent.class);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        ComponentName componentName = mock(ComponentName.class);
+        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
+        when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
+
+        /* Mock download completed. */
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(DOWNLOAD_STATE_COMPLETED);
+
+        /* Channel initialization. */
+        start();
+        Distribute.getInstance().onActivityCreated(mActivity, null);
+
+        /* No exceptions. */
+    }
+
+    @Test
+    public void recreateLauncherActivityBeforeFullInitializationChannelNotNullNoDownload() {
+
+        /* SharedPreferencesManager isn't initialized yet. */
+        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
+                .thenThrow(new NullPointerException());
+
+        /* Our activity is launch one. */
+        Intent intent = mock(Intent.class);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        ComponentName componentName = mock(ComponentName.class);
+        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
+        when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(-1);
+
+        /* Callback. */
+        start();
+        Distribute.getInstance().onActivityCreated(mActivity, null);
+
+        /* No exceptions. */
+    }
+
+    @Test
     public void setDownloadingReleaseDetailsEqualTest() {
 
         /* Moc release details and startFromBackground to apply it. */
@@ -100,6 +187,14 @@ public class DistributeTest extends AbstractDistributeTest {
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
         verifyStatic();
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
+    }
+
+    @Test
+    public void startFromBackgroundTwice() {
+        start();
+        Distribute.getInstance().startFromBackground(mContext);
+        verifyStatic(never());
+        SharedPreferencesManager.initialize(mContext);
     }
 
     @Test
