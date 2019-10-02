@@ -15,6 +15,7 @@ import android.os.Environment;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.PermissionUtils;
@@ -95,9 +96,10 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
      *
      * @see #mNotificationBuilder
      */
+    @VisibleForTesting
     @NonNull
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private Notification.Builder getNotificationBuilder() {
+    Notification.Builder getNotificationBuilder() {
         if (mNotificationBuilder == null) {
             mNotificationBuilder = new Notification.Builder(mContext);
         }
@@ -153,16 +155,10 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
     }
 
     private synchronized void check() {
-        if (isCancelled()) {
-            return;
-        }
         mCheckTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionCheckTask(this));
     }
 
     private synchronized void downloadFile(File file) {
-        if (isCancelled()) {
-            return;
-        }
         if (mDownloadTask != null) {
             AppCenterLog.debug(LOG_TAG, "Downloading of " + file.getPath() + " is already in progress.");
             return;
@@ -205,8 +201,8 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         if (isCancelled()) {
             return;
         }
-        mListener.onStart(enqueueTime);
         showProgressNotification(0, 0);
+        mListener.onStart(enqueueTime);
     }
 
     @WorkerThread
@@ -246,7 +242,8 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         mListener.onError(errorMessage);
     }
 
-    private static String[] requiredPermissions() {
+    @VisibleForTesting
+    static String[] requiredPermissions() {
         ArrayList<String> permissions = new ArrayList<>();
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);

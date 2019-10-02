@@ -9,6 +9,7 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -42,7 +43,8 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
      */
     private static final int MAX_REDIRECTS = 6;
 
-    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    @VisibleForTesting
+    static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     private final HttpConnectionReleaseDownloader mDownloader;
 
@@ -63,7 +65,7 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... args) {
+    protected Void doInBackground(Void[] args) {
         try {
             long enqueueTime = System.currentTimeMillis();
             mDownloader.onDownloadStarted(enqueueTime);
