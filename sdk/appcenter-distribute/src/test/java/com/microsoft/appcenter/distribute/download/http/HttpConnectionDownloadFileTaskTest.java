@@ -28,7 +28,6 @@ import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static com.microsoft.appcenter.distribute.download.http.HttpConnectionDownloadFileTask.APK_CONTENT_TYPE;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -86,6 +85,8 @@ public class HttpConnectionDownloadFileTaskTest {
     private HttpConnectionDownloadFileTask mTask;
     private String mMovedUrlStringHttps = "https://mock2";
     private String mMovedUrlStringHttp = "http://mock2";
+
+    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
     @Before
     public void setUp() throws Exception {

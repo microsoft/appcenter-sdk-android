@@ -9,6 +9,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -151,6 +153,9 @@ public class AbstractDistributeTest {
     ReleaseDownloader mReleaseDownloader;
 
     @Mock
+    Notification.Builder mNotificationBuilder;
+
+    @Mock
     ReleaseDownloadListener mReleaseDownloaderListener;
 
     @Mock
@@ -162,6 +167,9 @@ public class AbstractDistributeTest {
     @Mock
     Intent mInstallIntent;
 
+    @Mock
+    NotificationManager notificationManager;
+
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
@@ -169,6 +177,8 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
+        mReleaseDetails = mock(ReleaseDetails.class);
+        notificationManager = mock(NotificationManager.class);
         when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
         when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
