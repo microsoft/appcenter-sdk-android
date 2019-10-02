@@ -8,7 +8,7 @@
 
 ### App Center Distribute
 
-* **[Breaking change]** `DownloadManager` on Android versions prior to 5.0 does not enable TLS 1.2, so AppCenter SDK uses direct HTTPS download to enforce secure connection on these Android versions.
+* **[Fix]** Downloading in-app update APK file has been failing on Android 4.x since TLS 1.2 has been enforced early September. The file is now downloaded using HTTPS direct connection when running on Android 4 instead of relying on system's download manager.
 
    If your `minSdkVersion` is lower than `19`, Android requires the `WRITE_EXTERNAL_STORAGE` permission to store new downloaded updates.
 
