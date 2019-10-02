@@ -266,17 +266,15 @@ public class ReleaseDownloadListenerTest  {
 
     @Test
     public void onStartTest() throws Exception {
-        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
+        ReleaseDetails releaseDetails = mockReleaseDetails(true);
+        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, releaseDetails);
         long mockTime = 1000 * 1000 * 1000;
 
         /* Call onStart(). */
         releaseDownloadListener.onStart(mockTime);
 
         /* Verify that download state and time are stored on start. */
-        verifyStatic();
-        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
-        verifyStatic();
-        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
+        verify(mockDistribute).setDownloading(releaseDetails, mockTime);
     }
 
     @Test
@@ -374,32 +372,16 @@ public class ReleaseDownloadListenerTest  {
 
     @Test
     public void onCompleteTest() throws Exception {
-        boolean mandatoryUpdate = false;
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
+        ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
 
         /* Do not notify the download. */
         when(mockDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(mUri);
-
-        /* Verify that completeWorkflow() is called on not mandatory update. */
-        verify(mockDistribute).completeWorkflow(mockReleaseDetails);
-        verifyStoreReleaseDetails();
-    }
-
-    @Test
-    public void onCompleteMandatoryTest() throws Exception {
-        boolean mandatoryUpdate = true;
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
-
-        /* Do not notify the download. */
-        when(mockDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(false);
-        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(mUri);
+        assertTrue(releaseDownloadListener.onComplete(mUri));
 
         /* Verify that setInstalling() is called on mandatory update. */
         verify(mockDistribute).setInstalling(mockReleaseDetails);
-        verifyStoreReleaseDetails();
+        verify(mContext).startActivity(mInstallIntent);
     }
 
     @Test
@@ -410,10 +392,10 @@ public class ReleaseDownloadListenerTest  {
         /* Notify the download. */
         when(mockDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(mUri);
+        assertTrue(releaseDownloadListener.onComplete(mUri));
 
-        /* Verify that completeWorkflow() and setInstalling() are not called here.*/
-        verify(mockDistribute, never()).completeWorkflow(mockReleaseDetails);
+        /* Verify that startActivity() and setInstalling() are not called here. */
+        verify(mContext, never()).startActivity(any(Intent.class));
         verify(mockDistribute, never()).setInstalling(mockReleaseDetails);
     }
 
@@ -428,18 +410,7 @@ public class ReleaseDownloadListenerTest  {
 
         /* Verify that nothing is called and the method is exited early with false result. */
         assertFalse(releaseDownloadListener.onComplete(mUri));
-        verify(mockDistribute, never()).completeWorkflow(mockReleaseDetails);
+        verify(mContext, never()).startActivity(any(Intent.class));
         verify(mockDistribute, never()).setInstalling(mockReleaseDetails);
-    }
-
-    private void verifyStoreReleaseDetails() {
-
-        /* Verify storing appropriate release details. */
-        verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), eq(DISTRIBUTION_GROUP_ID));
-        verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), eq(RELEASE_HASH));
-        verifyStatic();
-        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), eq(RELEASE_ID));
     }
 }

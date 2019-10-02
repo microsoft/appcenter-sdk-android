@@ -5,26 +5,28 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.File;
+import java.nio.file.Files;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
         HttpConnectionCheckTask.class,
@@ -35,6 +37,9 @@ public class HttpConnectionCheckTaskTest {
 
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
+
+    @Rule
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     private HttpConnectionCheckTask mTask;
 
@@ -66,13 +71,9 @@ public class HttpConnectionCheckTaskTest {
         String downloadedReleaseFilePath = "test_path";
 
         /* Mock target file path equals to the downloaded file path. */
-        when(mTargetFile.getAbsolutePath()).thenReturn(downloadedReleaseFilePath);
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadedReleaseFilePath);
-
-        File downloadedReleaseFileMock = mock(File.class);
-        mockStatic(File.class);
-        whenNew(File.class).withArguments(downloadedReleaseFilePath).thenReturn(downloadedReleaseFileMock);
-        when(downloadedReleaseFileMock.exists()).thenReturn(true);
+        File downloadFile = mTemporaryFolder.newFile(downloadedReleaseFilePath);
+        when(mTargetFile.getAbsolutePath()).thenReturn(downloadFile.getPath());
+        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadFile.getPath());
 
         mTask.doInBackground(null);
 
@@ -91,11 +92,6 @@ public class HttpConnectionCheckTaskTest {
         when(mTargetFile.getAbsolutePath()).thenReturn(downloadedReleaseFilePath);
         PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadedReleaseFilePath);
 
-        File downloadedReleaseFileMock = mock(File.class);
-        mockStatic(File.class);
-        whenNew(File.class).withArguments(downloadedReleaseFilePath).thenReturn(downloadedReleaseFileMock);
-        when(downloadedReleaseFileMock.exists()).thenReturn(false);
-
         mTask.doInBackground(null);
 
         /* Verify that onDownloadComplete callback is not called. */
@@ -109,22 +105,18 @@ public class HttpConnectionCheckTaskTest {
         mockStatic(SharedPreferencesManager.class);
         String downloadedReleaseFilePath = "test_path";
         String targetFilePath = "test_path-2";
+        File downloadFile = mTemporaryFolder.newFile(downloadedReleaseFilePath);
 
         /* Mock target file path equals to the downloaded file path. */
         when(mTargetFile.getAbsolutePath()).thenReturn(targetFilePath);
-        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadedReleaseFilePath);
-
-        File downloadedReleaseFileMock = mock(File.class);
-        mockStatic(File.class);
-        whenNew(File.class).withArguments(downloadedReleaseFilePath).thenReturn(downloadedReleaseFileMock);
-        when(downloadedReleaseFileMock.exists()).thenReturn(true);
+        PowerMockito.when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null)).thenReturn(downloadFile.getPath());
 
         mTask.doInBackground(null);
 
         /* Verify that the previous file is deleted. */
-        verify(downloadedReleaseFileMock).delete();
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE));
+        assertFalse(Files.exists(downloadFile.toPath()));
 
         /* Verify that onDownloadComplete callback is not called. */
         verify(mDownloader, never()).onDownloadComplete(any(File.class));
