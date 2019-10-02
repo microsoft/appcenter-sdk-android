@@ -15,6 +15,7 @@ import android.os.Environment;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.PermissionUtils;
@@ -73,14 +74,32 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         return (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
+    @WorkerThread
+    synchronized String getDownloadedReleaseFilePath() {
+        return SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
+    }
+
+    @WorkerThread
+    synchronized void setDownloadedReleaseFilePath(String downloadedReleaseFilePath) {
+        if (isCancelled()) {
+            return;
+        }
+        if (downloadedReleaseFilePath != null) {
+            SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
+        } else {
+            SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
+        }
+    }
+
     /**
      * Get progress notification builder.
      *
      * @see #mNotificationBuilder
      */
+    @VisibleForTesting
     @NonNull
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private Notification.Builder getNotificationBuilder() {
+    Notification.Builder getNotificationBuilder() {
         if (mNotificationBuilder == null) {
             mNotificationBuilder = new Notification.Builder(mContext);
         }
@@ -127,7 +146,7 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
             mDownloadTask.cancel(true);
             mDownloadTask = null;
         }
-        String filePath = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, null);
+        String filePath = getDownloadedReleaseFilePath();
         if (filePath != null) {
             removeFile(new File(filePath));
             SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE);
@@ -136,19 +155,10 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
     }
 
     private synchronized void check() {
-        if (isCancelled()) {
-            return;
-        }
-        if (mCheckTask != null) {
-            return;
-        }
         mCheckTask = AsyncTaskUtils.execute(LOG_TAG, new HttpConnectionCheckTask(this));
     }
 
     private synchronized void downloadFile(File file) {
-        if (isCancelled()) {
-            return;
-        }
         if (mDownloadTask != null) {
             AppCenterLog.debug(LOG_TAG, "Downloading of " + file.getPath() + " is already in progress.");
             return;
@@ -191,8 +201,8 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         if (isCancelled()) {
             return;
         }
-        mListener.onStart(enqueueTime);
         showProgressNotification(0, 0);
+        mListener.onStart(enqueueTime);
     }
 
     @WorkerThread
@@ -219,7 +229,7 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
 
         /* Store that the release file has been downloaded. */
         String downloadedReleaseFilePath = targetFile.getAbsolutePath();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE, downloadedReleaseFilePath);
+        setDownloadedReleaseFilePath(downloadedReleaseFilePath);
         mListener.onComplete(Uri.parse("file://" + downloadedReleaseFilePath));
     }
 
@@ -232,7 +242,8 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
         mListener.onError(errorMessage);
     }
 
-    private static String[] requiredPermissions() {
+    @VisibleForTesting
+    static String[] requiredPermissions() {
         ArrayList<String> permissions = new ArrayList<>();
         if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
