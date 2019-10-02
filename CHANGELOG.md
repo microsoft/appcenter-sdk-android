@@ -10,7 +10,7 @@
 
 * **[Fix]** Downloading in-app update APK file has been failing on Android 4.x since TLS 1.2 has been enforced early September. The file is now downloaded using HTTPS direct connection when running on Android 4 instead of relying on system's download manager.
 
-   If your `minSdkVersion` is lower than `19`, Android requires the `WRITE_EXTERNAL_STORAGE` permission to store new downloaded updates.
+   **[Breaking change]** If your `minSdkVersion` is lower than `19`, Android requires the `WRITE_EXTERNAL_STORAGE` permission to store new downloaded updates. Please refer to the updated documentation site for detailed instructions.
 
 ___
 
