@@ -8,358 +8,275 @@ package com.microsoft.appcenter.distribute.download.http;
 import android.net.TrafficStats;
 import android.net.Uri;
 
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_BYTES_THRESHOLD;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+import static com.microsoft.appcenter.distribute.download.http.HttpConnectionDownloadFileTask.APK_CONTENT_TYPE;
+import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
+import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
+import static com.microsoft.appcenter.test.TestUtils.generateString;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doThrow;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
-        AsyncTaskUtils.class,
         AppCenterLog.class,
-        HttpConnectionDownloadFileTask.class,
-        TrafficStats.class,
-        System.class
+        HttpUtils.class,
+        TrafficStats.class
 })
+@RunWith(PowerMockRunner.class)
 public class HttpConnectionDownloadFileTaskTest {
 
     @Rule
-    public PowerMockRule mRule = new PowerMockRule();
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     @Mock
-    private Uri mMockDownloadUri;
-
-    @Mock
-    private File mMockTargetFile;
+    private Uri mDownloadUri;
 
     @Mock
     private HttpsURLConnection mUrlConnection;
 
     @Mock
-    private BufferedInputStream mBufferedInputStream;
+    private HttpConnectionReleaseDownloader mDownloader;
 
-    @Mock
-    private FileOutputStream mFileOutputStream;
+    private File mTargetFile;
 
-    @Mock
-    private InputStream mMockInputStream;
-
-    @Mock
-    private HttpConnectionReleaseDownloader mMockHttpDownloader;
-
-    @Mock
-    private URL mMovedUrlHttps;
-
-    @Mock
-    private URL mMovedUrlHttp;
-
-    private HttpConnectionDownloadFileTask mTask;
-
-    private static final String MOVED_URL_HTTPS = "https://mock2";
-
-    private static final String MOVED_URL_HTTP = "http://mock2";
-
-    private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
+    private HttpConnectionDownloadFileTask mDownloadFileTask;
 
     @Before
     public void setUp() throws Exception {
-        mockStatic(AsyncTaskUtils.class);
-        mockStatic(AppCenterLog.class);
         mockStatic(TrafficStats.class);
-        mockStatic(System.class);
 
-        /* Prepare data. */
-        URL url = mock(URL.class);
-        String urlString = "https://mock";
-        when(mMockTargetFile.exists()).thenReturn(true);
-        when(mMockTargetFile.delete()).thenReturn(false);
+        /* Mock Uri. */
+        when(mDownloadUri.toString()).thenReturn("https://test/url");
 
-        /* Mock url. */
-        when(url.getProtocol()).thenReturn("https");
-        when(mMovedUrlHttps.getProtocol()).thenReturn("https");
-        when(mMovedUrlHttp.getProtocol()).thenReturn("http")
-                .thenReturn("https").thenReturn("http")
-                .thenReturn("https").thenReturn("http")
-                .thenReturn("https").thenReturn("http")
-                .thenReturn("https").thenReturn("http")
-                .thenReturn("https").thenReturn("http");
-        when(mMockDownloadUri.toString()).thenReturn(urlString);
-
-        /* Mock https connection. */
-        when(url.openConnection()).thenReturn(mUrlConnection);
-        when(mMovedUrlHttp.openConnection()).thenReturn(mUrlConnection);
-        when(mMovedUrlHttps.openConnection()).thenReturn(mUrlConnection);
-        whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
-        whenNew(URL.class).withArguments(eq(MOVED_URL_HTTPS)).thenReturn(mMovedUrlHttps);
-        whenNew(URL.class).withArguments(eq(MOVED_URL_HTTP)).thenReturn(mMovedUrlHttp);
-
-        when(mUrlConnection.getResponseCode()).thenReturn(1);
-        when(mUrlConnection.getHeaderField(anyString())).thenReturn(MOVED_URL_HTTPS);
-        when(mUrlConnection.getContentType()).thenReturn(null);
-
-        /* Mock stream. */
-        whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mFileOutputStream);
-        whenNew(BufferedInputStream.class).withAnyArguments().thenReturn(mBufferedInputStream);
-        when(mUrlConnection.getInputStream()).thenReturn(mMockInputStream);
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(1).thenReturn(-1);
-
-        mTask = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-    }
-
-    private void verifyProperCompletion() throws Exception {
-        verify(mBufferedInputStream).close();
-        verify(mFileOutputStream).close();
-        verifyStatic();
-        TrafficStats.clearThreadStatsTag();
-    }
-
-    private void verifyPrintWarn() {
-        verifyStatic();
-        AppCenterLog.warn(anyString(), anyString());
-    }
-
-    private void verifyNotPrintWarn() {
-        verifyStatic(never());
-        AppCenterLog.warn(anyString(), anyString());
-    }
-
-    private void verifyDownloadComplete() {
-        verify(mMockHttpDownloader).onDownloadComplete(eq(mMockTargetFile));
-    }
-
-    private void verifyDownloadNeverComplete() {
-        verify(mMockHttpDownloader, never()).onDownloadComplete(eq(mMockTargetFile));
-    }
-
-    @Test
-    public void doInBackgroundWhenTotalBytesDownloadedMoreZero() throws Exception {
-
-        /* Start. */
-        mTask.doInBackground();
-
-        /* Verify. */
-        verify(mUrlConnection, never()).disconnect();
-        verifyPrintWarn();
-        verifyProperCompletion();
-        verifyDownloadComplete();
-    }
-
-    @Test
-    public void doInBackgroundVerifyRedirection() throws Exception {
-        when(mUrlConnection.getResponseCode()).thenReturn(HttpsURLConnection.HTTP_MOVED_TEMP);
-        when(mUrlConnection.getHeaderField(anyString())).thenReturn(MOVED_URL_HTTP);
-        when(mUrlConnection.getContentType()).thenReturn("");
-
-        /* Mock stream. */
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(-1);
-
-        /* Mock file. */
-        when(mMockTargetFile.delete()).thenReturn(true);
-
-        /* Start. */
-        mTask.doInBackground();
-
-        /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, times(6)).disconnect();
-        verifyProperCompletion();
-        verifyDownloadNeverComplete();
-    }
-
-    @Test
-    public void doInBackgroundWhenTaskCancelled() throws Exception {
-
-        /* Mock https connection. */
-        when(mUrlConnection.getResponseCode()).thenReturn(HttpsURLConnection.HTTP_MOVED_PERM);
-        when(mUrlConnection.getContentLength()).thenReturn(0);
+        /* Mock URL connection. */
+        mockStatic(HttpUtils.class);
+        when(HttpUtils.createHttpsConnection(any(URL.class))).thenReturn(mUrlConnection);
+        when(mUrlConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
         when(mUrlConnection.getContentType()).thenReturn(APK_CONTENT_TYPE);
 
-        /* Mock stream. */
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(0);
+        /* Create target file. */
+        mTargetFile = mTemporaryFolder.newFile();
 
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task = spy(task);
-        doReturn(true).when(task).isCancelled();
-        task.doInBackground();
+        /* Create task. */
+        mDownloadFileTask = new HttpConnectionDownloadFileTask(mDownloader, mDownloadUri, mTargetFile);
+    }
 
-        /* Verify. */
-        verifyNotPrintWarn();
-        verify(mBufferedInputStream).read(any(byte[].class));
-        verify(mUrlConnection, never()).disconnect();
-        verifyProperCompletion();
-        verifyDownloadNeverComplete();
+    @After
+    public void tearDown() {
+        verifyStatic();
+        TrafficStats.setThreadStatsTag(eq(THREAD_STATS_TAG));
+        verifyStatic();
+        TrafficStats.clearThreadStatsTag();
     }
 
     @Test
-    public void doInBackgroundWhenNowLowLastReportedTime() throws Exception {
+    public void downloadSuccessful() throws IOException {
+        String apk = "I'm an APK file";
+        mockConnectionContent(apk);
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verifyDownloadedContent(apk);
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
+    }
+
+    @Test
+    public void wrongContentType() throws IOException {
+        mockStatic(AppCenterLog.class);
+        String apk = "I'm an APK file";
+        mockConnectionContent(apk);
+        when(mUrlConnection.getContentType()).thenReturn("text/html");
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verifyStatic();
+        AppCenterLog.warn(eq(LOG_TAG), anyString());
+        verifyDownloadedContent(apk);
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
+    }
+
+    @Test
+    public void errorResponseCode() throws IOException {
+        when(mUrlConnection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_INTERNAL_ERROR);
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
+    }
+
+    @Test
+    public void nothingIsDownloaded() throws IOException {
+        when(mUrlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
+    }
+
+    @Test
+    public void readResponseError() throws IOException {
+        when(mUrlConnection.getInputStream()).thenThrow(new IOException());
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
+    }
+
+    @Test
+    public void reportProgressBasedOnDownloadCount() throws IOException {
+        long totalSize = UPDATE_PROGRESS_BYTES_THRESHOLD * 3;
+        when(mUrlConnection.getContentLength()).thenReturn((int) totalSize);
+        String apk = generateString((int) totalSize, '*');
+        mockConnectionContent(apk);
 
         /* Mock system time. */
-        when(System.currentTimeMillis()).thenReturn(300L);
+        mockStatic(System.class);
+        when(System.currentTimeMillis()).thenAnswer(new Answer<Long>() {
 
-        /* Mock url connection. */
-        when(mUrlConnection.getContentType()).thenReturn("");
-        when(mUrlConnection.getContentLength()).thenReturn(1);
+            private long currentTime = 0;
 
-        /* Mock stream. */
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(0).thenReturn(-1);
+            @Override
+            public Long answer(InvocationOnMock invocation) {
+                return currentTime += UPDATE_PROGRESS_TIME_THRESHOLD;
+            }
+        });
 
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
 
         /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyProperCompletion();
-        verifyDownloadNeverComplete();
+        verifyDownloadedContent(apk);
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadProgress(WRITE_BUFFER_SIZE, totalSize);
+        verify(mDownloader).onDownloadProgress(WRITE_BUFFER_SIZE + UPDATE_PROGRESS_BYTES_THRESHOLD, totalSize);
+        verify(mDownloader).onDownloadProgress(WRITE_BUFFER_SIZE + UPDATE_PROGRESS_BYTES_THRESHOLD * 2, totalSize);
+        verify(mDownloader).onDownloadProgress(totalSize, totalSize);
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
     }
 
     @Test
-    public void doInBackgroundWhenFlushThrowIOException() throws Exception {
+    public void reportProgressBasedOnDownloadTime() throws IOException {
+        long totalSize = UPDATE_PROGRESS_BYTES_THRESHOLD * 3;
+        when(mUrlConnection.getContentLength()).thenReturn((int) totalSize);
+        String apk = generateString((int) totalSize, '*');
+        mockConnectionContent(apk);
 
-        /* Mock system time. */
-        when(System.currentTimeMillis()).thenReturn(0L);
-
-        /* Mock https connection. */
-        when(mUrlConnection.getResponseCode()).thenReturn(HttpsURLConnection.HTTP_SEE_OTHER);
-        when(mUrlConnection.getContentType()).thenReturn("");
-        when(mUrlConnection.getContentLength()).thenReturn(0);
-
-        /* Mock stream. */
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(0).thenReturn(-1);
-        doThrow(new IOException()).when(mFileOutputStream).flush();
-
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
 
         /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyProperCompletion();
-        verifyDownloadNeverComplete();
-        verify(mMockHttpDownloader).onDownloadError(anyString());
+        verifyDownloadedContent(apk);
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadProgress(WRITE_BUFFER_SIZE, totalSize);
+        verify(mDownloader).onDownloadProgress(totalSize, totalSize);
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
     }
 
     @Test
-    public void doInBackgroundWhenTotalBytesDownloadedMoreThanUpdateThreshold() throws Exception {
+    public void cancelDuringDownloading() throws IOException {
+        long totalSize = UPDATE_PROGRESS_BYTES_THRESHOLD * 3;
+        when(mUrlConnection.getContentLength()).thenReturn((int) totalSize);
+        String apk = generateString((int) totalSize, '*');
+        mockConnectionContent(apk);
 
-        /* Mock stream. */
-        int bytesThreshold = 512 * 1024;
-        when(mBufferedInputStream.read(any(byte[].class))).thenReturn(bytesThreshold)
-                .thenReturn(2 * (bytesThreshold))
-                .thenReturn(-1);
+        mDownloadFileTask = spy(mDownloadFileTask);
+        when(mDownloadFileTask.isCancelled()).thenReturn(true);
 
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
 
         /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyProperCompletion();
-        verifyDownloadComplete();
+        assertEquals(WRITE_BUFFER_SIZE, mTargetFile.length());
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadProgress(WRITE_BUFFER_SIZE, totalSize);
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
     }
 
     @Test
-    public void doInBackgroundWhenTotalTimeMoreThanUpdateTimeThreshold() throws Exception {
+    public void errorOnStreamClose() throws IOException {
+        String apk = "I'm an APK file";
+        InputStream inputStream = spy(new ByteArrayInputStream(apk.getBytes()));
+        doThrow(new IOException()).when(inputStream).close();
+        when(mUrlConnection.getInputStream()).thenReturn(inputStream);
+        mockConnectionContent(apk);
 
-        /* Mock stream. */
-        when(System.currentTimeMillis()).thenReturn(600L);
-
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
 
         /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyProperCompletion();
-        verifyDownloadComplete();
+        verifyDownloadedContent(apk);
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader).onDownloadComplete(eq(mTargetFile));
+        verify(mDownloader, never()).onDownloadError(anyString());
     }
 
-    @Test
-    public void doInBackgroundInputStreamNull() throws Exception {
-
-        /* Mock stream. */
-        whenNew(BufferedInputStream.class)
-                .withParameterTypes(InputStream.class)
-                .withArguments(mMockInputStream).thenThrow(new FileNotFoundException("test"));
-
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
-
-        /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyStatic();
-        TrafficStats.clearThreadStatsTag();
-        verify(mMockHttpDownloader).onDownloadError("test");
+    private void mockConnectionContent(String content) throws IOException {
+        InputStream inputStream = new ByteArrayInputStream(content.getBytes());
+        when(mUrlConnection.getInputStream()).thenReturn(inputStream);
     }
 
-    @Test
-    public void doInBackgroundOutputStreamNull() throws Exception {
-        whenNew(FileOutputStream.class)
-                .withParameterTypes(File.class)
-                .withArguments(mMockTargetFile).thenThrow(new FileNotFoundException("test"));
-
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
-
-        /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verifyStatic();
-        TrafficStats.clearThreadStatsTag();
-        verify(mMockHttpDownloader).onDownloadError("test");
-    }
-
-    @Test
-    public void doInBackgroundIgnoredIOException() throws Exception {
-        doThrow(new IOException()).when(mFileOutputStream).close();
-
-        /* Start. */
-        HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground();
-
-        /* Verify. */
-        verifyPrintWarn();
-        verify(mUrlConnection, never()).disconnect();
-        verify(mFileOutputStream).close();
-        verifyStatic();
-        TrafficStats.clearThreadStatsTag();
-        verifyDownloadComplete();
+    private void verifyDownloadedContent(String expected) throws IOException {
+        String downloadedContent = new String(Files.readAllBytes(mTargetFile.toPath()), Charset.defaultCharset());
+        assertEquals(expected, downloadedContent);
     }
 }

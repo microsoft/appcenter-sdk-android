@@ -34,7 +34,6 @@ import org.powermock.reflect.Whitebox;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE;
@@ -370,7 +369,7 @@ public class HttpConnectionReleaseDownloaderTest {
         mockStatic(Uri.class);
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
         File targetFile = mTemporaryFolder.newFile();
-        Files.write(Paths.get(targetFile.toURI()), "I'm an APK file".getBytes());
+        Files.write(targetFile.toPath(), "I'm an APK file".getBytes());
         when(mReleaseDetails.getSize()).thenReturn(targetFile.length());
 
         /* Complete download. */
@@ -388,7 +387,7 @@ public class HttpConnectionReleaseDownloaderTest {
     @Test
     public void downloadCompleteWithWrongFile() throws IOException {
         File targetFile = mTemporaryFolder.newFile();
-        Files.write(Paths.get(targetFile.toURI()), "I'm an APK file".getBytes());
+        Files.write(targetFile.toPath(), "I'm an APK file".getBytes());
         when(mReleaseDetails.getSize()).thenReturn(42L);
 
         /* Complete download. */
