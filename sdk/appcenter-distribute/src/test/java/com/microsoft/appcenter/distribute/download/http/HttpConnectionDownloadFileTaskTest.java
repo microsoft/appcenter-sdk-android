@@ -48,10 +48,10 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @PrepareForTest({
@@ -258,7 +258,6 @@ public class HttpConnectionDownloadFileTaskTest {
         InputStream inputStream = spy(new ByteArrayInputStream(apk.getBytes()));
         doThrow(new IOException()).when(inputStream).close();
         when(mUrlConnection.getInputStream()).thenReturn(inputStream);
-        mockConnectionContent(apk);
 
         /* Perform background task. */
         mDownloadFileTask.doInBackground();
