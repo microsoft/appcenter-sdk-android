@@ -9,10 +9,10 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertEquals;
@@ -30,8 +30,10 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
         SharedPreferencesManager.class,
         ReleaseDetails.class
 })
-@RunWith(PowerMockRunner.class)
 public class DistributeUtilsTest {
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Before
     public void setUp() {
