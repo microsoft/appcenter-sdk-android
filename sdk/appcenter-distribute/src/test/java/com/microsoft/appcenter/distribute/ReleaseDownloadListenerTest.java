@@ -77,7 +77,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class ReleaseDownloadListenerTest  {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id_test";
+
     private static final String RELEASE_HASH = "release_hash_test";
+
     private static final int RELEASE_ID = 123;
 
     @Rule

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download.http;
 
 import org.junit.Before;
@@ -41,7 +46,7 @@ public class HttpConnectionCheckTaskTest {
         when(mDownloader.getTargetFile()).thenReturn(null);
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify that onDownloadError callback is called. */
         verify(mDownloader).onDownloadError(anyString());
@@ -55,7 +60,7 @@ public class HttpConnectionCheckTaskTest {
         when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(targetFile.getAbsolutePath());
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify that onDownloadComplete callback is called with the right target file. */
         verify(mDownloader).onDownloadComplete(targetFile);
@@ -69,7 +74,7 @@ public class HttpConnectionCheckTaskTest {
         when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(targetFile.getAbsolutePath());
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify that onStart is called. */
         verify(mDownloader).onStart(targetFile);
@@ -84,7 +89,7 @@ public class HttpConnectionCheckTaskTest {
         when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(downloadedFile.getAbsolutePath());
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify that the previous file is deleted. */
         assertFalse(downloadedFile.exists());
@@ -102,7 +107,7 @@ public class HttpConnectionCheckTaskTest {
         when(mDownloader.getDownloadedReleaseFilePath()).thenReturn(null);
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify that onStart is called. */
         verify(mDownloader).onStart(targetFile);
@@ -120,7 +125,7 @@ public class HttpConnectionCheckTaskTest {
         when(mCheckTask.isCancelled()).thenReturn(true);
 
         /* Perform background task. */
-        mCheckTask.doInBackground(null);
+        mCheckTask.doInBackground();
 
         /* Verify */
         verifyZeroInteractions(ignoreStubs(mDownloader));

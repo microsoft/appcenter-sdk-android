@@ -64,7 +64,7 @@ public class DownloadManagerRequestTaskTest {
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(false);
 
         /* Perform background task. */
-        mRequestTask.doInBackground(null);
+        mRequestTask.doInBackground();
 
         /* Verify. */
         verifyZeroInteractions(mDownloadManagerRequest);
@@ -76,7 +76,7 @@ public class DownloadManagerRequestTaskTest {
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
         /* Perform background task. */
-        mRequestTask.doInBackground(null);
+        mRequestTask.doInBackground();
 
         /* Verify. */
         verify(mDownloadManagerRequest).setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
@@ -90,7 +90,7 @@ public class DownloadManagerRequestTaskTest {
         when(mRequestTask.isCancelled()).thenReturn(true);
 
         /* Perform background task. */
-        mRequestTask.doInBackground(null);
+        mRequestTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader, never()).onDownloadStarted(anyLong(), anyLong());

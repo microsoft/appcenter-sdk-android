@@ -32,7 +32,7 @@ public class DownloadManagerRemoveTaskTest {
     public void doInBackground() {
         when(mContext.getSystemService(DOWNLOAD_SERVICE)).thenReturn(mDownloadManager);
         DownloadManagerRemoveTask task = new DownloadManagerRemoveTask(mContext, DOWNLOAD_ID);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verify(mDownloadManager).remove(DOWNLOAD_ID);

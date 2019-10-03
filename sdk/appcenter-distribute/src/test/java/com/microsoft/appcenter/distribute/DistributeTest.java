@@ -59,7 +59,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class DistributeTest extends AbstractDistributeTest {
 
     private String mMockGroupId = "group_id";
+
     private String mMockReleaseHash = "release_hash";
+
     private int mReleaseId = 123;
 
     @After

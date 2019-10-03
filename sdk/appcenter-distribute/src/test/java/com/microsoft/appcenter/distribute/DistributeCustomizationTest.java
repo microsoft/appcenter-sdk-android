@@ -276,7 +276,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
-        /* Verify POSTPONE has been processed. */
+        /* Verify POSTPONE has not been processed. */
         verify(distribute, never()).completeWorkflow();
     }
 
@@ -305,7 +305,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
-        /* Verify POSTPONE has been processed. */
+        /* Verify POSTPONE has not been processed. */
         verify(distribute, never()).completeWorkflow();
     }
 

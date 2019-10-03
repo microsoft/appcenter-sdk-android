@@ -83,8 +83,10 @@ public class HttpConnectionDownloadFileTaskTest {
     private URL mMovedUrlHttp;
 
     private HttpConnectionDownloadFileTask mTask;
-    private String mMovedUrlStringHttps = "https://mock2";
-    private String mMovedUrlStringHttp = "http://mock2";
+
+    private static final String MOVED_URL_HTTPS = "https://mock2";
+
+    private static final String MOVED_URL_HTTP = "http://mock2";
 
     private static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
 
@@ -117,11 +119,11 @@ public class HttpConnectionDownloadFileTaskTest {
         when(mMovedUrlHttp.openConnection()).thenReturn(mUrlConnection);
         when(mMovedUrlHttps.openConnection()).thenReturn(mUrlConnection);
         whenNew(URL.class).withArguments(eq(urlString)).thenReturn(url);
-        whenNew(URL.class).withArguments(eq(mMovedUrlStringHttps)).thenReturn(mMovedUrlHttps);
-        whenNew(URL.class).withArguments(eq(mMovedUrlStringHttp)).thenReturn(mMovedUrlHttp);
+        whenNew(URL.class).withArguments(eq(MOVED_URL_HTTPS)).thenReturn(mMovedUrlHttps);
+        whenNew(URL.class).withArguments(eq(MOVED_URL_HTTP)).thenReturn(mMovedUrlHttp);
 
         when(mUrlConnection.getResponseCode()).thenReturn(1);
-        when(mUrlConnection.getHeaderField(anyString())).thenReturn(mMovedUrlStringHttps);
+        when(mUrlConnection.getHeaderField(anyString())).thenReturn(MOVED_URL_HTTPS);
         when(mUrlConnection.getContentType()).thenReturn(null);
 
         /* Mock stream. */
@@ -162,7 +164,7 @@ public class HttpConnectionDownloadFileTaskTest {
     public void doInBackgroundWhenTotalBytesDownloadedMoreZero() throws Exception {
 
         /* Start. */
-        mTask.doInBackground(null);
+        mTask.doInBackground();
 
         /* Verify. */
         verify(mUrlConnection, never()).disconnect();
@@ -174,7 +176,7 @@ public class HttpConnectionDownloadFileTaskTest {
     @Test
     public void doInBackgroundVerifyRedirection() throws Exception {
         when(mUrlConnection.getResponseCode()).thenReturn(HttpsURLConnection.HTTP_MOVED_TEMP);
-        when(mUrlConnection.getHeaderField(anyString())).thenReturn(mMovedUrlStringHttp);
+        when(mUrlConnection.getHeaderField(anyString())).thenReturn(MOVED_URL_HTTP);
         when(mUrlConnection.getContentType()).thenReturn("");
 
         /* Mock stream. */
@@ -184,7 +186,7 @@ public class HttpConnectionDownloadFileTaskTest {
         when(mMockTargetFile.delete()).thenReturn(true);
 
         /* Start. */
-        mTask.doInBackground(null);
+        mTask.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -208,7 +210,7 @@ public class HttpConnectionDownloadFileTaskTest {
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
         task = spy(task);
         doReturn(true).when(task).isCancelled();
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyNotPrintWarn();
@@ -233,7 +235,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -259,7 +261,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -280,7 +282,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -297,7 +299,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -316,7 +318,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -334,7 +336,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();
@@ -350,7 +352,7 @@ public class HttpConnectionDownloadFileTaskTest {
 
         /* Start. */
         HttpConnectionDownloadFileTask task = new HttpConnectionDownloadFileTask(mMockHttpDownloader, mMockDownloadUri, mMockTargetFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verifyPrintWarn();

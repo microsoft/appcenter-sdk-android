@@ -24,7 +24,7 @@ public class HttpConnectionRemoveFileTaskTest {
     @Test
     public void doInBackground() {
         HttpConnectionRemoveFileTask task = new HttpConnectionRemoveFileTask(mFile);
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verify(mFile).delete();

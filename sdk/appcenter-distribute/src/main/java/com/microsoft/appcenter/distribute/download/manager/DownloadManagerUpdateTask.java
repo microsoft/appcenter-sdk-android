@@ -26,7 +26,7 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void[] params) {
+    protected Void doInBackground(Void... params) {
 
         /* Query download manager. */
         DownloadManager downloadManager = mDownloader.getDownloadManager();

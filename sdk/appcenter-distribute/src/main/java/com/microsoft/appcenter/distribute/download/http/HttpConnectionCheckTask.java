@@ -18,7 +18,7 @@ class HttpConnectionCheckTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void[] params) {
+    protected Void doInBackground(Void... params) {
         File targetFile = mDownloader.getTargetFile();
         if (targetFile == null) {
             mDownloader.onDownloadError("Cannot access to downloads folder. Shared storage is not currently available.");

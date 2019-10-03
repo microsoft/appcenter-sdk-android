@@ -31,7 +31,7 @@ class ResumeFromBackgroundTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void[] args) {
+    protected Void doInBackground(Void... args) {
         Distribute distribute = Distribute.getInstance();
 
         /*

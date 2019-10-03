@@ -67,7 +67,7 @@ public class ResumeFromBackgroundTaskTest {
         /* Start. */
         startDoInBackground();
         ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 1L));
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
@@ -81,7 +81,7 @@ public class ResumeFromBackgroundTaskTest {
         /* Start. */
         startDoInBackground();
         ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 4L));
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
@@ -96,7 +96,7 @@ public class ResumeFromBackgroundTaskTest {
         /* Start. */
         startDoInBackground();
         ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, downloadedId));
-        task.doInBackground(null);
+        task.doInBackground();
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
@@ -104,7 +104,7 @@ public class ResumeFromBackgroundTaskTest {
     }
 
     private void startDoInBackground() {
-        final ResumeFromBackgroundTask[] task = {null};
+        final ResumeFromBackgroundTask[] task = { null };
         when(AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class))).then(new Answer<ResumeFromBackgroundTask>() {
             @Override
             public ResumeFromBackgroundTask answer(InvocationOnMock invocation) {

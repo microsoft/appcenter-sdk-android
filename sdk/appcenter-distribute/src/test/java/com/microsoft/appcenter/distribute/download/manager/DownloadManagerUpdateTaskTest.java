@@ -64,7 +64,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mDownloader.getDownloadId()).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader).onStart();
@@ -75,7 +75,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(null);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader).onDownloadError(any(RuntimeException.class));
@@ -86,7 +86,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mCursor.moveToFirst()).thenReturn(false);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader).onDownloadError(any(RuntimeException.class));
@@ -99,7 +99,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mUpdateTask.isCancelled()).thenReturn(true);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verifyZeroInteractions(ignoreStubs(mDownloader));
@@ -110,7 +110,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mCursor.getInt(eq(DownloadManager.COLUMN_STATUS.hashCode()))).thenReturn(DownloadManager.STATUS_FAILED);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader).onDownloadError(any(RuntimeException.class));
@@ -122,7 +122,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mCursor.getInt(eq(DownloadManager.COLUMN_STATUS.hashCode()))).thenReturn(DownloadManager.STATUS_RUNNING);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mCursor).close();
@@ -133,7 +133,7 @@ public class DownloadManagerUpdateTaskTest {
         when(mCursor.getInt(eq(DownloadManager.COLUMN_STATUS.hashCode()))).thenReturn(DownloadManager.STATUS_SUCCESSFUL);
 
         /* Perform background task. */
-        mUpdateTask.doInBackground(null);
+        mUpdateTask.doInBackground();
 
         /* Verify. */
         verify(mDownloader).onDownloadComplete(eq(mCursor));
