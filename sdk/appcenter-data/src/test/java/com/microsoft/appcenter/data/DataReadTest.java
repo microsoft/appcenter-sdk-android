@@ -29,7 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.microsoft.appcenter.data.Constants.PREFERENCE_PARTITION_PREFIX;
