@@ -88,7 +88,7 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
      * Create connection for downloading.
      *
      * @return instance of {@link URLConnection}.
-     * @throws IOException if connection fails
+     * @throws IOException if connection fails.
      */
     private URLConnection createConnection() throws IOException {
 
