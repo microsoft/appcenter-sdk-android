@@ -20,7 +20,7 @@ import static javax.net.ssl.HttpsURLConnection.getDefaultSSLSocketFactory;
 /**
  * This class forces TLS 1.2 protocol via adapter pattern.
  */
-public class TLS1_2SocketFactory extends SSLSocketFactory {
+class TLS1_2SocketFactory extends SSLSocketFactory {
 
     /**
      * TLS 1.2 protocol name.
@@ -39,7 +39,7 @@ public class TLS1_2SocketFactory extends SSLSocketFactory {
      */
     private final SSLSocketFactory delegate;
 
-    public TLS1_2SocketFactory() {
+    TLS1_2SocketFactory() {
         SSLSocketFactory socketFactory = null;
         try {
 

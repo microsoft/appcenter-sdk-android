@@ -7,7 +7,6 @@ package com.microsoft.appcenter.http;
 
 import android.net.TrafficStats;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
@@ -22,7 +21,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +36,10 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_ENCODING_VA
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.READ_BUFFER_SIZE;
-import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpsConnection;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -160,41 +157,9 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
      * Do http call.
      */
     private Pair<String, Map<String, String>> doHttpCall() throws Exception {
-
-        /* HTTP session. */
-        if (!mUrl.startsWith("https")) {
-            throw new IOException("App Center support only HTTPS connection.");
-        }
         URL url = new URL(mUrl);
-        URLConnection urlConnection = url.openConnection();
-        HttpsURLConnection httpsURLConnection;
-        if (urlConnection instanceof HttpsURLConnection) {
-            httpsURLConnection = (HttpsURLConnection) urlConnection;
-        } else {
-            throw new IOException("App Center supports only HTTPS connection.");
-        }
+        HttpsURLConnection httpsURLConnection = createHttpsConnection(url);
         try {
-
-            /*
-             * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
-             * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
-             * to support future versions of TLS such as say 1.3 without having to patch this code.
-             *
-             * TLS 1.2 was enabled by default only on Android 5.0:
-             * https://developer.android.com/about/versions/android-5.0-changes#ssl
-             * https://developer.android.com/reference/javax/net/ssl/SSLSocket#default-configuration-for-different-android-versions
-             *
-             * There is a problem that TLS 1.2 is still disabled by default on some Samsung devices
-             * with API 21, so apply the rule to this API level as well.
-             * See https://github.com/square/okhttp/issues/2372#issuecomment-244807676
-             */
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                httpsURLConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
-            }
-
-            /* Configure connection timeouts. */
-            httpsURLConnection.setConnectTimeout(CONNECT_TIMEOUT);
-            httpsURLConnection.setReadTimeout(READ_TIMEOUT);
 
             /* Build payload now if POST. */
             httpsURLConnection.setRequestMethod(mMethod);
