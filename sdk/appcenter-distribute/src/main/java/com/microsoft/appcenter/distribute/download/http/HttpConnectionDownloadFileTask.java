@@ -11,7 +11,6 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.http.TLS1_2SocketFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.BufferedInputStream;
@@ -28,20 +27,14 @@ import javax.net.ssl.HttpsURLConnection;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_BYTES_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
-import static com.microsoft.appcenter.http.HttpUtils.CONNECT_TIMEOUT;
-import static com.microsoft.appcenter.http.HttpUtils.READ_TIMEOUT;
 import static com.microsoft.appcenter.http.HttpUtils.THREAD_STATS_TAG;
 import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpsConnection;
 
 /**
  * Downloads an update and stores it on specified file.
  **/
 class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
-
-    /**
-     * Maximal number of allowed redirects.
-     */
-    private static final int MAX_REDIRECTS = 6;
 
     @VisibleForTesting
     static final String APK_CONTENT_TYPE = "application/vnd.android.package-archive";
@@ -65,22 +58,16 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void[] args) {
+    protected Void doInBackground(Void... params) {
+
+        /* Do tag socket to avoid strict mode issue. */
+        TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
         try {
             long enqueueTime = System.currentTimeMillis();
             mDownloader.onDownloadStarted(enqueueTime);
 
             /* Create connection. */
-            URL url = new URL(mDownloadUri.toString());
-            TrafficStats.setThreadStatsTag(THREAD_STATS_TAG);
-            URLConnection connection = createConnection(url, MAX_REDIRECTS);
-            connection.connect();
-
-            /* Content type check. Produce only warning if it doesn't match. */
-            String contentType = connection.getContentType();
-            if (!APK_CONTENT_TYPE.equals(contentType)) {
-                AppCenterLog.warn(LOG_TAG, "The requested download has not expected content type.");
-            }
+            URLConnection connection = createConnection();
 
             /* Download the release file. */
             long totalBytesDownloaded = downloadFile(connection);
@@ -93,6 +80,34 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
             TrafficStats.clearThreadStatsTag();
         }
         return null;
+    }
+
+    /**
+     * Create connection for downloading.
+     *
+     * @return instance of {@link URLConnection}.
+     * @throws IOException if connection fails
+     */
+    private URLConnection createConnection() throws IOException {
+
+        /* Create connection. */
+        URL url = new URL(mDownloadUri.toString());
+        HttpsURLConnection connection = createHttpsConnection(url);
+        connection.setInstanceFollowRedirects(true);
+        connection.connect();
+
+        /* Content type check. Produce only warning if it doesn't match. */
+        String contentType = connection.getContentType();
+        if (!APK_CONTENT_TYPE.equals(contentType)) {
+            AppCenterLog.warn(LOG_TAG, "The requested download has not expected content type.");
+        }
+
+        /* Accept all 2xx codes. */
+        int responseCode = connection.getResponseCode();
+        if (responseCode < 200 || responseCode >= 300) {
+            throw new IOException("Download failed with HTTP error code: " + responseCode);
+        }
+        return connection;
     }
 
     /**
@@ -159,46 +174,5 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
         }
         outputStream.flush();
         return totalBytesDownloaded;
-    }
-
-    /**
-     * Recursive method for resolving redirects. Resolves at most MAX_REDIRECTS times.
-     *
-     * @param url                a URL.
-     * @param remainingRedirects redirects counter.
-     * @return instance of {@link URLConnection}.
-     * @throws IOException if connection fails
-     */
-    private static URLConnection createConnection(URL url, int remainingRedirects) throws IOException {
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.setSSLSocketFactory(new TLS1_2SocketFactory());
-        connection.setInstanceFollowRedirects(true);
-
-        /* Configure connection timeouts. */
-        connection.setConnectTimeout(CONNECT_TIMEOUT);
-        connection.setReadTimeout(READ_TIMEOUT);
-
-        /* Check redirects. */
-        int code = connection.getResponseCode();
-        if (code == HttpsURLConnection.HTTP_MOVED_PERM ||
-                code == HttpsURLConnection.HTTP_MOVED_TEMP ||
-                code == HttpsURLConnection.HTTP_SEE_OTHER) {
-            if (remainingRedirects == 0) {
-
-                /* Stop redirecting. */
-                return connection;
-            }
-            URL movedUrl = new URL(connection.getHeaderField("Location"));
-            if (!url.getProtocol().equals(movedUrl.getProtocol())) {
-
-                /*
-                 * HttpsURLConnection doesn't handle redirects across schemes, so handle it manually,
-                 * see http://code.google.com/p/android/issues/detail?id=41651
-                 */
-                connection.disconnect();
-                return createConnection(movedUrl, --remainingRedirects);
-            }
-        }
-        return connection;
     }
 }
