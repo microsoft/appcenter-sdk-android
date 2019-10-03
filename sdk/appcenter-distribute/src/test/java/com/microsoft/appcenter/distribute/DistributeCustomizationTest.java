@@ -256,10 +256,10 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
         when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
@@ -285,10 +285,10 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
         when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */

@@ -7,25 +7,21 @@ package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -36,10 +32,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         ResumeFromBackgroundTask.class,
         SharedPreferencesManager.class
 })
+@RunWith(PowerMockRunner.class)
 public class ResumeFromBackgroundTaskTest {
-
-    @Rule
-    public PowerMockRule mRule = new PowerMockRule();
 
     @Mock
     private Context mContext;
@@ -65,7 +59,7 @@ public class ResumeFromBackgroundTaskTest {
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
-        verify(mDistribute, never()).resumeDownload();
+        verifyNoMoreInteractions(mDistribute);
     }
 
     @Test
@@ -78,7 +72,7 @@ public class ResumeFromBackgroundTaskTest {
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
-        verify(mDistribute, never()).resumeDownload();
+        verifyNoMoreInteractions(mDistribute);
     }
 
     @Test

@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -71,7 +71,7 @@ public class DownloadManagerReceiverTest {
 
         /* Verify. */
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(ResumeFromBackgroundTask.class));
+        AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 
     @Test
@@ -87,7 +87,7 @@ public class DownloadManagerReceiverTest {
 
         /* Verify. */
         verifyStatic();
-        AsyncTaskUtils.execute(anyString(), any(ResumeFromBackgroundTask.class));
+        AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 
     @Test
@@ -102,6 +102,6 @@ public class DownloadManagerReceiverTest {
         verifyStatic(never());
         Distribute.getInstance();
         verifyStatic(never());
-        AsyncTaskUtils.execute(anyString(), any(ResumeFromBackgroundTask.class));
+        AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 }

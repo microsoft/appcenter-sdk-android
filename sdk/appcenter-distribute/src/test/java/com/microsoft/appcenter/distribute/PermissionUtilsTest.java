@@ -9,11 +9,11 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -28,10 +28,8 @@ import static org.mockito.Mockito.when;
         PermissionUtils.class,
         Context.class
 })
+@RunWith(PowerMockRunner.class)
 public class PermissionUtilsTest {
-
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     Context mContext;
@@ -41,9 +39,10 @@ public class PermissionUtilsTest {
         new PermissionUtils();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void permissionsStateNull() {
-        int[] permissionsState = PermissionUtils.permissionsState(mContext, null);
+        int[] permissionsState = PermissionUtils.permissionsState(mContext, (String[]) null);
         assertNull(permissionsState);
     }
 

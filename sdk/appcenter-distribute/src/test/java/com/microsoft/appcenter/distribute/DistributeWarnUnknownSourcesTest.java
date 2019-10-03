@@ -11,7 +11,6 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
 
@@ -29,7 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -44,8 +42,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.anyVararg;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -342,8 +338,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mDialog, never()).hide();
         verify(mUnknownSourcesDialog).show();
         verify(mUnknownSourcesDialog, never()).hide();
-        verifyStatic();
-        Distribute.getInstance().resumeDownload();
+        verify(mReleaseDownloader).resume();
     }
 
     @Test

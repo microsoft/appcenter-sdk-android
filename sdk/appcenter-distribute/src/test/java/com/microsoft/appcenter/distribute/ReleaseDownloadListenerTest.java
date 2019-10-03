@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
@@ -19,45 +24,31 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -74,7 +65,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         SystemClock.class,
         Toast.class
 })
-public class ReleaseDownloadListenerTest  {
+public class ReleaseDownloadListenerTest {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id_test";
 
@@ -102,7 +93,7 @@ public class ReleaseDownloadListenerTest  {
     Uri mUri;
 
     @Mock
-    private Distribute mockDistribute;
+    private Distribute mDistribute;
 
     @Mock
     private Intent mInstallIntent;
@@ -125,18 +116,18 @@ public class ReleaseDownloadListenerTest  {
 
     private void mockToast() {
         mockStatic(Toast.class);
-        Mockito.when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
+        when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
     }
 
     private void mockDistribute() {
         mockStatic(Distribute.class);
-        Mockito.when(Distribute.getInstance()).thenReturn(mockDistribute);
+        when(Distribute.getInstance()).thenReturn(mDistribute);
     }
 
     private void mockInstallIntent() throws Exception {
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
         when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
-        Mockito.when(mContext.getPackageManager()).thenReturn(mPackageManager);
+        when(mContext.getPackageManager()).thenReturn(mPackageManager);
     }
 
     private ReleaseDetails mockReleaseDetails(boolean isMandatory) throws Exception {
@@ -156,24 +147,6 @@ public class ReleaseDownloadListenerTest  {
         mockStatic(SharedPreferencesManager.class);
 
         /* Mock updates to storage. */
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                when(SharedPreferencesManager.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn((Long) invocation.getArguments()[1]);
-                return null;
-            }
-        }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), anyLong());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                when(SharedPreferencesManager.getLong(invocation.getArguments()[0].toString(), INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
-                return null;
-            }
-        }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_ID);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -230,10 +203,10 @@ public class ReleaseDownloadListenerTest  {
 
         /* Mock time for Handler.post. */
         mockStatic(SystemClock.class);
-        PowerMockito.when(SystemClock.uptimeMillis()).thenReturn(1L);
+        when(SystemClock.uptimeMillis()).thenReturn(1L);
 
         /* Mock Handler. */
-        PowerMockito.when(HandlerUtils.getMainHandler()).thenReturn(mHandler);
+        when(HandlerUtils.getMainHandler()).thenReturn(mHandler);
     }
 
     private void mockDialog() throws Exception {
@@ -268,7 +241,7 @@ public class ReleaseDownloadListenerTest  {
         releaseDownloadListener.onStart(mockTime);
 
         /* Verify that download state and time are stored on start. */
-        verify(mockDistribute).setDownloading(releaseDetails, mockTime);
+        verify(mDistribute).setDownloading(releaseDetails, mockTime);
     }
 
     @Test
@@ -283,12 +256,12 @@ public class ReleaseDownloadListenerTest  {
         long currentSize = 2;
 
         /*
-        * Verify that progressDialog is not set up with invalid values
-        * and the method returns true since the dialog is not null.
-        */
+         * Verify that progressDialog is not set up with invalid values
+         * and the method returns true since the dialog is not null.
+         */
         assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
-        verify(mProgressDialog, never()).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
-        verify(mProgressDialog, never()).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog, never()).setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog, never()).setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
     }
 
     @Test
@@ -303,12 +276,12 @@ public class ReleaseDownloadListenerTest  {
         long currentSize = 2;
 
         /*
-        * Verify that if progressDialog is null, it is not set up
-        * and the method returns false.
-        */
+         * Verify that if progressDialog is null, it is not set up
+         * and the method returns false.
+         */
         assertFalse(releaseDownloadListener.onProgress(currentSize, totalSize));
-        verify(mProgressDialog, never()).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
-        verify(mProgressDialog, never()).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog, never()).setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog, never()).setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
     }
 
     @Test
@@ -347,12 +320,12 @@ public class ReleaseDownloadListenerTest  {
         long currentSize = 2;
 
         /*
-        * Verify that the dialog is set up with the approp[roate values
-        * and the method returns true.
-        */
+         * Verify that the dialog is set up with the approp[roate values
+         * and the method returns true.
+         */
         assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
-        verify(mProgressDialog).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
-        verify(mProgressDialog).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog).setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog).setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
     }
 
     @Test
@@ -372,18 +345,18 @@ public class ReleaseDownloadListenerTest  {
         assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
 
         /* Verify that dialog is not indeterminate, it's not configured again. */
-        verify(mProgressDialog, never()).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
-        verify(mProgressDialog).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog, never()).setMax((int) (totalSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog).setProgress((int) (currentSize / MEBIBYTE_IN_BYTES));
     }
 
     @Test
     public void onErrorTest() throws Exception {
-        ReleaseDetails mockReleaseDetails  = mockReleaseDetails(true);
+        ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
         releaseDownloadListener.onError("");
 
         /* Verify that completeWorkflow() is called on error. */
-        verify(mockDistribute).completeWorkflow(mockReleaseDetails);
+        verify(mDistribute).completeWorkflow(mockReleaseDetails);
     }
 
     @Test
@@ -391,12 +364,12 @@ public class ReleaseDownloadListenerTest  {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
 
         /* Do not notify the download. */
-        when(mockDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(false);
+        when(mDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
         assertTrue(releaseDownloadListener.onComplete(mUri));
 
         /* Verify that setInstalling() is called on mandatory update. */
-        verify(mockDistribute).setInstalling(mockReleaseDetails);
+        verify(mDistribute).setInstalling(mockReleaseDetails);
         verify(mContext).startActivity(mInstallIntent);
     }
 
@@ -406,13 +379,13 @@ public class ReleaseDownloadListenerTest  {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
 
         /* Notify the download. */
-        when(mockDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(true);
+        when(mDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
         assertTrue(releaseDownloadListener.onComplete(mUri));
 
         /* Verify that startActivity() and setInstalling() are not called here. */
         verify(mContext, never()).startActivity(any(Intent.class));
-        verify(mockDistribute, never()).setInstalling(mockReleaseDetails);
+        verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }
 
     @Test
@@ -427,6 +400,6 @@ public class ReleaseDownloadListenerTest  {
         /* Verify that nothing is called and the method is exited early with false result. */
         assertFalse(releaseDownloadListener.onComplete(mUri));
         verify(mContext, never()).startActivity(any(Intent.class));
-        verify(mockDistribute, never()).setInstalling(mockReleaseDetails);
+        verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }
 }

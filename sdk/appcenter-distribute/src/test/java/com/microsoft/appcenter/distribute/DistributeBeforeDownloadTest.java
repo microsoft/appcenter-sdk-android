@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -499,8 +498,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no download scheduled. */
-        verifyStatic(never());
-        Distribute.getInstance().resumeDownload();
+        verify(mReleaseDownloader, never()).resume();
     }
 
     @Test
@@ -547,8 +545,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify that download is scheduled. */
-        verifyStatic();
-        Distribute.getInstance().resumeDownload();
+        verify(mReleaseDownloader).resume();
     }
 
     @Test

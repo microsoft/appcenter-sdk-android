@@ -8,8 +8,6 @@ package com.microsoft.appcenter.distribute;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DownloadManager;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
@@ -45,12 +43,10 @@ import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
-import static android.app.DownloadManager.EXTRA_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -58,7 +54,6 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -71,22 +66,22 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
 @PrepareForTest({
-    AppCenter.class,
-    AppCenterLog.class,
-    AppNameHelper.class,
-    BrowserUtils.class,
-    CryptoUtils.class,
-    Distribute.class,
-    DistributeUtils.class,
-    HandlerUtils.class,
-    HttpUtils.class,
-    InstallerUtils.class,
-    NetworkStateHelper.class,
-    ReleaseDetails.class,
-    ReleaseDownloaderFactory.class,
-    SharedPreferencesManager.class,
-    TextUtils.class,
-    Toast.class
+        AppCenter.class,
+        AppCenterLog.class,
+        AppNameHelper.class,
+        BrowserUtils.class,
+        CryptoUtils.class,
+        Distribute.class,
+        DistributeUtils.class,
+        HandlerUtils.class,
+        HttpUtils.class,
+        InstallerUtils.class,
+        NetworkStateHelper.class,
+        ReleaseDetails.class,
+        ReleaseDownloaderFactory.class,
+        SharedPreferencesManager.class,
+        TextUtils.class,
+        Toast.class
 })
 public class AbstractDistributeTest {
 
@@ -165,7 +160,7 @@ public class AbstractDistributeTest {
     Intent mInstallIntent;
 
     @Mock
-    NotificationManager notificationManager;
+    NotificationManager mNotificationManager;
 
     @Before
     @SuppressLint("ShowToast")
@@ -174,8 +169,6 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
-        mReleaseDetails = mock(ReleaseDetails.class);
-        notificationManager = mock(NotificationManager.class);
         when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
         when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
@@ -243,7 +236,6 @@ public class AbstractDistributeTest {
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
-        mockStatic(ReleaseDetails.class);
         mockStatic(TextUtils.class);
         mockStatic(InstallerUtils.class);
         when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(new Answer<Boolean>() {
@@ -311,6 +303,7 @@ public class AbstractDistributeTest {
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock Release Details. */
+        mockStatic(ReleaseDetails.class);
         when(ReleaseDetails.parse(anyString())).thenReturn(mReleaseDetails);
 
         /* Mock Release Downloader. */
@@ -322,10 +315,12 @@ public class AbstractDistributeTest {
         mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
 
+        /* Mock Uri. */
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getEncodedPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
 
+        /* Mock Install Intent. */
         when(mInstallIntent.getData()).thenReturn(mUri);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
     }

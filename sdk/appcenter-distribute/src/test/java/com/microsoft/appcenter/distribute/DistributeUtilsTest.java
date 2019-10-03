@@ -8,12 +8,11 @@ package com.microsoft.appcenter.distribute;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertEquals;
@@ -26,11 +25,13 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-@PrepareForTest({DistributeUtils.class, SharedPreferencesManager.class, ReleaseDetails.class})
+@PrepareForTest({
+        DistributeUtils.class,
+        SharedPreferencesManager.class,
+        ReleaseDetails.class
+})
+@RunWith(PowerMockRunner.class)
 public class DistributeUtilsTest {
-
-    @Rule
-    public PowerMockRule mRule = new PowerMockRule();
 
     @Before
     public void setUp() {
@@ -45,30 +46,9 @@ public class DistributeUtilsTest {
     }
 
     @Test
-    public void getNotificationId() {
-
-        /* Coverage fix. */
-        int notificationId = DistributeUtils.getNotificationId();
-        Assert.assertNotEquals(0, notificationId);
-    }
-
-    @Test
     public void loadCachedReleaseDetails() throws JSONException {
-        String json = "{" +
-                "id: 42," +
-                "version: '14'," +
-                "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
-                "release_notes_url: 'https://mock/'," +
-                "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
-                "size: 4242," +
-                "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
-                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
-                "}";
         ReleaseDetails mock = mock(ReleaseDetails.class);
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS)).thenReturn(json);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS)).thenReturn("test");
         when(ReleaseDetails.parse(anyString())).thenReturn(mock);
 
         /* Load. */
@@ -96,21 +76,7 @@ public class DistributeUtilsTest {
 
     @Test
     public void loadCachedReleaseDetailsJsonException() throws JSONException {
-        String json = "{" +
-                "id: 42," +
-                "version: '14'," +
-                "short_version: '2.1.5'," +
-                "release_notes: 'Fix a critical bug, this text was entered in App Center portal.'," +
-                "release_notes_url: 'https://mock/'," +
-                "android_min_api_level: 19," +
-                "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
-                "size: 4242," +
-                "mandatory_update: false," +
-                "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
-                "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
-                "}";
-
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS)).thenReturn(json);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS)).thenReturn("test");
         when(ReleaseDetails.parse(anyString())).thenThrow(new JSONException("test"));
 
         /* Load. */

@@ -8,7 +8,6 @@ package com.microsoft.appcenter.distribute;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -52,6 +51,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -65,11 +65,11 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest(DistributeUtils.class)
 public class DistributeTest extends AbstractDistributeTest {
 
-    private String mMockGroupId = "group_id";
+    private static final String DISTRIBUTION_GROUP_ID = "group_id";
 
-    private String mMockReleaseHash = "release_hash";
+    private static final String RELEASE_HASH = "release_hash";
 
-    private int mReleaseId = 123;
+    private static final int RELEASE_ID = 123;
 
     @After
     public void tearDown() throws Exception {
@@ -244,9 +244,9 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(false);
         Distribute.getInstance().startFromBackground(mContext);
-
         Distribute.getInstance().setInstalling(mReleaseDetails);
 
+        /* Verify. */
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
         verifyStatic();
@@ -262,9 +262,9 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(true);
         Distribute.getInstance().startFromBackground(mContext);
-
         Distribute.getInstance().setInstalling(mReleaseDetails);
 
+        /* Verify. */
         verifyStatic();
         DistributeUtils.getStoredDownloadState();
         verifyStatic();
@@ -274,20 +274,20 @@ public class DistributeTest extends AbstractDistributeTest {
 
     private void mockReleaseDetails(boolean mandatoryUpdate) {
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(mandatoryUpdate);
-        when(mReleaseDetails.getDistributionGroupId()).thenReturn(mMockGroupId);
-        when(mReleaseDetails.getReleaseHash()).thenReturn(mMockReleaseHash);
-        when(mReleaseDetails.getId()).thenReturn(mReleaseId);
+        when(mReleaseDetails.getDistributionGroupId()).thenReturn(DISTRIBUTION_GROUP_ID);
+        when(mReleaseDetails.getReleaseHash()).thenReturn(RELEASE_HASH);
+        when(mReleaseDetails.getId()).thenReturn(RELEASE_ID);
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
     }
 
     private void verifyReleaseDetailsAreStored() {
         verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), eq(mMockGroupId));
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), eq(DISTRIBUTION_GROUP_ID));
         verifyStatic();
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), eq(mMockReleaseHash));
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), eq(RELEASE_HASH));
         verifyStatic();
-        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), eq(mReleaseId));
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), eq(RELEASE_ID));
     }
 
     @Test
@@ -315,10 +315,10 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void notifyDownloadNoReleaseDetails() throws Exception {
         mockStatic(DistributeUtils.class);
-        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
         Distribute.getInstance().startFromBackground(mContext);
 
         /* Mock another ReleaseDetails. */
@@ -329,16 +329,16 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify. */
         assertTrue(notifyDownloadResult);
-        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 
     @Test
     public void notifyDownloadStateNotified() throws Exception {
         mockStatic(DistributeUtils.class);
-        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
         Distribute.getInstance().startFromBackground(mContext);
 
         /* Mock notified state. */
@@ -349,16 +349,16 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
-        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 
     @Test
     public void notifyDownloadForegroundActivity() throws Exception {
         mockStatic(DistributeUtils.class);
-        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(notificationManager);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
         Distribute.getInstance().startFromBackground(mContext);
 
         /* Mock foreground activity. */
@@ -369,7 +369,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
-        verify(notificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 
     @Test
@@ -624,10 +624,10 @@ public class DistributeTest extends AbstractDistributeTest {
         verify(mDialog, times(1)).hide();
 
         /*
-        * Call resume fifth time with the same activity reference as before so that
-        * mLastActivityWithDialog and mForegroundActivity are equal and refreshed dialog
-        * is the same and it's not hidden.
-        */
+         * Call resume fifth time with the same activity reference as before so that
+         * mLastActivityWithDialog and mForegroundActivity are equal and refreshed dialog
+         * is the same and it's not hidden.
+         */
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify install dialog is created. */
@@ -653,8 +653,8 @@ public class DistributeTest extends AbstractDistributeTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
         mockStatic(DistributeUtils.class);
         NotificationManager manager = mock(NotificationManager.class);
-        Notification.Builder notificationBuilder = mockNotificationBuilderChain();
-        when(notificationBuilder.build()).thenReturn(mock(Notification.class));
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(DistributeUtils.getNotificationId()).thenReturn(0);
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
@@ -662,17 +662,5 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
         Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
         verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    private Notification.Builder mockNotificationBuilderChain() throws Exception {
-        Notification.Builder notificationBuilder = mock(Notification.Builder.class);
-        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(notificationBuilder);
-        when(notificationBuilder.setTicker(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentTitle(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentText(anyString())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setSmallIcon(anyInt())).thenReturn(notificationBuilder);
-        when(notificationBuilder.setContentIntent(any(PendingIntent.class))).thenReturn(notificationBuilder);
-        when(notificationBuilder.setChannelId(anyString())).thenReturn(notificationBuilder);
-        return notificationBuilder;
     }
 }
