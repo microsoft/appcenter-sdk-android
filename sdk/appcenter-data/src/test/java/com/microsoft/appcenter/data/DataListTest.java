@@ -248,7 +248,7 @@ public class DataListTest extends AbstractDataTest {
         Page<TestDocument> page = docs.getCurrentPage();
         assertNotNull(page.getItems());
         assertNull(page.getError());
-        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mRemoteOperationListener);
         verify(mLocalDocumentStorage).getDocumentsByPartition(startsWith(USER_DOCUMENTS), eq(RESOLVED_USER_PARTITION), any(ReadOptions.class));
         verifyNoMoreInteractions(mLocalDocumentStorage);
@@ -283,7 +283,7 @@ public class DataListTest extends AbstractDataTest {
         final String expectedResponse = Utils.getGson().toJson(
                 new Page<TestDocument>().setItems(documents)
         );
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -320,9 +320,9 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(docCancel);
         assertNull(docCancel.getCurrentPage().getItems());
         assertNotNull(docCancel.getCurrentPage().getError());
-        Throwable cause = docCancel.getCurrentPage().getError().getCause();
-        assertNotNull(cause);
-        assertEquals(IllegalStateException.class, cause.getClass());
+        assertNotNull(docCancel.getCurrentPage().getError().getCause());
+        assertEquals(IllegalStateException.class, docCancel.getCurrentPage().getError().getCause().getClass());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -363,7 +363,7 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -386,6 +386,7 @@ public class DataListTest extends AbstractDataTest {
         Page<TestDocument> secondPage = docs.getNextPage().get();
         assertFalse(docs.hasNextPage());
         assertEquals(secondPage.getItems().get(0).getId(), docs.getCurrentPage().getItems().get(0).getId());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -426,7 +427,7 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -454,6 +455,7 @@ public class DataListTest extends AbstractDataTest {
 
         /* Verify not throws exception. */
         iterator.remove();
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -510,7 +512,7 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(secondPartDocuments)
         );
 
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), mHeaders.capture(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -538,6 +540,7 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(ex);
         assertNotNull(ex.getMessage());
         assertTrue(ex.getMessage().contains("Listing next page is not supported in off-line mode."));
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -552,7 +555,7 @@ public class DataListTest extends AbstractDataTest {
                 .setExpirationDate(expirationDate.getTime())
                 .setToken("fakeToken"));
         when(SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + USER_DOCUMENTS)).thenReturn(tokenResult);
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -579,6 +582,7 @@ public class DataListTest extends AbstractDataTest {
         nextPage = docs.getNextPage().get();
         assertNotNull(nextPage);
         assertNotNull(nextPage.getError());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -586,12 +590,12 @@ public class DataListTest extends AbstractDataTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Data.list(TestDocument.class, USER_DOCUMENTS);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeFlow(null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(false, null, new HttpException(503, exceptionMessage));
 
         /*
          *  No retries and Cosmos DB does not get called.
          */
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         assertNotNull(documents);
         assertNotNull(documents.get());
         assertNotNull(documents.get().getCurrentPage().getError());
@@ -628,7 +632,7 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(documents)
         );
 
-        when(mHttpClient.callAsync(
+        when(mHttpClientNoRetryer.callAsync(
                 endsWith("docs"),
                 anyString(),
                 anyMapOf(String.class, String.class),
@@ -662,6 +666,7 @@ public class DataListTest extends AbstractDataTest {
         assertNotNull(page.getItems());
         assertEquals(1, page.getItems().size());
         assertTrue(page.getItems().get(0).hasFailed());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -692,7 +697,7 @@ public class DataListTest extends AbstractDataTest {
                 new Page<TestDocument>().setItems(documents)
         );
 
-        when(mHttpClient.callAsync(
+        when(mHttpClientNoRetryer.callAsync(
                 endsWith("docs"),
                 anyString(),
                 anyMapOf(String.class, String.class),
@@ -734,7 +739,7 @@ public class DataListTest extends AbstractDataTest {
 
         /* Setup list documents api response. Set response as empty string to force deserialization error. */
         final String expectedResponse = "";
-        when(mHttpClient.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClientNoRetryer.callAsync(endsWith("docs"), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -758,6 +763,7 @@ public class DataListTest extends AbstractDataTest {
         Page<TestDocument> page = docs.getCurrentPage();
         assertNotNull(page);
         assertNotNull(page.getError());
+        verifyZeroInteractions(mHttpClientWithRetryer);
     }
 
     @Test

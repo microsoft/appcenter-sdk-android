@@ -83,7 +83,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        String requestBody = verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        String requestBody = verifyTokenExchangeToCosmosDbFlow(true, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
         assertEquals(DOCUMENT_ID, requestPayload.getId());
@@ -122,7 +122,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
             assertEquals("document", capturedOperation.getDocument());
             assertNull(capturedOperation.getOperation());
         }
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
 
         mData.onNetworkStateUpdated(true);
-        String requestBody = verifyTokenExchangeToCosmosDbFlow(null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+        String requestBody = verifyTokenExchangeToCosmosDbFlow(true, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
 
         DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
         assertEquals(DOCUMENT_ID, requestPayload.getId());
@@ -157,7 +157,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         assertEquals(ETAG, capturedOperation.getETag());
         assertEquals("document", capturedOperation.getDocument());
 
-        verifyNoMoreInteractions(mHttpClient);
+        verifyNoMoreInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mRemoteOperationListener);
     }
 
@@ -193,7 +193,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(500, "You failed!");
-        verifyTokenExchangeToCosmosDbFlow(documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(true, documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(operation),
@@ -221,14 +221,14 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                             CURRENT_TIMESTAMP));
                 }});
         mData.onNetworkStateUpdated(true);
-        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mRemoteOperationListener);
     }
 
     @Test
     public void networkGoesOfflineDoesNothing() {
         mData.onNetworkStateUpdated(false);
-        verifyZeroInteractions(mHttpClient);
+        verifyZeroInteractions(mHttpClientWithRetryer);
         verifyZeroInteractions(mLocalDocumentStorage);
         verifyZeroInteractions(mRemoteOperationListener);
     }
@@ -260,7 +260,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
-        verifyTokenExchangeFlow(null, new Exception("Yeah, it failed."));
+        verifyTokenExchangeFlow(true, null, new Exception("Yeah, it failed."));
 
         ArgumentCaptor<DataException> documentErrorArgumentCaptor = ArgumentCaptor.forClass(DataException.class);
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
@@ -292,7 +292,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
+        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(PENDING_OPERATION_DELETE_VALUE),
@@ -345,7 +345,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
                 eq(pendingOperation.getOperation()),
@@ -379,7 +379,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         mData.onNetworkStateUpdated(true);
 
         HttpException cosmosFailureException = new HttpException(409, "Conflict");
-        verifyTokenExchangeToCosmosDbFlow(DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
+        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }
 }

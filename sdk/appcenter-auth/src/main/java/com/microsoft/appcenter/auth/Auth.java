@@ -55,6 +55,7 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITIES;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_DEFAULT;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE;
+import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_AAD;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_TYPE_B2C;
 import static com.microsoft.appcenter.auth.Constants.AUTHORITY_URL;
 import static com.microsoft.appcenter.auth.Constants.AUTH_GROUP;
@@ -460,24 +461,27 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
             JSONObject configuration = new JSONObject(configurationPayload);
             String identityScope = configuration.getString(IDENTITY_SCOPE);
             String authorityUrl = null;
+            String type = null;
             JSONArray authorities = configuration.getJSONArray(AUTHORITIES);
             for (int i = 0; i < authorities.length(); i++) {
                 JSONObject authority = authorities.getJSONObject(i);
-                if (authority.optBoolean(AUTHORITY_DEFAULT) && AUTHORITY_TYPE_B2C.equals(authority.getString(AUTHORITY_TYPE))) {
-                    authorityUrl = authority.getString(AUTHORITY_URL);
-                    break;
+                if (authority.optBoolean(AUTHORITY_DEFAULT)) {
+                    if (AUTHORITY_TYPE_B2C.equals(authority.getString(AUTHORITY_TYPE))) {
+                        type = AUTHORITY_TYPE_B2C;
+                        authorityUrl = authority.getString(AUTHORITY_URL);
+                    } else if (AUTHORITY_TYPE_AAD.equals(authority.getString(AUTHORITY_TYPE))) {
+                        type = AUTHORITY_TYPE_AAD;
+                    }
                 }
             }
-            if (authorityUrl != null) {
-
-                /* The remaining validation is done by the library. */
-                mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
-                mAuthorityUrl = authorityUrl;
-                mIdentityScope = identityScope;
-                AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
-            } else {
-                throw new IllegalStateException("Cannot find a b2c authority configured to be the default.");
+            if (type == null) {
+                throw new IllegalStateException("Cannot find a default b2c or aad authority configured to be the default.");
             }
+            mAuthenticationClient = new PublicClientApplication(mContext, getConfigFile());
+            mAuthorityUrl = (authorityUrl != null) ? authorityUrl : mAuthenticationClient.getConfiguration().getAuthorities().get(0).getAuthorityURL().toString();
+            AppCenterLog.debug(LOG_TAG, "Authority url=" + mAuthorityUrl);
+            mIdentityScope = identityScope;
+            AppCenterLog.info(LOG_TAG, "Auth service configured successfully.");
         } catch (JSONException | RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "The configuration is invalid.", e);
             clearCache();
