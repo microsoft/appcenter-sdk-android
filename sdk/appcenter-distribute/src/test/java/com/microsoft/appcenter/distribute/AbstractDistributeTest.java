@@ -153,9 +153,6 @@ public class AbstractDistributeTest {
     ReleaseDownloader mReleaseDownloader;
 
     @Mock
-    Notification.Builder mNotificationBuilder;
-
-    @Mock
     ReleaseDownloadListener mReleaseDownloaderListener;
 
     @Mock
@@ -324,20 +321,12 @@ public class AbstractDistributeTest {
         mReleaseDownloaderListener = mock(ReleaseDownloadListener.class);
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
 
-        mUri = mock(Uri.class);
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
         when(mUri.getEncodedPath()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
 
-        mInstallIntent = mock(Intent.class);
         when(mInstallIntent.getData()).thenReturn(mUri);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
-    }
-
-    void completeDownload() {
-        Intent completionIntent = mock(Intent.class);
-        PowerMockito.when(completionIntent.getAction()).thenReturn(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        mReleaseDownloaderListener.onComplete(mUri);
     }
 
     void restartProcessAndSdk() {

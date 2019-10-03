@@ -39,7 +39,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -294,77 +293,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setMessage("hardcoded-app-name1.2.36");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
-    }
-
-    @Test
-    public void dialogActivityStateChanges() throws Exception {
-
-        /* Mock we already have redirection parameters. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        final Semaphore beforeSemaphore = new Semaphore(0);
-        final Semaphore afterSemaphore = new Semaphore(0);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocation) {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
-                        afterSemaphore.release();
-                    }
-                }.start();
-                return mock(ServiceCall.class);
-            }
-        });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(4);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(releaseDetails.getReleaseNotes()).thenReturn("mock");
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-
-        /* Trigger call. */
-        start();
-        Activity activity = mock(Activity.class);
-        Distribute.getInstance().onActivityResumed(activity);
-        Distribute.getInstance().onActivityPaused(activity);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Release call in background. */
-        beforeSemaphore.release();
-        afterSemaphore.acquireUninterruptibly();
-
-        /* Verify dialog not shown. */
-        verify(mDialogBuilder, never()).create();
-        verify(mDialog, never()).show();
-
-        /* Go foreground. */
-        Distribute.getInstance().onActivityResumed(activity);
-
-        /* Verify dialog now shown. */
-        verify(mDialogBuilder).create();
-        verify(mDialog).show();
-
-        /* Pause/resume should not alter dialog. */
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityResumed(activity);
-
-        /* Only once check, and no hiding. */
-        verify(mDialogBuilder).create();
-        verify(mDialog).show();
-        verify(mDialog, never()).hide();
-
-        /* Cover activity. Dialog must be replaced. */
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialogBuilder, times(2)).create();
-        verify(mDialog, times(2)).show();
-        verify(mDialog).hide();
     }
 
     @Test

@@ -243,14 +243,6 @@ public class ReleaseDownloadListenerTest  {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                PowerMockito.when(mProgressDialog.isIndeterminate()).thenReturn((Boolean) invocation.getArguments()[0]);
-                return null;
-            }
-        }).when(mProgressDialog).setIndeterminate(anyBoolean());
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
                 Mockito.when(mProgressDialog.isShowing()).thenReturn(true);
                 return null;
             }
@@ -347,6 +339,7 @@ public class ReleaseDownloadListenerTest  {
     @Test
     public void showDialogOnProgressTest() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
+        when(mProgressDialog.isIndeterminate()).thenReturn(true);
 
         /* Setup progressDialog. */
         releaseDownloadListener.showDownloadProgress(mActivity);
@@ -359,6 +352,27 @@ public class ReleaseDownloadListenerTest  {
         */
         assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
         verify(mProgressDialog).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
+        verify(mProgressDialog).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
+    }
+
+    @Test
+    public void showIndeterminateDialogOnProgressTest() throws Exception {
+        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
+        when(mProgressDialog.isIndeterminate()).thenReturn(false);
+
+        /* Setup progressDialog. */
+        releaseDownloadListener.showDownloadProgress(mActivity);
+        long totalSize = 1024 * 1024 * 1024;
+        long currentSize = 2;
+
+        /*
+         * Verify that the dialog is set up with the appropriate values
+         * and the method returns true.
+         */
+        assertTrue(releaseDownloadListener.onProgress(currentSize, totalSize));
+
+        /* Verify that dialog is not indeterminate, it's not configured again. */
+        verify(mProgressDialog, never()).setMax((int)(totalSize / MEBIBYTE_IN_BYTES));
         verify(mProgressDialog).setProgress((int)(currentSize / MEBIBYTE_IN_BYTES));
     }
 

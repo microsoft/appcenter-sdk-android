@@ -38,11 +38,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 })
 public class ResumeFromBackgroundTaskTest {
 
-    /**
-     * Log tag for this service.
-     */
-    private static final String LOG_TAG = AppCenter.LOG_TAG + "Distribute";
-
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
 
@@ -65,8 +60,7 @@ public class ResumeFromBackgroundTaskTest {
         when(SharedPreferencesManager.getLong(anyString(), anyLong())).thenReturn(-1L);
 
         /* Start. */
-        startDoInBackground();
-        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 1L));
+        ResumeFromBackgroundTask task = new ResumeFromBackgroundTask(mContext, 1L);
         task.doInBackground();
 
         /* Verify. */
@@ -79,8 +73,7 @@ public class ResumeFromBackgroundTaskTest {
         when(SharedPreferencesManager.getLong(anyString(), anyLong())).thenReturn(2L);
 
         /* Start. */
-        startDoInBackground();
-        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, 4L));
+        ResumeFromBackgroundTask task = new ResumeFromBackgroundTask(mContext, 4L);
         task.doInBackground();
 
         /* Verify. */
@@ -94,23 +87,11 @@ public class ResumeFromBackgroundTaskTest {
         when(SharedPreferencesManager.getLong(anyString(), anyLong())).thenReturn(downloadedId);
 
         /* Start. */
-        startDoInBackground();
-        ResumeFromBackgroundTask task = AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(mContext, downloadedId));
+        ResumeFromBackgroundTask task = new ResumeFromBackgroundTask(mContext, downloadedId);
         task.doInBackground();
 
         /* Verify. */
         verify(mDistribute).startFromBackground(mContext);
         verify(mDistribute).resumeDownload();
-    }
-
-    private void startDoInBackground() {
-        final ResumeFromBackgroundTask[] task = { null };
-        when(AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class))).then(new Answer<ResumeFromBackgroundTask>() {
-            @Override
-            public ResumeFromBackgroundTask answer(InvocationOnMock invocation) {
-                task[0] = (ResumeFromBackgroundTask) invocation.getArguments()[1];
-                return task[0];
-            }
-        });
     }
 }

@@ -47,7 +47,6 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1261,31 +1260,10 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        final Semaphore beforeSemaphore = new Semaphore(0);
-        final Semaphore afterSemaphore = new Semaphore(0);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocation) {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(403));
-                        afterSemaphore.release();
-                    }
-                }.start();
-                return mock(ServiceCall.class);
-            }
-        });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it fails. */
         Distribute.setEnabled(false);
@@ -1293,8 +1271,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-        beforeSemaphore.release();
-        afterSemaphore.acquireUninterruptibly();
 
         /* Verify complete workflow call ignored. i.e. no more call to delete the state. */
         verifyStatic();
@@ -1303,7 +1279,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1311,31 +1286,10 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        final Semaphore beforeSemaphore = new Semaphore(0);
-        final Semaphore afterSemaphore = new Semaphore(0);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocation) {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        beforeSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
-                        afterSemaphore.release();
-                    }
-                }.start();
-                return mock(ServiceCall.class);
-            }
-        });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Disable before it succeeds. */
         Distribute.setEnabled(false);
@@ -1343,8 +1297,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verifyStatic(never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-        beforeSemaphore.release();
-        afterSemaphore.acquireUninterruptibly();
 
         /* Verify complete workflow call skipped. i.e. no more call to delete the state. */
         verifyStatic();
@@ -1353,8 +1305,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verify(mDialog, never()).show();
     }
 
     @Test
