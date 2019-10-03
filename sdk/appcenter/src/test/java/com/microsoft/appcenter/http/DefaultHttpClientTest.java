@@ -83,6 +83,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppCenterLog.class,
         DefaultHttpClient.class,
         DefaultHttpClientCallTask.class,
+        HttpUtils.class,
         TrafficStats.class
 })
 public class DefaultHttpClientTest {
@@ -153,6 +154,15 @@ public class DefaultHttpClientTest {
         mockCall(null);
     }
 
+    private static HttpsURLConnection mockConnection(String urlString) throws Exception {
+        URL url = mock(URL.class);
+        whenNew(URL.class).withArguments(urlString).thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
+        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
+        when(url.openConnection()).thenReturn(urlConnection);
+        return urlConnection;
+    }
+
     @Test
     public void tls1_2Enforcement() throws Exception {
 
@@ -168,10 +178,7 @@ public class DefaultHttpClientTest {
 
     private void testTls1_2Setting(int apiLevel, int tlsSetExpectedCalls) throws Exception {
         String urlString = "https://mock/logs?api-version=1.0.0";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         DefaultHttpClient httpClient = new DefaultHttpClient();
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
         httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), null, mock(ServiceCallback.class));
@@ -200,10 +207,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/logs?api-version=1.0.0";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -232,7 +236,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -256,10 +260,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/logs?api-version=1.0.0";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -298,10 +299,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -331,7 +329,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
     }
@@ -341,10 +339,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(outputStream);
         ByteArrayInputStream inputStream = new ByteArrayInputStream("OK".getBytes());
@@ -376,11 +371,8 @@ public class DefaultHttpClientTest {
     public void get100() throws Exception {
 
         /* Configure mock HTTPS. */
-        URL url = mock(URL.class);
         String urlString = "https://mock/get";
-        whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(100);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -404,10 +396,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -445,10 +434,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -471,7 +457,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
 
@@ -508,10 +494,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -534,7 +517,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
 
@@ -558,10 +541,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -590,7 +570,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection, never()).setDoOutput(true);
         verify(urlConnection).disconnect();
         verify(inputStream).close();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate, never()).buildRequestBody();
         httpClient.close();
 
@@ -615,10 +595,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(304);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -644,10 +621,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(503);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -717,10 +691,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         mockCall(new Consumer<DefaultHttpClientCallTask>() {
 
             @Override
@@ -744,10 +715,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/post";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
         mockCall(new Consumer<DefaultHttpClientCallTask>() {
@@ -774,10 +742,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         mockCall(new Consumer<DefaultHttpClientCallTask>() {
 
             @Override
@@ -801,10 +766,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -831,10 +793,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock/get";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(503);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -861,6 +820,7 @@ public class DefaultHttpClientTest {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
         IOException exception = new IOException("mock");
         when(url.openConnection()).thenThrow(exception);
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
@@ -878,6 +838,7 @@ public class DefaultHttpClientTest {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
         IOException exception = new IOException("mock");
         HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
@@ -904,6 +865,7 @@ public class DefaultHttpClientTest {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
         IOException exception = new IOException("mock");
         HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
@@ -932,6 +894,7 @@ public class DefaultHttpClientTest {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
         when(url.openConnection()).thenThrow(new Error());
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -953,11 +916,8 @@ public class DefaultHttpClientTest {
     public void failedSerialization() throws Exception {
 
         /* Configure mock HTTPS. */
-        URL url = mock(URL.class);
         String urlString = "https://mock/get";
-        whenNew(URL.class).withAnyArguments().thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
 
         /* Configure API client. */
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
@@ -1028,10 +988,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -1074,7 +1031,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -1100,10 +1057,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTP. */
         String urlString = "https://mock";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -1139,7 +1093,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -1165,10 +1119,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -1204,7 +1155,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -1230,10 +1181,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         String urlString = "https://mock";
-        URL url = mock(URL.class);
-        whenNew(URL.class).withArguments(urlString).thenReturn(url);
-        HttpsURLConnection urlConnection = mock(HttpsURLConnection.class);
-        when(url.openConnection()).thenReturn(urlConnection);
+        HttpsURLConnection urlConnection = mockConnection(urlString);
         when(urlConnection.getResponseCode()).thenReturn(200);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         when(urlConnection.getOutputStream()).thenReturn(buffer);
@@ -1276,7 +1224,7 @@ public class DefaultHttpClientTest {
         verify(urlConnection).setRequestMethod("POST");
         verify(urlConnection).setDoOutput(true);
         verify(urlConnection).disconnect();
-        verify(callTemplate).onBeforeCalling(eq(url), anyMapOf(String.class, String.class));
+        verify(callTemplate).onBeforeCalling(any(URL.class), anyMapOf(String.class, String.class));
         verify(callTemplate).buildRequestBody();
         httpClient.close();
 
@@ -1298,6 +1246,7 @@ public class DefaultHttpClientTest {
         String urlString = "http://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("http");
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -1313,6 +1262,7 @@ public class DefaultHttpClientTest {
         String urlString = "bad url";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn(null);
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -1328,6 +1278,7 @@ public class DefaultHttpClientTest {
         String urlString = "https://mock/get";
         URL url = mock(URL.class);
         whenNew(URL.class).withAnyArguments().thenReturn(url);
+        when(url.getProtocol()).thenReturn("https");
         HttpURLConnection urlConnection = mock(HttpURLConnection.class);
         when(url.openConnection()).thenReturn(urlConnection);
         HttpClient.CallTemplate callTemplate = mock(HttpClient.CallTemplate.class);

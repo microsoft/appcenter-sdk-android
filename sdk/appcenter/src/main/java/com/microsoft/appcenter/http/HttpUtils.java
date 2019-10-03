@@ -224,8 +224,8 @@ public class HttpUtils {
      * @throws IOException if connection fails.
      */
     @NonNull
-    public static HttpsURLConnection createHttpsConnection(URL url) throws IOException {
-        if (!url.getProtocol().equals("https")) {
+    public static HttpsURLConnection createHttpsConnection(@NonNull URL url) throws IOException {
+        if (!"https".equals(url.getProtocol())) {
             throw new IOException("App Center support only HTTPS connection.");
         }
         URLConnection urlConnection = url.openConnection();
