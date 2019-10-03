@@ -89,7 +89,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getInt(anyString(), anyInt()))
                 .thenThrow(new NullPointerException());
 
-        /* Our activity is launch one. */
+        /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
@@ -130,7 +130,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getInt(anyString(), anyInt()))
                 .thenThrow(new NullPointerException());
 
-        /* Our activity is launch one. */
+        /* Our activity is launched once. */
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(null);
         ComponentName componentName = mock(ComponentName.class);
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
@@ -148,7 +148,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getInt(anyString(), anyInt()))
                 .thenThrow(new NullPointerException());
 
-        /* Our activity is launch one. */
+        /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
@@ -173,7 +173,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getInt(anyString(), anyInt()))
                 .thenThrow(new NullPointerException());
 
-        /* Our activity is launch one. */
+        /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
@@ -192,7 +192,7 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void setDownloadingReleaseDetailsEqualTest() {
 
-        /* Moc release details and startFromBackground to apply it. */
+        /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(true);
         Distribute.getInstance().startFromBackground(mContext);
 
@@ -234,7 +234,7 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void setInstallingTest() {
 
-        /* Moc release details and startFromBackground to apply it. */
+        /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(false);
         Distribute.getInstance().startFromBackground(mContext);
 
@@ -252,7 +252,7 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void setInstallingMandatoryReleaseDetailsTest() {
 
-        /* Moc release details and startFromBackground to apply it. */
+        /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(true);
         Distribute.getInstance().startFromBackground(mContext);
 
