@@ -6,14 +6,18 @@
 package com.microsoft.appcenter.http;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Locale;
@@ -21,6 +25,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLException;
 
 /**
@@ -209,5 +214,48 @@ public class HttpUtils {
         NetworkStateHelper networkStateHelper = NetworkStateHelper.getSharedInstance(context);
         httpClient = new HttpClientNetworkStateHandler(httpClient, networkStateHelper);
         return httpClient;
+    }
+
+    /**
+     * Create HTTPS connection.
+     *
+     * @param url a URL.
+     * @return instance of {@link HttpsURLConnection}.
+     * @throws IOException if connection fails.
+     */
+    @NonNull
+    public static HttpsURLConnection createHttpsConnection(URL url) throws IOException {
+        if (!url.getProtocol().equals("https")) {
+            throw new IOException("App Center support only HTTPS connection.");
+        }
+        URLConnection urlConnection = url.openConnection();
+        HttpsURLConnection httpsURLConnection;
+        if (urlConnection instanceof HttpsURLConnection) {
+            httpsURLConnection = (HttpsURLConnection) urlConnection;
+        } else {
+            throw new IOException("App Center supports only HTTPS connection.");
+        }
+
+        /*
+         * Make sure we use TLS 1.2 when the device supports it but not enabled by default.
+         * Don't hardcode TLS version when enabled by default to avoid unnecessary wrapping and
+         * to support future versions of TLS such as say 1.3 without having to patch this code.
+         *
+         * TLS 1.2 was enabled by default only on Android 5.0:
+         * https://developer.android.com/about/versions/android-5.0-changes#ssl
+         * https://developer.android.com/reference/javax/net/ssl/SSLSocket#default-configuration-for-different-android-versions
+         *
+         * There is a problem that TLS 1.2 is still disabled by default on some Samsung devices
+         * with API 21, so apply the rule to this API level as well.
+         * See https://github.com/square/okhttp/issues/2372#issuecomment-244807676
+         */
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
+            httpsURLConnection.setSSLSocketFactory(new TLS1_2SocketFactory());
+        }
+
+        /* Configure connection timeouts. */
+        httpsURLConnection.setConnectTimeout(CONNECT_TIMEOUT);
+        httpsURLConnection.setReadTimeout(READ_TIMEOUT);
+        return httpsURLConnection;
     }
 }
