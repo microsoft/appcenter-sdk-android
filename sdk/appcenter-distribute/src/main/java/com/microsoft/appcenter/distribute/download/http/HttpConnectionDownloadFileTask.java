@@ -73,6 +73,8 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
             long totalBytesDownloaded = downloadFile(connection);
             if (totalBytesDownloaded > 0) {
                 mDownloader.onDownloadComplete(mTargetFile);
+            } else {
+                throw new IOException("The content of downloaded file is empty");
             }
         } catch (IOException e) {
             mDownloader.onDownloadError(e.getMessage());
