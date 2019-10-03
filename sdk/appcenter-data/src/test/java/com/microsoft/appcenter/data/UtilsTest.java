@@ -120,9 +120,16 @@ public class UtilsTest {
     }
 
     @Test
-    public void removeAccountIdFromPartitionName() {
+    public void removeAccountIdFromPartitionNameWithGuid() {
         String partition = "user";
         String partitionNameWithAccountId = partition + "-" + "bd45f90e-6eb1-4c47-817e-e59b82b5c03d";
+        assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
+    }
+
+    @Test
+    public void removeAccountIdFromPartitionNameWithLongHash() {
+        String partition = "user";
+        String partitionNameWithAccountId = partition + "-" + "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7";
         assertEquals(partition, Utils.removeAccountIdFromPartitionName(partitionNameWithAccountId));
     }
 

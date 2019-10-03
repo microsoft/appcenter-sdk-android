@@ -202,7 +202,7 @@ public class Utils {
         if (partition.equals(DefaultPartitions.APP_DOCUMENTS)) {
             return partition;
         }
-        return partition.substring(0, partition.length() - Constants.PARTITION_KEY_SUFFIX_LENGTH);
+        return partition.split("-")[0];
     }
 
     public static Gson getGson() {
