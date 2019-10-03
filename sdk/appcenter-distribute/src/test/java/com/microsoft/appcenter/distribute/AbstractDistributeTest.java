@@ -225,6 +225,7 @@ public class AbstractDistributeTest {
         Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
+        Whitebox.setInternalState(packageInfo, "lastUpdateTime", 2);
 
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
