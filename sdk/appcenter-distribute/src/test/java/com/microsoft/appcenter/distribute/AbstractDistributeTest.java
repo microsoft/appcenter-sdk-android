@@ -324,8 +324,6 @@ public class AbstractDistributeTest {
         /* Mock Install Intent. */
         when(mInstallIntent.getData()).thenReturn(mUri);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
-
-        doNothing().when(mNotificationManager).cancel(anyInt());
     }
 
     void restartProcessAndSdk() {

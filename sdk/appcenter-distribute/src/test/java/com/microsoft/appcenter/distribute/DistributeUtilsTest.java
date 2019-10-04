@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,14 @@ public class DistributeUtilsTest {
     public void init() {
         new DistributeUtils();
         new DistributeConstants();
+    }
+
+    @Test
+    public void getNotificationId() {
+
+        /* Coverage fix. */
+        int notificationId = DistributeUtils.getNotificationId();
+        Assert.assertNotEquals(0, notificationId);
     }
 
     @Test
