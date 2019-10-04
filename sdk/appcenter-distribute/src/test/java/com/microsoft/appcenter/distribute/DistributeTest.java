@@ -294,7 +294,7 @@ public class DistributeTest extends AbstractDistributeTest {
     public void cancelingNotification() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
-        when(DistributeUtils.getNotificationId()).thenReturn(2);
+        when(DistributeUtils.getNotificationId()).thenCallRealMethod();
         NotificationManager manager = mock(NotificationManager.class);
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
         Distribute.getInstance().onStarted(mContext, mChannel, any(String.class), any(String.class), false);
