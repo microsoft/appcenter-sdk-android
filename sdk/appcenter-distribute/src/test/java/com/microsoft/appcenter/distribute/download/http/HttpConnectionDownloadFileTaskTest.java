@@ -315,6 +315,16 @@ public class HttpConnectionDownloadFileTaskTest {
         verify(mDownloader).onDownloadError(anyString());
     }
 
+    @Test(expected = NullPointerException.class)
+    public void somethingGoingWrong() {
+        doThrow(new NullPointerException()).when(mDownloader).onDownloadStarted(anyLong());
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Cover clearing TrafficStats in finally block. */
+    }
+
     private void mockConnectionContent(String content) throws IOException {
         InputStream inputStream = new ByteArrayInputStream(content.getBytes());
         when(mUrlConnection.getInputStream()).thenReturn(inputStream);
