@@ -394,16 +394,13 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void discardDownloadAsAppUpdateTest() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Mock that download time is smaller than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(1L);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         /* Verify that previous tasks are cancelled. */
         verifyStatic();
@@ -416,8 +413,6 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void restartDownloadNotEnqueued() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
@@ -428,16 +423,13 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(false);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         verify(mDialog, never()).show();
     }
 
     @Test
     public void showDownloadProgressTest() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
@@ -448,15 +440,12 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mActivity);
+        resumeWorkflow(mActivity);
         verify(mReleaseDownloaderListener).showDownloadProgress(mActivity);
     }
 
     @Test
     public void showDownloadProgressAndActivityTest() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
@@ -469,8 +458,8 @@ public class DistributeTest extends AbstractDistributeTest {
 
         ProgressDialog progressDialog = mock(ProgressDialog.class);
         when(mReleaseDownloaderListener.showDownloadProgress(mActivity)).thenReturn(progressDialog);
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mActivity);
+
+        resumeWorkflow(mActivity);
         verify(mReleaseDownloaderListener).showDownloadProgress(mActivity);
         verify(progressDialog).show();
     }
@@ -478,8 +467,6 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void showDownloadProgressNullDownloaderListenerTest() throws Exception {
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(null);
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
@@ -490,16 +477,12 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
         verify(mReleaseDownloaderListener, never()).showDownloadProgress(mActivity);
     }
 
     @Test
     public void restartedDuringMandatoryUpdate() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
@@ -510,24 +493,20 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         verify(mDialog, never()).show();
     }
 
     @Test
     public void downloadAlreadyCheckedTest() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         /* Call resume twice when download already checked. */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -539,8 +518,6 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock mReleaseDownloader null. */
         when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(null);
 
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
@@ -551,8 +528,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
@@ -568,8 +544,6 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock mReleaseDownloader is not downloading. */
         when(mReleaseDownloader.isDownloading()).thenReturn(false);
 
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
@@ -580,8 +554,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
@@ -591,6 +564,12 @@ public class DistributeTest extends AbstractDistributeTest {
         verify(mDialogBuilder).create();
     }
 
+    private void resumeWorkflow(Activity activity) {
+        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
+        start();
+        Distribute.setEnabledForDebuggableBuild(true);
+        Distribute.getInstance().onActivityResumed(activity);
+    }
 
     @Test
     public void showMandatoryDownloadReadyDialogTest() {

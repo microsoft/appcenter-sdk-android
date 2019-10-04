@@ -1291,6 +1291,42 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void releaseSuccessActivityIsNull() {
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+
+        /* Update is more recent. */
+        when(mReleaseDetails.getVersion()).thenReturn(7);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+
+                /* Do the call so that id had changed. */
+                Distribute.getInstance().onActivityPaused(mActivity);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                return mock(ServiceCall.class);
+            }
+        }).thenAnswer(new Answer<ServiceCall>() {
+
+            /* On second time we don't answer as it's callback from getLatestReleaseDetails above. */
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Verify on failure we don't complete workflow if ids don't match. */
+        verifyStatic(never());
+        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+    }
+
+    @Test
     public void checkReleaseFailsParsing() throws Exception {
 
         /* Mock we already have token. */
