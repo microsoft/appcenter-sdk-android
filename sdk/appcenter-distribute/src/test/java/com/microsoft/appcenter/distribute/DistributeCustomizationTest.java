@@ -6,9 +6,11 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -16,6 +18,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -117,6 +120,12 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.setInstanceEnabled(false);
 
         /* Call handleUpdateAction. */
+        distribute.handleUpdateAction(UpdateAction.POSTPONE);
+        verifyStatic(times(++appCenterLogErrorCounter));
+        AppCenterLog.error(anyString(), anyString());
+
+        /* mReleaseListener is null. */
+        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(null);
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */

@@ -384,9 +384,16 @@ public class DistributeTest extends AbstractDistributeTest {
     public void updateReleaseDetailsFromBackground() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+
+        /* mReleaseDownloader is null and is created. */
         Distribute.getInstance().startFromBackground(mContext);
         verifyStatic();
         ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloader.Listener.class));
+
+        /* mReleaseDetails not null but id is not equal to mReleaseDownloader details id. */
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* mReleaseDetails is null. */
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
         Distribute.getInstance().startFromBackground(mContext);
         verify(mReleaseDownloader).cancel();
