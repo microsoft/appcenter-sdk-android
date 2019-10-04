@@ -14,6 +14,7 @@ import android.support.annotation.VisibleForTesting;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -116,11 +117,10 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
      * Performs IO operation to download file through {@link URLConnection}.
      * Saves the file to the {@link #mTargetFile).
      *
-     * @param connection network connection,
+     * @param connection network connection.
      * @return total number of downloaded bytes.
      * @throws IOException if connection fails.
      */
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     private long downloadFile(URLConnection connection) throws IOException {
         InputStream input = null;
         OutputStream output = null;
@@ -129,15 +129,7 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
             output = new FileOutputStream(mTargetFile);
             return copyStream(input, output, connection.getContentLength());
         } finally {
-            try {
-                if (output != null) {
-                    output.close();
-                }
-                if (input != null) {
-                    input.close();
-                }
-            } catch (IOException ignored) {
-            }
+            close(input, output);
         }
     }
 
@@ -176,5 +168,21 @@ class HttpConnectionDownloadFileTask extends AsyncTask<Void, Void, Void> {
         }
         outputStream.flush();
         return totalBytesDownloaded;
+    }
+
+    /**
+     * Close all resources.
+     *
+     * @param closeables list of closable resources.
+     */
+    private static void close(Closeable... closeables) {
+        for (Closeable closeable : closeables) {
+            try {
+                if (closeable != null) {
+                    closeable.close();
+                }
+            } catch (IOException ignored) {
+            }
+        }
     }
 }

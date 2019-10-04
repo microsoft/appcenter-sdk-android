@@ -43,10 +43,12 @@ import static com.microsoft.appcenter.http.HttpUtils.WRITE_BUFFER_SIZE;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -280,6 +282,37 @@ public class HttpConnectionDownloadFileTaskTest {
         verify(mDownloader).onDownloadStarted(anyLong());
         verify(mDownloader).onDownloadComplete(eq(mTargetFile));
         verify(mDownloader, never()).onDownloadError(anyString());
+    }
+
+    @Test
+    public void errorDuringStreamCopy() throws IOException {
+        InputStream inputStream = mock(InputStream.class);
+        when(inputStream.read(any(byte[].class), anyInt(), anyInt())).thenThrow(new IOException());
+        when(mUrlConnection.getInputStream()).thenReturn(inputStream);
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
+    }
+
+    @Test
+    public void errorDuringStreamCopyAndClose() throws IOException {
+        InputStream inputStream = mock(InputStream.class);
+        when(inputStream.read(any(byte[].class), anyInt(), anyInt())).thenThrow(new IOException());
+        doThrow(new IOException()).when(inputStream).close();
+        when(mUrlConnection.getInputStream()).thenReturn(inputStream);
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
     }
 
     private void mockConnectionContent(String content) throws IOException {
