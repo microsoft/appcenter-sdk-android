@@ -546,10 +546,10 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void showUpdateDialogReleaseDownloaderNotDownloadingTest() {
+    public void showUpdateDialogReleaseDownloaderDownloadingTest() {
 
-        /* Mock mReleaseDownloader is not downloading. */
-        when(mReleaseDownloader.isDownloading()).thenReturn(false);
+        /* Mock mReleaseDownloader is downloading. */
+        when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
@@ -565,10 +565,10 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
-         * mReleaseDownloader is not downloading.
+         * mReleaseDownloader is downloading.
          */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mDialogBuilder).create();
+        verify(mDialogBuilder, never()).create();
     }
 
     private void resumeWorkflow(Activity activity) {
@@ -580,8 +580,6 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void showMandatoryDownloadReadyDialogTest() {
-        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        start();
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1).thenReturn(DOWNLOAD_STATE_INSTALLING);
 
@@ -592,8 +590,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
-        Distribute.setEnabledForDebuggableBuild(true);
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        resumeWorkflow(mock(Activity.class));
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
