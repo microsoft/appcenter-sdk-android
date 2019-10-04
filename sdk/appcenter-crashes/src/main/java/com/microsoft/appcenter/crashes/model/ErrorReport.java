@@ -25,9 +25,9 @@ public class ErrorReport {
     private String threadName;
 
     /**
-     * The throwable that caused the crash.
+     * The stack trace of the crash.
      */
-    private Throwable throwable;
+    private String stackTrace;
 
     /**
      * The date and time the application started, <code>null</code> if unknown.
@@ -81,21 +81,42 @@ public class ErrorReport {
     }
 
     /**
+     * Gets the stack trace of the crash.
+     *
+     * @return The stack trace.
+     */
+    public String getStackTrace() {
+        return stackTrace;
+    }
+
+    /**
+     * Sets the stack trace of the crash.
+     *
+     * @param stackTrace The stack trace.
+     */
+    public void setStackTrace(String stackTrace) {
+        this.stackTrace = stackTrace;
+    }
+
+    /**
      * Gets the throwable.
      *
+     * @deprecated This method has been deprecated, use {@link #getStackTrace()} instead.
      * @return The throwable.
      */
+    @Deprecated
     public Throwable getThrowable() {
-        return throwable;
+        return null;
     }
 
     /**
      * Sets the throwable.
      *
+     * @deprecated This method has been deprecated, use {@link #setStackTrace(String)} instead.
      * @param throwable A throwable to set.
      */
+    @Deprecated
     public void setThrowable(Throwable throwable) {
-        this.throwable = throwable;
     }
 
     /**
