@@ -27,7 +27,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void[] params) {
+    protected Void doInBackground(Void... params) {
 
         /* Download file. */
         ReleaseDetails releaseDetails = mDownloader.getReleaseDetails();

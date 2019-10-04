@@ -1,231 +1,373 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.download.manager;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import android.os.Build;
+import android.os.Handler;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.internal.matchers.CapturesArguments;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
+import org.powermock.reflect.Whitebox;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyMapOf;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest ( {SharedPreferencesManager.class, AsyncTaskUtils.class, DownloadManager.Request.class})
+@PrepareForTest({
+        AsyncTaskUtils.class,
+        Build.VERSION.class,
+        DownloadManager.Request.class,
+        HandlerUtils.class,
+        SharedPreferencesManager.class,
+        Uri.class
+})
 @RunWith(PowerMockRunner.class)
 public class DownloadManagerReleaseDownloaderTest {
 
-    Context mockContext;
+    private static final long DOWNLOAD_ID = 42;
 
-    ReleaseDownloader.Listener mockListener;
+    @Mock
+    private Context mContext;
 
-    DownloadManager mockDownloadManager;
+    @Mock
+    private ReleaseDetails mReleaseDetails;
 
-    Semaphore mCheckDownloadBeforeSemaphore;
+    @Mock
+    private ReleaseDownloader.Listener mListener;
 
-    Semaphore mCheckDownloadAfterSemaphore;
+    @Mock
+    private DownloadManagerUpdateTask mUpdateTask;
+
+    @Mock
+    private DownloadManagerRequestTask mRequestTask;
+
+    @Mock
+    private DownloadManagerRemoveTask mRemoveTask;
+
+    private DownloadManagerReleaseDownloader mReleaseDownloader;
 
     @Before
-    public void setUp() throws Exception {
-        mockContext = mock(Context.class);
-        mockListener = mock(ReleaseDownloader.Listener.class);
-        mockDownloadManager = mock(DownloadManager.class);
-        when(mockContext.getSystemService(DOWNLOAD_SERVICE)).thenReturn(mockDownloadManager);
+    public void setUp() {
         mockStatic(SharedPreferencesManager.class);
+        mockStatic(HandlerUtils.class);
+
+        /* Mock AsyncTaskUtils. */
         mockStatic(AsyncTaskUtils.class);
-        whenNew(DownloadManager.class).withAnyArguments().thenReturn(mockDownloadManager);
-    }
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class))).thenReturn(mUpdateTask);
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class))).thenReturn(mRequestTask);
+        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class))).thenReturn(mRemoveTask);
 
-    @Test
-    public void resumeTest() throws Exception {
+        /* Run handler immediately. */
+        Handler handler = mock(Handler.class);
+        when(HandlerUtils.getMainHandler()).thenReturn(handler);
+        when(handler.postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
 
-        /* Prepare data. */
-        DownloadManagerUpdateTask mockDownloadManagerUpdateTask = mock(DownloadManagerUpdateTask.class);
-        DownloadManagerRequestTask mockDownloadManagerRequestTask = mock(DownloadManagerRequestTask.class);
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(-1L);
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-        when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(1L);
-        ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
-        whenNew(DownloadManagerRequestTask.class).withArguments(eq(releaseDownloader)).thenReturn(mockDownloadManagerRequestTask);
-
-        /* Verify when downloadId == -1 and DownloadManagerReleaseDownloader was call. */
-        releaseDownloader.resume();
-//        verify(whenNew(DownloadManagerRequestTask.class).withArguments(eq(releaseDownloader)));
-        //todo async
-
-        /* Verify when downloadId == 1 and DownloadManagerUpdateTask was call. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(1L);
-        releaseDownloader.resume();
-        verify(whenNew(DownloadManagerUpdateTask.class).withArguments(eq(releaseDownloader)));
-    }
-
-    @Test
-    public void deleteWhenValidDownloadIdTest() throws Exception {
-
-        /* Prepare data. */
-        DownloadManagerUpdateTask mockDownloadManagerUpdateTask = mock(DownloadManagerUpdateTask.class);
-        DownloadManagerRequestTask mockDownloadManagerRequestTask = mock(DownloadManagerRequestTask.class);
-        DownloadManagerRemoveTask mockDownloadManagerRemoveTask = mock(DownloadManagerRemoveTask.class);
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(-1L);
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-        when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(1L);
-        ReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
-        whenNew(DownloadManagerUpdateTask.class).withAnyArguments().thenReturn(mockDownloadManagerUpdateTask);
-        whenNew(DownloadManagerRequestTask.class).withAnyArguments().thenReturn(mockDownloadManagerRequestTask);
-        whenNew(DownloadManagerRemoveTask.class).withAnyArguments().thenReturn(mockDownloadManagerRemoveTask);
-        /* Verify when downloadId == -1 and DownloadManagerReleaseDownloader was call. */
-        releaseDownloader.resume();
-//        verify(whenNew(DownloadManagerRequestTask.class).withArguments(eq(releaseDownloader)));
-            //todo verify async
-
-        /* Verify when downloadId == 1 and DownloadManagerUpdateTask was call. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(1L);
-        releaseDownloader.resume();
-//        verify(whenNew(DownloadManagerUpdateTask.class).withArguments(eq(releaseDownloader)));
-        // //todo verify async
-
-        /* Prepare data and call. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(1L);
-        releaseDownloader.cancel();
-
-        /* Verify that it is call. */
-        verify(mockDownloadManagerRequestTask).cancel(eq(true));
-        verify(mockDownloadManagerUpdateTask).cancel(eq(true));
-        // todo async
-        verifyStatic();
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
-
-        /* Prepare data and call. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID))).thenReturn(-1L);
-        releaseDownloader.cancel();
-
-        /* Verify that it is not call. */
-        verify(mockDownloadManagerRequestTask.cancel(eq(true)));
-        verify(mockDownloadManagerUpdateTask.cancel(eq(true)));
-
-        // todo async
-//        verify(whenNew(DownloadManagerRemoveTask.class).withArguments(eq(mockContext), eq(1)));
-        verifyStatic();
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
-    }
-
-    @Test
-    public void onRequestWhenMandatoryUpdateTest() throws Exception {
-
-        /* Mock release details. */
-        long mockPreviousDownloadId = -1L;
-        long mockNewDownloadId = 2L;
-        Uri mockUri = mock(Uri.class);
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-        when(mockReleaseDetails.getDownloadUrl()).thenReturn(mockUri);
-        when(mockReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        /* Prepare data. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(mockPreviousDownloadId);
-        DownloadManagerReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
-
-        /* Mock download manager request. */
-        DownloadManager.Request mockDownloadRequest = mock(DownloadManager.Request.class);
-        whenNew(DownloadManager.Request.class).withAnyArguments().thenReturn(mockDownloadRequest);
-        when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(mockNewDownloadId);
-
-        /* Mock download task. */
-        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class))).then(new Answer<DownloadManagerRequestTask>() {
             @Override
-            public DownloadManagerRequestTask answer(InvocationOnMock invocation) {
-                DownloadManagerRequestTask task = spy((DownloadManagerRequestTask) invocation.getArguments()[1]);
-                task.doInBackground(null);
-                return task;
+            public Object answer(InvocationOnMock invocation) {
+                invocation.getArgumentAt(0, Runnable.class).run();
+                return null;
             }
         });
 
-        /* Verify. */
-        releaseDownloader.resume();
-        verify(mockDownloadRequest).setNotificationVisibility(anyInt());
-        verify(mockDownloadRequest).setVisibleInDownloadsUi(eq(false));
-        verify(mockDownloadManager).enqueue(eq(mockDownloadRequest));
+        /* Create release downloader. */
+        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
     }
 
     @Test
-    public void onRequestWhenNotMandatoryUpdateTest() throws Exception {
-
-        /* Mock release details. */
-        long mockPreviousDownloadId = 123;
-        Uri mockUri = mock(Uri.class);
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-        when(mockReleaseDetails.getDownloadUrl()).thenReturn(mockUri);
-        when(mockReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        /* Prepare data. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER))).thenReturn(mockPreviousDownloadId);
-        final DownloadManagerReleaseDownloader releaseDownloader = new DownloadManagerReleaseDownloader(mockContext, mockReleaseDetails, mockListener);
-
-        /* Mock download manager request. */
-        final DownloadManager.Request mockDownloadRequest = mock(DownloadManager.Request.class);
-        when(mockDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(mockPreviousDownloadId);
-        whenNew(DownloadManager.Request.class).withArguments(any()).thenReturn(mockDownloadRequest);
-
-        /* Mock download task. */
-        final DownloadManagerUpdateTask mockDownloadManagerUpdateTask = mock(DownloadManagerUpdateTask.class);
-        whenNew(DownloadManagerUpdateTask.class).withAnyArguments().thenReturn(mockDownloadManagerUpdateTask);
-        when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class))).then(new Answer<DownloadManagerUpdateTask>() {
-            @Override
-            public DownloadManagerUpdateTask answer(InvocationOnMock invocation) {
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        releaseDownloader.onUpdate();
-                    }
-                }.start();
-                return mockDownloadManagerUpdateTask;
-            }
-        });
-
-        /* Verify. */
-        releaseDownloader.resume();
-        verify(mockDownloadManager.enqueue(eq(mockDownloadRequest)));
+    public void getDownloadManager() {
+        DownloadManager downloadManager = mock(DownloadManager.class);
+        when(mContext.getSystemService(DOWNLOAD_SERVICE)).thenReturn(downloadManager);
+        assertEquals(downloadManager, mReleaseDownloader.getDownloadManager());
     }
 
-    @After
-    public void onAfterTest() {
-        mockContext = null;
-        mockDownloadManager = null;
-        mockListener = null;
+    @Test
+    public void downloadStatus() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(INVALID_DOWNLOAD_IDENTIFIER)
+                .thenReturn(DOWNLOAD_ID)
+                .thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+        assertFalse(mReleaseDownloader.isDownloading());
+        assertEquals(INVALID_DOWNLOAD_IDENTIFIER, mReleaseDownloader.getDownloadId());
+        assertEquals(DOWNLOAD_ID, mReleaseDownloader.getDownloadId());
+        assertEquals(DOWNLOAD_ID, mReleaseDownloader.getDownloadId());
+        assertTrue(mReleaseDownloader.isDownloading());
+        verifyStatic(times(2));
+        SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER));
+    }
+
+    @Test
+    public void resumeStartsUpdateTask() {
+        mReleaseDownloader.resume();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void resumeDoesNothingAfterCancellation() {
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.resume();
+        verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void cancelClearsEverything() {
+
+        /* Update status. */
+        mReleaseDownloader.resume();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+
+        /* Create new request. */
+        mReleaseDownloader.onStart();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+
+        /* Cancel clears everything only once. */
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.cancel();
+
+        /* Verify. */
+        verify(mRequestTask).cancel(eq(true));
+        verify(mUpdateTask).cancel(eq(true));
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), Mockito.<Void>anyVararg());
+        verifyStatic();
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
+    }
+
+    @Test
+    public void doNotTryToRemoveInvalidDownloadId() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
+        mReleaseDownloader.cancel();
+
+        /* Verify. */
+        verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), Mockito.<Void>anyVararg());
+        verifyStatic(never());
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
+    }
+
+    @Test
+    public void requestNewDownloading() {
+
+        /* Create new request. */
+        mReleaseDownloader.onStart();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+
+        /* Do not duplicate requests. */
+        mReleaseDownloader.onStart();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+
+        /* Don't do anything after cancellation. */
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onStart();
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void doNotRequestNewDownloadingAfterCancellation() {
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onStart();
+        verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void startDownloadingMandatoryUpdate() {
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        assertEquals(mReleaseDetails, mReleaseDownloader.getReleaseDetails());
+
+        /* When download request has been enqueued. */
+        mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+
+        /* Verify. */
+        verify(mListener).onStart(anyLong());
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(DOWNLOAD_ID));
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void startDownloadingNotMandatoryUpdate() {
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(false);
+        assertEquals(mReleaseDetails, mReleaseDownloader.getReleaseDetails());
+
+        /* When download request has been enqueued. */
+        mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+
+        /* Verify. */
+        verify(mListener).onStart(anyLong());
+        verifyStatic();
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(DOWNLOAD_ID));
+        verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void doNotStartDownloadingAfterCancellation() {
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+        verify(mListener, never()).onStart(anyLong());
+        verifyStatic(never());
+        SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(DOWNLOAD_ID));
+    }
+
+    @Test
+    public void scheduleAnotherUpdateIfListenerWantsIt() {
+        Cursor cursor = mock(Cursor.class);
+        when(cursor.getLong(eq(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR.hashCode()))).thenReturn(42L);
+        when(cursor.getLong(eq(DownloadManager.COLUMN_TOTAL_SIZE_BYTES.hashCode()))).thenReturn(4242L);
+        when(mListener.onProgress(anyInt(), anyInt())).thenReturn(true);
+
+        /* Update download progress. */
+        mReleaseDownloader.onDownloadProgress(cursor);
+
+        /* Verify. */
+        verify(mListener).onProgress(anyInt(), anyInt());
+        verifyStatic();
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void doNotScheduleAnotherUpdateIfListenerDoNotWantsIt() {
+        Cursor cursor = mock(Cursor.class);
+        when(cursor.getLong(eq(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR.hashCode()))).thenReturn(42L);
+        when(cursor.getLong(eq(DownloadManager.COLUMN_TOTAL_SIZE_BYTES.hashCode()))).thenReturn(4242L);
+        when(mListener.onProgress(anyInt(), anyInt())).thenReturn(false);
+
+        /* Update download progress. */
+        mReleaseDownloader.onDownloadProgress(cursor);
+
+        /* Verify. */
+        verify(mListener).onProgress(anyInt(), anyInt());
+        verifyStatic(never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+    }
+
+    @Test
+    public void doNotOnDownloadProgressAfterCancellation() {
+
+        /* Update download progress. */
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onDownloadProgress(mock(Cursor.class));
+
+        /* Verify. */
+        verify(mListener, never()).onProgress(anyInt(), anyInt());
+    }
+
+    @Test
+    public void completeDownload() {
+        mockStatic(Uri.class);
+        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
+        when(mListener.onComplete(any(Uri.class))).thenReturn(true);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
+
+        /* Verify. */
+        verify(mListener).onComplete(any(Uri.class));
+        verify(mListener, never()).onError(anyString());
+    }
+
+    @Test
+    public void completeDownloadFallbackOnOldDevices() {
+        mockStatic(Uri.class);
+        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
+        when(mListener.onComplete(any(Uri.class))).thenReturn(false).thenReturn(true);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
+
+        /* Verify. */
+        verify(mListener, times(2)).onComplete(any(Uri.class));
+        verify(mListener, never()).onError(anyString());
+    }
+
+    @Test
+    public void completeDownloadingFallbackOnNewDevices() {
+        mockStatic(Uri.class);
+        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
+        when(mListener.onComplete(any(Uri.class))).thenReturn(false).thenReturn(true);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
+
+        /* Verify. */
+        verify(mListener).onComplete(any(Uri.class));
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void completeDownloadDoesNothingAfterCancellation() {
+        mockStatic(Uri.class);
+        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
+
+        /* Complete download after cancelling. */
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
+
+        /* Verify. */
+        verify(mListener, never()).onComplete(any(Uri.class));
+    }
+
+    @Test
+    public void errorDownload() {
+        mReleaseDownloader.onDownloadError(mock(RuntimeException.class));
+
+        /* Verify. */
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void errorDownloadDoesNothingAfterCancellation() {
+        mReleaseDownloader.cancel();
+        mReleaseDownloader.onDownloadError(mock(RuntimeException.class));
+
+        /* Verify. */
+        verify(mListener, never()).onError(anyString());
     }
 }
