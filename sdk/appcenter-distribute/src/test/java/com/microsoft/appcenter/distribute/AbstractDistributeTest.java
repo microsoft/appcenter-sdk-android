@@ -56,6 +56,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -323,6 +324,8 @@ public class AbstractDistributeTest {
         /* Mock Install Intent. */
         when(mInstallIntent.getData()).thenReturn(mUri);
         whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
+
+        doNothing().when(mNotificationManager).cancel(anyInt());
     }
 
     void restartProcessAndSdk() {
