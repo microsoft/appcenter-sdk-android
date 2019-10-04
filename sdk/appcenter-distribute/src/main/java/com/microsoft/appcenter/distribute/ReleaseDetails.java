@@ -24,6 +24,8 @@ public class ReleaseDetails {
 
     private static final String SHORT_VERSION = "short_version";
 
+    private static final String SIZE = "size";
+
     private static final String RELEASE_NOTES = "release_notes";
 
     private static final String RELEASE_NOTES_URL = "release_notes_url";
@@ -56,6 +58,11 @@ public class ReleaseDetails {
      * For Android: android:versionName from AppManifest.xml.
      */
     private String shortVersion;
+
+    /**
+     * The release's package size.
+     */
+    private long size;
 
     /**
      * The release's release notes.
@@ -99,12 +106,14 @@ public class ReleaseDetails {
      * @return parsed release details.
      * @throws JSONException if JSON is invalid.
      */
+    @NonNull
     static ReleaseDetails parse(String json) throws JSONException {
         JSONObject object = new JSONObject(json);
         ReleaseDetails releaseDetails = new ReleaseDetails();
         releaseDetails.id = object.getInt(ID);
         releaseDetails.version = object.getInt(VERSION);
         releaseDetails.shortVersion = object.getString(SHORT_VERSION);
+        releaseDetails.size = object.getLong(SIZE);
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
         releaseDetails.releaseNotesUrl = object.isNull(RELEASE_NOTES_URL) ? null : Uri.parse(object.getString(RELEASE_NOTES_URL));
         releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
@@ -135,6 +144,15 @@ public class ReleaseDetails {
      */
     public int getVersion() {
         return version;
+    }
+
+    /**
+     * Get the release's package size.
+     *
+     * @return the release's package size.
+     */
+    public long getSize() {
+        return size;
     }
 
     /**
@@ -183,7 +201,7 @@ public class ReleaseDetails {
      * @return the downloadUrl value
      */
     @NonNull
-    Uri getDownloadUrl() {
+    public Uri getDownloadUrl() {
         return downloadUrl;
     }
 
@@ -202,7 +220,7 @@ public class ReleaseDetails {
      * @return the releaseHash value
      */
     @NonNull
-    String getReleaseHash() {
+    public String getReleaseHash() {
         return releaseHash;
     }
 
@@ -211,7 +229,7 @@ public class ReleaseDetails {
      *
      * @return the distributionGroupId value.
      */
-    String getDistributionGroupId() {
+    public String getDistributionGroupId() {
         return distributionGroupId;
     }
 }

@@ -6,6 +6,8 @@
 package com.microsoft.appcenter.distribute;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -19,7 +21,7 @@ import java.util.Set;
 /**
  * Installer utils.
  */
-class InstallerUtils {
+public class InstallerUtils {
 
     /**
      * Value when {@link Settings.Secure#INSTALL_NON_MARKET_APPS} setting is enabled.
@@ -54,6 +56,22 @@ class InstallerUtils {
     }
 
     /**
+     * Get the intent used to open installation UI.
+     *
+     * @param fileUri downloaded file URI from the download manager.
+     * @return intent to open installation UI.
+     */
+    @NonNull
+    static Intent getInstallIntent(Uri fileUri) {
+        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        intent.setData(fileUri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return intent;
+    }
+
+    /**
      * Check if this installation was made via an application store.
      *
      * @param logTag  log tag for debug.
@@ -76,7 +94,7 @@ class InstallerUtils {
      * @return true if installation via unknown sources is enabled, false otherwise.
      */
     @SuppressWarnings("deprecation")
-    static boolean isUnknownSourcesEnabled(@NonNull Context context) {
+    public static boolean isUnknownSourcesEnabled(@NonNull Context context) {
 
         /*
          * On Android 8 with applications targeting lower versions,
