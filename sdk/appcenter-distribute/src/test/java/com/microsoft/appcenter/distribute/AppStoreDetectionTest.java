@@ -58,6 +58,15 @@ public class AppStoreDetectionTest {
     }
 
     @Test
+    public void installerUtilsAlreadyInitialized() {
+        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+
+        /* Verify called once. */
+        verify(mPackageManager).getInstallerPackageName(anyString());
+    }
+
+    @Test
     public void appStore() {
         setInstallerPackageName("com.android.vending");
 
