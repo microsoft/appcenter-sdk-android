@@ -154,6 +154,19 @@ public class HttpConnectionDownloadFileTaskTest {
     }
 
     @Test
+    public void errorResponseCodeInvalid() throws IOException {
+        when(mUrlConnection.getResponseCode()).thenReturn(-1);
+
+        /* Perform background task. */
+        mDownloadFileTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadStarted(anyLong());
+        verify(mDownloader, never()).onDownloadComplete(any(File.class));
+        verify(mDownloader).onDownloadError(anyString());
+    }
+
+    @Test
     public void nothingIsDownloaded() throws IOException {
         when(mUrlConnection.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 
