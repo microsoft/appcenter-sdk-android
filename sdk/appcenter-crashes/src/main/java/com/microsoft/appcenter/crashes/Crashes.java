@@ -61,6 +61,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 
 /**
  * Crashes service.
@@ -92,7 +93,7 @@ public class Crashes extends AbstractAppCenterService {
      * Preference storage key for memory running level.
      */
     @VisibleForTesting
-    public static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
+    static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
 
     /**
      * Group for sending logs.
@@ -654,7 +655,7 @@ public class Crashes extends AbstractAppCenterService {
             File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
             Exception modelException = new Exception();
             modelException.setType("minidump");
-            modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+            modelException.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
             modelException.setMinidumpFilePath(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
@@ -694,8 +695,8 @@ public class Crashes extends AbstractAppCenterService {
             errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
                 errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
-                errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                saveErrorLogFiles(new NativeException(), errorLog); // TODO
+                errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+                saveErrorLogFiles(new NativeException(), errorLog);
                 if (!logFile.renameTo(dest)) {
                     throw new IOException("Failed to move file");
                 }
@@ -918,7 +919,7 @@ public class Crashes extends AbstractAppCenterService {
                         ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-                        if (errorLogReport.report.getThrowable() instanceof NativeException) { // TODO
+                        if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
 
                             /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
