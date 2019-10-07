@@ -184,9 +184,7 @@ public class CrashesTest {
                 new Date().getTime() - errorReport.getAppErrorTime().getTime(),
                 lessThan(10000L));
         assertNotNull(errorReport.getDevice());
-        assertEquals(failureHandler.uncaughtException.getClass(), errorReport.getThrowable().getClass());
-        assertEquals(failureHandler.uncaughtException.getMessage(), errorReport.getThrowable().getMessage());
-        assertArrayEquals(failureHandler.uncaughtException.getStackTrace(), errorReport.getThrowable().getStackTrace());
+        assertNotNull(errorReport.getStackTrace());
 
         /* Send report. */
         waitFor(onView(withText(R.string.crash_confirmation_dialog_send_button))

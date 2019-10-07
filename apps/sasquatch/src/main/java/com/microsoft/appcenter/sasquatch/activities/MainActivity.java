@@ -373,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void accept(ErrorReport data) {
                 if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
+                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace());
                 }
             }
         });

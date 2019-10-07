@@ -1073,6 +1073,14 @@ public class CrashesTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void setThrowableDeprecated() {
+        ErrorReport report = new ErrorReport();
+        report.setThrowable(new Throwable());
+        assertNull(report.getThrowable());
+    }
+
+    @Test
     public void noCrashInLastSessionWhenDisabled() {
 
         mockStatic(ErrorLogHelper.class);
@@ -1466,7 +1474,9 @@ public class CrashesTest {
         mockStatic(ErrorLogHelper.class);
         mockStatic(ErrorAttachmentLog.class);
         ErrorReport errorReport = new ErrorReport();
-        errorReport.setThrowable(new NativeException());
+        Device device = new Device();
+        device.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+        errorReport.setDevice(device);
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), any(String.class))).thenReturn(errorReport);
         whenNew(DefaultLogSerializer.class).withAnyArguments().thenReturn(defaultLogSerializer);
         whenNew(com.microsoft.appcenter.crashes.ingestion.models.Exception.class).withAnyArguments().thenReturn(exception);
