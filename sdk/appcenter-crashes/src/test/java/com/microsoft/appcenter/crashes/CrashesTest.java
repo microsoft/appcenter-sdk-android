@@ -1573,6 +1573,7 @@ public class CrashesTest {
     }
 
     @Test
+    @PrepareForTest({android.util.Log.class})
     public void stackOverflowOnSavingThrowable() throws Exception {
 
         /* Mock error log utils. */
@@ -1594,9 +1595,12 @@ public class CrashesTest {
         when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
 
         /* Mock storage to fail on stack overflow when saving a Throwable as binary. */
+        mockStatic(android.util.Log.class);
+        String stackTrace = "sample stacktrace";
+        when(android.util.Log.getStackTraceString(any(Throwable.class))).thenReturn(stackTrace);
         Throwable throwable = new Throwable();
         doThrow(new StackOverflowError()).when(FileManager.class);
-        FileManager.write(throwableFile, throwable.toString());
+        FileManager.write(throwableFile, stackTrace);
 
         /* Simulate start SDK. */
         Crashes crashes = Crashes.getInstance();
@@ -1609,7 +1613,7 @@ public class CrashesTest {
 
         /* Verify we gracefully abort saving throwable (no exception) and we created an empty file instead. */
         verifyStatic();
-        FileManager.write(throwableFile, throwable.toString());
+        FileManager.write(throwableFile, stackTrace);
         assertNotNull(throwableFile);
         InOrder inOrder = inOrder(throwableFile);
 
