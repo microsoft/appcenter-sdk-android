@@ -1584,8 +1584,9 @@ public class CrashesTest {
         when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
 
         /* Mock storage to fail on stack overflow when saving a Throwable as binary. */
+        Throwable throwable = new Throwable();
         doThrow(new StackOverflowError()).when(FileManager.class);
-        FileManager.write(any(File.class), anyString());
+        FileManager.write(throwableFile, throwable.toString());
 
         /* Simulate start SDK. */
         Crashes crashes = Crashes.getInstance();
@@ -1594,7 +1595,6 @@ public class CrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* Simulate crash. */
-        Throwable throwable = new Throwable();
         Crashes.getInstance().saveUncaughtException(Thread.currentThread(), throwable);
 
         /* Verify we gracefully abort saving throwable (no exception) and we created an empty file instead. */
