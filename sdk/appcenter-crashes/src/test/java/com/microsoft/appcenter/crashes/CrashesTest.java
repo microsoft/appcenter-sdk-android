@@ -65,7 +65,6 @@ import org.powermock.reflect.Whitebox;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -757,7 +756,7 @@ public class CrashesTest {
     }
 
     @Test
-    public void getChannelListener() throws IOException, ClassNotFoundException, JSONException {
+    public void getChannelListener() throws JSONException {
         ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
         mockStatic(ErrorLogHelper.class);
@@ -771,7 +770,7 @@ public class CrashesTest {
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE)).thenReturn(errorReport);
         when(FileManager.read(any(File.class))).thenReturn("");
-        when(FileManager.readObject(any(File.class))).thenReturn(EXCEPTION);
+        when(FileManager.read(any(File.class))).thenReturn(STACK_TRACE);
 
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
@@ -1455,6 +1454,7 @@ public class CrashesTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void minidumpFilePathNull() throws Exception {
 
         /* Set up mock for the crash. */

@@ -189,7 +189,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic();
         FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        FileManager.writeObject(any(File.class), eq(throwable));
+        FileManager.write(any(File.class), eq(throwable.toString()));
 
         /* We can't do it twice in the same process. */
         data = new byte[]{'e'};
@@ -197,7 +197,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        FileManager.writeObject(any(File.class), eq(throwable));
+        FileManager.write(any(File.class), eq(throwable.toString()));
     }
 
     @Test
@@ -210,12 +210,12 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         FileManager.writeObject(any(File.class), isNull(byte[].class));
         verifyStatic();
-        FileManager.writeObject(any(File.class), eq(throwable));
+        FileManager.write(any(File.class), eq(throwable.toString()));
 
         /* We can't do it twice in the same process. */
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic();
-        FileManager.writeObject(any(File.class), eq(throwable));
+        FileManager.write(any(File.class), eq(throwable.toString()));
     }
 
     @Test
