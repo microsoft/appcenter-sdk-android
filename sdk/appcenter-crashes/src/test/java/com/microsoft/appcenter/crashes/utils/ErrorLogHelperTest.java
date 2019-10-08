@@ -290,7 +290,7 @@ public class ErrorLogHelperTest {
         assertNotNull(errorLog);
 
         /* Test. */
-        String stackTrace = "Sample stacktrace";
+        String stackTrace = "Sample stack trace";
         ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, stackTrace);
         assertNotNull(report);
         assertEquals(errorLog.getId().toString(), report.getId());

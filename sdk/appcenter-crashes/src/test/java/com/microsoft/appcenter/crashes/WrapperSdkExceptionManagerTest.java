@@ -64,7 +64,7 @@ public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
-    private static final String STACK_TRACE = "Sample stacktrace";
+    private static final String STACK_TRACE = "Sample stack trace";
 
     @Rule
     public final PowerMockRule rule = new PowerMockRule();
@@ -178,7 +178,7 @@ public class WrapperSdkExceptionManagerTest {
     }
 
     @Test
-    @PrepareForTest({android.util.Log.class})
+    @PrepareForTest(android.util.Log.class)
     public void saveWrapperSdkCrashWithJavaThrowable() throws JSONException, IOException {
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");

@@ -151,7 +151,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         /* message += String.format("\nStackTrace: %s", report.getStackTrace()); */
         try {
             String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(report);
-            message += String.format("\nStackTrace: %s", stackTrace);
+            message += String.format("\nStack Trace: %s", stackTrace);
         } catch (Exception ignored) {
         }
         notifySending(message);

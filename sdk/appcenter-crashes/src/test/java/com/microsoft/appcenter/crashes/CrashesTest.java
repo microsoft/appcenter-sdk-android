@@ -1070,10 +1070,8 @@ public class CrashesTest {
 
     @Test
     @SuppressWarnings("deprecation")
-    public void getAndSetThrowableDeprecated() {
+    public void getThrowableDeprecated() {
         ErrorReport report = new ErrorReport();
-        assertNull(report.getThrowable());
-        report.setThrowable(new Throwable());
         assertNull(report.getThrowable());
     }
 

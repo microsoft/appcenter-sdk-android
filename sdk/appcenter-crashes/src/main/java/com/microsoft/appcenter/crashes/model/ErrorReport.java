@@ -110,16 +110,6 @@ public class ErrorReport {
     }
 
     /**
-     * Sets the throwable.
-     *
-     * @deprecated This method has been deprecated.
-     * @param throwable A throwable to set.
-     */
-    @Deprecated
-    public void setThrowable(Throwable throwable) {
-    }
-
-    /**
      * Gets the application start datetime.
      *
      * @return The application start datetime.

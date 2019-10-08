@@ -1071,9 +1071,9 @@ public class Crashes extends AbstractAppCenterService {
             try {
                 String stackTrace = getStackTraceString(throwable);
                 FileManager.write(throwableFile, stackTrace);
-                AppCenterLog.debug(LOG_TAG, "Saved stackTrace as is for client side inspection in " + throwableFile + " stackTrace:" + stackTrace);
+                AppCenterLog.debug(LOG_TAG, "Saved stack trace as is for client side inspection in " + throwableFile + " stack trace:" + stackTrace);
             } catch (StackOverflowError e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stacktrace.", e);
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stack trace.", e);
                 throwable = null;
 
                 //noinspection ResultOfMethodCallIgnored
