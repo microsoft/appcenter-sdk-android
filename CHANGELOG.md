@@ -11,7 +11,7 @@
 
 ### App Center Crashes
 
-* **[Breaking change]** Remove insecure implementation of `ErrorReport.getThrowable` and `ErrorReport.setThrowable` (now marked as deprecated and always returns `null`). Provide `ErrorReport.getStackTrace` and `ErrorReport.setStackTrace` as an alternative.
+* **[Behavior change]** Deprecate and remove insecure implementation of `ErrorReport.getThrowable()`, which now always returns `null`. Use the new `ErrorReport.getStackTrace()` as an alternative.
 
 ### App Center Data
 

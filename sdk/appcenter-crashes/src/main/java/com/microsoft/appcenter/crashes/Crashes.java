@@ -1070,7 +1070,7 @@ public class Crashes extends AbstractAppCenterService {
             try {
                 String stackTrace = android.util.Log.getStackTraceString(throwable);
                 FileManager.write(throwableFile, stackTrace);
-                AppCenterLog.debug(Crashes.LOG_TAG, "Saved stackTrace as is for client side inspection in " + throwableFile + " stackTrace:" + stackTrace);
+                AppCenterLog.debug(LOG_TAG, "Saved stackTrace as is for client side inspection in " + throwableFile + " stackTrace:" + stackTrace);
             } catch (StackOverflowError e) {
                 AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
                 throwable = null;
