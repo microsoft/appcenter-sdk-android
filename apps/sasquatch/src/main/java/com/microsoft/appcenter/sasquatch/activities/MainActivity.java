@@ -374,7 +374,8 @@ public class MainActivity extends AppCompatActivity {
             public void accept(ErrorReport data) {
                 if (data != null) {
 
-                    /* TODO remove reflection and catch block after API available to jCenter. */
+                    /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
+                    /* Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace()); */
                     try {
                         String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(data);
                         Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + stackTrace);
