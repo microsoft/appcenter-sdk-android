@@ -112,7 +112,7 @@ public class ErrorReport {
     /**
      * Sets the throwable.
      *
-     * @deprecated This method has been deprecated, use {@link #setStackTrace(String)} instead.
+     * @deprecated This method has been deprecated.
      * @param throwable A throwable to set.
      */
     @Deprecated

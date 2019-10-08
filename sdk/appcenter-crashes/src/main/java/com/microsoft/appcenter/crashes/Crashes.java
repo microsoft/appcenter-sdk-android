@@ -61,6 +61,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 
 /**
@@ -1068,11 +1069,11 @@ public class Crashes extends AbstractAppCenterService {
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
             try {
-                String stackTrace = android.util.Log.getStackTraceString(throwable);
+                String stackTrace = getStackTraceString(throwable);
                 FileManager.write(throwableFile, stackTrace);
                 AppCenterLog.debug(LOG_TAG, "Saved stackTrace as is for client side inspection in " + throwableFile + " stackTrace:" + stackTrace);
             } catch (StackOverflowError e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stacktrace.", e);
                 throwable = null;
 
                 //noinspection ResultOfMethodCallIgnored

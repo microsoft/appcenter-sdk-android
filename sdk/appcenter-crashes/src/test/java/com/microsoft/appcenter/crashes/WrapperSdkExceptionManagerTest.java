@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -62,6 +63,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
+
+    private static final String STACK_TRACE = "Sample stacktrace";
 
     @Rule
     public final PowerMockRule rule = new PowerMockRule();
@@ -187,13 +190,12 @@ public class WrapperSdkExceptionManagerTest {
         byte[] data = new byte[]{'d'};
         Throwable throwable = new Throwable();
         mockStatic(android.util.Log.class);
-        String stackTrace = "sample stacktrace";
-        Mockito.when(android.util.Log.getStackTraceString(any(Throwable.class))).thenReturn(stackTrace);
+        Mockito.when(getStackTraceString(any(Throwable.class))).thenReturn(STACK_TRACE);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), data);
         verifyStatic();
         FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        FileManager.write(any(File.class), eq(stackTrace));
+        FileManager.write(any(File.class), eq(STACK_TRACE));
 
         /* We can't do it twice in the same process. */
         data = new byte[]{'e'};
@@ -201,7 +203,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         FileManager.writeObject(any(File.class), eq(data));
         verifyStatic();
-        FileManager.write(any(File.class), eq(stackTrace));
+        FileManager.write(any(File.class), eq(STACK_TRACE));
     }
 
     @Test
@@ -212,18 +214,17 @@ public class WrapperSdkExceptionManagerTest {
         Crashes.getInstance().setLogSerializer(logSerializer);
         Throwable throwable = new Throwable();
         mockStatic(android.util.Log.class);
-        String stackTrace = "sample stacktrace";
-        Mockito.when(android.util.Log.getStackTraceString(any(Throwable.class))).thenReturn(stackTrace);
+        Mockito.when(getStackTraceString(any(Throwable.class))).thenReturn(STACK_TRACE);
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic(never());
         FileManager.writeObject(any(File.class), isNull(byte[].class));
         verifyStatic();
-        FileManager.write(any(File.class), eq(stackTrace));
+        FileManager.write(any(File.class), eq(STACK_TRACE));
 
         /* We can't do it twice in the same process. */
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic();
-        FileManager.write(any(File.class), eq(stackTrace));
+        FileManager.write(any(File.class), eq(STACK_TRACE));
     }
 
     @Test

@@ -48,6 +48,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 import static android.support.test.espresso.matcher.ViewMatchers.withChild;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
+import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.CHECK_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.TOAST_DELAY;
 import static com.microsoft.appcenter.sasquatch.activities.utils.EspressoUtils.onToast;
@@ -57,7 +58,6 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
@@ -184,7 +184,7 @@ public class CrashesTest {
                 new Date().getTime() - errorReport.getAppErrorTime().getTime(),
                 lessThan(10000L));
         assertNotNull(errorReport.getDevice());
-        assertNotNull(errorReport.getStackTrace());
+        assertEquals(getStackTraceString(failureHandler.uncaughtException), errorReport.getStackTrace());
 
         /* Send report. */
         waitFor(onView(withText(R.string.crash_confirmation_dialog_send_button))
