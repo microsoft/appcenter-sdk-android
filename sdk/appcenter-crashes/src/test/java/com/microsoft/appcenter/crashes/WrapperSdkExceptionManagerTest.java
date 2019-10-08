@@ -182,7 +182,7 @@ public class WrapperSdkExceptionManagerTest {
     }
 
     @Test
-    @PrepareForTest({android.util.Log.class})
+    @PrepareForTest(android.util.Log.class)
     public void saveWrapperSdkCrashWithJavaThrowable() throws JSONException, IOException {
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
