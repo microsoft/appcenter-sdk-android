@@ -83,18 +83,18 @@ public class WrapperSdkExceptionManagerAndroidTest {
     public void saveWrapperException() throws java.lang.Exception {
 
         class ErrorData {
-            private byte[] data;
+            private String data;
             private UUID id;
         }
 
         ErrorData errorA = new ErrorData();
-        errorA.data = new byte[]{};
+        errorA.data = "";
 
         ErrorData errorB = new ErrorData();
         errorB.data = null;
 
         ErrorData errorC = new ErrorData();
-        errorC.data = new byte[]{'d', 'a', 't', 'a'};
+        errorC.data = "data";
 
         ErrorData[] errors = new ErrorData[]{errorA, errorB, errorC};
 
@@ -105,7 +105,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
             /* Save crash. */
             error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), error.data);
-            byte[] loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
+            String loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {
                 assertNull(loadedData);
@@ -113,28 +113,22 @@ public class WrapperSdkExceptionManagerAndroidTest {
             }
 
             assertNotNull(loadedData);
-            for (int i = 0; i < error.data.length; ++i) {
-                assertEquals(error.data[i], loadedData[i]);
-            }
+            assertEquals(error.data, loadedData);
         }
 
         /* Even after deleting errorA, it should exist in memory - so, we can still load it. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
-        byte[] loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
+        String loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
         assertNotNull(loadedDataA);
-        for (int i = 0; i < errorA.data.length; ++i) {
-            assertEquals(errorA.data[i], loadedDataA[i]);
-        }
+        assertEquals(errorA.data, loadedDataA);
 
         /* Try to load data bypassing the cache. */
         WrapperSdkExceptionManager.sWrapperExceptionDataContainer.clear();
-        byte[] loadedDataC = WrapperSdkExceptionManager.loadWrapperExceptionData(errorC.id);
+        String loadedDataC = WrapperSdkExceptionManager.loadWrapperExceptionData(errorC.id);
         assertNotNull(loadedDataC);
-        for (int i = 0; i < errorC.data.length; ++i) {
-            assertEquals(errorC.data[i], loadedDataC[i]);
-        }
+        assertEquals(errorC.data, loadedDataC);
 
         /* Save another crash without reset: will be ignored as only 1 crash per process. */
-        assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), new byte[]{'e'}));
+        assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), "e"));
     }
 }

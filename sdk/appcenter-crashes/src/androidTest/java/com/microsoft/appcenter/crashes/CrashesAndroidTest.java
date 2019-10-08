@@ -16,7 +16,6 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;

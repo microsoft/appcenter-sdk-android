@@ -16,7 +16,6 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +29,7 @@ public class WrapperSdkExceptionManager {
      * Contains wrapper SDK data that has been loaded into memory
      */
     @VisibleForTesting
-    static final Map<String, byte[]> sWrapperExceptionDataContainer = new HashMap<>();
+    static final Map<String, String> sWrapperExceptionDataContainer = new HashMap<>();
 
     /**
      * File extension for data files created by this class.
@@ -47,16 +46,16 @@ public class WrapperSdkExceptionManager {
      * @param thread                 thread where uncaught exception originated.
      * @param throwable              Java throwable for client side inspection if available, can be null.
      * @param modelException         model exception.
-     * @param rawSerializedException raw exception bytes if available, can be null.
+     * @param rawSerializedException raw exception string if available, can be null.
      * @return error log identifier if successful or null if failed to save to disk.
      */
-    public static UUID saveWrapperException(Thread thread, Throwable throwable, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, byte[] rawSerializedException) {
+    public static UUID saveWrapperException(Thread thread, Throwable throwable, com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, String rawSerializedException) {
         try {
             UUID errorId = Crashes.getInstance().saveUncaughtException(thread, throwable, modelException);
             if (errorId != null && rawSerializedException != null) {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
-                FileManager.writeObject(dataFile, rawSerializedException);
+                FileManager.write(dataFile, rawSerializedException);
                 AppCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
             }
             return errorId;
@@ -78,7 +77,7 @@ public class WrapperSdkExceptionManager {
         }
         File dataFile = getFile(errorId);
         if (dataFile.exists()) {
-            byte[] loadResult = loadWrapperExceptionData(errorId);
+            String loadResult = loadWrapperExceptionData(errorId);
             if (loadResult == null) {
                 AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
             }
@@ -92,26 +91,22 @@ public class WrapperSdkExceptionManager {
      * @param errorId The associated error UUID
      * @return The data loaded into memory
      */
-    public static byte[] loadWrapperExceptionData(UUID errorId) {
+    public static String loadWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
             return null;
         }
-        byte[] dataBytes = sWrapperExceptionDataContainer.get(errorId.toString());
-        if (dataBytes != null) {
-            return dataBytes;
+        String data = sWrapperExceptionDataContainer.get(errorId.toString());
+        if (data != null) {
+            return data;
         }
         File dataFile = getFile(errorId);
         if (dataFile.exists()) {
-            try {
-                dataBytes = FileManager.readObject(dataFile);
-                if (dataBytes != null) {
-                    sWrapperExceptionDataContainer.put(errorId.toString(), dataBytes);
-                }
-                return dataBytes;
-            } catch (ClassNotFoundException | IOException e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Cannot access wrapper exception data file " + dataFile.getName(), e);
+            data = FileManager.read(dataFile);
+            if (data != null) {
+                sWrapperExceptionDataContainer.put(errorId.toString(), data);
             }
+            return data;
         }
         return null;
     }
