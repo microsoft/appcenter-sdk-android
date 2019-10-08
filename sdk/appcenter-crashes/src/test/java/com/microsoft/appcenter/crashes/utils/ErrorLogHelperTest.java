@@ -263,7 +263,6 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void getErrorReportFromErrorLog() throws java.lang.Exception {
 
         /* Mock base. */
@@ -297,7 +296,6 @@ public class ErrorLogHelperTest {
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
         assertEquals(stackTrace, report.getStackTrace());
-        assertNull(report.getThrowable());
         assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
         assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
         assertEquals(errorLog.getDevice(), report.getDevice());

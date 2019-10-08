@@ -145,12 +145,10 @@ public class CrashesTest {
     @Mock
     private AppCenterHandler mAppCenterHandler;
 
-    @SuppressWarnings("deprecation")
     private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
         assertNotNull(report);
         assertEquals(errorLog.getId().toString(), report.getId());
         assertEquals(errorLog.getErrorThreadName(), report.getThreadName());
-        assertNull(report.getThrowable());
         assertEquals(STACK_TRACE, report.getStackTrace());
         assertEquals(errorLog.getAppLaunchTimestamp(), report.getAppStartTime());
         assertEquals(errorLog.getTimestamp(), report.getAppErrorTime());
@@ -582,7 +580,9 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
+
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
+                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
         }), eq(crashes.getGroupName()), eq(DEFAULTS));
         reset(mockChannel);
@@ -596,7 +596,8 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
+                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 0;
             }
         }), eq(crashes.getGroupName()), eq(DEFAULTS));
@@ -610,7 +611,8 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
+                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
+                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
                         && ((HandledErrorLog) item).getProperties().size() == 20;
             }
         }), eq(crashes.getGroupName()), eq(DEFAULTS));
@@ -625,7 +627,7 @@ public class CrashesTest {
             public boolean matches(Object item) {
                 if (item instanceof HandledErrorLog) {
                     HandledErrorLog errorLog = (HandledErrorLog) item;
-                    if (EXCEPTION.getMessage().equals((errorLog.getException().getMessage()))) {
+                    if (EXCEPTION.getMessage() != null && EXCEPTION.getMessage().equals((errorLog.getException().getMessage()))) {
                         if (errorLog.getProperties().size() == 1) {
                             Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
                             String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
@@ -1001,7 +1003,6 @@ public class CrashesTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void crashInLastSession() throws JSONException, IOException {
 
         final ManagedErrorLog errorLog = new ManagedErrorLog();
@@ -1069,13 +1070,13 @@ public class CrashesTest {
         assertEquals(logTimestamp, result.getAppErrorTime());
         assertNotNull(result.getDevice());
         assertEquals(STACK_TRACE, result.getStackTrace());
-        assertNull(result.getThrowable());
     }
 
     @Test
     @SuppressWarnings("deprecation")
-    public void setThrowableDeprecated() {
+    public void getAndSetThrowableDeprecated() {
         ErrorReport report = new ErrorReport();
+        assertNull(report.getThrowable());
         report.setThrowable(new Throwable());
         assertNull(report.getThrowable());
     }
@@ -1462,7 +1463,6 @@ public class CrashesTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void minidumpFilePathNull() throws Exception {
 
         /* Set up mock for the crash. */
