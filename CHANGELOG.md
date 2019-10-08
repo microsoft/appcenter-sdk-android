@@ -9,6 +9,10 @@
   - Accounts in any Azure AD directory.
   - Accounts in any Azure AD directory and personal Microsoft accounts.
 
+### App Center Crashes
+
+* **[Breaking change]** Remove insecure implementation of `ErrorReport.getThrowable` and `ErrorReport.setThrowable` (now marked as deprecated and always returns `null`). Provide `ErrorReport.getStackTrace` and `ErrorReport.setStackTrace` as an alternative.
+
 ### App Center Data
 
 * **[Fix]** Reduced retries on Data-related operations to fail fast and avoid the perception of calls "hanging".
