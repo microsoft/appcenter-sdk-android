@@ -82,6 +82,17 @@ public class FileManagerTest {
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
+    @Test
+    public void readEmptyFile() throws Exception {
+        mockStatic(AppCenterLog.class);
+        BufferedReader reader = mock(BufferedReader.class);
+        whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
+        whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
+        when(reader.readLine()).thenReturn(null);
+        assertEquals("", FileManager.read(new File("")));
+        verify(reader).close();
+    }
+
     @Test(expected = IOException.class)
     public void writeError() throws Exception {
         mockStatic(TextUtils.class);

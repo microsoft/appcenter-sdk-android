@@ -96,7 +96,10 @@ public class WrapperSdkExceptionManagerAndroidTest {
         ErrorData errorC = new ErrorData();
         errorC.data = "data";
 
-        ErrorData[] errors = new ErrorData[]{errorA, errorB, errorC};
+        ErrorData errorD = new ErrorData();
+        errorD.data = "otherData";
+
+        ErrorData[] errors = new ErrorData[]{errorA, errorB, errorC, errorD};
 
         for (ErrorData error : errors) {
 
@@ -116,11 +119,15 @@ public class WrapperSdkExceptionManagerAndroidTest {
             assertEquals(error.data, loadedData);
         }
 
-        /* Even after deleting errorA, it should exist in memory - so, we can still load it. */
+        /* Even after deleting errorA and errorD, they should exist in memory - so, we can still load it. */
         WrapperSdkExceptionManager.deleteWrapperExceptionData(errorA.id);
         String loadedDataA = WrapperSdkExceptionManager.loadWrapperExceptionData(errorA.id);
         assertNotNull(loadedDataA);
         assertEquals(errorA.data, loadedDataA);
+        WrapperSdkExceptionManager.deleteWrapperExceptionData(errorD.id);
+        String loadedDataD = WrapperSdkExceptionManager.loadWrapperExceptionData(errorD.id);
+        assertNotNull(loadedDataD);
+        assertEquals(errorD.data, loadedDataD);
 
         /* Try to load data bypassing the cache. */
         WrapperSdkExceptionManager.sWrapperExceptionDataContainer.clear();

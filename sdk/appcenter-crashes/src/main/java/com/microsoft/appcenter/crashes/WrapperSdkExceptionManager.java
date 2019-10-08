@@ -79,7 +79,7 @@ public class WrapperSdkExceptionManager {
         if (dataFile.exists()) {
             String loadResult = loadWrapperExceptionData(errorId);
             if (loadResult == null) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: data not found");
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data.");
             }
             FileManager.delete(dataFile);
         }
