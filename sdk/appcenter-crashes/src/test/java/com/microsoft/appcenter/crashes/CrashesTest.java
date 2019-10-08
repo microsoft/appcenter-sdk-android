@@ -580,7 +580,6 @@ public class CrashesTest {
 
             @Override
             public boolean matches(Object item) {
-
                 return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
                         && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
             }
