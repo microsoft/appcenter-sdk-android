@@ -150,7 +150,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
         /* TODO remove reflection and catch block after API available to jCenter. */
         try {
             String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(report);
-            message += String.format("\nStackTrace: %s", stackTrace);
+            message += String.format("\nStack Trace: %s", stackTrace);
         } catch (Exception ignored) {
         }
         notifySending(message);

@@ -64,7 +64,7 @@ public class WrapperSdkExceptionManagerTest {
 
     private static final String CRASHES_ENABLED_KEY = KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
 
-    private static final String STACK_TRACE = "Sample stacktrace";
+    private static final String STACK_TRACE = "Sample stack trace";
 
     @Rule
     public final PowerMockRule rule = new PowerMockRule();
