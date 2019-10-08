@@ -119,7 +119,6 @@ public class WrapperSdkExceptionManagerTest {
         File file = mock(File.class);
         whenNew(File.class).withAnyArguments().thenReturn(file);
         when(file.exists()).thenReturn(true);
-        FileManager.read(any(File.class));
         assertNull(WrapperSdkExceptionManager.loadWrapperExceptionData(UUID.randomUUID()));
         assertNull(WrapperSdkExceptionManager.loadWrapperExceptionData(null));
     }
