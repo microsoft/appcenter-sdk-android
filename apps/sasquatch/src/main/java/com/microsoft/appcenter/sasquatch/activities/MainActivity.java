@@ -7,10 +7,10 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.res.Resources;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -373,7 +373,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void accept(ErrorReport data) {
                 if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace());
+
+                    /* TODO remove reflection and catch block after API available to jCenter. */
+                    try {
+                        String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(data);
+                        Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + stackTrace);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         });
