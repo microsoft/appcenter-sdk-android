@@ -49,7 +49,9 @@ public class WrapperSdkExceptionManagerAndroidTest {
     public void setUp() {
         android.util.Log.i(TAG, "Cleanup");
         SharedPreferencesManager.clear();
-        for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles();
+        assertNotNull(files);
+        for (File logFile : files) {
             if (!logFile.isDirectory()) {
                 assertTrue(logFile.delete());
             }
@@ -71,6 +73,16 @@ public class WrapperSdkExceptionManagerAndroidTest {
         method = AppCenter.class.getDeclaredMethod("setChannel", Channel.class);
         method.setAccessible(true);
         method.invoke(appCenter, mock(Channel.class));
+
+
+        /* Since this is a real Android test, it might actually tries to send crash and might delete files on sending completion. Avoid that. */
+        Crashes.setListener(new AbstractCrashesListener() {
+
+            @Override
+            public boolean shouldAwaitUserConfirmation() {
+                return false;
+            }
+        });
 
         /* Start crashes. */
         AppCenter.start(Crashes.class);
