@@ -61,6 +61,8 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+import static android.util.Log.getStackTraceString;
+import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 
 /**
  * Crashes service.
@@ -92,7 +94,7 @@ public class Crashes extends AbstractAppCenterService {
      * Preference storage key for memory running level.
      */
     @VisibleForTesting
-    public static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
+    static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
 
     /**
      * Group for sending logs.
@@ -652,10 +654,9 @@ public class Crashes extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
             long minidumpDate = logFile.lastModified();
             File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
-            NativeException nativeException = new NativeException();
             Exception modelException = new Exception();
             modelException.setType("minidump");
-            modelException.setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
+            modelException.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
             modelException.setMinidumpFilePath(dest.getPath());
             ManagedErrorLog errorLog = new ManagedErrorLog();
             errorLog.setException(modelException);
@@ -695,8 +696,8 @@ public class Crashes extends AbstractAppCenterService {
             errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
                 errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
-                errorLog.getDevice().setWrapperSdkName(Constants.WRAPPER_SDK_NAME_NDK);
-                saveErrorLogFiles(nativeException, errorLog);
+                errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+                saveErrorLogFiles(new NativeException(), errorLog);
                 if (!logFile.renameTo(dest)) {
                     throw new IOException("Failed to move file");
                 }
@@ -859,15 +860,11 @@ public class Crashes extends AbstractAppCenterService {
         } else {
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
-                Throwable throwable = null;
+                String stackTrace = null;
                 if (file.length() > 0) {
-                    try {
-                        throwable = FileManager.readObject(file);
-                    } catch (IOException | ClassNotFoundException | RuntimeException | StackOverflowError e) {
-                        AppCenterLog.error(LOG_TAG, "Cannot read throwable file " + file.getName(), e);
-                    }
+                    stackTrace = FileManager.read(file);
                 }
-                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, throwable);
+                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
                 mErrorReportCache.put(id, new ErrorLogReport(log, report));
                 return report;
             }
@@ -923,7 +920,7 @@ public class Crashes extends AbstractAppCenterService {
                         ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-                        if (errorLogReport.report.getThrowable() instanceof NativeException) {
+                        if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
 
                             /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
@@ -1072,10 +1069,11 @@ public class Crashes extends AbstractAppCenterService {
         File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         if (throwable != null) {
             try {
-                FileManager.writeObject(throwableFile, throwable);
-                AppCenterLog.debug(Crashes.LOG_TAG, "Saved Throwable as is for client side inspection in " + throwableFile + " throwable:", throwable);
+                String stackTrace = getStackTraceString(throwable);
+                FileManager.write(throwableFile, stackTrace);
+                AppCenterLog.debug(LOG_TAG, "Saved stack trace as is for client side inspection in " + throwableFile + " stack trace:" + stackTrace);
             } catch (StackOverflowError e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store throwable", e);
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stack trace.", e);
                 throwable = null;
 
                 //noinspection ResultOfMethodCallIgnored

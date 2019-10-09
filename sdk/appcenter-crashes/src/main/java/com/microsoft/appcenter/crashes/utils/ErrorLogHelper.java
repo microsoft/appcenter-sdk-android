@@ -291,11 +291,11 @@ public class ErrorLogHelper {
     }
 
     @NonNull
-    public static ErrorReport getErrorReportFromErrorLog(@NonNull ManagedErrorLog log, Throwable throwable) {
+    public static ErrorReport getErrorReportFromErrorLog(@NonNull ManagedErrorLog log, String stackTrace) {
         ErrorReport report = new ErrorReport();
         report.setId(log.getId().toString());
         report.setThreadName(log.getErrorThreadName());
-        report.setThrowable(throwable);
+        report.setStackTrace(stackTrace);
         report.setAppStartTime(log.getAppLaunchTimestamp());
         report.setAppErrorTime(log.getTimestamp());
         report.setDevice(log.getDevice());
