@@ -74,8 +74,10 @@ public class WrapperSdkExceptionManagerAndroidTest {
         method.setAccessible(true);
         method.invoke(appCenter, mock(Channel.class));
 
-
-        /* Since this is a real Android test, it might actually tries to send crash and might delete files on sending completion. Avoid that. */
+        /*
+         * Since this is a real Android test, it might actually try to send crash logs
+         * and will delete files on sending completion. Avoid that by requesting user confirmation.
+         */
         Crashes.setListener(new AbstractCrashesListener() {
 
             @Override
