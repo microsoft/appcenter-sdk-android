@@ -68,7 +68,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 startMSALoginActivity(AuthenticationProvider.Type.MSA_DELEGATE);
             }
         }));
-        mFeatureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_in_title, R.string.b2c_sign_in_description, new View.OnClickListener() {
+        mFeatureList.add(new TestFeatures.TestFeatureTitle(R.string.auth_title));
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.sign_in_title, R.string.sign_in_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -97,7 +98,7 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                 });
             }
         }));
-        mFeatureList.add(new TestFeatures.TestFeature(R.string.b2c_sign_out_title, R.string.b2c_sign_out_description, new View.OnClickListener() {
+        mFeatureList.add(new TestFeatures.TestFeature(R.string.sign_out_title, R.string.sign_out_description, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -138,19 +139,19 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
     }
 
     private TestFeatures.TestFeature getAuthenticationDefaultTestFeature() {
-        return getAuthenticationTestFeature(R.string.b2c_authentication_status_description);
+        return getAuthenticationTestFeature(R.string.authentication_status_description);
     }
 
     private TestFeatures.TestFeature getAuthenticatedTestFeature() {
-        return getAuthenticationTestFeature(R.string.b2c_authentication_status_authenticated);
+        return getAuthenticationTestFeature(R.string.authentication_status_authenticated);
     }
 
     private TestFeatures.TestFeature getNotAuthenticatedTestFeature() {
-        return getAuthenticationTestFeature(R.string.b2c_authentication_status_not_authenticated);
+        return getAuthenticationTestFeature(R.string.authentication_status_not_authenticated);
     }
 
     private TestFeatures.TestFeature getAuthenticationTestFeature(int valueStringId) {
-        return new TestFeatures.TestFeature(R.string.b2c_authentication_status_title, valueStringId, new View.OnClickListener() {
+        return new TestFeatures.TestFeature(R.string.authentication_status_title, valueStringId, new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -158,8 +159,8 @@ public class AuthenticationProviderActivity extends AppCompatActivity {
                     startUserInfoActivity(sUserInformation);
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(AuthenticationProviderActivity.this);
-                    builder.setTitle(R.string.b2c_authentication_status_dialog_unavailable_title)
-                           .setMessage(R.string.b2c_authentication_status_dialog_unavailable_description)
+                    builder.setTitle(R.string.authentication_status_dialog_unavailable_title)
+                           .setMessage(R.string.authentication_status_dialog_unavailable_description)
                            .setPositiveButton(R.string.alert_ok, new DialogInterface.OnClickListener() {
 
                                 @Override

@@ -1,5 +1,22 @@
 # App Center SDK for Android Change Log
 
+## Version 2.4.0
+
+### App Center Crashes
+
+* **[Behavior change]** Deprecate and remove insecure implementation of `ErrorReport.getThrowable()`, which now always returns `null`. Use the new `ErrorReport.getStackTrace()` as an alternative.
+
+### App Center Data
+
+* **[Fix]** Reduced retries on Data-related operations to fail fast and avoid the perception of calls "hanging".
+
+### App Center Distribute
+
+* **[Fix]** Downloading in-app update APK file has been failing on Android 4.x since TLS 1.2 has been enforced early September. The file is now downloaded using HTTPS direct connection when running on Android 4 instead of relying on system's download manager.
+* **[Breaking change]** If your `minSdkVersion` is lower than `19`, Android requires the `WRITE_EXTERNAL_STORAGE` permission to store new downloaded updates. Please refer to the updated documentation site for detailed instructions. This is related to the download fix.
+
+___
+
 ## Version 2.3.0
 
 ### App Center Auth

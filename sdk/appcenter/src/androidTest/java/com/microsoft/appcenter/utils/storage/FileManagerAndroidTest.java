@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -133,7 +132,7 @@ public class FileManagerAndroidTest {
 
         /* Verify the contents of the most recent file. */
         assertNotNull(actual);
-        assertEquals(contents2, actual.trim());
+        assertEquals(contents2, actual);
 
         /* Delete the files to clean up. */
         for (String filename : filenames) {
@@ -147,40 +146,6 @@ public class FileManagerAndroidTest {
         assertNull(FileManager.read("not-exist-filename"));
         assertArrayEquals(new String[0], FileManager.getFilenames("not-exist-path", null));
         assertNull(FileManager.lastModifiedFile("not-exist-path", null));
-    }
-
-    @Test
-    public void fileManagerForObject() throws IOException, ClassNotFoundException {
-        File file = new File(sAndroidFilesPath + UUID.randomUUID().toString() + FILE_STORAGE_TEST_FILE_EXTENSION);
-
-        /* Create a mock object. */
-        DataModel model = new DataModel(10, "Model", true);
-
-        /* Write the object to a file. */
-        FileManager.writeObject(file, model);
-
-        /* Read the file. */
-        DataModel actual = FileManager.readObject(file);
-
-        /* Read with class cast exception. */
-        Exception readCastException = null;
-        try {
-
-            @SuppressWarnings("unused")
-            String wrongType = FileManager.readObject(file);
-        } catch (Exception e) {
-            readCastException = e;
-        }
-        assertTrue(readCastException instanceof ClassCastException);
-
-        /* Verify the deserialized instance and original instance are same. */
-        assertNotNull(actual);
-        assertEquals(model.number, actual.number);
-        assertEquals(model.object.text, actual.object.text);
-        assertEquals(model.object.enabled, actual.object.enabled);
-
-        /* Delete the files to clean up. */
-        FileManager.delete(file);
     }
 
     @Test
@@ -203,29 +168,5 @@ public class FileManagerAndroidTest {
 
         /* Check file not found. */
         assertNull(FileManager.readBytes(file));
-    }
-
-    /**
-     * Temporary class for testing object serialization.
-     */
-    private static class DataModel implements Serializable {
-        final int number;
-        final InnerModel object;
-
-        @SuppressWarnings("SameParameterValue")
-        DataModel(int number, String text, boolean enabled) {
-            this.number = number;
-            this.object = new InnerModel(text, enabled);
-        }
-
-        static class InnerModel implements Serializable {
-            final String text;
-            final boolean enabled;
-
-            InnerModel(String text, boolean enabled) {
-                this.text = text;
-                this.enabled = enabled;
-            }
-        }
     }
 }

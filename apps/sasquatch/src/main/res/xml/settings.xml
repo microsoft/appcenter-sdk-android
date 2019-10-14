@@ -120,7 +120,9 @@
             android:dependency="@string/appcenter_state_key"
             android:key="@string/install_id_key"
             android:title="@string/install_id_title" />
-        <Preference
+        <ListPreference
+            android:entries="@array/appcenter_secret_values"
+            android:entryValues="@array/appcenter_secrets"
             android:key="@string/app_secret_key"
             android:title="@string/app_secret_title" />
     </PreferenceCategory>

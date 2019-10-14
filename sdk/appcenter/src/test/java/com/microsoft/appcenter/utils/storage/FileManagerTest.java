@@ -22,13 +22,10 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -85,6 +82,17 @@ public class FileManagerTest {
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
+    @Test
+    public void readEmptyFile() throws Exception {
+        mockStatic(AppCenterLog.class);
+        BufferedReader reader = mock(BufferedReader.class);
+        whenNew(BufferedReader.class).withAnyArguments().thenReturn(reader);
+        whenNew(FileReader.class).withAnyArguments().thenReturn(mock(FileReader.class));
+        when(reader.readLine()).thenReturn(null);
+        assertEquals("", FileManager.read(new File("")));
+        verify(reader).close();
+    }
+
     @Test(expected = IOException.class)
     public void writeError() throws Exception {
         mockStatic(TextUtils.class);
@@ -95,26 +103,6 @@ public class FileManagerTest {
         whenNew(FileWriter.class).withAnyArguments().thenReturn(mock(FileWriter.class));
         doThrow(new IOException("mock")).when(writer).write(anyString());
         FileManager.write(mock(File.class), "test");
-        verify(writer).close();
-    }
-
-    @Test(expected = IOException.class)
-    public void readObjectError() throws Exception {
-        ObjectInputStream reader = mock(ObjectInputStream.class);
-        whenNew(ObjectInputStream.class).withAnyArguments().thenReturn(reader);
-        whenNew(FileInputStream.class).withAnyArguments().thenReturn(mock(FileInputStream.class));
-        doThrow(new IOException("mock")).when(reader).readObject();
-        FileManager.readObject(mock(File.class));
-        verify(reader).close();
-    }
-
-    @Test(expected = IOException.class)
-    public void writeObjectError() throws Exception {
-        ObjectOutputStream writer = mock(ObjectOutputStream.class);
-        whenNew(ObjectOutputStream.class).withAnyArguments().thenReturn(writer);
-        whenNew(FileOutputStream.class).withAnyArguments().thenReturn(mock(FileOutputStream.class));
-        doThrow(new IOException("mock")).when(writer).writeObject(any());
-        FileManager.writeObject(mock(File.class), "test");
         verify(writer).close();
     }
 

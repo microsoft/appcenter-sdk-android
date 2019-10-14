@@ -84,19 +84,19 @@
     <string name="msa_compact_description" tools:ignore="MissingTranslation">One collector userId from MSA whitelisted.</string>
     <string name="msa_delegate_title" tools:ignore="MissingTranslation">MSA delegate ticket</string>
     <string name="msa_delegate_description" tools:ignore="MissingTranslation">One collector userId from MSA third-party.</string>
-    <string name="b2c_sign_in_title" tools:ignore="MissingTranslation">Azure B2C ticket</string>
-    <string name="b2c_sign_in_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
-    <string name="b2c_sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
-    <string name="b2c_authentication_status_title" tools:ignore="MissingTranslation">Authentication status</string>
-    <string name="b2c_user_info_id_title" tools:ignore="MissingTranslation">Account ID</string>
-    <string name="b2c_user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
-    <string name="b2c_user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
-    <string name="b2c_authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
-    <string name="b2c_authentication_status_dialog_unavailable_title" tools:ignore="MissingTranslation">Please sign in</string>
-    <string name="b2c_authentication_status_dialog_unavailable_description" tools:ignore="MissingTranslation">Please perform a sign in to get user information.</string>
-    <string name="b2c_authentication_status_description" tools:ignore="MissingTranslation">Unknown</string>
-    <string name="b2c_authentication_status_not_authenticated" tools:ignore="MissingTranslation">User not authenticated</string>
-    <string name="b2c_sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
+    <string name="sign_in_title" tools:ignore="MissingTranslation">Sign In</string>
+    <string name="sign_in_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
+    <string name="sign_out_title" tools:ignore="MissingTranslation">Sign out</string>
+    <string name="authentication_status_title" tools:ignore="MissingTranslation">Authentication status</string>
+    <string name="user_info_id_title" tools:ignore="MissingTranslation">Account ID</string>
+    <string name="user_info_id_token_title" tools:ignore="MissingTranslation">ID token</string>
+    <string name="user_info_access_token_title" tools:ignore="MissingTranslation">Access token</string>
+    <string name="authentication_status_authenticated" tools:ignore="MissingTranslation">User Authenticated</string>
+    <string name="authentication_status_dialog_unavailable_title" tools:ignore="MissingTranslation">Please sign in</string>
+    <string name="authentication_status_dialog_unavailable_description" tools:ignore="MissingTranslation">Please perform a sign in to get user information.</string>
+    <string name="authentication_status_description" tools:ignore="MissingTranslation">Unknown</string>
+    <string name="authentication_status_not_authenticated" tools:ignore="MissingTranslation">User not authenticated</string>
+    <string name="sign_out_description" tools:ignore="MissingTranslation">For Auth module in App Center.</string>
     <string name="max_storage_size_change_success" tools:ignore="MissingTranslation">Max storage size has changed to %s successfully. Check SDK logs for actual size of storage.</string>
     <string name="max_storage_size_change_failed" tools:ignore="MissingTranslation">Failed to change max storage size.</string>
     <string name="storage_size_changed_format" tools:ignore="MissingTranslation">Storage maximum size has been changed to %s. The new size is not a final size, please close the application completely and relaunch again.</string>
@@ -114,6 +114,6 @@
         <item>Invalid</item>
     </string-array>
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
-    <string name="b2c_jwt_parse_error" tools:ignore="MissingTranslation">Could not parse the JWT token</string>
-    <string name="b2c_jwt_parse_json_error" tools:ignore="MissingTranslation">An error occurred during parsing JWT claims.</string>
+    <string name="jwt_parse_error" tools:ignore="MissingTranslation">Could not parse the JWT token</string>
+    <string name="jwt_parse_json_error" tools:ignore="MissingTranslation">An error occurred during parsing JWT claims.</string>
 </resources>

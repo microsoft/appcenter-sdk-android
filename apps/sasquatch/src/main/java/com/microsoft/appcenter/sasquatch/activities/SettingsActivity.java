@@ -494,23 +494,49 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initEditText(R.string.app_secret_key, R.string.app_secret_title, APP_SECRET_KEY, getString(R.string.app_secret), new EditTextListener() {
+            final String defaultAppSecret = MainActivity.getDefaultAppSecret(getActivity().getResources());
+            final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, defaultAppSecret);
+            initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
                 @Override
-                public void onSave(String value) {
+                public boolean onPreferenceChange(final Preference preference, Object newValue) {
+                    if (newValue == null) {
+                        return true;
+                    }
+                    String value = newValue.toString();
+
                     if (!TextUtils.isEmpty(value)) {
-                        setKeyValue(APP_SECRET_KEY, value);
-                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
+                        if (value.equals(MainActivity.getCustomAppSecretString(getActivity().getResources()))) {
+
+                            /* If user selected custom, popup a text editor so they can enter whatever they want. */
+                            showPreferenceTextEditor(getPreferenceManager().findPreference(getString(R.string.app_secret_key)), R.string.app_secret_title, APP_SECRET_KEY, defaultAppSecret, new EditTextListener() {
+
+                                @Override
+                                public void onSave(String value) {
+                                    if (!TextUtils.isEmpty(value)) {
+                                        setKeyValue(APP_SECRET_KEY, value);
+                                        Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onReset() {
+                                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
+                                    preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
+                            setKeyValue(APP_SECRET_KEY, value);
+                            preference.setSummary(MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, null));
+                            Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), value), Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(getActivity(), R.string.app_secret_invalid, Toast.LENGTH_SHORT).show();
                     }
-                }
-
-                @Override
-                public void onReset() {
-                    String defaultAppSecret = getString(R.string.app_secret);
-                    setKeyValue(APP_SECRET_KEY, defaultAppSecret);
-                    Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.app_secret_changed_format), defaultAppSecret), Toast.LENGTH_SHORT).show();
+                    return true;
                 }
             });
 
@@ -740,30 +766,35 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onPreferenceClick(final Preference preference) {
-                    final EditText input = new EditText(getActivity());
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setText(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
-
-                    new AlertDialog.Builder(getActivity()).setTitle(title).setView(input)
-                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    listener.onSave(input.getText().toString());
-                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
-                                }
-                            })
-                            .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    listener.onReset();
-                                    preference.setSummary(getSummary(preferencesKey, defaultValue));
-                                }
-                            })
-                            .setNegativeButton(R.string.cancel, null)
-                            .create().show();
-                    return true;
+                    return showPreferenceTextEditor(preference, title, preferencesKey, defaultValue, listener);
                 }
             });
+        }
+
+        private boolean showPreferenceTextEditor(final Preference preference, final int title, final String preferencesKey, final String defaultValue, final EditTextListener listener) {
+            final EditText input = new EditText(getActivity());
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            input.setText(MainActivity.sSharedPreferences.getString(preferencesKey, defaultValue));
+
+            /* Actually show the text entry dialog. */
+            new AlertDialog.Builder(getActivity()).setTitle(title).setView(input)
+                    .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            listener.onSave(input.getText().toString());
+                            preference.setSummary(getSummary(preferencesKey, defaultValue));
+                        }
+                    })
+                    .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            listener.onReset();
+                            preference.setSummary(getSummary(preferencesKey, defaultValue));
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .create().show();
+            return true;
         }
 
         private void initCheckBoxSetting(int key, final int enabledSummary, final int disabledSummary, final HasEnabled hasEnabled) {

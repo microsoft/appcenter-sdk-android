@@ -10,6 +10,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -121,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         switch (StartType.valueOf(startType)) {
             case TARGET:
             case NO_SECRET:
+            case SKIP_START:
                 return context.getString(R.string.log_url_one_collector);
         }
         return context.getString(R.string.log_url);
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         if (startType == StartType.SKIP_START) {
             return;
         }
-        String appId = sSharedPreferences.getString(APP_SECRET_KEY, application.getString(R.string.app_secret));
+        String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
         String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
         String appIdArg = "";
         switch (startType) {
@@ -371,7 +373,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void accept(ErrorReport data) {
                 if (data != null) {
-                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getThrowable()=", data.getThrowable());
+
+                    /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
+                    /* Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace()); */
+                    try {
+                        String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(data);
+                        Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + stackTrace);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         });
@@ -382,6 +391,17 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+    }
+
+    /* Get the default app secret from the app secret array. */
+    static String getDefaultAppSecret(Resources resources) {
+        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        return secretValuesArray[0];
+    }
+
+    static String getCustomAppSecretString(Resources resources) {
+        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
+        return secretValuesArray[secretValuesArray.length - 1];
     }
 
     private void setDistributeEnabledForDebuggableBuild() {

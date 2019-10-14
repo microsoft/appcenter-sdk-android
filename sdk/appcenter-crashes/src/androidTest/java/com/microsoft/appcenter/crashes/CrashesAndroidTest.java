@@ -16,7 +16,6 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -191,8 +190,7 @@ public class CrashesAndroidTest {
         startFresh(null);
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
-        Throwable lastThrowable = errorReport.getThrowable();
-        assertTrue(lastThrowable instanceof IllegalArgumentException);
+        assertNotNull(errorReport.getStackTrace());
         assertTrue(Crashes.hasCrashedInLastSession().get());
 
         /* Disable SDK, that will clear the report. */
@@ -236,9 +234,7 @@ public class CrashesAndroidTest {
         startFresh(null);
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
-        Throwable lastThrowable = errorReport.getThrowable();
-        assertTrue(lastThrowable instanceof StackOverflowError);
-        assertEquals(ErrorLogHelper.FRAME_LIMIT, lastThrowable.getStackTrace().length);
+        assertNotNull(errorReport.getStackTrace());
         assertTrue(Crashes.hasCrashedInLastSession().get());
     }
 
@@ -264,7 +260,7 @@ public class CrashesAndroidTest {
         ErrorReport errorReport = Crashes.getLastSessionCrashReport().get();
         assertNotNull(errorReport);
         assertTrue(Crashes.hasCrashedInLastSession().get());
-        assertTrue(errorReport.getThrowable() instanceof NativeException);
+        assertNotNull(errorReport.getStackTrace());
 
         /* File has been deleted. */
         assertFalse(minidumpFile.exists());
@@ -360,8 +356,7 @@ public class CrashesAndroidTest {
             @Override
             public void accept(ErrorReport errorReport) {
                 assertNotNull(errorReport);
-                Throwable lastThrowable = errorReport.getThrowable();
-                assertTrue(lastThrowable instanceof RuntimeException);
+                assertNotNull(errorReport.getStackTrace());
             }
         });
         assertTrue(Crashes.hasCrashedInLastSession().get());

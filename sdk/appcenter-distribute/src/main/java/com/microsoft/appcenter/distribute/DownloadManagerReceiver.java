@@ -10,6 +10,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
+
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
 /**
  * Process download manager callbacks.
  */
@@ -32,8 +37,10 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          * Forward the download identifier to Distribute for inspection when a download completes.
          */
         else if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-            long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            Distribute.getInstance().checkDownload(context, downloadId, false);
+            long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER);
+            if (downloadId != INVALID_DOWNLOAD_IDENTIFIER) {
+                AsyncTaskUtils.execute(LOG_TAG, new ResumeFromBackgroundTask(context, downloadId));
+            }
         }
     }
 }

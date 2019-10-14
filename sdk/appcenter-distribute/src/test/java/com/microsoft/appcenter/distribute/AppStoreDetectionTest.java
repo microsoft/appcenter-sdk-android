@@ -52,80 +52,87 @@ public class AppStoreDetectionTest {
 
     @Test
     public void nullInstallerIsNotStore() {
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
 
         /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void installerUtilsAlreadyInitialized() {
         assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+
+        /* Verify called once. */
         verify(mPackageManager).getInstallerPackageName(anyString());
     }
 
     @Test
     public void appStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.android.vending");
-        assertTrue(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.android.vending");
 
         /* Check cache. */
-        assertTrue(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyFromAppStore();
     }
 
     @Test
     public void adbIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("adb");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("adb");
 
         /* Check cache. */
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyNotFromAppStore();
     }
 
     @Test
     public void localInstallerIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.google.android.packageinstaller");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.google.android.packageinstaller");
 
         /* Check cache. */
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyNotFromAppStore();
     }
 
     @Test
     public void anotherLocalInstallerIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.android.packageinstaller");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.android.packageinstaller");
 
         /* Check cache. */
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyNotFromAppStore();
     }
 
     @Test
     public void managedProvisioningIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.android.managedprovisioning");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.android.managedprovisioning");
 
         /* Check cache. */
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyNotFromAppStore();
     }
 
     @Test
     public void miUiLocalInstallerIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.miui.packageinstaller");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.miui.packageinstaller");
 
         /* Check cache. */
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
-        verify(mPackageManager).getInstallerPackageName(anyString());
+        verifyNotFromAppStore();
     }
 
     @Test
     public void samsungLocalInstallerIsNotStore() {
-        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn("com.samsung.android.packageinstaller");
-        assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        setInstallerPackageName("com.samsung.android.packageinstaller");
 
         /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    private void setInstallerPackageName(String packageName) {
+        when(mPackageManager.getInstallerPackageName(anyString())).thenReturn(packageName);
+    }
+
+    private void verifyNotFromAppStore() {
         assertFalse(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
+        verify(mPackageManager).getInstallerPackageName(anyString());
+    }
+
+    private void verifyFromAppStore() {
+        assertTrue(InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext));
         verify(mPackageManager).getInstallerPackageName(anyString());
     }
 }

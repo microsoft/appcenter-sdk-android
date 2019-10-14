@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.download.manager;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -11,9 +11,9 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 /**
- * Removing a download triggers strict mode exception in U.I. thread.
+ * Removing a download triggers strict mode exception in UI thread.
  */
-class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
+class DownloadManagerRemoveTask extends AsyncTask<Void, Void, Void> {
 
     /**
      * Context.
@@ -22,7 +22,7 @@ class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
     private final Context mContext;
 
     /**
-     * Download identifier to inspect.
+     * Download identifier to delete.
      */
     private final long mDownloadId;
 
@@ -32,7 +32,7 @@ class RemoveDownloadTask extends AsyncTask<Void, Void, Void> {
      * @param context    context.
      * @param downloadId download identifier to remove.
      */
-    RemoveDownloadTask(Context context, long downloadId) {
+    DownloadManagerRemoveTask(Context context, long downloadId) {
         mContext = context;
         mDownloadId = downloadId;
     }

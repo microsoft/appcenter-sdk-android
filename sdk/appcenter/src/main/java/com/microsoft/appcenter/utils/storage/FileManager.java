@@ -19,14 +19,10 @@ import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 
 /**
  * File manager for internal/external storage access
@@ -77,8 +73,12 @@ public class FileManager {
                 String line;
                 String lineSeparator = System.getProperty("line.separator");
                 contents = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    contents.append(line).append(lineSeparator);
+                line = reader.readLine();
+                if (line != null) {
+                    contents.append(line);
+                    while ((line = reader.readLine()) != null) {
+                        contents.append(lineSeparator).append(line);
+                    }
                 }
             } finally {
                 reader.close();
@@ -143,47 +143,6 @@ public class FileManager {
             writer.write(contents);
         } finally {
             writer.close();
-        }
-    }
-
-    /**
-     * Read an object from a file (deserialization).
-     *
-     * @param file The file to read from.
-     * @param <T>  A type for the deserialized instance.
-     * @return The deserialized instance.
-     * @throws IOException            If an I/O error occurs
-     * @throws ClassNotFoundException If no class definition found for serialized instance.
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends Serializable> T readObject(@NonNull File file)
-            throws IOException, ClassNotFoundException {
-        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(file));
-        //noinspection TryFinallyCanBeTryWithResources
-        try {
-            return (T) inputStream.readObject();
-        } finally {
-            inputStream.close();
-        }
-    }
-
-    /**
-     * Write an object to a file (serialization).
-     *
-     * @param file   The file to write to.
-     * @param object The object to be written to the file.
-     * @param <T>    A type for the object.
-     * @throws IOException If an I/O error occurs
-     */
-    public static <T extends Serializable> void writeObject(@NonNull File file, @NonNull T object) throws IOException {
-        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
-
-        //noinspection TryFinallyCanBeTryWithResources
-        try {
-            outputStream.writeObject(object);
-        } finally {
-
-            outputStream.close();
         }
     }
 
