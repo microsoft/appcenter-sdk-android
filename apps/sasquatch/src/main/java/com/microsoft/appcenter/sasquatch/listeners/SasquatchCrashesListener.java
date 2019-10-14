@@ -146,14 +146,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     @Override
     public void onSendingSucceeded(ErrorReport report) {
         String message = String.format("%s\nCrash ID: %s", mContext.getString(R.string.crash_sent_succeeded), report.getId());
-
-        /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
-        /* message += String.format("\nStackTrace: %s", report.getStackTrace()); */
-        try {
-            String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(report);
-            message += String.format("\nStack Trace: %s", stackTrace);
-        } catch (Exception ignored) {
-        }
+        message += String.format("\nStackTrace: %s", report.getStackTrace());
         notifySending(message);
     }
 

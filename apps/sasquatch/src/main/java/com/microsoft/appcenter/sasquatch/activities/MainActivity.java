@@ -373,14 +373,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void accept(ErrorReport data) {
                 if (data != null) {
-
-                    /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
-                    /* Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace()); */
-                    try {
-                        String stackTrace = (String) ErrorReport.class.getMethod("getStackTrace").invoke(data);
-                        Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + stackTrace);
-                    } catch (Exception ignored) {
-                    }
+                    Log.i(LOG_TAG, "Crashes.getLastSessionCrashReport().getStackTrace()=" + data.getStackTrace());
                 }
             }
         });
