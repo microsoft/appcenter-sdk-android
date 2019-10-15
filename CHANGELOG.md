@@ -1,5 +1,9 @@
 # App Center SDK for Android Change Log
 
+## Version 2.4.1 (Under development)
+
+___
+
 ## Version 2.4.0
 
 ### App Center Crashes
