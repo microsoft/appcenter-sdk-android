@@ -46,6 +46,15 @@ abstract public class PropertyActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Indicate whether properties support strong types or not.
+     *
+     * @return <code>true</code> if it only supports string type, otherwise <code>false</code>.
+     */
+    protected boolean isStringTypeOnly() {
+        return false;
+    }
+
     protected Map<String, String> readStringProperties() {
         Map<String, String> properties = new HashMap<>();
         for (TypedPropertyFragment fragment : mProperties) {
@@ -70,11 +79,4 @@ abstract public class PropertyActivity extends AppCompatActivity {
      * @param view The view of send button.
      */
     abstract protected void send(View view);
-
-    /**
-     * Indicate whether properties support strong types or not.
-     *
-     * @return <code>true</code> if it only supports string type, otherwise <code>false</code>.
-     */
-    abstract protected boolean isStringTypeOnly();
 }

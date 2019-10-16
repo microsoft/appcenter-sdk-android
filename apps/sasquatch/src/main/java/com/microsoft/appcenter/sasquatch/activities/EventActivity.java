@@ -249,11 +249,6 @@ public class EventActivity extends PropertyActivity {
         }
     }
 
-    @Override
-    protected boolean isStringTypeOnly() {
-        return false;
-    }
-
     private int getFlags(PersistenceFlag persistenceFlag) {
         switch (persistenceFlag) {
             case DEFAULT:
