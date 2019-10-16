@@ -8,22 +8,24 @@ package com.microsoft.appcenter.sasquatch.activities;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class ManagedErrorActivity extends AppCompatActivity {
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+
+public class ManagedErrorActivity extends PropertyActivity {
 
     private static final List<Class<? extends Throwable>> sSupportedThrowables = Arrays.asList(
             ArithmeticException.class,
@@ -53,13 +55,19 @@ public class ManagedErrorActivity extends AppCompatActivity {
             InternalError.class,
             OutOfMemoryError.class);
 
+    private Spinner mHandledErrorsSpinner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list);
 
-        ListView listView = findViewById(R.id.list);
-        listView.setAdapter(new ArrayAdapter<Class<? extends Throwable>>(this, android.R.layout.simple_list_item_1, sSupportedThrowables) {
+        View middleView = getLayoutInflater().inflate(R.layout.layout_handled_error, null);
+        ((LinearLayout) findViewById(R.id.middle_layout)).addView(middleView);
+
+        /* Handled Errors Spinner. */
+        mHandledErrorsSpinner = findViewById(R.id.handled_errors_spinner);
+        mHandledErrorsSpinner.setAdapter(new ArrayAdapter<Class<? extends Throwable>>(this, android.R.layout.simple_list_item_1, sSupportedThrowables) {
+
             @SuppressWarnings("ConstantConditions")
             @NonNull
             @Override
@@ -69,29 +77,22 @@ public class ManagedErrorActivity extends AppCompatActivity {
                 return view;
             }
         });
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    Class<? extends Throwable> clazz = (Class<? extends Throwable>) parent.getItemAtPosition(position);
-                    Throwable e;
-                    try {
-                        e = clazz.getConstructor(String.class).newInstance("Test Exception");
-                    } catch (NoSuchMethodException ignored) {
-                        e = clazz.getConstructor().newInstance();
-                    }
-                    CrashesPrivateHelper.trackException(e,
-                            new HashMap<String, String>() {{
-                                put("prop1", "value1");
-                                put("prop2", "value2");
-                            }});
-                } catch (Exception e) {
+    }
 
-                    /* This is not expected behavior so let the application crashes. */
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+    @Override
+    protected void send(View view) {
+        try {
+            Throwable throwable = sSupportedThrowables.get(mHandledErrorsSpinner.getSelectedItemPosition()).newInstance();
+            Map<String, String> properties = readStringProperties();
+            CrashesPrivateHelper.trackException(throwable, properties);
+        } catch (Exception e) {
+            //noinspection ConstantConditions
+            Log.d(LOG_TAG, e.getMessage());
+        }
+    }
+
+    @Override
+    protected boolean isStringTypeOnly() {
+        return true;
     }
 }
