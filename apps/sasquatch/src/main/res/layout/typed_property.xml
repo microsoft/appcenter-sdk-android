@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -28,6 +27,7 @@
         tools:targetApi="o" />
 
     <TextView
+        android:id="@+id/type_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/type" />
@@ -66,8 +66,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:focusable="false"
-                android:inputType="date"
                 android:importantForAutofill="no"
+                android:inputType="date"
                 tools:ignore="LabelFor"
                 tools:targetApi="o" />
 
@@ -77,8 +77,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:focusable="false"
-                android:inputType="time"
                 android:importantForAutofill="no"
+                android:inputType="time"
                 tools:ignore="LabelFor"
                 tools:targetApi="o" />
 

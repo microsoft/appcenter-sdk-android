@@ -3,9 +3,11 @@
   ~ Licensed under the MIT License.
   -->
 
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:showIn="@layout/activity_event">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="match_parent"
@@ -20,4 +22,4 @@
         android:importantForAutofill="no"
         android:inputType="text"
         tools:targetApi="o" />
-</merge>
+</LinearLayout>

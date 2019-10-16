@@ -24,6 +24,8 @@ import java.util.Map;
 
 public class TypedPropertyFragment extends EditDateTimeFragment {
 
+    public final static String STRING_TYPE_ONLY_KEY = "stringTypeOnly";
+
     private EditText mEditKey;
 
     private Spinner mEditType;
@@ -48,21 +50,37 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
         mEditNumberDouble = view.findViewById(R.id.number_double);
         mEditNumberLong = view.findViewById(R.id.number_long);
         mEditBool = view.findViewById(R.id.bool);
-
-        /* Set change type callback. */
-        mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateValueType();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
         resetValue();
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        boolean stringTypeOnly = getArguments().getBoolean(STRING_TYPE_ONLY_KEY);
+        if (stringTypeOnly) {
+            view.findViewById(R.id.type_label).setVisibility(View.GONE);
+            mEditType.setVisibility(View.GONE);
+            mEditNumberDouble.setVisibility(View.GONE);
+            mEditNumberLong.setVisibility(View.GONE);
+            mEditBool.setVisibility(View.GONE);
+            mDateTime.setVisibility(View.GONE);
+        } else {
+
+            /* Set change type callback. */
+            mEditType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    updateValueType();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            });
+        }
     }
 
     private void updateValueType() {

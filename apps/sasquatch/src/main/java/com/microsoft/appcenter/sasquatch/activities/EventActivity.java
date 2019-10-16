@@ -7,15 +7,12 @@ package com.microsoft.appcenter.sasquatch.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -30,21 +27,18 @@ import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class EventActivity extends AppCompatActivity {
+public class EventActivity extends PropertyActivity {
 
     /**
      * Remember for what targets the device id was enabled.
      * It shouldn't be lost on recreate activity.
      */
     private static final Set<AnalyticsTransmissionTarget> DEVICE_ID_ENABLED = new HashSet<>();
-
-    private final List<TypedPropertyFragment> mProperties = new ArrayList<>();
 
     private TextView mName;
 
@@ -73,7 +67,12 @@ public class EventActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_event);
+
+        View topView = getLayoutInflater().inflate(R.layout.activity_log_top, null);
+        ((LinearLayout) findViewById(R.id.top_layout)).addView(topView);
+
+        View middleView = getLayoutInflater().inflate(R.layout.layout_event, null);
+        ((LinearLayout) findViewById(R.id.middle_layout)).addView(middleView);
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
@@ -178,29 +177,9 @@ public class EventActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.add, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_add) {
-            addProperty();
-        }
-        return true;
-    }
 
     private int getNumberOfLogs() {
         return Math.max(mNumberOfLogs.getProgress(), 1);
-    }
-
-    private void addProperty() {
-        TypedPropertyFragment fragment = new TypedPropertyFragment();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.add(R.id.list, fragment).commit();
-        mProperties.add(fragment);
     }
 
     private boolean onlyStringProperties() {
@@ -212,8 +191,8 @@ public class EventActivity extends AppCompatActivity {
         return true;
     }
 
-    @SuppressWarnings("unused")
-    public void send(@SuppressWarnings("UnusedParameters") View view) {
+    @Override
+    protected void send(View view) {
         AnalyticsTransmissionTarget target = getSelectedTarget();
         PersistenceFlag persistenceFlag = PersistenceFlag.values()[mPersistenceFlagSpinner.getSelectedItemPosition()];
         int flags = getFlags(persistenceFlag);
@@ -222,10 +201,7 @@ public class EventActivity extends AppCompatActivity {
         EventProperties typedProperties = null;
         if (mProperties.size() > 0) {
             if (onlyStringProperties()) {
-                properties = new HashMap<>();
-                for (TypedPropertyFragment fragment : mProperties) {
-                    fragment.set(properties);
-                }
+                properties = readStringProperties();
             } else {
                 typedProperties = new EventProperties();
                 for (TypedPropertyFragment fragment : mProperties) {
@@ -271,6 +247,11 @@ public class EventActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Override
+    protected boolean isStringTypeOnly() {
+        return false;
     }
 
     private int getFlags(PersistenceFlag persistenceFlag) {
