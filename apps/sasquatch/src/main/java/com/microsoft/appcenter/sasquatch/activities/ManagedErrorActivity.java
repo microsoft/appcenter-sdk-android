@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -60,7 +61,9 @@ public class ManagedErrorActivity extends PropertyActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getLayoutInflater().inflate(R.layout.layout_handled_error, ((LinearLayout) findViewById(R.id.middle_layout)));
+
+        @SuppressLint("InflateParams") View middleView = getLayoutInflater().inflate(R.layout.layout_handled_error, null);
+        ((LinearLayout) findViewById(R.id.middle_layout)).addView(middleView);
 
         /* Handled Errors Spinner. */
         mHandledErrorsSpinner = findViewById(R.id.handled_errors_spinner);
