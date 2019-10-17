@@ -16,7 +16,6 @@ import java.util.Random;
 
 public class CrashTestHelper {
 
-    private Activity mActivity;
     private final List<Crash> mCrashes = Arrays.asList(
             new Crash(R.string.title_test_crash, R.string.description_test_crash, new Runnable() {
 
@@ -68,6 +67,8 @@ public class CrashTestHelper {
                 }
             })
     );
+
+    private Activity mActivity;
 
     public CrashTestHelper(Activity activity) {
         mActivity = activity;
