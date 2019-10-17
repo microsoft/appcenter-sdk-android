@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -23,9 +22,7 @@ public class PageActivity extends PropertyActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        @SuppressLint("InflateParams") View topView = getLayoutInflater().inflate(R.layout.activity_log_top, null);
-        ((LinearLayout) findViewById(R.id.top_layout)).addView(topView);
+        getLayoutInflater().inflate(R.layout.activity_log_top, ((LinearLayout) findViewById(R.id.top_layout)));
 
         /* Init name field. */
         mName = findViewById(R.id.name);

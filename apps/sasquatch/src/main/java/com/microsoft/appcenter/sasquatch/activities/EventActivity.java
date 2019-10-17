@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -68,12 +67,8 @@ public class EventActivity extends PropertyActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        @SuppressLint("InflateParams") View topView = getLayoutInflater().inflate(R.layout.activity_log_top, null);
-        ((LinearLayout) findViewById(R.id.top_layout)).addView(topView);
-
-        @SuppressLint("InflateParams") View middleView = getLayoutInflater().inflate(R.layout.layout_event, null);
-        ((LinearLayout) findViewById(R.id.middle_layout)).addView(middleView);
+        getLayoutInflater().inflate(R.layout.activity_log_top, ((LinearLayout) findViewById(R.id.top_layout)));
+        getLayoutInflater().inflate(R.layout.layout_event, ((LinearLayout) findViewById(R.id.middle_layout)));
 
         /* Test start from library. */
         AppCenter.startFromLibrary(this, Analytics.class);
