@@ -253,13 +253,13 @@ public class CrashesAndroidTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getMinidumpDirectory().get());
 
-        /* Start crashes now. */
-        startFresh(null);
-
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
         FileManager.write(minidumpFile, "mock minidump");
+
+        /* Start crashes now. */
+        startFresh(null);
 
         /* We can access directory now. */
         assertEquals(newMinidumpDirectory.getAbsolutePath(), Crashes.getMinidumpDirectory().get());
@@ -270,9 +270,6 @@ public class CrashesAndroidTest {
 
         /* File has been deleted. */
         assertFalse(minidumpFile.exists());
-
-        Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
-        Crashes.isEnabled().get();
 
         /* After restart, it's processed. */
         Crashes.unsetInstance();
