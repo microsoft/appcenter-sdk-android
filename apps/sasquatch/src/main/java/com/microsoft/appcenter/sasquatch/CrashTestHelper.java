@@ -6,11 +6,9 @@
 package com.microsoft.appcenter.sasquatch;
 
 import android.app.Activity;
-import android.content.Intent;
 
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
-import com.microsoft.appcenter.sasquatch.activities.CrashSubActivity;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,13 +58,6 @@ public class CrashTestHelper {
                 @Override
                 public void run() {
                     new int[Integer.MAX_VALUE].clone();
-                }
-            }),
-            new Crash(R.string.title_memory_crash2, R.string.description_memory_crash2, new Runnable() {
-
-                @Override
-                public void run() {
-                    mActivity.startActivity(new Intent(mActivity, CrashSubActivity.class).putExtra(CrashSubActivity.INTENT_EXTRA_CRASH_TYPE, 1));
                 }
             }),
             new Crash(R.string.title_variable_message, R.string.description_variable_message, new Runnable() {
