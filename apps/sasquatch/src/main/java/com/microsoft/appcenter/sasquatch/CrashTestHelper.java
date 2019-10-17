@@ -10,6 +10,7 @@ import android.app.Activity;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -39,6 +40,13 @@ public class CrashTestHelper {
                 @SuppressWarnings("InfiniteRecursion")
                 public void run() {
                     run();
+                }
+            }),
+            new Crash(R.string.title_nested_exception_crash, R.string.description_nested_exception_crash, new Runnable() {
+
+                @Override
+                public void run() {
+                    throw new RuntimeException("HTTP call failed", new IOException("Broken pipe"));
                 }
             }),
             new Crash(R.string.title_deeply_nested_exception_crash, R.string.description_deeply_nested_exception_crash, new Runnable() {
