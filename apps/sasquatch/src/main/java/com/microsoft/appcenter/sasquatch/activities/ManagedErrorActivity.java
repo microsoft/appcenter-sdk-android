@@ -50,18 +50,11 @@ public class ManagedErrorActivity extends PropertyActivity {
                 return view;
             }
 
-            @SuppressWarnings("ConstantConditions")
             @Override
-            public CrashTestHelper.Crash getItem(int position) {
-                final CrashTestHelper.Crash crash = super.getItem(position);
-                return new CrashTestHelper.Crash(crash.title, crash.description, crash.crashTask) {
-
-                    @NonNull
-                    @Override
-                    public String toString() {
-                        return getString(crash.title);
-                    }
-                };
+            public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).title);
+                return view;
             }
         });
     }
