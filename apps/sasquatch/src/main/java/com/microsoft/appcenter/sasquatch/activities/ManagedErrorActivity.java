@@ -42,6 +42,7 @@ public class ManagedErrorActivity extends PropertyActivity {
         mHandledErrorsSpinner = findViewById(R.id.handled_errors_spinner);
         mHandledErrorsSpinner.setAdapter(new ArrayAdapter<CrashTestHelper.Crash>(this, android.R.layout.simple_list_item_1, android.R.id.text1, mCrashes) {
 
+            @SuppressWarnings("ConstantConditions")
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -52,9 +53,7 @@ public class ManagedErrorActivity extends PropertyActivity {
 
             @Override
             public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                View view = super.getDropDownView(position, convertView, parent);
-                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).title);
-                return view;
+                return getView(position, convertView, parent);
             }
         });
     }
