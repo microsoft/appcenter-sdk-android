@@ -57,7 +57,6 @@ public class TypedPropertyFragment extends EditDateTimeFragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         boolean stringTypeOnly = getArguments() != null && getArguments().getBoolean(STRING_TYPE_ONLY_KEY);
         if (stringTypeOnly) {
             view.findViewById(R.id.type_label).setVisibility(View.GONE);
