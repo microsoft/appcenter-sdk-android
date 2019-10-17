@@ -38,6 +38,13 @@ public class CrashActivity extends AppCompatActivity {
     private boolean mCrashSuperDestroyNotCalled;
 
     private final List<CrashTestHelper.Crash> mSpecificCrashes = Arrays.asList(
+            new CrashTestHelper.Crash(R.string.title_memory_crash2, R.string.description_memory_crash2, new Runnable() {
+
+                @Override
+                public void run() {
+                    startActivity(new Intent(CrashActivity.this, CrashSubActivity.class).putExtra(CrashSubActivity.INTENT_EXTRA_CRASH_TYPE, 1));
+                }
+            }),
             new CrashTestHelper.Crash(R.string.title_variable_message2, R.string.description_variable_message2, new Runnable() {
 
                 @Override
