@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.sasquatch.activities;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,7 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
+import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.util.Arrays;
@@ -61,7 +62,7 @@ public class ManagedErrorActivity extends PropertyActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        View middleView = getLayoutInflater().inflate(R.layout.layout_handled_error, null);
+        @SuppressLint("InflateParams") View middleView = getLayoutInflater().inflate(R.layout.layout_handled_error, null);
         ((LinearLayout) findViewById(R.id.middle_layout)).addView(middleView);
 
         /* Handled Errors Spinner. */
@@ -84,7 +85,10 @@ public class ManagedErrorActivity extends PropertyActivity {
         try {
             Throwable throwable = sSupportedThrowables.get(mHandledErrorsSpinner.getSelectedItemPosition()).newInstance();
             Map<String, String> properties = readStringProperties();
-            CrashesPrivateHelper.trackException(throwable, properties);
+            Crashes.class.getMethod("trackException", Throwable.class, Map.class).invoke(null, throwable, properties);
+
+            /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
+            /* Crashes.trackException(throwable, properties); */
         } catch (Exception e) {
             //noinspection ConstantConditions
             Log.d(LOG_TAG, e.getMessage());
