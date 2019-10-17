@@ -50,7 +50,7 @@ public class ManagedErrorActivity extends PropertyActivity {
 
             @Override
             public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                return setTextView(position, super.getView(position, convertView, parent));
+                return setTextView(position, super.getDropDownView(position, convertView, parent));
             }
 
             @NonNull
