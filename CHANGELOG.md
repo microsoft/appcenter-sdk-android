@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Feature]** Support handled errors with properties via `Crashes.trackException(throwable, properties)`.
+* **[Feature]** Support handled errors.
 
 ___
 
