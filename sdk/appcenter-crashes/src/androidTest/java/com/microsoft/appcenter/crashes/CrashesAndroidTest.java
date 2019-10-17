@@ -253,6 +253,9 @@ public class CrashesAndroidTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getMinidumpDirectory().get());
 
+        /* Start crashes now. */
+        startFresh(null);
+
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
