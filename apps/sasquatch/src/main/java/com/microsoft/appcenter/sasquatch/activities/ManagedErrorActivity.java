@@ -17,10 +17,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.sasquatch.CrashTestHelper;
 import com.microsoft.appcenter.sasquatch.R;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -28,52 +28,40 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class ManagedErrorActivity extends PropertyActivity {
 
-    private static final List<Class<? extends Throwable>> sSupportedThrowables = Arrays.asList(
-            ArithmeticException.class,
-            ArrayIndexOutOfBoundsException.class,
-            ArrayStoreException.class,
-            ClassCastException.class,
-            ClassNotFoundException.class,
-            CloneNotSupportedException.class,
-            IllegalAccessException.class,
-            IllegalArgumentException.class,
-            IllegalMonitorStateException.class,
-            IllegalStateException.class,
-            IllegalThreadStateException.class,
-            IndexOutOfBoundsException.class,
-            InstantiationException.class,
-            InterruptedException.class,
-            NegativeArraySizeException.class,
-            NoSuchFieldException.class,
-            NoSuchMethodException.class,
-            NullPointerException.class,
-            NumberFormatException.class,
-            SecurityException.class,
-            UnsupportedOperationException.class,
-            AssertionError.class,
-            LinkageError.class,
-            ThreadDeath.class,
-            InternalError.class,
-            OutOfMemoryError.class);
-
     private Spinner mHandledErrorsSpinner;
+
+    private List<CrashTestHelper.Crash> mCrashes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getLayoutInflater().inflate(R.layout.layout_handled_error, ((LinearLayout) findViewById(R.id.middle_layout)));
+        mCrashes = new CrashTestHelper(this).getCrashes();
 
         /* Handled Errors Spinner. */
         mHandledErrorsSpinner = findViewById(R.id.handled_errors_spinner);
-        mHandledErrorsSpinner.setAdapter(new ArrayAdapter<Class<? extends Throwable>>(this, android.R.layout.simple_list_item_1, sSupportedThrowables) {
+        mHandledErrorsSpinner.setAdapter(new ArrayAdapter<CrashTestHelper.Crash>(this, android.R.layout.simple_list_item_1, android.R.id.text1, mCrashes) {
 
-            @SuppressWarnings("ConstantConditions")
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).getSimpleName());
+                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).title);
                 return view;
+            }
+
+            @SuppressWarnings("ConstantConditions")
+            @Override
+            public CrashTestHelper.Crash getItem(int position) {
+                final CrashTestHelper.Crash crash = super.getItem(position);
+                return new CrashTestHelper.Crash(crash.title, crash.description, crash.crashTask) {
+
+                    @NonNull
+                    @Override
+                    public String toString() {
+                        return getString(crash.title);
+                    }
+                };
             }
         });
     }
@@ -81,16 +69,19 @@ public class ManagedErrorActivity extends PropertyActivity {
     @Override
     protected void send(View view) {
         try {
-            Throwable throwable = sSupportedThrowables.get(mHandledErrorsSpinner.getSelectedItemPosition()).newInstance();
-            Map<String, String> properties = readStringProperties();
-            Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
-            method.setAccessible(true);
-            method.invoke(null, throwable, properties);
+            mCrashes.get(mHandledErrorsSpinner.getSelectedItemPosition()).crashTask.run();
+        } catch (Throwable t) {
+            try {
+                Map<String, String> properties = readStringProperties();
+                Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
+                method.setAccessible(true);
+                method.invoke(null, t, properties);
 
-            /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
-            /* Crashes.trackException(throwable, properties); */
-        } catch (Exception e) {
-            Log.d(LOG_TAG, "Could not call Crashes.trackException", e);
+                /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
+                /* Crashes.trackException(throwable, properties); */
+            } catch (Exception e) {
+                Log.d(LOG_TAG, "Could not call Crashes.trackException", e);
+            }
         }
     }
 
