@@ -45,6 +45,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
@@ -122,6 +123,7 @@ public class DefaultHttpClientTest {
 
                     @Override
                     public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
+                        call.onPreExecute();
                         Object result = call.doInBackground();
                         if (call.isCancelled()) {
                             call.onCancelled(result);
@@ -673,16 +675,43 @@ public class DefaultHttpClientTest {
 
         /* Mock AsyncTask. */
         String urlString = "https://mock/get";
-        DefaultHttpClientCallTask mockCall = mock(DefaultHttpClientCallTask.class);
-        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(mockCall);
+        final AtomicReference<DefaultHttpClientCallTask> callTask = new AtomicReference<>();
+        whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+
+                @SuppressWarnings("unchecked") final DefaultHttpClientCallTask call = spy(new DefaultHttpClientCallTask(
+                        invocation.getArguments()[0].toString(),
+                        invocation.getArguments()[1].toString(),
+                        (Map<String, String>) invocation.getArguments()[2],
+                        (HttpClient.CallTemplate) invocation.getArguments()[3],
+                        (ServiceCallback) invocation.getArguments()[4],
+                        (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5],
+                        (boolean) invocation.getArguments()[6]));
+                callTask.set(call);
+                when(call.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
+
+                    @Override
+                    public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
+                        call.onPreExecute();
+
+                        /* Simulate we will cancel before doInBackground. */
+                        return call;
+                    }
+                });
+                return call;
+            }
+        });
+
+        /* Simulate HTTP call. */
         DefaultHttpClient httpClient = new DefaultHttpClient();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), mock(HttpClient.CallTemplate.class), serviceCallback);
-        httpClient.onStart(mockCall);
 
         /* Close and verify. */
         httpClient.close();
-        verify(mockCall).cancel(true);
+        verify(callTask.get()).cancel(true);
         assertEquals(0, httpClient.getTasks().size());
     }
 
