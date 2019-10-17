@@ -2,6 +2,10 @@
 
 ## Version 2.4.1 (Under development)
 
+### App Center Crashes
+
+* **[Feature]** Support handled errors with properties via `Crashes.trackException(throwable, properties)`.
+
 ___
 
 ## Version 2.4.0
