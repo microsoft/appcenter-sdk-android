@@ -35,7 +35,7 @@ public class ManagedErrorActivity extends PropertyActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getLayoutInflater().inflate(R.layout.layout_handled_error, ((LinearLayout) findViewById(R.id.middle_layout)));
+        getLayoutInflater().inflate(R.layout.layout_handled_error, ((LinearLayout) findViewById(R.id.top_layout)));
         mCrashes = new CrashTestHelper(this).getCrashes();
 
         /* Handled Errors Spinner. */
