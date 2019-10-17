@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.sasquatch.R;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -85,13 +86,14 @@ public class ManagedErrorActivity extends PropertyActivity {
         try {
             Throwable throwable = sSupportedThrowables.get(mHandledErrorsSpinner.getSelectedItemPosition()).newInstance();
             Map<String, String> properties = readStringProperties();
-            Crashes.class.getMethod("trackException", Throwable.class, Map.class).invoke(null, throwable, properties);
+            Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
+            method.setAccessible(true);
+            method.invoke(null, throwable, properties);
 
             /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
             /* Crashes.trackException(throwable, properties); */
         } catch (Exception e) {
-            //noinspection ConstantConditions
-            Log.d(LOG_TAG, e.getMessage());
+            Log.d(LOG_TAG, "Could not call Crashes.trackException", e);
         }
     }
 
