@@ -250,7 +250,7 @@ public class CrashesTest {
         /* Just check log is discarded without throwing any exception. */
         Crashes.notifyUserConfirmation(Crashes.SEND);
         Crashes.trackException(EXCEPTION);
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>());
+        Crashes.trackException(EXCEPTION, null, null);
         verifyStatic(times(3));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
@@ -587,7 +587,7 @@ public class CrashesTest {
             put("", null);
             put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -602,7 +602,7 @@ public class CrashesTest {
             for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -616,7 +616,7 @@ public class CrashesTest {
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -671,11 +671,11 @@ public class CrashesTest {
         Crashes crashes = Crashes.getInstance();
         Channel mockChannel = mock(Channel.class);
 
-        WrapperSdkExceptionManager.trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception, null, null);
         verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
-        WrapperSdkExceptionManager.trackException(exception);
+        WrapperSdkExceptionManager.trackException(exception, null, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -689,7 +689,7 @@ public class CrashesTest {
             put("", null);
             put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -703,7 +703,7 @@ public class CrashesTest {
             for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -716,7 +716,7 @@ public class CrashesTest {
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
-        }});
+        }}, null);
         verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override

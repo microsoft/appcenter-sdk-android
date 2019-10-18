@@ -127,20 +127,11 @@ public class WrapperSdkExceptionManager {
      * Send an handled exception (used by wrapper SDKs).
      *
      * @param modelException An handled exception already in JSON model form.
-     */
-    public static void trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException) {
-        trackException(modelException, null);
-    }
-
-    /**
-     * Send an handled exception (used by wrapper SDKs).
-     *
-     * @param modelException An handled exception already in JSON model form.
      * @param properties     optional properties.
+     * @param attachments    optional attachments.
      */
-    public static void trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties) {
-        Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
-        Crashes.getInstance().queueException(modelException, validatedProperties);
+    public static void trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+        Crashes.getInstance().queueException(modelException, properties, attachments);
     }
 
     /**
