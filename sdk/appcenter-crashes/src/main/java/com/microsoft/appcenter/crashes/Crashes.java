@@ -269,8 +269,7 @@ public class Crashes extends AbstractAppCenterService {
     // TODO remove the suppress when releasing to jCenter
     @SuppressWarnings("WeakerAccess")
     public static void trackException(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
-        Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
-        getInstance().queueException(throwable, validatedProperties, attachments);
+        getInstance().queueException(throwable, properties, attachments);
     }
 
     /**
@@ -618,7 +617,7 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, Map<String, String> properties, final Iterable<ErrorAttachmentLog> attachments) {
-        final Map<String, String> validateProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
+        final Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
         post(new Runnable() {
 
             @Override
@@ -629,7 +628,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
-                errorLog.setProperties(validateProperties);
+                errorLog.setProperties(validatedProperties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
 
                 /* Then attachments if any. */
