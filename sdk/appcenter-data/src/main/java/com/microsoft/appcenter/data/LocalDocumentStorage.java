@@ -24,7 +24,9 @@ import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.DATABASE;
@@ -97,6 +99,15 @@ class LocalDocumentStorage {
             String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
 
     /**
+     * String columns can be updated.
+     */
+    private static final String[] MUTABLE_STRING_COLUMNS = new String[]
+            {DOCUMENT_COLUMN_NAME, ETAG_COLUMN_NAME, PENDING_OPERATION_COLUMN_NAME};
+
+    private static final String[] MUTABLE_LONG_COLUMNS = new String[]
+            {EXPIRATION_TIME_COLUMN_NAME, DOWNLOAD_TIME_COLUMN_NAME, OPERATION_TIME_COLUMN_NAME};
+
+    /**
      * Current schema.
      */
     private static final ContentValues SCHEMA =
@@ -161,23 +172,24 @@ class LocalDocumentStorage {
         return builder;
     }
 
-    private <T> long write(String table, DocumentWrapper<T> document, WriteOptions writeOptions, String pendingOperationValue) {
-        if (writeOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
-            return 0;
+    private static ContentValues getContentValues(
+            String partition,
+            String documentId,
+            Map<String, String> content) {
+        ContentValues values = new ContentValues();
+        values.put(PARTITION_COLUMN_NAME, partition);
+        values.put(DOCUMENT_ID_COLUMN_NAME, documentId);
+        for (String column : MUTABLE_STRING_COLUMNS) {
+            if (content.containsKey(column)) {
+                values.put(column, content.get(column));
+            }
         }
-        AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
-        long now = System.currentTimeMillis();
-        ContentValues values = getContentValues(
-                document.getPartition(),
-                document.getId(),
-                document.getJsonValue(),
-                document.getETag(),
-                writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
-                        TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
-                document.getLastUpdatedDate().getTime(),
-                document.getLastUpdatedDate().getTime(),
-                pendingOperationValue);
-        return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        for (String column : MUTABLE_LONG_COLUMNS) {
+            if (content.containsKey(column)) {
+                values.put(column, Long.parseLong(content.get(column)));
+            }
+        }
+        return values;
     }
 
     private <T> long createOffline(String table, DocumentWrapper<T> document, WriteOptions writeOptions) {
@@ -354,6 +366,47 @@ class LocalDocumentStorage {
         return values;
     }
 
+    private <T> long write(String table, DocumentWrapper<T> document, final WriteOptions writeOptions, final String pendingOperationValue) {
+        ContentValues values;
+        if (writeOptions.getDeviceTimeToLive() != TimeToLive.NO_CACHE) {
+            AppCenterLog.debug(LOG_TAG, String.format("Trying to replace %s:%s document to cache", document.getPartition(), document.getId()));
+            long now = System.currentTimeMillis();
+            values = getContentValues(
+                    document.getPartition(),
+                    document.getId(),
+                    document.getJsonValue(),
+                    document.getETag(),
+                    writeOptions.getDeviceTimeToLive() == TimeToLive.INFINITE ?
+                            TimeToLive.INFINITE : now + writeOptions.getDeviceTimeToLive() * 1000L,
+                    document.getLastUpdatedDate().getTime(),
+                    document.getLastUpdatedDate().getTime(),
+                    pendingOperationValue);
+            return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+        } else {
+
+            /*
+              The operation is called after successfully/failed to call cosmosdb api to do create/update and writeOptions is no cache, remove the trace log.
+             */
+            if (pendingOperationValue == null) {
+                AppCenterLog.debug(LOG_TAG, String.format("Trying to remove %s:%s document trace from cache", document.getPartition(), document.getId()));
+
+                /* Successfully create or update documents online, remove the pending operation from  localstorage. **/
+                return mDatabaseManager.delete(table, document.getId());
+            } else {
+
+                /*
+                  The pending operation is delete/create/update with writeOptions no cache. It will be execute:
+                  1. Before every delete/create/update call to cosmosdb.
+                 */
+                values = getContentValues(document.getPartition(), document.getId(), new HashMap<String, String>() {{
+                    put(EXPIRATION_TIME_COLUMN_NAME, TimeToLive.NO_CACHE + "");
+                    put(PENDING_OPERATION_COLUMN_NAME, Constants.PENDING_OPERATION_PROCESS_VALUE);
+                }});
+                return mDatabaseManager.replace(table, values, PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
+            }
+        }
+    }
+
     /**
      * Update the pending operation.
      *
@@ -393,7 +446,16 @@ class LocalDocumentStorage {
         values = mDatabaseManager.nextValues(cursor);
         cursor.close();
         if (values != null) {
-            if (ReadOptions.isExpired(values.getAsLong(EXPIRATION_TIME_COLUMN_NAME))) {
+            long documentExpirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
+
+            /*  This happens when doing operation cosmosdb create/update when writeOptions in flight and did not resolve a result yet. **/
+            if (values.getAsString(PENDING_OPERATION_COLUMN_NAME).equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
+                String errorMessage = "Document remote state is unknown, and local storage is set to no cache.";
+                AppCenterLog.debug(LOG_TAG, errorMessage);
+                mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
+                return new DocumentWrapper<>(new DataException(errorMessage));
+            }
+            if (ReadOptions.isExpired(documentExpirationTime)) {
                 mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 String errorMessage = "Document was found in the cache, but it was expired. The cached document has been invalidated.";
                 AppCenterLog.debug(LOG_TAG, errorMessage);
@@ -453,7 +515,6 @@ class LocalDocumentStorageDatabaseListener implements DatabaseManager.Listener {
             /* Returning false here so that the default table gets deleted by `DatabaseManager`. */
             return false;
         }
-
         return true;
     }
 }

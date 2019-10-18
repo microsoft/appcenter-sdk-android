@@ -375,7 +375,21 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     }
 
     private synchronized void processPendingOperations() {
-        for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(Utils.getUserTableName())) {
+        String table = Utils.getUserTableName();
+        for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(table)) {
+            if (localDocument.isExpired()) {
+                if (localDocument.getOperation().equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
+                    notifyListenerAndUpdateOperationOnFailure(
+                            new DataException(String.format("Remote state is unknown for document %s, and no local cache for this document.", localDocument.getDocumentId())),
+                            localDocument);
+                } else {
+                    notifyListenerAndUpdateOperationOnFailure(
+                            new DataException(String.format("Local document with id %s has expired, skip the pending operation processing.", localDocument.getDocumentId())),
+                            localDocument);
+                }
+                mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
+                continue;
+            }
             String outgoingId = Utils.getOutgoingId(localDocument.getPartition(), localDocument.getDocumentId());
 
             /* If the operation is already being processed, skip it. */
@@ -460,7 +474,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 /* Get cached document. */
                 DocumentWrapper<T> cachedDocument;
                 String table = null;
-                TokenResult cachedToken = getCachedToken(partition);
+                final TokenResult cachedToken = getCachedToken(partition);
                 if (cachedToken != null) {
                     table = Utils.getTableName(cachedToken);
                     cachedDocument = mLocalDocumentStorage.read(table, cachedToken.getPartition(), documentId, documentType, cacheReadOptions);
@@ -561,6 +575,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
             @Override
             public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
+                mLocalDocumentStorage.deleteOffline(Utils.getTableName(tokenResult.getPartition()), tokenResult.getPartition(), documentId, writeOptions);
                 callCosmosDbDeleteApi(tokenResult, partition, documentId, result);
             }
         });
@@ -859,6 +874,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                                 @Override
                                 public void callCosmosDb(TokenResult tokenResult) {
+                                    mLocalDocumentStorage.createOrUpdateOffline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId, document, documentType, writeOptions);
                                     callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.getPartition(), documentId, writeOptions, additionalHeaders, result);
                                 }
 
