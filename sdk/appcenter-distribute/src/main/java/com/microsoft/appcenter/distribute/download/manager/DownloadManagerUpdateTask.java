@@ -38,18 +38,18 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
         try {
             Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
             if (cursor == null) {
-                throw new NoSuchElementException();
+                throw new NoSuchElementException("Cannot find download with id=" + downloadId);
             }
             try {
                 if (!cursor.moveToFirst()) {
-                    throw new NoSuchElementException();
+                    throw new NoSuchElementException("Cannot find download with id=" + downloadId);
                 }
                 if (isCancelled()) {
                     return null;
                 }
                 int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
                 if (status == DownloadManager.STATUS_FAILED) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("The download has failed");
                 }
                 if (status != DownloadManager.STATUS_SUCCESSFUL) {
                     mDownloader.onDownloadProgress(cursor);

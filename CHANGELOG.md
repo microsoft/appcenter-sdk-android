@@ -2,6 +2,10 @@
 
 ## Version 2.4.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix a crash when downloading an update fails on Android 5+.
+
 ___
 
 ## Version 2.4.0
