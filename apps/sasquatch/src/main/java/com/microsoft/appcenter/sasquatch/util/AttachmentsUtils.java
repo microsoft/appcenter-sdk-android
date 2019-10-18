@@ -1,5 +1,6 @@
 package com.microsoft.appcenter.sasquatch.util;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
@@ -22,37 +23,52 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 public class AttachmentsUtils {
 
-    private Context mContext;
-
     private Uri mFileAttachment;
 
     private String mTextAttachment;
 
-    private AttachmentsUtils(Context context, String textAttachment) {
-        mFileAttachment = null;
-        mContext = context;
-        mTextAttachment = textAttachment;
+    public String getTextAttachment() {
+        return mTextAttachment;
     }
 
-    public AttachmentsUtils(Context context, String fileUriString, String textAttachment) {
-        this(context, textAttachment);
-        mFileAttachment = Uri.parse(fileUriString);
+    public void setTextAttachment(String textAttachment) {
+        this.mTextAttachment = textAttachment;
     }
 
-    public AttachmentsUtils(Context context, Uri fileUriString, String textAttachment) {
-        this(context, textAttachment);
-        mFileAttachment = fileUriString;
+    public Uri getFileAttachment() {
+        return mFileAttachment;
     }
 
-    public Iterable<ErrorAttachmentLog> getErrorAttachments() {
+    public void setFileAttachment(Uri fileAttachment) {
+        this.mFileAttachment = fileAttachment;
+    }
+
+    public void setFileAttachment(String fileAttachment) {
+        this.mFileAttachment = Uri.parse(fileAttachment);
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private static AttachmentsUtils instance;
+
+    public static AttachmentsUtils getInstance() {
+        if(instance == null) {
+            instance = new AttachmentsUtils();
+        }
+        return instance;
+    }
+
+    private AttachmentsUtils() {
+    }
+
+    public Iterable<ErrorAttachmentLog> getErrorAttachments(Context context) {
         List<ErrorAttachmentLog> attachments = new LinkedList<>();
 
         /* Attach app icon to test binary. */
         if (mFileAttachment != null) {
             try {
-                byte[] data = getFileAttachmentData();
-                String name = getFileAttachmentDisplayName();
-                String mime = getFileAttachmentMimeType();
+                byte[] data = getFileAttachmentData(context);
+                String name = getFileAttachmentDisplayName(context);
+                String mime = getFileAttachmentMimeType(context);
                 ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(data, name, mime);
                 attachments.add(binaryLog);
             } catch (SecurityException e) {
@@ -73,10 +89,10 @@ public class AttachmentsUtils {
         return attachments.size() > 0 ? attachments : null;
     }
 
-    public String getFileAttachmentMimeType() {
+    public String getFileAttachmentMimeType(Context context) {
         String mimeType;
         if (ContentResolver.SCHEME_CONTENT.equals(mFileAttachment.getScheme())) {
-            mimeType = mContext.getContentResolver().getType(mFileAttachment);
+            mimeType = context.getContentResolver().getType(mFileAttachment);
         } else {
             String fileExtension = MimeTypeMap.getFileExtensionFromUrl(mFileAttachment.toString());
             mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
@@ -84,8 +100,8 @@ public class AttachmentsUtils {
         return mimeType;
     }
 
-    public String getFileAttachmentDisplayName() throws SecurityException {
-        Cursor cursor = mContext.getContentResolver()
+    public String getFileAttachmentDisplayName(Context context) throws SecurityException {
+        Cursor cursor = context.getContentResolver()
                 .query(mFileAttachment, null, null, null, null);
         try {
             if (cursor != null && cursor.moveToFirst()) {
@@ -102,11 +118,11 @@ public class AttachmentsUtils {
         return "";
     }
 
-    public byte[] getFileAttachmentData() throws SecurityException {
+    public byte[] getFileAttachmentData(Context context) throws SecurityException {
         InputStream inputStream = null;
         ByteArrayOutputStream outputStream = null;
         try {
-            inputStream = mContext.getContentResolver().openInputStream(mFileAttachment);
+            inputStream = context.getContentResolver().openInputStream(mFileAttachment);
             if (inputStream == null) {
                 return null;
             }
@@ -135,14 +151,14 @@ public class AttachmentsUtils {
         return outputStream != null ? outputStream.toByteArray() : null;
     }
 
-    public String getFileAttachmentSize() throws SecurityException {
-        Cursor cursor = mContext.getContentResolver()
+    public String getFileAttachmentSize(Context context) throws SecurityException {
+        Cursor cursor = context.getContentResolver()
                 .query(mFileAttachment, null, null, null, null);
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
                 if (!cursor.isNull(sizeIndex)) {
-                    return Formatter.formatFileSize(mContext, cursor.getLong(sizeIndex));
+                    return Formatter.formatFileSize(context, cursor.getLong(sizeIndex));
                 }
             }
         } finally {

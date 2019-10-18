@@ -86,14 +86,13 @@ public class ManagedErrorActivity extends AppCompatActivity {
                     } catch (NoSuchMethodException ignored) {
                         e = clazz.getConstructor().newInstance();
                     }
-                    String mFileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
-                    String mTextAttachment = sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null);
-                    AttachmentsUtils attachmentsUtils = new AttachmentsUtils(getApplicationContext(), mFileAttachment, mTextAttachment);
+                    AttachmentsUtils.getInstance().setFileAttachment(sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null));
+                    AttachmentsUtils.getInstance().setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
                     CrashesPrivateHelper.trackException(e,
                             new HashMap<String, String>() {{
                                 put("prop1", "value1");
                                 put("prop2", "value2");
-                            }}, attachmentsUtils.getErrorAttachments());
+                            }}, AttachmentsUtils.getInstance().getErrorAttachments(getApplicationContext()));
                 } catch (Exception e) {
 
                     /* This is not expected behavior so let the application crashes. */

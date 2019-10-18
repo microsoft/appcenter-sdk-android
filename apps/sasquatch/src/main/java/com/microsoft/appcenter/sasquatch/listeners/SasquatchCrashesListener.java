@@ -40,10 +40,6 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     private static final long TOAST_DELAY = 2000;
 
-    private String mTextAttachment;
-
-    private Uri mFileAttachment;
-
     private long mBeforeSendingToastTime;
 
     public SasquatchCrashesListener(Context context) {
@@ -51,19 +47,19 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     public String getTextAttachment() {
-        return mTextAttachment;
+        return AttachmentsUtils.getInstance().getTextAttachment();
     }
 
     public void setTextAttachment(String textAttachment) {
-        this.mTextAttachment = textAttachment;
+        AttachmentsUtils.getInstance().setTextAttachment(textAttachment);
     }
 
     public Uri getFileAttachment() {
-        return mFileAttachment;
+        return AttachmentsUtils.getInstance().getFileAttachment();
     }
 
     public void setFileAttachment(Uri fileAttachment) {
-        this.mFileAttachment = fileAttachment;
+        AttachmentsUtils.getInstance().setFileAttachment(fileAttachment);
     }
 
     @Override
@@ -96,33 +92,9 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @Override
     public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
-        List<ErrorAttachmentLog> attachments = new LinkedList<>();
-
-        /* Attach app icon to test binary. */
-        if (mFileAttachment != null) {
-            try {
-                AttachmentsUtils attachmentsUtils = new AttachmentsUtils(mContext, mFileAttachment, mTextAttachment);
-                byte[] data = attachmentsUtils.getFileAttachmentData();
-                String name = attachmentsUtils.getFileAttachmentDisplayName();
-                String mime = attachmentsUtils.getFileAttachmentMimeType();
-                ErrorAttachmentLog binaryLog = ErrorAttachmentLog.attachmentWithBinary(data, name, mime);
-                attachments.add(binaryLog);
-            } catch (SecurityException e) {
-                Log.e(LOG_TAG, "Couldn't get file attachment data.", e);
-
-                /* Reset file attachment. */
-                MainActivity.setFileAttachment(null);
-            }
-        }
-
-        /* Attach some text. */
-        if (!TextUtils.isEmpty(mTextAttachment)) {
-            ErrorAttachmentLog textLog = ErrorAttachmentLog.attachmentWithText(mTextAttachment, "text.txt");
-            attachments.add(textLog);
-        }
 
         /* Return attachments as list. */
-        return attachments.size() > 0 ? attachments : null;
+        return AttachmentsUtils.getInstance().getErrorAttachments(mContext);
     }
 
     @Override
@@ -161,12 +133,10 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     public String getFileAttachmentDisplayName() {
-        AttachmentsUtils attachmentsUtils = new AttachmentsUtils(mContext, mFileAttachment, mTextAttachment);
-        return attachmentsUtils.getFileAttachmentDisplayName();
+        return AttachmentsUtils.getInstance().getFileAttachmentDisplayName(mContext);
     }
 
     public String getFileAttachmentSize() throws SecurityException {
-        AttachmentsUtils attachmentsUtils = new AttachmentsUtils(mContext, mFileAttachment, mTextAttachment);
-        return attachmentsUtils.getFileAttachmentSize();
+        return AttachmentsUtils.getInstance().getFileAttachmentSize(mContext);
     }
 }
