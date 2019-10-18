@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix crash on handling download update error.
+* **[Fix]** Fix a crash when downloading an update fails on Android 5+.
 
 ___
 
