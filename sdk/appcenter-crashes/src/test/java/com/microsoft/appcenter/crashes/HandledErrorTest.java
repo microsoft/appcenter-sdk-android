@@ -293,7 +293,6 @@ public class HandledErrorTest extends AbstractCrashesTest {
         assertSame(textAttachment, log.getAllValues().get(1));
     }
 
-
     @Test
     public void trackExceptionWithEverything() {
 
