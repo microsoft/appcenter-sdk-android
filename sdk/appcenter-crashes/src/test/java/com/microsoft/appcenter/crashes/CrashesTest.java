@@ -5,20 +5,18 @@
 
 package com.microsoft.appcenter.crashes;
 
+import android.content.ComponentCallbacks;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Looper;
-import android.os.SystemClock;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
-import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
@@ -33,32 +31,24 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
-import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
 import java.io.File;
@@ -69,7 +59,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -86,8 +75,6 @@ import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
-import static com.microsoft.appcenter.test.TestUtils.generateString;
-import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -105,45 +92,26 @@ import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class, ErrorAttachmentLog.class})
-public class CrashesTest {
-
-    private static final Exception EXCEPTION = new Exception("This is a test exception.");
+public class CrashesTest extends AbstractCrashesTest {
 
     private static final String STACK_TRACE = "Sample stacktrace";
 
-    private static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
-
-    @Rule
-    public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
-
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
-
     private ManagedErrorLog mErrorLog;
-
-    @Mock
-    private AppCenter mAppCenter;
-
-    @Mock
-    private AppCenterHandler mAppCenterHandler;
 
     private static void assertErrorEquals(ManagedErrorLog errorLog, ErrorReport report) {
         assertNotNull(report);
@@ -158,57 +126,8 @@ public class CrashesTest {
 
     @Before
     public void setUp() {
-        Thread.setDefaultUncaughtExceptionHandler(null);
-        Crashes.unsetInstance();
-        mockStatic(SystemClock.class);
-        mockStatic(FileManager.class);
-        mockStatic(SharedPreferencesManager.class);
-        mockStatic(AppCenterLog.class);
-        when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
-        mockStatic(AppCenter.class);
-        when(AppCenter.getInstance()).thenReturn(mAppCenter);
-
-        @SuppressWarnings("unchecked")
-        AppCenterFuture<Boolean> future = (AppCenterFuture<Boolean>) mock(AppCenterFuture.class);
-        when(AppCenter.isEnabled()).thenReturn(future);
-        when(future.get()).thenReturn(true);
-
-        when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
-
-        /* Then simulate further changes to state. */
-        doAnswer(new Answer<Object>() {
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-
-                /* Whenever the new state is persisted, make further calls return the new state. */
-                boolean enabled = (Boolean) invocation.getArguments()[1];
-                when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(enabled);
-                return null;
-            }
-        }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.putBoolean(eq(CRASHES_ENABLED_KEY), anyBoolean());
-
-        /* Mock handlers. */
-        mockStatic(HandlerUtils.class);
-        Answer<Void> runNow = new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        };
-        doAnswer(runNow).when(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(any(Runnable.class));
-        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
-
+        super.setUp();
         mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
-    }
-
-    @After
-    public void tearDown() {
-        UserIdContext.unsetInstance();
     }
 
     @Test
@@ -246,12 +165,8 @@ public class CrashesTest {
 
     @Test
     public void notInit() {
-
-        /* Just check log is discarded without throwing any exception. */
         Crashes.notifyUserConfirmation(Crashes.SEND);
-        Crashes.trackException(EXCEPTION);
-        Crashes.trackException(EXCEPTION, null, null);
-        verifyStatic(times(3));
+        verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -319,6 +234,34 @@ public class CrashesTest {
         verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
         Crashes.trackException(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULTS));
+    }
+
+    @Test
+    public void failToListErrorStorageDirectoryOnDisable() {
+
+        /* Setup mock. */
+        Crashes crashes = Crashes.getInstance();
+        mockStatic(ErrorLogHelper.class);
+        Context context = mock(Context.class);
+        Channel mockChannel = mock(Channel.class);
+        File dir = mock(File.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
+        when(dir.listFiles()).thenReturn(null);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+
+        /* Start. */
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(context, mockChannel, "", null, true);
+        verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+
+        /* When we disable. */
+        Crashes.setEnabled(false);
+        assertFalse(Crashes.isEnabled().get());
+
+        /* Verify we recovered file listing error. */
+        verify(context).unregisterComponentCallbacks(notNull(ComponentCallbacks.class));
     }
 
     @Test
@@ -562,195 +505,6 @@ public class CrashesTest {
     public void generateTestCrashInRelease() {
         Constants.APPLICATION_DEBUGGABLE = false;
         Crashes.generateTestCrash();
-    }
-
-    @Test
-    public void trackException() {
-
-        /* Track exception test. */
-        Crashes crashes = Crashes.getInstance();
-        Channel mockChannel = mock(Channel.class);
-        crashes.onStarting(mAppCenterHandler);
-        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
-        Crashes.trackException(EXCEPTION);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
-            put(null, null);
-            put("", null);
-            put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
-            put("1", null);
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
-                        && ((HandledErrorLog) item).getProperties().size() == 0;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
-            for (int i = 0; i < 30; i++) {
-                put("valid" + i, "valid");
-            }
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
-                        && ((HandledErrorLog) item).getProperties().size() == 20;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
-            put(longerMapItem, longerMapItem);
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof HandledErrorLog) {
-                    HandledErrorLog errorLog = (HandledErrorLog) item;
-                    if (EXCEPTION.getMessage() != null && EXCEPTION.getMessage().equals((errorLog.getException().getMessage()))) {
-                        if (errorLog.getProperties().size() == 1) {
-                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
-                            String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
-                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
-                        }
-                    }
-                }
-                return false;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-
-        HandledErrorLog mockLog = mock(HandledErrorLog.class);
-        CrashesListener mockListener = mock(CrashesListener.class);
-        crashes.setInstanceListener(mockListener);
-
-        /* Crashes callback test for trackException. */
-        crashes.getChannelListener().onBeforeSending(mockLog);
-        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
-        crashes.getChannelListener().onSuccess(mockLog);
-        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
-        crashes.getChannelListener().onFailure(mockLog, EXCEPTION);
-        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
-
-        ErrorAttachmentLog attachmentLog = mock(ErrorAttachmentLog.class);
-        crashes.getChannelListener().onBeforeSending(attachmentLog);
-        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
-        crashes.getChannelListener().onSuccess(attachmentLog);
-        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
-        crashes.getChannelListener().onFailure(attachmentLog, EXCEPTION);
-        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
-    }
-
-    @Test
-    public void trackExceptionForWrapperSdk() {
-        StackFrame frame = new StackFrame();
-        frame.setClassName("1");
-        frame.setFileName("2");
-        frame.setLineNumber(3);
-        frame.setMethodName("4");
-        final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = new com.microsoft.appcenter.crashes.ingestion.models.Exception();
-        exception.setType("5");
-        exception.setMessage("6");
-        exception.setFrames(singletonList(frame));
-
-        Crashes crashes = Crashes.getInstance();
-        Channel mockChannel = mock(Channel.class);
-
-        WrapperSdkExceptionManager.trackException(exception, null, null);
-        verify(mockChannel, never()).enqueue(any(Log.class), eq(crashes.getGroupName()), anyInt());
-        crashes.onStarting(mAppCenterHandler);
-        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
-        WrapperSdkExceptionManager.trackException(exception, null, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
-            put(null, null);
-            put("", null);
-            put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
-            put("1", null);
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
-                        && ((HandledErrorLog) item).getProperties().size() == 0;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
-            for (int i = 0; i < 30; i++) {
-                put("valid" + i, "valid");
-            }
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
-                        && ((HandledErrorLog) item).getProperties().size() == 20;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-        reset(mockChannel);
-        final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
-            put(longerMapItem, longerMapItem);
-        }}, null);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof HandledErrorLog) {
-                    HandledErrorLog errorLog = (HandledErrorLog) item;
-                    if (exception.equals((errorLog.getException()))) {
-                        if (errorLog.getProperties().size() == 1) {
-                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
-                            String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
-                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
-                        }
-                    }
-                }
-                return false;
-            }
-        }), eq(crashes.getGroupName()), eq(DEFAULTS));
-    }
-
-    @Test
-    public void trackExceptionWithUserId() {
-        UserIdContext.getInstance().setUserId("charlie");
-
-        /* Track exception test. */
-        Crashes crashes = Crashes.getInstance();
-        Channel mockChannel = mock(Channel.class);
-        crashes.onStarting(mAppCenterHandler);
-        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
-        Crashes.trackException(EXCEPTION);
-        ArgumentCaptor<HandledErrorLog> log = ArgumentCaptor.forClass(HandledErrorLog.class);
-        verify(mockChannel).enqueue(log.capture(), eq(crashes.getGroupName()), eq(DEFAULTS));
-        assertNotNull(log.getValue());
-        assertEquals(EXCEPTION.getMessage(), log.getValue().getException().getMessage());
-        assertEquals("charlie", log.getValue().getUserId());
     }
 
     @Test
@@ -1455,8 +1209,6 @@ public class CrashesTest {
     public void minidumpFilePathNull() throws Exception {
 
         /* Set up mock for the crash. */
-        long appStartTime = 99L;
-        long crashTime = 123L;
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
         mock(ErrorAttachmentLog.class);
@@ -1509,8 +1261,6 @@ public class CrashesTest {
     public void minidumpStoredWithOldSDK() throws Exception {
 
         /* Set up mock for the crash. */
-        long appStartTime = 99L;
-        long crashTime = 123L;
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
         mock(ErrorAttachmentLog.class);
