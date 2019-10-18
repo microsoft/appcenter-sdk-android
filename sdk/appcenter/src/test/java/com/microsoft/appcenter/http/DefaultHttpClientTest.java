@@ -680,7 +680,6 @@ public class DefaultHttpClientTest {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
-
                 @SuppressWarnings("unchecked") final DefaultHttpClientCallTask call = spy(new DefaultHttpClientCallTask(
                         invocation.getArguments()[0].toString(),
                         invocation.getArguments()[1].toString(),
