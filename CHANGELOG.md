@@ -2,6 +2,10 @@
 
 ## Version 2.4.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix crash on handling download update error.
+
 ___
 
 ## Version 2.4.0
