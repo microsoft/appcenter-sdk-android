@@ -23,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,7 @@ import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -264,5 +266,44 @@ public class HandledErrorTest extends AbstractCrashesTest {
 
         /* Then the attachment. */
         assertSame(textAttachment, log.getAllValues().get(1));
+    }
+
+    @Test
+    public void trackExceptionWithEverything() {
+
+        /* If we start crashes. */
+        startCrashes();
+
+        /* And set a userId. */
+        UserIdContext.getInstance().setUserId("omega");
+
+        /* When we track error. */
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("text", null);
+        ErrorAttachmentLog binaryAttachment = ErrorAttachmentLog.attachmentWithBinary("hello".getBytes(), "hello.so", "application/octet-stream");
+        HashMap<String, String> properties = new HashMap<String, String>() {
+            {
+                put("a", "b");
+            }
+        };
+        Crashes.trackException(EXCEPTION, properties, Arrays.asList(textAttachment, binaryAttachment));
+
+        /* Then we send the handled error. */
+        ArgumentCaptor<Log> logs = ArgumentCaptor.forClass(Log.class);
+        verify(mChannel, times(3)).enqueue(logs.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertNotNull(logs.getAllValues());
+        assertEquals(3, logs.getAllValues().size());
+        assertTrue(logs.getAllValues().get(0) instanceof HandledErrorLog);
+        HandledErrorLog handledErrorLog = (HandledErrorLog) logs.getAllValues().get(0);
+        assertEquals(EXCEPTION.getMessage(), handledErrorLog.getException().getMessage());
+        assertEquals(properties, handledErrorLog.getProperties());
+
+        /* Then the attachments. */
+        assertSame(textAttachment, logs.getAllValues().get(1));
+        assertSame(binaryAttachment, logs.getAllValues().get(2));
+
+        /* We send userId only in the error log. */
+        assertEquals("omega", handledErrorLog.getUserId());
+        assertNull(logs.getAllValues().get(1).getUserId());
+        assertNull(logs.getAllValues().get(2).getUserId());
     }
 }
