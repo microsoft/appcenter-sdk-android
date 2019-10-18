@@ -74,9 +74,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String SENDER_ID = "177539951155";
 
-    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+    public static final String TEXT_ATTACHMENT_KEY = "textAttachment";
 
-    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
+    public static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
     private static final int DATABASE_SIZE_MULTIPLE = 4096;
 

@@ -18,10 +18,15 @@ import android.widget.TextView;
 
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.util.AttachmentsUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FILE_ATTACHMENT_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TEXT_ATTACHMENT_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class ManagedErrorActivity extends AppCompatActivity {
 
@@ -81,11 +86,14 @@ public class ManagedErrorActivity extends AppCompatActivity {
                     } catch (NoSuchMethodException ignored) {
                         e = clazz.getConstructor().newInstance();
                     }
+                    String mFileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
+                    String mTextAttachment = sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null);
+                    AttachmentsUtils attachmentsUtils = new AttachmentsUtils(getApplicationContext(), mFileAttachment, mTextAttachment);
                     CrashesPrivateHelper.trackException(e,
                             new HashMap<String, String>() {{
                                 put("prop1", "value1");
                                 put("prop2", "value2");
-                            }});
+                            }}, attachmentsUtils.getErrorAttachments());
                 } catch (Exception e) {
 
                     /* This is not expected behavior so let the application crashes. */
