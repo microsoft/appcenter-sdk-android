@@ -10,6 +10,7 @@ import android.content.Context;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
+import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
@@ -269,6 +270,31 @@ public class HandledErrorTest extends AbstractCrashesTest {
     }
 
     @Test
+    public void trackExceptionWithOneAttachmentFromWrapper() {
+
+        /* If we start crashes. */
+        startCrashes();
+
+        /* When we track error with an attachment. */
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("text", null);
+        Exception exception = new Exception();
+        WrapperSdkExceptionManager.trackException(exception, null, Collections.singleton(textAttachment));
+
+        /* Then we send the handled error. */
+        ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
+        verify(mChannel, times(2)).enqueue(log.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertNotNull(log.getAllValues());
+        assertEquals(2, log.getAllValues().size());
+        assertTrue(log.getAllValues().get(0) instanceof HandledErrorLog);
+        HandledErrorLog handledErrorLog = (HandledErrorLog) log.getAllValues().get(0);
+        assertEquals(exception, handledErrorLog.getException());
+
+        /* Then the attachment. */
+        assertSame(textAttachment, log.getAllValues().get(1));
+    }
+
+
+    @Test
     public void trackExceptionWithEverything() {
 
         /* If we start crashes. */
@@ -295,6 +321,46 @@ public class HandledErrorTest extends AbstractCrashesTest {
         assertTrue(logs.getAllValues().get(0) instanceof HandledErrorLog);
         HandledErrorLog handledErrorLog = (HandledErrorLog) logs.getAllValues().get(0);
         assertEquals(EXCEPTION.getMessage(), handledErrorLog.getException().getMessage());
+        assertEquals(properties, handledErrorLog.getProperties());
+
+        /* Then the attachments. */
+        assertSame(textAttachment, logs.getAllValues().get(1));
+        assertSame(binaryAttachment, logs.getAllValues().get(2));
+
+        /* We send userId only in the error log. */
+        assertEquals("omega", handledErrorLog.getUserId());
+        assertNull(logs.getAllValues().get(1).getUserId());
+        assertNull(logs.getAllValues().get(2).getUserId());
+    }
+
+    @Test
+    public void trackExceptionWithEverythingFromWrapper() {
+
+        /* If we start crashes. */
+        startCrashes();
+
+        /* And set a userId. */
+        UserIdContext.getInstance().setUserId("omega");
+
+        /* When we track error. */
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("text", null);
+        ErrorAttachmentLog binaryAttachment = ErrorAttachmentLog.attachmentWithBinary("hello".getBytes(), "hello.so", "application/octet-stream");
+        HashMap<String, String> properties = new HashMap<String, String>() {
+            {
+                put("a", "b");
+            }
+        };
+        Exception modelException = new Exception();
+        WrapperSdkExceptionManager.trackException(modelException, properties, Arrays.asList(textAttachment, binaryAttachment));
+
+        /* Then we send the handled error. */
+        ArgumentCaptor<Log> logs = ArgumentCaptor.forClass(Log.class);
+        verify(mChannel, times(3)).enqueue(logs.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertNotNull(logs.getAllValues());
+        assertEquals(3, logs.getAllValues().size());
+        assertTrue(logs.getAllValues().get(0) instanceof HandledErrorLog);
+        HandledErrorLog handledErrorLog = (HandledErrorLog) logs.getAllValues().get(0);
+        assertEquals(modelException, handledErrorLog.getException());
         assertEquals(properties, handledErrorLog.getProperties());
 
         /* Then the attachments. */
