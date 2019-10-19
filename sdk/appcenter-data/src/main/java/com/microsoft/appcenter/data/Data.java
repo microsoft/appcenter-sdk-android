@@ -390,6 +390,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
                 continue;
             }
+            System.out.println();
             String outgoingId = Utils.getOutgoingId(localDocument.getPartition(), localDocument.getDocumentId());
 
             /* If the operation is already being processed, skip it. */
@@ -1094,9 +1095,9 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             null,
                             e);
                 }
-                if (deleteLocalCopy || pendingOperation.isExpired()) {
+                if (deleteLocalCopy) {
 
-                    /* Remove the document if document was removed on the server, or expiration_time has elapsed. */
+                    /* Remove the document if document was removed on the server. */
                     mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());
                 }
                 mOutgoingPendingOperationCalls.remove(Utils.getOutgoingId(pendingOperation.getPartition(), pendingOperation.getDocumentId()));

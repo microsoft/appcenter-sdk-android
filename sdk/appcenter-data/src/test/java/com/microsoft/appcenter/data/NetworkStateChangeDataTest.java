@@ -83,24 +83,6 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        String requestBody = verifyTokenExchangeToCosmosDbFlow(true, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
-
-        DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
-        assertEquals(DOCUMENT_ID, requestPayload.getId());
-        assertEquals(RESOLVED_USER_PARTITION, requestPayload.getPartition());
-        assertEquals("document", requestPayload.getDeserializedValue());
-
-        verify(mRemoteOperationListener).onRemoteOperationCompleted(
-                eq(PENDING_OPERATION_CREATE_VALUE),
-                documentMetadataArgumentCaptor.capture(),
-                isNull(DataException.class));
-        DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
-        assertNotNull(documentMetadata);
-        verifyNoMoreInteractions(mRemoteOperationListener);
-
-        assertEquals(DOCUMENT_ID, documentMetadata.getId());
-        assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
-        assertEquals(ETAG, documentMetadata.getETag());
         if (operationExpired) {
 
             /* Verify operation is deleted from the cache when operation expired. */
@@ -108,10 +90,29 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
             ArgumentCaptor<String> partitionCaptor = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<String> documentIdCaptor = ArgumentCaptor.forClass(String.class);
             verify(mLocalDocumentStorage).deleteOnline(tableNameCaptor.capture(), partitionCaptor.capture(), documentIdCaptor.capture());
+            verifyNoMoreInteractions(mHttpClientNoRetryer);
             assertEquals(USER_TABLE_NAME, tableNameCaptor.getValue());
             assertEquals(RESOLVED_USER_PARTITION, partitionCaptor.getValue());
             assertEquals(DOCUMENT_ID, documentIdCaptor.getValue());
         } else {
+            String requestBody = verifyTokenExchangeToCosmosDbFlow(true, null, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_POST, COSMOS_DB_DOCUMENT_RESPONSE_PAYLOAD, null);
+
+            DocumentWrapper<String> requestPayload = Utils.parseDocument(requestBody, String.class);
+            assertEquals(DOCUMENT_ID, requestPayload.getId());
+            assertEquals(RESOLVED_USER_PARTITION, requestPayload.getPartition());
+            assertEquals("document", requestPayload.getDeserializedValue());
+
+            verify(mRemoteOperationListener).onRemoteOperationCompleted(
+                    eq(PENDING_OPERATION_CREATE_VALUE),
+                    documentMetadataArgumentCaptor.capture(),
+                    isNull(DataException.class));
+            DocumentMetadata documentMetadata = documentMetadataArgumentCaptor.getValue();
+            assertNotNull(documentMetadata);
+            verifyNoMoreInteractions(mRemoteOperationListener);
+
+            assertEquals(DOCUMENT_ID, documentMetadata.getId());
+            assertEquals(RESOLVED_USER_PARTITION, documentMetadata.getPartition());
+            assertEquals(ETAG, documentMetadata.getETag());
 
             /* Verify operation is updated in the cache when operation is not expired. */
             ArgumentCaptor<LocalDocument> pendingOperationCaptor = ArgumentCaptor.forClass(LocalDocument.class);
@@ -121,8 +122,9 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
             assertEquals(ETAG, capturedOperation.getETag());
             assertEquals("document", capturedOperation.getDocument());
             assertNull(capturedOperation.getOperation());
+
+            verifyNoMoreInteractions(mHttpClientWithRetryer);
         }
-        verifyNoMoreInteractions(mHttpClientWithRetryer);
     }
 
     @Test
@@ -343,21 +345,23 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
+        if (!operationExpired) {
+            HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
+            verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
-        HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
-        verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
-
-        verify(mRemoteOperationListener).onRemoteOperationCompleted(
-                eq(pendingOperation.getOperation()),
-                isNull(DocumentMetadata.class),
-                documentErrorArgumentCaptor.capture());
-        DataException documentError = documentErrorArgumentCaptor.getValue();
-        assertNotNull(documentError);
-        verifyNoMoreInteractions(mRemoteOperationListener);
-
-        assertEquals(cosmosFailureException, documentError.getCause());
-
-        verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
+            verify(mRemoteOperationListener).onRemoteOperationCompleted(
+                    eq(pendingOperation.getOperation()),
+                    isNull(DocumentMetadata.class),
+                    documentErrorArgumentCaptor.capture());
+            DataException documentError = documentErrorArgumentCaptor.getValue();
+            assertNotNull(documentError);
+            verifyNoMoreInteractions(mRemoteOperationListener);
+            assertEquals(cosmosFailureException, documentError.getCause());
+            verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
+        } else {
+            verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
+            verifyNoMoreInteractions(mHttpClientNoRetryer);
+        }
     }
 
     @Test

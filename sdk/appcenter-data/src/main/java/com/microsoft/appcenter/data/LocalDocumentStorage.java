@@ -447,9 +447,10 @@ class LocalDocumentStorage {
         cursor.close();
         if (values != null) {
             long documentExpirationTime = values.getAsLong(EXPIRATION_TIME_COLUMN_NAME);
+            String pendingOperation = values.getAsString(PENDING_OPERATION_COLUMN_NAME);
 
             /*  This happens when doing operation cosmosdb create/update when writeOptions in flight and did not resolve a result yet. **/
-            if (values.getAsString(PENDING_OPERATION_COLUMN_NAME).equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
+            if (pendingOperation != null && pendingOperation.equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
                 String errorMessage = "Document remote state is unknown, and local storage is set to no cache.";
                 AppCenterLog.debug(LOG_TAG, errorMessage);
                 mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));

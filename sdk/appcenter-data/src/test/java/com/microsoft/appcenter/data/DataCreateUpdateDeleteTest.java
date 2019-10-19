@@ -103,7 +103,6 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
         /* Verify document error. Confirm the cache was not touched. */
         assertNotNull(doc);
-        verifyNoMoreInteractions(mLocalDocumentStorage);
         DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         assertTrue(testCosmosDocument.hasFailed());
@@ -119,7 +118,6 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         DocumentWrapper<TestDocument> testCosmosDocument = doc.get();
         assertNotNull(testCosmosDocument);
         verify(mLocalDocumentStorage, times(1)).writeOnline(eq(USER_TABLE_NAME), refEq(testCosmosDocument), refEq(writeOptions));
-        verifyNoMoreInteractions(mLocalDocumentStorage);
         assertEquals(RESOLVED_USER_PARTITION, testCosmosDocument.getPartition());
         assertEquals(DOCUMENT_ID, testCosmosDocument.getId());
         assertNull(testCosmosDocument.getError());
@@ -390,7 +388,6 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, "", null);
         verify(mLocalDocumentStorage).deleteOnline(eq(USER_TABLE_NAME), eq(RESOLVED_USER_PARTITION), eq(DOCUMENT_ID));
-        verifyNoMoreInteractions(mLocalDocumentStorage);
         DocumentWrapper<Void> wrapper = doc.get();
         assertNotNull(wrapper);
         assertEquals(USER_DOCUMENTS, wrapper.getPartition());
