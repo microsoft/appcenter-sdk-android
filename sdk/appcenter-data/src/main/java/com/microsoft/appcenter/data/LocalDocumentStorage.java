@@ -99,11 +99,14 @@ class LocalDocumentStorage {
             String.format("%s = ? AND %s = ?", PARTITION_COLUMN_NAME, DOCUMENT_ID_COLUMN_NAME);
 
     /**
-     * String columns can be updated.
+     * String type columns can be updated.
      */
     private static final String[] MUTABLE_STRING_COLUMNS = new String[]
             {DOCUMENT_COLUMN_NAME, ETAG_COLUMN_NAME, PENDING_OPERATION_COLUMN_NAME};
 
+    /**
+     * Long type columns can be updated.
+     */
     private static final String[] MUTABLE_LONG_COLUMNS = new String[]
             {EXPIRATION_TIME_COLUMN_NAME, DOWNLOAD_TIME_COLUMN_NAME, OPERATION_TIME_COLUMN_NAME};
 
