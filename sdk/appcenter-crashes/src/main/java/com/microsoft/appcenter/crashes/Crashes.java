@@ -249,9 +249,10 @@ public class Crashes extends AbstractAppCenterService {
      *
      * @param throwable An exception.
      */
-    @SuppressWarnings("SameParameterValue")
-    public static void trackException(@NonNull Throwable throwable) {
-        trackException(throwable, null);
+    @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
+    // TODO remove the suppress when releasing to jCenter
+    public static void trackException(Throwable throwable) {
+        trackException(throwable, null, null);
     }
 
     /**
@@ -265,9 +266,10 @@ public class Crashes extends AbstractAppCenterService {
      * @param throwable  An exception.
      * @param properties Optional properties.
      */
-    public static void trackException(@NonNull Throwable throwable, Map<String, String> properties) {
-        Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
-        getInstance().queueException(throwable, validatedProperties);
+    // TODO remove the suppress when releasing to jCenter
+    @SuppressWarnings("WeakerAccess")
+    public static void trackException(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+        getInstance().queueException(throwable, properties, attachments);
     }
 
     /**
@@ -415,7 +417,7 @@ public class Crashes extends AbstractAppCenterService {
                 }
 
                 @Override
-                public void onConfigurationChanged(Configuration newConfig) {
+                public void onConfigurationChanged(@NonNull Configuration newConfig) {
                 }
 
                 @Override
@@ -427,10 +429,13 @@ public class Crashes extends AbstractAppCenterService {
         } else {
 
             /* Delete all files. */
-            for (File file : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
-                AppCenterLog.debug(LOG_TAG, "Deleting file " + file);
-                if (!file.delete()) {
-                    AppCenterLog.warn(LOG_TAG, "Failed to delete file " + file);
+            File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    AppCenterLog.debug(LOG_TAG, "Deleting file " + file);
+                    if (!file.delete()) {
+                        AppCenterLog.warn(LOG_TAG, "Failed to delete file " + file);
+                    }
                 }
             }
             AppCenterLog.info(LOG_TAG, "Deleted crashes local files");
@@ -580,17 +585,18 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Send an handled exception.
      *
-     * @param throwable  An handled exception.
-     * @param properties optional properties.
+     * @param throwable   An handled exception.
+     * @param properties  optional properties.
+     * @param attachments optional attachments.
      */
-    private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties) {
+    private synchronized void queueException(@NonNull final Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public Exception buildExceptionModel() {
                 return ErrorLogHelper.getModelExceptionFromThrowable(throwable);
             }
-        }, properties);
+        }, properties, attachments);
     }
 
     /**
@@ -598,28 +604,35 @@ public class Crashes extends AbstractAppCenterService {
      *
      * @param modelException An handled exception already in JSON model form.
      * @param properties     optional properties.
+     * @param attachments    optional attachments.
      */
-    synchronized void queueException(@NonNull final Exception modelException, Map<String, String> properties) {
+    synchronized void queueException(@NonNull final Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
         queueException(new ExceptionModelBuilder() {
 
             @Override
             public Exception buildExceptionModel() {
                 return modelException;
             }
-        }, properties);
+        }, properties, attachments);
     }
 
-    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, final Map<String, String> properties) {
+    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, Map<String, String> properties, final Iterable<ErrorAttachmentLog> attachments) {
+        final Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
         post(new Runnable() {
 
             @Override
             public void run() {
+
+                /* First send the handled error. */
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(UUID.randomUUID());
                 errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
-                errorLog.setProperties(properties);
+                errorLog.setProperties(validatedProperties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
+
+                /* Then attachments if any. */
+                sendErrorAttachment(errorLog.getId(), attachments);
             }
         });
     }
@@ -763,7 +776,7 @@ public class Crashes extends AbstractAppCenterService {
             }
         }
         mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
-        if(mHasReceivedMemoryWarningInLastSession) {
+        if (mHasReceivedMemoryWarningInLastSession) {
             AppCenterLog.debug(LOG_TAG, "The application received a low memory warning in the last session.");
         }
         SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
@@ -977,9 +990,10 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Send error attachment logs through channel.
      */
+    @WorkerThread
     private void sendErrorAttachment(UUID errorId, Iterable<ErrorAttachmentLog> attachments) {
         if (attachments == null) {
-            AppCenterLog.debug(LOG_TAG, "CrashesListener.getErrorAttachments returned null, no additional information will be attached to log: " + errorId.toString());
+            AppCenterLog.debug(LOG_TAG, "Error report: " + errorId.toString() + " does not have any attachment.");
         } else {
             int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
@@ -993,7 +1007,7 @@ public class Crashes extends AbstractAppCenterService {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }
                 } else {
-                    AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog in CrashesListener.getErrorAttachments.");
+                    AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");
                 }
             }
             if (totalErrorAttachments > MAX_ATTACHMENT_PER_CRASH) {
@@ -1153,6 +1167,7 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Implementation of {@link WrapperSdkExceptionManager#sendErrorAttachments(String, Iterable)}.
      */
+    @WorkerThread
     void sendErrorAttachments(final String errorReportId, final Iterable<ErrorAttachmentLog> attachments) {
         post(new Runnable() {
 
