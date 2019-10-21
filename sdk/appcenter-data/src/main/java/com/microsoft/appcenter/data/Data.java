@@ -575,9 +575,15 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             }
 
             @Override
-            public void callCosmosDb(TokenResult tokenResult, DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
-                mLocalDocumentStorage.deleteOffline(Utils.getTableName(tokenResult.getPartition()), tokenResult.getPartition(), documentId, writeOptions);
-                callCosmosDbDeleteApi(tokenResult, partition, documentId, result);
+            public void callCosmosDb(final TokenResult tokenResult, final DefaultAppCenterFuture<DocumentWrapper<Void>> result) {
+                postAsyncGetter(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        mLocalDocumentStorage.deleteOffline(Utils.getTableName(tokenResult.getPartition()), tokenResult.getPartition(), documentId, writeOptions);
+                        callCosmosDbDeleteApi(tokenResult, partition, documentId, result);
+                    }
+                }, result, new DocumentWrapper<Void>(getModuleNotStartedException()));
             }
         });
     }
@@ -867,6 +873,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             @Override
             public void run() {
                 if (mNetworkStateHelper.isNetworkConnected()) {
+
                     getTokenAndCallCosmosDbApi(
                             partition,
                             mHttpClientNoRetryer,
@@ -874,9 +881,16 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                             new TokenExchangeServiceCallback(mTokenManager) {
 
                                 @Override
-                                public void callCosmosDb(TokenResult tokenResult) {
-                                    mLocalDocumentStorage.createOrUpdateOffline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId, document, documentType, writeOptions);
-                                    callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.getPartition(), documentId, writeOptions, additionalHeaders, result);
+                                public void callCosmosDb(final TokenResult tokenResult) {
+
+                                    postAsyncGetter(new Runnable() {
+
+                                        @Override
+                                        public void run() {
+                                            mLocalDocumentStorage.createOrUpdateOffline(Utils.getTableName(tokenResult), tokenResult.getPartition(), documentId, document, documentType, writeOptions);
+                                            callCosmosDbCreateOrUpdateApi(tokenResult, document, documentType, tokenResult.getPartition(), documentId, writeOptions, additionalHeaders, result);
+                                        }
+                                    }, result, new DocumentWrapper<T>(getModuleNotStartedException()));
                                 }
 
                                 @Override
