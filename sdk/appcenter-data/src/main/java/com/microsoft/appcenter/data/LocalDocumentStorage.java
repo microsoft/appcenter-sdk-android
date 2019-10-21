@@ -399,9 +399,10 @@ class LocalDocumentStorage {
 
                 /*
                   The pending operation is delete/create/update with writeOptions no cache. It will be execute:
-                  1. Before every delete/create/update call to cosmosdb.
+                  Before every delete/create/update call to cosmosdb.
                  */
                 values = getContentValues(document.getPartition(), document.getId(), new HashMap<String, String>() {{
+                    put(DOCUMENT_COLUMN_NAME, null);
                     put(EXPIRATION_TIME_COLUMN_NAME, TimeToLive.NO_CACHE + "");
                     put(PENDING_OPERATION_COLUMN_NAME, Constants.PENDING_OPERATION_PROCESS_VALUE);
                 }});
