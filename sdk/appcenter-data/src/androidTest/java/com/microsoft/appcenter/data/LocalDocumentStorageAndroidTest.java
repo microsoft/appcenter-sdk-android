@@ -319,7 +319,7 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
-    public void ReadFailForTransitOperation() {
+    public void readFailForTransitOperation() {
         mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, APP_DOCUMENTS, ID, "test", String.class, new WriteOptions(TimeToLive.NO_CACHE));
         DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, APP_DOCUMENTS, ID, String.class, new ReadOptions());
         assertNotNull(createdDocument);
