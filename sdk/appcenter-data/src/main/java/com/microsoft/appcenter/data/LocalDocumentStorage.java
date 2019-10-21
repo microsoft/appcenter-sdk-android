@@ -453,11 +453,11 @@ class LocalDocumentStorage {
             if (pendingOperation != null && pendingOperation.equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
                 String errorMessage = "Document remote state is unknown, and local storage is set to no cache.";
                 AppCenterLog.debug(LOG_TAG, errorMessage);
-                mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
+                mDatabaseManager.delete(table, DatabaseManager.PRIMARY_KEY, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 return new DocumentWrapper<>(new DataException(errorMessage));
             }
             if (ReadOptions.isExpired(documentExpirationTime)) {
-                mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
+                mDatabaseManager.delete(table, DatabaseManager.PRIMARY_KEY, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 String errorMessage = "Document was found in the cache, but it was expired. The cached document has been invalidated.";
                 AppCenterLog.debug(LOG_TAG, errorMessage);
                 return new DocumentWrapper<>(new DataException(errorMessage));
@@ -475,7 +475,7 @@ class LocalDocumentStorage {
                 if (readOptions.getDeviceTimeToLive() == TimeToLive.NO_CACHE) {
 
                     /* Delete the document since no cache was requested. */
-                    mDatabaseManager.delete(table, values.getAsLong(DatabaseManager.PRIMARY_KEY));
+                    mDatabaseManager.delete(table, DatabaseManager.PRIMARY_KEY, values.getAsLong(DatabaseManager.PRIMARY_KEY));
                 } else if (!documentWrapper.hasFailed()) {
 
                     /* We update cache timestamp only if no serialization issue, otherwise that would corrupt cache in payload. */

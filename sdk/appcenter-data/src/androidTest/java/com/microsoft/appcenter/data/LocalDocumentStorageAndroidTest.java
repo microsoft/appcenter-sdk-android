@@ -319,6 +319,21 @@ public class LocalDocumentStorageAndroidTest {
     }
 
     @Test
+    public void ReadFailForTransitOperation() {
+        mLocalDocumentStorage.createOrUpdateOffline(USER_TABLE_NAME, APP_DOCUMENTS, ID, "test", String.class, new WriteOptions(TimeToLive.NO_CACHE));
+        DocumentWrapper<String> createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, APP_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertNotNull(createdDocument.getError());
+        assertNotNull(createdDocument.getError().getMessage());
+        assertTrue(createdDocument.getError().getMessage().contains("Document remote state is unknown"));
+        createdDocument = mLocalDocumentStorage.read(USER_TABLE_NAME, APP_DOCUMENTS, ID, String.class, new ReadOptions());
+        assertNotNull(createdDocument);
+        assertNotNull(createdDocument.getError());
+        assertNotNull(createdDocument.getError().getMessage());
+        assertTrue(createdDocument.getError().getMessage().contains("Document was not found"));
+    }
+
+    @Test
     public void deleteOfflineAddsNoPendingOperation() {
         mLocalDocumentStorage.deleteOffline(USER_TABLE_NAME, USER_DOCUMENTS, ID, new WriteOptions());
         List<LocalDocument> operations = mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME);

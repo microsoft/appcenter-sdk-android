@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_CREATE_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_DELETE_VALUE;
+import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_PROCESS_VALUE;
 import static com.microsoft.appcenter.data.Constants.PENDING_OPERATION_REPLACE_VALUE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_DELETE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
@@ -55,19 +56,49 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
     @Test
     public void pendingCreateOperationSuccess() throws JSONException {
-        verifyPendingCreateOperationsSuccess(false);
+        verifyPendingCreateOperationsSuccess(PENDING_OPERATION_CREATE_VALUE, false);
     }
 
     @Test
     public void pendingCreateOperationSuccessDeletesExpiredOperation() throws JSONException {
-        verifyPendingCreateOperationsSuccess(true);
+        verifyPendingCreateOperationsSuccess(PENDING_OPERATION_CREATE_VALUE, true);
     }
 
-    private void verifyPendingCreateOperationsSuccess(boolean operationExpired) throws JSONException {
+    @Test
+    public void pendingOperationWithNoCacheSuccessfullyRemoved() {
+        final LocalDocument pendingOperation = new LocalDocument(
+                USER_TABLE_NAME,
+                PENDING_OPERATION_PROCESS_VALUE,
+                RESOLVED_USER_PARTITION,
+                DOCUMENT_ID,
+                "document",
+                0,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP);
+        when(mLocalDocumentStorage.getPendingOperations(USER_TABLE_NAME)).thenReturn(
+                new ArrayList<LocalDocument>() {{
+                    add(pendingOperation);
+                }});
+        Data.setRemoteOperationListener(mRemoteOperationListener);
+        mData.onNetworkStateUpdated(true);
+        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
+
+        /* Verify operation is deleted from the cache when operation expired. */
+        ArgumentCaptor<String> tableNameCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> partitionCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> documentIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mLocalDocumentStorage).deleteOnline(tableNameCaptor.capture(), partitionCaptor.capture(), documentIdCaptor.capture());
+        verifyNoMoreInteractions(mHttpClientNoRetryer);
+        assertEquals(USER_TABLE_NAME, tableNameCaptor.getValue());
+        assertEquals(RESOLVED_USER_PARTITION, partitionCaptor.getValue());
+        assertEquals(DOCUMENT_ID, documentIdCaptor.getValue());
+    }
+
+    private void verifyPendingCreateOperationsSuccess(String pendingOperationName, boolean operationExpired) throws JSONException {
         long expirationTime = operationExpired ? PAST_TIMESTAMP : FUTURE_TIMESTAMP;
         final LocalDocument pendingOperation = new LocalDocument(
                 USER_TABLE_NAME,
-                PENDING_OPERATION_CREATE_VALUE,
+                pendingOperationName,
                 RESOLVED_USER_PARTITION,
                 DOCUMENT_ID,
                 "document",

@@ -1054,7 +1054,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                                     eTag),
                             null);
                 }
-                if (pendingOperation.isExpired() || PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
+                if (PENDING_OPERATION_DELETE_VALUE.equals(pendingOperation.getOperation())) {
 
                     /* Remove the document if expiration_time has elapsed or it is a delete operation. */
                     mLocalDocumentStorage.deleteOnline(pendingOperation.getTable(), pendingOperation.getPartition(), pendingOperation.getDocumentId());

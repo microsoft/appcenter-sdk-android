@@ -155,7 +155,7 @@ public class LocalDocumentStorageTest {
         DocumentWrapper<String> doc = mLocalDocumentStorage.read(mUserTableName, PARTITION, DOCUMENT_ID, String.class, ReadOptions.createNoCacheOptions());
 
         /* Verify that we delete the written document because readOptions are set to NoCache. */
-        verify(mDatabaseManager).delete(anyString(), any(ContentValues.class));
+        verify(mDatabaseManager).delete(anyString(), anyString(), any(ContentValues.class));
         assertNotNull(doc);
         assertNotNull(doc.getDeserializedValue());
         assertFalse(doc.hasFailed());
