@@ -20,16 +20,13 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.sasquatch.CrashTestHelper;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.util.AttachmentsUtils;
+import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FILE_ATTACHMENT_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TEXT_ATTACHMENT_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class ManagedErrorActivity extends PropertyActivity {
 
@@ -77,9 +74,7 @@ public class ManagedErrorActivity extends PropertyActivity {
                 Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
                 method.setAccessible(true);
                 method.invoke(null, t, properties);
-                AttachmentsUtils.getInstance().setFileAttachment(sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null));
-                AttachmentsUtils.getInstance().setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
-                Iterable<ErrorAttachmentLog> attachmentLogs = AttachmentsUtils.getInstance().getErrorAttachments(getApplicationContext());
+                Iterable<ErrorAttachmentLog> attachmentLogs = AttachmentsUtil.getInstance().getErrorAttachments(getApplicationContext());
                 /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
                 /* Crashes.trackException(throwable, properties); */
             } catch (Exception e) {

@@ -12,8 +12,6 @@ import android.os.SystemClock;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.idling.CountingIdlingResource;
 import android.support.v7.app.AlertDialog;
-import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.crashes.AbstractCrashesListener;
@@ -21,14 +19,8 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.sasquatch.R;
-import com.microsoft.appcenter.sasquatch.activities.MainActivity;
-import com.microsoft.appcenter.sasquatch.util.AttachmentsUtils;
+import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.HandlerUtils;
-
-import java.util.LinkedList;
-import java.util.List;
-
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class SasquatchCrashesListener extends AbstractCrashesListener {
@@ -47,19 +39,19 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     public String getTextAttachment() {
-        return AttachmentsUtils.getInstance().getTextAttachment();
+        return AttachmentsUtil.getInstance().getTextAttachment();
     }
 
     public void setTextAttachment(String textAttachment) {
-        AttachmentsUtils.getInstance().setTextAttachment(textAttachment);
+        AttachmentsUtil.getInstance().setTextAttachment(textAttachment);
     }
 
     public Uri getFileAttachment() {
-        return AttachmentsUtils.getInstance().getFileAttachment();
+        return AttachmentsUtil.getInstance().getFileAttachment();
     }
 
     public void setFileAttachment(Uri fileAttachment) {
-        AttachmentsUtils.getInstance().setFileAttachment(fileAttachment);
+        AttachmentsUtil.getInstance().setFileAttachment(fileAttachment);
     }
 
     @Override
@@ -94,7 +86,7 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     public Iterable<ErrorAttachmentLog> getErrorAttachments(ErrorReport report) {
 
         /* Return attachments as list. */
-        return AttachmentsUtils.getInstance().getErrorAttachments(mContext);
+        return AttachmentsUtil.getInstance().getErrorAttachments(mContext);
     }
 
     @Override
@@ -133,10 +125,10 @@ public class SasquatchCrashesListener extends AbstractCrashesListener {
     }
 
     public String getFileAttachmentDisplayName() {
-        return AttachmentsUtils.getInstance().getFileAttachmentDisplayName(mContext);
+        return AttachmentsUtil.getInstance().getFileAttachmentDisplayName(mContext);
     }
 
     public String getFileAttachmentSize() throws SecurityException {
-        return AttachmentsUtils.getInstance().getFileAttachmentSize(mContext);
+        return AttachmentsUtil.getInstance().getFileAttachmentSize(mContext);
     }
 }

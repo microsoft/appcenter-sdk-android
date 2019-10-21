@@ -3,6 +3,7 @@ package com.microsoft.appcenter.sasquatch.util;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
@@ -19,19 +20,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
-public class AttachmentsUtils {
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
+
+public class AttachmentsUtil {
 
     private Uri mFileAttachment;
 
     private String mTextAttachment;
+
+    private static final String TEXT_ATTACHMENT_KEY = "textAttachment";
+
+    private static final String FILE_ATTACHMENT_KEY = "fileAttachment";
 
     public String getTextAttachment() {
         return mTextAttachment;
     }
 
     public void setTextAttachment(String textAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (textAttachment == null) {
+            editor.remove(TEXT_ATTACHMENT_KEY);
+        } else {
+            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
+        }
+        editor.apply();
         this.mTextAttachment = textAttachment;
     }
 
@@ -40,24 +54,32 @@ public class AttachmentsUtils {
     }
 
     public void setFileAttachment(Uri fileAttachment) {
+        SharedPreferences.Editor editor = sSharedPreferences.edit();
+        if (fileAttachment == null) {
+            editor.remove(FILE_ATTACHMENT_KEY);
+        } else {
+            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
+        }
+        editor.apply();
         this.mFileAttachment = fileAttachment;
     }
 
-    public void setFileAttachment(String fileAttachment) {
-        this.mFileAttachment = Uri.parse(fileAttachment);
-    }
-
     @SuppressLint("StaticFieldLeak")
-    private static AttachmentsUtils instance;
+    private static AttachmentsUtil instance;
 
-    public static AttachmentsUtils getInstance() {
+    public static AttachmentsUtil getInstance() {
         if(instance == null) {
-            instance = new AttachmentsUtils();
+            instance = new AttachmentsUtil();
         }
         return instance;
     }
 
-    private AttachmentsUtils() {
+    private AttachmentsUtil() {
+        mTextAttachment = sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null);
+        String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
+        if (fileAttachment != null) {
+            mFileAttachment = Uri.parse(fileAttachment);
+        }
     }
 
     public Iterable<ErrorAttachmentLog> getErrorAttachments(Context context) {

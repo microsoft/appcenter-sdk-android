@@ -47,6 +47,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
+import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
@@ -74,13 +75,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String SENDER_ID = "177539951155";
 
-    public static final String TEXT_ATTACHMENT_KEY = "textAttachment";
-
-    public static final String FILE_ATTACHMENT_KEY = "fileAttachment";
-
     private static final int DATABASE_SIZE_MULTIPLE = 4096;
 
-    static SharedPreferences sSharedPreferences;
+    public static SharedPreferences sSharedPreferences;
 
     @SuppressLint("StaticFieldLeak")
     static SasquatchAnalyticsListener sAnalyticsListener;
@@ -95,24 +92,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static void setTextAttachment(String textAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (textAttachment == null) {
-            editor.remove(TEXT_ATTACHMENT_KEY);
-        } else {
-            editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
-        }
-        editor.apply();
         sCrashesListener.setTextAttachment(textAttachment);
     }
 
     public static void setFileAttachment(Uri fileAttachment) {
-        SharedPreferences.Editor editor = sSharedPreferences.edit();
-        if (fileAttachment == null) {
-            editor.remove(FILE_ATTACHMENT_KEY);
-        } else {
-            editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
-        }
-        editor.apply();
         sCrashesListener.setFileAttachment(fileAttachment);
     }
 
@@ -312,11 +295,7 @@ public class MainActivity extends AppCompatActivity {
         setSenderId();
 
         /* Set crash attachments. */
-        sCrashesListener.setTextAttachment(sSharedPreferences.getString(TEXT_ATTACHMENT_KEY, null));
-        String fileAttachment = sSharedPreferences.getString(FILE_ATTACHMENT_KEY, null);
-        if (fileAttachment != null) {
-            sCrashesListener.setFileAttachment(Uri.parse(fileAttachment));
-        }
+        AttachmentsUtil.getInstance();
 
         /* Enable Firebase analytics if we enabled the setting previously. */
         if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
