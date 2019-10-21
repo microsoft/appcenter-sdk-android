@@ -390,7 +390,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
                 continue;
             }
-            System.out.println();
             String outgoingId = Utils.getOutgoingId(localDocument.getPartition(), localDocument.getDocumentId());
 
             /* If the operation is already being processed, skip it. */
