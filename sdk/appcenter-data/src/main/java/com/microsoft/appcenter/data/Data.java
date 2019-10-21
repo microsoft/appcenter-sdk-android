@@ -374,6 +374,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         }
     }
 
+    @WorkerThread
     private synchronized void processPendingOperations() {
         String table = Utils.getUserTableName();
         for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(table)) {
