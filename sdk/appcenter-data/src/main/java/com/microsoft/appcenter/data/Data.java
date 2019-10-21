@@ -873,7 +873,6 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
             @Override
             public void run() {
                 if (mNetworkStateHelper.isNetworkConnected()) {
-
                     getTokenAndCallCosmosDbApi(
                             partition,
                             mHttpClientNoRetryer,
