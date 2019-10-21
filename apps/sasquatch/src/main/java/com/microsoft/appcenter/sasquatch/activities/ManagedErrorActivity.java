@@ -69,12 +69,14 @@ public class ManagedErrorActivity extends PropertyActivity {
         } catch (Throwable t) {
             try {
                 Map<String, String> properties = readStringProperties();
-                Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
+
+                @SuppressWarnings("JavaReflectionMemberAccess")
+                Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class, Iterable.class);
                 method.setAccessible(true);
-                method.invoke(null, t, properties);
+                method.invoke(null, t, properties, null);
 
                 /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
-                /* Crashes.trackException(throwable, properties); */
+                /* Crashes.trackException(throwable, properties, attachments); */
             } catch (Exception e) {
                 Log.d(LOG_TAG, "Could not call Crashes.trackException", e);
             }
