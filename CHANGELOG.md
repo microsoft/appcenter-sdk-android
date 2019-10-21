@@ -5,6 +5,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix a crash when downloading an update fails on Android 5+.
+* **[Improvement]** Improved error message logging when downloading an update fails on Android 5+.
 
 ___
 
