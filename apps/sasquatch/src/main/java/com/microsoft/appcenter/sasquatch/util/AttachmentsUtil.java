@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch.util;
 
 import android.annotation.SuppressLint;
@@ -46,7 +51,7 @@ public class AttachmentsUtil {
             editor.putString(TEXT_ATTACHMENT_KEY, textAttachment);
         }
         editor.apply();
-        this.mTextAttachment = textAttachment;
+        mTextAttachment = textAttachment;
     }
 
     public Uri getFileAttachment() {
@@ -61,14 +66,14 @@ public class AttachmentsUtil {
             editor.putString(FILE_ATTACHMENT_KEY, fileAttachment.toString());
         }
         editor.apply();
-        this.mFileAttachment = fileAttachment;
+        mFileAttachment = fileAttachment;
     }
 
     @SuppressLint("StaticFieldLeak")
     private static AttachmentsUtil instance;
 
     public static AttachmentsUtil getInstance() {
-        if(instance == null) {
+        if (instance == null) {
             instance = new AttachmentsUtil();
         }
         return instance;
