@@ -43,7 +43,7 @@ public final class Constants {
      */
     static final String PENDING_OPERATION_DELETE_VALUE = "DELETE";
 
-    /***
+    /**
      * Generic pending operation when writeOptions is no cache.
      */
     static final String PENDING_OPERATION_PROCESS_VALUE = "PROCESSING";
