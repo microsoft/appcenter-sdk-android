@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class CrashSubActivity extends AppCompatActivity {
 
-    static final String INTENT_EXTRA_CRASH_TYPE = "INTENT_EXTRA_CRASH_TYPE";
+    public static final String INTENT_EXTRA_CRASH_TYPE = "INTENT_EXTRA_CRASH_TYPE";
 
     @Override
     @SuppressLint("MissingSuperCall")
