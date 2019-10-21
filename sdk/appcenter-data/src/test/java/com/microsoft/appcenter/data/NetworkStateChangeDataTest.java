@@ -81,7 +81,6 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
                 }});
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
-        ArgumentCaptor<DocumentMetadata> documentMetadataArgumentCaptor = ArgumentCaptor.forClass(DocumentMetadata.class);
 
         /* Verify operation is deleted from the cache when operation expired. */
         ArgumentCaptor<String> tableNameCaptor = ArgumentCaptor.forClass(String.class);

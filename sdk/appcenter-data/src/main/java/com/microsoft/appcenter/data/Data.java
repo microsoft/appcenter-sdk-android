@@ -378,16 +378,17 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
     private synchronized void processPendingOperations() {
         String table = Utils.getUserTableName();
         for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(table)) {
+            if (localDocument.getOperation().equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
+                notifyListenerAndUpdateOperationOnFailure(
+                        new DataException(String.format("Remote state is unknown for document %s, and no local cache for this document.", localDocument.getDocumentId())),
+                        localDocument);
+                mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
+                continue;
+            }
             if (localDocument.isExpired()) {
-                if (localDocument.getOperation().equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
-                    notifyListenerAndUpdateOperationOnFailure(
-                            new DataException(String.format("Remote state is unknown for document %s, and no local cache for this document.", localDocument.getDocumentId())),
-                            localDocument);
-                } else {
-                    notifyListenerAndUpdateOperationOnFailure(
-                            new DataException(String.format("Local document with id %s has expired, skip the pending operation processing.", localDocument.getDocumentId())),
-                            localDocument);
-                }
+                notifyListenerAndUpdateOperationOnFailure(
+                        new DataException(String.format("Local document with id %s has expired, skip the pending operation processing.", localDocument.getDocumentId())),
+                        localDocument);
                 mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
                 continue;
             }
