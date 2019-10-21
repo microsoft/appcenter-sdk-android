@@ -50,7 +50,7 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
                 int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
                 if (status == DownloadManager.STATUS_FAILED) {
                     int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
-                    throw new IllegalStateException("The download has failed; Reason: " + reason);
+                    throw new IllegalStateException("The download has failed with reason code: " + reason);
                 }
                 if (status != DownloadManager.STATUS_SUCCESSFUL) {
                     mDownloader.onDownloadProgress(cursor);
