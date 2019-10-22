@@ -380,7 +380,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
         for (LocalDocument localDocument : mLocalDocumentStorage.getPendingOperations(table)) {
             if (localDocument.getOperation().equals(Constants.PENDING_OPERATION_PROCESS_VALUE)) {
                 notifyListenerAndUpdateOperationOnFailure(
-                        new DataException(String.format("Remote state is unknown for document %s, and no local cache for this document.", localDocument.getDocumentId())),
+                        new DataException(String.format("Remote state is unknown for document id %s, and no local cache exists for this document.", localDocument.getDocumentId())),
                         localDocument);
                 mLocalDocumentStorage.deleteOnline(table, localDocument.getPartition(), localDocument.getDocumentId());
                 continue;
