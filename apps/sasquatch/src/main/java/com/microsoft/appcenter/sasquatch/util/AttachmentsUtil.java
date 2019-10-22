@@ -116,7 +116,7 @@ public class AttachmentsUtil {
         return attachments.size() > 0 ? attachments : null;
     }
 
-    public String getFileAttachmentMimeType(Context context) {
+    private String getFileAttachmentMimeType(Context context) {
         String mimeType;
         if (ContentResolver.SCHEME_CONTENT.equals(mFileAttachment.getScheme())) {
             mimeType = context.getContentResolver().getType(mFileAttachment);
@@ -130,6 +130,8 @@ public class AttachmentsUtil {
     public String getFileAttachmentDisplayName(Context context) throws SecurityException {
         Cursor cursor = context.getContentResolver()
                 .query(mFileAttachment, null, null, null, null);
+
+        //noinspection TryFinallyCanBeTryWithResources
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -145,7 +147,7 @@ public class AttachmentsUtil {
         return "";
     }
 
-    public byte[] getFileAttachmentData(Context context) throws SecurityException {
+    private byte[] getFileAttachmentData(Context context) throws SecurityException {
         InputStream inputStream = null;
         ByteArrayOutputStream outputStream = null;
         try {
@@ -181,6 +183,8 @@ public class AttachmentsUtil {
     public String getFileAttachmentSize(Context context) throws SecurityException {
         Cursor cursor = context.getContentResolver()
                 .query(mFileAttachment, null, null, null, null);
+
+        //noinspection TryFinallyCanBeTryWithResources
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
