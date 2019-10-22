@@ -393,7 +393,7 @@ class LocalDocumentStorage {
             if (pendingOperationValue == null) {
                 AppCenterLog.debug(LOG_TAG, String.format("Trying to remove %s:%s document trace from cache", document.getPartition(), document.getId()));
 
-                /* Successfully create or update documents online, remove the pending operation from  localstorage. **/
+                /* Successfully create or update documents online, remove the pending operation from the local storage. */
                 return mDatabaseManager.delete(table, document.getId());
             } else {
 
